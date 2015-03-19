@@ -1,0 +1,143 @@
+!include MUI2.nsh
+!include LogicLib.nsh
+!include "@CPACK_NSIS_INCLFILE@"
+
+!define APPNAME "@CPACK_PACKAGE_NAME@"
+!define DESCRIPTION "@CPACK_PACKAGE_DESCRIPTION_SUMMARY@"
+!define ABOUTURL "@CPACK_NSIS_URL_INFO_ABOUT@"
+
+!define INST_DIR "@CPACK_TEMPORARY_DIRECTORY@"
+
+Name "${APPNAME}"
+InstallDir "@CPACK_NSIS_INSTALL_ROOT@\${APPNAME}"
+SetCompressor /SOLID /FINAL LZMA
+outFile "@CPACK_TOPLEVEL_DIRECTORY@/@CPACK_OUTPUT_FILE_NAME@"
+
+!define MUI_ABORTWARNING
+!insertmacro MUI_PAGE_DIRECTORY
+!insertmacro MUI_PAGE_INSTFILES
+!insertmacro MUI_PAGE_FINISH
+!insertmacro MUI_UNPAGE_CONFIRM
+!insertmacro MUI_UNPAGE_INSTFILES
+!insertmacro MUI_LANGUAGE "English"
+
+RequestExecutionLevel admin
+function .onInit
+    setShellVarContext all
+    
+    ; search for a jk2 installation
+    ReadRegStr $R0 HKLM "SOFTWARE\LucasArts Entertainment Company LLC\Star Wars JK II Jedi Outcast\1.0" "install path"
+    ${If} $R0 == ""
+        ReadRegStr $R0 HKLM "SOFTWARE\LucasArts Entertainment Company LLC\Star Wars JK II Jedi Outcast\1.0" "installpath"
+        ${If} $R0 == ""
+            goto jknotfound
+        ${EndIf}
+    ${EndIf}
+    
+    IfFileExists $R0\GameData\base\assets0.pk3 jkfound
+jknotfound:
+    MessageBox MB_ICONSTOP "Jedi Knight II installation not found, please make sure you have JK2 correctly installed, either from CD or from Steam.$\r$\n$\r$\n\
+                            If you have no option installing JK2 you can try the portable/manual version from the website."
+    Abort
+    
+jkfound:
+    IfFileExists $R0\GameData\base\assets5.pk3 patched
+    MessageBox MB_ICONEXCLAMATION "Jedi Knight II found, but seems to be 1.02 / 1.03. ${APPNAME} works with all versions but needs JK2 1.04 installed.$\r$\n\
+                                   A website will open on which you can download the patch."
+    ExecShell "open" "http://jk2mv.org/Downloads"
+    Abort
+    
+patched:
+    ; this installation is fine
+    
+    ; check for previous JK2MV installation
+    ReadRegDWORD $R0 HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "EasyCompare"
+    ${If} $R0 == ${VERSION_EASY_COMPARE}
+        MessageBox MB_ICONSTOP "${APPNAME} is already installed."
+        Abort
+    ${ElseIf} $R0 > ${VERSION_EASY_COMPARE}
+        MessageBox MB_ICONSTOP "A newer version of ${APPNAME} is already installed."
+        Abort
+    ${ElseIf} $R0 < ${VERSION_EASY_COMPARE}
+        ${If} $R0 <> 0
+            ReadRegStr $R0 HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "InstallLocation"
+            StrCpy $INSTDIR $R0 -1 1 ; remove quotes
+            StrCpy $1 $INSTDIR
+            ReadRegStr $0 HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "QuietUninstallString"
+            ReadRegStr $R0 HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "DisplayVersion"
+            MessageBox MB_ICONINFORMATION "${APPNAME} $R0 has been found. The installer will upgrade ${APPNAME} to ${VERSIONMAJOR}.${VERSIONMINOR}${VERSION_EXT}."
+        ${EndIf}
+    ${EndIf}
+functionEnd
+
+section "install"
+    ; uninstall old version first
+    ${If} $0 != ""
+        ExecWait "$0 _?=$1"
+        delete $1\uninstall.exe
+        rmDir $1
+    ${EndIf}
+    
+    #setOutPath $INSTDIR\base
+    #file "..\Release\base\assetsmv.pk3"
+    
+    setOutPath $INSTDIR
+    @CPACK_NSIS_FULL_INSTALL@
+    
+    #file "..\Release\jk2mvmp_x86.exe"
+    #file "..\Release\jk2mvmenu_x86.dll"
+	#file "..\Release\softoal_x86.dll"
+    #file "..\qe3.ico"
+    
+	writeUninstaller "$INSTDIR\uninstall.exe"
+    
+    ; Startmenu
+    createDirectory "$SMPROGRAMS\${APPNAME}"
+    createShortCut "$SMPROGRAMS\${APPNAME}\${APPNAME}.lnk" "$INSTDIR\${MAIN_EXE_NAME}.exe"
+    createShortCut "$SMPROGRAMS\${APPNAME}\Uninstall.lnk" "$INSTDIR\uninstall.exe"
+    
+    ; Desktop
+    createShortCut "$DESKTOP\${APPNAME}.lnk" "$INSTDIR\${MAIN_EXE_NAME}.exe"
+    
+	; Controlpanel entry for add/remove programs
+	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "DisplayName" "${APPNAME} - ${DESCRIPTION}"
+	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "UninstallString" "$\"$INSTDIR\uninstall.exe$\""
+	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "QuietUninstallString" "$\"$INSTDIR\uninstall.exe$\" /S"
+	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "InstallLocation" "$\"$INSTDIR$\""
+	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "DisplayIcon" "$\"$INSTDIR\mv.ico$\""
+	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "Publisher" "${APPNAME}"
+	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "HelpLink" "${ABOUTURL}"
+	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "DisplayVersion" "${VERSIONMAJOR}.${VERSIONMINOR}${VERSION_EXT}"
+	WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "VersionMajor" ${VERSIONMAJOR}
+	WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "VersionMinor" ${VERSIONMINOR}
+    WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "EasyCompare" ${VERSION_EASY_COMPARE}
+	WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "NoModify" 1
+	WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "NoRepair" 1
+sectionEnd
+
+Function un.onInit
+	SetShellVarContext all
+FunctionEnd
+
+section "uninstall"
+    ; Startmenu
+    delete "$SMPROGRAMS\${APPNAME}\${APPNAME}.lnk"
+    delete "$SMPROGRAMS\${APPNAME}\Uninstall.lnk"
+	rmDir "$SMPROGRAMS\${APPNAME}"
+
+    ; Desktop
+    delete "$DESKTOP\${APPNAME}.lnk"
+
+    @CPACK_NSIS_DELETE_FILES@
+    @CPACK_NSIS_DELETE_DIRECTORIES@
+ 
+	; Always delete uninstaller as the last action
+	delete $INSTDIR\uninstall.exe
+ 
+	; Try to remove the install directory - this will only happen if it is empty
+    rmDir $INSTDIR\base
+	rmDir $INSTDIR
+    
+    ; Controlpanel entry for add/remove programs
+	DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}"
+sectionEnd

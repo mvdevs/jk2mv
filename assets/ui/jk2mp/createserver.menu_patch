@@ -1,0 +1,54 @@
+ORI_HASH 2718634206
+
+LINES_INSERT 1045 [
+		// ouned: server version
+		itemDef
+		{
+			name				settingsButton20
+			style				WINDOW_STYLE_SHADER
+			rect 				207 373 221 20
+			background			"gfx/menus/menu_blendbox"
+			forecolor			1 1 1 1
+			decoration
+			visible				0
+		}
+
+		itemDef
+		{
+			name				normal
+			group				grpsettings
+			type				ITEM_TYPE_MULTI
+			text				@MV_GAME_VERSION
+			cvar				"mv_serverversion"
+			cvarStrList
+			{
+				"1.02", "1.02",
+				"1.03", "1.03",
+				"1.04", "1.04",
+			}
+			rect				207 373 221 20
+			textalign			ITEM_ALIGN_RIGHT
+			textalignx			150
+			textaligny			-2
+			font				2
+			textscale			.8
+			forecolor			1 1 1 1
+			visible				1
+			descText			@MV_GAME_VERSION_HOST_INFO
+			
+			action
+			{
+				play "sound/interface/button1.wav"
+			}
+
+			mouseEnter
+			{
+				show settingsButton20
+			}
+
+			mouseExit
+			{
+				hide settingsButton20
+			}
+		}
+]

@@ -1,0 +1,26 @@
+// Red saber
+gfx/effects/sabers/red_glow:gfx/effects/sabers/red_glow2
+//gfx/effects/sabers/red_line:gfx/effects/sabers/red_line
+
+// Orange saber
+gfx/effects/sabers/orange_glow:gfx/effects/sabers/orange_glow2
+//gfx/effects/sabers/orange_line:gfx/effects/sabers/orange_line
+
+// Yellow saber
+gfx/effects/sabers/yellow_glow:gfx/effects/sabers/yellow_glow2
+//gfx/effects/sabers/yellow_line:gfx/effects/sabers/yellow_line
+
+// Green saber
+gfx/effects/sabers/green_glow:gfx/effects/sabers/green_glow2
+//gfx/effects/sabers/green_line:gfx/effects/sabers/green_line
+
+// Blue saber
+gfx/effects/sabers/blue_glow:gfx/effects/sabers/blue_glow2
+//gfx/effects/sabers/blue_line:gfx/effects/sabers/blue_line
+
+// Purple saber
+gfx/effects/sabers/purple_glow:gfx/effects/sabers/purple_glow2
+//gfx/effects/sabers/purple_line:gfx/effects/sabers/purple_line
+
+// Blur
+gfx/effects/sabers/saberBlur:gfx/effects/sabers/blurglow
