@@ -20,8 +20,8 @@
 #import <net/if.h>
 #import <net/if_types.h>
 
-#import <arpa/inet.h>         // for inet_ntoa()
-#import <net/if_dl.h>         // for 'struct sockaddr_dl'
+#import <arpa/inet.h>		 // for inet_ntoa()
+#import <net/if_dl.h>		 // for 'struct sockaddr_dl'
 #endif
 
 static cvar_t	*noudp;
@@ -136,7 +136,7 @@ qboolean	Sys_StringToAdr (const char *s, netadr_t *a)
 
 qboolean	Sys_GetPacket (netadr_t *net_from, msg_t *net_message)
 {
-	int 	ret;
+	int	ret;
 	struct sockaddr_in	from;
 	int		fromlen;
 	int		net_socket;
@@ -317,26 +317,26 @@ NET_GetLocalAddress
 // This code adapted from OmniNetworking.
 
 #define IFR_NEXT(ifr)	\
-    ((struct ifreq *) ((char *) (ifr) + sizeof(*(ifr)) + \
-      MAX(0, (int) (ifr)->ifr_addr.sa_len - (int) sizeof((ifr)->ifr_addr))))
+	((struct ifreq *) ((char *) (ifr) + sizeof(*(ifr)) + \
+	  MAX(0, (int) (ifr)->ifr_addr.sa_len - (int) sizeof((ifr)->ifr_addr))))
 
 void NET_GetLocalAddress( void ) {
-        struct ifreq requestBuffer[MAX_IPS], *linkInterface, *inetInterface;
-        struct ifconf ifc;
-        struct ifreq ifr;
-        struct sockaddr_dl *sdl;
-        int interfaceSocket;
-        int family;
+		struct ifreq requestBuffer[MAX_IPS], *linkInterface, *inetInterface;
+		struct ifconf ifc;
+		struct ifreq ifr;
+		struct sockaddr_dl *sdl;
+		int interfaceSocket;
+		int family;
 
-        //Com_Printf("NET_GetLocalAddress: Querying for network interfaces\n");
+		//Com_Printf("NET_GetLocalAddress: Querying for network interfaces\n");
 
-        // Set this early so we can just return if there is an error
+		// Set this early so we can just return if there is an error
 	numIP = 0;
 
-        ifc.ifc_len = sizeof(requestBuffer);
-        ifc.ifc_buf = (caddr_t)requestBuffer;
+		ifc.ifc_len = sizeof(requestBuffer);
+		ifc.ifc_buf = (caddr_t)requestBuffer;
 
-        // Since we get at this info via an ioctl, we need a temporary little socket.  This will only get AF_INET interfaces, but we probably don't care about anything else.  If we do end up caring later, we should add a ONAddressFamily and at a -interfaces method to it.
+		// Since we get at this info via an ioctl, we need a temporary little socket.  This will only get AF_INET interfaces, but we probably don't care about anything else.  If we do end up caring later, we should add a ONAddressFamily and at a -interfaces method to it.
         family = AF_INET;
         if ((interfaceSocket = socket(family, SOCK_DGRAM, 0)) < 0) {
             Com_Printf("NET_GetLocalAddress: Unable to create temporary socket, errno = %d\n", errno);

@@ -27,7 +27,7 @@ SFxHelper		theFxHelper;
 
 int				activeFx = 0;
 int				drawnFx;
-qboolean		fxInitialized = qfalse;	
+qboolean		fxInitialized = qfalse;
 
 //-------------------------
 // FX_Free
@@ -81,7 +81,7 @@ void FX_Stop( void )
 // Preps system for use
 //-------------------------
 int	FX_Init( void )
-{ 
+{
 	if ( fxInitialized == qfalse )
 	{
 		fxInitialized = qtrue;
@@ -215,19 +215,19 @@ void FX_Add( void )
 	for ( i = 0, ef = effectList; i < MAX_EFFECTS; i++, ef++ )
 	{
 		if ( ef->mEffect != 0 )
-		{ 
+		{
 			// Effect is active
 			if ( theFxHelper.mTime > ef->mEffect->GetKillTime() )
-			{ 
+			{
 				// Clean up old effects, calling any death effects as needed
 				// this flag just has to be cleared otherwise death effects might not happen correctly
-				ef->mEffect->ClearFlags( FX_KILL_ON_IMPACT ); 
+				ef->mEffect->ClearFlags( FX_KILL_ON_IMPACT );
 				FX_FreeMember( ef );
 			}
 			else
 			{
 				if ( theFxHelper.mFrameTime > 0 )
-				{ 
+				{
 					// time and the fx system aren't paused
 					if ( ef->mEffect->Update() == false )
 					{
@@ -236,9 +236,9 @@ void FX_Add( void )
 						continue;
 					}
 				}
-		
+
 				if ( ef->mEffect->Cull() == false )
-				{ 
+				{
 					drawnFx++;
 
 					// presumably visible so draw the effect
@@ -333,8 +333,8 @@ CCloud	*FX_AddCloud(void)
 //-------------------------
 //  FX_AddParticle
 //-------------------------
-CParticle *FX_AddParticle( CCloud *effectCloud, vec3_t org, vec3_t vel, vec3_t accel, float size1, float size2, float sizeParm, 
-							float alpha1, float alpha2, float alphaParm, 
+CParticle *FX_AddParticle( CCloud *effectCloud, vec3_t org, vec3_t vel, vec3_t accel, float size1, float size2, float sizeParm,
+							float alpha1, float alpha2, float alphaParm,
 							vec3_t sRGB, vec3_t eRGB, float rgbParm,
 							float rotation, float rotationDelta,
 							vec3_t min, vec3_t max, float elasticity,
@@ -645,7 +645,7 @@ CElectricity *FX_AddElectricity( CCloud *effectCloud, vec3_t start, vec3_t end, 
 		// in the editor, fx may now be NULL
 		if ( fx )
 		{
-			fx->Initialize(); 
+			fx->Initialize();
 		}
 	}
 
@@ -656,12 +656,12 @@ CElectricity *FX_AddElectricity( CCloud *effectCloud, vec3_t start, vec3_t end, 
 //-------------------------
 //  FX_AddTail
 //-------------------------
-CTail *FX_AddTail( CCloud *effectCloud, vec3_t org, vec3_t vel, vec3_t accel, 
-							float size1, float size2, float sizeParm, 
+CTail *FX_AddTail( CCloud *effectCloud, vec3_t org, vec3_t vel, vec3_t accel,
+							float size1, float size2, float sizeParm,
 							float length1, float length2, float lengthParm,
 							float alpha1, float alpha2, float alphaParm,
 							vec3_t sRGB, vec3_t eRGB, float rgbParm,
-							vec3_t min, vec3_t max, float elasticity, 
+							vec3_t min, vec3_t max, float elasticity,
 							int deathID, int impactID,
 							int killTime, qhandle_t shader, int flags = 0 )
 {
@@ -751,7 +751,7 @@ CTail *FX_AddTail( CCloud *effectCloud, vec3_t org, vec3_t vel, vec3_t accel,
 //-------------------------
 //  FX_AddCylinder
 //-------------------------
-CCylinder *FX_AddCylinder( CCloud *effectCloud, vec3_t start, vec3_t normal, 
+CCylinder *FX_AddCylinder( CCloud *effectCloud, vec3_t start, vec3_t normal,
 							float size1s, float size1e, float size1Parm,
 							float size2s, float size2e, float size2Parm,
 							float length1, float length2, float lengthParm,
@@ -849,12 +849,12 @@ CCylinder *FX_AddCylinder( CCloud *effectCloud, vec3_t start, vec3_t normal,
 //-------------------------
 //  FX_AddEmitter
 //-------------------------
-CEmitter *FX_AddEmitter( CCloud *effectCloud, vec3_t org, vec3_t vel, vec3_t accel, 
+CEmitter *FX_AddEmitter( CCloud *effectCloud, vec3_t org, vec3_t vel, vec3_t accel,
 								float size1, float size2, float sizeParm,
 								float alpha1, float alpha2, float alphaParm,
 								vec3_t rgb1, vec3_t rgb2, float rgbParm,
 								vec3_t angs, vec3_t deltaAngs,
-								vec3_t min, vec3_t max, float elasticity, 
+								vec3_t min, vec3_t max, float elasticity,
 								int deathID, int impactID, int emitterID,
 								float density, float variance,
 								int killTime, qhandle_t model, int flags = 0 )
@@ -1079,7 +1079,7 @@ COrientedParticle *FX_AddOrientedParticle( CCloud *effectCloud, vec3_t org, vec3
 //-------------------------
 //  FX_AddPoly
 //-------------------------
-CPoly *FX_AddPoly( CCloud *effectCloud, vec3_t *verts, vec2_t *st, int numVerts, 
+CPoly *FX_AddPoly( CCloud *effectCloud, vec3_t *verts, vec2_t *st, int numVerts,
 							vec3_t vel, vec3_t accel,
 							float alpha1, float alpha2, float alphaParm,
 							vec3_t rgb1, vec3_t rgb2, float rgbParm,
@@ -1152,7 +1152,7 @@ CPoly *FX_AddPoly( CCloud *effectCloud, vec3_t *verts, vec2_t *st, int numVerts,
 //-------------------------
 //  FX_AddBezier
 //-------------------------
-CBezier *FX_AddBezier( vec3_t start, vec3_t end, 
+CBezier *FX_AddBezier( vec3_t start, vec3_t end,
 								vec3_t control1, vec3_t control1Vel,
 								vec3_t control2, vec3_t control2Vel,
 								float size1, float size2, float sizeParm,
@@ -1287,7 +1287,7 @@ CFlash *FX_AddFlash( CCloud *effectCloud, vec3_t origin, vec3_t sRGB, vec3_t eRG
 		fx->SetFlags( flags );
 
 //		fx->SetSTScale( 1.0f, 1.0f );
-		
+
 		fx->Init();
 
 		FX_AddPrimitive( (CEffect**)&fx, effectCloud, killTime );
@@ -1300,7 +1300,7 @@ CFlash *FX_AddFlash( CCloud *effectCloud, vec3_t origin, vec3_t sRGB, vec3_t eRG
 #ifdef CHC
 //-------------------------------------------------------
 // Functions for limited backward compatibility with EF.
-//	These calls can be used for simple programmatic 
+//	These calls can be used for simple programmatic
 //	effects, temp effects or debug graphics.
 // Note that this is not an all-inclusive list of
 //	fx add functions from EF, nor are the calls guaranteed
@@ -1308,13 +1308,13 @@ CFlash *FX_AddFlash( CCloud *effectCloud, vec3_t origin, vec3_t sRGB, vec3_t eRG
 //-------------------------------------------------------
 
 //---------------------------------------------------
-void FX_AddSprite( CCloud *effectCloud, vec3_t origin, vec3_t vel, vec3_t accel, 
-							float scale, float dscale, 
-							float sAlpha, float eAlpha, 
-							float rotation, float bounce,  
+void FX_AddSprite( CCloud *effectCloud, vec3_t origin, vec3_t vel, vec3_t accel,
+							float scale, float dscale,
+							float sAlpha, float eAlpha,
+							float rotation, float bounce,
 							int life, qhandle_t shader, int flags )
 {
-	FX_AddParticle( origin, vel, accel, scale, scale, 0, 
+	FX_AddParticle( origin, vel, accel, scale, scale, 0,
 							sAlpha, eAlpha, FX_ALPHA_LINEAR,
 							WHITE, WHITE, 0,
 							rotation, 0,
@@ -1324,14 +1324,14 @@ void FX_AddSprite( CCloud *effectCloud, vec3_t origin, vec3_t vel, vec3_t accel,
 }
 
 //---------------------------------------------------
-void FX_AddSprite( CCloud *effectCloud, vec3_t origin, vec3_t vel, vec3_t accel, 
-							float scale, float dscale, 
-							float sAlpha, float eAlpha, 
-							vec3_t sRGB, vec3_t eRGB, 
-							float rotation, float bounce, 
+void FX_AddSprite( CCloud *effectCloud, vec3_t origin, vec3_t vel, vec3_t accel,
+							float scale, float dscale,
+							float sAlpha, float eAlpha,
+							vec3_t sRGB, vec3_t eRGB,
+							float rotation, float bounce,
 							int life, qhandle_t shader, int flags )
 {
-	FX_AddParticle( origin, vel, accel, scale, scale, 0, 
+	FX_AddParticle( origin, vel, accel, scale, scale, 0,
 							sAlpha, eAlpha, FX_ALPHA_LINEAR,
 							sRGB, eRGB, 0,
 							rotation, 0,
@@ -1341,9 +1341,9 @@ void FX_AddSprite( CCloud *effectCloud, vec3_t origin, vec3_t vel, vec3_t accel,
 }
 
 //---------------------------------------------------
-void FX_AddLine( CCloud *effectCloud, vec3_t start, vec3_t end, float stScale, 
-							float width, float dwidth, 
-							float sAlpha, float eAlpha, 
+void FX_AddLine( CCloud *effectCloud, vec3_t start, vec3_t end, float stScale,
+							float width, float dwidth,
+							float sAlpha, float eAlpha,
 							int life, qhandle_t shader, int flags )
 {
 	FX_AddLine( start, end, width, width, 0,
@@ -1353,10 +1353,10 @@ void FX_AddLine( CCloud *effectCloud, vec3_t start, vec3_t end, float stScale,
 }
 
 //---------------------------------------------------
-void FX_AddLine( vec3_t start, vec3_t end, float stScale, 
-							float width, float dwidth, 
-							float sAlpha, float eAlpha, 
-							vec3_t sRGB, vec3_t eRGB, 
+void FX_AddLine( vec3_t start, vec3_t end, float stScale,
+							float width, float dwidth,
+							float sAlpha, float eAlpha,
+							vec3_t sRGB, vec3_t eRGB,
 							int life, qhandle_t shader, int flags )
 {
 	FX_AddLine( start, end, width, width, 0,

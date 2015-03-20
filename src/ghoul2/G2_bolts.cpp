@@ -71,7 +71,7 @@ int G2_Find_Bolt_Surface_Num(boltInfo_v &bltlist, const int surfaceNum, const in
 	// didn't find it
 	return -1;
 }
-			
+
 //=========================================================================================
 //// Public Bolt Routines
 int G2_Add_Bolt_Surf_Num(const char *fileName, boltInfo_v &bltlist, surfaceInfo_v &slist, const int surfNum)
@@ -97,21 +97,21 @@ int G2_Add_Bolt_Surf_Num(const char *fileName, boltInfo_v &bltlist, surfaceInfo_
 		}
 	}
 
-	// we have a surface 
+	// we have a surface
 	// look through entire list - see if it's already there first
 	for(i=0; i<bltlist.size(); i++)
 	{
 		// if this surface entry has info in it, bounce over it
-	  	if (bltlist[i].boneNumber == -1 && bltlist[i].surfaceNumber == -1)
+		if (bltlist[i].boneNumber == -1 && bltlist[i].surfaceNumber == -1)
 		{
 			// if we found an entry that had a -1 for the bone / surface number, then we hit a surface / bone slot that was empty
 			bltlist[i].surfaceNumber = surfNum;
 			bltlist[i].surfaceType = G2SURFACEFLAG_GENERATED;
 			bltlist[i].boltUsed = 1;
-	 		return i;
+			return i;
 		}
 	}
-	
+
 	// ok, we didn't find an existing surface of that name, or an empty slot. Lets add an entry
 	tempBolt.surfaceNumber = surfNum;
 	tempBolt.surfaceType = G2SURFACEFLAG_GENERATED;
@@ -124,15 +124,15 @@ int G2_Add_Bolt_Surf_Num(const char *fileName, boltInfo_v &bltlist, surfaceInfo_
 
 int G2_Add_Bolt(const char *fileName, boltInfo_v &bltlist, surfaceInfo_v &slist, const char *boneName)
 {
-	model_t		*mod_m = R_GetModelByHandle(RE_RegisterModel(fileName)); 
-	model_t		*mod_a = R_GetModelByHandle(mod_m->mdxm->animIndex); 
+	model_t		*mod_m = R_GetModelByHandle(RE_RegisterModel(fileName));
+	model_t		*mod_a = R_GetModelByHandle(mod_m->mdxm->animIndex);
 	int					i, x, surfNum = -1;
 	mdxaSkel_t			*skel;
 	mdxaSkelOffsets_t	*offsets;
 	mdxmHierarchyOffsets_t	*surfOffsets;
 	boltInfo_t			tempBolt;
 	int					flags;
-  
+
 	surfOffsets = (mdxmHierarchyOffsets_t *)((byte*)mod_m->mdxm + sizeof(mdxmHeader_t));
 	// first up, we'll search for that which this bolt names in all the surfaces
 	surfNum = G2_IsSurfaceLegal((void*)mod_m, boneName, &flags);
@@ -165,7 +165,7 @@ int G2_Add_Bolt(const char *fileName, boltInfo_v &bltlist, surfaceInfo_v &slist,
 		 		return i;
 			}
 		}
-	
+
 		// ok, we didn't find an existing surface of that name, or an empty slot. Lets add an entry
 		tempBolt.surfaceNumber = surfNum;
 		tempBolt.boneNumber = -1;
@@ -223,12 +223,12 @@ int G2_Add_Bolt(const char *fileName, boltInfo_v &bltlist, surfaceInfo_v &slist,
 	 		return i;
 		}
 	}
-	
+
 	// ok, we didn't find an existing bone of that name, or an empty slot. Lets add an entry
 	tempBolt.boneNumber = x;
 	tempBolt.surfaceNumber = -1;
 	tempBolt.boltUsed = 1;
- 	tempBolt.surfaceType = 0;
+	tempBolt.surfaceType = 0;
 	bltlist.push_back(tempBolt);
 	return (int)bltlist.size()-1;
 
@@ -284,7 +284,7 @@ void G2_Init_Bolt_List(boltInfo_v &bltlist)
 	bltlist.clear();
 }
 
-// remove any bolts that reference original surfaces, generated surfaces, or bones that aren't active anymore 
+// remove any bolts that reference original surfaces, generated surfaces, or bones that aren't active anymore
 void G2_RemoveRedundantBolts(boltInfo_v &bltlist, surfaceInfo_v &slist, int *activeSurfaces, int *activeBones)
 {
 	// walk the bolt list

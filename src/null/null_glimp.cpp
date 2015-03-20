@@ -14,7 +14,7 @@ void (APIENTRY * qglUnlockArraysEXT) ( void );
 void		GLimp_EndFrame( void ) {
 }
 
-void 		GLimp_Init( void )
+void		GLimp_Init( void )
 {
 }
 
@@ -47,7 +47,7 @@ void ( * qglUnlockArraysEXT) ( void );
 void		GLimp_EndFrame( void ) {
 }
 
-void 		GLimp_Init( void )
+void		GLimp_Init( void )
 {
 }
 

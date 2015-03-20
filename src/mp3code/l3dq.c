@@ -2,8 +2,8 @@
 
 	FreeAmp - The Free MP3 Player
 
-        MP3 Decoder originally Copyright (C) 1995-1997 Xing Technology
-        Corp.  http://www.xingtech.com
+		MP3 Decoder originally Copyright (C) 1995-1997 Xing Technology
+		Corp.  http://www.xingtech.com
 
 	Portions Copyright (C) 1998-1999 EMusic.com
 
@@ -116,9 +116,9 @@ float *quant_init_subblock_addr()
 #endif
 
 void dequant(SAMPLE Sample[], int *nsamp,
-	     SCALEFACT * sf,
-	     GR * gr,
-	     CB_INFO * cb_info, int ncbl_mixed)
+		 SCALEFACT * sf,
+		 GR * gr,
+		 CB_INFO * cb_info, int ncbl_mixed)
 {
    int i, j;
    int cb, n, w;
@@ -141,13 +141,13 @@ void dequant(SAMPLE Sample[], int *nsamp,
 /* ncbl_mixed = 8 or 6  mpeg1 or 2 */
    if (gr->block_type == 2)
    {
-      ncbl = 0;
-      cbs0 = 0;
-      if (gr->mixed_block_flag)
-      {
+	  ncbl = 0;
+	  cbs0 = 0;
+	  if (gr->mixed_block_flag)
+	  {
 	 ncbl = ncbl_mixed;
 	 cbs0 = 3;
-      }
+	  }
    }
 /* fill in cb_info -- */
    /* This doesn't seem used anywhere...

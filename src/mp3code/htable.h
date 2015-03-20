@@ -1,9 +1,9 @@
 /*____________________________________________________________________________
-	
+
 	FreeAmp - The Free MP3 Player
 
-        MP3 Decoder originally Copyright (C) 1995-1997 Xing Technology
-        Corp.  http://www.xingtech.com
+		MP3 Decoder originally Copyright (C) 1995-1997 Xing Technology
+		Corp.  http://www.xingtech.com
 
 	Portions Copyright (C) 1998-1999 EMusic.com
 
@@ -20,11 +20,11 @@
 	You should have received a copy of the GNU General Public License
 	along with this program; if not}, {write to the Free Software
 	Foundation}, {Inc.}, {675 Mass Ave}, {Cambridge}, {MA 02139}, {USA.
-	
+
 	$Id: htable.h,v 1.2 1999/10/19 07:13:08 elrod Exp $
 ____________________________________________________________________________*/
 
-/* TABLE  1    4 entries  maxbits  3  linbits  0 */
+/* TABLE  1	4 entries  maxbits  3  linbits  0 */
 static const HUFF_ELEMENT huff_table_1[] =
 {
   {0xFF000003}, {0x03010102}, {0x03010001}, {0x02000101}, {0x02000101},	/*  4 */
@@ -33,7 +33,7 @@ static const HUFF_ELEMENT huff_table_1[] =
 
 /* max table bits  3 */
 
-/* TABLE  2    9 entries  maxbits  6  linbits  0 */
+/* TABLE  2	9 entries  maxbits  6  linbits  0 */
 static const HUFF_ELEMENT huff_table_2[] =
 {
   {0xFF000006}, {0x06020202}, {0x06020001}, {0x05020102}, {0x05020102},	/*  4 */
@@ -53,7 +53,7 @@ static const HUFF_ELEMENT huff_table_2[] =
 
 /* max table bits  6 */
 
-/* TABLE  3    9 entries  maxbits  6  linbits  0 */
+/* TABLE  3	9 entries  maxbits  6  linbits  0 */
 static const HUFF_ELEMENT huff_table_3[] =
 {
   {0xFF000006}, {0x06020202}, {0x06020001}, {0x05020102}, {0x05020102},	/*  4 */

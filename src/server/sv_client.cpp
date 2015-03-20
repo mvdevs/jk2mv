@@ -242,7 +242,7 @@ void SV_DirectConnect( netadr_t from ) {
 	version = atoi( Info_ValueForKey( userinfo, "protocol" ) );
 	if ( version != MV_GetCurrentProtocol() ) {
 		NET_OutOfBandPrint(NS_SERVER, from, "print\nServer uses protocol version %i.\n", MV_GetCurrentProtocol());
-		Com_DPrintf ("    rejected connect from version %i\n", version);
+		Com_DPrintf ("	rejected connect from version %i\n", version);
 		return;
 	}
 
@@ -1316,7 +1316,7 @@ void SV_UserinfoChanged( client_t *cl ) {
 	// ouned: serverside galaking fix
 	if (mv_fixgalaking->integer) {
 		char model[80];
-		
+
 		Q_strncpyz(model, Info_ValueForKey(cl->userinfo, "model"), sizeof(model));
 		if (Q_stristr(model, "galak_mech"))
 			Info_SetValueForKey(cl->userinfo, "model", "galak/default");

@@ -72,7 +72,7 @@ LIBEXPORT int QDECL vmMain(int command, int arg0, int arg1, int arg2, int arg3, 
 		  UI_DrawConnectScreen( arg0 );
 		  return 0;
 	  case UI_HASUNIQUECDKEY: // mod authors need to observe this
-	    return qtrue; // bk010117 - change this to qfalse for mods!
+		return qtrue; // bk010117 - change this to qfalse for mods!
 
 	}
 
@@ -1431,7 +1431,7 @@ static void UI_DrawTeamName(rectDef_t *rect, float scale, vec4_t color, qboolean
   int i;
   i = UI_TeamIndexFromName(UI_Cvar_VariableString((blue) ? "ui_blueTeam" : "ui_redTeam"));
   if (i >= 0 && i < uiInfo.teamCount) {
-    Text_Paint(rect->x, rect->y, scale, color, va("%s: %s", (blue) ? "Blue" : "Red", uiInfo.teamList[i].teamName),0, 0, textStyle, iMenuFont);
+	Text_Paint(rect->x, rect->y, scale, color, va("%s: %s", (blue) ? "Blue" : "Red", uiInfo.teamList[i].teamName),0, 0, textStyle, iMenuFont);
   }
 }
 
@@ -1565,7 +1565,7 @@ static void UI_DrawMapCinematic(rectDef_t *rect, float scale, vec4_t color, qboo
 		if (uiInfo.mapList[map].cinematic >= 0) {
 		  trap_CIN_RunCinematic(uiInfo.mapList[map].cinematic);
 		  trap_CIN_SetExtents(uiInfo.mapList[map].cinematic, rect->x, rect->y, rect->w, rect->h);
- 			trap_CIN_DrawCinematic(uiInfo.mapList[map].cinematic);
+			trap_CIN_DrawCinematic(uiInfo.mapList[map].cinematic);
 		} else {
 			uiInfo.mapList[map].cinematic = -2;
 		}
@@ -2238,8 +2238,8 @@ static int UI_OwnerDrawWidth(int ownerDraw, float scale) {
 				text = uiInfo.aliasList[value].name;
 			}
 			s = va("%i. %s", iUse, text);
-      break;
-    case UI_REDTEAM1:
+	  break;
+	case UI_REDTEAM1:
 		case UI_REDTEAM2:
 		case UI_REDTEAM3:
 		case UI_REDTEAM4:
@@ -2750,9 +2750,9 @@ static void UI_OwnerDraw(float x, float y, float w, float h, float text_x, float
 	{
 	  iUse = ownerDraw-274; //unpleasent hack because I don't want to move up all the UI_BLAHTEAM# defines
 	}
-      UI_DrawTeamMember(&rect, scale, color, qtrue, iUse, textStyle, iMenuFont);
-      break;
-    case UI_REDTEAM1:
+	  UI_DrawTeamMember(&rect, scale, color, qtrue, iUse, textStyle, iMenuFont);
+	  break;
+	case UI_REDTEAM1:
 		case UI_REDTEAM2:
 		case UI_REDTEAM3:
 		case UI_REDTEAM4:
@@ -3526,9 +3526,9 @@ static qboolean UI_OwnerDrawHandleKey(int ownerDraw, int flags, float *special, 
 	  iUse = ownerDraw-274; //unpleasent hack because I don't want to move up all the UI_BLAHTEAM# defines
 	}
 
-      UI_TeamMember_HandleKey(flags, special, key, qtrue, iUse);
-      break;
-    case UI_REDTEAM1:
+	  UI_TeamMember_HandleKey(flags, special, key, qtrue, iUse);
+	  break;
+	case UI_REDTEAM1:
 		case UI_REDTEAM2:
 		case UI_REDTEAM3:
 		case UI_REDTEAM4:
@@ -3912,7 +3912,7 @@ static void UI_Update(const char *name) {
 			trap_Cvar_Set("cl_maxpackets", "15");
 			trap_Cvar_Set("cl_packetdup", "1");		// favor lower bandwidth
 		}*/
- 	}
+	}
 	else if (Q_stricmp(name, "ui_GetName") == 0)
 	{
 		trap_Cvar_Set( "ui_Name", UI_Cvar_VariableString("name"));
@@ -4557,8 +4557,8 @@ static void UI_RunMenuScript(char **args)
 				int res;
 
 				name[0] = addr[0] = '\0';
-				Q_strncpyz(name, 	UI_Cvar_VariableString("ui_favoriteName"), MAX_NAME_LENGTH);
-				Q_strncpyz(addr, 	UI_Cvar_VariableString("ui_favoriteAddress"), MAX_NAME_LENGTH);
+				Q_strncpyz(name,	UI_Cvar_VariableString("ui_favoriteName"), MAX_NAME_LENGTH);
+				Q_strncpyz(addr,	UI_Cvar_VariableString("ui_favoriteAddress"), MAX_NAME_LENGTH);
 				if (/*strlen(name) > 0 &&*/ strlen(addr) > 0) {
 					res = trap_LAN_AddServer(AS_FAVORITES, name, addr);
 					if (res == 0) {
@@ -5963,7 +5963,7 @@ static qhandle_t UI_FeederItemImage(float feederID, int index) {
 			}
 			return uiInfo.q3HeadIcons[index];
 		}
-    }
+	}
 	else if (feederID == FEEDER_ALLMAPS || feederID == FEEDER_MAPS)
 	{
 		int actual;
@@ -6230,9 +6230,9 @@ static qboolean MapList_Parse(char **p) {
 			//mapList[mapCount].imageName = String_Alloc(va("levelshots/%s", mapList[mapCount].mapLoadName));
 			//if (uiInfo.mapCount == 0) {
 			  // only load the first cinematic, selection loads the others
-  			//  uiInfo.mapList[uiInfo.mapCount].cinematic = trap_CIN_PlayCinematic(va("%s.roq",uiInfo.mapList[uiInfo.mapCount].mapLoadName), qfalse, qfalse, qtrue, 0, 0, 0, 0);
+			//  uiInfo.mapList[uiInfo.mapCount].cinematic = trap_CIN_PlayCinematic(va("%s.roq",uiInfo.mapList[uiInfo.mapCount].mapLoadName), qfalse, qfalse, qtrue, 0, 0, 0, 0);
 			//}
-  		uiInfo.mapList[uiInfo.mapCount].cinematic = -1;
+		uiInfo.mapList[uiInfo.mapCount].cinematic = -1;
 			uiInfo.mapList[uiInfo.mapCount].levelShot = trap_R_RegisterShaderNoMip(va("levelshots/%s_small", uiInfo.mapList[uiInfo.mapCount].mapLoadName));
 
 			if (uiInfo.mapCount < MAX_MAPS) {
@@ -6708,7 +6708,7 @@ UI_KeyEvent
 void _UI_KeyEvent( int key, qboolean down ) {
 
   if (Menu_Count() > 0) {
-    menuDef_t *menu = Menu_GetFocused();
+	menuDef_t *menu = Menu_GetFocused();
 		if (menu) {
 			if (key == A_ESCAPE && down && !Menus_AnyFullScreenVisible() && strcmp(menu->window.name, "download_popup")) {
 				Menus_CloseAll();
@@ -6748,8 +6748,8 @@ void _UI_MouseEvent( int dx, int dy )
 		uiInfo.uiDC.cursory = SCREEN_HEIGHT;
 
   if (Menu_Count() > 0) {
-    //menuDef_t *menu = Menu_GetFocused();
-    //Menu_HandleMouseMove(menu, uiInfo.uiDC.cursorx, uiInfo.uiDC.cursory);
+	//menuDef_t *menu = Menu_GetFocused();
+	//Menu_HandleMouseMove(menu, uiInfo.uiDC.cursorx, uiInfo.uiDC.cursory);
 		Display_MouseMove(NULL, uiInfo.uiDC.cursorx, uiInfo.uiDC.cursory);
   }
 
@@ -6825,7 +6825,7 @@ void _UI_SetActiveMenu( uiMenuCommand_t menu ) {
 
 	  case UIMENU_TEAM:
 			trap_Key_SetCatcher( KEYCATCH_UI );
-      Menus_ActivateByName("team");
+	  Menus_ActivateByName("team");
 		  return;
 	  case UIMENU_POSTGAME:
 			//trap_Cvar_Set( "sv_killserver", "1" );

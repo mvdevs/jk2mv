@@ -9,8 +9,8 @@ static portable_samplepair_t paintbuffer[PAINTBUFFER_SIZE];
 static int snd_vol;
 
 // bk001119 - these not static, required by unix/snd_mixa.s
-int*     snd_p;
-int      snd_linear_count;
+int*	 snd_p;
+int	  snd_linear_count;
 short*   snd_out;
 
 void S_WriteLinearBlastStereo16 (void)
@@ -75,11 +75,11 @@ S_TransferPaintBuffer
 */
 void S_TransferPaintBuffer(int endtime)
 {
-	int 	out_idx;
-	int 	count;
-	int 	out_mask;
-	int 	*p;
-	int 	step;
+	int	out_idx;
+	int	count;
+	int	out_mask;
+	int	*p;
+	int	step;
 	int		val;
 	unsigned int *pbuf;
 
@@ -245,8 +245,8 @@ void ChannelPaint(channel_t *ch, sfx_t *sc, int count, int sampleOffset, int buf
 
 
 void S_PaintChannels( int endtime ) {
-	int 	i;
-	int 	end;
+	int	i;
+	int	end;
 	channel_t *ch;
 	sfx_t	*sc;
 	int		ltime, count;

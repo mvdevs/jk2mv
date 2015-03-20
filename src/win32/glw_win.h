@@ -9,7 +9,7 @@ typedef struct
 {
 	WNDPROC		wndproc;
 
-	HDC     hDC;			// handle to device context
+	HDC	 hDC;			// handle to device context
 	HGLRC   hGLRC;			// handle to GL rendering context
 
 	HINSTANCE hinstOpenGL;	// HINSTANCE for the OpenGL library

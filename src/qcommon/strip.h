@@ -97,7 +97,7 @@ class cStrings
 private:
 	unsigned int	Flags;
 	char			*Reference;
-	
+
 public:
 					cStrings(unsigned int initFlags = 0, char *initReference = NULL);
 	virtual			~cStrings(void);
@@ -126,7 +126,7 @@ private:
 	char			*Text[MAX_LANGUAGES];
 	char			*Notes;
 	bool			Used;
-	
+
 public:
 					cStringsED(unsigned int initFlags = 0, char *initReference = NULL, char *initNotes = NULL);
 	virtual			~cStringsED();

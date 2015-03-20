@@ -84,7 +84,7 @@
 /*
 Ghoul2 Insert Start
 */
-#define CS_CHARSKINS 			(CS_PLAYERS+MAX_CLIENTS)
+#define CS_CHARSKINS			(CS_PLAYERS+MAX_CLIENTS)
 /*
 Ghoul2 Insert End
 */

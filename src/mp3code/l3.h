@@ -2,8 +2,8 @@
 
 	FreeAmp - The Free MP3 Player
 
-        MP3 Decoder originally Copyright (C) 1996-1997 Xing Technology
-        Corp.  http://www.xingtech.com
+		MP3 Decoder originally Copyright (C) 1996-1997 Xing Technology
+		Corp.  http://www.xingtech.com
 
 	Portions Copyright (C) 1998-1999 Emusic.com
 
@@ -28,7 +28,7 @@ ____________________________________________________________________________*/
 
   Layer III structures
 
-  *** Layer III is 32 bit only          ***
+  *** Layer III is 32 bit only		  ***
   *** Layer III code assumes 32 bit int ***
 
 ******************************************************************/
@@ -80,10 +80,10 @@ typedef union
    int ptr;
    struct
    {
-      unsigned char signbits;
-      unsigned char x;
-      unsigned char y;
-      unsigned char purgebits;	// 0 = esc
+	  unsigned char signbits;
+	  unsigned char x;
+	  unsigned char y;
+	  unsigned char purgebits;	// 0 = esc
 
    }
    b;
@@ -96,11 +96,11 @@ typedef union
    int ptr;			/* int must be 32 bits or more */
    struct
    {
-      unsigned char purgebits;	// 0 = esc
+	  unsigned char purgebits;	// 0 = esc
 
-      unsigned char y;
-      unsigned char x;
-      unsigned char signbits;
+	  unsigned char y;
+	  unsigned char x;
+	  unsigned char signbits;
    }
    b;
 }

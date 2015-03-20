@@ -1,9 +1,9 @@
 /*____________________________________________________________________________
-	
+
 	FreeAmp - The Free MP3 Player
 
-        MP3 Decoder originally Copyright (C) 1995-1997 Xing Technology
-        Corp.  http://www.xingtech.com
+		MP3 Decoder originally Copyright (C) 1995-1997 Xing Technology
+		Corp.  http://www.xingtech.com
 
 	Portions Copyright (C) 1998-1999 EMusic.com
 
@@ -20,7 +20,7 @@
 	You should have received a copy of the GNU General Public License
 	along with this program; if not, write to the Free Software
 	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-	
+
 	$Id: mhead.c,v 1.7 1999/10/19 07:13:09 elrod Exp $
 ____________________________________________________________________________*/
 
@@ -53,7 +53,7 @@ static const int mp_br_tableL1[2][16] =
  {0, 32, 64, 96, 128, 160, 192, 224, 256, 288, 320, 352, 384, 416, 448, 0}};
 
 static const int mp_br_tableL3[2][16] =
-{{0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160, 0},      /* mpeg 2 */
+{{0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160, 0},	  /* mpeg 2 */
  {0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320, 0}};
 
 
@@ -68,9 +68,9 @@ int head_info(unsigned char *buf, unsigned int n, MPEG_HEAD * h)
 {
    int framebytes;
    int mpeg25_flag;
-  
+
    if (n > 10000)
-      n = 10000;		/* limit scan for free format */
+	  n = 10000;		/* limit scan for free format */
 
 
 
@@ -78,20 +78,20 @@ int head_info(unsigned char *buf, unsigned int n, MPEG_HEAD * h)
    //if ((buf[0] == 0xFF) && ((buf[1] & 0xF0) == 0xF0))
    if ((buf[0] == 0xFF) && ((buf[0+1] & 0xF0) == 0xF0))
    {
-      mpeg25_flag = 0;		// mpeg 1 & 2
+	  mpeg25_flag = 0;		// mpeg 1 & 2
 
    }
    else if ((buf[0] == 0xFF) && ((buf[0+1] & 0xF0) == 0xE0))
    {
-      mpeg25_flag = 1;		// mpeg 2.5
+	  mpeg25_flag = 1;		// mpeg 2.5
 
    }
    else
-      return 0;			// sync fail
+	  return 0;			// sync fail
 
    h->sync = 1;
    if (mpeg25_flag)
-      h->sync = 2;		//low bit clear signals mpeg25 (as in 0xFFE)
+	  h->sync = 2;		//low bit clear signals mpeg25 (as in 0xFFE)
 
    h->id = (buf[0+1] & 0x08) >> 3;
    h->option = (buf[0+1] & 0x06) >> 1;
@@ -109,63 +109,63 @@ int head_info(unsigned char *buf, unsigned int n, MPEG_HEAD * h)
 
 
 // if( mpeg25_flag ) {
- //    if( h->sr_index == 2 ) return 0;   // fail 8khz
+ //	if( h->sr_index == 2 ) return 0;   // fail 8khz
  //}
 
 
 /* compute framebytes for Layer I, II, III */
    if (h->option < 1)
-      return 0;
+	  return 0;
    if (h->option > 3)
-      return 0;
+	  return 0;
 
    framebytes = 0;
 
    if (h->br_index > 0)
    {
-      if (h->option == 3)
-      {				/* layer I */
+	  if (h->option == 3)
+	  {				/* layer I */
 	 framebytes =
-	    240 * mp_br_tableL1[h->id][h->br_index]
-	    / mp_sr20_table[h->id][h->sr_index];
+		240 * mp_br_tableL1[h->id][h->br_index]
+		/ mp_sr20_table[h->id][h->sr_index];
 	 framebytes = 4 * framebytes;
-      }
-      else if (h->option == 2)
-      {				/* layer II */
+	  }
+	  else if (h->option == 2)
+	  {				/* layer II */
 	 framebytes =
-	    2880 * mp_br_table[h->id][h->br_index]
-	    / mp_sr20_table[h->id][h->sr_index];
-      }
-      else if (h->option == 1)
-      {				/* layer III */
+		2880 * mp_br_table[h->id][h->br_index]
+		/ mp_sr20_table[h->id][h->sr_index];
+	  }
+	  else if (h->option == 1)
+	  {				/* layer III */
 	 if (h->id)
 	 {			// mpeg1
 
-	    framebytes =
-	       2880 * mp_br_tableL3[h->id][h->br_index]
-	       / mp_sr20_table[h->id][h->sr_index];
+		framebytes =
+		   2880 * mp_br_tableL3[h->id][h->br_index]
+		   / mp_sr20_table[h->id][h->sr_index];
 	 }
 	 else
 	 {			// mpeg2
 
-	    if (mpeg25_flag)
-	    {			// mpeg2.2
+		if (mpeg25_flag)
+		{			// mpeg2.2
 
-	       framebytes =
+		   framebytes =
 		  2880 * mp_br_tableL3[h->id][h->br_index]
 		  / mp_sr20_table[h->id][h->sr_index];
-	    }
-	    else
-	    {
-	       framebytes =
+		}
+		else
+		{
+		   framebytes =
 		  1440 * mp_br_tableL3[h->id][h->br_index]
 		  / mp_sr20_table[h->id][h->sr_index];
-	    }
+		}
 	 }
-      }
+	  }
    }
    else
-      framebytes = find_sync(buf, n);	/* free format */
+	  framebytes = find_sync(buf, n);	/* free format */
 
   return framebytes;
 }
@@ -174,8 +174,8 @@ int head_info3(unsigned char *buf, unsigned int n, MPEG_HEAD *h, int *br, unsign
 	unsigned int pBuf = 0;
 
 	// jdw insertion...
-   while ((pBuf < n) && !((buf[pBuf] == 0xFF) && 
-          ((buf[pBuf+1] & 0xF0) == 0xF0 || (buf[pBuf+1] & 0xF0) == 0xE0))) 
+   while ((pBuf < n) && !((buf[pBuf] == 0xFF) &&
+		  ((buf[pBuf+1] & 0xF0) == 0xF0 || (buf[pBuf+1] & 0xF0) == 0xE0)))
    {
 		pBuf++;
    }
@@ -190,16 +190,16 @@ int head_info3(unsigned char *buf, unsigned int n, MPEG_HEAD *h, int *br, unsign
 int head_info2(unsigned char *buf, unsigned int n, MPEG_HEAD * h, int *br)
 {
 	int framebytes;
-	
+
 	/*---  return br (in bits/sec) in addition to frame bytes ---*/
-	
+
 	*br = 0;
 	/*-- assume fail --*/
 	framebytes = head_info(buf, n, h);
-	
+
 	if (framebytes == 0)
-		return 0; 
-	
+		return 0;
+
 	switch (h->option)
 	{
 		case 1:	/* layer III */
@@ -209,13 +209,13 @@ int head_info2(unsigned char *buf, unsigned int n, MPEG_HEAD * h, int *br)
 			else
 			{
 				if (h->id)		// mpeg1
-					
+
 					*br = 1000 * framebytes * mp_sr20_table[h->id][h->sr_index] / (144 * 20);
 				else
 				{			// mpeg2
-					
+
 					if ((h->sync & 1) == 0)	//  flags mpeg25
-						
+
 						*br = 500 * framebytes * mp_sr20_table[h->id][h->sr_index] / (72 * 20);
 					else
 						*br = 1000 * framebytes * mp_sr20_table[h->id][h->sr_index] / (72 * 20);
@@ -246,8 +246,8 @@ int head_info2(unsigned char *buf, unsigned int n, MPEG_HEAD * h, int *br)
 
 			return 0;	// fuck knows what this is, but it ain't one of ours...
 	}
-		
-		
+
+
 	return framebytes;
 }
 /*--------------------------------------------------------------*/

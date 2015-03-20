@@ -117,7 +117,7 @@ static int				currentHandle = -1;
 static int				CL_handle = -1;
 
 extern int				s_soundtime;		// sample PAIRS
-extern int   			s_paintedtime; 		// sample PAIRS
+extern int			s_paintedtime;		// sample PAIRS
 
 
 void CIN_CloseAllVideos(void) {
@@ -509,7 +509,7 @@ static void ROQ_GenYUVTables(void)
 }
 
 #define VQ2TO4(a,b,c,d) { \
-    	*c++ = a[0];	\
+		*c++ = a[0];	\
 	*d++ = a[0];	\
 	*d++ = a[0];	\
 	*c++ = a[1];	\
@@ -1151,7 +1151,7 @@ redump:
 		break;
 	case	ROQ_PACKET:
 		cinTable[currentHandle].inMemory = (qboolean)cinTable[currentHandle].roq_flags;
-		cinTable[currentHandle].RoQFrameSize = 0;           // for header
+		cinTable[currentHandle].RoQFrameSize = 0;		   // for header
 		break;
 	case	ROQ_QUAD_HANG:
 		cinTable[currentHandle].RoQFrameSize = 0;

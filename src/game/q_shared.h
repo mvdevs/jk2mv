@@ -246,7 +246,7 @@ inline static float LittleFloat (const float *l) { return FloatSwap(l); }
 
 //=============================================================
 
-typedef unsigned char 		byte;
+typedef unsigned char		byte;
 typedef unsigned short		word;
 typedef unsigned long		ulong;
 
@@ -671,9 +671,9 @@ extern	vec3_t	axisDefault[3];
 
 static inline float Q_rsqrt( float number ) {
 		float x = 0.5f * number;
-                float y;
+				float y;
 #ifdef __GNUC__
-                asm("frsqrte %0,%1" : "=f" (y) : "f" (number));
+				asm("frsqrte %0,%1" : "=f" (y) : "f" (number));
 #else
 		y = __frsqrte( number );
 #endif
@@ -682,10 +682,10 @@ static inline float Q_rsqrt( float number ) {
 
 #ifdef __GNUC__
 static inline float Q_fabs(float x) {
-    float abs_x;
+	float abs_x;
 
-    asm("fabs %0,%1" : "=f" (abs_x) : "f" (x));
-    return abs_x;
+	asm("fabs %0,%1" : "=f" (abs_x) : "f" (x));
+	return abs_x;
 }
 #else
 #define Q_fabs __fabsf
@@ -2064,7 +2064,7 @@ typedef struct entityState_s {
 
 typedef enum {
 	CA_UNINITIALIZED,
-	CA_DISCONNECTED, 	// not talking to a server
+	CA_DISCONNECTED,	// not talking to a server
 	CA_AUTHORIZING,		// not used any more, was checking cd key
 	CA_CONNECTING,		// sending request packets to the server
 	CA_CHALLENGING,		// sending challenge packets to the server
@@ -2083,14 +2083,14 @@ typedef enum {
 
 
 typedef struct qtime_s {
-	int tm_sec;     /* seconds after the minute - [0,59] */
-	int tm_min;     /* minutes after the hour - [0,59] */
-	int tm_hour;    /* hours since midnight - [0,23] */
-	int tm_mday;    /* day of the month - [1,31] */
-	int tm_mon;     /* months since January - [0,11] */
-	int tm_year;    /* years since 1900 */
-	int tm_wday;    /* days since Sunday - [0,6] */
-	int tm_yday;    /* days since January 1 - [0,365] */
+	int tm_sec;	 /* seconds after the minute - [0,59] */
+	int tm_min;	 /* minutes after the hour - [0,59] */
+	int tm_hour;	/* hours since midnight - [0,23] */
+	int tm_mday;	/* day of the month - [1,31] */
+	int tm_mon;	 /* months since January - [0,11] */
+	int tm_year;	/* years since 1900 */
+	int tm_wday;	/* days since Sunday - [0,6] */
+	int tm_yday;	/* days since January 1 - [0,365] */
 	int tm_isdst;   /* daylight savings time flag */
 } qtime_t;
 

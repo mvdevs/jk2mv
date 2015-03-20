@@ -182,7 +182,7 @@ typedef enum {
 	// if it is not passed to linkentity.  If the size, position, or
 	// solidity changes, it must be relinked.
 
-	G_UNLINKENTITY,		// ( gentity_t *ent );		
+	G_UNLINKENTITY,		// ( gentity_t *ent );
 	// call before removing an interactive entity
 
 	G_ENTITIES_IN_BOX,	// ( const vec3_t mins, const vec3_t maxs, gentity_t **list, int maxcount );

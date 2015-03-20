@@ -11,7 +11,7 @@ Also sets the clipped hint bit in tess
 =================
 */
 static qboolean	R_CullTriSurf( srfTriangles_t *cv ) {
-	int 	boxCull;
+	int	boxCull;
 
 	boxCull = R_CullLocalBox( cv->bounds );
 
@@ -30,8 +30,8 @@ Also sets the clipped hint bit in tess
 =================
 */
 static qboolean	R_CullGrid( srfGridMesh_t *cv ) {
-	int 	boxCull;
-	int 	sphereCull;
+	int	boxCull;
+	int	sphereCull;
 
 	if ( r_nocurves->integer ) {
 		return qtrue;
@@ -43,7 +43,7 @@ static qboolean	R_CullGrid( srfGridMesh_t *cv ) {
 		sphereCull = R_CullPointAndRadius( cv->localOrigin, cv->meshRadius );
 	}
 	boxCull = CULL_OUT;
-	
+
 	// check for trivial reject
 	if ( sphereCull == CULL_OUT )
 	{
@@ -57,7 +57,7 @@ static qboolean	R_CullGrid( srfGridMesh_t *cv ) {
 
 		boxCull = R_CullLocalBox( cv->meshBounds );
 
-		if ( boxCull == CULL_OUT ) 
+		if ( boxCull == CULL_OUT )
 		{
 			tr.pc.c_box_cull_patch_out++;
 			return qtrue;
@@ -124,7 +124,7 @@ static qboolean	R_CullSurface( surfaceType_t *surface, shader_t *shader ) {
 
 	// don't cull exactly on the plane, because there are levels of rounding
 	// through the BSP, ICD, and hardware that may cause pixel gaps if an
-	// epsilon isn't allowed here 
+	// epsilon isn't allowed here
 	if ( shader->cullType == CT_FRONT_SIDED ) {
 		if ( d < sface->plane.dist - 8 ) {
 			return qtrue;
@@ -309,7 +309,7 @@ void R_AddBrushModelSurfaces ( trRefEntity_t *ent ) {
 	if ( clip == CULL_OUT ) {
 		return;
 	}
-	
+
 	R_DlightBmodel( bmodel );
 
 	for ( i = 0 ; i < bmodel->numSurfaces ; i++ ) {
@@ -323,7 +323,7 @@ float GetQuadArea( vec3_t v1, vec3_t v2, vec3_t v3, vec3_t v4 )
 
 	// Get area of tri1
 	VectorSubtract( v1, v2, vec1 );
-	VectorSubtract( v1, v4, vec2 ); 
+	VectorSubtract( v1, v4, vec2 );
 	CrossProduct( vec1, vec2, dis1 );
 	VectorScale( dis1, 0.25f, dis1 );
 
@@ -355,7 +355,7 @@ void RE_GetBModelVerts( int bmodelIndex, vec3_t *verts, vec3_t normal )
 	bmodel = pModel->bmodel;
 
 	// Loop through all surfaces on the brush and find the best two candidates
-	for ( i = 0 ; i < bmodel->numSurfaces; i++ ) 
+	for ( i = 0 ; i < bmodel->numSurfaces; i++ )
 	{
 		surfs = bmodel->firstSurface + i;
 		face = ( srfSurfaceFace_t *)surfs->data;
@@ -386,7 +386,7 @@ void RE_GetBModelVerts( int bmodelIndex, vec3_t *verts, vec3_t normal )
 	surfs = bmodel->firstSurface + maxIndx[0];
 	face = ( srfSurfaceFace_t *)surfs->data;
 	dot1 = DotProduct( face->plane.normal, tr.refdef.viewaxis[0] );
-	
+
 	surfs = bmodel->firstSurface + maxIndx[1];
 	face = ( srfSurfaceFace_t *)surfs->data;
 	dot2 = DotProduct( face->plane.normal, tr.refdef.viewaxis[0] );
@@ -506,7 +506,7 @@ static void R_RecursiveWorldNode( mnode_t *node, int planeBits, int dlightBits )
 				if ( dlightBits & ( 1 << i ) ) {
 					dl = &tr.refdef.dlights[i];
 					dist = DotProduct( dl->origin, node->plane->normal ) - node->plane->dist;
-					
+
 					if ( dist > -dl->radius ) {
 						newDlights[0] |= ( 1 << i );
 					}
@@ -577,7 +577,7 @@ static mnode_t *R_PointInLeaf( const vec3_t p ) {
 	mnode_t		*node;
 	float		d;
 	cplane_t	*plane;
-	
+
 	if ( !tr.world ) {
 		ri.Error (ERR_DROP, "R_PointInLeaf: bad model");
 	}
@@ -595,7 +595,7 @@ static mnode_t *R_PointInLeaf( const vec3_t p ) {
 			node = node->children[1];
 		}
 	}
-	
+
 	return node;
 }
 
@@ -658,8 +658,8 @@ static void R_MarkLeaves (void) {
 	// if the cluster is the same and the area visibility matrix
 	// hasn't changed, we don't need to mark everything again
 
-	// if r_showcluster was just turned on, remark everything 
-	if ( tr.viewCluster == cluster && !tr.refdef.areamaskModified 
+	// if r_showcluster was just turned on, remark everything
+	if ( tr.viewCluster == cluster && !tr.refdef.areamaskModified
 		&& !r_showcluster->modified ) {
 		return;
 	}
@@ -684,7 +684,7 @@ static void R_MarkLeaves (void) {
 	}
 
 	vis = R_ClusterPVS (tr.viewCluster);
-	
+
 	for (i=0,leaf=tr.world->nodes ; i<tr.world->numnodes ; i++, leaf++) {
 		cluster = leaf->cluster;
 		if ( cluster < 0 || cluster >= tr.world->numClusters ) {

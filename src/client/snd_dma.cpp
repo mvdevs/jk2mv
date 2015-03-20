@@ -117,7 +117,7 @@ static vec3_t		listener_origin;
 static vec3_t		listener_axis[3];
 
 int			s_soundtime;		// sample PAIRS
-int   		s_paintedtime; 		// sample PAIRS
+int		s_paintedtime;		// sample PAIRS
 
 // MAX_SFX may be larger than MAX_SOUNDS because
 // of custom player sounds
@@ -2927,11 +2927,11 @@ void S_SoundList_f( void ) {
 	total = 0;
 
 	Com_Printf("\n");
-	Com_Printf("                    InMemory?\n");
-	Com_Printf("                    |\n");
-	Com_Printf("                    |  LevelLastUsedOn\n");
-	Com_Printf("                    |  |\n");
-	Com_Printf("                    |  |\n");
+	Com_Printf("					InMemory?\n");
+	Com_Printf("					|\n");
+	Com_Printf("					|  LevelLastUsedOn\n");
+	Com_Printf("					|  |\n");
+	Com_Printf("					|  |\n");
 	Com_Printf(" Slot   Bytes Type  |  |   Name\n");
 //	Com_Printf(" Slot   Bytes Type  InMem?   Name\n");
 

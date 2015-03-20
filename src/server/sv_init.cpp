@@ -547,7 +547,7 @@ Ghoul2 Insert End
 /*
 Ghoul2 Insert Start
 */
- 	// clear out those shaders, images and Models as long as this
+	// clear out those shaders, images and Models as long as this
 	// isnt a dedicated server.
 	if ( !com_dedicated->integer )
 	{

@@ -45,7 +45,7 @@ typedef struct {
 typedef	struct sndBuffer_s {
 	short					sndChunk[SND_CHUNK_SIZE];
 	struct sndBuffer_s		*next;
-//    int						size;
+//	int						size;
 } sndBuffer;
 
 // keep this table in-sync with the table "sSoundCompressionMethodStrings" (snd_dma.cpp)	-ste

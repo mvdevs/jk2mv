@@ -243,15 +243,15 @@ qboolean CROFFSystem::InitROFF2( unsigned char *data, CROFF *obj )
 }
 
 /************************************************************************************************
- * CROFFSystem::FixBadAngles                                                                    *
- *    This function will attempt to fix bad angles (large) that come in from the exporter.      *
- *                                                                                              *
- * Input                                                                                        *
- *    obj: the ROFF object                                                                      *
- *                                                                                              *
- * Output / Return                                                                              *
- *    none                                                                                      *
- *                                                                                              *
+ * CROFFSystem::FixBadAngles																	*
+ *	This function will attempt to fix bad angles (large) that come in from the exporter.	  *
+ *																							  *
+ * Input																						*
+ *	obj: the ROFF object																	  *
+ *																							  *
+ * Output / Return																			  *
+ *	none																					  *
+ *																							  *
  ************************************************************************************************/
 void CROFFSystem::FixBadAngles(CROFF *obj)
 {
@@ -886,17 +886,17 @@ qboolean CROFFSystem::ApplyROFF( SROFFEntity *roff_ent, CROFFSystem::CROFF *roff
 
 
 /************************************************************************************************
- * CROFFSystem::ProcessNote                                                                     *
- *    This function will send the note to the client.  It will parse through the note for       *
- *    leading or trailing white space (thus making each line feed a separate function call).    *
- *                                                                                              *
- * Input                                                                                        *
- *    ent: the entity for which the roff is being played                                        *
- *    note: the note that should be passed on                                                   *
- *                                                                                              *
- * Output / Return                                                                              *
- *    none                                                                                      *
- *                                                                                              *
+ * CROFFSystem::ProcessNote																	 *
+ *	This function will send the note to the client.  It will parse through the note for	   *
+ *	leading or trailing white space (thus making each line feed a separate function call).	*
+ *																							  *
+ * Input																						*
+ *	ent: the entity for which the roff is being played										*
+ *	note: the note that should be passed on												   *
+ *																							  *
+ * Output / Return																			  *
+ *	none																					  *
+ *																							  *
  ************************************************************************************************/
 void CROFFSystem::ProcessNote(SROFFEntity *roff_ent, char *note)
 {

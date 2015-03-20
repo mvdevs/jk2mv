@@ -813,17 +813,17 @@ void CMistyFog2::Render(CWorldEffectsSystem *system)
 
 	qglMatrixMode(GL_PROJECTION);
 	qglPushMatrix();
-    qglLoadIdentity ();
+	qglLoadIdentity ();
 	MYgluPerspective (80.0f,  1.0f,  4.0f,  2048.0f);
 
 	qglMatrixMode(GL_MODELVIEW);
 	qglPushMatrix();
-    qglLoadIdentity ();
-    qglRotatef (-90,  1, 0, 0);	    // put Z going up
-    qglRotatef (90,  0, 0, 1);	    // put Z going up
-    qglRotatef (0,  1, 0, 0);
-    qglRotatef (-90,  0, 1, 0);
-    qglRotatef (-90,  0, 0, 1);
+	qglLoadIdentity ();
+	qglRotatef (-90,  1, 0, 0);		// put Z going up
+	qglRotatef (90,  0, 0, 1);		// put Z going up
+	qglRotatef (0,  1, 0, 0);
+	qglRotatef (-90,  0, 1, 0);
+	qglRotatef (-90,  0, 0, 1);
 
 	qglDisable(GL_TEXTURE_2D);
 	GL_State(GLS_SRCBLEND_SRC_ALPHA|GLS_DSTBLEND_ONE);
@@ -831,7 +831,7 @@ void CMistyFog2::Render(CWorldEffectsSystem *system)
 
 	qglEnableClientState(GL_COLOR_ARRAY);
 
-    qglColorPointer(4, GL_FLOAT, 0, mColors);
+	qglColorPointer(4, GL_FLOAT, 0, mColors);
 
 //	qglEnableClientState(GL_VERTEX_ARRAY);
 	qglVertexPointer( 3, GL_FLOAT, 0, mVerts );

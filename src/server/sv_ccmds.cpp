@@ -332,7 +332,7 @@ static void SV_MapRestart_f( void ) {
 		client->state = CS_ACTIVE;
 
 		SV_ClientEnterWorld( client, &client->lastUsercmd );
-	}	
+	}
 
 	// run another frame to allow things to look at all the players
 	VM_Call( gvm, GAME_RUN_FRAME, svs.time );
@@ -560,7 +560,7 @@ static void SV_Ban_f( void ) {
 	// otherwise send their ip to the authorize server
 	if ( svs.authorizeAddress.type != NA_BAD ) {
 		NET_OutOfBandPrint( NS_SERVER, svs.authorizeAddress,
-			"banUser %i.%i.%i.%i", cl->netchan.remoteAddress.ip[0], cl->netchan.remoteAddress.ip[1], 
+			"banUser %i.%i.%i.%i", cl->netchan.remoteAddress.ip[0], cl->netchan.remoteAddress.ip[1],
 								   cl->netchan.remoteAddress.ip[2], cl->netchan.remoteAddress.ip[3] );
 		Com_Printf("%s was banned from coming back\n", cl->name);
 	}
@@ -615,7 +615,7 @@ static void SV_BanNum_f( void ) {
 	// otherwise send their ip to the authorize server
 	if ( svs.authorizeAddress.type != NA_BAD ) {
 		NET_OutOfBandPrint( NS_SERVER, svs.authorizeAddress,
-			"banUser %i.%i.%i.%i", cl->netchan.remoteAddress.ip[0], cl->netchan.remoteAddress.ip[1], 
+			"banUser %i.%i.%i.%i", cl->netchan.remoteAddress.ip[0], cl->netchan.remoteAddress.ip[1],
 								   cl->netchan.remoteAddress.ip[2], cl->netchan.remoteAddress.ip[3] );
 		Com_Printf("%s was banned from coming back\n", cl->name);
 	}
@@ -663,7 +663,7 @@ static void SV_KickNum_f( void ) {
 SV_Status_f
 ================
 */
-static void SV_Status_f( void ) 
+static void SV_Status_f( void )
 {
 	int				i;
 	client_t		*cl;
@@ -678,7 +678,7 @@ static void SV_Status_f( void )
 	char			displayName[MAX_NAME_LENGTH];
 
 	// make sure server is running
-	if ( !com_sv_running->integer ) 
+	if ( !com_sv_running->integer )
 	{
 		Com_Printf( SP_GetStringText(STR_SERVER_SERVER_NOT_RUNNING) );
 		return;
@@ -694,7 +694,7 @@ static void SV_Status_f( void )
 
 	Com_Printf ("map: %s\n", sv_mapname->string );
 
-	Com_Printf ("num score ping name            lastmsg address               qport rate\n");
+	Com_Printf ("num score ping name			lastmsg address			   qport rate\n");
 	Com_Printf ("--- ----- ---- --------------- ------- --------------------- ----- -----\n");
 	for (i=0,cl=svs.clients ; i < sv_maxclients->integer ; i++,cl++)
 	{
@@ -719,7 +719,7 @@ static void SV_Status_f( void )
 
 		ps = SV_GameClientNum( i );
 		s = NET_AdrToString( cl->netchan.remoteAddress );
-		
+
 		// Count the length of the visible characters in the name and if it's less than 15 fill the rest with spaces
 		k = MV_StrlenSkipColors(cl->name);
 		if ( k < 0 ) k = 0; // Should never happen
@@ -729,8 +729,8 @@ static void SV_Status_f( void )
 		if (!avoidTruncation) MV_CopyStringWithColors( cl->name, displayName, sizeof(displayName), 15 ); // Limit the visible length of the name to 15 characters (not counting colors)
 		else				  Q_strncpyz( displayName, cl->name, sizeof(displayName) );
 
-		Com_Printf ("%3i %5i %s %s^7%s %7i %21s %5i %5i\n", 
-			i, 
+		Com_Printf ("%3i %5i %s %s^7%s %7i %21s %5i %5i\n",
+			i,
 			ps->persistant[PERS_SCORE],
 			state,
 			displayName,
@@ -781,7 +781,7 @@ static void SV_ConSay_f(void) {
 	SV_SendServerCommand(NULL, "chat \"%s\n\"", text);
 }
 
-static const char *forceToggleNamePrints[] = 
+static const char *forceToggleNamePrints[] =
 {
 	"HEAL",//FP_HEAL
 	"JUMP",//FP_LEVITATION
@@ -996,7 +996,7 @@ void SV_AddOperatorCommands( void ) {
 	Cmd_SetCommandCompletionFunc( "devmapall", SV_CompleteMapName );
 #endif
 	Cmd_AddCommand ("killserver", SV_KillServer_f);
-//	if( com_dedicated->integer ) 
+//	if( com_dedicated->integer )
 	{
 		Cmd_AddCommand ("svsay", SV_ConSay_f);
 	}

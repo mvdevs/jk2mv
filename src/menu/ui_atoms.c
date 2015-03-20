@@ -136,7 +136,7 @@ void UI_LoadBestScores(const char *map, int game) {
 	if (trap_FS_FOpenFile(fileName, &f, FS_READ) >= 0) {
 		uiInfo.demoAvailable = qtrue;
 		trap_FS_FCloseFile(f);
-	} 
+	}
 }
 
 /*
@@ -169,7 +169,7 @@ void UI_ClearScores() {
 			gameFile += len + 1;
 		}
 	}
-	
+
 	UI_SetBestScores(&newInfo, qfalse);
 
 }
@@ -218,7 +218,7 @@ static void UI_CalcPostGameStats() {
 			trap_FS_Read(&oldInfo, sizeof(postGameInfo_t), f);
 		}
 		trap_FS_FCloseFile(f);
-	}					 
+	}
 
 	newInfo.accuracy = atoi(UI_Argv(3));
 	newInfo.impressives = atoi(UI_Argv(4));
@@ -235,7 +235,7 @@ static void UI_CalcPostGameStats() {
 
 	newInfo.time = (time - trap_Cvar_VariableValue("ui_matchStartTime")) / 1000;
 	adjustedTime = uiInfo.mapList[ui_currentMap.integer].timeToBeat[game];
-	if (newInfo.time < adjustedTime) { 
+	if (newInfo.time < adjustedTime) {
 		newInfo.timeBonus = (adjustedTime - newInfo.time) * 10;
 	} else {
 		newInfo.timeBonus = 0;
@@ -271,7 +271,7 @@ static void UI_CalcPostGameStats() {
 	if (newInfo.time < oldInfo.time) {
 		uiInfo.newBestTime = uiInfo.uiDC.realTime + 20000;
 	}
- 
+
 	// put back all the ui overrides
 	trap_Cvar_Set("capturelimit", UI_Cvar_VariableString("ui_saveCaptureLimit"));
 	trap_Cvar_Set("fraglimit", UI_Cvar_VariableString("ui_saveFragLimit"));
@@ -313,13 +313,13 @@ qboolean UI_ConsoleCommand( int realTime ) {
 		UI_Report();
 		return qtrue;
 	}
-	
+
 	if ( Q_stricmp (cmd, "ui_load") == 0 ) {
 		UI_Load();
 		return qtrue;
 	}
 
-	if ( Q_stricmp (cmd, "ui_openmenu" ) == 0 ) 
+	if ( Q_stricmp (cmd, "ui_openmenu" ) == 0 )
 	{
 		if ( trap_Cvar_VariableValue ( "developer" ) )
 		{
@@ -404,7 +404,7 @@ void UI_DrawHandlePic( float x, float y, float w, float h, qhandle_t hShader ) {
 		t0 = 0;
 		t1 = 1;
 	}
-	
+
 	trap_R_DrawStretchPic( x, y, w, h, s0, t0, s1, t1, hShader );
 }
 

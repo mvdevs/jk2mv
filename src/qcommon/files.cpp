@@ -333,7 +333,7 @@ qboolean FS_PakIsPure( pack_t *pack ) {
     // NOTE TTimo we are matching checksums without checking the pak names
     //   this means you can have the same pk3 as the server under a different name, you will still get through sv_pure validation
     //   (what happens when two pk3's have the same checkums? is it a likely situation?)
-    //   also, if there's a wrong checksumed pk3 and autodownload is enabled, the checksum will be appended to the downloaded pk3 name
+	//   also, if there's a wrong checksumed pk3 and autodownload is enabled, the checksum will be appended to the downloaded pk3 name
 		for ( i = 0 ; i < fs_numServerPaks ; i++ ) {
 			// FIXME: also use hashed file names
 			if ( pack->checksum == fs_serverPaks[i] ) {
@@ -1137,7 +1137,7 @@ int FS_FOpenFileReadHash(const char *filename, fileHandle_t *file, qboolean uniq
 				(!Q_stricmp(search->pack->pakBasename, "assets2") || !Q_stricmp(search->pack->pakBasename, "assets5"))) {
 				continue;
 			}
-			
+
 			// Daggolin: if scanning for cgame, ui or jk2mpgame and we are in 1.03 mode ignore assets5.pk3
 			if (MV_GetCurrentGameversion() == VERSION_1_03 &&
 				(!Q_stricmp(filename, "vm/cgame.qvm") || !Q_stricmp(filename, "vm/ui.qvm") || !Q_stricmp(filename, "vm/jk2mpgame.qvm")) &&
@@ -1273,7 +1273,7 @@ int FS_FOpenFileReadHash(const char *filename, fileHandle_t *file, qboolean uniq
 			// if we are running restricted, the only files we
 			// will allow to come from the directory are .cfg files
 			l = (int)strlen( filename );
-      // FIXME TTimo I'm not sure about the fs_numServerPaks test
+	  // FIXME TTimo I'm not sure about the fs_numServerPaks test
       // if you are using FS_ReadFile to find out if a file exists,
       //   this test can make the search fail although the file is in the directory
       // I had the problem on https://zerowing.idsoftware.com/bugzilla/show_bug.cgi?id=8
@@ -2541,9 +2541,9 @@ void FS_Path_f( void ) {
 			Com_Printf ("%s (%i files)\n", s->pack->pakFilename, s->pack->numfiles);
 			if ( fs_numServerPaks ) {
 				if ( !FS_PakIsPure(s->pack) ) {
-					Com_Printf( "    not on the pure list\n" );
+					Com_Printf( "	not on the pure list\n" );
 				} else {
-					Com_Printf( "    on the pure list\n" );
+					Com_Printf( "	on the pure list\n" );
 				}
 			}
 		} else {

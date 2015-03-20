@@ -4,19 +4,19 @@
 #include "../client/client.h"
 #include "unix_local.h"
 
-static cvar_t *in_keyboardDebug     = NULL;
+static cvar_t *in_keyboardDebug	 = NULL;
 
 static SDL_Joystick *stick = NULL;
 
 static qboolean mouseAvailable = qfalse;
 static qboolean mouseActive = qfalse;
 
-static cvar_t *in_mouse             = NULL;
+static cvar_t *in_mouse			 = NULL;
 static cvar_t *in_nograb;
 
-cvar_t *in_joystick          		= NULL;
+cvar_t *in_joystick				= NULL;
 static cvar_t *in_joystickThreshold = NULL;
-static cvar_t *in_joystickNo        = NULL;
+static cvar_t *in_joystickNo		= NULL;
 static cvar_t *in_joystickUseAnalog = NULL;
 
 static int vidRestartTime = 0;
@@ -43,15 +43,15 @@ static void IN_PrintKey( const SDL_Keysym *keysym, fakeAscii_t key, qboolean dow
 
 	if( keysym->mod & KMOD_LSHIFT )   Com_Printf( " KMOD_LSHIFT" );
 	if( keysym->mod & KMOD_RSHIFT )   Com_Printf( " KMOD_RSHIFT" );
-	if( keysym->mod & KMOD_LCTRL )    Com_Printf( " KMOD_LCTRL" );
-	if( keysym->mod & KMOD_RCTRL )    Com_Printf( " KMOD_RCTRL" );
-	if( keysym->mod & KMOD_LALT )     Com_Printf( " KMOD_LALT" );
-	if( keysym->mod & KMOD_RALT )     Com_Printf( " KMOD_RALT" );
-	if( keysym->mod & KMOD_LGUI )     Com_Printf( " KMOD_LGUI" );
-	if( keysym->mod & KMOD_RGUI )     Com_Printf( " KMOD_RGUI" );
-	if( keysym->mod & KMOD_NUM )      Com_Printf( " KMOD_NUM" );
-	if( keysym->mod & KMOD_CAPS )     Com_Printf( " KMOD_CAPS" );
-	if( keysym->mod & KMOD_MODE )     Com_Printf( " KMOD_MODE" );
+	if( keysym->mod & KMOD_LCTRL )	Com_Printf( " KMOD_LCTRL" );
+	if( keysym->mod & KMOD_RCTRL )	Com_Printf( " KMOD_RCTRL" );
+	if( keysym->mod & KMOD_LALT )	 Com_Printf( " KMOD_LALT" );
+	if( keysym->mod & KMOD_RALT )	 Com_Printf( " KMOD_RALT" );
+	if( keysym->mod & KMOD_LGUI )	 Com_Printf( " KMOD_LGUI" );
+	if( keysym->mod & KMOD_RGUI )	 Com_Printf( " KMOD_RGUI" );
+	if( keysym->mod & KMOD_NUM )	  Com_Printf( " KMOD_NUM" );
+	if( keysym->mod & KMOD_CAPS )	 Com_Printf( " KMOD_CAPS" );
+	if( keysym->mod & KMOD_MODE )	 Com_Printf( " KMOD_MODE" );
 	if( keysym->mod & KMOD_RESERVED ) Com_Printf( " KMOD_RESERVED" );
 
 	Com_Printf( " Q:0x%02x(%s)\n", key, Key_KeynumToString( key ) );
@@ -64,7 +64,7 @@ static void IN_PrintKey( const SDL_Keysym *keysym, fakeAscii_t key, qboolean dow
 IN_IsConsoleKey
 
 TODO: If the SDL_Scancode situation improves, use it instead of
-      both of these methods
+	  both of these methods
 ===============
 */
 
@@ -88,7 +88,7 @@ static qboolean IN_IsConsoleKey( fakeAscii_t key, int character )
 	consoleKey_t consoleKeys[ MAX_CONSOLE_KEYS ];
 	int i;
 
-    // ouned: I really don't get how exactly this works
+	// ouned: I really don't get how exactly this works
 #ifdef MACOS_X
     consoleKeys[0].type = consoleKey_t::CHARACTER;
     consoleKeys[0].u.character = 0xB0; // ouned: '°'

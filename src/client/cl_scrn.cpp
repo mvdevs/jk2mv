@@ -396,7 +396,7 @@ void MV_DrawConnectingInfo( void )
 	SCR_DrawStringExt(xPos, yPos+(line*1), size, va("JK2MV-Version: %s", JK2MV_VERSION), color, qfalse);
 	SCR_DrawStringExt(xPos, yPos+(line*2), size, va(" Game-Version: %s", (MV_GetCurrentGameversion() == VERSION_1_02 ? "1.02" : "1.04")), color, qfalse);
 	*/
-	
+
 	SCR_DrawStringExt(xPos, yPos+(line*0), size, va("^1[ ^7JK2MV %s ^1]", JK2MV_VERSION), color, qfalse);
 	switch ( MV_GetCurrentGameversion() )
 	{

@@ -17,26 +17,26 @@ SV_Netchan_Encode
 static void SV_Netchan_Encode( client_t *client, msg_t *msg ) {
 	int reliableAcknowledge, i, index;
 	byte key, *string;
-        int	srdc, sbit, soob;
-        
+		int	srdc, sbit, soob;
+
 	if ( msg->cursize < SV_ENCODE_START ) {
 		return;
 	}
 
-        srdc = msg->readcount;
-        sbit = msg->bit;
-        soob = msg->oob;
-        
-        msg->bit = 0;
-        msg->readcount = 0;
-        msg->oob = (qboolean)0;
-        
+		srdc = msg->readcount;
+		sbit = msg->bit;
+		soob = msg->oob;
+
+		msg->bit = 0;
+		msg->readcount = 0;
+		msg->oob = (qboolean)0;
+
 	reliableAcknowledge = MSG_ReadLong(msg);
 
-        msg->oob = (qboolean)soob;
-        msg->bit = sbit;
-        msg->readcount = srdc;
-        
+		msg->oob = (qboolean)soob;
+		msg->bit = sbit;
+		msg->readcount = srdc;
+
 	string = (byte *)client->lastClientCommandString;
 	index = 0;
 	// xor the client challenge with the netchan sequence number
@@ -73,20 +73,20 @@ static void SV_Netchan_Decode( client_t *client, msg_t *msg ) {
 	int i, index, srdc, sbit, soob;
 	byte key, *string;
 
-        srdc = msg->readcount;
-        sbit = msg->bit;
-        soob = msg->oob;
-        
-        msg->oob = (qboolean)0;
-        
-        serverId = MSG_ReadLong(msg);
+		srdc = msg->readcount;
+		sbit = msg->bit;
+		soob = msg->oob;
+
+		msg->oob = (qboolean)0;
+
+		serverId = MSG_ReadLong(msg);
 	messageAcknowledge = MSG_ReadLong(msg);
 	reliableAcknowledge = MSG_ReadLong(msg);
 
-        msg->oob = (qboolean)soob;
-        msg->bit = sbit;
-        msg->readcount = srdc;
-        
+		msg->oob = (qboolean)soob;
+		msg->bit = sbit;
+		msg->readcount = srdc;
+
 	string = (byte *)client->reliableCommands[ reliableAcknowledge & (MAX_RELIABLE_COMMANDS-1) ];
 	index = 0;
 	//

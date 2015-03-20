@@ -13,7 +13,7 @@ void S_StopBackgroundTrack( void );
 
 // cinematics and voice-over-network will send raw samples
 // 1.0 volume will be direct output of source samples
-void S_RawSamples (int samples, int rate, int width, int channels, 
+void S_RawSamples (int samples, int rate, int width, int channels,
 				   const byte *data, float volume);
 
 // stop all sounds and the background track

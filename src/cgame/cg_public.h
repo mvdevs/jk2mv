@@ -2,7 +2,7 @@
 //
 
 
-#define	CMD_BACKUP			64	
+#define	CMD_BACKUP			64
 #define	CMD_MASK			(CMD_BACKUP - 1)
 // allow a lot of command backups for very fast systems
 // multiple commands may be combined into a single packet, so this
@@ -300,7 +300,7 @@ typedef enum {
 	CG_LAST_ATTACKER,
 //	int (*CG_LastAttacker)( void );
 
-	CG_KEY_EVENT, 
+	CG_KEY_EVENT,
 //	void	(*CG_KeyEvent)( int key, qboolean down );
 
 	CG_MOUSE_EVENT,
@@ -323,7 +323,7 @@ typedef enum {
 //	void CG_CalcEntityLerpPositions(int num);
 
 	CG_TRACE,
-//void CG_Trace( trace_t *result, const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, 
+//void CG_Trace( trace_t *result, const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end,
 //					 int skipNumber, int mask );
 
 	CG_GET_ORIGIN,		// int entnum, vec3_t origin
@@ -337,7 +337,7 @@ typedef enum {
 	CG_ROFF_NOTETRACK_CALLBACK,		// int entnum, char *notetrack
 
 	CG_IMPACT_MARK,
-//void CG_ImpactMark( qhandle_t markShader, const vec3_t origin, const vec3_t dir, 
+//void CG_ImpactMark( qhandle_t markShader, const vec3_t origin, const vec3_t dir,
 //				   float orientation, float red, float green, float blue, float alpha,
 //				   qboolean alphaFade, float radius, qboolean temporary )
 

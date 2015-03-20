@@ -32,7 +32,7 @@
 #define	CONTENTS_DETAIL			0x08000000u	// brushes not used for the bsp
 #define	CONTENTS_TRANSLUCENT	0x80000000u	// don't consume surface fragments inside
 
-#define CONTENTS_ALL            0xFFFFFFFFu
+#define CONTENTS_ALL			0xFFFFFFFFu
 
 #define	SURF_SKY				0x00002000u	// lighting from environment map
 #define	SURF_SLICK				0x00004000u	// affects game physics
@@ -59,7 +59,7 @@
 #define MATERIAL_DIRT			7			// hard mud
 #define MATERIAL_SAND			8			// sandy beach
 #define MATERIAL_GRAVEL			9			// lots of small stones
-#define MATERIAL_GLASS			10			// 
+#define MATERIAL_GLASS			10			//
 #define MATERIAL_CONCRETE		11			// hardened concrete pavement
 #define MATERIAL_MARBLE			12			// marble floors
 #define MATERIAL_WATER			13			// light covering of water on a surface
@@ -74,7 +74,7 @@
 #define MATERIAL_CANVAS			22			// tent material
 #define MATERIAL_ROCK			23			//
 #define MATERIAL_RUBBER			24			// hard tire like rubber
-#define MATERIAL_PLASTIC		25			// 
+#define MATERIAL_PLASTIC		25			//
 #define MATERIAL_TILES			26			// tiled floor
 #define MATERIAL_CARPET			27			// lush carpet
 #define MATERIAL_PLASTER		28			// drywall style plaster

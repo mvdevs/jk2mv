@@ -5,7 +5,7 @@
  * desc:		fuzzy logic
  *
  * $Archive: /MissionPack/code/botlib/be_ai_weight.c $
- * $Author: Mrelusive $ 
+ * $Author: Mrelusive $
  * $Revision: 3 $
  * $Modtime: 8/06/00 5:25p $
  * $Date: 8/06/00 11:07p $

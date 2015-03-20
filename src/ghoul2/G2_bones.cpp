@@ -36,7 +36,7 @@ int G2_Find_Bone(const model_t *mod, boneInfo_v &blist, const char *boneName)
 	int					i;
 	mdxaSkel_t			*skel;
 	mdxaSkelOffsets_t	*offsets;
-   	offsets = (mdxaSkelOffsets_t *)((byte *)mod->mdxa + sizeof(mdxaHeader_t));
+	offsets = (mdxaSkelOffsets_t *)((byte *)mod->mdxa + sizeof(mdxaHeader_t));
 	skel = (mdxaSkel_t *)((byte *)mod->mdxa + sizeof(mdxaHeader_t) + offsets->offsets[0]);
 
 	// look through entire list
@@ -1006,7 +1006,7 @@ qboolean G2_Get_Bone_Anim(const char *fileName, boneInfo_v &blist, const char *b
 // given a model, bonelist and bonename, lets pause an anim if it's playing.
 qboolean G2_Pause_Bone_Anim(const char *fileName, boneInfo_v &blist, const char *boneName, const int currentTime)
 {
-  	model_t		*mod_m = R_GetModelByHandle(RE_RegisterModel(fileName));
+	model_t		*mod_m = R_GetModelByHandle(RE_RegisterModel(fileName));
 	model_t		*mod_a = R_GetModelByHandle(mod_m->mdxm->animIndex);
 	int			index = G2_Find_Bone(mod_a, blist, boneName);
 
@@ -1041,7 +1041,7 @@ qboolean G2_Pause_Bone_Anim(const char *fileName, boneInfo_v &blist, const char 
 
 qboolean	G2_IsPaused(const char *fileName, boneInfo_v &blist, const char *boneName)
 {
-  	model_t		*mod_m = R_GetModelByHandle(RE_RegisterModel(fileName));
+	model_t		*mod_m = R_GetModelByHandle(RE_RegisterModel(fileName));
 	model_t		*mod_a = R_GetModelByHandle(mod_m->mdxm->animIndex);
 	int			index = G2_Find_Bone(mod_a, blist, boneName);
 
@@ -1115,7 +1115,7 @@ qboolean G2_Stop_Bone_Angles_Index(boneInfo_v &blist, const int index)
 // given a model, bonelist and bonename, lets stop an anim if it's playing.
 qboolean G2_Stop_Bone_Angles(const char *fileName, boneInfo_v &blist, const char *boneName)
 {
-  	model_t		*mod_m = R_GetModelByHandle(RE_RegisterModel(fileName));
+	model_t		*mod_m = R_GetModelByHandle(RE_RegisterModel(fileName));
 	model_t		*mod_a = R_GetModelByHandle(mod_m->mdxm->animIndex);
 	int			index = G2_Find_Bone(mod_a, blist, boneName);
 

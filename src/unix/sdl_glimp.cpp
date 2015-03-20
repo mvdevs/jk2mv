@@ -91,22 +91,22 @@ PFNGLGETOBJECTPARAMETERIVARBPROC qglGetObjectParameterivARB = NULL;
 PFNGLGETATTACHEDOBJECTSARBPROC qglGetAttachedObjectsARB = NULL;
 
 GLboolean(APIENTRYP qglIsRenderbufferEXT) (GLuint renderbuffer);
-void            (APIENTRYP qglBindRenderbufferEXT) (GLenum target, GLuint renderbuffer);
-void            (APIENTRYP qglDeleteRenderbuffersEXT) (GLsizei n, const GLuint * renderbuffers);
-void            (APIENTRYP qglGenRenderbuffersEXT) (GLsizei n, GLuint * renderbuffers);
-void            (APIENTRYP qglRenderbufferStorageEXT) (GLenum target, GLenum internalformat, GLsizei width, GLsizei height);
-void            (APIENTRYP qglGetRenderbufferParameterivEXT) (GLenum target, GLenum pname, GLint * params);
+void			(APIENTRYP qglBindRenderbufferEXT) (GLenum target, GLuint renderbuffer);
+void			(APIENTRYP qglDeleteRenderbuffersEXT) (GLsizei n, const GLuint * renderbuffers);
+void			(APIENTRYP qglGenRenderbuffersEXT) (GLsizei n, GLuint * renderbuffers);
+void			(APIENTRYP qglRenderbufferStorageEXT) (GLenum target, GLenum internalformat, GLsizei width, GLsizei height);
+void			(APIENTRYP qglGetRenderbufferParameterivEXT) (GLenum target, GLenum pname, GLint * params);
 GLboolean(APIENTRYP qglIsFramebufferEXT) (GLuint framebuffer);
-void            (APIENTRYP qglBindFramebufferEXT) (GLenum target, GLuint framebuffer);
-void            (APIENTRYP qglDeleteFramebuffersEXT) (GLsizei n, const GLuint * framebuffers);
-void            (APIENTRYP qglGenFramebuffersEXT) (GLsizei n, GLuint * framebuffers);
+void			(APIENTRYP qglBindFramebufferEXT) (GLenum target, GLuint framebuffer);
+void			(APIENTRYP qglDeleteFramebuffersEXT) (GLsizei n, const GLuint * framebuffers);
+void			(APIENTRYP qglGenFramebuffersEXT) (GLsizei n, GLuint * framebuffers);
 GLenum(APIENTRYP qglCheckFramebufferStatusEXT) (GLenum target);
-void            (APIENTRYP qglFramebufferTexture1DEXT) (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level);
-void            (APIENTRYP qglFramebufferTexture2DEXT) (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level);
-void            (APIENTRYP qglFramebufferTexture3DEXT) (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level, GLint zoffset);
-void            (APIENTRYP qglFramebufferRenderbufferEXT) (GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer);
-void            (APIENTRYP qglGetFramebufferAttachmentParameterivEXT) (GLenum target, GLenum attachment, GLenum pname, GLint * params);
-void            (APIENTRYP qglGenerateMipmapEXT) (GLenum target);
+void			(APIENTRYP qglFramebufferTexture1DEXT) (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level);
+void			(APIENTRYP qglFramebufferTexture2DEXT) (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level);
+void			(APIENTRYP qglFramebufferTexture3DEXT) (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level, GLint zoffset);
+void			(APIENTRYP qglFramebufferRenderbufferEXT) (GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer);
+void			(APIENTRYP qglGetFramebufferAttachmentParameterivEXT) (GLenum target, GLenum attachment, GLenum pname, GLint * params);
+void			(APIENTRYP qglGenerateMipmapEXT) (GLenum target);
 void			(APIENTRYP qglBlitFramebufferEXT) (GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter);
 
 /*
@@ -910,12 +910,12 @@ static void GLimp_InitExtensions( void )
 	if ( bARBVertexProgram || bARBFragmentProgram )
 	{
 		qglProgramStringARB					= (PFNGLPROGRAMSTRINGARBPROC)  SDL_GL_GetProcAddress("glProgramStringARB");
-		qglBindProgramARB					= (PFNGLBINDPROGRAMARBPROC)    SDL_GL_GetProcAddress("glBindProgramARB");
+		qglBindProgramARB					= (PFNGLBINDPROGRAMARBPROC)	SDL_GL_GetProcAddress("glBindProgramARB");
 		qglDeleteProgramsARB				= (PFNGLDELETEPROGRAMSARBPROC) SDL_GL_GetProcAddress("glDeleteProgramsARB");
-		qglGenProgramsARB					= (PFNGLGENPROGRAMSARBPROC)    SDL_GL_GetProcAddress("glGenProgramsARB");
-		qglProgramEnvParameter4dARB			= (PFNGLPROGRAMENVPARAMETER4DARBPROC)    SDL_GL_GetProcAddress("glProgramEnvParameter4dARB");
+		qglGenProgramsARB					= (PFNGLGENPROGRAMSARBPROC)	SDL_GL_GetProcAddress("glGenProgramsARB");
+		qglProgramEnvParameter4dARB			= (PFNGLPROGRAMENVPARAMETER4DARBPROC)	SDL_GL_GetProcAddress("glProgramEnvParameter4dARB");
 		qglProgramEnvParameter4dvARB		= (PFNGLPROGRAMENVPARAMETER4DVARBPROC)   SDL_GL_GetProcAddress("glProgramEnvParameter4dvARB");
-		qglProgramEnvParameter4fARB			= (PFNGLPROGRAMENVPARAMETER4FARBPROC)    SDL_GL_GetProcAddress("glProgramEnvParameter4fARB");
+		qglProgramEnvParameter4fARB			= (PFNGLPROGRAMENVPARAMETER4FARBPROC)	SDL_GL_GetProcAddress("glProgramEnvParameter4fARB");
 		qglProgramEnvParameter4fvARB		= (PFNGLPROGRAMENVPARAMETER4FVARBPROC)   SDL_GL_GetProcAddress("glProgramEnvParameter4fvARB");
 		qglProgramLocalParameter4dARB		= (PFNGLPROGRAMLOCALPARAMETER4DARBPROC)  SDL_GL_GetProcAddress("glProgramLocalParameter4dARB");
 		qglProgramLocalParameter4dvARB		= (PFNGLPROGRAMLOCALPARAMETER4DVARBPROC) SDL_GL_GetProcAddress("glProgramLocalParameter4dvARB");
@@ -925,17 +925,17 @@ static void GLimp_InitExtensions( void )
 		qglGetProgramEnvParameterfvARB		= (PFNGLGETPROGRAMENVPARAMETERFVARBPROC) SDL_GL_GetProcAddress("glGetProgramEnvParameterfvARB");
 		qglGetProgramLocalParameterdvARB	= (PFNGLGETPROGRAMLOCALPARAMETERDVARBPROC) SDL_GL_GetProcAddress("glGetProgramLocalParameterdvARB");
 		qglGetProgramLocalParameterfvARB	= (PFNGLGETPROGRAMLOCALPARAMETERFVARBPROC) SDL_GL_GetProcAddress("glGetProgramLocalParameterfvARB");
-		qglGetProgramivARB					= (PFNGLGETPROGRAMIVARBPROC)     SDL_GL_GetProcAddress("glGetProgramivARB");
+		qglGetProgramivARB					= (PFNGLGETPROGRAMIVARBPROC)	 SDL_GL_GetProcAddress("glGetProgramivARB");
 		qglGetProgramStringARB				= (PFNGLGETPROGRAMSTRINGARBPROC) SDL_GL_GetProcAddress("glGetProgramStringARB");
-		qglIsProgramARB						= (PFNGLISPROGRAMARBPROC)        SDL_GL_GetProcAddress("glIsProgramARB");
+		qglIsProgramARB						= (PFNGLISPROGRAMARBPROC)		SDL_GL_GetProcAddress("glIsProgramARB");
 
 		// Validate the functions we need.
 		if ( !qglProgramStringARB || !qglBindProgramARB || !qglDeleteProgramsARB || !qglGenProgramsARB ||
 			 !qglProgramEnvParameter4dARB || !qglProgramEnvParameter4dvARB || !qglProgramEnvParameter4fARB ||
-             !qglProgramEnvParameter4fvARB || !qglProgramLocalParameter4dARB || !qglProgramLocalParameter4dvARB ||
-             !qglProgramLocalParameter4fARB || !qglProgramLocalParameter4fvARB || !qglGetProgramEnvParameterdvARB ||
-             !qglGetProgramEnvParameterfvARB || !qglGetProgramLocalParameterdvARB || !qglGetProgramLocalParameterfvARB ||
-             !qglGetProgramivARB || !qglGetProgramStringARB || !qglIsProgramARB )
+			 !qglProgramEnvParameter4fvARB || !qglProgramLocalParameter4dARB || !qglProgramLocalParameter4dvARB ||
+			 !qglProgramLocalParameter4fARB || !qglProgramLocalParameter4fvARB || !qglGetProgramEnvParameterdvARB ||
+			 !qglGetProgramEnvParameterfvARB || !qglGetProgramLocalParameterdvARB || !qglGetProgramLocalParameterfvARB ||
+			 !qglGetProgramivARB || !qglGetProgramStringARB || !qglIsProgramARB )
 		{
 			bARBVertexProgram = false;
 			bARBFragmentProgram = false;
@@ -961,7 +961,7 @@ static void GLimp_InitExtensions( void )
 	}
 
 	// Find out how many general combiners they have.
-	#define GL_MAX_GENERAL_COMBINERS_NV       0x854D
+	#define GL_MAX_GENERAL_COMBINERS_NV	   0x854D
 	GLint iNumGeneralCombiners = 0;
 	if(bNVRegisterCombiners)
 		qglGetIntegerv( GL_MAX_GENERAL_COMBINERS_NV, &iNumGeneralCombiners );
@@ -972,7 +972,7 @@ static void GLimp_InitExtensions( void )
 	{
 	#ifdef JKA_DYNAMIC_GLOW
 		g_bDynamicGlowSupported = true;
-    #endif
+	#endif
 		// this would overwrite any achived setting gwg
 		// Cvar_Set( "r_DynamicGlow", "1" );
 	}
@@ -986,10 +986,10 @@ static void GLimp_InitExtensions( void )
 
 	// ouned: gamma correction
 	if ( GL_CheckForExtension( "GL_ARB_shader_objects" ) &&
-        GL_CheckForExtension( "GL_ARB_shading_language_100" ) &&
-        GL_CheckForExtension( "GL_ARB_vertex_shader" ) &&
-        GL_CheckForExtension( "GL_ARB_fragment_shader" ) &&
-        GL_CheckForExtension( "GL_EXT_framebuffer_object" ) ) {
+		GL_CheckForExtension( "GL_ARB_shading_language_100" ) &&
+		GL_CheckForExtension( "GL_ARB_vertex_shader" ) &&
+		GL_CheckForExtension( "GL_ARB_fragment_shader" ) &&
+		GL_CheckForExtension( "GL_EXT_framebuffer_object" ) ) {
 		qglCreateShaderObjectARB = (PFNGLCREATESHADEROBJECTARBPROC)SDL_GL_GetProcAddress("glCreateShaderObjectARB");
 		qglShaderSourceARB = (PFNGLSHADERSOURCEARBPROC)SDL_GL_GetProcAddress("glShaderSourceARB");
 		qglCompileShaderARB = (PFNGLCOMPILESHADERARBPROC)SDL_GL_GetProcAddress("glCompileShaderARB");
@@ -1004,7 +1004,7 @@ static void GLimp_InitExtensions( void )
 		qglValidateProgramARB = (PFNGLVALIDATEPROGRAMARBPROC)SDL_GL_GetProcAddress("glValidateProgramARB");
 		qglGetUniformLocationARB = (PFNGLGETUNIFORMLOCATIONARBPROC)SDL_GL_GetProcAddress("glGetUniformLocationARB");
 		qglUniform1iARB = (PFNGLUNIFORM1IARBPROC)SDL_GL_GetProcAddress("glUniform1iARB");
-        qglUniform1fARB = (PFNGLUNIFORM1FARBPROC)SDL_GL_GetProcAddress("glUniform1fARB");
+		qglUniform1fARB = (PFNGLUNIFORM1FARBPROC)SDL_GL_GetProcAddress("glUniform1fARB");
 		qglUniform4fARB = (PFNGLUNIFORM4FARBPROC)SDL_GL_GetProcAddress("glUniform4fARB");
 		qglUniform4fvARB = (PFNGLUNIFORM4FVARBPROC)SDL_GL_GetProcAddress("glUniform4fvARB");
 		qglGetInfoLogARB = (PFNGLGETINFOLOGARBPROC)SDL_GL_GetProcAddress("glGetInfoLogARB");
@@ -1250,25 +1250,25 @@ GLimp_ShutdownRenderThread
 */
 static void GLimp_ShutdownRenderThread(void)
 {
-    if (smpMutex != NULL)
-    {
-        SDL_DestroyMutex(smpMutex);
-        smpMutex = NULL;
-    }
+	if (smpMutex != NULL)
+	{
+		SDL_DestroyMutex(smpMutex);
+		smpMutex = NULL;
+	}
 
-    if (renderCommandsEvent != NULL)
-    {
-        SDL_DestroyCond(renderCommandsEvent);
-        renderCommandsEvent = NULL;
-    }
+	if (renderCommandsEvent != NULL)
+	{
+		SDL_DestroyCond(renderCommandsEvent);
+		renderCommandsEvent = NULL;
+	}
 
-    if (renderCompletedEvent != NULL)
-    {
-        SDL_DestroyCond(renderCompletedEvent);
-        renderCompletedEvent = NULL;
-    }
+	if (renderCompletedEvent != NULL)
+	{
+		SDL_DestroyCond(renderCompletedEvent);
+		renderCompletedEvent = NULL;
+	}
 
-    glimpRenderThread = NULL;
+	glimpRenderThread = NULL;
 }
 
 /*
@@ -1278,15 +1278,15 @@ GLimp_RenderThreadWrapper
 */
 static int GLimp_RenderThreadWrapper( void *arg )
 {
-    Com_Printf( "Render thread starting\n" );
+	Com_Printf( "Render thread starting\n" );
 
-    glimpRenderThread();
+	glimpRenderThread();
 
-    GLimp_SetCurrentContext(NULL);
+	GLimp_SetCurrentContext(NULL);
 
-    Com_Printf( "Render thread terminating\n" );
+	Com_Printf( "Render thread terminating\n" );
 
-    return 0;
+	return 0;
 }
 
 /*
@@ -1296,60 +1296,60 @@ GLimp_SpawnRenderThread
 */
 qboolean GLimp_SpawnRenderThread( void (*function)( void ) )
 {
-    static qboolean warned = qfalse;
-    if (!warned)
-    {
-        Com_Printf("WARNING: You enable r_smp at your own risk!\n");
-        warned = qtrue;
-    }
+	static qboolean warned = qfalse;
+	if (!warned)
+	{
+		Com_Printf("WARNING: You enable r_smp at your own risk!\n");
+		warned = qtrue;
+	}
 
 #ifndef MACOS_X
-    return qfalse;  /* better safe than sorry for now. */
+	return qfalse;  /* better safe than sorry for now. */
 #endif
 
-    if (renderThread != NULL)  /* hopefully just a zombie at this point... */
-    {
-        Com_Printf("Already a render thread? Trying to clean it up...\n");
-        SDL_WaitThread(renderThread, NULL);
-        renderThread = NULL;
-        GLimp_ShutdownRenderThread();
-    }
+	if (renderThread != NULL)  /* hopefully just a zombie at this point... */
+	{
+		Com_Printf("Already a render thread? Trying to clean it up...\n");
+		SDL_WaitThread(renderThread, NULL);
+		renderThread = NULL;
+		GLimp_ShutdownRenderThread();
+	}
 
-    smpMutex = SDL_CreateMutex();
-    if (smpMutex == NULL)
-    {
-        Com_Printf( "smpMutex creation failed: %s\n", SDL_GetError() );
-        GLimp_ShutdownRenderThread();
-        return qfalse;
-    }
+	smpMutex = SDL_CreateMutex();
+	if (smpMutex == NULL)
+	{
+		Com_Printf( "smpMutex creation failed: %s\n", SDL_GetError() );
+		GLimp_ShutdownRenderThread();
+		return qfalse;
+	}
 
-    renderCommandsEvent = SDL_CreateCond();
-    if (renderCommandsEvent == NULL)
-    {
-        Com_Printf( "renderCommandsEvent creation failed: %s\n", SDL_GetError() );
-        GLimp_ShutdownRenderThread();
-        return qfalse;
-    }
+	renderCommandsEvent = SDL_CreateCond();
+	if (renderCommandsEvent == NULL)
+	{
+		Com_Printf( "renderCommandsEvent creation failed: %s\n", SDL_GetError() );
+		GLimp_ShutdownRenderThread();
+		return qfalse;
+	}
 
-    renderCompletedEvent = SDL_CreateCond();
-    if (renderCompletedEvent == NULL)
-    {
-        Com_Printf( "renderCompletedEvent creation failed: %s\n", SDL_GetError() );
-        GLimp_ShutdownRenderThread();
-        return qfalse;
-    }
+	renderCompletedEvent = SDL_CreateCond();
+	if (renderCompletedEvent == NULL)
+	{
+		Com_Printf( "renderCompletedEvent creation failed: %s\n", SDL_GetError() );
+		GLimp_ShutdownRenderThread();
+		return qfalse;
+	}
 
-    glimpRenderThread = function;
-    renderThread = SDL_CreateThread(GLimp_RenderThreadWrapper, NULL);
-    if ( renderThread == NULL )
-    {
-        ri.Printf( PRINT_ALL, "SDL_CreateThread() returned %s", SDL_GetError() );
-        GLimp_ShutdownRenderThread();
-        return qfalse;
-    }
-    else
-    {
-        // tma 01/09/07: don't think this is necessary anyway?
+	glimpRenderThread = function;
+	renderThread = SDL_CreateThread(GLimp_RenderThreadWrapper, NULL);
+	if ( renderThread == NULL )
+	{
+		ri.Printf( PRINT_ALL, "SDL_CreateThread() returned %s", SDL_GetError() );
+		GLimp_ShutdownRenderThread();
+		return qfalse;
+	}
+	else
+	{
+		// tma 01/09/07: don't think this is necessary anyway?
         //
         // !!! FIXME: No detach API available in SDL!
         //ret = pthread_detach( renderThread );

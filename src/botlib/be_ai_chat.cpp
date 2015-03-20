@@ -5,7 +5,7 @@
  * desc:		bot chat AI
  *
  * $Archive: /MissionPack/code/botlib/be_ai_chat.c $
- * $Author: Ttimo $ 
+ * $Author: Ttimo $
  * $Revision: 12 $
  * $Modtime: 4/13/01 4:45p $
  * $Date: 4/13/01 4:45p $
@@ -2202,10 +2202,10 @@ int BotLoadChatFile(int chatstate, char *chatfile, char *chatname)
 				}
 				continue;
 			}
-			if( strcmp( chatfile, ichatdata[n]->filename ) != 0 ) { 
+			if( strcmp( chatfile, ichatdata[n]->filename ) != 0 ) {
 				continue;
 			}
-			if( strcmp( chatname, ichatdata[n]->chatname ) != 0 ) { 
+			if( strcmp( chatname, ichatdata[n]->chatname ) != 0 ) {
 				continue;
 			}
 			cs->chat = ichatdata[n]->chat;
@@ -2291,7 +2291,7 @@ int BotExpandChatMessage(char *outmessage, char *message, unsigned long mcontext
 							//replace the reply synonyms in the variables
 							BotReplaceReplySynonyms(temp, vcontext);
 						} //end if
-						else 
+						else
 						{
 							//replace synonyms in the variable context
 							BotReplaceSynonyms(temp, vcontext);

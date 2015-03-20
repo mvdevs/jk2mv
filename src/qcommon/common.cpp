@@ -1462,10 +1462,10 @@ void Com_Meminfo_f( void ) {
 	Com_Printf( "%8i unused highwater\n", unused );
 	Com_Printf( "\n" );
 //	Com_Printf( "%8i bytes in %i zone blocks\n", zoneBytes, zoneBlocks	);
-	Com_Printf( "        %8i bytes in dynamic botlib\n", botlibBytes );
-	Com_Printf( "        %8i bytes in dynamic renderer\n", rendererBytes );
-//	Com_Printf( "        %8i bytes in dynamic other\n", zoneBytes - ( botlibBytes + rendererBytes ) );
-//	Com_Printf( "        %8i bytes in small Zone memory\n", smallZoneBytes );
+	Com_Printf( "		%8i bytes in dynamic botlib\n", botlibBytes );
+	Com_Printf( "		%8i bytes in dynamic renderer\n", rendererBytes );
+//	Com_Printf( "		%8i bytes in dynamic other\n", zoneBytes - ( botlibBytes + rendererBytes ) );
+//	Com_Printf( "		%8i bytes in small Zone memory\n", smallZoneBytes );
 }
 
 /*
@@ -2226,8 +2226,8 @@ int Com_EventLoop( void ) {
 		  // bk001129 - was ev.evTime
 			Com_Error( ERR_FATAL, "Com_EventLoop: bad event type %i", ev.evType );
 			break;
-        case SE_NONE:
-            break;
+		case SE_NONE:
+			break;
 		case SE_KEY:
 			CL_KeyEvent( ev.evValue, (qboolean)ev.evValue2, ev.evTime );
 			break;
@@ -2911,7 +2911,7 @@ void Com_Memset (void* dest, const int val, const size_t count)
 
 qboolean Com_Memcmp (const void *src0, const void *src1, const unsigned int count)
 {
-    return (qboolean)memcmp(src0, src1, count);
+	return (qboolean)memcmp(src0, src1, count);
 }
 
 //------------------------------------------------------------------------

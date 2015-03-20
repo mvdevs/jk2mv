@@ -1125,7 +1125,7 @@ static void SV_InitGameVM( qboolean restart ) {
 
 	// start the entity parsing at the beginning
 	sv.entityParsePoint = CM_EntityString();
-	
+
 	//Daggolin: MV-API
 	VM_Call( gvm, MV_API_INIT, MV_API_VERSION );
 	sv.gentitiesMV = NULL;

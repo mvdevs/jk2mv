@@ -39,7 +39,7 @@ and one exported function: Perform
 
 
 vm_t	*currentVM = NULL;
-vm_t	*lastVM    = NULL;
+vm_t	*lastVM	= NULL;
 int		vm_debugLevel;
 
 // used by Com_Error to get rid of running vm's before longjmp
@@ -335,7 +335,7 @@ Dlls will call this directly
 
   For speed, we just grab 15 arguments, and don't worry about exactly
    how many the syscall actually needs; the extra is thrown away.
- 
+
 ============
 */
 intptr_t QDECL VM_DllSyscall( intptr_t arg, ... ) {
@@ -344,14 +344,14 @@ intptr_t QDECL VM_DllSyscall( intptr_t arg, ... ) {
   intptr_t args[MAX_VMSYSCALL_ARGS];
   int i;
   va_list ap;
-  
+
   args[0] = arg;
-  
+
   va_start(ap, arg);
   for (i = 1; i < ARRAY_LEN (args); i++)
-    args[i] = va_arg(ap, intptr_t);
+	args[i] = va_arg(ap, intptr_t);
   va_end(ap);
-  
+
   return currentVM->systemCall( args );
 #else // original id code
 	return currentVM->systemCall( &arg );
@@ -448,7 +448,7 @@ vmHeader_t *VM_LoadQVM( vm_t *vm, qboolean alloc)
 					"VM_Restart()\n", filename);
 			return NULL;
 		}
-		
+
 		Com_Memset(vm->dataBase, 0, dataLength);
 	}
 
@@ -483,8 +483,8 @@ vm_t *VM_Restart(vm_t *vm)
 	if ( vm->dllHandle ) {
 		char	name[MAX_QPATH];
 		intptr_t	(*systemCall)( intptr_t *parms );
-		
-		systemCall = vm->systemCall;	
+
+		systemCall = vm->systemCall;
 		Q_strncpyz( name, vm->name, sizeof( name ) );
 
 		VM_Free( vm );
@@ -516,7 +516,7 @@ If image ends in .qvm it will be interpreted, otherwise
 it will attempt to load as a system dll
 ================
 */
-vm_t *VM_Create( const char *module, intptr_t (*systemCalls)(intptr_t *), 
+vm_t *VM_Create( const char *module, intptr_t (*systemCalls)(intptr_t *),
 				vmInterpret_t interpret ) {
 	vm_t		*vm;
 	vmHeader_t	*header;
@@ -564,7 +564,7 @@ vm_t *VM_Create( const char *module, intptr_t (*systemCalls)(intptr_t *),
 		Com_Printf("Failed to load dll, looking for qvm.\n");
 		interpret = VMI_COMPILED;
 	}
-	
+
     if (interpret == VMI_COMPILED || interpret == VMI_BYTECODE)
 	{
 		vm->searchPath = startSearch;
@@ -863,7 +863,7 @@ void VM_VmProfile_f( void ) {
 		sym->profileCount = 0;
 	}
 
-	Com_Printf("    %9.0f total\n", total );
+	Com_Printf("	%9.0f total\n", total );
 
 	Z_Free( sorted );
 }
@@ -894,9 +894,9 @@ void VM_VmInfo_f( void ) {
 		} else {
 			Com_Printf( "interpreted\n" );
 		}
-		Com_Printf( "    code length : %7i\n", vm->codeLength );
-		Com_Printf( "    table length: %7i\n", vm->instructionCount*4 );
-		Com_Printf( "    data length : %7i\n", vm->dataMask + 1 );
+		Com_Printf( "	code length : %7i\n", vm->codeLength );
+		Com_Printf( "	table length: %7i\n", vm->instructionCount*4 );
+		Com_Printf( "	data length : %7i\n", vm->dataMask + 1 );
 	}
 }
 

@@ -27,10 +27,10 @@ WAV loading
 */
 
 static	byte	*data_p;
-static	byte 	*iff_end;
-static	byte 	*last_chunk;
-static	byte 	*iff_data;
-static	int 	iff_chunk_len;
+static	byte	*iff_end;
+static	byte	*last_chunk;
+static	byte	*iff_data;
+static	int	iff_chunk_len;
 
 static short GetLittleShort(void)
 {

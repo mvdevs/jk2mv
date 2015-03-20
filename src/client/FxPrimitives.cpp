@@ -376,7 +376,7 @@ bool CParticle::Update()
 		}
 
 		vec3_t	org;
-		//vec3_t 	realVel, realAccel;
+		//vec3_t	realVel, realAccel;
 		vec3_t	currentOffset, initialOffset;
 		vec3_t	offsetOffset;
 

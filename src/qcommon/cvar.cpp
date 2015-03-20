@@ -23,7 +23,7 @@ return a hash value for the filename
 */
 static int generateHashValue( const char *fname ) {
 	int		i;
-	int	    hash;
+	int		hash;
 	char	letter;
 
 	hash = 0;
@@ -880,13 +880,13 @@ void	Cvar_Update( vmCvar_t *vmCvar ) {
 	// bk001129 - mismatches.
 	if ( strlen(cv->string)+1 > MAX_CVAR_VALUE_STRING )
 	  Com_Error( ERR_DROP, "Cvar_Update: src %s length %d exceeds MAX_CVAR_VALUE_STRING",
-		     cv->string,
-		     strlen(cv->string),
-		     sizeof(vmCvar->string) );
+			 cv->string,
+			 strlen(cv->string),
+			 sizeof(vmCvar->string) );
 	// bk001212 - Q_strncpyz guarantees zero padding and dest[MAX_CVAR_VALUE_STRING-1]==0
 	// bk001129 - paranoia. Never trust the destination string.
 	// bk001129 - beware, sizeof(char*) is always 4 (for cv->string).
-	//            sizeof(vmCvar->string) always MAX_CVAR_VALUE_STRING
+	//			sizeof(vmCvar->string) always MAX_CVAR_VALUE_STRING
 	//Q_strncpyz( vmCvar->string, cv->string, sizeof( vmCvar->string ) ); // id
 	Q_strncpyz( vmCvar->string, cv->string,  MAX_CVAR_VALUE_STRING );
 

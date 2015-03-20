@@ -61,7 +61,7 @@ public:
 
 CMapPoolLow::CMapPoolLow()
 {
-	mLastBlockNum=-1;	
+	mLastBlockNum=-1;
 }
 
 CMapPoolLow::~CMapPoolLow()
@@ -134,7 +134,7 @@ void *CMapPoolLow::Alloc()
 void CMapPoolLow::Free(void *p)
 {
 	// Validate that someone isn't trying to double free this node and also
-	// that the end marker is intact. 
+	// that the end marker is intact.
 	assert(((SMapNode *)p)->mTag==MAPNODE_INUSE);
 	assert((((SMapNode *)p)->mMapBlockNum)>=0);
 	assert((((SMapNode *)p)->mMapBlockNum)<256);
@@ -203,7 +203,7 @@ class CHashHelper
 	int mFindPtr;
 	int mFindPtrStart;
 public:
-	CHashHelper() 
+	CHashHelper()
 	{
 		int i;
 		for (i=0;i<MAX_HASH;i++)
@@ -285,7 +285,7 @@ public:
 		{
 			return(0);
 		}
-		
+
 		// Return the pointer to the start of allocated space.
 		char *ret=&mRaw[mBytesUsed];
 		mBytesUsed+=sizeBytes;

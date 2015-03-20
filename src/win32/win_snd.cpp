@@ -131,7 +131,7 @@ int SNDDMA_InitDS ()
 		Com_DPrintf( "...loading dsound.dll: " );
 
 		hInstDS = LoadLibraryA("dsound.dll");
-		
+
 		if ( hInstDS == NULL ) {
 			Com_Printf ("failed\n");
 			return 0;
@@ -196,7 +196,7 @@ int SNDDMA_InitDS ()
     format.nSamplesPerSec = dma.speed;
     format.nBlockAlign = format.nChannels * format.wBitsPerSample / 8;
     format.cbSize = 0;
-    format.nAvgBytesPerSec = format.nSamplesPerSec*format.nBlockAlign; 
+    format.nAvgBytesPerSec = format.nSamplesPerSec*format.nBlockAlign;
 
 	memset (&dsbuf, 0, sizeof(dsbuf));
 	dsbuf.dwSize = sizeof(DSBUFFERDESC);
@@ -206,20 +206,20 @@ int SNDDMA_InitDS ()
 	dsbuf.dwFlags = DSBCAPS_CTRLFREQUENCY | DSBCAPS_LOCHARDWARE | idDSBCAPS_GETCURRENTPOSITION2;
 	dsbuf.dwBufferBytes = SECONDARY_BUFFER_SIZE;
 	dsbuf.lpwfxFormat = &format;
-	
+
 	Com_DPrintf( "...creating secondary buffer: " );
 	if (DS_OK != pDS->CreateSoundBuffer(&dsbuf, &pDSBuf, NULL)) {
 		Com_Printf( " - using ancient version of DirectX -- this will slow FPS\n" );
 		dsbuf.dwFlags = DSBCAPS_CTRLFREQUENCY;
 		hresult = pDS->CreateSoundBuffer(&dsbuf, &pDSBuf, NULL);
-		if (hresult != DS_OK) {			
+		if (hresult != DS_OK) {
 			Com_Printf( "failed to create secondary buffer - %s\n", DSoundError( hresult ) );
 			SNDDMA_Shutdown ();
 			return qfalse;
 		}
 	}
 	Com_Printf( "locked hardware.  ok\n" );
-		
+
 	// Make sure mixer is active
 	if ( DS_OK != pDSBuf->Play(0, 0, DSBPLAY_LOOPING) ) {
 		Com_Printf ("*** Looped sound play failed ***\n");
@@ -235,7 +235,7 @@ int SNDDMA_InitDS ()
 		SNDDMA_Shutdown ();
 		return qfalse;
 	}
-	
+
 	gSndBufSize = dsbcaps.dwBufferBytes;
 
 	dma.channels = format.nChannels;
@@ -305,10 +305,10 @@ void SNDDMA_BeginPainting( void ) {
 	if ( pDSBuf->GetStatus (&dwStatus) != DS_OK ) {
 		Com_Printf ("Couldn't get sound buffer status\n");
 	}
-	
+
 	if (dwStatus & DSBSTATUS_BUFFERLOST)
 		pDSBuf->Restore ();
-	
+
 	if (!(dwStatus & DSBSTATUS_PLAYING))
 		pDSBuf->Play(0, 0, DSBPLAY_LOOPING);
 
@@ -317,7 +317,7 @@ void SNDDMA_BeginPainting( void ) {
 	reps = 0;
 	dma.buffer = NULL;
 
-	while ((hresult = pDSBuf->Lock(0, gSndBufSize, (void **)&pbuf, &locksize, 
+	while ((hresult = pDSBuf->Lock(0, gSndBufSize, (void **)&pbuf, &locksize,
 								   (void **)&pbuf2, &dwSize2, 0)) != DS_OK)
 	{
 		if (hresult != DSERR_BUFFERLOST)
@@ -346,7 +346,7 @@ Also unlocks the dsound buffer
 ===============
 */
 void SNDDMA_Submit( void ) {
-    // unlock the dsound buffer
+	// unlock the dsound buffer
 	if ( pDSBuf ) {
 		pDSBuf->Unlock(dma.buffer, locksize, NULL, 0);
 	}

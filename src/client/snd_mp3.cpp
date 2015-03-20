@@ -611,7 +611,7 @@ qboolean MP3Stream_InitFromFile( sfx_t* sfx, byte *pbSrcData, int iSrcDatalen, c
 		// make a copy of the filled-in stream struct and attach to the sfx_t struct...
 		//
 				sfx->pMP3StreamHeader = (MP3STREAM *) Z_Malloc( sizeof(MP3STREAM), TAG_SND_MP3STREAMHDR );
-		memcpy(	sfx->pMP3StreamHeader, &SFX_MP3Stream,		    sizeof(MP3STREAM) );
+		memcpy(	sfx->pMP3StreamHeader, &SFX_MP3Stream,			sizeof(MP3STREAM) );
 		//
 		return qtrue;
 	}

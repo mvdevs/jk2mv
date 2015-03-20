@@ -23,7 +23,7 @@ typedef struct keyGlobals_s
 } keyGlobals_t;
 
 
-typedef struct 
+typedef struct
 {
 	word	upper;
 	word	lower;

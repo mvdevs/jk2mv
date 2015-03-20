@@ -32,7 +32,7 @@ int			CM_PointLeafnum( const vec3_t p );
 // only returns non-solid leafs
 // overflow if return listsize and if *lastLeaf != list[listsize-1]
 int			CM_BoxLeafnums( const vec3_t mins, const vec3_t maxs, int *list,
-		 					int listsize, int *lastLeaf );
+							int listsize, int *lastLeaf );
 
 int			CM_LeafCluster (int leafnum);
 int			CM_LeafArea (int leafnum);
@@ -43,7 +43,7 @@ qboolean	CM_AreasConnected( int area1, int area2 );
 int			CM_WriteAreaBits( byte *buffer, int area );
 
 // cm_tag.c
-int			CM_LerpTag( orientation_t *tag,  clipHandle_t model, int startFrame, int endFrame, 
+int			CM_LerpTag( orientation_t *tag,  clipHandle_t model, int startFrame, int endFrame,
 					 float frac, const char *tagName );
 
 

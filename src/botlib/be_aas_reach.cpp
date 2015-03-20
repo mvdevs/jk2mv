@@ -5,7 +5,7 @@
  * desc:		reachability calculations
  *
  * $Archive: /MissionPack/code/botlib/be_aas_reach.c $
- * $Author: Ttimo $ 
+ * $Author: Ttimo $
  * $Revision: 12 $
  * $Modtime: 4/21/01 9:15a $
  * $Date: 4/21/01 9:15a $
@@ -1378,19 +1378,19 @@ int AAS_Reachability_Step_Barrier_WaterJump_WalkOffLedge(int area1num, int area2
 	//
 	// Water Jumps
 	//
-	//        ---------
-	//        |
+	//		---------
+	//		|
 	//~~~~~~~~|
-	//        |
-	//        |          higher than step height and water up to waterjump height -> TRAVEL_WATERJUMP
+	//		|
+	//		|		  higher than step height and water up to waterjump height -> TRAVEL_WATERJUMP
 	//--------|
 	//
 	//~~~~~~~~~~~~~~~~~~
-	//        ---------
-	//        |
-	//        |
-	//        |
-	//        |          higher than step height and low water up to the step -> TRAVEL_WATERJUMP
+	//		---------
+	//		|
+	//		|
+	//		|
+	//		|		  higher than step height and low water up to the step -> TRAVEL_WATERJUMP
 	//--------|
 	//
 	//check for a waterjump reachability
@@ -1433,19 +1433,19 @@ int AAS_Reachability_Step_Barrier_WaterJump_WalkOffLedge(int area1num, int area2
 	//
 	// Barrier Jumps
 	//
-	//        ---------
-	//        |
-	//        |
-	//        |
-	//        |         higher than step height lower than barrier height -> TRAVEL_BARRIERJUMP
+	//		---------
+	//		|
+	//		|
+	//		|
+	//		|		 higher than step height lower than barrier height -> TRAVEL_BARRIERJUMP
 	//--------|
 	//
-	//        ---------
-	//        |
-	//        |
-	//        |
-	//~~~~~~~~|         higher than step height lower than barrier height
-	//--------|         and a thin layer of water in the area to jump from -> TRAVEL_BARRIERJUMP
+	//		---------
+	//		|
+	//		|
+	//		|
+	//~~~~~~~~|		 higher than step height lower than barrier height
+	//--------|		 and a thin layer of water in the area to jump from -> TRAVEL_BARRIERJUMP
 	//
 	//check for a barrier jump reachability
 	if (ground_foundreach)
@@ -2637,7 +2637,7 @@ int AAS_Reachability_Ladder(int area1num, int area2num)
 					lreach->next = areareachability[area2num];
 					areareachability[area2num] = lreach;
 					//
-					reach_jump++;	
+					reach_jump++;
 					//
 					return qtrue;
 #ifdef REACH_DEBUG
@@ -2965,7 +2965,7 @@ void AAS_Reachability_Elevator(void)
 			} //end if
 			//get the mins, maxs and origin of the model
 			//NOTE: the origin is usually (0,0,0) and the mins and maxs
-			//      are the absolute mins and maxs
+			//	  are the absolute mins and maxs
 			AAS_BSPModelMinsMaxsOrigin(modelnum, angles, mins, maxs, origin);
 			//
 			AAS_VectorForBSPEpairKey(ent, "origin", origin);
@@ -3719,7 +3719,7 @@ void AAS_Reachability_JumpPad(void)
 													SE_TOUCHJUMPPAD|SE_TOUCHTELEPORTER|SE_HITGROUNDAREA, area2num, visualize);
 						//if prediction time wasn't enough to fully predict the movement
 						//don't enter slime or lava and don't fall from too high
-						if (move.frames < 30 && 
+						if (move.frames < 30 &&
 								!(move.stopevent & (SE_ENTERSLIME|SE_ENTERLAVA|SE_HITGROUNDDAMAGE))
 								&& (move.stopevent & (SE_HITGROUNDAREA|SE_TOUCHJUMPPAD|SE_TOUCHTELEPORTER)))
 						{
@@ -4064,7 +4064,7 @@ int AAS_Reachability_WeaponJump(int area1num, int area2num)
 												SE_TOUCHJUMPPAD|SE_HITGROUND|SE_HITGROUNDAREA, area2num, visualize);
 					//if prediction time wasn't enough to fully predict the movement
 					//don't enter slime or lava and don't fall from too high
-					if (move.frames < 30 && 
+					if (move.frames < 30 &&
 							!(move.stopevent & (SE_ENTERSLIME|SE_ENTERLAVA|SE_HITGROUNDDAMAGE))
 								&& (move.stopevent & (SE_HITGROUNDAREA|SE_TOUCHJUMPPAD)))
 					{

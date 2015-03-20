@@ -2,8 +2,8 @@
 
 	FreeAmp - The Free MP3 Player
 
-        MP3 Decoder originally Copyright (C) 1995-1997 Xing Technology
-        Corp.  http://www.xingtech.com
+		MP3 Decoder originally Copyright (C) 1995-1997 Xing Technology
+		Corp.  http://www.xingtech.com
 
 	Portions Copyright (C) 1998 EMusic.com
 
@@ -92,7 +92,7 @@ int L3table_init()
 
    static int iOnceOnly = 0;
 
-   	if (!iOnceOnly++)
+	if (!iOnceOnly++)
 	{
 /*================ quant ===============================*/
 

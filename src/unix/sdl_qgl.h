@@ -380,23 +380,23 @@ extern PFNGLGETPROGRAMSTRINGARBPROC qglGetProgramStringARB;
 extern PFNGLISPROGRAMARBPROC qglIsProgramARB;
 
 // ouned: gamma correction
-extern          GLboolean(APIENTRYP qglIsRenderbufferEXT) (GLuint renderbuffer);
-extern void     (APIENTRYP qglBindRenderbufferEXT) (GLenum target, GLuint renderbuffer);
-extern void     (APIENTRYP qglDeleteRenderbuffersEXT) (GLsizei n, const GLuint * renderbuffers);
-extern void     (APIENTRYP qglGenRenderbuffersEXT) (GLsizei n, GLuint * renderbuffers);
-extern void     (APIENTRYP qglRenderbufferStorageEXT) (GLenum target, GLenum internalformat, GLsizei width, GLsizei height);
-extern void     (APIENTRYP qglGetRenderbufferParameterivEXT) (GLenum target, GLenum pname, GLint * params);
-extern          GLboolean(APIENTRYP qglIsFramebufferEXT) (GLuint framebuffer);
-extern void     (APIENTRYP qglBindFramebufferEXT) (GLenum target, GLuint framebuffer);
-extern void     (APIENTRYP qglDeleteFramebuffersEXT) (GLsizei n, const GLuint * framebuffers);
-extern void     (APIENTRYP qglGenFramebuffersEXT) (GLsizei n, GLuint * framebuffers);
-extern          GLenum(APIENTRYP qglCheckFramebufferStatusEXT) (GLenum target);
-extern void     (APIENTRYP qglFramebufferTexture1DEXT) (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level);
-extern void     (APIENTRYP qglFramebufferTexture2DEXT) (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level);
-extern void     (APIENTRYP qglFramebufferTexture3DEXT) (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level, GLint zoffset);
-extern void     (APIENTRYP qglFramebufferRenderbufferEXT) (GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer);
-extern void     (APIENTRYP qglGetFramebufferAttachmentParameterivEXT) (GLenum target, GLenum attachment, GLenum pname, GLint * params);
-extern void     (APIENTRYP qglGenerateMipmapEXT) (GLenum target);
+extern		  GLboolean(APIENTRYP qglIsRenderbufferEXT) (GLuint renderbuffer);
+extern void	 (APIENTRYP qglBindRenderbufferEXT) (GLenum target, GLuint renderbuffer);
+extern void	 (APIENTRYP qglDeleteRenderbuffersEXT) (GLsizei n, const GLuint * renderbuffers);
+extern void	 (APIENTRYP qglGenRenderbuffersEXT) (GLsizei n, GLuint * renderbuffers);
+extern void	 (APIENTRYP qglRenderbufferStorageEXT) (GLenum target, GLenum internalformat, GLsizei width, GLsizei height);
+extern void	 (APIENTRYP qglGetRenderbufferParameterivEXT) (GLenum target, GLenum pname, GLint * params);
+extern		  GLboolean(APIENTRYP qglIsFramebufferEXT) (GLuint framebuffer);
+extern void	 (APIENTRYP qglBindFramebufferEXT) (GLenum target, GLuint framebuffer);
+extern void	 (APIENTRYP qglDeleteFramebuffersEXT) (GLsizei n, const GLuint * framebuffers);
+extern void	 (APIENTRYP qglGenFramebuffersEXT) (GLsizei n, GLuint * framebuffers);
+extern		  GLenum(APIENTRYP qglCheckFramebufferStatusEXT) (GLenum target);
+extern void	 (APIENTRYP qglFramebufferTexture1DEXT) (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level);
+extern void	 (APIENTRYP qglFramebufferTexture2DEXT) (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level);
+extern void	 (APIENTRYP qglFramebufferTexture3DEXT) (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level, GLint zoffset);
+extern void	 (APIENTRYP qglFramebufferRenderbufferEXT) (GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer);
+extern void	 (APIENTRYP qglGetFramebufferAttachmentParameterivEXT) (GLenum target, GLenum attachment, GLenum pname, GLint * params);
+extern void	 (APIENTRYP qglGenerateMipmapEXT) (GLenum target);
 
 typedef GLboolean(APIENTRYP PFNGLISRENDERBUFFEREXTPROC) (GLuint renderbuffer);
 typedef void (APIENTRYP PFNGLBINDRENDERBUFFEREXTPROC) (GLenum target, GLuint renderbuffer);
@@ -441,6 +441,6 @@ extern void ( * qglUnlockArraysEXT) ( void );
 
 #define GL_TEXTURE_RECTANGLE_EXT GL_TEXTURE_RECTANGLE_ARB
 
-#define GL_ACTIVE_TEXTURE_ARB               0x84E0
-#define GL_CLIENT_ACTIVE_TEXTURE_ARB        0x84E1
-#define GL_MAX_ACTIVE_TEXTURES_ARB          0x84E2
+#define GL_ACTIVE_TEXTURE_ARB			   0x84E0
+#define GL_CLIENT_ACTIVE_TEXTURE_ARB		0x84E1
+#define GL_MAX_ACTIVE_TEXTURES_ARB		  0x84E2

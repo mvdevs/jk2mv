@@ -27,7 +27,7 @@ public:
 	const char *GetData(void) const { return(mData); }
 };
 
-char			   		*shaderText = NULL;
+char					*shaderText = NULL;
 CHash<CCMShaderText>	shaderTextTable;
 CHash<CCMShader>		cmShaderTable;
 
@@ -239,8 +239,8 @@ infoParm_t	svInfoParms[] =
 	{"nodlight",			CONTENTS_ALL,					SURF_NODLIGHT,		0 },						// don't ever add dynamic lights
 
 	// Game content flags
-	{"nonsolid", 			~CONTENTS_SOLID,	0, 					0 },						// special hack to clear solid flag
-	{"nonopaque", 			~CONTENTS_OPAQUE,	0, 					0 },						// special hack to clear opaque flag
+	{"nonsolid",			~CONTENTS_SOLID,	0,					0 },						// special hack to clear solid flag
+	{"nonopaque",			~CONTENTS_OPAQUE,	0,					0 },						// special hack to clear opaque flag
 	{"lava",				~CONTENTS_SOLID,	0,					CONTENTS_LAVA },			// very damaging
 	{"water",				~CONTENTS_SOLID,	0,					CONTENTS_WATER },
 	{"fog",					~CONTENTS_SOLID,	0,					CONTENTS_FOG},				// carves surfaces entering

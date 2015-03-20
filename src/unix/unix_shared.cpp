@@ -59,17 +59,17 @@ int Sys_Milliseconds (void)
 
 void	Sys_Mkdir( const char *path )
 {
-    mkdir (path, 0777);
+	mkdir (path, 0777);
 }
 
 char *strlwr (char *s) {
   if ( s==NULL ) { // bk001204 - paranoia
-    assert(0);
-    return s;
+	assert(0);
+	return s;
   }
   while (*s) {
-    *s = tolower(*s);
-    s++;
+	*s = tolower(*s);
+	s++;
   }
   return s; // bk001204 - duh
 }
@@ -589,11 +589,11 @@ void	* QDECL Sys_LoadDll(const char *name, intptr_t(QDECL **entryPoint)(int, ...
   assert( name );
 
   if ( !getcwd(curpath, sizeof(curpath)) ) {
-    return NULL;
+	return NULL;
   }
 
 #ifdef MACOS_X
-    snprintf (fname, sizeof(fname), "%s.dylib", name);
+	snprintf (fname, sizeof(fname), "%s.dylib", name);
 #else
 #if defined __i386__
   snprintf (fname, sizeof(fname), "%s_i386.so", name);
@@ -611,7 +611,7 @@ void	* QDECL Sys_LoadDll(const char *name, intptr_t(QDECL **entryPoint)(int, ...
 #endif
 
 // bk001129 - was RTLD_LAZY
-#define Q_RTLD    RTLD_NOW
+#define Q_RTLD	RTLD_NOW
 
 #if 0 // bk010205 - was NDEBUG // bk001129 - FIXME: what is this good for?
   // bk001206 - do not have different behavior in builds
@@ -632,10 +632,10 @@ void	* QDECL Sys_LoadDll(const char *name, intptr_t(QDECL **entryPoint)(int, ...
   gamedir = Cvar_VariableString( "fs_game" );
 
   if (!strcmp(name, "jk2mvmenu")) {
-    sprintf(mvmenu, "%s/%s", basepath, fname);
-    fn = mvmenu;
+	sprintf(mvmenu, "%s/%s", basepath, fname);
+	fn = mvmenu;
   } else {
-    fn = FS_BuildOSPath( basepath, gamedir, fname );
+	fn = FS_BuildOSPath( basepath, gamedir, fname );
   }
   // bk001206 - verbose
   Com_Printf( "Sys_LoadDll(%s)... \n", fn );
@@ -644,30 +644,30 @@ void	* QDECL Sys_LoadDll(const char *name, intptr_t(QDECL **entryPoint)(int, ...
   libHandle = dlopen( fn, Q_RTLD );
 
   if ( !libHandle ) {
-    if( cdpath[0] ) {
-      // bk001206 - report any problem
-      Com_Printf( "Sys_LoadDll(%s) failed: \"%s\"\n", fn, dlerror() );
+	if( cdpath[0] ) {
+	  // bk001206 - report any problem
+	  Com_Printf( "Sys_LoadDll(%s) failed: \"%s\"\n", fn, dlerror() );
 
-      fn = FS_BuildOSPath( cdpath, gamedir, fname );
-      libHandle = dlopen( fn, Q_RTLD );
-      if ( !libHandle ) {
+	  fn = FS_BuildOSPath( cdpath, gamedir, fname );
+	  libHandle = dlopen( fn, Q_RTLD );
+	  if ( !libHandle ) {
 	// bk001206 - report any problem
 	Com_Printf( "Sys_LoadDll(%s) failed: \"%s\"\n", fn, dlerror() );
-      }
-      else
+	  }
+	  else
 	Com_Printf ( "Sys_LoadDll(%s): succeeded ...\n", fn );
-    }
-    else
-      Com_Printf ( "Sys_LoadDll(%s): succeeded ...\n", fn );
+	}
+	else
+	  Com_Printf ( "Sys_LoadDll(%s): succeeded ...\n", fn );
 
-    if ( !libHandle ) {
+	if ( !libHandle ) {
 #ifdef NDEBUG // bk001206 - in debug abort on failure
-      Com_Error ( ERR_FATAL, "Sys_LoadDll(%s) failed dlopen() completely!\n", name  );
+	  Com_Error ( ERR_FATAL, "Sys_LoadDll(%s) failed dlopen() completely!\n", name  );
 #else
-      Com_Printf ( "Sys_LoadDll(%s) failed dlopen() completely!\n", name );
+	  Com_Printf ( "Sys_LoadDll(%s) failed dlopen() completely!\n", name );
 #endif
-      return NULL;
-    }
+	  return NULL;
+	}
   }
   // bk001206 - no different behavior
   //#ifndef NDEBUG }
@@ -677,17 +677,17 @@ void	* QDECL Sys_LoadDll(const char *name, intptr_t(QDECL **entryPoint)(int, ...
   dllEntry = (void (*)(intptr_t (*)(intptr_t,...))) dlsym( libHandle, "dllEntry" );
   *entryPoint = (intptr_t(*)(int,...))dlsym( libHandle, "vmMain" );
   if ( !*entryPoint || !dllEntry ) {
-    err = dlerror();
+	err = dlerror();
 #ifdef NDEBUG // bk001206 - in debug abort on failure
-    Com_Error ( ERR_FATAL, "Sys_LoadDll(%s) failed dlsym(vmMain): \"%s\" !\n", name, err );
+	Com_Error ( ERR_FATAL, "Sys_LoadDll(%s) failed dlsym(vmMain): \"%s\" !\n", name, err );
 #else
-    Com_Printf ( "Sys_LoadDll(%s) failed dlsym(vmMain): \"%s\" !\n", name, err );
+	Com_Printf ( "Sys_LoadDll(%s) failed dlsym(vmMain): \"%s\" !\n", name, err );
 #endif
-    dlclose( libHandle );
-    err = dlerror();
-    if ( err != NULL )
-      Com_Printf ( "Sys_LoadDll(%s) failed dlcose: \"%s\"\n", name, err );
-    return NULL;
+	dlclose( libHandle );
+	err = dlerror();
+	if ( err != NULL )
+	  Com_Printf ( "Sys_LoadDll(%s) failed dlcose: \"%s\"\n", name, err );
+	return NULL;
   }
   Com_Printf ( "Sys_LoadDll(%s) found **vmMain** at  %p  \n", name, *entryPoint ); // bk001212
   dllEntry( systemcalls );

@@ -1,14 +1,14 @@
 if(WIN32)
-    cmake_minimum_required(VERSION 3.1.0) # assembler stuff
+	cmake_minimum_required(VERSION 3.1.0) # assembler stuff
 else()
-    cmake_minimum_required(VERSION 2.8.8)
+	cmake_minimum_required(VERSION 2.8.8)
 endif()
 
 if(POLICY CMP0043)
-    cmake_policy(SET CMP0043 OLD) # debian wheezy still uses 2.8.9
+	cmake_policy(SET CMP0043 OLD) # debian wheezy still uses 2.8.9
 endif()
 if(POLICY CMP0042)
-    cmake_policy(SET CMP0042 OLD)
+	cmake_policy(SET CMP0042 OLD)
 endif()
 
 # For checks in subdirectories
@@ -28,9 +28,9 @@ set(MV_VERSION "${MV_MAJOR_VERSION}.${MV_MINOR_VERSION}${MV_EXT_VERSION}")
 
 # Languages
 if(WIN32)
-    enable_language(C CXX ASM_MASM)
+	enable_language(C CXX ASM_MASM)
 else()
-    enable_language(C CXX)
+	enable_language(C CXX)
 endif()
 
 # Customizable options
@@ -39,11 +39,11 @@ option(BuildMVMP "Whether to create projects for the client (jk2mvmp & jk2mvmenu
 option(BuildMVDED "Whether to create projects for the dedicated server (jk2mvded)" ON)
 
 if(WIN32 OR APPLE)
-    option(BuildPack "Whether to create the image / installer" OFF)
+	option(BuildPack "Whether to create the image / installer" OFF)
 endif()
 
 if(WIN32)
-    set(UseInternalPNG ON)
+	set(UseInternalPNG ON)
 elseif(APPLE)
 	option(UseInternalPNG "Whether to use the included libpng instead of a locally installed one" ON)
 else()
@@ -51,7 +51,7 @@ else()
 endif()
 
 if(WIN32)
-    set(UseInternalJPEG ON)
+	set(UseInternalJPEG ON)
 elseif(APPLE)
 	option(UseInternalJPEG "Whether to use the included libjpeg instead of a locally installed one" ON)
 else()
@@ -83,48 +83,48 @@ list(INSERT CMAKE_MODULE_PATH 0 "${RESDir}")
 set(CMAKE_OSX_ARCHITECTURES "i386" "x86_64") # always building both on osx
 
 if(CMAKE_SIZEOF_VOID_P MATCHES "8")
-    set(ARCH_BITS 64)
+	set(ARCH_BITS 64)
 	if(WIN32)
 		set(Architecture "x64")
 		set(WIN64 TRUE)
 	elseif(APPLE)
 		set(Architecture "universal")
-    else()
-        set(Architecture "amd64")
+	else()
+		set(Architecture "amd64")
 	endif()
-    
-    if(NOT APPLE)
-        set(GlobalDefines ${GlobalDefines} "_M_X64")
-    endif()
+
+	if(NOT APPLE)
+		set(GlobalDefines ${GlobalDefines} "_M_X64")
+	endif()
 else()
-    set(ARCH_BITS 32)
+	set(ARCH_BITS 32)
 	if(WIN32)
 		set(Architecture "x86")
 		set(WIN64 FALSE)
-    elseif(APPLE)
-        set(Architecture "universal")
-    else()
-        set(Architecture "i386")
+	elseif(APPLE)
+		set(Architecture "universal")
+	else()
+		set(Architecture "i386")
 	endif()
-    
-    if(NOT APPLE)
-        set(GlobalDefines ${GlobalDefines} "_M_IX86")
-    endif()
+
+	if(NOT APPLE)
+		set(GlobalDefines ${GlobalDefines} "_M_IX86")
+	endif()
 endif()
 
 message(STATUS "Architecture is ${Architecture}")
 
 # Binary names
 if(NOT APPLE)
-    set(MVMP "jk2mvmp_${Architecture}")
-    set(MVMENU "jk2mvmenu_${Architecture}")
-    set(MVDED "jk2mvded_${Architecture}")
+	set(MVMP "jk2mvmp_${Architecture}")
+	set(MVMENU "jk2mvmenu_${Architecture}")
+	set(MVDED "jk2mvded_${Architecture}")
 else()
-    set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/out/install")
+	set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/out/install")
 
-    set(MVMP "jk2mvmp")
-    set(MVMENU "jk2mvmenu")
-    set(MVDED "jk2mvded")
+	set(MVMP "jk2mvmp")
+	set(MVMENU "jk2mvmenu")
+	set(MVDED "jk2mvded")
 endif()
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/out)
@@ -147,75 +147,75 @@ set(ReleaseDefines "FINAL_BUILD" "NDEBUG")
 
 if(WIN32)
 	if(MSVC)
-        set(GlobalDefines ${GlobalDefines} "_CRT_SECURE_NO_WARNINGS")
-        
-        # Multithreaded
-        set(CMAKE_CXX_FLAGS_RELEASE "/MT" CACHE TYPE INTERNAL FORCE)
-        set(CMAKE_C_FLAGS_RELEASE "/MT" CACHE TYPE INTERNAL FORCE)
-        
-        # Platform
-        set(GlobalDefines ${GlobalDefines} "UNICODE" "_UNICODE")
-        
-        # Optimization
-        set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} /MP") # multiprocessor compilation
-        set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MP")
-        set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} /O2 /Oi /Ot /Ob2 /fp:fast") # maximize speed
-        set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /O2 /Oi /Ot /Ob2 /fp:fast")
-        
-        if(WIN64)
-            set(GlobalDefines ${GlobalDefines} "WIN64")
-        else()
-            set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /arch:SSE2")
-            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /arch:SSE2")
-            
-            set(CMAKE_ASM_MASM_FLAGS "${CMAKE_ASM_MASM_FLAGS} /safeseh") # safe exception handler
-        endif()
-    endif()
+		set(GlobalDefines ${GlobalDefines} "_CRT_SECURE_NO_WARNINGS")
+
+		# Multithreaded
+		set(CMAKE_CXX_FLAGS_RELEASE "/MT" CACHE TYPE INTERNAL FORCE)
+		set(CMAKE_C_FLAGS_RELEASE "/MT" CACHE TYPE INTERNAL FORCE)
+
+		# Platform
+		set(GlobalDefines ${GlobalDefines} "UNICODE" "_UNICODE")
+
+		# Optimization
+		set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} /MP") # multiprocessor compilation
+		set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MP")
+		set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} /O2 /Oi /Ot /Ob2 /fp:fast") # maximize speed
+		set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /O2 /Oi /Ot /Ob2 /fp:fast")
+
+		if(WIN64)
+			set(GlobalDefines ${GlobalDefines} "WIN64")
+		else()
+			set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /arch:SSE2")
+			set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /arch:SSE2")
+
+			set(CMAKE_ASM_MASM_FLAGS "${CMAKE_ASM_MASM_FLAGS} /safeseh") # safe exception handler
+		endif()
+	endif()
 else()
 	if(APPLE)
 		set(GlobalDefines ${GlobalDefines} "MACOS_X")
-    endif()
-    
-    # Additional flags for debug configuration
+	endif()
+
+	# Additional flags for debug configuration
 	set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -ggdb")
 	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -ggdb")
-    
-    # ouned: need sse optimizations in debug configuration, too because of the inline assembler which is sse code
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -msse2")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse2")
-    
-    # Optimization
+
+	# ouned: need sse optimizations in debug configuration, too because of the inline assembler which is sse code
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -msse2")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse2")
+
+	# Optimization
 	set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O3 -ffast-math")
 	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -ffast-math")
-    
-    if("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU")
-        set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -mfpmath=sse -fexpensive-optimizations")
-        
-        # Link only libs actually needed
-        set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -Wl,--as-needed,-s")
-        
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=hidden")
-    elseif("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang")
-        set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -flto")
-        
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-comment -Wno-reorder -Wunused-value -Wswitch")
-    endif()
-    
-    if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-        set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -mfpmath=sse -fexpensive-optimizations")
-        
-        # Link only libs actually needed
-        set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wl,--as-needed,-s")
-        
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility-inlines-hidden")
-        
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-write-strings")
-    elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-        set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -flto")
-        
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-comment -Wno-deprecated-writable-strings -Wno-reorder -Wunused-value -Wswitch")
-    endif()
+
+	if("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU")
+		set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -mfpmath=sse -fexpensive-optimizations")
+
+		# Link only libs actually needed
+		set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -Wl,--as-needed,-s")
+
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=hidden")
+	elseif("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang")
+		set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -flto")
+
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-comment -Wno-reorder -Wunused-value -Wswitch")
+	endif()
+
+	if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+		set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -mfpmath=sse -fexpensive-optimizations")
+
+		# Link only libs actually needed
+		set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wl,--as-needed,-s")
+
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden")
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility-inlines-hidden")
+
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-write-strings")
+	elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+		set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -flto")
+
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-comment -Wno-deprecated-writable-strings -Wno-reorder -Wunused-value -Wswitch")
+	endif()
 endif()
 
 if(NOT CMAKE_BUILD_TYPE)
@@ -224,19 +224,19 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 if(UseInternalPNG)
-    set(GlobalDefines ${GlobalDefines} "INTERNAL_PNG")
+	set(GlobalDefines ${GlobalDefines} "INTERNAL_PNG")
 endif()
 
 if(UseInternalJPEG)
-    set(GlobalDefines ${GlobalDefines} "INTERNAL_JPEG")
+	set(GlobalDefines ${GlobalDefines} "INTERNAL_JPEG")
 endif()
 
 if(UseInternalZLIB)
-    set(GlobalDefines ${GlobalDefines} "INTERNAL_ZLIB")
+	set(GlobalDefines ${GlobalDefines} "INTERNAL_ZLIB")
 endif()
 
 if(UseInternalCURL)
-    set(GlobalDefines ${GlobalDefines} "INTERNAL_CURL")
+	set(GlobalDefines ${GlobalDefines} "INTERNAL_CURL")
 endif()
 
 if(BuildPortableVersion)
@@ -253,22 +253,22 @@ set(CPACK_PACKAGE_VERSION_MINOR "${MV_MINOR_VERSION}")
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE.txt")
 
 if(BuildPack)
-    if(WIN32)
-        set(CPACK_GENERATOR "NSIS")
-        set(CPACK_NSIS_URL_INFO_ABOUT "http://jk2mv.org")
-        
-        configure_file(
-            ${RESDir}/NSIS.definitions.nsh.in
-            ${CMAKE_CURRENT_BINARY_DIR}/res/NSIS.definitions.nsh
-        )
-        string(REGEX REPLACE "/" "\\\\\\\\" CPACK_NSIS_INCLFILE "${CMAKE_CURRENT_BINARY_DIR}/res/NSIS.definitions.nsh")
-        
-        include(CPack)
-    elseif(APPLE)
-        # TODO
-        set(CPACK_GENERATOR "Bundle")
-        set(CPACK_BUNDLE_NAME ${ProjectName})
-    endif()
+	if(WIN32)
+		set(CPACK_GENERATOR "NSIS")
+		set(CPACK_NSIS_URL_INFO_ABOUT "http://jk2mv.org")
+
+		configure_file(
+			${RESDir}/NSIS.definitions.nsh.in
+			${CMAKE_CURRENT_BINARY_DIR}/res/NSIS.definitions.nsh
+		)
+		string(REGEX REPLACE "/" "\\\\\\\\" CPACK_NSIS_INCLFILE "${CMAKE_CURRENT_BINARY_DIR}/res/NSIS.definitions.nsh")
+
+		include(CPack)
+	elseif(APPLE)
+		# TODO
+		set(CPACK_GENERATOR "Bundle")
+		set(CPACK_BUNDLE_NAME ${ProjectName})
+	endif()
 endif()
 
 add_subdirectory(${SRCDir})

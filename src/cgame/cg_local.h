@@ -36,9 +36,9 @@
 // Zoom vars
 #define	ZOOM_TIME			150		// not currently used?
 #define MAX_ZOOM_FOV		3.0f
-#define ZOOM_IN_TIME		1500.0f	
+#define ZOOM_IN_TIME		1500.0f
 #define ZOOM_OUT_TIME		100.0f
-#define ZOOM_START_PERCENT	0.3f	
+#define ZOOM_START_PERCENT	0.3f
 
 #define	ITEM_BLOB_TIME		200
 #define	MUZZLE_FLASH_TIME	20
@@ -180,7 +180,7 @@ typedef struct centity_s {
 	int				errorTime;		// decay the error from this time
 	vec3_t			errorOrigin;
 	vec3_t			errorAngles;
-	
+
 	qboolean		extrapolated;	// false if origin / angles is an interpolation
 	vec3_t			rawOrigin;
 	vec3_t			rawAngles;
@@ -212,7 +212,7 @@ typedef struct centity_s {
 
 	int				rootBone;
 	int				torsoBolt;
-	
+
 	vec3_t			turAngles;
 
 	int				isATST;
@@ -396,7 +396,7 @@ typedef struct localEntity_s {
 		} fragment;
 	} data;
 
-	refEntity_t		refEntity;		
+	refEntity_t		refEntity;
 } localEntity_t;
 
 //======================================================================
@@ -427,7 +427,7 @@ typedef struct {
 // usually as a result of a userinfo (name, model, etc) change
 #define	MAX_CUSTOM_SOUNDS	32
 
-typedef struct 
+typedef struct
 {
 	// Actual trail stuff
 	int		inAction;	// controls whether should we even consider starting one
@@ -441,7 +441,7 @@ typedef struct
 
 	// Marks stuff
 	qboolean	haveOldPos[2];
-	vec3_t		oldPos[2];		
+	vec3_t		oldPos[2];
 	vec3_t		oldNormal[2];	// store this in case we don't have a connect-the-dots situation
 							//	..then we'll need the normal to project a mark blob onto the impact point
 } saberTrail_t;
@@ -514,7 +514,7 @@ typedef struct {
 	qboolean		ATST;
 
 	void			*ghoul2Model;
-	
+
 	qhandle_t		modelIcon;
 
 	qhandle_t		bolt_rhand;
@@ -630,12 +630,12 @@ typedef struct {
 // occurs, and they will have visible effects for #define STEP_TIME or whatever msec after
 
 #define MAX_PREDICTED_EVENTS	16
- 
+
 typedef struct {
 	int			clientFrame;		// incremented each frame
 
 	int			clientNum;
-	
+
 	qboolean	demoPlayback;
 	qboolean	levelShot;			// taking a level menu screenshot
 	int			deferredPlayerLoading;
@@ -737,7 +737,7 @@ typedef struct {
 	int				spectatorPaintX;										// current paint x
 	int				spectatorPaintX2;										// current paint x
 	int				spectatorOffset;										// current offset from start
-	int				spectatorPaintLen; 									// current offset from start
+	int				spectatorPaintLen;									// current offset from start
 
 	// skull trails
 	skulltrail_t	skulltrails[MAX_CLIENTS];
@@ -824,7 +824,7 @@ typedef struct {
 	float		bobfracsin;
 	int			bobcycle;
 	float		xyspeed;
-	int     nextOrbitTime;
+	int	 nextOrbitTime;
 
 	//qboolean cameraMode;		// if rendering from a loaded camera
 	int			loadLCARSStage;
@@ -1236,10 +1236,10 @@ typedef struct
 	// DISRUPTOR
 	fxHandle_t  disruptorRingsEffect;
 	fxHandle_t  disruptorProjectileEffect;
-	fxHandle_t  disruptorWallImpactEffect;	
-	fxHandle_t  disruptorFleshImpactEffect;	
-	fxHandle_t  disruptorAltMissEffect;	
-	fxHandle_t  disruptorAltHitEffect;	
+	fxHandle_t  disruptorWallImpactEffect;
+	fxHandle_t  disruptorFleshImpactEffect;
+	fxHandle_t  disruptorAltMissEffect;
+	fxHandle_t  disruptorAltHitEffect;
 
 	// BOWCASTER
 	fxHandle_t	bowcasterShotEffect;
@@ -1248,7 +1248,7 @@ typedef struct
 	// REPEATER
 	fxHandle_t  repeaterProjectileEffect;
 	fxHandle_t  repeaterAltProjectileEffect;
-	fxHandle_t  repeaterWallImpactEffect;	
+	fxHandle_t  repeaterWallImpactEffect;
 	fxHandle_t  repeaterFleshImpactEffect;
 	fxHandle_t  repeaterAltWallImpactEffect;
 
@@ -1502,8 +1502,8 @@ extern	vmCvar_t		cg_synchronousClients;
 extern	vmCvar_t		cg_teamChatTime;
 extern	vmCvar_t		cg_teamChatHeight;
 extern	vmCvar_t		cg_stats;
-extern	vmCvar_t 		cg_forceModel;
-extern	vmCvar_t 		cg_buildScript;
+extern	vmCvar_t		cg_forceModel;
+extern	vmCvar_t		cg_buildScript;
 extern	vmCvar_t		cg_paused;
 extern	vmCvar_t		cg_blood;
 extern	vmCvar_t		cg_predictItems;
@@ -1615,12 +1615,12 @@ void CG_FillRect( float x, float y, float width, float height, const float *colo
 void CG_DrawPic( float x, float y, float width, float height, qhandle_t hShader );
 void CG_DrawRotatePic( float x, float y, float width, float height,float angle, qhandle_t hShader );
 void CG_DrawRotatePic2( float x, float y, float width, float height,float angle, qhandle_t hShader );
-void CG_DrawString( float x, float y, const char *string, 
+void CG_DrawString( float x, float y, const char *string,
 				   float charWidth, float charHeight, const float *modulate );
 
 void CG_DrawNumField (int x, int y, int width, int value,int charWidth,int charHeight,int style,qboolean zeroFill);
 
-void CG_DrawStringExt( int x, int y, const char *string, const float *setColor, 
+void CG_DrawStringExt( int x, int y, const char *string, const float *setColor,
 		qboolean forceColor, qboolean shadow, int charWidth, int charHeight, int maxChars );
 void CG_DrawBigString( int x, int y, const char *s, float alpha );
 void CG_DrawBigStringColor( int x, int y, const char *s, vec4_t color );
@@ -1700,7 +1700,7 @@ void CG_PlayerShieldHit(int entitynum, vec3_t angles, int amount);
 //
 void CG_BuildSolidList( void );
 int	CG_PointContents( const vec3_t point, int passEntityNum );
-void CG_Trace( trace_t *result, const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, 
+void CG_Trace( trace_t *result, const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end,
 					 int skipNumber, int mask );
 void CG_PredictPlayerState( void );
 void CG_LoadDeferredPlayers( void );
@@ -1725,9 +1725,9 @@ void CG_ManualEntityRender(centity_t *cent);
 void CG_Beam( centity_t *cent );
 void CG_AdjustPositionForMover( const vec3_t in, int moverNum, int fromTime, int toTime, vec3_t out );
 
-void CG_PositionEntityOnTag( refEntity_t *entity, const refEntity_t *parent, 
+void CG_PositionEntityOnTag( refEntity_t *entity, const refEntity_t *parent,
 							qhandle_t parentModel, char *tagName );
-void CG_PositionRotatedEntityOnTag( refEntity_t *entity, const refEntity_t *parent, 
+void CG_PositionRotatedEntityOnTag( refEntity_t *entity, const refEntity_t *parent,
 							qhandle_t parentModel, char *tagName );
 
 /*
@@ -1771,11 +1771,11 @@ void CG_OutOfAmmoChange( int oldWeapon );	// should this be in pmove?
 //
 void	CG_InitMarkPolys( void );
 void	CG_AddMarks( void );
-void	CG_ImpactMark( qhandle_t markShader, 
-				    const vec3_t origin, const vec3_t dir, 
-					float orientation, 
-				    float r, float g, float b, float a, 
-					qboolean alphaFade, 
+void	CG_ImpactMark( qhandle_t markShader,
+					const vec3_t origin, const vec3_t dir,
+					float orientation,
+					float r, float g, float b, float a,
+					qboolean alphaFade,
 					float radius, qboolean temporary );
 
 //
@@ -1788,8 +1788,8 @@ void	CG_AddLocalEntities( void );
 //
 // cg_effects.c
 //
-localEntity_t *CG_SmokePuff( const vec3_t p, 
-				   const vec3_t vel, 
+localEntity_t *CG_SmokePuff( const vec3_t p,
+				   const vec3_t vel,
 				   float radius,
 				   float r, float g, float b, float a,
 				   float duration,
@@ -1804,7 +1804,7 @@ void CG_ScorePlum( int client, vec3_t org, int score );
 
 void CG_Bleed( vec3_t origin, int entityNum );
 
-localEntity_t *CG_MakeExplosion( vec3_t origin, vec3_t dir, 
+localEntity_t *CG_MakeExplosion( vec3_t origin, vec3_t dir,
 								qhandle_t hModel, int numframes, qhandle_t shader, int msec,
 								qboolean isSprite, float scale, int flags );// Overloaded in single player
 
@@ -1935,7 +1935,7 @@ void		trap_CM_TransformedBoxTrace( trace_t *results, const vec3_t start, const v
 					  const vec3_t origin, const vec3_t angles );
 
 // Returns the projection of a polygon onto the solid brushes in the world
-int			trap_CM_MarkFragments( int numPoints, const vec3_t *points, 
+int			trap_CM_MarkFragments( int numPoints, const vec3_t *points,
 			const vec3_t projection,
 			int maxPoints, vec3_t pointBuffer,
 			int maxFragments, markFragment_t *fragmentBuffer );
@@ -1992,16 +1992,16 @@ void		trap_R_AddLightToScene( const vec3_t org, float intensity, float r, float 
 int			trap_R_LightForPoint( vec3_t point, vec3_t ambientLight, vec3_t directedLight, vec3_t lightDir );
 void		trap_R_RenderScene( const refdef_t *fd );
 void		trap_R_SetColor( const float *rgba );	// NULL = 1,1,1,1
-void		trap_R_DrawStretchPic( float x, float y, float w, float h, 
+void		trap_R_DrawStretchPic( float x, float y, float w, float h,
 			float s1, float t1, float s2, float t2, qhandle_t hShader );
 void		trap_R_ModelBounds( clipHandle_t model, vec3_t mins, vec3_t maxs );
-int			trap_R_LerpTag( orientation_t *tag, clipHandle_t mod, int startFrame, int endFrame, 
+int			trap_R_LerpTag( orientation_t *tag, clipHandle_t mod, int startFrame, int endFrame,
 					   float frac, const char *tagName );
 // Does weird, barely controllable rotation behaviour
-void	trap_R_DrawRotatePic( float x, float y, float w, float h, 
+void	trap_R_DrawRotatePic( float x, float y, float w, float h,
 			float s1, float t1, float s2, float t2,float a, qhandle_t hShader );
 // rotates image around exact center point of passed in coords
-void	trap_R_DrawRotatePic2( float x, float y, float w, float h, 
+void	trap_R_DrawRotatePic2( float x, float y, float w, float h,
 			float s1, float t1, float s2, float t2,float a, qhandle_t hShader );
 void		trap_R_RemapShader( const char *oldShader, const char *newShader, const char *timeOffset );
 
@@ -2043,7 +2043,7 @@ qboolean	trap_GetServerCommand( int serverCommandNumber );
 // this will always be at least one higher than the number in the current
 // snapshot, and it may be quite a few higher if it is a fast computer on
 // a lagged connection
-int			trap_GetCurrentCmdNumber( void );	
+int			trap_GetCurrentCmdNumber( void );
 
 qboolean	trap_GetUserCmd( int cmdNumber, usercmd_t *ucmd );
 
@@ -2095,11 +2095,11 @@ qboolean	trap_R_inPVS( const vec3_t p1, const vec3_t p2 );
 int	trap_FX_RegisterEffect(const char *file);
 void trap_FX_PlaySimpleEffect( const char *file, vec3_t org );					// uses a default up axis
 void trap_FX_PlayEffect( const char *file, vec3_t org, vec3_t fwd );		// builds arbitrary perp. right vector, does a cross product to define up
-void trap_FX_PlayEntityEffect( const char *file, vec3_t org, 
+void trap_FX_PlayEntityEffect( const char *file, vec3_t org,
 						vec3_t axis[3], const int boltInfo, const int entNum );
 void trap_FX_PlaySimpleEffectID( int id, vec3_t org );					// uses a default up axis
 void trap_FX_PlayEffectID( int id, vec3_t org, vec3_t fwd );		// builds arbitrary perp. right vector, does a cross product to define up
-void trap_FX_PlayEntityEffectID( int id, vec3_t org, 
+void trap_FX_PlayEntityEffectID( int id, vec3_t org,
 						vec3_t axis[3], const int boltInfo, const int entNum );
 void trap_FX_PlayBoltedEffectID( int id, sharedBoltInterface_t *fxObj );
 void trap_FX_AddScheduledEffects( void );
@@ -2146,7 +2146,7 @@ void FX_TurretHitPlayer( vec3_t origin, vec3_t normal, qboolean humanoid );
 // Effects related prototypes
 //-----------------------------
 
-// Environmental effects 
+// Environmental effects
 void CG_Spark( vec3_t origin, vec3_t dir );
 
 // Weapon prototypes
@@ -2168,7 +2168,7 @@ void FX_ForceDrained(vec3_t origin, vec3_t dir);
 // Effects related prototypes
 //-----------------------------
 
-// Environmental effects 
+// Environmental effects
 void CG_Spark( vec3_t origin, vec3_t dir );
 
 // Weapon prototypes

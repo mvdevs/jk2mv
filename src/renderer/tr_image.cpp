@@ -555,7 +555,7 @@ static void R_Images_DeleteImageContents( image_t *pImage )
 		if (qglDeleteTextures) {	//won't have one if we switched to dedicated.
 			qglDeleteTextures( 1, &pImage->texnum );
 		}
-        
+
 		Z_Free(pImage);
 	}
 }
@@ -837,7 +837,7 @@ void R_Images_Clear(void)
 {
 	image_t *pImage;
 	//	int iNumImages =
-	   				  R_Images_StartIteration();
+					  R_Images_StartIteration();
 	while ( (pImage = R_Images_GetNextIteration()) != NULL)
 	{
 		R_Images_DeleteImageContents(pImage);
@@ -1407,7 +1407,7 @@ void LoadTGA ( const char *name, byte **pic, int *width, int *height)
 			{
 				packetHeader = *pIn++;
 				packetSize   = 1 + (packetHeader & 0x7f);
-				if (packetHeader & 0x80)         // run-length packet
+				if (packetHeader & 0x80)		 // run-length packet
 				{
 					switch (pHeader->byImagePlanes)
 					{
@@ -1623,7 +1623,7 @@ void LoadJPG( const char *filename, unsigned char **pic, int *width, int *height
 	*height = cinfo.output_height;
 
 	/* Step 6: while (scan lines remain to be read) */
-	/*           jpeg_read_scanlines(...); */
+	/*		   jpeg_read_scanlines(...); */
 
 	/* Here we use the library's state variable cinfo.output_scanline as the
 	* loop counter, so that we don't have to keep track ourselves.

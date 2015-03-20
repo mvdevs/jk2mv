@@ -288,22 +288,22 @@ PFNGLGETOBJECTPARAMETERIVARBPROC qglGetObjectParameterivARB = NULL;
 PFNGLGETATTACHEDOBJECTSARBPROC qglGetAttachedObjectsARB = NULL;
 
 GLboolean(APIENTRY * qglIsRenderbufferEXT) (GLuint renderbuffer);
-void            (APIENTRY * qglBindRenderbufferEXT) (GLenum target, GLuint renderbuffer);
-void            (APIENTRY * qglDeleteRenderbuffersEXT) (GLsizei n, const GLuint * renderbuffers);
-void            (APIENTRY * qglGenRenderbuffersEXT) (GLsizei n, GLuint * renderbuffers);
-void            (APIENTRY * qglRenderbufferStorageEXT) (GLenum target, GLenum internalformat, GLsizei width, GLsizei height);
-void            (APIENTRY * qglGetRenderbufferParameterivEXT) (GLenum target, GLenum pname, GLint * params);
+void			(APIENTRY * qglBindRenderbufferEXT) (GLenum target, GLuint renderbuffer);
+void			(APIENTRY * qglDeleteRenderbuffersEXT) (GLsizei n, const GLuint * renderbuffers);
+void			(APIENTRY * qglGenRenderbuffersEXT) (GLsizei n, GLuint * renderbuffers);
+void			(APIENTRY * qglRenderbufferStorageEXT) (GLenum target, GLenum internalformat, GLsizei width, GLsizei height);
+void			(APIENTRY * qglGetRenderbufferParameterivEXT) (GLenum target, GLenum pname, GLint * params);
 GLboolean(APIENTRY * qglIsFramebufferEXT) (GLuint framebuffer);
-void            (APIENTRY * qglBindFramebufferEXT) (GLenum target, GLuint framebuffer);
-void            (APIENTRY * qglDeleteFramebuffersEXT) (GLsizei n, const GLuint * framebuffers);
-void            (APIENTRY * qglGenFramebuffersEXT) (GLsizei n, GLuint * framebuffers);
+void			(APIENTRY * qglBindFramebufferEXT) (GLenum target, GLuint framebuffer);
+void			(APIENTRY * qglDeleteFramebuffersEXT) (GLsizei n, const GLuint * framebuffers);
+void			(APIENTRY * qglGenFramebuffersEXT) (GLsizei n, GLuint * framebuffers);
 GLenum(APIENTRY * qglCheckFramebufferStatusEXT) (GLenum target);
-void            (APIENTRY * qglFramebufferTexture1DEXT) (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level);
-void            (APIENTRY * qglFramebufferTexture2DEXT) (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level);
-void            (APIENTRY * qglFramebufferTexture3DEXT) (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level, GLint zoffset);
-void            (APIENTRY * qglFramebufferRenderbufferEXT) (GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer);
-void            (APIENTRY * qglGetFramebufferAttachmentParameterivEXT) (GLenum target, GLenum attachment, GLenum pname, GLint * params);
-void            (APIENTRY * qglGenerateMipmapEXT) (GLenum target);
+void			(APIENTRY * qglFramebufferTexture1DEXT) (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level);
+void			(APIENTRY * qglFramebufferTexture2DEXT) (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level);
+void			(APIENTRY * qglFramebufferTexture3DEXT) (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level, GLint zoffset);
+void			(APIENTRY * qglFramebufferRenderbufferEXT) (GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer);
+void			(APIENTRY * qglGetFramebufferAttachmentParameterivEXT) (GLenum target, GLenum attachment, GLenum pname, GLint * params);
+void			(APIENTRY * qglGenerateMipmapEXT) (GLenum target);
 void			(APIENTRY * qglBlitFramebufferEXT) (GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter);
 
 #endif
@@ -379,41 +379,41 @@ GL_CheckErrors
 ==================
 */
 void GL_CheckErrors( void ) {
-    int		err;
-    char	s[64];
+	int		err;
+	char	s[64];
 
-    err = qglGetError();
-    if ( err == GL_NO_ERROR ) {
-        return;
-    }
-    if ( r_ignoreGLErrors->integer ) {
-        return;
-    }
-    switch( err ) {
-        case GL_INVALID_ENUM:
-            strcpy( s, "GL_INVALID_ENUM" );
-            break;
-        case GL_INVALID_VALUE:
-            strcpy( s, "GL_INVALID_VALUE" );
-            break;
-        case GL_INVALID_OPERATION:
-            strcpy( s, "GL_INVALID_OPERATION" );
-            break;
-        case GL_STACK_OVERFLOW:
-            strcpy( s, "GL_STACK_OVERFLOW" );
-            break;
-        case GL_STACK_UNDERFLOW:
-            strcpy( s, "GL_STACK_UNDERFLOW" );
-            break;
-        case GL_OUT_OF_MEMORY:
-            strcpy( s, "GL_OUT_OF_MEMORY" );
-            break;
-        default:
-            Com_sprintf( s, sizeof(s), "%i", err);
-            break;
-    }
+	err = qglGetError();
+	if ( err == GL_NO_ERROR ) {
+		return;
+	}
+	if ( r_ignoreGLErrors->integer ) {
+		return;
+	}
+	switch( err ) {
+		case GL_INVALID_ENUM:
+			strcpy( s, "GL_INVALID_ENUM" );
+			break;
+		case GL_INVALID_VALUE:
+			strcpy( s, "GL_INVALID_VALUE" );
+			break;
+		case GL_INVALID_OPERATION:
+			strcpy( s, "GL_INVALID_OPERATION" );
+			break;
+		case GL_STACK_OVERFLOW:
+			strcpy( s, "GL_STACK_OVERFLOW" );
+			break;
+		case GL_STACK_UNDERFLOW:
+			strcpy( s, "GL_STACK_UNDERFLOW" );
+			break;
+		case GL_OUT_OF_MEMORY:
+			strcpy( s, "GL_OUT_OF_MEMORY" );
+			break;
+		default:
+			Com_sprintf( s, sizeof(s), "%i", err);
+			break;
+	}
 
-    ri.Error( ERR_FATAL, "GL_CheckErrors: %s", s );
+	ri.Error( ERR_FATAL, "GL_CheckErrors: %s", s );
 }
 
 #endif //!DEDICATED
@@ -423,20 +423,20 @@ void GL_CheckErrors( void ) {
 */
 typedef struct vidmode_s
 {
-    const char *description;
-    int         width, height;
+	const char *description;
+	int		 width, height;
 	float		pixelAspect;		// pixel width / height
 } vidmode_t;
 
 // ouned: screen resolutions
 vidmode_t r_vidModes[] = {
 	// 4:3
-	{ "Mode  0:  320x240",    320,  240,  1 },
-	{ "Mode  1:  400x300",    400,  300,  1 },
-	{ "Mode  2:  512x384",    512,  384,  1 },
-	{ "Mode  3:  640x480",    640,  480,  1 },
-	{ "Mode  4:  800x600",    800,  600,  1 },
-	{ "Mode  5:  960x720",    960,  720,  1 },
+	{ "Mode  0:  320x240",	320,  240,  1 },
+	{ "Mode  1:  400x300",	400,  300,  1 },
+	{ "Mode  2:  512x384",	512,  384,  1 },
+	{ "Mode  3:  640x480",	640,  480,  1 },
+	{ "Mode  4:  800x600",	800,  600,  1 },
+	{ "Mode  5:  960x720",	960,  720,  1 },
 	{ "Mode  6:  1024x768",   1024, 768,  1 },
 	{ "Mode  7:  1152x864",   1152, 864,  1 },
 	{ "Mode  8:  1280x1024",  1280, 1024, 1 },
@@ -444,8 +444,8 @@ vidmode_t r_vidModes[] = {
 	{ "Mode  10: 2048x1536",  2048, 1536, 1 },
 
 	// 16:9
-	{ "Mode  11: 960x540",    960,  540,  1 },
-	{ "Mode  12: 960x544",    960,  544,  1 },
+	{ "Mode  11: 960x540",	960,  540,  1 },
+	{ "Mode  12: 960x544",	960,  544,  1 },
 	{ "Mode  13: 1024x576",   1024, 576,  1 },
 	{ "Mode  14: 1024x600",   1024, 600,  1 },
 	{ "Mode  15: 1136x640",   1136, 640,  1 },
@@ -473,8 +473,8 @@ static int	s_numVidModes = ( sizeof( r_vidModes ) / sizeof( r_vidModes[0] ) );
 qboolean R_GetModeInfo( int *width, int *height, float *windowAspect, int mode ) {
 	vidmode_t	*vm;
 
-    if ( mode < -2 ) {
-        return qfalse;
+	if ( mode < -2 ) {
+		return qfalse;
 	}
 	if ( mode >= s_numVidModes ) {
 		return qfalse;
@@ -494,11 +494,11 @@ qboolean R_GetModeInfo( int *width, int *height, float *windowAspect, int mode )
 
 	vm = &r_vidModes[mode];
 
-    *width  = vm->width;
-    *height = vm->height;
-    *windowAspect = (float)vm->width / ( vm->height * vm->pixelAspect );
+	*width  = vm->width;
+	*height = vm->height;
+	*windowAspect = (float)vm->width / ( vm->height * vm->pixelAspect );
 
-    return qtrue;
+	return qtrue;
 }
 
 /*
@@ -1087,7 +1087,7 @@ void R_Register( void )
 	r_finish = ri.Cvar_Get("r_finish", "0", CVAR_ARCHIVE | CVAR_GLOBAL);
 	r_textureMode = ri.Cvar_Get("r_textureMode", "GL_LINEAR_MIPMAP_NEAREST", CVAR_ARCHIVE | CVAR_GLOBAL);
 	r_swapInterval = ri.Cvar_Get("r_swapInterval", "0", CVAR_ARCHIVE | CVAR_GLOBAL);
-	
+
 	// ouned: gamma correction
 	r_gamma = ri.Cvar_Get("r_gamma", "1", CVAR_ARCHIVE | CVAR_GLOBAL);
 	r_gammamethod = ri.Cvar_Get("r_gammamethod", GAMMA_DEFAULT, CVAR_ARCHIVE | CVAR_LATCH | CVAR_GLOBAL);
@@ -1168,7 +1168,7 @@ Ghoul2 Insert Start
 /*
 Ghoul2 Insert End
 */
-	
+
 	r_modelpoolmegs = Cvar_Get("r_modelpoolmegs", "10", CVAR_ARCHIVE | CVAR_GLOBAL);
 
 	// make sure all the commands added here are also
@@ -1440,7 +1440,7 @@ void RE_GetLightStyle(int style, color4ub_t color)
 {
 	if (style >= MAX_LIGHT_STYLES)
 	{
-	    ri.Error( ERR_FATAL, "RE_GetLightStyle: %d is out of range", (int)style );
+		ri.Error( ERR_FATAL, "RE_GetLightStyle: %d is out of range", (int)style );
 		return;
 	}
 
@@ -1451,7 +1451,7 @@ void RE_SetLightStyle(int style, int color)
 {
 	if (style >= MAX_LIGHT_STYLES)
 	{
-	    ri.Error( ERR_FATAL, "RE_SetLightStyle: %d is out of range", (int)style );
+		ri.Error( ERR_FATAL, "RE_SetLightStyle: %d is out of range", (int)style );
 		return;
 	}
 

@@ -214,7 +214,7 @@ int G2API_InitGhoul2Model(CGhoul2Info_v **ghoul2Ptr, const char *fileName, int m
 			ghoul2[model].mModelindex = modelIndex;
 				// on the game side this is valid. On the client side it is valid only after it has been filled in by trap_G2_SetGhoul2ModelIndexes
 			ghoul2[model].mModel = RE_RegisterModel((char *)fileName);
-		  	model_t		*mod_m = R_GetModelByHandle(ghoul2[model].mModel);
+			model_t		*mod_m = R_GetModelByHandle(ghoul2[model].mModel);
 			if (mod_m->type == MOD_BAD)
 			{
 				return -1;
@@ -249,7 +249,7 @@ int G2API_InitGhoul2Model(CGhoul2Info_v **ghoul2Ptr, const char *fileName, int m
 	{
 		newModel.mModel = RE_RegisterModel((char *)fileName);
 	}
-  	model_t		*mod_m = R_GetModelByHandle(newModel.mModel);
+	model_t		*mod_m = R_GetModelByHandle(newModel.mModel);
 	if (mod_m->type == MOD_BAD)
 	{
 		if (ghoul2.size() == 0)//very first model created
@@ -1077,7 +1077,7 @@ char *G2API_GetAnimFileNameIndex(qhandle_t modelIndex)
  *    obtains the name of a model's .gla (animation) file
  *
  * Input
- *    pointer to list of CGhoul2Info's, WraithID of specific model in that list
+ *	pointer to list of CGhoul2Info's, WraithID of specific model in that list
  *
  * Output
  *    true if a good filename was obtained, false otherwise
@@ -1368,7 +1368,7 @@ char *G2API_GetSurfaceName(CGhoul2Info *ghlInfo, int surfNumber)
 
 int	G2API_GetSurfaceIndex(CGhoul2Info *ghlInfo, const char *surfaceName)
 {
-  	if (ghlInfo)
+	if (ghlInfo)
 	{
 		return G2_GetSurfaceIndex(ghlInfo->mFileName, surfaceName);
 	}

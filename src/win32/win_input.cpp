@@ -84,7 +84,7 @@ WIN32 MOUSE CONTROL
 IN_InitWin32Mouse
 ================
 */
-void IN_InitWin32Mouse( void ) 
+void IN_InitWin32Mouse( void )
 {
 }
 
@@ -133,7 +133,7 @@ void IN_ActivateWin32Mouse( void ) {
 IN_DeactivateWin32Mouse
 ================
 */
-void IN_DeactivateWin32Mouse( void ) 
+void IN_DeactivateWin32Mouse( void )
 {
 	ClipCursor (NULL);
 	ReleaseCapture ();
@@ -246,7 +246,7 @@ qboolean IN_InitDIMouse( void ) {
 
 	if (!hInstDI) {
 		hInstDI = LoadLibraryA("dinput.dll");
-		
+
 		if (hInstDI == NULL) {
 			Com_Printf ("Couldn't load dinput.dll\n");
 			return qfalse;
@@ -417,7 +417,7 @@ void IN_DIMouse( int *mx, int *my ) {
 			else
 				Sys_QueEvent( od.dwTimeStamp, SE_KEY, A_MOUSE2, qfalse, 0, NULL );
 			break;
-			
+
 		case DIMOFS_BUTTON2:
 			if (od.dwData & 0x80)
 				Sys_QueEvent( od.dwTimeStamp, SE_KEY, A_MOUSE3, qtrue, 0, NULL );
@@ -461,17 +461,17 @@ IN_ActivateMouse
 Called when the window gains focus or changes in some way
 ===========
 */
-void IN_ActivateMouse( void ) 
+void IN_ActivateMouse( void )
 {
 	if (!s_wmv.mouseInitialized ) {
 		return;
 	}
-	if ( !in_mouse->integer ) 
+	if ( !in_mouse->integer )
 	{
 		s_wmv.mouseActive = qfalse;
 		return;
 	}
-	if ( s_wmv.mouseActive ) 
+	if ( s_wmv.mouseActive )
 	{
 		return;
 	}
@@ -512,7 +512,7 @@ void IN_DeactivateMouse( void ) {
 IN_StartupMouse
 ===========
 */
-void IN_StartupMouse( void ) 
+void IN_StartupMouse( void )
 {
 	s_wmv.mouseInitialized = qfalse;
 
@@ -578,7 +578,7 @@ void IN_MouseEvent (int mstate)
 		{
 			Sys_QueEvent( g_wv.sysMsgTime, SE_KEY, mouseConvert[i], false, 0, NULL );
 		}
-	}	
+	}
 	s_wmv.oldButtonState = mstate;
 }
 
@@ -729,7 +729,7 @@ void IN_Frame (void) {
 IN_ClearStates
 ===================
 */
-void IN_ClearStates (void) 
+void IN_ClearStates (void)
 {
 	s_wmv.oldButtonState = 0;
 }
@@ -743,17 +743,17 @@ JOYSTICK
 =========================================================================
 */
 
-/* 
-=============== 
-IN_StartupJoystick 
-=============== 
-*/  
-void IN_StartupJoystick (void) { 
+/*
+===============
+IN_StartupJoystick
+===============
+*/
+void IN_StartupJoystick (void) {
 	int			numdevs;
 	MMRESULT	mmr;
 
 	// assume no joystick
-	joy.avail = qfalse; 
+	joy.avail = qfalse;
 
 	if (! in_joystick->integer ) {
 		Com_Printf ("Joystick is not active.\n");
@@ -777,7 +777,7 @@ void IN_StartupJoystick (void) {
 
 		if ((mmr = joyGetPosEx (joy.id, &joy.ji)) == JOYERR_NOERROR)
 			break;
-	} 
+	}
 
 	// abort startup if we didn't find a valid joystick
 	if (mmr != JOYERR_NOERROR)
@@ -791,7 +791,7 @@ void IN_StartupJoystick (void) {
 	Com_Memset (&joy.jc, 0, sizeof(joy.jc));
 	if ((mmr = joyGetDevCaps (joy.id, &joy.jc, sizeof(joy.jc))) != JOYERR_NOERROR)
 	{
-		Com_Printf ("joystick not found -- invalid joystick capabilities (%x)\n", mmr); 
+		Com_Printf ("joystick not found -- invalid joystick capabilities (%x)\n", mmr);
 		return;
 	}
 
@@ -814,7 +814,7 @@ void IN_StartupJoystick (void) {
 	joy.oldpovstate = 0;
 
 	// mark the joystick as available
-	joy.avail = qtrue; 
+	joy.avail = qtrue;
 }
 
 /*
@@ -828,7 +828,7 @@ float JoyToF( int value ) {
 	// move centerpoint to zero
 	value -= 32768;
 
-	// convert range from -32768..32767 to -1..1 
+	// convert range from -32768..32767 to -1..1
 	fValue = (float)value / 32768.0;
 
 	if ( fValue < -1 ) {
@@ -872,7 +872,7 @@ void IN_JoyMove( void ) {
 
 	// verify joystick is available and that the user wants to use it
 	if ( !joy.avail ) {
-		return; 
+		return;
 	}
 
 	// collect the joystick data, if possible
@@ -890,7 +890,7 @@ void IN_JoyMove( void ) {
 	}
 
 	if ( in_debugJoystick->integer ) {
-		Com_Printf( "%8x %5i %5.2f %5.2f %5.2f %5.2f %6i %6i\n", 
+		Com_Printf( "%8x %5i %5.2f %5.2f %5.2f %5.2f %6i %6i\n",
 			joy.ji.dwButtons,
 			joy.ji.dwPOV,
 			JoyToF( joy.ji.dwXpos ), JoyToF( joy.ji.dwYpos ),
@@ -1000,7 +1000,7 @@ static void MIDI_NoteOn( int note, int velocity )
 	Sys_QueEvent( g_wv.sysMsgTime, SE_KEY, qkey, qtrue, 0, NULL );
 }
 
-static void CALLBACK MidiInProc( HMIDIIN hMidiIn, UINT uMsg, DWORD dwInstance, 
+static void CALLBACK MidiInProc( HMIDIIN hMidiIn, UINT uMsg, DWORD dwInstance,
 								 DWORD dwParam1, DWORD dwParam2 )
 {
 	int message;
@@ -1054,7 +1054,7 @@ static void MidiInfo_f( void )
 			Com_Printf( "***" );
 		else
 			Com_Printf( "..." );
-		Com_Printf(    "device %2d:       %s\n", i, s_midiInfo.caps[i].szPname );
+		Com_Printf(	"device %2d:       %s\n", i, s_midiInfo.caps[i].szPname );
 		Com_Printf( "...manufacturer ID: 0x%hx\n", s_midiInfo.caps[i].wMid );
 		Com_Printf( "...product ID:      0x%hx\n", s_midiInfo.caps[i].wPid );
 
@@ -1082,8 +1082,8 @@ static void IN_StartupMIDI( void )
 	//
 	// open the MIDI IN port
 	//
-	if ( midiInOpen( &s_midiInfo.hMidiIn, 
-		             in_mididevice->integer,
+	if ( midiInOpen( &s_midiInfo.hMidiIn,
+					 in_mididevice->integer,
 					 ( unsigned long ) MidiInProc,
 					 ( unsigned long ) NULL,
 					 CALLBACK_FUNCTION ) != MMSYSERR_NOERROR )

@@ -5,12 +5,12 @@ int	FX_RegisterEffect(const char *file);
 
 void FX_PlaySimpleEffect( const char *file, vec3_t org );					// uses a default up axis
 void FX_PlayEffect( const char *file, vec3_t org, vec3_t fwd );		// builds arbitrary perp. right vector, does a cross product to define up
-void FX_PlayEntityEffect( const char *file, vec3_t org, 
+void FX_PlayEntityEffect( const char *file, vec3_t org,
 						vec3_t axis[3], const int boltInfo, const int entNum );
 
 void FX_PlaySimpleEffectID( int id, vec3_t org );					// uses a default up axis
 void FX_PlayEffectID( int id, vec3_t org, vec3_t fwd );		// builds arbitrary perp. right vector, does a cross product to define up
-void FX_PlayEntityEffectID( int id, vec3_t org, 
+void FX_PlayEntityEffectID( int id, vec3_t org,
 						vec3_t axis[3], const int boltInfo, const int entNum );
 void FX_VM_PlayBoltedEffectID(int id, vmsharedBoltInterface_t *fxObj);
 void FX_PlayBoltedEffectID( int id, sharedBoltInterface_t *fxObj );

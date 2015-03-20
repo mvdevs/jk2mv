@@ -7,7 +7,7 @@
  * desc:		Area Awareness System, stuff exported to the AI
  *
  * $Archive: /source/code/botlib/be_aas.h $
- * $Author: Mrelusive $ 
+ * $Author: Mrelusive $
  * $Revision: 2 $
  * $Modtime: 10/05/99 3:32p $
  * $Date: 10/05/99 3:42p $

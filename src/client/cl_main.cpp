@@ -2620,7 +2620,7 @@ void CL_Init( void ) {
 	m_forward = Cvar_Get("m_forward", "0.25", CVAR_ARCHIVE | CVAR_GLOBAL);
 	m_side = Cvar_Get("m_side", "0.25", CVAR_ARCHIVE | CVAR_GLOBAL);
 #ifdef MACOS_X
-        // Input is jittery on OS X w/o this
+		// Input is jittery on OS X w/o this
 	m_filter = Cvar_Get ("m_filter", "1", CVAR_ARCHIVE | CVAR_GLOBAL);
 #else
 	m_filter = Cvar_Get("m_filter", "0", CVAR_ARCHIVE | CVAR_GLOBAL);
@@ -2773,7 +2773,7 @@ void CL_Shutdown( void ) {
 
 	curl_global_cleanup();
 	MV_DestroyMutex(m_dl);
-    m_dl = NULL;
+	m_dl = NULL;
 
 	Com_Printf( "-----------------------\n" );
 
@@ -3655,7 +3655,7 @@ qboolean CL_UpdateVisiblePings_f(int source) {
 						cl_pinglist[j].time = 0;
 
 						NET_OutOfBandPrint( NS_CLIENT, cl_pinglist[j].adr, "getinfo" );
-						
+
 						serverStatus_t *serverStatus = CL_GetServerStatus(cl_pinglist[j].adr);
 						serverStatus->address = cl_pinglist[j].adr;
 						serverStatus->print = qfalse;

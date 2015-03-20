@@ -1,9 +1,9 @@
 /*____________________________________________________________________________
-	
+
 	FreeAmp - The Free MP3 Player
 
-        MP3 Decoder originally Copyright (C) 1995-1997 Xing Technology
-        Corp.  http://www.xingtech.com
+		MP3 Decoder originally Copyright (C) 1995-1997 Xing Technology
+		Corp.  http://www.xingtech.com
 
 	Portions Copyright (C) 1998-1999 EMusic.com
 
@@ -20,19 +20,19 @@
 	You should have received a copy of the GNU General Public License
 	along with this program; if not, write to the Free Software
 	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-	
+
 	$Id: towave.c,v 1.3 1999/10/19 07:13:09 elrod Exp $
 ____________________________________________________________________________*/
 
 /* ------------------------------------------------------------------------
 
-      NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE
+	  NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE
 
-        This file exists for reference only. It is not actually used
-        in the FreeAmp project. There is no need to mess with this 
-        file. There is no need to flatten the beavers, either.
+		This file exists for reference only. It is not actually used
+		in the FreeAmp project. There is no need to mess with this
+		file. There is no need to flatten the beavers, either.
 
-      NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE
+	  NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE
 
 ---- towave.c --------------------------------------------
   32 bit version only
@@ -44,8 +44,8 @@ mod 8/19/98 decode 22 sf bands
 
 mod 5/14/98  allow mpeg25 (dec8 not supported for mpeg25 samp rate)
 
-mod 3/4/98 bs_trigger  bs_bufbytes  made signed, unsigned may 
-            not terminate properly.  Also extra test in bs_fill.
+mod 3/4/98 bs_trigger  bs_bufbytes  made signed, unsigned may
+			not terminate properly.  Also extra test in bs_fill.
 
 mod 8/6/96 add 8 bit output to standard decoder
 
@@ -54,9 +54,9 @@ ver 1.4 mods 7/18/96 32 bit and add asm option
 mods 6/29/95  allow MS wave file for u-law.  bugfix u-law table dec8.c
 
 mods 2/95 add sample rate reduction, freq_limit and conversions.
-          add _decode8 for 8Ks output, 16bit 8bit, u-law output.
-          add additional control parameters to init.
-          add _info function
+		  add _decode8 for 8Ks output, 16bit 8bit, u-law output.
+		  add additional control parameters to init.
+		  add _info function
 
 mod 5/12/95 add quick window cwinq.c
 
@@ -68,16 +68,16 @@ mod 1/5/95   integer overflow mod iup.c
 
 ver 1.3
 mod 2/5/96   portability mods
-             drop Tom and Gloria pcm file types
+			 drop Tom and Gloria pcm file types
 
 ver 2.0
 mod 1/7/97   Layer 3 (float mpeg-1 only)
-    2/6/97   Layer 3 MPEG-2
+	2/6/97   Layer 3 MPEG-2
 
-ver 3.01     Layer III bugfix crc problem 8/18/97
-ver 3.02     Layer III fix wannabe.mp3 problem 10/9/97
-ver 3.03     allow mpeg 2.5  5/14/98
-  
+ver 3.01	 Layer III bugfix crc problem 8/18/97
+ver 3.02	 Layer III fix wannabe.mp3 problem 10/9/97
+ver 3.03	 allow mpeg 2.5  5/14/98
+
 Decoder functions for _decode8 are defined in dec8.c.  Useage
 is same as regular decoder.
 
@@ -88,7 +88,7 @@ adding alternative write_pcm_header and write_pcm_tailer
 functions.  The functions kbhit and getch used in towave.c
 may not port to other systems.
 
-The decoder handles all mpeg1 and mpeg2 Layer I/II  bitstreams.  
+The decoder handles all mpeg1 and mpeg2 Layer I/II  bitstreams.
 
 For compatability with the asm decoder and future C versions,
 source code users are discouraged from making modifications
@@ -102,26 +102,26 @@ mod 8/6/96 standard decoder adds 8 bit output
 
 decode8 (8Ks output) convert_code:
    convert_code = 4*bit_code + chan_code
-       bit_code:   1 = 16 bit linear pcm
-                   2 =  8 bit (unsigned) linear pcm
-                   3 = u-law (8 bits unsigned)
-       chan_code:  0 = convert two chan to mono
-                   1 = convert two chan to mono
-                   2 = convert two chan to left chan
-                   3 = convert two chan to right chan
+	   bit_code:   1 = 16 bit linear pcm
+				   2 =  8 bit (unsigned) linear pcm
+				   3 = u-law (8 bits unsigned)
+	   chan_code:  0 = convert two chan to mono
+				   1 = convert two chan to mono
+				   2 = convert two chan to left chan
+				   3 = convert two chan to right chan
 
 decode (standard decoder) convert_code:
-             0 = two chan output
-             1 = convert two chan to mono
-             2 = convert two chan to left chan
-             3 = convert two chan to right chan
-     or with 8 = 8 bit output 
-          (other bits ignored)
+			 0 = two chan output
+			 1 = convert two chan to mono
+			 2 = convert two chan to left chan
+			 3 = convert two chan to right chan
+	 or with 8 = 8 bit output
+		  (other bits ignored)
 
 decode (standard decoder) reduction_code:
-             0 = full sample rate output
-             1 = half rate
-             2 = quarter rate
+			 0 = full sample rate output
+			 1 = half rate
+			 2 = quarter rate
 
 -----------------------------------------------------------*/
 #include <stdlib.h>
@@ -159,15 +159,15 @@ typedef unsigned char byte;
 
 
 typedef struct id3v1_1 {
-    char id[3];
-    char title[30];		// <file basename>
-    char artist[30];	// "Raven Software"
-    char album[30];		// "#UNCOMP %d"		// needed
-    char year[4];		// "2000"
-    char comment[28];	// "#MAXVOL %g"		// needed
-    char zero;
-    char track;
-    char genre;
+	char id[3];
+	char title[30];		// <file basename>
+	char artist[30];	// "Raven Software"
+	char album[30];		// "#UNCOMP %d"		// needed
+	char year[4];		// "2000"
+	char comment[28];	// "#MAXVOL %g"		// needed
+	char zero;
+	char track;
+	char genre;
 } id3v1_1;	// 128 bytes in size
 
 id3v1_1 *gpTAG;
@@ -194,11 +194,11 @@ char PCM_Buffer[PCM_BUFBYTES];	// better off being declared, so we don't do mall
       int (*decode_init) (MPEG_HEAD * h, int framebytes_arg,
 			  int reduction_code, int transform_code,
 			  int convert_code, int freq_limit);
-      void (*decode_info) (DEC_INFO * info);      
+      void (*decode_info) (DEC_INFO * info);
 	  IN_OUT(*decode) (unsigned char *bs, short *pcm, unsigned char *pNextByteAfterData);
    }
    AUDIO;
-   
+
 #if 0
    // stuff this...
    static AUDIO audio_table[2][2] =
@@ -221,7 +221,7 @@ char PCM_Buffer[PCM_BUFBYTES];	// better off being declared, so we don't do mall
       },
       {
 		{audio_decode_init, audio_decode_info, audio_decode},
-		{audio_decode_init, audio_decode_info, audio_decode},			
+		{audio_decode_init, audio_decode_info, audio_decode},
       }
    };
 #endif
@@ -232,7 +232,7 @@ char PCM_Buffer[PCM_BUFBYTES];	// better off being declared, so we don't do mall
 // Do NOT change these, ever!!!!!!!!!!!!!!!!!!
 //
 const int reduction_code	= 0;		// unpack at full sample rate output
-const int convert_code_mono	= 1;		
+const int convert_code_mono	= 1;
 const int convert_code_stereo = 0;
 const int freq_limit		= 24000;	// no idea what this is about, but it's always this value so...
 
@@ -280,14 +280,14 @@ char *C_MP3_IsValid(void *pvData, int iDataLen, int bStereoDesired)
 			{
 				return "MP3ERR: Source file has output packet size > 2304 (*2 for stereo) bytes!";
 			}
-		}		
+		}
 		else
 		{
 			if (pMP3Stream->outbytes > 2304)
 			{
 				return "MP3ERR: Source file has output packet size > 2304 bytes!";
 			}
-		}		
+		}
 
 		audio.decode_info(&decinfo);
 
@@ -304,7 +304,7 @@ char *C_MP3_IsValid(void *pvData, int iDataLen, int bStereoDesired)
 		if (bStereoDesired && decinfo.channels != 2)
 		{
 			return "MP3ERR: Source file is not stereo!";	// sod it, I'm going to count this as an error now
-		}		
+		}
 	}
 	else
 	{
@@ -382,14 +382,14 @@ char *C_MP3_GetUnpackedSize(void *pvData, int iSourceBytesRemaining, int *piUnpa
 
 	DEC_INFO decinfo;
 	IN_OUT	 x;
-	
+
 	memset(pMP3Stream,0,sizeof(*pMP3Stream));
 
 #define iSourceReadIndex iRealDataStart
 
 //	iFrameBytes = head_info2( pvData, 0, &head, &iBitRate);
 	iFrameBytes = head_info3( pvData, iSourceBytesRemaining/2, &head, &iBitRate, &iRealDataStart);
-	
+
 	BYTESREMAINING_ACCOUNT_FOR_REAR_TAG(pvData, iSourceBytesRemaining)
 	iSourceBytesRemaining -= iRealDataStart;
 
@@ -423,7 +423,7 @@ char *C_MP3_GetUnpackedSize(void *pvData, int iSourceBytesRemaining, int *piUnpa
 											);
 
 					bFastEstimateOnly = 0;	///////////////////////////////
-					
+
 					iSourceReadIndex		+= x.in_bytes;
 					iSourceBytesRemaining	-= x.in_bytes;
 					iDestWriteIndex			+= x.out_bytes;
@@ -444,7 +444,7 @@ char *C_MP3_GetUnpackedSize(void *pvData, int iSourceBytesRemaining, int *piUnpa
 		}
 //		else
 //		{
-//			psReturn = "MP3ERR: Unable to alloc temp decomp buffer";		
+//			psReturn = "MP3ERR: Unable to alloc temp decomp buffer";
 //		}
 	}
 	else
@@ -473,7 +473,7 @@ char *C_MP3_UnpackRawPCM( void *pvData, int iSourceBytesRemaining, int *piUnpack
 	unsigned int iRealDataStart;
 	MPEG_HEAD head;
 	int iBitRate;
-	
+
 	char *psReturn = NULL;
 //	int  iSourceReadIndex = 0;
 	int	 iDestWriteIndex = 0;
@@ -512,7 +512,7 @@ char *C_MP3_UnpackRawPCM( void *pvData, int iSourceBytesRemaining, int *piUnpack
 //				printf("\n output type     = %6d", decinfo.type);
 
 //===============
-				
+
 				// decode...
 				//
 				for (iFrameCounter = 0;;iFrameCounter++)
@@ -520,10 +520,10 @@ char *C_MP3_UnpackRawPCM( void *pvData, int iSourceBytesRemaining, int *piUnpack
 					if ( iSourceBytesRemaining == 0 || iSourceBytesRemaining < iFrameBytes)
 						break;	// end of file
 
-					x = audio.decode((unsigned char *)pvData + iSourceReadIndex, (short *) ((char *)pbUnpackBuffer + iDestWriteIndex),									 
+					x = audio.decode((unsigned char *)pvData + iSourceReadIndex, (short *) ((char *)pbUnpackBuffer + iDestWriteIndex),
 									 (unsigned char *)pvData + iReadLimit
-									);	
-					
+									);
+
 					iSourceReadIndex		+= x.in_bytes;
 					iSourceBytesRemaining	-= x.in_bytes;
 					iDestWriteIndex			+= x.out_bytes;
@@ -555,7 +555,7 @@ char *C_MP3_UnpackRawPCM( void *pvData, int iSourceBytesRemaining, int *piUnpack
 
 
 // called once, after we've decided to keep something as MP3. This just sets up the decoder for subsequent stream-calls.
-// 					  
+//
 // (the struct pSFX_MP3Stream is cleared internally, so pass as args anything you want stored in it)
 //
 // char * return is NULL for ok, else error string
@@ -568,7 +568,7 @@ char *C_MP3Stream_DecodeInit( LP_MP3STREAM pSFX_MP3Stream, void *pvSourceData, i
 							  int iGameAudioSampleRate, int iGameAudioSampleBits, int bStereoDesired )
 {
 	char			*psReturn = NULL;
-	MPEG_HEAD		head;			// only relevant within this function during init	
+	MPEG_HEAD		head;			// only relevant within this function during init
 	DEC_INFO		decinfo;		//   " "
 	int				iBitRate;		// not used after being filled in by head_info3()
 
@@ -578,7 +578,7 @@ char *C_MP3Stream_DecodeInit( LP_MP3STREAM pSFX_MP3Stream, void *pvSourceData, i
 
 	pMP3Stream->pbSourceData			= (byte *) pvSourceData;	// this MUST be re-initialised to link-mem outside here for SOF2, since raw data is now link-listed
 	pMP3Stream->iSourceBytesRemaining	= iSourceBytesRemaining;
-	pMP3Stream->iSourceFrameBytes		= head_info3( (byte *) pvSourceData, iSourceBytesRemaining/2, &head, &iBitRate, (unsigned int*)&pMP3Stream->iSourceReadIndex );	
+	pMP3Stream->iSourceFrameBytes		= head_info3( (byte *) pvSourceData, iSourceBytesRemaining/2, &head, &iBitRate, (unsigned int*)&pMP3Stream->iSourceReadIndex );
 
 	// hack, do NOT do this for stereo, since music files are now streamed and therefore the data isn't actually fully
 	//	loaded at this point, only about 4k or so for the header is actually in memory!!!...
@@ -695,7 +695,7 @@ unsigned int C_MP3Stream_Decode( LP_MP3STREAM pSFX_MP3Stream )
 
 		if (x.in_bytes <= 0)
 		{
-			//psReturn = "MP3ERR: Bad sync in file";			
+			//psReturn = "MP3ERR: Bad sync in file";
 			uiDecoded= 0;	// finished
 			break;
 		}
@@ -703,7 +703,7 @@ unsigned int C_MP3Stream_Decode( LP_MP3STREAM pSFX_MP3Stream )
 	#pragma warning (disable : 4127 )	// conditional expression is constant
 	while (0);	// <g>
 	#pragma warning (default : 4127 )	// conditional expression is constant
-	
+
 	// restore global stream ptr before returning to normal functions (so the rest of the MP3 code still works)...
 	//
 	pMP3Stream = &_MP3Stream;
@@ -717,19 +717,19 @@ unsigned int C_MP3Stream_Decode( LP_MP3STREAM pSFX_MP3Stream )
 char *C_MP3Stream_Rewind( LP_MP3STREAM pSFX_MP3Stream )
 {
 	char*		psReturn = NULL;
-	MPEG_HEAD	head;			// only relevant within this function during init	
+	MPEG_HEAD	head;			// only relevant within this function during init
 	int			iBitRate;		// ditto
-	int			iNULL;			
+	int			iNULL;
 
 	pMP3Stream = pSFX_MP3Stream;
 
 	pMP3Stream->iSourceReadIndex		= pMP3Stream->iRewind_SourceReadIndex;
-	pMP3Stream->iSourceBytesRemaining	= pMP3Stream->iRewind_SourceBytesRemaining;	// already adjusted for tags etc	
+	pMP3Stream->iSourceBytesRemaining	= pMP3Stream->iRewind_SourceBytesRemaining;	// already adjusted for tags etc
 
 	// I'm not sure that this is needed, but where else does decode_init get passed useful data ptrs?...
 	//
 	if (pMP3Stream->iSourceFrameBytes == head_info3( pMP3Stream->pbSourceData, pMP3Stream->iSourceBytesRemaining/2, &head, &iBitRate, (unsigned int*)&iNULL ) )
-	{	
+	{
 		if (audio.decode_init(&head, pMP3Stream->iSourceFrameBytes, pMP3Stream->iRewind_FinalReductionCode, pMP3Stream->iSourceReadIndex, pMP3Stream->iRewind_FinalConvertCode, freq_limit))
 		{
 			// we should always get here...

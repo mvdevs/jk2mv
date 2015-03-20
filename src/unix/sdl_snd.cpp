@@ -89,8 +89,8 @@ static struct
 	char		*stringFormat;
 } formatToStringTable[ ] =
 {
-	{ AUDIO_U8,     "AUDIO_U8" },
-	{ AUDIO_S8,     "AUDIO_S8" },
+	{ AUDIO_U8,	 "AUDIO_U8" },
+	{ AUDIO_S8,	 "AUDIO_S8" },
 	{ AUDIO_U16LSB, "AUDIO_U16LSB" },
 	{ AUDIO_S16LSB, "AUDIO_S16LSB" },
 	{ AUDIO_U16MSB, "AUDIO_U16MSB" },

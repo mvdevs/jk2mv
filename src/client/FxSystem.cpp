@@ -22,7 +22,7 @@ SFxHelper::SFxHelper(void) :
 	mTimeFrozen(false)
 {
 }
- 
+
 void SFxHelper::ReInit(void)
 {
 	mTime = 0;

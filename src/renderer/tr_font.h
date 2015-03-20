@@ -1,6 +1,6 @@
 // Filename:-	tr_font.h
 //
-// font support 
+// font support
 
 #ifndef TR_FONT_H
 #define TR_FONT_H
@@ -22,16 +22,16 @@ private:
 	int				mHeight;
 	int				mAscender;
 	int				mDescender;
-	
+
 	int				mAsianHack;
 	// end of fontdat data
 
 
-	int				mShader;   				// handle to the shader with the glyph
+	int				mShader;				// handle to the shader with the glyph
 
 	char			m_sFontName[MAX_QPATH];	// eg "fonts/lcd"	// needed for korean font-hint if we need >1 hangul set
-	
-	int				m_hAsianShaders[GLYPH_MAX_ASIAN_SHADERS];	// shaders for Korean glyphs where applicable		
+
+	int				m_hAsianShaders[GLYPH_MAX_ASIAN_SHADERS];	// shaders for Korean glyphs where applicable
 	glyphInfo_t		m_AsianGlyph;			// special glyph containing asian->western scaling info for all glyphs
 	int				m_iAsianGlyphsAcross;	// needed to dynamically calculate S,T coords
 	int				m_iAsianPagesLoaded;

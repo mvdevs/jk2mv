@@ -884,7 +884,7 @@ typedef enum {
 /*
 Ghoul2 Insert Start
 */
-   	MOD_MDXM,
+	MOD_MDXM,
 	MOD_MDXA
 /*
 Ghoul2 Insert End
@@ -1124,7 +1124,7 @@ typedef struct {
 	float					sawToothTable[FUNCTABLE_SIZE];
 	float					inverseSawToothTable[FUNCTABLE_SIZE];
 	float					fogTable[FOG_TABLE_SIZE];
-	
+
 	// ouned: gamma correction
 	GLhandleARB gammaProgram, m_hVShader, m_hFShader;
 	GLint gammaUniformLoc;
@@ -1411,7 +1411,7 @@ qboolean	R_GetEntityToken( char *buffer, int size );
 
 model_t		*R_AllocModel( void );
 
-void    	R_Init( void );
+void		R_Init( void );
 void R_LoadImage( const char *name, byte **pic, int *width, int *height );
 image_t		*R_FindImageFile( const char *name, qboolean mipmap, qboolean allowPicmip, qboolean allowTC, int glWrapClampMode );
 
@@ -1455,7 +1455,7 @@ shader_t	*R_GetShaderByState( int index, int *cycleTime );
 shader_t *R_FindShaderByName( const char *name );
 void		R_InitShaders( void );
 void		R_ShaderList_f( void );
-void    R_RemapShader(const char *oldShader, const char *newShader, const char *timeOffset);
+void	R_RemapShader(const char *oldShader, const char *newShader, const char *timeOffset);
 
 /*
 ====================================================================
@@ -1477,7 +1477,7 @@ void		GLimp_WakeRenderer( void *data );
 void		GLimp_LogComment( char *comment );
 
 void		GLimp_SetGamma( unsigned char red[256],
-						    unsigned char green[256],
+							unsigned char green[256],
 							unsigned char blue[256] );
 
 
@@ -1690,7 +1690,7 @@ class CRenderableSurface
 {
 public:
 	const int		ident;			// ident of this surface - required so the materials renderer knows what sort of surface this refers to
-	void	 		*boneList;		// pointer to transformed bone list for this surface - required client side for rendering DONOT USE IN GAME	SIDE
+	void			*boneList;		// pointer to transformed bone list for this surface - required client side for rendering DONOT USE IN GAME	SIDE
 	mdxmSurface_t	*surfaceData;	// pointer to surface data loaded into file - only used by client renderer DO NOT USE IN GAME SIDE - if there is a vid restart this will be out of wack on the game
 
 CRenderableSurface():

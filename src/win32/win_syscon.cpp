@@ -53,7 +53,7 @@ typedef struct
 	int			visLevel;
 	qboolean	quitOnClose;
 	int			windowWidth, windowHeight;
-	
+
 	WNDPROC		SysInputLineWndProc;
 
 } WinConData;
@@ -227,7 +227,7 @@ LRESULT APIENTRY InputLineWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 		case WM_KEYDOWN:
 			if (wParam == VK_UP)
 			{
-				if ( kg.nextHistoryLine - kg.historyLine < COMMAND_HISTORY && kg.historyLine > 0 ) 
+				if ( kg.nextHistoryLine - kg.historyLine < COMMAND_HISTORY && kg.historyLine > 0 )
 				{
 					kg.historyLine--;
 				}
@@ -339,10 +339,10 @@ void Sys_CreateConsole( void )
 	//
 	// create the input line
 	//
-	s_wcd.hwndInputLine = CreateWindowA( "edit", NULL, WS_CHILD | WS_VISIBLE | WS_BORDER | 
+	s_wcd.hwndInputLine = CreateWindowA( "edit", NULL, WS_CHILD | WS_VISIBLE | WS_BORDER |
 												ES_LEFT | ES_AUTOHSCROLL | WS_TABSTOP,
 												6, 400, s_wcd.windowWidth-20, 20,
-												s_wcd.hWnd, 
+												s_wcd.hWnd,
 												( HMENU ) INPUT_ID,	// child window ID
 												g_wv.hInstance, NULL );
 
@@ -351,21 +351,21 @@ void Sys_CreateConsole( void )
 	//
 	s_wcd.hwndButtonCopy = CreateWindowA( "button", NULL, BS_PUSHBUTTON | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON | WS_TABSTOP,
 												5, 425, 72, 24,
-												s_wcd.hWnd, 
+												s_wcd.hWnd,
 												( HMENU ) COPY_ID,	// child window ID
 												g_wv.hInstance, NULL );
 	SendMessageA( s_wcd.hwndButtonCopy, WM_SETTEXT, 0, ( LPARAM ) "Copy" );
 
 	s_wcd.hwndButtonClear = CreateWindowA( "button", NULL, BS_PUSHBUTTON | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON | WS_TABSTOP,
 												82, 425, 72, 24,
-												s_wcd.hWnd, 
+												s_wcd.hWnd,
 												( HMENU ) CLEAR_ID,	// child window ID
 												g_wv.hInstance, NULL );
 	SendMessageA( s_wcd.hwndButtonClear, WM_SETTEXT, 0, ( LPARAM ) "Clear" );
 
 	s_wcd.hwndButtonQuit = CreateWindowA( "button", NULL, BS_PUSHBUTTON | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON | WS_TABSTOP,
 												s_wcd.windowWidth-92, 425, 72, 24,
-												s_wcd.hWnd, 
+												s_wcd.hWnd,
 												( HMENU ) QUIT_ID,	// child window ID
 												g_wv.hInstance, NULL );
 	SendMessageA( s_wcd.hwndButtonQuit, WM_SETTEXT, 0, ( LPARAM ) "Quit" );
@@ -374,10 +374,10 @@ void Sys_CreateConsole( void )
 	//
 	// create the scrollbuffer
 	//
-	s_wcd.hwndBuffer = CreateWindowA( "edit", NULL, WS_CHILD | WS_VISIBLE | WS_VSCROLL | WS_BORDER | 
+	s_wcd.hwndBuffer = CreateWindowA( "edit", NULL, WS_CHILD | WS_VISIBLE | WS_VSCROLL | WS_BORDER |
 												ES_LEFT | ES_MULTILINE | ES_AUTOVSCROLL | ES_READONLY | WS_TABSTOP,
 												6, 40, s_wcd.windowWidth-20, 354,
-												s_wcd.hWnd, 
+												s_wcd.hWnd,
 												( HMENU ) EDIT_ID,	// child window ID
 												g_wv.hInstance, NULL );
 	SendMessageA( s_wcd.hwndBuffer, WM_SETFONT, ( WPARAM ) s_wcd.hfBufferFont, 0 );
@@ -397,9 +397,9 @@ void Sys_CreateConsole( void )
 /*
 ** Sys_DestroyConsole
 */
-void Sys_DestroyConsole( void ) 
+void Sys_DestroyConsole( void )
 {
-	if ( s_wcd.hWnd ) 
+	if ( s_wcd.hWnd )
 	{
 		DeleteObject(s_wcd.hbrEditBackground);
 		DeleteObject(s_wcd.hbrErrorBackground);
@@ -458,10 +458,10 @@ char *Sys_ConsoleInput( void )
 	{
 		return NULL;
 	}
-		
+
 	strcpy( s_wcd.returnedText, s_wcd.consoleText );
 	s_wcd.consoleText[0] = 0;
-	
+
 	return s_wcd.returnedText;
 }
 
@@ -561,7 +561,7 @@ void Sys_SetErrorText( const char *buf )
 	{
 		s_wcd.hwndErrorBox = CreateWindowA( "static", NULL, WS_CHILD | WS_VISIBLE | SS_SUNKEN,
 													6, 5, s_wcd.windowWidth-20, 30,
-													s_wcd.hWnd, 
+													s_wcd.hWnd,
 													( HMENU ) ERRORBOX_ID,	// child window ID
 													g_wv.hInstance, NULL );
 		SendMessageA( s_wcd.hwndErrorBox, WM_SETFONT, ( WPARAM ) s_wcd.hfBufferFont, 0 );

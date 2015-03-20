@@ -1,11 +1,11 @@
 #pragma warning(disable:4206)	// nonstandard extension used : translation unit is empty
 #ifdef COMPILE_ME
 /*____________________________________________________________________________
-	
+
 	FreeAmp - The Free MP3 Player
 
-        MP3 Decoder originally Copyright (C) 1995-1997 Xing Technology
-        Corp.  http://www.xingtech.com
+		MP3 Decoder originally Copyright (C) 1995-1997 Xing Technology
+		Corp.  http://www.xingtech.com
 
 	Portions Copyright (C) 1998-1999 EMusic.com
 
@@ -22,7 +22,7 @@
 	You should have received a copy of the GNU General Public License
 	along with this program; if not, write to the Free Software
 	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-	
+
 	$Id: cwin.c,v 1.7 1999/10/19 07:13:08 elrod Exp $
 ____________________________________________________________________________*/
 
@@ -53,56 +53,56 @@ void window(float *vbuf, int vb_ptr, short *pcm)
 /*-- first 16 --*/
    for (i = 0; i < 16; i++)
    {
-      sum = 0.0F;
-      for (j = 0; j < 8; j++)
-      {
+	  sum = 0.0F;
+	  for (j = 0; j < 8; j++)
+	  {
 	 sum += (*coef++) * vbuf[si];
 	 si = (si + 64) & 511;
 	 sum -= (*coef++) * vbuf[bx];
 	 bx = (bx + 64) & 511;
-      }
-      si++;
-      bx--;
-      tmp = (long) sum;
-      if (tmp > 32767)
+	  }
+	  si++;
+	  bx--;
+	  tmp = (long) sum;
+	  if (tmp > 32767)
 	 tmp = 32767;
-      else if (tmp < -32768)
+	  else if (tmp < -32768)
 	 tmp = -32768;
-      *pcm++ = tmp;
+	  *pcm++ = tmp;
    }
 /*--  special case --*/
    sum = 0.0F;
    for (j = 0; j < 8; j++)
    {
-      sum += (*coef++) * vbuf[bx];
-      bx = (bx + 64) & 511;
+	  sum += (*coef++) * vbuf[bx];
+	  bx = (bx + 64) & 511;
    }
    tmp = (long) sum;
    if (tmp > 32767)
-      tmp = 32767;
+	  tmp = 32767;
    else if (tmp < -32768)
-      tmp = -32768;
+	  tmp = -32768;
    *pcm++ = tmp;
 /*-- last 15 --*/
    coef = wincoef + 255;	/* back pass through coefs */
    for (i = 0; i < 15; i++)
    {
-      si--;
-      bx++;
-      sum = 0.0F;
-      for (j = 0; j < 8; j++)
-      {
+	  si--;
+	  bx++;
+	  sum = 0.0F;
+	  for (j = 0; j < 8; j++)
+	  {
 	 sum += (*coef--) * vbuf[si];
 	 si = (si + 64) & 511;
 	 sum += (*coef--) * vbuf[bx];
 	 bx = (bx + 64) & 511;
-      }
-      tmp = (long) sum;
-      if (tmp > 32767)
+	  }
+	  tmp = (long) sum;
+	  if (tmp > 32767)
 	 tmp = 32767;
-      else if (tmp < -32768)
+	  else if (tmp < -32768)
 	 tmp = -32768;
-      *pcm++ = tmp;
+	  *pcm++ = tmp;
    }
 }
 
@@ -124,59 +124,59 @@ void window_dual(float *vbuf, int vb_ptr, short *pcm)
 /*-- first 16 --*/
    for (i = 0; i < 16; i++)
    {
-      sum = 0.0F;
-      for (j = 0; j < 8; j++)
-      {
+	  sum = 0.0F;
+	  for (j = 0; j < 8; j++)
+	  {
 	 sum += (*coef++) * vbuf[si];
 	 si = (si + 64) & 511;
 	 sum -= (*coef++) * vbuf[bx];
 	 bx = (bx + 64) & 511;
-      }
-      si++;
-      bx--;
-      tmp = (long) sum;
-      if (tmp > 32767)
+	  }
+	  si++;
+	  bx--;
+	  tmp = (long) sum;
+	  if (tmp > 32767)
 	 tmp = 32767;
-      else if (tmp < -32768)
+	  else if (tmp < -32768)
 	 tmp = -32768;
-      *pcm = tmp;
-      pcm += 2;
+	  *pcm = tmp;
+	  pcm += 2;
    }
 /*--  special case --*/
    sum = 0.0F;
    for (j = 0; j < 8; j++)
    {
-      sum += (*coef++) * vbuf[bx];
-      bx = (bx + 64) & 511;
+	  sum += (*coef++) * vbuf[bx];
+	  bx = (bx + 64) & 511;
    }
    tmp = (long) sum;
    if (tmp > 32767)
-      tmp = 32767;
+	  tmp = 32767;
    else if (tmp < -32768)
-      tmp = -32768;
+	  tmp = -32768;
    *pcm = tmp;
    pcm += 2;
 /*-- last 15 --*/
    coef = wincoef + 255;	/* back pass through coefs */
    for (i = 0; i < 15; i++)
    {
-      si--;
-      bx++;
-      sum = 0.0F;
-      for (j = 0; j < 8; j++)
-      {
+	  si--;
+	  bx++;
+	  sum = 0.0F;
+	  for (j = 0; j < 8; j++)
+	  {
 	 sum += (*coef--) * vbuf[si];
 	 si = (si + 64) & 511;
 	 sum += (*coef--) * vbuf[bx];
 	 bx = (bx + 64) & 511;
-      }
-      tmp = (long) sum;
-      if (tmp > 32767)
+	  }
+	  tmp = (long) sum;
+	  if (tmp > 32767)
 	 tmp = 32767;
-      else if (tmp < -32768)
+	  else if (tmp < -32768)
 	 tmp = -32768;
-      *pcm = tmp;
-      pcm += 2;
+	  *pcm = tmp;
+	  pcm += 2;
    }
 }
 /*------------------------------------------------------------*/
@@ -196,58 +196,58 @@ void window16(float *vbuf, int vb_ptr, short *pcm)
 /*-- first 8 --*/
    for (i = 0; i < 8; i++)
    {
-      sum = 0.0F;
-      for (j = 0; j < 8; j++)
-      {
+	  sum = 0.0F;
+	  for (j = 0; j < 8; j++)
+	  {
 	 sum += (*coef++) * vbuf[si];
 	 si += 32;
 	 sum -= (*coef++) * vbuf[bx];
 	 bx += 32;
-      }
-      si++;
-      bx--;
-      coef += 16;
-      tmp = (long) sum;
-      if (tmp > 32767)
+	  }
+	  si++;
+	  bx--;
+	  coef += 16;
+	  tmp = (long) sum;
+	  if (tmp > 32767)
 	 tmp = 32767;
-      else if (tmp < -32768)
+	  else if (tmp < -32768)
 	 tmp = -32768;
-      *pcm++ = tmp;
+	  *pcm++ = tmp;
    }
 /*--  special case --*/
    sum = 0.0F;
    for (j = 0; j < 8; j++)
    {
-      sum += (*coef++) * vbuf[bx];
-      bx += 32;
+	  sum += (*coef++) * vbuf[bx];
+	  bx += 32;
    }
    tmp = (long) sum;
    if (tmp > 32767)
-      tmp = 32767;
+	  tmp = 32767;
    else if (tmp < -32768)
-      tmp = -32768;
+	  tmp = -32768;
    *pcm++ = tmp;
 /*-- last 7 --*/
    coef = wincoef + 255;	/* back pass through coefs */
    for (i = 0; i < 7; i++)
    {
-      coef -= 16;
-      si--;
-      bx++;
-      sum = 0.0F;
-      for (j = 0; j < 8; j++)
-      {
+	  coef -= 16;
+	  si--;
+	  bx++;
+	  sum = 0.0F;
+	  for (j = 0; j < 8; j++)
+	  {
 	 sum += (*coef--) * vbuf[si];
 	 si += 32;
 	 sum += (*coef--) * vbuf[bx];
 	 bx += 32;
-      }
-      tmp = (long) sum;
-      if (tmp > 32767)
+	  }
+	  tmp = (long) sum;
+	  if (tmp > 32767)
 	 tmp = 32767;
-      else if (tmp < -32768)
+	  else if (tmp < -32768)
 	 tmp = -32768;
-      *pcm++ = tmp;
+	  *pcm++ = tmp;
    }
 }
 /*--------------- 16 pt dual window (interleaved output) -----------------*/
@@ -266,61 +266,61 @@ void window16_dual(float *vbuf, int vb_ptr, short *pcm)
 /*-- first 8 --*/
    for (i = 0; i < 8; i++)
    {
-      sum = 0.0F;
-      for (j = 0; j < 8; j++)
-      {
+	  sum = 0.0F;
+	  for (j = 0; j < 8; j++)
+	  {
 	 sum += (*coef++) * vbuf[si];
 	 si += 32;
 	 sum -= (*coef++) * vbuf[bx];
 	 bx += 32;
-      }
-      si++;
-      bx--;
-      coef += 16;
-      tmp = (long) sum;
-      if (tmp > 32767)
+	  }
+	  si++;
+	  bx--;
+	  coef += 16;
+	  tmp = (long) sum;
+	  if (tmp > 32767)
 	 tmp = 32767;
-      else if (tmp < -32768)
+	  else if (tmp < -32768)
 	 tmp = -32768;
-      *pcm = tmp;
-      pcm += 2;
+	  *pcm = tmp;
+	  pcm += 2;
    }
 /*--  special case --*/
    sum = 0.0F;
    for (j = 0; j < 8; j++)
    {
-      sum += (*coef++) * vbuf[bx];
-      bx += 32;
+	  sum += (*coef++) * vbuf[bx];
+	  bx += 32;
    }
    tmp = (long) sum;
    if (tmp > 32767)
-      tmp = 32767;
+	  tmp = 32767;
    else if (tmp < -32768)
-      tmp = -32768;
+	  tmp = -32768;
    *pcm = tmp;
    pcm += 2;
 /*-- last 7 --*/
    coef = wincoef + 255;	/* back pass through coefs */
    for (i = 0; i < 7; i++)
    {
-      coef -= 16;
-      si--;
-      bx++;
-      sum = 0.0F;
-      for (j = 0; j < 8; j++)
-      {
+	  coef -= 16;
+	  si--;
+	  bx++;
+	  sum = 0.0F;
+	  for (j = 0; j < 8; j++)
+	  {
 	 sum += (*coef--) * vbuf[si];
 	 si += 32;
 	 sum += (*coef--) * vbuf[bx];
 	 bx += 32;
-      }
-      tmp = (long) sum;
-      if (tmp > 32767)
+	  }
+	  tmp = (long) sum;
+	  if (tmp > 32767)
 	 tmp = 32767;
-      else if (tmp < -32768)
+	  else if (tmp < -32768)
 	 tmp = -32768;
-      *pcm = tmp;
-      pcm += 2;
+	  *pcm = tmp;
+	  pcm += 2;
    }
 }
 /*------------------- 8 pt window ------------------------------*/
@@ -339,58 +339,58 @@ void window8(float *vbuf, int vb_ptr, short *pcm)
 /*-- first 4 --*/
    for (i = 0; i < 4; i++)
    {
-      sum = 0.0F;
-      for (j = 0; j < 8; j++)
-      {
+	  sum = 0.0F;
+	  for (j = 0; j < 8; j++)
+	  {
 	 sum += (*coef++) * vbuf[si];
 	 si = (si + 16) & 127;
 	 sum -= (*coef++) * vbuf[bx];
 	 bx = (bx + 16) & 127;
-      }
-      si++;
-      bx--;
-      coef += 48;
-      tmp = (long) sum;
-      if (tmp > 32767)
+	  }
+	  si++;
+	  bx--;
+	  coef += 48;
+	  tmp = (long) sum;
+	  if (tmp > 32767)
 	 tmp = 32767;
-      else if (tmp < -32768)
+	  else if (tmp < -32768)
 	 tmp = -32768;
-      *pcm++ = tmp;
+	  *pcm++ = tmp;
    }
 /*--  special case --*/
    sum = 0.0F;
    for (j = 0; j < 8; j++)
    {
-      sum += (*coef++) * vbuf[bx];
-      bx = (bx + 16) & 127;
+	  sum += (*coef++) * vbuf[bx];
+	  bx = (bx + 16) & 127;
    }
    tmp = (long) sum;
    if (tmp > 32767)
-      tmp = 32767;
+	  tmp = 32767;
    else if (tmp < -32768)
-      tmp = -32768;
+	  tmp = -32768;
    *pcm++ = tmp;
 /*-- last 3 --*/
    coef = wincoef + 255;	/* back pass through coefs */
    for (i = 0; i < 3; i++)
    {
-      coef -= 48;
-      si--;
-      bx++;
-      sum = 0.0F;
-      for (j = 0; j < 8; j++)
-      {
+	  coef -= 48;
+	  si--;
+	  bx++;
+	  sum = 0.0F;
+	  for (j = 0; j < 8; j++)
+	  {
 	 sum += (*coef--) * vbuf[si];
 	 si = (si + 16) & 127;
 	 sum += (*coef--) * vbuf[bx];
 	 bx = (bx + 16) & 127;
-      }
-      tmp = (long) sum;
-      if (tmp > 32767)
+	  }
+	  tmp = (long) sum;
+	  if (tmp > 32767)
 	 tmp = 32767;
-      else if (tmp < -32768)
+	  else if (tmp < -32768)
 	 tmp = -32768;
-      *pcm++ = tmp;
+	  *pcm++ = tmp;
    }
 }
 /*--------------- 8 pt dual window (interleaved output) -----------------*/
@@ -409,61 +409,61 @@ void window8_dual(float *vbuf, int vb_ptr, short *pcm)
 /*-- first 4 --*/
    for (i = 0; i < 4; i++)
    {
-      sum = 0.0F;
-      for (j = 0; j < 8; j++)
-      {
+	  sum = 0.0F;
+	  for (j = 0; j < 8; j++)
+	  {
 	 sum += (*coef++) * vbuf[si];
 	 si = (si + 16) & 127;
 	 sum -= (*coef++) * vbuf[bx];
 	 bx = (bx + 16) & 127;
-      }
-      si++;
-      bx--;
-      coef += 48;
-      tmp = (long) sum;
-      if (tmp > 32767)
+	  }
+	  si++;
+	  bx--;
+	  coef += 48;
+	  tmp = (long) sum;
+	  if (tmp > 32767)
 	 tmp = 32767;
-      else if (tmp < -32768)
+	  else if (tmp < -32768)
 	 tmp = -32768;
-      *pcm = tmp;
-      pcm += 2;
+	  *pcm = tmp;
+	  pcm += 2;
    }
 /*--  special case --*/
    sum = 0.0F;
    for (j = 0; j < 8; j++)
    {
-      sum += (*coef++) * vbuf[bx];
-      bx = (bx + 16) & 127;
+	  sum += (*coef++) * vbuf[bx];
+	  bx = (bx + 16) & 127;
    }
    tmp = (long) sum;
    if (tmp > 32767)
-      tmp = 32767;
+	  tmp = 32767;
    else if (tmp < -32768)
-      tmp = -32768;
+	  tmp = -32768;
    *pcm = tmp;
    pcm += 2;
 /*-- last 3 --*/
    coef = wincoef + 255;	/* back pass through coefs */
    for (i = 0; i < 3; i++)
    {
-      coef -= 48;
-      si--;
-      bx++;
-      sum = 0.0F;
-      for (j = 0; j < 8; j++)
-      {
+	  coef -= 48;
+	  si--;
+	  bx++;
+	  sum = 0.0F;
+	  for (j = 0; j < 8; j++)
+	  {
 	 sum += (*coef--) * vbuf[si];
 	 si = (si + 16) & 127;
 	 sum += (*coef--) * vbuf[bx];
 	 bx = (bx + 16) & 127;
-      }
-      tmp = (long) sum;
-      if (tmp > 32767)
+	  }
+	  tmp = (long) sum;
+	  if (tmp > 32767)
 	 tmp = 32767;
-      else if (tmp < -32768)
+	  else if (tmp < -32768)
 	 tmp = -32768;
-      *pcm = tmp;
-      pcm += 2;
+	  *pcm = tmp;
+	  pcm += 2;
    }
 }
 /*------------------------------------------------------------*/

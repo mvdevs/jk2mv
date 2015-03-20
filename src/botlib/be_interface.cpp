@@ -5,7 +5,7 @@
  * desc:		bot library interface
  *
  * $Archive: /MissionPack/code/botlib/be_interface.c $
- * $Author: Zaphod $ 
+ * $Author: Zaphod $
  * $Revision: 16 $
  * $Modtime: 5/16/01 2:36p $
  * $Date: 5/16/01 2:41p $
@@ -119,7 +119,7 @@ qboolean BotLibSetup(char *str)
 int Export_BotLibSetup(void)
 {
 	int		errnum;
-	
+
 	bot_developer = LibVarGetValue("bot_developer");
   memset( &botlibglobals, 0, sizeof(botlibglobals) ); // bk001207 - init
 	//initialize byte swapping (litte endian etc.)
@@ -554,7 +554,7 @@ int BotExportTest(int parm0, char *parm1, vec3_t parm2, vec3_t parm3)
 
 //	AAS_TestMovementPrediction(1, parm2, forward);
 /*
-    //trace the line to find the hit point
+	//trace the line to find the hit point
 	trace = AAS_TraceClientBBox(eye, end, PRESENCE_NORMAL, 1);
 	if (!line[0]) line[0] = botimport.DebugLineCreate();
 	botimport.DebugLineShow(line[0], eye, trace.endpos, LINECOLOR_BLUE);
@@ -585,7 +585,7 @@ int BotExportTest(int parm0, char *parm1, vec3_t parm2, vec3_t parm3)
 	botimport.Print(PRT_MESSAGE, "id %lu clocks, %lu CLOCKS_PER_SEC\n", end_time - start_time, CLOCKS_PER_SEC);
 */
 
-    // TTimo: nested comments are BAD for gcc -Werror, use #if 0 instead..
+	// TTimo: nested comments are BAD for gcc -Werror, use #if 0 instead..
 #if 0
 	AAS_ClearShownDebugLines();
 	//bsptrace = AAS_Trace(eye, NULL, NULL, end, 1, MASK_PLAYERSOLID);
@@ -599,7 +599,7 @@ int BotExportTest(int parm0, char *parm1, vec3_t parm2, vec3_t parm3)
 		{
 			AAS_ShowFace(face - aasworld.faces);
 		} //end if
-		
+
 		AAS_DrawPlaneCross(bsptrace.endpos,
 									bsptrace.plane.normal,
 									bsptrace.plane.dist + bsptrace.exp_dist,
@@ -685,7 +685,7 @@ static void Init_AAS_Export( aas_export_t *aas ) {
 	aas->AAS_PredictClientMovement = AAS_PredictClientMovement;
 }
 
-  
+
 /*
 ============
 Init_EA_Export

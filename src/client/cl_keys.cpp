@@ -13,7 +13,7 @@ qboolean	chat_team;
 
 int			chat_playerNum;
 
-keyGlobals_t	kg;										
+keyGlobals_t	kg;
 
 // do NOT blithely change any of the key names (3rd field) here, since they have to match the key binds
 //	in the CFG files, they're also prepended with "KEYNAME_" when looking up StripEd references
@@ -52,7 +52,7 @@ keyname_t keynames[MAX_KEYS] =
     { 0x1d, 0x1d, "F2", A_F2, true										},
     { 0x1e, 0x1e, "F3", A_F3, true										},
     { 0x1f, 0x1f, "F4", A_F4, true										},
-    
+
     { 0x20, 0x20, "SPACE", A_SPACE, false								},
     { (word)'!', (word)'!', NULL, A_PLING, false		  				},
     { (word)'"', (word)'"', NULL, A_DOUBLE_QUOTE, false  				},
@@ -85,7 +85,7 @@ keyname_t keynames[MAX_KEYS] =
     { (word)'=', (word)'=', NULL, A_EQUALS, false						},
     { (word)'>', (word)'>', NULL, A_GREATERTHAN, false					},
     { (word)'?', (word)'?', NULL, A_QUESTION, false						},
-    
+
     { (word)'@', (word)'@', NULL, A_AT, false							},
     { (word)'A', (word)'a', NULL, A_CAP_A, false						},
     { (word)'B', (word)'b', NULL, A_CAP_B, false						},
@@ -118,7 +118,7 @@ keyname_t keynames[MAX_KEYS] =
     { (word)']', (word)']', NULL, A_CLOSE_SQUARE, false 				},
     { (word)'^', (word)'^', NULL, A_CARET, false		 				},
     { (word)'_', (word)'_', NULL, A_UNDERSCORE, false					},
-    
+
     { 0x60, 0x60, NULL, A_LEFT_SINGLE_QUOTE, false						},
     { (word)'A', (word)'a', NULL, A_LOW_A, false						},
     { (word)'B', (word)'b', NULL, A_LOW_B, false						},
@@ -151,7 +151,7 @@ keyname_t keynames[MAX_KEYS] =
     { (word)'}', (word)'}', NULL, A_CLOSE_BRACE, false					},
     { (word)'~', (word)'~', NULL, A_TILDE, false						},
     { 0x7f, 0x7f, "DEL", A_DELETE, false								},
-    
+
     { 0x80, 0x80, "EURO", A_EURO, false  								},
     { 0x81, 0x81, "SHIFT", A_SHIFT2, false								},
     { 0x82, 0x82, "CTRL", A_CTRL2, false								},
@@ -184,7 +184,7 @@ keyname_t keynames[MAX_KEYS] =
     { 0x9d, 0x9d, "END", A_END, false									},
     { 0x9e, 0x9e, "PGDN", A_PAGE_DOWN, false							},
     { 0x9f, 0xff, NULL, A_CAP_YDIERESIS, false							},	// ******
-    
+
     { 0xa0, 0,	  "SHIFT_SPACE", A_SPACE, false							},
     { 0xa1, 0xa1, NULL, A_EXCLAMDOWN, false								},	// upside down '!' - undisplayable
     { L'\u00A2', L'\u00A2', NULL, A_CENT, false	  			}, // cent sign
@@ -217,7 +217,7 @@ keyname_t keynames[MAX_KEYS] =
     { 0xbd, 0,	  NULL, A_UNDEFINED_21, false							},
     { 0xbe, 0,	  NULL, A_UNDEFINED_22, false							},
     { L'\u00BF', L'\u00BF', NULL, A_QUESTION_DOWN, false	}, // upside-down question mark
-    
+
     { L'\u00C0', L'\u00E0', NULL, A_CAP_AGRAVE, false		},
     { L'\u00C1', L'\u00E1', NULL, A_CAP_AACUTE, false		},
     { L'\u00C2', L'\u00E2', NULL, A_CAP_ACIRCUMFLEX, false	},
@@ -250,7 +250,7 @@ keyname_t keynames[MAX_KEYS] =
     { L'\u00DD', L'\u00FD', NULL, A_CAP_YACUTE, false		},
     { L'\u00DE', L'\u00FE', NULL, A_CAP_THORN, false		},
     { L'\u00DF', L'\u00DF', NULL, A_GERMANDBLS, false 		},
-    
+
     { L'\u00C0', L'\u00E0', NULL, A_LOW_AGRAVE, false		},
     { L'\u00C1', L'\u00E1', NULL, A_LOW_AACUTE, false		},
     { L'\u00C2', L'\u00E2', NULL, A_LOW_ACIRCUMFLEX, false	},
@@ -283,7 +283,7 @@ keyname_t keynames[MAX_KEYS] =
     { L'\u00DD', L'\u00FD', NULL, A_LOW_YACUTE, false		},
     { L'\u00DE', L'\u00FE', NULL, A_LOW_THORN, false		},
     { 0x9f, 0xff, NULL, A_LOW_YDIERESIS, false							},	// *******
-    
+
     { 0x100, 0x100, "JOY0", A_JOY0, false								},
     { 0x101, 0x101, "JOY1", A_JOY1, false								},
     { 0x102, 0x102, "JOY2", A_JOY2, false								},
@@ -316,7 +316,7 @@ keyname_t keynames[MAX_KEYS] =
     { 0x11d, 0x11d, "JOY29", A_JOY29, false								},
     { 0x11e, 0x11e, "JOY30", A_JOY30, false								},
     { 0x11f, 0x11f, "JOY31", A_JOY31, false								},
-    
+
     { 0x120, 0x120, "AUX0", A_AUX0, false								},
     { 0x121, 0x121, "AUX1", A_AUX1, false								},
     { 0x122, 0x122, "AUX2", A_AUX2, false								},
@@ -453,12 +453,12 @@ void Field_VariableSizeDraw( field_t *edit, int x, int y, int width, int size, q
 	}
 }
 
-void Field_Draw( field_t *edit, int x, int y, int width, qboolean showCursor ) 
+void Field_Draw( field_t *edit, int x, int y, int width, qboolean showCursor )
 {
 	Field_VariableSizeDraw( edit, x, y, width, SMALLCHAR_WIDTH, showCursor );
 }
 
-void Field_BigDraw( field_t *edit, int x, int y, int width, qboolean showCursor ) 
+void Field_BigDraw( field_t *edit, int x, int y, int width, qboolean showCursor )
 {
 	Field_VariableSizeDraw( edit, x, y, width, BIGCHAR_WIDTH, showCursor );
 }
@@ -510,13 +510,13 @@ void Field_KeyDownEvent( field_t *edit, int key ) {
 
 	if ( key == A_DELETE ) {
 		if ( edit->cursor < len ) {
-			memmove( edit->buffer + edit->cursor, 
+			memmove( edit->buffer + edit->cursor,
 				edit->buffer + edit->cursor + 1, len - edit->cursor );
 		}
 		return;
 	}
 
-	if ( key == A_CURSOR_RIGHT ) 
+	if ( key == A_CURSOR_RIGHT )
 	{
 		if ( edit->cursor < len ) {
 			edit->cursor++;
@@ -529,7 +529,7 @@ void Field_KeyDownEvent( field_t *edit, int key ) {
 		return;
 	}
 
-	if ( key == A_CURSOR_LEFT ) 
+	if ( key == A_CURSOR_LEFT )
 	{
 		if ( edit->cursor > 0 ) {
 			edit->cursor--;
@@ -541,13 +541,13 @@ void Field_KeyDownEvent( field_t *edit, int key ) {
 		return;
 	}
 
-	if ( key == A_HOME || ( keynames[key].lower == 'a' && kg.keys[A_CTRL].down ) ) 
+	if ( key == A_HOME || ( keynames[key].lower == 'a' && kg.keys[A_CTRL].down ) )
 	{
 		edit->cursor = 0;
 		return;
 	}
 
-	if ( key == A_END || ( keynames[key].lower == 'e' && kg.keys[A_CTRL].down ) ) 
+	if ( key == A_END || ( keynames[key].lower == 'e' && kg.keys[A_CTRL].down ) )
 	{
 		edit->cursor = len;
 		return;
@@ -581,7 +581,7 @@ void Field_CharEvent( field_t *edit, int ch ) {
 
 	if ( ch == 'h' - 'a' + 1 )	{	// ctrl-h is backspace
 		if ( edit->cursor > 0 ) {
-			memmove( edit->buffer + edit->cursor - 1, 
+			memmove( edit->buffer + edit->cursor - 1,
 				edit->buffer + edit->cursor, len + 1 - edit->cursor );
 			edit->cursor--;
 			if ( edit->cursor < edit->scroll )
@@ -611,7 +611,7 @@ void Field_CharEvent( field_t *edit, int ch ) {
 		return;
 	}
 
-	if ( kg.key_overstrikeMode ) {	
+	if ( kg.key_overstrikeMode ) {
 		if ( edit->cursor == MAX_EDIT_LINE - 1 )
 			return;
 		edit->buffer[edit->cursor] = ch;
@@ -620,7 +620,7 @@ void Field_CharEvent( field_t *edit, int ch ) {
 		if ( len == MAX_EDIT_LINE - 1 ) {
 			return; // all full
 		}
-		memmove( edit->buffer + edit->cursor + 1, 
+		memmove( edit->buffer + edit->cursor + 1,
 			edit->buffer + edit->cursor, len + 1 - edit->cursor );
 		edit->buffer[edit->cursor] = ch;
 		edit->cursor++;
@@ -721,7 +721,7 @@ Tab expansion
 ===============
 */
 /*
-void CompleteCommand( void ) 
+void CompleteCommand( void )
 {
 	field_t		*edit;
 	field_t		temp;
@@ -774,13 +774,13 @@ void CompleteCommand( void )
 	Cvar_CommandCompletion( PrintMatches );
 }
 */
-void CompleteCommand( void ) 
+void CompleteCommand( void )
 { // Daggolin: This is now calling Field_AutoComplete2 and adds a '\' if we found a match... (Hybrid between the old and the new Completion)
 	field_t		*edit;
 
 	// Field_AutoComplete( &kg.g_consoleField );
 	Field_AutoComplete2( &kg.g_consoleField, qtrue, qtrue, qfalse );
-	
+
 	edit = &kg.g_consoleField;
 
 	// only look at the first token for completion purposes
@@ -829,7 +829,7 @@ void Console_Key (int key) {
 	// enter finishes the line
 	if ( key == A_ENTER || key == A_KP_ENTER ) {
 		// if not in the game explicitly prepent a slash if needed
-		if ( cls.state != CA_ACTIVE && kg.g_consoleField.buffer[0] != '\\' 
+		if ( cls.state != CA_ACTIVE && kg.g_consoleField.buffer[0] != '\\'
 			&& kg.g_consoleField.buffer[0] != '/' ) {
 			char	temp[MAX_STRING_CHARS];
 
@@ -884,9 +884,9 @@ void Console_Key (int key) {
 
 	// command history (ctrl-p ctrl-n for unix style)
 
-	if ( ( key == A_CURSOR_UP ) || ( ( keynames[ key ].lower == 'p' ) && kg.keys[A_CTRL].down ) ) 
+	if ( ( key == A_CURSOR_UP ) || ( ( keynames[ key ].lower == 'p' ) && kg.keys[A_CTRL].down ) )
 	{
-		if ( kg.nextHistoryLine - kg.historyLine < COMMAND_HISTORY && kg.historyLine > 0 ) 
+		if ( kg.nextHistoryLine - kg.historyLine < COMMAND_HISTORY && kg.historyLine > 0 )
 		{
 			kg.historyLine--;
 		}
@@ -894,7 +894,7 @@ void Console_Key (int key) {
 		return;
 	}
 
-	if ( ( key == A_CURSOR_DOWN ) || ( ( keynames[ key ].lower == 'n' ) && kg.keys[A_CTRL].down ) ) 
+	if ( ( key == A_CURSOR_DOWN ) || ( ( keynames[ key ].lower == 'n' ) && kg.keys[A_CTRL].down ) )
 	{
 		if (kg.historyLine == kg.nextHistoryLine)
 			return;
@@ -902,7 +902,7 @@ void Console_Key (int key) {
 		kg.g_consoleField = kg.historyEditLines[ kg.historyLine % COMMAND_HISTORY ];
 		return;
 	}
-	
+
 	//Daggolin: Fast scrolling and mousewheel-scrolling
 	if ( (key == A_PAGE_UP || kg.keys[A_MWHEELUP].down) && kg.keys[A_CTRL].down ) {
 		Con_PageUp(2*4);
@@ -1028,19 +1028,19 @@ to be configured even if they don't have defined names.
 */
 int Key_StringToKeynum( char *str ) {
 	int			i;
-	
-	if ( !str || !str[0] ) 
+
+	if ( !str || !str[0] )
 	{
 		return -1;
 	}
 	// If single char bind, presume ascii char bind
-	if ( !str[1] ) 
+	if ( !str[1] )
 	{
 		return keynames[ (unsigned char)str[0] ].upper;
 	}
 
 	// scan for a text match
-	for ( i = 0 ; i < MAX_KEYS ; i++ ) 
+	for ( i = 0 ; i < MAX_KEYS ; i++ )
 	{
 		if ( keynames[i].name && !stricmp( str, keynames[i].name ) )
 		{
@@ -1049,34 +1049,34 @@ int Key_StringToKeynum( char *str ) {
 	}
 
 	// check for hex code
-	if ( str[0] == '0' && str[1] == 'x' && strlen( str ) == 4) 
+	if ( str[0] == '0' && str[1] == 'x' && strlen( str ) == 4)
 	{
 		int		n1, n2;
-		
+
 		n1 = str[2];
-		if ( n1 >= '0' && n1 <= '9' ) 
+		if ( n1 >= '0' && n1 <= '9' )
 		{
 			n1 -= '0';
 		}
-		else if ( n1 >= 'A' && n1 <= 'F' ) 
+		else if ( n1 >= 'A' && n1 <= 'F' )
 		{
 			n1 = n1 - 'A' + 10;
 		}
-		else 
+		else
 		{
 			n1 = 0;
 		}
 
 		n2 = str[3];
-		if ( n2 >= '0' && n2 <= '9' ) 
+		if ( n2 >= '0' && n2 <= '9' )
 		{
 			n2 -= '0';
 		}
-		else if ( n2 >= 'A' && n2 <= 'F' ) 
+		else if ( n2 >= 'A' && n2 <= 'F' )
 		{
 			n2 = n2 - 'A' + 10;
 		}
-		else 
+		else
 		{
 			n2 = 0;
 		}
@@ -1090,11 +1090,11 @@ int Key_StringToKeynum( char *str ) {
 static char tinyString[16];
 static const char *Key_KeynumValid( int keynum )
 {
-	if ( keynum == -1 ) 
+	if ( keynum == -1 )
 	{
 		return "<KEY NOT FOUND>";
 	}
-	if ( keynum < 0 || keynum >= MAX_KEYS ) 
+	if ( keynum < 0 || keynum >= MAX_KEYS )
 	{
 		return "<OUT OF RANGE>";
 	}
@@ -1150,14 +1150,14 @@ static const char *Key_KeyToHex( int keynum )
 }
 
 // Returns the ascii code of the keynum
-const char *Key_KeynumToAscii( int keynum ) 
+const char *Key_KeynumToAscii( int keynum )
 {
 	const char	*name;
 
 	name = Key_KeynumValid(keynum);
 
 	// check for printable ascii
-	if ( !name && keynum > 0 && keynum < 256 ) 
+	if ( !name && keynum > 0 && keynum < 256 )
 	{
 		name = Key_KeyToAscii(keynum);
 	}
@@ -1184,7 +1184,7 @@ given keynum.
 ===================
 */
 // Returns a console/config file friendly name for the key
-const char *Key_KeynumToString( int keynum ) 
+const char *Key_KeynumToString( int keynum )
 {
 	const char	*name;
 
@@ -1196,7 +1196,7 @@ const char *Key_KeynumToString( int keynum )
 		name = Key_KeyToName(keynum);
 	}
 	// check for printable ascii
-	if ( !name && keynum > 0 && keynum < 256) 
+	if ( !name && keynum > 0 && keynum < 256)
 	{
 		name = Key_KeyToAscii(keynum);
 	}
@@ -1225,7 +1225,7 @@ void Key_SetBinding( int keynum, const char *binding ) {
 		Z_Free( kg.keys[ keynames[keynum].upper ].binding );
 		kg.keys[ keynames[keynum].upper ].binding = NULL;
 	}
-			
+
 	// allocate memory for new binding
 	if (binding)
 	{
@@ -1255,7 +1255,7 @@ char *Key_GetBinding( int keynum ) {
 	return kg.keys[ keynum ].binding;
 }
 
-/* 
+/*
 ===================
 Key_GetKey
 ===================
@@ -1288,7 +1288,7 @@ void Key_Unbind_f (void)
 		Com_Printf ("unbind <key> : remove commands from a key\n");
 		return;
 	}
-	
+
 	b = Key_StringToKeynum (Cmd_Argv(1));
 	if (b==-1)
 	{
@@ -1307,7 +1307,7 @@ Key_Unbindall_f
 void Key_Unbindall_f (void)
 {
 	int		i;
-	
+
 	for (i = 0; i < MAX_KEYS ; i++)
 	{
 		if (kg.keys[i].binding)
@@ -1328,7 +1328,7 @@ void Key_Bind_f (void)
 {
 	int			i, c, b;
 	char		cmd[1024];
-	
+
 	c = Cmd_Argc();
 
 	if (c < 2)
@@ -1351,7 +1351,7 @@ void Key_Bind_f (void)
 			Com_Printf ("\"%s\" is not bound\n", Cmd_Argv(1) );
 		return;
 	}
-	
+
 // copy the rest of the command line
 	cmd[0] = 0;		// start out with a null string
 	for (i=2 ; i< c ; i++)
@@ -1556,7 +1556,7 @@ void CL_KeyEvent (int key, qboolean down, unsigned time) {
 			return;
 		}
 #endif
-	    Con_ToggleConsole_f ();
+		Con_ToggleConsole_f ();
 		return;
 	}
 
@@ -1605,7 +1605,7 @@ void CL_KeyEvent (int key, qboolean down, unsigned time) {
 	//
 	// key up events only perform actions if the game key binding is
 	// a button command (leading + sign).  These will be processed even in
-	// console mode and menu mode, to keep the character from continuing 
+	// console mode and menu mode, to keep the character from continuing
 	// an action started before a mode switch.
 	//
 	if (!down) {
@@ -1617,7 +1617,7 @@ void CL_KeyEvent (int key, qboolean down, unsigned time) {
 			VM_Call(uivm, UI_KEY_EVENT, Key_GetProtocolKey(UI_GetCurrentGameversion(), key), down);
 		} else if ( cls.keyCatchers & KEYCATCH_CGAME && cgvm ) {
 			VM_Call(cgvm, CG_KEY_EVENT, Key_GetProtocolKey(MV_GetCurrentGameversion(), key), down);
-		} 
+		}
 
 		return;
 	}
@@ -1629,11 +1629,11 @@ void CL_KeyEvent (int key, qboolean down, unsigned time) {
 	} else if ( cls.keyCatchers & KEYCATCH_UI ) {
 		if ( uivm ) {
 			VM_Call(uivm, UI_KEY_EVENT, Key_GetProtocolKey(UI_GetCurrentGameversion(), key), down);
-		} 
+		}
 	} else if ( cls.keyCatchers & KEYCATCH_CGAME ) {
 		if ( cgvm ) {
 			VM_Call(cgvm, CG_KEY_EVENT, Key_GetProtocolKey(MV_GetCurrentGameversion(), key), down);
-		} 
+		}
 	} else if ( cls.keyCatchers & KEYCATCH_MESSAGE ) {
 		Message_Key( key );
 	} else if ( cls.state == CA_DISCONNECTED ) {
@@ -1643,7 +1643,7 @@ void CL_KeyEvent (int key, qboolean down, unsigned time) {
 		kb = kg.keys[ keynames[key].upper ].binding;
 		if (kb)
 		{
-			if (kb[0] == '+') {	
+			if (kb[0] == '+') {
 				int i;
 				char button[1024], *buttonPtr;
 				buttonPtr = button;
@@ -1702,7 +1702,7 @@ void CL_CharEvent( int key ) {
 	{
 		VM_Call(uivm, UI_KEY_EVENT, key | K_CHAR_FLAG, qtrue);
 	}
-	else if ( cls.keyCatchers & KEYCATCH_MESSAGE ) 
+	else if ( cls.keyCatchers & KEYCATCH_MESSAGE )
 	{
 		Field_CharEvent( &chatField, key );
 	}
@@ -2253,7 +2253,7 @@ int Key_GetProtocolKey15(mvversion_t protocol, int key15) {
 	case K_LAST_KEY:
 		return MAX_KEYS;
 	}
-	
+
 	//Daggolin: Prevent double entries for 1.02 (Example: if 1.02 asks for K_CTRL it will be as if it asked for A_CTRL, if 1.02 asks for something that has the same number as A_CTRL it will count as A_CTRL, too: the CTRL key is handled twice. Solution: check if key15 would get altered by the inverse replacement).
 	if ( Key_GetProtocolKey(protocol, key15) != key15 ) return -1;
 

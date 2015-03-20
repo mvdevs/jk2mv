@@ -99,8 +99,8 @@ char *Sys_DefaultInstallPath(void)
 	return Sys_Cwd();
 }
 
-int Sys_GetPhysicalMemory( void ) 
-{ 
+int Sys_GetPhysicalMemory( void )
+{
    MEMORYSTATUS	MemoryStatus;
 
    memset( &MemoryStatus, sizeof(MEMORYSTATUS), 0 );
@@ -110,7 +110,7 @@ int Sys_GetPhysicalMemory( void )
 
    return( (int)(MemoryStatus.dwTotalPhys / (1024 * 1024)) + 1 );
 
-} 
+}
 
 mvmutex_t MV_CreateMutex() {
 	return (mvmutex_t)CreateMutex(NULL, FALSE, NULL);

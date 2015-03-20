@@ -616,9 +616,9 @@ usercmd_t communication
 */
 
 // ms is allways sent, the others are optional
-#define	CM_ANGLE1 	(1<<0)
-#define	CM_ANGLE2 	(1<<1)
-#define	CM_ANGLE3 	(1<<2)
+#define	CM_ANGLE1	(1<<0)
+#define	CM_ANGLE2	(1<<1)
+#define	CM_ANGLE3	(1<<2)
 #define	CM_FORWARD	(1<<3)
 #define	CM_SIDE		(1<<4)
 #define	CM_UP		(1<<5)

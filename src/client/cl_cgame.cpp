@@ -172,7 +172,7 @@ qboolean	CL_GetSnapshot16(int snapshotNumber, snapshot_t *snapshot) {
 	}
 	snapshot->numEntities = count;
 
- 	for ( i = 0 ; i < count ; i++ ) {
+	for ( i = 0 ; i < count ; i++ ) {
 
 		int entNum =  ( clSnap->parseEntitiesNum + i ) & (MAX_PARSE_ENTITIES-1) ;
 
@@ -404,7 +404,7 @@ void CL_ConfigstringModified( void ) {
 			char *model;
 			char *modelEnd;
 			char *galakPos;
-				
+
 			model = Q_stristr( dup, "model\\" ); //Can't use Info_ValueForKey, because it "copies" what it finds...
 			if ( model )
 			{
@@ -886,7 +886,7 @@ intptr_t CL_CgameSystemCalls(intptr_t *args) {
 		return Key_GetCatcher();
   case CG_KEY_SETCATCHER:
 		Key_SetCatcher( args[1] );
-    return 0;
+	return 0;
   case CG_KEY_GETKEY:
 	  return Key_GetProtocolKey(MV_GetCurrentGameversion(), Key_GetKey((const char *)VMA(1))); //Daggolin: 1.04 keynums -> 1.02 keynums (return)
 
@@ -1331,7 +1331,7 @@ Ghoul2 Insert End
 		return 0;
 
 	default:
-	        assert(0); // bk010102
+			assert(0); // bk010102
 		Com_Error( ERR_DROP, "Bad cgame system trap: %i", args[0] );
 	}
 	return 0;

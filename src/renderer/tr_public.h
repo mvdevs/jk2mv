@@ -50,11 +50,11 @@ typedef struct {
 	void	(*RenderScene)( const refdef_t *fd );
 
 	void	(*SetColor)( const float *rgba );	// NULL = 1,1,1,1
-	void	(*DrawStretchPic) ( float x, float y, float w, float h, 
+	void	(*DrawStretchPic) ( float x, float y, float w, float h,
 		float s1, float t1, float s2, float t2, qhandle_t hShader );	// 0 = white
-	void	(*DrawRotatePic) ( float x, float y, float w, float h, 
+	void	(*DrawRotatePic) ( float x, float y, float w, float h,
 		float s1, float t1, float s2, float t2, float a1, qhandle_t hShader );	// 0 = white
-	void	(*DrawRotatePic2) ( float x, float y, float w, float h, 
+	void	(*DrawRotatePic2) ( float x, float y, float w, float h,
 		float s1, float t1, float s2, float t2, float a1, qhandle_t hShader );	// 0 = white
 
 	// Draw images for cinematic rendering, pass as 32 bit rgba
@@ -70,12 +70,12 @@ typedef struct {
 	int		(*MarkFragments)( int numPoints, const vec3_t *points, const vec3_t projection,
 				   int maxPoints, vec3_t pointBuffer, int maxFragments, markFragment_t *fragmentBuffer );
 
-	int		(*LerpTag)( orientation_t *tag,  qhandle_t model, int startFrame, int endFrame, 
+	int		(*LerpTag)( orientation_t *tag,  qhandle_t model, int startFrame, int endFrame,
 					 float frac, const char *tagName );
 	void	(*ModelBounds)( qhandle_t model, vec3_t mins, vec3_t maxs );
 
 #ifdef __USEA3D
-	void    (*A3D_RenderGeometry) (void *pVoidA3D, void *pVoidGeom, void *pVoidMat, void *pVoidGeomStatus);
+	void	(*A3D_RenderGeometry) (void *pVoidA3D, void *pVoidGeom, void *pVoidMat, void *pVoidGeomStatus);
 #endif
 
 	qhandle_t (*RegisterFont)( const char *fontName );

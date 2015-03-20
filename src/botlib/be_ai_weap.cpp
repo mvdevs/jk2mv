@@ -78,7 +78,7 @@ static fielddef_t projectileinfo_fields[] =
 {"push", PROJECTILE_OFS(push), FT_FLOAT},						//amount a player is pushed away from the projectile impact
 {"detonation", PROJECTILE_OFS(detonation), FT_FLOAT},		//time before projectile explodes after fire pressed
 {"bounce", PROJECTILE_OFS(bounce), FT_FLOAT},				//amount the projectile bounces
-{"bouncefric", PROJECTILE_OFS(bouncefric), FT_FLOAT}, 	//amount the bounce decreases per bounce
+{"bouncefric", PROJECTILE_OFS(bouncefric), FT_FLOAT},	//amount the bounce decreases per bounce
 {"bouncestop", PROJECTILE_OFS(bouncestop), FT_FLOAT},		//minimum bounce value before bouncing stops
 //recurive projectile definition??
 {NULL, 0, 0, 0}

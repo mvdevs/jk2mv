@@ -2,7 +2,7 @@
 
 #ifdef _WIN32
 
-#pragma warning(disable : 4018)     // signed/unsigned mismatch
+#pragma warning(disable : 4018)	 // signed/unsigned mismatch
 #pragma warning(disable : 4032)
 #pragma warning(disable : 4051)
 #pragma warning(disable : 4057)		// slightly different base types

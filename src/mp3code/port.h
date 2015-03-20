@@ -1,9 +1,9 @@
 /*____________________________________________________________________________
-	
+
 	FreeAmp - The Free MP3 Player
 
-        MP3 Decoder originally Copyright (C) 1995-1997 Xing Technology
-        Corp.  http://www.xingtech.com
+		MP3 Decoder originally Copyright (C) 1995-1997 Xing Technology
+		Corp.  http://www.xingtech.com
 
 	Portions Copyright (C) 1998-1999 EMusic.com
 
@@ -20,7 +20,7 @@
 	You should have received a copy of the GNU General Public License
 	along with this program; if not, write to the Free Software
 	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-	
+
 	$Id: port.h,v 1.2 1999/10/19 07:13:08 elrod Exp $
 ____________________________________________________________________________*/
 
@@ -40,23 +40,23 @@ ____________________________________________________________________________*/
 #endif
 #endif
 
-/*-- no pcm conversion to wave required 
+/*-- no pcm conversion to wave required
  if short = 16 bits and little endian ---*/
 
 /* mods 1/9/97 LITTLE_SHORT16 detect */
 
 #ifndef LITTLE_SHORT16
   #ifdef __MSDOS__
-    #undef LITTLE_SHORT16
-    #define LITTLE_SHORT16
+	#undef LITTLE_SHORT16
+	#define LITTLE_SHORT16
   #endif
   #ifdef WIN32
-    #undef LITTLE_SHORT16
-    #define LITTLE_SHORT16
+	#undef LITTLE_SHORT16
+	#define LITTLE_SHORT16
   #endif
   #ifdef _M_IX86
-    #undef LITTLE_SHORT16
-    #define LITTLE_SHORT16
+	#undef LITTLE_SHORT16
+	#define LITTLE_SHORT16
   #endif
 #endif
 

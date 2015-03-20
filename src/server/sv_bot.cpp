@@ -95,7 +95,7 @@ void BotDrawDebugPolygons(void (*drawPoly)(int color, int numPoints, float *poin
 		if (bot_reachability->integer) parm0 |= 2;
 		if (bot_groundonly->integer) parm0 |= 4;
 		botlib_export->BotLibVarSet("bot_highlightarea", bot_highlightarea->string);
-		botlib_export->Test(parm0, NULL, svs.clients[0].gentity->r.currentOrigin, 
+		botlib_export->Test(parm0, NULL, svs.clients[0].gentity->r.currentOrigin,
 			svs.clients[0].gentity->r.currentAngles);
 	} //end if
 	//draw all debug polys
@@ -322,7 +322,7 @@ int BotImport_DebugPolygonCreate(int color, int numPoints, vec3_t *points) {
 	if (!debugpolygons)
 		return 0;
 
-	for (i = 1; i < bot_maxdebugpolys; i++) 	{
+	for (i = 1; i < bot_maxdebugpolys; i++)	{
 		if (!debugpolygons[i].inuse)
 			break;
 	}
@@ -568,7 +568,7 @@ void SV_BotInitBotLib(void) {
 	botlib_import.DebugPolygonDelete = BotImport_DebugPolygonDelete;
 
 	botlib_export = (botlib_export_t *)GetBotLibAPI( BOTLIB_API_VERSION, &botlib_import );
-	assert(botlib_export); 	// bk001129 - somehow we end up with a zero import.
+	assert(botlib_export);	// bk001129 - somehow we end up with a zero import.
 }
 
 

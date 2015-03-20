@@ -13,15 +13,15 @@
 
 
 typedef struct id3v1_1 {
-    char id[3];
-    char title[30];		// <file basename>
-    char artist[30];	// "Raven Software"
-    char album[30];		// "#UNCOMP %d"		// needed
-    char year[4];		// "2001"
-    char comment[28];	// "#MAXVOL %g"		// needed
-    char zero;
-    char track;
-    char genre;
+	char id[3];
+	char title[30];		// <file basename>
+	char artist[30];	// "Raven Software"
+	char album[30];		// "#UNCOMP %d"		// needed
+	char year[4];		// "2001"
+	char comment[28];	// "#MAXVOL %g"		// needed
+	char zero;
+	char track;
+	char genre;
 } id3v1_1;	// 128 bytes in size
 
 

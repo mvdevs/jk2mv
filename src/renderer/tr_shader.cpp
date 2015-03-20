@@ -180,7 +180,7 @@ return a hash value for the filename
 */
 static int generateHashValue( const char *fname, const int size ) {
 	int		i;
-	int	    hash;
+	int		hash;
 	char	letter;
 
 	hash = 0;
@@ -1731,7 +1731,7 @@ static qboolean ParseStage( shaderStage_t *stage, const char **text )
 	// compute state bits
 	//
 	stage->stateBits = depthMaskBits |
-		               blendSrcBits | blendDstBits |
+					   blendSrcBits | blendDstBits |
 					   atestBits |
 					   depthFuncBits;
 
@@ -2062,16 +2062,16 @@ typedef struct {
 
 infoParm_t	infoParms[] = {
 	// Game content Flags
-	{"nonsolid", 	~CONTENTS_SOLID,	0, 				0 },						// special hack to clear solid flag
-	{"nonopaque", 	~CONTENTS_OPAQUE,	0, 				0 },						// special hack to clear opaque flag
+	{"nonsolid",	~CONTENTS_SOLID,	0,				0 },						// special hack to clear solid flag
+	{"nonopaque",	~CONTENTS_OPAQUE,	0,				0 },						// special hack to clear opaque flag
 	{"lava",		~CONTENTS_SOLID,	0,				CONTENTS_LAVA },			// very damaging
 	{"slime",		~CONTENTS_SOLID,	0,				CONTENTS_SLIME },			// mildly damaging
 	{"water",		~CONTENTS_SOLID,	0,				CONTENTS_WATER },
 	{"fog",			~CONTENTS_SOLID,	0,				CONTENTS_FOG},				// carves surfaces entering
 	{"shotclip",	~CONTENTS_SOLID,	0,				CONTENTS_SHOTCLIP },		/* block shots, but not people */
-	{"playerclip",	~(CONTENTS_SOLID|CONTENTS_OPAQUE),0,CONTENTS_PLAYERCLIP },	   	/* block only the player */
+	{"playerclip",	~(CONTENTS_SOLID|CONTENTS_OPAQUE),0,CONTENTS_PLAYERCLIP },		/* block only the player */
 	{"monsterclip",	~(CONTENTS_SOLID|CONTENTS_OPAQUE),0,CONTENTS_MONSTERCLIP },
-	{"botclip",		~(CONTENTS_SOLID|CONTENTS_OPAQUE),0,CONTENTS_BOTCLIP },		   	/* for bots */
+	{"botclip",		~(CONTENTS_SOLID|CONTENTS_OPAQUE),0,CONTENTS_BOTCLIP },			/* for bots */
 	{"trigger",		~(CONTENTS_SOLID|CONTENTS_OPAQUE),0,CONTENTS_TRIGGER },
 	{"nodrop",		~(CONTENTS_SOLID|CONTENTS_OPAQUE),0,CONTENTS_NODROP },			// don't drop items or leave bodies (death fog, lava, etc)
 	{"terrain",		~(CONTENTS_SOLID|CONTENTS_OPAQUE),0,CONTENTS_TERRAIN },		   	/* use special terrain collsion */
@@ -2083,13 +2083,13 @@ infoParm_t	infoParms[] = {
 	{"trans",		CONTENTS_ALL,					0,				CONTENTS_TRANSLUCENT },		// surface has an alpha component
 
 	/* Game surface flags */
-	{"sky",			CONTENTS_ALL,					SURF_SKY,		0 },					   	/* emit light from an environment map */
+	{"sky",			CONTENTS_ALL,					SURF_SKY,		0 },						/* emit light from an environment map */
 	{"slick",		CONTENTS_ALL,					SURF_SLICK,		0 },
 
 	{"nodamage",	CONTENTS_ALL,					SURF_NODAMAGE,	0 },
-	{"noimpact",	CONTENTS_ALL,					SURF_NOIMPACT,	0 },					   	/* don't make impact explosions or marks */
+	{"noimpact",	CONTENTS_ALL,					SURF_NOIMPACT,	0 },						/* don't make impact explosions or marks */
 	{"nomarks",		CONTENTS_ALL,					SURF_NOMARKS,	0 },					   	/* don't make impact marks, but still explode */
-	{"nodraw",		CONTENTS_ALL,					SURF_NODRAW,	0 },					   	/* don't generate a drawsurface (or a lightmap) */
+	{"nodraw",		CONTENTS_ALL,					SURF_NODRAW,	0 },						/* don't generate a drawsurface (or a lightmap) */
 	{"nosteps",		CONTENTS_ALL,					SURF_NOSTEPS,	0 },
 	{"nodlight",	CONTENTS_ALL,					SURF_NODLIGHT,	0 },					   	/* don't ever add dynamic lights */
 	{"metalsteps",	CONTENTS_ALL,					SURF_METALSTEPS,0 },
@@ -2237,10 +2237,10 @@ static qboolean ParseShader( const char **text )
 		}
 		else if ( !Q_stricmp( token, "clampTime" ) ) {
 			token = COM_ParseExt( text, qfalse );
-      if (token[0]) {
-        shader.clampTime = atof(token);
-      }
-    }
+	  if (token[0]) {
+		shader.clampTime = atof(token);
+	  }
+	}
 		// skip stuff that only the q3map needs
 		else if ( !Q_stricmpn( token, "q3map", 5 ) ) {
 			SkipRestOfLine( text );
@@ -2626,7 +2626,7 @@ static qboolean CollapseMultitexture( void ) {
 	int abits, bbits;
 	int i;
 #ifndef DEDICATED
-    textureBundle_t tmpBundle;
+	textureBundle_t tmpBundle;
 #endif
 
 	if ( !qglActiveTextureARB ) {
@@ -3105,11 +3105,11 @@ static shader_t *FinishShader( void ) {
 		}
 
 
-    // not a true lightmap but we want to leave existing
-    // behaviour in place and not print out a warning
-    //if (pStage->rgbGen == CGEN_VERTEX) {
-    //  vertexLightmap = qtrue;
-    //}
+	// not a true lightmap but we want to leave existing
+	// behaviour in place and not print out a warning
+	//if (pStage->rgbGen == CGEN_VERTEX) {
+	//  vertexLightmap = qtrue;
+	//}
 
 
 
@@ -3384,7 +3384,7 @@ qboolean MV_IsGlowStage( shader_t *shader, shaderStage_t *stage )
 	if ( !mv_dynGlowShaders || !strlen(mv_dynGlowShaders) )	 return qfalse;
 	if ( !stage || !stage->bundle || !stage->bundle->image ) return qfalse;
 	if ( !shader || !shader->name || !strlen(shader->name) ) return qfalse;
-	
+
 	for ( i = 0; i < MAX_IMAGE_ANIMATIONS; i++ )
 	{
 		if ( stage->bundle->image[i] && stage->bundle->image[i]->imgName && strlen(stage->bundle->image[i]->imgName) &&
@@ -3434,7 +3434,7 @@ shader_t *R_FindShader( const char *name, const int *lightmapIndex, const byte *
 	const char	*shaderText;
 	shader_t	*sh;
 #ifndef DEDICATED
-    image_t *image;
+	image_t *image;
 #endif
 
 	if ( name[0] == 0 ) {
@@ -3845,7 +3845,7 @@ void	R_ShaderList_f (void) {
 		} else if ( shader->multitextureEnv == GL_DECAL ) {
 			ri.Printf( PRINT_ALL, "MT(d) " );
 		} else {
-			ri.Printf( PRINT_ALL, "      " );
+			ri.Printf( PRINT_ALL, "	  " );
 		}
 		if ( shader->explicitlyDefined ) {
 			ri.Printf( PRINT_ALL, "E " );
@@ -3862,7 +3862,7 @@ void	R_ShaderList_f (void) {
 		} else if ( shader->optimalStageIteratorFunc == RB_StageIteratorVertexLitTexture ) {
 			ri.Printf( PRINT_ALL, "vlt " );
 		} else {
-			ri.Printf( PRINT_ALL, "    " );
+			ri.Printf( PRINT_ALL, "	" );
 		}
 
 		if ( shader->defaultShader ) {

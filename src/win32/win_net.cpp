@@ -152,7 +152,7 @@ qboolean Sys_StringToSockaddr( const char *s, struct sockaddr *sadr ) {
 	struct hostent	*h;
 	int		val;
 	char	copy[MAX_STRING_CHARS];
-	
+
 	memset( sadr, 0, sizeof( *sadr ) );
 
 	// check for an IPX address
@@ -184,7 +184,7 @@ qboolean Sys_StringToSockaddr( const char *s, struct sockaddr *sadr ) {
 			*(int *)&((struct sockaddr_in *)sadr)->sin_addr = *(int *)h->h_addr_list[0];
 		}
 	}
-	
+
 	return qtrue;
 }
 
@@ -200,11 +200,11 @@ idnewt
 */
 qboolean Sys_StringToAdr( const char *s, netadr_t *a ) {
 	struct sockaddr sadr;
-	
+
 	if ( !Sys_StringToSockaddr( s, &sadr ) ) {
 		return qfalse;
 	}
-	
+
 	SockadrToNetadr( &sadr, a );
 	return qtrue;
 }
@@ -221,7 +221,7 @@ Never called by the game logic, just the system event queing
 int	recvfromCount;
 
 qboolean Sys_GetPacket( netadr_t *net_from, msg_t *net_message ) {
-	int 	ret;
+	int	ret;
 	struct sockaddr from;
 	int		fromlen;
 	int		net_socket;

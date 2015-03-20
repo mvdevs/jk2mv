@@ -392,7 +392,7 @@ char *CON_Input( void )
 					Field_Clear(&TTY_con);
 					key = '\n';
 					write(STDOUT_FILENO, &key, 1);
-                    write(STDOUT_FILENO, TTY_CONSOLE_PROMPT, strlen(TTY_CONSOLE_PROMPT));
+					write(STDOUT_FILENO, TTY_CONSOLE_PROMPT, strlen(TTY_CONSOLE_PROMPT));
 #endif
 					return text;
 				}
@@ -464,7 +464,7 @@ char *CON_Input( void )
 	}
 	else if (stdin_active)
 	{
-		int     len;
+		int	 len;
 		fd_set  fdset;
 		struct timeval timeout;
 
@@ -484,7 +484,7 @@ char *CON_Input( void )
 
 		if (len < 1)
 			return NULL;
-		text[len-1] = 0;    // rip off the /n and terminate
+		text[len-1] = 0;	// rip off the /n and terminate
 
 		return text;
 	}
@@ -503,7 +503,7 @@ void CON_Print( const char *msg )
 
 	CON_Hide( );
 
-    Sys_AnsiColorPrint( msg );
+	Sys_AnsiColorPrint( msg );
 
 	if (!ttycon_on) {
 		// CON_Hide didn't do anything.

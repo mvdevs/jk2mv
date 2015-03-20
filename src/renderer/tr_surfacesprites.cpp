@@ -494,7 +494,7 @@ static void RB_VerticalSurfaceSpriteWindPoint(vec3_t loc, float width, float hei
 static void RB_DrawVerticalSurfaceSprites( shaderStage_t *stage, shaderCommands_t *input)
 {
 	int curindex, curvert;
- 	vec3_t dist;
+	vec3_t dist;
 	float triarea;
 	vec2_t vec1to2, vec1to3;
 
@@ -878,7 +878,7 @@ static void RB_OrientedSurfaceSprite(vec3_t loc, float width, float height, byte
 static void RB_DrawOrientedSurfaceSprites( shaderStage_t *stage, shaderCommands_t *input)
 {
 	int curindex, curvert;
- 	vec3_t dist;
+	vec3_t dist;
 	float triarea, minnormal;
 	vec2_t vec1to2, vec1to3;
 

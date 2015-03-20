@@ -99,7 +99,7 @@ void RB_AddFlare( void *surface, int fogNum, vec3_t point, vec3_t color, vec3_t 
 
 	// if the point is off the screen, don't bother adding it
 	// calculate screen coordinates and depth
-	R_TransformModelToClip( point, backEnd.ori.modelMatrix, 
+	R_TransformModelToClip( point, backEnd.ori.modelMatrix,
 		backEnd.viewParms.projectionMatrix, eye, clip );
 
 	// check to see if the point is completely off screen
@@ -158,7 +158,7 @@ void RB_AddFlare( void *surface, int fogNum, vec3_t point, vec3_t color, vec3_t 
 		VectorSubtract( backEnd.viewParms.ori.origin, point, local );
 		VectorNormalizeFast( local );
 		d = DotProduct( local, normal );
-		VectorScale( f->color, d, f->color ); 
+		VectorScale( f->color, d, f->color );
 	}
 
 	// save info needed to test
@@ -186,7 +186,7 @@ void RB_AddDlightFlares( void ) {
 	fog = tr.world->fogs;
 	for (i=0 ; i<backEnd.refdef.num_dlights ; i++, l++) {
 
-		// find which fog volume the light is in 
+		// find which fog volume the light is in
 		for ( j = 1 ; j < tr.world->numfogs ; j++ ) {
 			fog = &tr.world->fogs[j];
 			for ( k = 0 ; k < 3 ; k++ ) {
@@ -234,7 +234,7 @@ void RB_TestFlare( flare_t *f ) {
 	// read back the z buffer contents
 	qglReadPixels( f->windowX, f->windowY, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth );
 
-	screenZ = backEnd.viewParms.projectionMatrix[14] / 
+	screenZ = backEnd.viewParms.projectionMatrix[14] /
 		( ( 2*depth - 1 ) * backEnd.viewParms.projectionMatrix[11] - backEnd.viewParms.projectionMatrix[10] );
 
 	visible = (qboolean)(( -f->eyeZ - -screenZ ) < 24);
@@ -403,10 +403,10 @@ void RB_RenderFlares (void) {
 	}
 
 	qglPushMatrix();
-    qglLoadIdentity();
+	qglLoadIdentity();
 	qglMatrixMode( GL_PROJECTION );
 	qglPushMatrix();
-    qglLoadIdentity();
+	qglLoadIdentity();
 	qglOrtho( backEnd.viewParms.viewportX, backEnd.viewParms.viewportX + backEnd.viewParms.viewportWidth,
 			  backEnd.viewParms.viewportY, backEnd.viewParms.viewportY + backEnd.viewParms.viewportHeight,
 			  -99999, 99999 );

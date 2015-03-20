@@ -31,7 +31,7 @@ typedef	struct modelHash_s
 }modelHash_t;
 
 #define FILE_HASH_SIZE		1024
-static	modelHash_t 		*mhHashTable[FILE_HASH_SIZE];
+static	modelHash_t		*mhHashTable[FILE_HASH_SIZE];
 
 /*
 Ghoul2 Insert End
@@ -680,7 +680,7 @@ qboolean ServerLoadMDXA( model_t *mod, void *buffer, const char *mod_name, qbool
 	int					version;
 	int					size;
 
- 	pinmodel = (mdxaHeader_t *)buffer;
+	pinmodel = (mdxaHeader_t *)buffer;
 	//
 	// read some fields from the binary, but only LittleLong() them when we know this wasn't an already-cached model...
 	//
@@ -799,7 +799,7 @@ qboolean ServerLoadMDXM( model_t *mod, void *buffer, const char *mod_name, qbool
 	}
 
 	surfInfo = (mdxmSurfHierarchy_t *)( (byte *)mdxm + mdxm->ofsSurfHierarchy);
- 	for ( i = 0 ; i < mdxm->numSurfaces ; i++)
+	for ( i = 0 ; i < mdxm->numSurfaces ; i++)
 	{
 		LL(surfInfo->numChildren);
 		LL(surfInfo->parentIndex);
@@ -820,7 +820,7 @@ qboolean ServerLoadMDXM( model_t *mod, void *buffer, const char *mod_name, qbool
 
 		// find the next surface
 		surfInfo = (mdxmSurfHierarchy_t *)( (byte *)surfInfo + (size_t)( &((mdxmSurfHierarchy_t *)0)->childIndexes[ surfInfo->numChildren ] ));
-  	}
+	}
 
 	// swap all the LOD's	(we need to do the middle part of this even for intel, because of shader reg and err-check)
 	lod = (mdxmLOD_t *) ( (byte *)mdxm + mdxm->ofsLODs );

@@ -47,19 +47,19 @@ PCX files are used for 8 bit images
 */
 
 typedef struct {
-    char	manufacturer;
-    char	version;
-    char	encoding;
-    char	bits_per_pixel;
-    unsigned short	xmin,ymin,xmax,ymax;
-    unsigned short	hres,vres;
-    unsigned char	palette[48];
-    char	reserved;
-    char	color_planes;
-    unsigned short	bytes_per_line;
-    unsigned short	palette_type;
-    char	filler[58];
-    unsigned char	data;			// unbounded
+	char	manufacturer;
+	char	version;
+	char	encoding;
+	char	bits_per_pixel;
+	unsigned short	xmin,ymin,xmax,ymax;
+	unsigned short	hres,vres;
+	unsigned char	palette[48];
+	char	reserved;
+	char	color_planes;
+	unsigned short	bytes_per_line;
+	unsigned short	palette_type;
+	char	filler[58];
+	unsigned char	data;			// unbounded
 } pcx_t;
 
 
@@ -72,7 +72,7 @@ TGA files are used for 24/32 bit images
 */
 
 typedef struct _TargaHeader {
-	unsigned char 	id_length, colormap_type, image_type;
+	unsigned char	id_length, colormap_type, image_type;
 	unsigned short	colormap_index, colormap_length;
 	unsigned char	colormap_size;
 	unsigned short	x_origin, y_origin, width, height;
@@ -128,7 +128,7 @@ typedef struct md3Tag_s {
 ** XyzNormals		sizeof( md3XyzNormal_t ) * numVerts * numFrames
 */
 typedef struct {
-	int		ident;				// 
+	int		ident;				//
 
 	char	name[MAX_QPATH];	// polyset name
 
@@ -175,7 +175,7 @@ typedef struct {
 	int			flags;
 
 	int			numFrames;
-	int			numTags;			
+	int			numTags;
 	int			numSurfaces;
 
 	int			numSkins;
@@ -503,13 +503,13 @@ typedef struct {
 #define STYLE_BLINK			0x40000000
 #define	SET_MASK			0x00ffffff
 
-typedef struct 
+typedef struct
 {
 	short		width;					// number of pixels wide
 	short		height;					// number of scan lines
 	short		horizAdvance;			// number of pixels to advance to the next char
 	short		horizOffset;			// x offset into space to render glyph
-	int			baseline;				// y offset 
+	int			baseline;				// y offset
 	float		s;						// x start tex coord
 	float		t;						// y start tex coord
 	float		s2;						// x end tex coord

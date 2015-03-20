@@ -178,7 +178,7 @@ public:
 	rootSList(initrootSList),
 	currentModel(initcurrentModel),
 	lod(initlod),
- 	collRecMap(initcollRecMap),
+	collRecMap(initcollRecMap),
 	entNum(initentNum),
 	modelIndex(initmodelIndex),
 	skin(initskin),
@@ -199,7 +199,7 @@ public:
 void G2_List_Model_Surfaces(const char *fileName)
 {
 	int			i, x;
-  	model_t		*mod_m = R_GetModelByHandle(RE_RegisterModel(fileName));
+	model_t		*mod_m = R_GetModelByHandle(RE_RegisterModel(fileName));
 	mdxmSurfHierarchy_t	*surf;
 
 	surf = (mdxmSurfHierarchy_t *) ( (byte *)mod_m->mdxm + mod_m->mdxm->ofsSurfHierarchy );
@@ -217,8 +217,8 @@ void G2_List_Model_Surfaces(const char *fileName)
 			}
 		}
 		// find the next surface
-  		surf = (mdxmSurfHierarchy_t *)( (byte *)surf + (size_t)( &((mdxmSurfHierarchy_t *)0)->childIndexes[ surf->numChildren ] ));
-  		surface =(mdxmSurface_t *)( (byte *)surface + surface->ofsEnd );
+		surf = (mdxmSurfHierarchy_t *)( (byte *)surf + (size_t)( &((mdxmSurfHierarchy_t *)0)->childIndexes[ surf->numChildren ] ));
+		surface =(mdxmSurface_t *)( (byte *)surface + surface->ofsEnd );
 	}
 
 }
@@ -229,16 +229,16 @@ void G2_List_Model_Bones(const char *fileName, int frame)
 	int				x, i;
 	mdxaSkel_t		*skel;
 	mdxaSkelOffsets_t	*offsets;
-  	model_t			*mod_m = R_GetModelByHandle(RE_RegisterModel(fileName));
+	model_t			*mod_m = R_GetModelByHandle(RE_RegisterModel(fileName));
 	model_t			*mod_a = R_GetModelByHandle(mod_m->mdxm->animIndex);
-// 	mdxaFrame_t		*aframe=0;
+//	mdxaFrame_t		*aframe=0;
 //	int				frameSize;
 	mdxaHeader_t	*header = mod_a->mdxa;
 
 	// figure out where the offset list is
 	offsets = (mdxaSkelOffsets_t *)((byte *)header + sizeof(mdxaHeader_t));
 
-//    frameSize = (int)( &((mdxaFrame_t *)0)->boneIndexes[ header->numBones ] );
+//	frameSize = (int)( &((mdxaFrame_t *)0)->boneIndexes[ header->numBones ] );
 
 //	aframe = (mdxaFrame_t *)((byte *)header + header->ofsFrames + (frame * frameSize));
 	// walk each bone and list it's name
@@ -532,7 +532,7 @@ void G2_TransformSurfaces(int surfaceNum, surfaceInfo_v &rootSList,
 	// really, we should use the default flags for this surface unless it's been overriden
 	int offFlags = surfInfo->flags;
 
-  	if (surfOverride)
+	if (surfOverride)
 	{
 		offFlags = surfOverride->offFlags;
 	}
@@ -1189,9 +1189,9 @@ bool G2_TracePolys( const mdxmSurface_t *surface, const vec3_t rayStart, const v
 			{
 				if (collRecMap[i].mEntityNum == -1)
 				{
-					CollisionRecord_t  	&newCol = collRecMap[i];
-					float			  	distance;
-					vec3_t			  	distVect;
+					CollisionRecord_t	&newCol = collRecMap[i];
+					float				distance;
+					vec3_t				distVect;
 					float				x_pos = 0, y_pos = 0;
 
 					newCol.mPolyIndex = j;
@@ -1486,19 +1486,19 @@ void Inverse_Matrix(mdxaBone_t *src, mdxaBone_t *dest)
 {
 	int i, j;
 
-    for (i = 0; i < 3; i++)
+	for (i = 0; i < 3; i++)
 	{
-        for (j = 0; j < 3; j++)
+		for (j = 0; j < 3; j++)
 		{
-            dest->matrix[i][j]=src->matrix[j][i];
+			dest->matrix[i][j]=src->matrix[j][i];
 		}
 	}
-    for (i = 0; i < 3; i++)
+	for (i = 0; i < 3; i++)
 	{
-        dest->matrix[i][3]=0;
-        for (j = 0; j < 3; j++)
+		dest->matrix[i][3]=0;
+		for (j = 0; j < 3; j++)
 		{
-            dest->matrix[i][3]-=dest->matrix[i][j]*src->matrix[j][3];
+			dest->matrix[i][3]-=dest->matrix[i][j]*src->matrix[j][3];
 		}
 	}
 }

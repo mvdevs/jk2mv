@@ -86,14 +86,14 @@ private:
 	CGPGroup			*mParent;
 	bool				mWriteable;
 
-	void	SortObject(CGPObject *object, CGPObject **unsortedList, CGPObject **sortedList, 
+	void	SortObject(CGPObject *object, CGPObject **unsortedList, CGPObject **sortedList,
 					   CGPObject **lastObject);
 
 public:
 	CGPGroup(const char *initName = "Top Level", CGPGroup *initParent = 0);
 	~CGPGroup(void);
 
-	void	Clean(void); 
+	void	Clean(void);
 
 	void		SetWriteable(const bool writeable) { mWriteable = writeable; }
 	CGPValue	*GetPairs(void) { return mPairs; }

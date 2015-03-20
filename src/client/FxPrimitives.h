@@ -93,7 +93,7 @@
 class CFxBoltInterface
 {
 private:
-	bool				mIsValid;	
+	bool				mIsValid;
 	vec3_t				mOrg;
 	vec3_t				mFwd;
 	vec3_t				mScale;
@@ -106,13 +106,13 @@ private:
 	vec3_t				mInitialOffset;
 
 public:
-	
+
 	CFxBoltInterface()	{ mIsValid = true; };
 	virtual ~CFxBoltInterface()	{};
 
 	void GetOrigin( vec3_t org ) { VectorCopy(mOrg, org); };	// the fx system will call this to get the new origin
-	void GetForward( vec3_t dir ) { VectorCopy(mFwd, dir); };	// and this to get the new forward.  Getting the whole axis is not necessary		
-	void GetScale( vec3_t scale ) { VectorCopy(mScale, scale); };	// and this to get the new forward.  Getting the whole axis is not necessary		
+	void GetForward( vec3_t dir ) { VectorCopy(mFwd, dir); };	// and this to get the new forward.  Getting the whole axis is not necessary
+	void GetScale( vec3_t scale ) { VectorCopy(mScale, scale); };	// and this to get the new forward.  Getting the whole axis is not necessary
 
 	void GetInitialPartOrg( vec3_t org ) { VectorCopy(mInitialPartOrg, org); };
 	void GetInitialOffset( vec3_t org ) { VectorCopy(mInitialOffset, org); };
@@ -123,8 +123,8 @@ public:
 	int GetEntNum( void ) { return mEntNum; }
 
 	void SetOrigin( vec3_t org ) { VectorCopy(org, mOrg); };	// the fx system will call this to get the new origin
-	void SetForward( vec3_t dir ) { VectorCopy(dir, mFwd); };	// and this to get the new forward.  Getting the whole axis is not necessary		
-	void SetScale( vec3_t scale ) { VectorCopy(scale, mScale); };	// and this to get the new forward.  Getting the whole axis is not necessary		
+	void SetForward( vec3_t dir ) { VectorCopy(dir, mFwd); };	// and this to get the new forward.  Getting the whole axis is not necessary
+	void SetScale( vec3_t scale ) { VectorCopy(scale, mScale); };	// and this to get the new forward.  Getting the whole axis is not necessary
 
 	void SetInitialPartOrg( vec3_t org ) { VectorCopy(org, mInitialPartOrg); };
 	void SetInitialOffset( vec3_t org ) { VectorCopy(org, mInitialOffset); };
@@ -177,7 +177,7 @@ public:
 	virtual bool Cull();
 	virtual void Draw();
 
-	inline	miniRefEntity_t	&GetRefEnt(void) { return mRefEnt; } 
+	inline	miniRefEntity_t	&GetRefEnt(void) { return mRefEnt; }
 
 	inline void		SetNext(CEffect *Next) { mNext = Next; }
 	inline CEffect	*GetNext(void) { return mNext; }
@@ -358,7 +358,7 @@ protected:
 	vec3_t		mRGBStart;
 	vec3_t		mRGBEnd;
 	float		mRGBParm;
-	
+
 	float		mAlphaStart;
 	float		mAlphaEnd;
 	float		mAlphaParm;
@@ -487,7 +487,7 @@ public:
 	virtual bool Update();
 	virtual bool Cull();
 	virtual void Draw();
-	
+
 	void DrawSegment( vec3_t start, vec3_t end, float texcoord1, float texcoord2 );
 
 	inline void SetControlPoints( vec3_t ctrl1, vec3_t ctrl2 )	{ VectorCopy( ctrl1, mControl1 ); VectorCopy( ctrl2, mControl2 ); }
@@ -607,10 +607,10 @@ protected:
 
 	vec3_t		mOldOrigin;		// we use these to do some nice
 	vec3_t		mLastOrigin;	//	tricks...
-	vec3_t		mOldVelocity;	//	
+	vec3_t		mOldVelocity;	//
 	int			mOldTime;
 
-	vec3_t		mAngles;		// for a rotating thing, using a delta  
+	vec3_t		mAngles;		// for a rotating thing, using a delta
 	vec3_t		mAngleDelta;	//	as opposed to an end angle is probably much easier
 
 	int			mEmitterFxID;	// if we have emitter fx, this is our id

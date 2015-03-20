@@ -23,7 +23,7 @@
 #define WINDOW_HASFOCUS				0x00000002	// has cursor focus, exclusive
 #define WINDOW_VISIBLE				0x00000004	// is visible
 #define WINDOW_INACTIVE				0x00000008	// is visible but grey ( non-active )
-#define WINDOW_DECORATION			0x00000010	// for decoration only, no mouse, keyboard, etc.. 
+#define WINDOW_DECORATION			0x00000010	// for decoration only, no mouse, keyboard, etc..
 #define WINDOW_FADINGOUT			0x00000020	// fading out, non-active
 #define WINDOW_FADINGIN				0x00000040	// fading in
 #define WINDOW_MOUSEOVERTEXT		0x00000080	// mouse is over it, non exclusive
@@ -41,7 +41,7 @@
 #define WINDOW_AUTOWRAPPED			0x00080000	// auto wrap text
 #define WINDOW_FORCED				0x00100000	// forced open
 #define WINDOW_POPUP				0x00200000	// popup
-#define WINDOW_BACKCOLORSET			0x00400000	// backcolor was explicitly set 
+#define WINDOW_BACKCOLORSET			0x00400000	// backcolor was explicitly set
 #define WINDOW_TIMEDVISIBLE			0x00800000	// visibility timing ( NOT implemented )
 
 
@@ -72,12 +72,12 @@
 #define ART_FX_PURPLE		"menu/art/fx_purple"
 
 #define ASSET_GRADIENTBAR			"ui/assets/gradientbar2.tga"
-#define ASSET_SCROLLBAR             "gfx/menus/scrollbar.tga"
+#define ASSET_SCROLLBAR			 "gfx/menus/scrollbar.tga"
 #define ASSET_SCROLLBAR_ARROWDOWN   "gfx/menus/scrollbar_arrow_dwn_a.tga"
-#define ASSET_SCROLLBAR_ARROWUP     "gfx/menus/scrollbar_arrow_up_a.tga"
+#define ASSET_SCROLLBAR_ARROWUP	 "gfx/menus/scrollbar_arrow_up_a.tga"
 #define ASSET_SCROLLBAR_ARROWLEFT   "gfx/menus/scrollbar_arrow_left.tga"
 #define ASSET_SCROLLBAR_ARROWRIGHT  "gfx/menus/scrollbar_arrow_right.tga"
-#define ASSET_SCROLL_THUMB          "gfx/menus/scrollbar_thumb.tga"
+#define ASSET_SCROLL_THUMB		  "gfx/menus/scrollbar_thumb.tga"
 #define ASSET_SLIDER_BAR			"menu/new/slider"
 #define ASSET_SLIDER_THUMB			"menu/new/sliderthumb"
 #define SCROLLBAR_SIZE 16.0
@@ -94,37 +94,37 @@ typedef struct {
 
 
 typedef struct {
-  float x;    // horiz position
-  float y;    // vert position
-  float w;    // width
-  float h;    // height;
+  float x;	// horiz position
+  float y;	// vert position
+  float w;	// width
+  float h;	// height;
 } rectDef_t;
 
 typedef rectDef_t Rectangle;
 
 // FIXME: do something to separate text vs window stuff
 typedef struct {
-  Rectangle rect;                 // client coord rectangle
-  Rectangle rectClient;           // screen coord rectangle
-  const char *name;               //
-  const char *group;              // if it belongs to a group
+  Rectangle rect;				 // client coord rectangle
+  Rectangle rectClient;		   // screen coord rectangle
+  const char *name;			   //
+  const char *group;			  // if it belongs to a group
   const char *cinematicName;		  // cinematic name
   int cinematic;								  // cinematic handle
-  int style;                      //
-  int border;                     //
+  int style;					  //
+  int border;					 //
   int ownerDraw;									// ownerDraw style
 	int ownerDrawFlags;							// show flags for ownerdraw items
-  float borderSize;               // 
-  int flags;                      // visible, focus, mouseover, cursor
-  Rectangle rectEffects;          // for various effects
-  Rectangle rectEffects2;         // for various effects
-  int offsetTime;                 // time based value for various effects
-  int nextTime;                   // time next effect should cycle
-  vec4_t foreColor;               // text color
-  vec4_t backColor;               // border color
-  vec4_t borderColor;             // border color
-  vec4_t outlineColor;            // border color
-  qhandle_t background;           // background asset  
+  float borderSize;			   //
+  int flags;					  // visible, focus, mouseover, cursor
+  Rectangle rectEffects;		  // for various effects
+  Rectangle rectEffects2;		 // for various effects
+  int offsetTime;				 // time based value for various effects
+  int nextTime;				   // time next effect should cycle
+  vec4_t foreColor;			   // text color
+  vec4_t backColor;			   // border color
+  vec4_t borderColor;			 // border color
+  vec4_t outlineColor;			// border color
+  qhandle_t background;		   // background asset
 } windowDef_t;
 
 typedef windowDef_t Window;
@@ -138,13 +138,13 @@ typedef struct {
 // FIXME: combine flags into bitfields to save space
 // FIXME: consolidate all of the common stuff in one structure for menus and items
 // THINKABOUTME: is there any compelling reason not to have items contain items
-// and do away with a menu per say.. major issue is not being able to dynamically allocate 
-// and destroy stuff.. Another point to consider is adding an alloc free call for vm's and have 
+// and do away with a menu per say.. major issue is not being able to dynamically allocate
+// and destroy stuff.. Another point to consider is adding an alloc free call for vm's and have
 // the engine just allocate the pool for it based on a cvar
 // many of the vars are re-used for different item types, as such they are not always named appropriately
 // the benefits of c++ in DOOM will greatly help crap like this
 // FIXME: need to put a type ptr that points to specific type info per type
-// 
+//
 #define MAX_LB_COLUMNS 16
 
 typedef struct columnInfo_s {
@@ -171,10 +171,10 @@ typedef struct editFieldDef_s {
   float minVal;                  //	edit field limits
   float maxVal;                  //
   float defVal;                  //
-	float range;									 // 
+	float range;									 //
   int maxChars;                  // for edit fields
   int maxPaintChars;             // for edit fields
-	int paintOffset;							 // 
+	int paintOffset;							 //
 } editFieldDef_t;
 
 #define MAX_MULTI_CVARS 32
@@ -195,7 +195,7 @@ typedef struct modelDef_s {
 	int rotationSpeed;
 } modelDef_t;
 
-typedef struct textScrollDef_s 
+typedef struct textScrollDef_s
 {
 	int				startPos;
 	int				endPos;
@@ -222,7 +222,7 @@ typedef struct textScrollDef_s
 
 typedef struct itemDef_s {
 	Window		window;						// common positional, border, style, layout info
-	Rectangle	textRect;					// rectangle the text ( if any ) consumes     
+	Rectangle	textRect;					// rectangle the text ( if any ) consumes
 	int			type;						// text, button, radiobutton, checkbox, textfield, listbox, combo
 	int			alignment;					// left center right
 	int			textalignment;				// ( optional ) alignment for text within rect based on text width
@@ -239,11 +239,11 @@ typedef struct itemDef_s {
 	const char	*mouseEnterText;			// mouse enter script
 	const char	*mouseExitText;				// mouse exit script
 	const char	*mouseEnter;				// mouse enter script
-	const char	*mouseExit;					// mouse exit script 
+	const char	*mouseExit;					// mouse exit script
 	const char	*action;					// select script
 	const char	*onFocus;					// select script
 	const char	*leaveFocus;				// select script
-	const char	*cvar;						// associated cvar 
+	const char	*cvar;						// associated cvar
 	const char	*cvarTest;					// associated cvar for enable actions
 	const char	*enableCvar;				// enable, disable, show, or hide based on value, this can contain a list
 	int			cvarFlags;					//	what type of action to take on cvarenables
@@ -252,7 +252,7 @@ typedef struct itemDef_s {
 	colorRangeDef_t colorRanges[MAX_COLOR_RANGES];
 	float		special;					// used for feeder id's etc.. diff per type
 	int			cursorPos;					// cursor position in characters
-	void		*typeData;					// type specific data ptr's	
+	void		*typeData;					// type specific data ptr's
 	const char	*descText;					//	Description text
 	int			appearanceSlot;				// order of appearance
 	int			iMenuFont;					// FONT_SMALL,FONT_MEDIUM,FONT_LARGE	// changed from 'font' so I could see what didn't compile, and differentiate between font handles returned from RegisterFont -ste
@@ -261,9 +261,9 @@ typedef struct itemDef_s {
 typedef struct {
 	Window window;
 	const char  *font;						// font
-	qboolean fullScreen;					// covers entire screen 
+	qboolean fullScreen;					// covers entire screen
 	int itemCount;							// number of items;
-	int fontIndex;							// 
+	int fontIndex;							//
 	int cursorItem;							// which item as the cursor
 	int fadeCycle;							//
 	float fadeClamp;						//
@@ -275,7 +275,7 @@ typedef struct {
 
 	vec4_t focusColor;						// focus color for items
 	vec4_t disableColor;					// focus color for items
-	itemDef_t *items[MAX_MENUITEMS];		// items this menu contains   
+	itemDef_t *items[MAX_MENUITEMS];		// items this menu contains
 	int			descX;						// X position of description
 	int			descY;						// X position of description
 	vec4_t		descColor;					// description text color for items
@@ -326,7 +326,7 @@ typedef struct {
 
 } cachedAssets_t;
 
-typedef struct 
+typedef struct
 {
 	const char *name;
 	qboolean (*handler) (itemDef_t *item, char** args);
@@ -337,8 +337,8 @@ typedef struct {
   void (*setColor) (const vec4_t v);
   void (*drawHandlePic) (float x, float y, float w, float h, qhandle_t asset);
   void (*drawStretchPic) (float x, float y, float w, float h, float s1, float t1, float s2, float t2, qhandle_t hShader );
-  void (*drawText) (float x, float y, float scale, vec4_t color, const char *text, float adjust, int limit, int style, int iMenuFont);  
-  int (*textWidth) (const char *text, float scale, int iMenuFont);  
+  void (*drawText) (float x, float y, float scale, vec4_t color, const char *text, float adjust, int limit, int style, int iMenuFont);
+  int (*textWidth) (const char *text, float scale, int iMenuFont);
   int (*textHeight) (const char *text, float scale, int iMenuFont);
   qhandle_t (*registerModel) (const char *p);
   void (*modelBounds) (qhandle_t model, vec3_t min, vec3_t max);
@@ -379,7 +379,7 @@ typedef struct {
 	void (*keynumToStringBuf)( int keynum, char *buf, int buflen );
 	void (*getBindingBuf)( int keynum, char *buf, int buflen );
 	void (*setBinding)( int keynum, const char *binding );
-	void (*executeText)(int exec_when, const char *text );	
+	void (*executeText)(int exec_when, const char *text );
 	void (*Error)(int level, const char *error, ...);
 	void (*Print)(const char *msg, ...);
 	void (*Pause)(qboolean b);

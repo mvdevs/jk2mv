@@ -95,7 +95,7 @@ worldSector_t *SV_CreateworldSector( int depth, vec3_t mins, vec3_t maxs ) {
 		anode->children[0] = anode->children[1] = NULL;
 		return anode;
 	}
-	
+
 	VectorSubtract (maxs, mins, size);
 	if (size[0] > size[1]) {
 		anode->axis = 0;
@@ -104,13 +104,13 @@ worldSector_t *SV_CreateworldSector( int depth, vec3_t mins, vec3_t maxs ) {
 	}
 
 	anode->dist = 0.5 * (maxs[anode->axis] + mins[anode->axis]);
-	VectorCopy (mins, mins1);	
-	VectorCopy (mins, mins2);	
-	VectorCopy (maxs, maxs1);	
-	VectorCopy (maxs, maxs2);	
-	
+	VectorCopy (mins, mins1);
+	VectorCopy (mins, mins2);
+	VectorCopy (maxs, maxs1);
+	VectorCopy (maxs, maxs2);
+
 	maxs1[anode->axis] = mins2[anode->axis] = anode->dist;
-	
+
 	anode->children[0] = SV_CreateworldSector (depth+1, mins2, maxs2);
 	anode->children[1] = SV_CreateworldSector (depth+1, mins1, maxs1);
 
@@ -245,7 +245,7 @@ void SV_LinkEntity( sharedEntity_t *gEnt ) {
 		}
 	} else {
 		// normal
-		VectorAdd (origin, gEnt->r.mins, gEnt->r.absmin);	
+		VectorAdd (origin, gEnt->r.mins, gEnt->r.absmin);
 		VectorAdd (origin, gEnt->r.maxs, gEnt->r.absmax);
 	}
 
@@ -325,7 +325,7 @@ void SV_LinkEntity( sharedEntity_t *gEnt ) {
 		else
 			break;		// crosses the node
 	}
-	
+
 	// link it in
 	ent->worldSector = node;
 	ent->nextEntityInWorldSector = node->entities;
@@ -387,7 +387,7 @@ void SV_AreaEntities_r( worldSector_t *node, areaParms_t *ap ) {
 		ap->list[ap->count] = check - sv.svEntities;
 		ap->count++;
 	}
-	
+
 	if (node->axis == -1) {
 		return;		// terminal node
 	}
@@ -640,7 +640,7 @@ Ghoul2 Insert Start
 					touch->s.angles, touch->s.origin, svs.time, touch->s.number, clip->start, clip->end, touch->s.modelScale, G2VertSpaceServer, clip->traceFlags, clip->useLod);
 
 				// set our new trace record size
- 
+
 				for (z=0;z<MAX_G2_COLLISIONS;z++)
 				{
 					if (clip->trace.G2CollisionMap[z].mEntityNum != -1)
@@ -702,7 +702,7 @@ Ghoul2 Insert End
 	clip.contentmask = contentmask;
 /*
 Ghoul2 Insert Start
-*/	
+*/
 	VectorCopy( start, clip.start );
 	clip.traceFlags = traceFlags;
 	clip.useLod = useLod;

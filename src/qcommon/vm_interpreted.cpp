@@ -31,9 +31,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 //#define	DEBUG_VM
 #ifdef DEBUG_VM
 static char	*opnames[256] = {
-	"OP_UNDEF", 
+	"OP_UNDEF",
 
-	"OP_IGNORE", 
+	"OP_IGNORE",
 
 	"OP_BREAK",
 
@@ -141,11 +141,11 @@ static ID_INLINE unsigned int __lwbrx(register void *addr,
 #endif
 
 #else
-    static ID_INLINE int loadWord(void *addr) {
+	static ID_INLINE int loadWord(void *addr) {
 	int word;
 	memcpy(&word, addr, 4);
 	return LittleLong(word);
-    }
+	}
 #endif
 
 char *VM_Indent( vm_t *vm ) {
@@ -244,14 +244,14 @@ void VM_PrepareInterpreter( vm_t *vm, vmHeader_t *header ) {
 	}
 	int_pc = 0;
 	instruction = 0;
-	
+
 	// Now that the code has been expanded to int-sized opcodes, we'll translate instruction index
 	//into an index into codeBase[], which contains opcodes and operands.
 	while ( instruction < header->instructionCount ) {
 		op = codeBase[ int_pc ];
 		instruction++;
 		int_pc++;
-		
+
 		switch ( op ) {
 		// These ops need to translate addresses in jumps from instruction index to int index
 		case OP_EQ:
@@ -349,12 +349,12 @@ int	VM_CallInterpreted( vm_t *vm, int *args ) {
 	// uncomment this for debugging breakpoints
 	vm->breakFunction = 0;
 #endif
-	// set up the stack frame 
+	// set up the stack frame
 
 	image = vm->dataBase;
 	codeImage = (int *)vm->codeBase;
 	dataMask = vm->dataMask;
-	
+
 	programCounter = 0;
 
 	programStack -= ( 8 + 4 * MAX_VMMAIN_ARGS );
@@ -424,7 +424,7 @@ nextInstruction2:
 			opStackOfs++;
 			r1 = r0;
 			r0 = opStack[opStackOfs] = r2;
-			
+
 			programCounter += 1;
 			goto nextInstruction2;
 		case OP_LOCAL:
@@ -481,7 +481,7 @@ nextInstruction2:
 		case OP_CALL:
 			// save current program counter
 			*(int *)&image[ programStack ] = programCounter;
-			
+
 			// jump to the location on the stack
 			programCounter = r0;
 			opStackOfs--;
@@ -722,7 +722,7 @@ nextInstruction2:
 
 		case OP_EQF:
 			opStackOfs -= 2;
-			
+
 			if(((float *) opStack)[(uint8_t) (opStackOfs + 1)] == ((float *) opStack)[(uint8_t) (opStackOfs + 2)])
 			{
 				programCounter = r2;	//vm->instructionPointers[r2];

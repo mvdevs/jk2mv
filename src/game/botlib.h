@@ -6,7 +6,7 @@
  * desc:		bot AI library
  *
  * $Archive: /source/code/game/botai.h $
- * $Author: Mrelusive $ 
+ * $Author: Mrelusive $
  * $Revision: 2 $
  * $Modtime: 03/01/00 3:32p $
  * $Date: 03/01/00 3:42p $

@@ -36,8 +36,8 @@ static qboolean g_editingField = qfalse;
 static itemDef_t *g_bindItem = NULL;
 static itemDef_t *g_editItem = NULL;
 
-menuDef_t Menus[MAX_MENUS];      // defined menus
-int menuCount = 0;               // how many
+menuDef_t Menus[MAX_MENUS];	  // defined menus
+int menuCount = 0;			   // how many
 
 menuDef_t *menuStack[MAX_OPEN_MENUS];
 int openMenuCount = 0;
@@ -133,7 +133,7 @@ void *UI_Alloc( size_t size ) {
 		if (DC->Print) {
 			DC->Print("UI_Alloc: Failure. Out of memory!\n");
 		}
-    //DC->trap_Print(S_COLOR_YELLOW"WARNING: UI Out of Memory!\n");
+	//DC->trap_Print(S_COLOR_YELLOW"WARNING: UI Out of Memory!\n");
 		return NULL;
 	}
 
@@ -548,7 +548,7 @@ qboolean PC_String_Parse(int handle, const char **out)
 
 									// The +1 is to offset the @ at the beginning of the text
 //		trap_SP_GetStringTextString(va("%s_%s",stripedFile,(temp+1)), text, sizeof(text));
-		trap_SP_GetStringTextString(                        temp+1  , text, sizeof(text));	// findmeste
+		trap_SP_GetStringTextString(						temp+1  , text, sizeof(text));	// findmeste
 
 		if (text[0] == 0)		// Couldn't find it
 		{
@@ -2309,12 +2309,12 @@ qboolean Item_ListBox_HandleKey(itemDef_t *item, int key, qboolean down, qboolea
 		max = Item_ListBox_MaxScroll(item);
 		if (item->window.flags & WINDOW_HORIZONTAL) {
 			viewmax = (item->window.rect.w / listPtr->elementWidth);
-			
+
 			if ( key == A_MWHEELUP || key == A_MWHEELDOWN )
 			{ // Daggolin: Enable scrolling with the mousewheel.
 				if ( key == A_MWHEELUP )	listPtr->startPos--;
 				if ( key == A_MWHEELDOWN )	listPtr->startPos++;
-				
+
 				if ( listPtr->startPos >= count - viewmax ) listPtr->startPos = count - viewmax;
 				if ( listPtr->startPos < 0 ) listPtr->startPos = 0;
 
@@ -2374,7 +2374,7 @@ qboolean Item_ListBox_HandleKey(itemDef_t *item, int key, qboolean down, qboolea
 			{ // Daggolin: Enable scrolling with the mousewheel.
 				if ( key == A_MWHEELUP )	listPtr->startPos--;
 				if ( key == A_MWHEELDOWN )	listPtr->startPos++;
-				
+
 				if ( listPtr->startPos >= count - viewmax ) listPtr->startPos = count - viewmax;
 				if ( listPtr->startPos < 0 ) listPtr->startPos = 0;
 
@@ -3418,10 +3418,10 @@ void Menu_HandleKey(menuDef_t *menu, int key, qboolean down) {
 		case A_ESCAPE:
 			if (!g_waitingForKey && menu->onESC) {
 				itemDef_t it;
-		    it.parent = menu;
-		    Item_RunScript(&it, menu->onESC);
+			it.parent = menu;
+			Item_RunScript(&it, menu->onESC);
 			}
-		    g_waitingForKey = qfalse;
+			g_waitingForKey = qfalse;
 			break;
 		case A_TAB:
 		case A_KP_2:
@@ -3896,21 +3896,21 @@ static bind_t g_bindings[] =
 {
 	{"+scores",			 A_TAB,				-1,		-1, -1},
 	{"+button2",		 A_ENTER,			-1,		-1, -1},
-	{"+speed", 			 A_SHIFT,			-1,		-1,	-1},
-	{"+forward", 		 A_CURSOR_UP,		-1,		-1, -1},
-	{"+back", 			 A_CURSOR_DOWN,		-1,		-1, -1},
+	{"+speed",			 A_SHIFT,			-1,		-1,	-1},
+	{"+forward",		 A_CURSOR_UP,		-1,		-1, -1},
+	{"+back",			 A_CURSOR_DOWN,		-1,		-1, -1},
 	{"+moveleft",		 ',',				-1,		-1, -1},
-	{"+moveright", 		 '.',				-1,		-1, -1},
+	{"+moveright",		 '.',				-1,		-1, -1},
 	{"+moveup",			 A_SPACE,			-1,		-1, -1},
 	{"+movedown",		 'c',				-1,		-1, -1},
-	{"+left", 			 A_CURSOR_LEFT,		-1,		-1, -1},
-	{"+right", 			 A_CURSOR_RIGHT,	-1,		-1, -1},
-	{"+strafe", 		 A_ALT,				-1,		-1, -1},
-	{"+lookup", 		 A_PAGE_DOWN,		-1,		-1, -1},
-	{"+lookdown",	 	 A_DELETE,			-1,		-1, -1},
-	{"+mlook", 			 '/',				-1,		-1, -1},
+	{"+left",			 A_CURSOR_LEFT,		-1,		-1, -1},
+	{"+right",			 A_CURSOR_RIGHT,	-1,		-1, -1},
+	{"+strafe",		 A_ALT,				-1,		-1, -1},
+	{"+lookup",		 A_PAGE_DOWN,		-1,		-1, -1},
+	{"+lookdown",		 A_DELETE,			-1,		-1, -1},
+	{"+mlook",			 '/',				-1,		-1, -1},
 	{"centerview",		 A_END,				-1,		-1, -1},
-//	{"+zoom", 			 -1,				-1,		-1, -1},
+//	{"+zoom",			 -1,				-1,		-1, -1},
 	{"weapon 1",		 '1',				-1,		-1, -1},
 	{"weapon 2",		 '2',				-1,		-1, -1},
 	{"weapon 3",		 '3',				-1,		-1, -1},
@@ -3925,13 +3925,13 @@ static bind_t g_bindings[] =
 	{"weapon 11",		 -1,				-1,		-1, -1},
 	{"weapon 12",		 -1,				-1,		-1, -1},
 	{"weapon 13",		 -1,				-1,		-1, -1},
-	{"+attack", 		 A_CTRL,			-1,		-1, -1},
-	{"+altattack", 		-1,					-1,		-1,	-1},
+	{"+attack",		 A_CTRL,			-1,		-1, -1},
+	{"+altattack",		-1,					-1,		-1,	-1},
 	{"+use",			-1,					-1,		-1, -1},
 	{"engage_duel",		'h',				-1,		-1, -1},
 	{"+taunt",			'u',				-1,		-1, -1},
 	{"weapprev",		 '[',				-1,		-1, -1},
-	{"weapnext", 		 ']',				-1,		-1, -1},
+	{"weapnext",		 ']',				-1,		-1, -1},
 	{"prevTeamMember",	'w',				-1,		-1, -1},
 	{"nextTeamMember",	'r',				-1,		-1, -1},
 	{"nextOrder",		't',				-1,		-1, -1},
@@ -4044,12 +4044,12 @@ void Controls_GetConfig( void )
 
 	//s_controls.invertmouse.curvalue  = DC->getCVarValue( "m_pitch" ) < 0;
 	//s_controls.smoothmouse.curvalue  = UI_ClampCvar( 0, 1, Controls_GetCvarValue( "m_filter" ) );
-	//s_controls.alwaysrun.curvalue    = UI_ClampCvar( 0, 1, Controls_GetCvarValue( "cl_run" ) );
+	//s_controls.alwaysrun.curvalue	= UI_ClampCvar( 0, 1, Controls_GetCvarValue( "cl_run" ) );
 	//s_controls.autoswitch.curvalue   = UI_ClampCvar( 0, 1, Controls_GetCvarValue( "cg_autoswitch" ) );
 	//s_controls.sensitivity.curvalue  = UI_ClampCvar( 2, 30, Controls_GetCvarValue( "sensitivity" ) );
-	//s_controls.joyenable.curvalue    = UI_ClampCvar( 0, 1, Controls_GetCvarValue( "in_joystick" ) );
+	//s_controls.joyenable.curvalue	= UI_ClampCvar( 0, 1, Controls_GetCvarValue( "in_joystick" ) );
 	//s_controls.joythreshold.curvalue = UI_ClampCvar( 0.05, 0.75, Controls_GetCvarValue( "joy_threshold" ) );
-	//s_controls.freelook.curvalue     = UI_ClampCvar( 0, 1, Controls_GetCvarValue( "cl_freelook" ) );
+	//s_controls.freelook.curvalue	 = UI_ClampCvar( 0, 1, Controls_GetCvarValue( "cl_freelook" ) );
 }
 
 /*
@@ -7207,26 +7207,26 @@ qboolean Menu_Parse(int handle, menuDef_t *menu) {
 			if ( menu && menu->window.name && !Q_stricmp(menu->window.name, "createserver") )
 			{
 				int handle_addon;
-				
+
 				handle_addon = trap_PC_LoadSource("ui/jk2mp/createserver_addon.menu");
-				
+
 				if (!trap_PC_ReadToken(handle_addon, &token))
 					return qfalse;
 				if (*token.string != '{') {
 					return qfalse;
 				}
-				
+
 				while ( 1 )
 				{
 					if (!trap_PC_ReadToken(handle_addon, &token)) {
 						PC_SourceError(handle_addon, "end of file inside menu\n");
 						return qfalse;
 					}
-					
+
 					if (*token.string == '}') {
 						return qtrue;
 					}
-				
+
 					key = KeywordHash_Find(menuParseKeywordHash, token.string);
 					if (!key) {
 						PC_SourceError(handle_addon, "unknown menu keyword %s", token.string);

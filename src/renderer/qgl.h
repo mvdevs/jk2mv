@@ -61,14 +61,14 @@
 /*
 ** multitexture extension definitions
 */
-#define GL_ACTIVE_TEXTURE_ARB               0x84E0
-#define GL_CLIENT_ACTIVE_TEXTURE_ARB        0x84E1
-#define GL_MAX_ACTIVE_TEXTURES_ARB          0x84E2
+#define GL_ACTIVE_TEXTURE_ARB			   0x84E0
+#define GL_CLIENT_ACTIVE_TEXTURE_ARB		0x84E1
+#define GL_MAX_ACTIVE_TEXTURES_ARB		  0x84E2
 
-#define GL_TEXTURE0_ARB                     0x84C0
-#define GL_TEXTURE1_ARB                     0x84C1
-#define GL_TEXTURE2_ARB                     0x84C2
-#define GL_TEXTURE3_ARB                     0x84C3
+#define GL_TEXTURE0_ARB					 0x84C0
+#define GL_TEXTURE1_ARB					 0x84C1
+#define GL_TEXTURE2_ARB					 0x84C2
+#define GL_TEXTURE3_ARB					 0x84C3
 
 // TTimo: FIXME
 // linux needs those prototypes
@@ -118,9 +118,9 @@ typedef unsigned int GLhandleARB;
 #endif
 
 #ifndef GL_ARB_vertex_shader
-#define GL_VERTEX_SHADER_ARB              0x8B31
+#define GL_VERTEX_SHADER_ARB			  0x8B31
 #define GL_MAX_VERTEX_UNIFORM_COMPONENTS_ARB 0x8B4A
-#define GL_MAX_VARYING_FLOATS_ARB         0x8B4B
+#define GL_MAX_VARYING_FLOATS_ARB		 0x8B4B
 #define GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS_ARB 0x8B4C
 #define GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS_ARB 0x8B4D
 #define GL_OBJECT_ACTIVE_ATTRIBUTES_ARB   0x8B89
@@ -128,15 +128,15 @@ typedef unsigned int GLhandleARB;
 #endif
 
 #ifndef GL_ARB_fragment_shader
-#define GL_FRAGMENT_SHADER_ARB            0x8B30
+#define GL_FRAGMENT_SHADER_ARB			0x8B30
 #define GL_MAX_FRAGMENT_UNIFORM_COMPONENTS_ARB 0x8B49
 #define GL_FRAGMENT_SHADER_DERIVATIVE_HINT_ARB 0x8B8B
 #endif
 
 #ifndef GL_ARB_texture_rectangle
-#define GL_TEXTURE_RECTANGLE_ARB          0x84F5
+#define GL_TEXTURE_RECTANGLE_ARB		  0x84F5
 #define GL_TEXTURE_BINDING_RECTANGLE_ARB  0x84F6
-#define GL_PROXY_TEXTURE_RECTANGLE_ARB    0x84F7
+#define GL_PROXY_TEXTURE_RECTANGLE_ARB	0x84F7
 #define GL_MAX_RECTANGLE_TEXTURE_SIZE_ARB 0x84F8
 #endif
 
@@ -187,77 +187,77 @@ typedef void (APIENTRY * PFNGLGETSHADERSOURCEARBPROC) (GLhandleARB obj, GLsizei 
 #ifndef GL_EXT_framebuffer_object
 #define GL_EXT_framebuffer_object
 
-#define GL_INVALID_FRAMEBUFFER_OPERATION_EXT                0x0506
-#define GL_MAX_RENDERBUFFER_SIZE_EXT                        0x84E8
-#define GL_FRAMEBUFFER_BINDING_EXT                            0x8CA6
-#define GL_RENDERBUFFER_BINDING_EXT                            0x8CA7
-#define GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE_EXT            0x8CD0
-#define GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME_EXT            0x8CD1
-#define GL_FRAMEBUFFER_ATTACHMENT_TEXTURE_LEVEL_EXT            0x8CD2
+#define GL_INVALID_FRAMEBUFFER_OPERATION_EXT				0x0506
+#define GL_MAX_RENDERBUFFER_SIZE_EXT						0x84E8
+#define GL_FRAMEBUFFER_BINDING_EXT							0x8CA6
+#define GL_RENDERBUFFER_BINDING_EXT							0x8CA7
+#define GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE_EXT			0x8CD0
+#define GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME_EXT			0x8CD1
+#define GL_FRAMEBUFFER_ATTACHMENT_TEXTURE_LEVEL_EXT			0x8CD2
 #define GL_FRAMEBUFFER_ATTACHMENT_TEXTURE_CUBE_MAP_FACE_EXT 0x8CD3
-#define GL_FRAMEBUFFER_ATTACHMENT_TEXTURE_3D_ZOFFSET_EXT    0x8CD4
-#define GL_FRAMEBUFFER_COMPLETE_EXT                            0x8CD5
-#define GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT_EXT            0x8CD6
-#define GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT_EXT    0x8CD7
-#define GL_FRAMEBUFFER_INCOMPLETE_DUPLICATE_ATTACHMENT_EXT    0x8CD8
-#define GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS_EXT            0x8CD9
-#define GL_FRAMEBUFFER_INCOMPLETE_FORMATS_EXT                0x8CDA
-#define GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER_EXT            0x8CDB
-#define GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER_EXT            0x8CDC
-#define GL_FRAMEBUFFER_UNSUPPORTED_EXT                        0x8CDD
-#define GL_MAX_COLOR_ATTACHMENTS_EXT                        0x8CDF
-#define GL_COLOR_ATTACHMENT0_EXT                            0x8CE0
-#define GL_COLOR_ATTACHMENT1_EXT                            0x8CE1
-#define GL_COLOR_ATTACHMENT2_EXT                            0x8CE2
-#define GL_COLOR_ATTACHMENT3_EXT                            0x8CE3
-#define GL_COLOR_ATTACHMENT4_EXT                            0x8CE4
-#define GL_COLOR_ATTACHMENT5_EXT                            0x8CE5
-#define GL_COLOR_ATTACHMENT6_EXT                            0x8CE6
-#define GL_COLOR_ATTACHMENT7_EXT                            0x8CE7
-#define GL_COLOR_ATTACHMENT8_EXT                            0x8CE8
-#define GL_COLOR_ATTACHMENT9_EXT                            0x8CE9
-#define GL_COLOR_ATTACHMENT10_EXT                            0x8CEA
-#define GL_COLOR_ATTACHMENT11_EXT                            0x8CEB
-#define GL_COLOR_ATTACHMENT12_EXT                            0x8CEC
-#define GL_COLOR_ATTACHMENT13_EXT                            0x8CED
-#define GL_COLOR_ATTACHMENT14_EXT                            0x8CEE
-#define GL_COLOR_ATTACHMENT15_EXT                            0x8CEF
-#define GL_DEPTH_ATTACHMENT_EXT                                0x8D00
-#define GL_STENCIL_ATTACHMENT_EXT                            0x8D20
-#define GL_FRAMEBUFFER_EXT                                    0x8D40
-#define GL_RENDERBUFFER_EXT                                    0x8D41
-#define GL_RENDERBUFFER_WIDTH_EXT                            0x8D42
-#define GL_RENDERBUFFER_HEIGHT_EXT                            0x8D43
-#define GL_RENDERBUFFER_INTERNAL_FORMAT_EXT                    0x8D44
-#define GL_STENCIL_INDEX1_EXT                                0x8D46
-#define GL_STENCIL_INDEX4_EXT                                0x8D47
-#define GL_STENCIL_INDEX8_EXT                                0x8D48
-#define GL_STENCIL_INDEX16_EXT                                0x8D49
-#define GL_RENDERBUFFER_RED_SIZE_EXT                        0x8D50
-#define GL_RENDERBUFFER_GREEN_SIZE_EXT                        0x8D51
-#define GL_RENDERBUFFER_BLUE_SIZE_EXT                        0x8D52
-#define GL_RENDERBUFFER_ALPHA_SIZE_EXT                        0x8D53
-#define GL_RENDERBUFFER_DEPTH_SIZE_EXT                        0x8D54
-#define GL_RENDERBUFFER_STENCIL_SIZE_EXT                    0x8D55
+#define GL_FRAMEBUFFER_ATTACHMENT_TEXTURE_3D_ZOFFSET_EXT	0x8CD4
+#define GL_FRAMEBUFFER_COMPLETE_EXT							0x8CD5
+#define GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT_EXT			0x8CD6
+#define GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT_EXT	0x8CD7
+#define GL_FRAMEBUFFER_INCOMPLETE_DUPLICATE_ATTACHMENT_EXT	0x8CD8
+#define GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS_EXT			0x8CD9
+#define GL_FRAMEBUFFER_INCOMPLETE_FORMATS_EXT				0x8CDA
+#define GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER_EXT			0x8CDB
+#define GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER_EXT			0x8CDC
+#define GL_FRAMEBUFFER_UNSUPPORTED_EXT						0x8CDD
+#define GL_MAX_COLOR_ATTACHMENTS_EXT						0x8CDF
+#define GL_COLOR_ATTACHMENT0_EXT							0x8CE0
+#define GL_COLOR_ATTACHMENT1_EXT							0x8CE1
+#define GL_COLOR_ATTACHMENT2_EXT							0x8CE2
+#define GL_COLOR_ATTACHMENT3_EXT							0x8CE3
+#define GL_COLOR_ATTACHMENT4_EXT							0x8CE4
+#define GL_COLOR_ATTACHMENT5_EXT							0x8CE5
+#define GL_COLOR_ATTACHMENT6_EXT							0x8CE6
+#define GL_COLOR_ATTACHMENT7_EXT							0x8CE7
+#define GL_COLOR_ATTACHMENT8_EXT							0x8CE8
+#define GL_COLOR_ATTACHMENT9_EXT							0x8CE9
+#define GL_COLOR_ATTACHMENT10_EXT							0x8CEA
+#define GL_COLOR_ATTACHMENT11_EXT							0x8CEB
+#define GL_COLOR_ATTACHMENT12_EXT							0x8CEC
+#define GL_COLOR_ATTACHMENT13_EXT							0x8CED
+#define GL_COLOR_ATTACHMENT14_EXT							0x8CEE
+#define GL_COLOR_ATTACHMENT15_EXT							0x8CEF
+#define GL_DEPTH_ATTACHMENT_EXT								0x8D00
+#define GL_STENCIL_ATTACHMENT_EXT							0x8D20
+#define GL_FRAMEBUFFER_EXT									0x8D40
+#define GL_RENDERBUFFER_EXT									0x8D41
+#define GL_RENDERBUFFER_WIDTH_EXT							0x8D42
+#define GL_RENDERBUFFER_HEIGHT_EXT							0x8D43
+#define GL_RENDERBUFFER_INTERNAL_FORMAT_EXT					0x8D44
+#define GL_STENCIL_INDEX1_EXT								0x8D46
+#define GL_STENCIL_INDEX4_EXT								0x8D47
+#define GL_STENCIL_INDEX8_EXT								0x8D48
+#define GL_STENCIL_INDEX16_EXT								0x8D49
+#define GL_RENDERBUFFER_RED_SIZE_EXT						0x8D50
+#define GL_RENDERBUFFER_GREEN_SIZE_EXT						0x8D51
+#define GL_RENDERBUFFER_BLUE_SIZE_EXT						0x8D52
+#define GL_RENDERBUFFER_ALPHA_SIZE_EXT						0x8D53
+#define GL_RENDERBUFFER_DEPTH_SIZE_EXT						0x8D54
+#define GL_RENDERBUFFER_STENCIL_SIZE_EXT					0x8D55
 #endif
 
-extern          GLboolean(APIENTRY * qglIsRenderbufferEXT) (GLuint renderbuffer);
-extern void     (APIENTRY * qglBindRenderbufferEXT) (GLenum target, GLuint renderbuffer);
-extern void     (APIENTRY * qglDeleteRenderbuffersEXT) (GLsizei n, const GLuint * renderbuffers);
-extern void     (APIENTRY * qglGenRenderbuffersEXT) (GLsizei n, GLuint * renderbuffers);
-extern void     (APIENTRY * qglRenderbufferStorageEXT) (GLenum target, GLenum internalformat, GLsizei width, GLsizei height);
-extern void     (APIENTRY * qglGetRenderbufferParameterivEXT) (GLenum target, GLenum pname, GLint * params);
-extern          GLboolean(APIENTRY * qglIsFramebufferEXT) (GLuint framebuffer);
-extern void     (APIENTRY * qglBindFramebufferEXT) (GLenum target, GLuint framebuffer);
-extern void     (APIENTRY * qglDeleteFramebuffersEXT) (GLsizei n, const GLuint * framebuffers);
-extern void     (APIENTRY * qglGenFramebuffersEXT) (GLsizei n, GLuint * framebuffers);
-extern          GLenum(APIENTRY * qglCheckFramebufferStatusEXT) (GLenum target);
-extern void     (APIENTRY * qglFramebufferTexture1DEXT) (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level);
-extern void     (APIENTRY * qglFramebufferTexture2DEXT) (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level);
-extern void     (APIENTRY * qglFramebufferTexture3DEXT) (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level, GLint zoffset);
-extern void     (APIENTRY * qglFramebufferRenderbufferEXT) (GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer);
-extern void     (APIENTRY * qglGetFramebufferAttachmentParameterivEXT) (GLenum target, GLenum attachment, GLenum pname, GLint * params);
-extern void     (APIENTRY * qglGenerateMipmapEXT) (GLenum target);
+extern		  GLboolean(APIENTRY * qglIsRenderbufferEXT) (GLuint renderbuffer);
+extern void	 (APIENTRY * qglBindRenderbufferEXT) (GLenum target, GLuint renderbuffer);
+extern void	 (APIENTRY * qglDeleteRenderbuffersEXT) (GLsizei n, const GLuint * renderbuffers);
+extern void	 (APIENTRY * qglGenRenderbuffersEXT) (GLsizei n, GLuint * renderbuffers);
+extern void	 (APIENTRY * qglRenderbufferStorageEXT) (GLenum target, GLenum internalformat, GLsizei width, GLsizei height);
+extern void	 (APIENTRY * qglGetRenderbufferParameterivEXT) (GLenum target, GLenum pname, GLint * params);
+extern		  GLboolean(APIENTRY * qglIsFramebufferEXT) (GLuint framebuffer);
+extern void	 (APIENTRY * qglBindFramebufferEXT) (GLenum target, GLuint framebuffer);
+extern void	 (APIENTRY * qglDeleteFramebuffersEXT) (GLsizei n, const GLuint * framebuffers);
+extern void	 (APIENTRY * qglGenFramebuffersEXT) (GLsizei n, GLuint * framebuffers);
+extern		  GLenum(APIENTRY * qglCheckFramebufferStatusEXT) (GLenum target);
+extern void	 (APIENTRY * qglFramebufferTexture1DEXT) (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level);
+extern void	 (APIENTRY * qglFramebufferTexture2DEXT) (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level);
+extern void	 (APIENTRY * qglFramebufferTexture3DEXT) (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level, GLint zoffset);
+extern void	 (APIENTRY * qglFramebufferRenderbufferEXT) (GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer);
+extern void	 (APIENTRY * qglGetFramebufferAttachmentParameterivEXT) (GLenum target, GLenum attachment, GLenum pname, GLint * params);
+extern void	 (APIENTRY * qglGenerateMipmapEXT) (GLenum target);
 
 typedef GLboolean(APIENTRY * PFNGLISRENDERBUFFEREXTPROC) (GLuint renderbuffer);
 typedef void (APIENTRY * PFNGLBINDRENDERBUFFEREXTPROC) (GLenum target, GLuint renderbuffer);
@@ -299,38 +299,38 @@ extern PFNGLGETOBJECTPARAMETERIVARBPROC qglGetObjectParameterivARB;
 extern PFNGLGETATTACHEDOBJECTSARBPROC qglGetAttachedObjectsARB;
 
 #ifndef GL_ARB_shader_objects
-#define GL_PROGRAM_OBJECT_ARB             0x8B40
-#define GL_SHADER_OBJECT_ARB              0x8B48
-#define GL_OBJECT_TYPE_ARB                0x8B4E
-#define GL_OBJECT_SUBTYPE_ARB             0x8B4F
-#define GL_FLOAT_VEC2_ARB                 0x8B50
-#define GL_FLOAT_VEC3_ARB                 0x8B51
-#define GL_FLOAT_VEC4_ARB                 0x8B52
-#define GL_INT_VEC2_ARB                   0x8B53
-#define GL_INT_VEC3_ARB                   0x8B54
-#define GL_INT_VEC4_ARB                   0x8B55
-#define GL_BOOL_ARB                       0x8B56
-#define GL_BOOL_VEC2_ARB                  0x8B57
-#define GL_BOOL_VEC3_ARB                  0x8B58
-#define GL_BOOL_VEC4_ARB                  0x8B59
-#define GL_FLOAT_MAT2_ARB                 0x8B5A
-#define GL_FLOAT_MAT3_ARB                 0x8B5B
-#define GL_FLOAT_MAT4_ARB                 0x8B5C
-#define GL_SAMPLER_1D_ARB                 0x8B5D
-#define GL_SAMPLER_2D_ARB                 0x8B5E
-#define GL_SAMPLER_3D_ARB                 0x8B5F
-#define GL_SAMPLER_CUBE_ARB               0x8B60
-#define GL_SAMPLER_1D_SHADOW_ARB          0x8B61
-#define GL_SAMPLER_2D_SHADOW_ARB          0x8B62
-#define GL_SAMPLER_2D_RECT_ARB            0x8B63
-#define GL_SAMPLER_2D_RECT_SHADOW_ARB     0x8B64
-#define GL_OBJECT_DELETE_STATUS_ARB       0x8B80
-#define GL_OBJECT_COMPILE_STATUS_ARB      0x8B81
-#define GL_OBJECT_LINK_STATUS_ARB         0x8B82
-#define GL_OBJECT_VALIDATE_STATUS_ARB     0x8B83
-#define GL_OBJECT_INFO_LOG_LENGTH_ARB     0x8B84
-#define GL_OBJECT_ATTACHED_OBJECTS_ARB    0x8B85
-#define GL_OBJECT_ACTIVE_UNIFORMS_ARB     0x8B86
+#define GL_PROGRAM_OBJECT_ARB			 0x8B40
+#define GL_SHADER_OBJECT_ARB			  0x8B48
+#define GL_OBJECT_TYPE_ARB				0x8B4E
+#define GL_OBJECT_SUBTYPE_ARB			 0x8B4F
+#define GL_FLOAT_VEC2_ARB				 0x8B50
+#define GL_FLOAT_VEC3_ARB				 0x8B51
+#define GL_FLOAT_VEC4_ARB				 0x8B52
+#define GL_INT_VEC2_ARB				   0x8B53
+#define GL_INT_VEC3_ARB				   0x8B54
+#define GL_INT_VEC4_ARB				   0x8B55
+#define GL_BOOL_ARB					   0x8B56
+#define GL_BOOL_VEC2_ARB				  0x8B57
+#define GL_BOOL_VEC3_ARB				  0x8B58
+#define GL_BOOL_VEC4_ARB				  0x8B59
+#define GL_FLOAT_MAT2_ARB				 0x8B5A
+#define GL_FLOAT_MAT3_ARB				 0x8B5B
+#define GL_FLOAT_MAT4_ARB				 0x8B5C
+#define GL_SAMPLER_1D_ARB				 0x8B5D
+#define GL_SAMPLER_2D_ARB				 0x8B5E
+#define GL_SAMPLER_3D_ARB				 0x8B5F
+#define GL_SAMPLER_CUBE_ARB			   0x8B60
+#define GL_SAMPLER_1D_SHADOW_ARB		  0x8B61
+#define GL_SAMPLER_2D_SHADOW_ARB		  0x8B62
+#define GL_SAMPLER_2D_RECT_ARB			0x8B63
+#define GL_SAMPLER_2D_RECT_SHADOW_ARB	 0x8B64
+#define GL_OBJECT_DELETE_STATUS_ARB	   0x8B80
+#define GL_OBJECT_COMPILE_STATUS_ARB	  0x8B81
+#define GL_OBJECT_LINK_STATUS_ARB		 0x8B82
+#define GL_OBJECT_VALIDATE_STATUS_ARB	 0x8B83
+#define GL_OBJECT_INFO_LOG_LENGTH_ARB	 0x8B84
+#define GL_OBJECT_ATTACHED_OBJECTS_ARB	0x8B85
+#define GL_OBJECT_ACTIVE_UNIFORMS_ARB	 0x8B86
 #define GL_OBJECT_ACTIVE_UNIFORM_MAX_LENGTH_ARB 0x8B87
 #define GL_OBJECT_SHADER_SOURCE_LENGTH_ARB 0x8B88
 #endif
@@ -508,8 +508,8 @@ extern PFNWGLSETPBUFFERATTRIBARBPROC		qwglSetPbufferAttribARB;
 
 // NOTE: These are obviously not all the vertex program flags (have you seen how many there actually are!). I'm
 // only including the ones I use (to reduce code clutter), so if you need any of the other flags, just add them.
-#define GL_VERTEX_PROGRAM_ARB                       0x8620
-#define GL_PROGRAM_FORMAT_ASCII_ARB                 0x8875
+#define GL_VERTEX_PROGRAM_ARB					   0x8620
+#define GL_PROGRAM_FORMAT_ASCII_ARB				 0x8875
 
 typedef void (APIENTRY * PFNGLPROGRAMSTRINGARBPROC) (GLenum target, GLenum format, GLsizei len, const GLvoid *string);
 typedef void (APIENTRY * PFNGLBINDPROGRAMARBPROC) (GLenum target, GLuint program);
@@ -942,14 +942,14 @@ extern BOOL  ( WINAPI * qwglShareLists)(HGLRC, HGLRC);
 extern BOOL  ( WINAPI * qwglUseFontBitmaps)(HDC, DWORD, DWORD, DWORD);
 
 extern BOOL  ( WINAPI * qwglUseFontOutlines)(HDC, DWORD, DWORD, DWORD, FLOAT,
-                                           FLOAT, int, LPGLYPHMETRICSFLOAT);
+										   FLOAT, int, LPGLYPHMETRICSFLOAT);
 
 extern BOOL ( WINAPI * qwglDescribeLayerPlane)(HDC, int, int, UINT,
-                                            LPLAYERPLANEDESCRIPTOR);
+											LPLAYERPLANEDESCRIPTOR);
 extern int  ( WINAPI * qwglSetLayerPaletteEntries)(HDC, int, int, int,
-                                                CONST COLORREF *);
+												CONST COLORREF *);
 extern int  ( WINAPI * qwglGetLayerPaletteEntries)(HDC, int, int, int,
-                                                COLORREF *);
+												COLORREF *);
 extern BOOL ( WINAPI * qwglRealizeLayerPalette)(HDC, int, BOOL);
 extern BOOL ( WINAPI * qwglSwapLayerBuffers)(HDC, UINT);
 

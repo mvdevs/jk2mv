@@ -35,10 +35,10 @@ void	IN_Frame (void);
 
 // window procedure
 LONG WINAPI MainWndProc (
-    HWND    hWnd,
-    UINT    uMsg,
-    WPARAM  wParam,
-    LPARAM  lParam);
+	HWND	hWnd,
+	UINT	uMsg,
+	WPARAM  wParam,
+	LPARAM  lParam);
 
 void Conbuf_AppendText( const char *msg );
 
@@ -47,8 +47,8 @@ int  SNDDMA_InitDS ();
 
 typedef struct
 {
-	
-	HINSTANCE		reflib_library;		// Handle to refresh DLL 
+
+	HINSTANCE		reflib_library;		// Handle to refresh DLL
 	qboolean		reflib_active;
 
 	HWND			hWnd;

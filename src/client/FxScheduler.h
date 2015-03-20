@@ -39,19 +39,19 @@ using namespace std;
 #define FX_MAX_EFFECTS				128		// how many effects the system can store
 #define FX_MAX_EFFECT_COMPONENTS	24		// how many primitives an effect can hold, this should be plenty
 #define FX_MAX_PRIM_NAME			32
-	
+
 //-----------------------------------------------
 // These are spawn flags for primitiveTemplates
 //-----------------------------------------------
 
 #define FX_ORG_ON_SPHERE		0x0001	// Pretty dang expensive, calculates a point on a sphere/ellipsoid
-#define FX_AXIS_FROM_SPHERE		0x0002	// Can be used in conjunction with org_on_sphere to cause particles to move out 
+#define FX_AXIS_FROM_SPHERE		0x0002	// Can be used in conjunction with org_on_sphere to cause particles to move out
 										//	from the center of the sphere
 #define FX_ORG_ON_CYLINDER		0x0004	// calculate point on cylinder/disk
 
 #define FX_ORG2_FROM_TRACE		0x0010
 #define FX_TRACE_IMPACT_FX		0x0020	// if trace impacts, we should play one of the specified impact fx files
-#define FX_ORG2_IS_OFFSET		0x0040	// template specified org2 should be the offset from a trace endpos or 
+#define FX_ORG2_IS_OFFSET		0x0040	// template specified org2 should be the offset from a trace endpos or
 										//	passed in org2. You might use this to lend a random flair to the endpos.
 										//	Note: this is done pre-trace, so you may have to specify large numbers for this
 
@@ -71,7 +71,7 @@ using namespace std;
 //
 // CMediaHandles
 //
-// Primitive templates might want to use a list of sounds, shaders 
+// Primitive templates might want to use a list of sounds, shaders
 //	or models to get a bit more variation in their effects.
 //
 //-----------------------------------------------------------------
@@ -109,7 +109,7 @@ public:
 // CFxRange
 //
 // Primitive templates typically use this class to define each of
-//	its members.  This is done to make it easier to create effects 
+//	its members.  This is done to make it easier to create effects
 //	with a desired range of characteristics.
 //
 //-----------------------------------------------------------------
@@ -174,11 +174,11 @@ enum EPrimType
 //
 // CPrimitiveTemplate
 //
-// The primitive template is used to spawn 1 or more fx primitives 
+// The primitive template is used to spawn 1 or more fx primitives
 //	with the range of characteristics defined by the template.
 //
-// As such, I just made this one huge shared class knowing that 
-//	there won't be many of them in memory at once, 	and we won't 
+// As such, I just made this one huge shared class knowing that
+//	there won't be many of them in memory at once, 	and we won't
 //	be dynamically creating and deleting them mid-game.  Also,
 //	note that not every primitive type will use all of these fields.
 //
@@ -190,8 +190,8 @@ public:
 
 	// These kinds of things should not even be allowed to be accessed publicly
 	bool			mCopy;
-	int				mRefCount;		// For a copy of a primitive...when we figure out how many items we want to spawn, 
-									//	we'll store that here and then decrement us for each we actually spawn.  When we 
+	int				mRefCount;		// For a copy of a primitive...when we figure out how many items we want to spawn,
+									//	we'll store that here and then decrement us for each we actually spawn.  When we
 									//	hit zero, we are no longer used and so we can just free ourselves
 
 	char			mName[FX_MAX_PRIM_NAME];
@@ -382,9 +382,9 @@ struct SEffectTemplate
 	bool	mCopy;
 	char	mEffectName[MAX_QPATH];					// is this extraneous??
 	int		mPrimitiveCount;
-	CPrimitiveTemplate	*mPrimitives[FX_MAX_EFFECT_COMPONENTS];	 
+	CPrimitiveTemplate	*mPrimitives[FX_MAX_EFFECT_COMPONENTS];
 
-	bool operator == (const char * name) const 
+	bool operator == (const char * name) const
 	{
 		return !stricmp( mEffectName, name );
 	}
@@ -397,8 +397,8 @@ struct SEffectTemplate
 //
 // CFxScheduler
 //
-// The scheduler not only handles requests to play an effect, it 
-//	tracks the request throughout its life if necessary, creating 
+// The scheduler not only handles requests to play an effect, it
+//	tracks the request throughout its life if necessary, creating
 //	any of the delayed components as needed.
 //
 //-----------------------------------------------------------------
@@ -434,7 +434,7 @@ private:
 		vec3_t	mOrigin;
 		vec3_t	mAxis[3];
 
-		bool operator <= (const int time) const 
+		bool operator <= (const int time) const
 		{
 			return mStartTime <= time;
 		}
@@ -470,7 +470,7 @@ private:
 public:
 
 	CFxScheduler();
-	
+
 	int		RegisterEffect( const char *file, bool bHasCorrectPath = false );	// handles pre-caching
 
 #ifdef EFFECTSED
@@ -494,7 +494,7 @@ public:
 	void	PlayEffect( int id, vec3_t origin, vec3_t axis[3], const int boltInfo=-1, const int entNum=-1 );
 	void	PlayEffect( const char *file, vec3_t org );					// uses a default up axis
 	void	PlayEffect( const char *file, vec3_t org, vec3_t fwd );		// builds arbitrary perp. right vector, does a cross product to define up
-	void	PlayEffect( const char *file, vec3_t origin, 
+	void	PlayEffect( const char *file, vec3_t origin,
 				vec3_t axis[3], const int boltInfo, const int entNum );
 
 #ifndef EFFECTSED

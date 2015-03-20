@@ -2,11 +2,11 @@
 #pragma warning(disable:4711)	// function 'xxxx' selected for automatic inline expansion
 #ifdef COMPILE_ME
 /*____________________________________________________________________________
-	
+
 	FreeAmp - The Free MP3 Player
 
-        MP3 Decoder originally Copyright (C) 1995-1997 Xing Technology
-        Corp.  http://www.xingtech.com
+		MP3 Decoder originally Copyright (C) 1995-1997 Xing Technology
+		Corp.  http://www.xingtech.com
 
 	Portions Copyright (C) 1998-1999 EMusic.com
 
@@ -23,7 +23,7 @@
 	You should have received a copy of the GNU General Public License
 	along with this program; if not, write to the Free Software
 	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-	
+
 	$Id: cupL1.c,v 1.3 1999/10/19 07:13:08 elrod Exp $
 ____________________________________________________________________________*/
 
@@ -55,19 +55,19 @@ static void unpack_baL1()
 
    for (j = 0; j < pMP3Stream->nbatL1; j++)
    {
-      mac_load_check(4);
-      ballo[j] = samp_dispatch[j] = mac_load(4);
-      if (j >= pMP3Stream->nsb_limit)
+	  mac_load_check(4);
+	  ballo[j] = samp_dispatch[j] = mac_load(4);
+	  if (j >= pMP3Stream->nsb_limit)
 		pMP3Stream->bit_skip += bat_bit_masterL1[samp_dispatch[j]];
-      c_value[j] = look_c_valueL1[samp_dispatch[j]];
-      if (--nstereo < 0)
-      {
+	  c_value[j] = look_c_valueL1[samp_dispatch[j]];
+	  if (--nstereo < 0)
+	  {
 	 ballo[j + 1] = ballo[j];
 	 samp_dispatch[j] += 15;	/* flag as joint */
 	 samp_dispatch[j + 1] = samp_dispatch[j];	/* flag for sf */
 	 c_value[j + 1] = c_value[j];
 	 j++;
-      }
+	  }
    }
 /*-- terminate with bit skip and end --*/
    samp_dispatch[pMP3Stream->nsb_limit] = 31;
@@ -80,22 +80,22 @@ static void unpack_sfL1(void)	/* unpack scale factor */
 
    for (i = 0; i < pMP3Stream->nbatL1; i++)
    {
-      if (ballo[i])
-      {
+	  if (ballo[i])
+	  {
 	 mac_load_check(6);
 	 pMP3Stream->cs_factorL1[i] = c_value[i] * sf_table[mac_load(6)];
-      }
+	  }
    }
 /*-- done --*/
 }
 /*-------------------------------------------------------------------------*/
-#define UNPACKL1_N(n) s[k]     =  pMP3Stream->cs_factorL1[k]*(load(n)-((1 << (n-1)) -1));  \
-    goto dispatch;
-#define UNPACKL1J_N(n) tmp        =  (load(n)-((1 << (n-1)) -1));                 \
-    s[k]       =  pMP3Stream->cs_factorL1[k]*tmp;                        \
-    s[k+1]     =  pMP3Stream->cs_factorL1[k+1]*tmp;                      \
-    k++;                                                     \
-    goto dispatch;
+#define UNPACKL1_N(n) s[k]	 =  pMP3Stream->cs_factorL1[k]*(load(n)-((1 << (n-1)) -1));  \
+	goto dispatch;
+#define UNPACKL1J_N(n) tmp		=  (load(n)-((1 << (n-1)) -1));				 \
+	s[k]	   =  pMP3Stream->cs_factorL1[k]*tmp;						\
+	s[k+1]	 =  pMP3Stream->cs_factorL1[k+1]*tmp;					  \
+	k++;													 \
+	goto dispatch;
 /*-------------------------------------------------------------------------*/
 static void unpack_sampL1()	/* unpack samples */
 {
@@ -106,81 +106,81 @@ static void unpack_sampL1()	/* unpack samples */
    s = sample;
    for (j = 0; j < 12; j++)
    {
-      k = -1;
-    dispatch:switch (samp_dispatch[++k])
-      {
+	  k = -1;
+	dispatch:switch (samp_dispatch[++k])
+	  {
 	 case 0:
-	    s[k] = 0.0F;
-	    goto dispatch;
+		s[k] = 0.0F;
+		goto dispatch;
 	 case 1:
-	    UNPACKL1_N(2)	/*  3 levels */
+		UNPACKL1_N(2)	/*  3 levels */
 	 case 2:
-	    UNPACKL1_N(3)	/*  7 levels */
+		UNPACKL1_N(3)	/*  7 levels */
 	 case 3:
-	    UNPACKL1_N(4)	/* 15 levels */
+		UNPACKL1_N(4)	/* 15 levels */
 	 case 4:
-	    UNPACKL1_N(5)	/* 31 levels */
+		UNPACKL1_N(5)	/* 31 levels */
 	 case 5:
-	    UNPACKL1_N(6)	/* 63 levels */
+		UNPACKL1_N(6)	/* 63 levels */
 	 case 6:
-	    UNPACKL1_N(7)	/* 127 levels */
+		UNPACKL1_N(7)	/* 127 levels */
 	 case 7:
-	    UNPACKL1_N(8)	/* 255 levels */
+		UNPACKL1_N(8)	/* 255 levels */
 	 case 8:
-	    UNPACKL1_N(9)	/* 511 levels */
+		UNPACKL1_N(9)	/* 511 levels */
 	 case 9:
-	    UNPACKL1_N(10)	/* 1023 levels */
+		UNPACKL1_N(10)	/* 1023 levels */
 	 case 10:
-	    UNPACKL1_N(11)	/* 2047 levels */
+		UNPACKL1_N(11)	/* 2047 levels */
 	 case 11:
-	    UNPACKL1_N(12)	/* 4095 levels */
+		UNPACKL1_N(12)	/* 4095 levels */
 	 case 12:
-	    UNPACKL1_N(13)	/* 8191 levels */
+		UNPACKL1_N(13)	/* 8191 levels */
 	 case 13:
-	    UNPACKL1_N(14)	/* 16383 levels */
+		UNPACKL1_N(14)	/* 16383 levels */
 	 case 14:
-	    UNPACKL1_N(15)	/* 32767 levels */
+		UNPACKL1_N(15)	/* 32767 levels */
 /* -- joint ---- */
 	 case 15 + 0:
-	    s[k + 1] = s[k] = 0.0F;
-	    k++;		/* skip right chan dispatch */
-	    goto dispatch;
+		s[k + 1] = s[k] = 0.0F;
+		k++;		/* skip right chan dispatch */
+		goto dispatch;
 /* -- joint ---- */
 	 case 15 + 1:
-	    UNPACKL1J_N(2)	/*  3 levels */
+		UNPACKL1J_N(2)	/*  3 levels */
 	 case 15 + 2:
-	    UNPACKL1J_N(3)	/*  7 levels */
+		UNPACKL1J_N(3)	/*  7 levels */
 	 case 15 + 3:
-	    UNPACKL1J_N(4)	/* 15 levels */
+		UNPACKL1J_N(4)	/* 15 levels */
 	 case 15 + 4:
-	    UNPACKL1J_N(5)	/* 31 levels */
+		UNPACKL1J_N(5)	/* 31 levels */
 	 case 15 + 5:
-	    UNPACKL1J_N(6)	/* 63 levels */
+		UNPACKL1J_N(6)	/* 63 levels */
 	 case 15 + 6:
-	    UNPACKL1J_N(7)	/* 127 levels */
+		UNPACKL1J_N(7)	/* 127 levels */
 	 case 15 + 7:
-	    UNPACKL1J_N(8)	/* 255 levels */
+		UNPACKL1J_N(8)	/* 255 levels */
 	 case 15 + 8:
-	    UNPACKL1J_N(9)	/* 511 levels */
+		UNPACKL1J_N(9)	/* 511 levels */
 	 case 15 + 9:
-	    UNPACKL1J_N(10)	/* 1023 levels */
+		UNPACKL1J_N(10)	/* 1023 levels */
 	 case 15 + 10:
-	    UNPACKL1J_N(11)	/* 2047 levels */
+		UNPACKL1J_N(11)	/* 2047 levels */
 	 case 15 + 11:
-	    UNPACKL1J_N(12)	/* 4095 levels */
+		UNPACKL1J_N(12)	/* 4095 levels */
 	 case 15 + 12:
-	    UNPACKL1J_N(13)	/* 8191 levels */
+		UNPACKL1J_N(13)	/* 8191 levels */
 	 case 15 + 13:
-	    UNPACKL1J_N(14)	/* 16383 levels */
+		UNPACKL1J_N(14)	/* 16383 levels */
 	 case 15 + 14:
-	    UNPACKL1J_N(15)	/* 32767 levels */
+		UNPACKL1J_N(15)	/* 32767 levels */
 
 /* -- end of dispatch -- */
 	 case 31:
-	    skip(pMP3Stream->bit_skip);
+		skip(pMP3Stream->bit_skip);
 	 case 30:
-	    s += 64;
-      }				/* end switch */
+		s += 64;
+	  }				/* end switch */
    }				/* end j loop */
 
 /*-- done --*/
@@ -197,7 +197,7 @@ IN_OUT L1audio_decode(unsigned char *bs, signed short *pcm)
    in_out.out_bytes = 0;
    sync = load(12);
    if (sync != 0xFFF)
-      return in_out;		/* sync fail */
+	  return in_out;		/* sync fail */
 
 
    load(3);			/* skip id and option (checked by init) */
@@ -207,9 +207,9 @@ IN_OUT L1audio_decode(unsigned char *bs, signed short *pcm)
    load(1);			/* skip to mode */
    pMP3Stream->stereo_sb = look_joint[load(4)];
    if (prot)
-      load(4);			/* skip to data */
+	  load(4);			/* skip to data */
    else
-      load(20);			/* skip crc */
+	  load(20);			/* skip crc */
 
    unpack_baL1();		/* unpack bit allocation */
    unpack_sfL1();		/* unpack scale factor */
@@ -237,9 +237,9 @@ int L1audio_decode_init(MPEG_HEAD * h, int framebytes_arg,
 /*--- sf init done by layer II init ---*/
    if (first_pass)
    {
-      for (step = 4, i = 1; i < 16; i++, step <<= 1)
+	  for (step = 4, i = 1; i < 16; i++, step <<= 1)
 	 look_c_valueL1[i] = (float) (2.0 / (step - 1));
-      first_pass = 0;
+	  first_pass = 0;
    }
    pMP3Stream->cs_factorL1 = pMP3Stream->cs_factor[0];
 
@@ -247,20 +247,20 @@ int L1audio_decode_init(MPEG_HEAD * h, int framebytes_arg,
 
    bit_code = 0;
    if (convert_code & 8)
-      bit_code = 1;
+	  bit_code = 1;
    convert_code = convert_code & 3;	/* higher bits used by dec8 freq cvt */
    if (reduction_code < 0)
-      reduction_code = 0;
+	  reduction_code = 0;
    if (reduction_code > 2)
-      reduction_code = 2;
+	  reduction_code = 2;
    if (freq_limit < 1000)
-      freq_limit = 1000;
+	  freq_limit = 1000;
 
 
    pMP3Stream->framebytes = framebytes_arg;
 /* check if code handles */
    if (h->option != 3)
-      return 0;			/* layer I only */
+	  return 0;			/* layer I only */
 
    pMP3Stream->nbatL1 = 32;
    pMP3Stream->max_sb = pMP3Stream->nbatL1;
@@ -271,41 +271,41 @@ int L1audio_decode_init(MPEG_HEAD * h, int framebytes_arg,
 /*---- limit = 0.94*(32>>reduction_code);  ----*/
    limit = (32 >> reduction_code);
    if (limit > 8)
-      limit--;
+	  limit--;
    if (pMP3Stream->nsb_limit > limit)
-      pMP3Stream->nsb_limit = limit;
+	  pMP3Stream->nsb_limit = limit;
    if (pMP3Stream->nsb_limit > pMP3Stream->max_sb)
-      pMP3Stream->nsb_limit = pMP3Stream->max_sb;
+	  pMP3Stream->nsb_limit = pMP3Stream->max_sb;
 
    pMP3Stream->outvalues = 384 >> reduction_code;
    if (h->mode != 3)
    {				/* adjust for 2 channel modes */
-      pMP3Stream->nbatL1 *= 2;
-      pMP3Stream->max_sb *= 2;
-      pMP3Stream->nsb_limit *= 2;
+	  pMP3Stream->nbatL1 *= 2;
+	  pMP3Stream->max_sb *= 2;
+	  pMP3Stream->nsb_limit *= 2;
    }
 
 /* set sbt function */
    k = 1 + convert_code;
    if (h->mode == 3)
    {
-      k = 0;
+	  k = 0;
    }
    pMP3Stream->sbt = sbt_table[bit_code][reduction_code][k];
    pMP3Stream->outvalues *= out_chans[k];
 
    if (bit_code)
-      pMP3Stream->outbytes = pMP3Stream->outvalues;
+	  pMP3Stream->outbytes = pMP3Stream->outvalues;
    else
-      pMP3Stream->outbytes = sizeof(short) * pMP3Stream->outvalues;
+	  pMP3Stream->outbytes = sizeof(short) * pMP3Stream->outvalues;
 
    decinfo.channels = out_chans[k];
    decinfo.outvalues = pMP3Stream->outvalues;
    decinfo.samprate = samprate >> reduction_code;
    if (bit_code)
-      decinfo.bits = 8;
+	  decinfo.bits = 8;
    else
-      decinfo.bits = sizeof(short) * 8;
+	  decinfo.bits = sizeof(short) * 8;
 
    decinfo.framebytes = pMP3Stream->framebytes;
    decinfo.type = 0;
@@ -313,7 +313,7 @@ int L1audio_decode_init(MPEG_HEAD * h, int framebytes_arg,
 
 /* clear sample buffer, unused sub bands must be 0 */
    for (i = 0; i < 768; i++)
-      sample[i] = 0.0F;
+	  sample[i] = 0.0F;
 
 
 /* init sub-band transform */

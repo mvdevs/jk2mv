@@ -76,13 +76,13 @@ int G2_IsSurfaceLegal(void *mod, const char *surfaceName, int *flags)
 
 	for ( int i = 0 ; i < mod_m->mdxm->numSurfaces ; i++)
 	{
-	 	if (!stricmp(surfaceName, surf->name))
-	 	{
+		if (!stricmp(surfaceName, surf->name))
+		{
 			*flags = surf->flags;
 			return i;
 		}
 		// find the next surface
-  		surf = (mdxmSurfHierarchy_t *)( (byte *)surf + (size_t)( &((mdxmSurfHierarchy_t *)0)->childIndexes[ surf->numChildren ] ));
+		surf = (mdxmSurfHierarchy_t *)( (byte *)surf + (size_t)( &((mdxmSurfHierarchy_t *)0)->childIndexes[ surf->numChildren ] ));
 	}
 	return -1;
 }
@@ -90,7 +90,7 @@ int G2_IsSurfaceLegal(void *mod, const char *surfaceName, int *flags)
 
 /************************************************************************************************
  * G2_FindSurface
- *    find a surface in a ghoul2 surface override list based on it's name
+ *	find a surface in a ghoul2 surface override list based on it's name
  *
  * Input
  *    filename of model, surface list of model instance, name of surface, int to be filled in
@@ -165,7 +165,7 @@ qboolean G2_SetSurfaceOnOff (const char *fileName, surfaceInfo_v &slist, const c
 		return qfalse;
 	}
 
- 	// first find if we already have this surface in the list
+	// first find if we already have this surface in the list
 	surf = G2_FindSurface(fileName, slist, surfaceName, &surfIndex);
 	if (surf)
 	{
@@ -209,7 +209,7 @@ int G2_IsSurfaceOff (const char *fileName, surfaceInfo_v &slist, const char *sur
 		return 0;
 	}
 
- 	// first find if we already have this surface in the list
+	// first find if we already have this surface in the list
 	surf = G2_FindSurface(fileName, slist, surfaceName, &surfIndex);
 	if (surf)
 	{
@@ -258,7 +258,7 @@ void G2_FindRecursiveSurface(model_t *currentModel, int surfaceNum, surfaceInfo_
 	{
 		activeSurfaces[surfaceNum] = 1;
 	}
- 	else
+	else
 	// if we are turning off all descendants, then stop this recursion now
 	if (offFlags & G2SURFACEFLAG_NODESCENDANTS)
 	{
@@ -403,7 +403,7 @@ qboolean G2_SetRootSurface(CGhoul2Info_v &ghoul2, const int modelIndex, const ch
 			return qfalse;
 		}
 
- 		// first find if we already have this surface in the list
+		// first find if we already have this surface in the list
 		surf = G2_IsSurfaceLegal(mod_m, surfaceName, &flags);
 		if (surf != -1)
 		{

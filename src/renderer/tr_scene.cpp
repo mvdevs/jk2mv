@@ -230,17 +230,17 @@ void RE_AddRefEntityToScene( const refEntity_t *ent ) {
 
 
 /************************************************************************************************
- * RE_AddMiniRefEntityToScene                                                                   *
- *    Adds a mini ref ent to the scene.  If the input parameter is null, it signifies the end   *
- *    of the chain.  Otherwise, if there is a valid chain parent, it will be added to that.     *
- *    If there is no parent, it will be added as a regular ref ent.                             *
- *                                                                                              *
- * Input                                                                                        *
- *    ent: the mini ref ent to be added                                                         *
- *                                                                                              *
- * Output / Return                                                                              *
- *    none                                                                                      *
- *                                                                                              *
+ * RE_AddMiniRefEntityToScene																   *
+ *	Adds a mini ref ent to the scene.  If the input parameter is null, it signifies the end   *
+ *	of the chain.  Otherwise, if there is a valid chain parent, it will be added to that.	 *
+ *	If there is no parent, it will be added as a regular ref ent.							 *
+ *																							  *
+ * Input																						*
+ *	ent: the mini ref ent to be added														 *
+ *																							  *
+ * Output / Return																			  *
+ *	none																					  *
+ *																							  *
  ************************************************************************************************/
 void RE_AddMiniRefEntityToScene( const miniRefEntity_t *ent )
 {

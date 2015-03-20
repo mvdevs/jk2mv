@@ -122,7 +122,7 @@ Show the early console as an error dialog
 void QDECL Sys_Error(const char *error, ...) {
 	va_list		argptr;
 	char		text[4096];
-	MSG        msg;
+	MSG		msg;
 
 	va_start(argptr, error);
 	vsprintf(text, error, argptr);
@@ -730,7 +730,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 
 #if 0
 	CheckProcessTime();
-#endif 
+#endif
 
 	Com_Init(sys_cmdline);
 #if 0
@@ -738,7 +738,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 	Cvar_Set("com_othertaskstime", va("%u", otherTaskTime));
 #else
 	Cvar_Set("com_othertasks", "0");
-#endif 
+#endif
 
 	NET_Init();
 

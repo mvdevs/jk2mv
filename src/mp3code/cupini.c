@@ -1,11 +1,11 @@
 #pragma warning(disable:4206)	// nonstandard extension used : translation unit is empty
 #ifdef COMPILE_ME
 /*____________________________________________________________________________
-	
+
 	FreeAmp - The Free MP3 Player
 
-        MP3 Decoder originally Copyright (C) 1995-1997 Xing Technology
-        Corp.  http://www.xingtech.com
+		MP3 Decoder originally Copyright (C) 1995-1997 Xing Technology
+		Corp.  http://www.xingtech.com
 
 	Portions Copyright (C) 1998-1999 EMusic.com
 
@@ -22,7 +22,7 @@
 	You should have received a copy of the GNU General Public License
 	along with this program; if not, write to the Free Software
 	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-	
+
 	$Id: cupini.c,v 1.3 1999/10/19 07:13:08 elrod Exp $
 ____________________________________________________________________________*/
 
@@ -35,7 +35,7 @@ mod 8/6/96 add 8 bit output
 mod 5/10/95 add quick (low precision) window
 
 mod 5/16/95 sb limit for reduced samprate output
-            changed from 94% to 100% of Nyquist sb
+			changed from 94% to 100% of Nyquist sb
 
 mod 11/15/95 for Layer I
 
@@ -69,9 +69,9 @@ static const signed char lookqt[4][3][16] =
   {0, -1, -1, -1, 2, -1, 2, 0, 0, 0, 0, 0, 0, 0, 0, -1},	/*  48ks */
   {1, -1, -1, -1, 3, -1, 3, 0, 0, 0, 1, 1, 1, 1, 1, -1}},	/*  32ks */
 // mono extended beyond legal br index
-//  1,2,2,0,0,0,1,1,1,1,1,1,1,1,1,-1,          /*  44ks single chan */
-//  0,2,2,0,0,0,0,0,0,0,0,0,0,0,0,-1,          /*  48ks */
-//  1,3,3,0,0,0,1,1,1,1,1,1,1,1,1,-1,          /*  32ks */
+//  1,2,2,0,0,0,1,1,1,1,1,1,1,1,1,-1,		  /*  44ks single chan */
+//  0,2,2,0,0,0,0,0,0,0,0,0,0,0,0,-1,		  /*  48ks */
+//  1,3,3,0,0,0,1,1,1,1,1,1,1,1,1,-1,		  /*  32ks */
 // legal mono
  {{1, 2, 2, 0, 0, 0, 1, 1, 1, 1, 1, -1, -1, -1, -1, -1},	/*  44ks single chan */
   {0, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, -1, -1, -1, -1, -1},	/*  48ks */
@@ -216,7 +216,7 @@ static void table_init()
 
 	/*--  scale factor table, scale by 32768 for 16 pcm output  --*/
 	   for (i = 0; i < 64; i++)
-		  sf_table[i] = (float) (32768.0 * 2.0 * pow(2.0, -i / 3.0));   
+		  sf_table[i] = (float) (32768.0 * 2.0 * pow(2.0, -i / 3.0));
 
 	/*--  grouped 3 level lookup table 5 bit token --*/
 	   for (i = 0; i < 32; i++)
@@ -228,7 +228,7 @@ static void table_init()
 		 code /= 3;
 		  }
 	   }
-   
+
 	/*--  grouped 5 level lookup table 7 bit token --*/
 	   for (i = 0; i < 128; i++)
 	   {
@@ -264,7 +264,7 @@ int L3audio_decode_init(MPEG_HEAD * h, int framebytes_arg,
 /* mpeg_head defined in mhead.h  frame bytes is without pad */
 int audio_decode_init(MPEG_HEAD * h, int framebytes_arg,
 		   int reduction_code, int transform_code, int convert_code,
-		      int freq_limit)
+			  int freq_limit)
 {
    int i, j, k;
    static int first_pass = 1;
@@ -275,8 +275,8 @@ int audio_decode_init(MPEG_HEAD * h, int framebytes_arg,
 
    if (first_pass)
    {
-      table_init();
-      first_pass = 0;
+	  table_init();
+	  first_pass = 0;
    }
 
 /* select decoder routine Layer I,II,III */
@@ -284,11 +284,11 @@ int audio_decode_init(MPEG_HEAD * h, int framebytes_arg,
 
 
    if (h->option == 3)		/* layer I */
-      return L1audio_decode_init(h, framebytes_arg,
+	  return L1audio_decode_init(h, framebytes_arg,
 		  reduction_code, transform_code, convert_code, freq_limit);
 
    if (h->option == 1)		/* layer III */
-      return L3audio_decode_init(h, framebytes_arg,
+	  return L3audio_decode_init(h, framebytes_arg,
 		  reduction_code, transform_code, convert_code, freq_limit);
 
 
@@ -296,37 +296,37 @@ int audio_decode_init(MPEG_HEAD * h, int framebytes_arg,
    transform_code = transform_code;	/* not used, asm compatability */
    bit_code = 0;
    if (convert_code & 8)
-      bit_code = 1;
+	  bit_code = 1;
    convert_code = convert_code & 3;	/* higher bits used by dec8 freq cvt */
    if (reduction_code < 0)
-      reduction_code = 0;
+	  reduction_code = 0;
    if (reduction_code > 2)
-      reduction_code = 2;
+	  reduction_code = 2;
    if (freq_limit < 1000)
-      freq_limit = 1000;
+	  freq_limit = 1000;
 
 
    pMP3Stream->framebytes = framebytes_arg;
 /* check if code handles */
    if (h->option != 2)
-      return 0;			/* layer II only */
+	  return 0;			/* layer II only */
    if (h->sr_index == 3)
-      return 0;			/* reserved */
+	  return 0;			/* reserved */
 
 /* compute abcd index for bit allo table selection */
    if (h->id)			/* mpeg 1 */
-      abcd_index = lookqt[h->mode][h->sr_index][h->br_index];
+	  abcd_index = lookqt[h->mode][h->sr_index][h->br_index];
    else
-      abcd_index = 4;		/* mpeg 2 */
+	  abcd_index = 4;		/* mpeg 2 */
 
    if (abcd_index < 0)
-      return 0;			// fail invalid Layer II bit rate index
+	  return 0;			// fail invalid Layer II bit rate index
 
    for (i = 0; i < 4; i++)
-      for (j = 0; j < 16; j++)
+	  for (j = 0; j < 16; j++)
 		pMP3Stream->bat[i][j] = look_bat[abcd_index][i][j];
    for (i = 0; i < 4; i++)
-      pMP3Stream->nbat[i] = look_nbat[abcd_index][i];
+	  pMP3Stream->nbat[i] = look_nbat[abcd_index][i];
    pMP3Stream->max_sb = pMP3Stream->nbat[0] + pMP3Stream->nbat[1] + pMP3Stream->nbat[2] + pMP3Stream->nbat[3];
 /*----- compute pMP3Stream->nsb_limit --------*/
    samprate = sr_table[4 * h->id + h->sr_index];
@@ -335,41 +335,41 @@ int audio_decode_init(MPEG_HEAD * h, int framebytes_arg,
 /*---- limit = 0.94*(32>>reduction_code);  ----*/
    limit = (32 >> reduction_code);
    if (limit > 8)
-      limit--;
+	  limit--;
    if (pMP3Stream->nsb_limit > limit)
-      pMP3Stream->nsb_limit = limit;
+	  pMP3Stream->nsb_limit = limit;
    if (pMP3Stream->nsb_limit > pMP3Stream->max_sb)
-      pMP3Stream->nsb_limit = pMP3Stream->max_sb;
+	  pMP3Stream->nsb_limit = pMP3Stream->max_sb;
 
    pMP3Stream->outvalues = 1152 >> reduction_code;
    if (h->mode != 3)
    {				/* adjust for 2 channel modes */
-      for (i = 0; i < 4; i++)
+	  for (i = 0; i < 4; i++)
 		pMP3Stream->nbat[i] *= 2;
-      pMP3Stream->max_sb *= 2;
-      pMP3Stream->nsb_limit *= 2;
+	  pMP3Stream->max_sb *= 2;
+	  pMP3Stream->nsb_limit *= 2;
    }
 
 /* set sbt function */
    k = 1 + convert_code;
    if (h->mode == 3)
    {
-      k = 0;
+	  k = 0;
    }
    pMP3Stream->sbt = sbt_table[bit_code][reduction_code][k];
    pMP3Stream->outvalues *= out_chans[k];
    if (bit_code)
-      pMP3Stream->outbytes = pMP3Stream->outvalues;
+	  pMP3Stream->outbytes = pMP3Stream->outvalues;
    else
-      pMP3Stream->outbytes = sizeof(short) * pMP3Stream->outvalues;
+	  pMP3Stream->outbytes = sizeof(short) * pMP3Stream->outvalues;
 
    decinfo.channels = out_chans[k];
    decinfo.outvalues = pMP3Stream->outvalues;
    decinfo.samprate = samprate >> reduction_code;
    if (bit_code)
-      decinfo.bits = 8;
+	  decinfo.bits = 8;
    else
-      decinfo.bits = sizeof(short) * 8;
+	  decinfo.bits = sizeof(short) * 8;
 
    decinfo.framebytes = pMP3Stream->framebytes;
    decinfo.type = 0;

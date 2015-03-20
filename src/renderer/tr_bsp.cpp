@@ -169,7 +169,7 @@ static	void R_LoadLightmaps( lump_t *l, const char *psMapName ) {
 	float maxIntensity = 0;
 	double sumIntensity = 0;
 
-    len = l->filelen;
+	len = l->filelen;
 	if ( !len ) {
 		return;
 	}
@@ -340,7 +340,7 @@ static void ParseFace( dsurface_t *ds, mapVert_t *verts, msurface_t *surf, int *
 	int					numPoints, numIndexes;
 	int					lightmapNum[MAXLIGHTMAPS];
 	size_t				sfaceSize;
-	int                 ofsIndexes;
+	int				 ofsIndexes;
 
 	for(i = 0; i < MAXLIGHTMAPS; i++)
 	{
@@ -359,8 +359,8 @@ static void ParseFace( dsurface_t *ds, mapVert_t *verts, msurface_t *surf, int *
 	numPoints = LittleLong( ds->numVerts );
 	if (numPoints > MAX_FACE_POINTS) {
 		ri.Printf( PRINT_WARNING, "WARNING: MAX_FACE_POINTS exceeded: %i\n", numPoints);
-    numPoints = MAX_FACE_POINTS;
-    surf->shader = tr.defaultShader;
+	numPoints = MAX_FACE_POINTS;
+	surf->shader = tr.defaultShader;
 	}
 
 	numIndexes = LittleLong( ds->numIndexes );

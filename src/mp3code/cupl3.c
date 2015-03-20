@@ -2,8 +2,8 @@
 
 	FreeAmp - The Free MP3 Player
 
-        MP3 Decoder originally Copyright (C) 1995-1997 Xing Technology
-        Corp.  http://www.xingtech.com
+		MP3 Decoder originally Copyright (C) 1995-1997 Xing Technology
+		Corp.  http://www.xingtech.com
 
 	Portions Copyright (C) 1998-1999 EMusic.com
 
@@ -478,23 +478,23 @@ static int unpack_side_MPEG1()
 	  /* region count set in terms of long block cb's/bands */
 	  /* r1 set so r0+r1+1 = 21 (lookup produces 576 bands ) */
 	  /* if(window_switching_flag) always 36 samples in region0 */
-	    side_info.gr[igr][ch].region0_count = (8 - 1);	/* 36 samples */
-	    side_info.gr[igr][ch].region1_count = 20 - (8 - 1);
+		side_info.gr[igr][ch].region0_count = (8 - 1);	/* 36 samples */
+		side_info.gr[igr][ch].region1_count = 20 - (8 - 1);
 	 }
 	 else
 	 {
-	    side_info.gr[igr][ch].mixed_block_flag = 0;
-	    side_info.gr[igr][ch].block_type = 0;
-	    side_info.gr[igr][ch].table_select[0] = bitget(5);
-	    side_info.gr[igr][ch].table_select[1] = bitget(5);
-	    side_info.gr[igr][ch].table_select[2] = bitget(5);
-	    side_info.gr[igr][ch].region0_count = bitget(4);
-	    side_info.gr[igr][ch].region1_count = bitget(3);
+		side_info.gr[igr][ch].mixed_block_flag = 0;
+		side_info.gr[igr][ch].block_type = 0;
+		side_info.gr[igr][ch].table_select[0] = bitget(5);
+		side_info.gr[igr][ch].table_select[1] = bitget(5);
+		side_info.gr[igr][ch].table_select[2] = bitget(5);
+		side_info.gr[igr][ch].region0_count = bitget(4);
+		side_info.gr[igr][ch].region1_count = bitget(3);
 	 }
 	 side_info.gr[igr][ch].preflag = bitget(1);
 	 side_info.gr[igr][ch].scalefac_scale = bitget(1);
 	 side_info.gr[igr][ch].count1table_select = bitget(1);
-      }
+	  }
    }
 
 
@@ -524,7 +524,7 @@ static int unpack_side_MPEG2(int igr)
    side_info.mode_ext = bitget(2);	/* mode ext */
 
    if (side_info.mode != 1)
-      side_info.mode_ext = 0;
+	  side_info.mode_ext = 0;
 
 /* adjust global gain in ms mode to avoid having to mult by 1/sqrt(2) */
    pMP3Stream->ms_mode = side_info.mode_ext >> 1;
@@ -532,42 +532,42 @@ static int unpack_side_MPEG2(int igr)
 
    pMP3Stream->crcbytes = 0;
    if (prot)
-      bitget(4);		/* skip to data */
+	  bitget(4);		/* skip to data */
    else
    {
-      bitget(20);		/* skip crc */
-      pMP3Stream->crcbytes = 2;
+	  bitget(20);		/* skip crc */
+	  pMP3Stream->crcbytes = 2;
    }
 
    if (br_index > 0)
    {				/* pMP3Stream->framebytes fixed for free format */
-      if (pMP3Stream->mpeg25_flag == 0)
-      {
+	  if (pMP3Stream->mpeg25_flag == 0)
+	  {
 	 pMP3Stream->framebytes =
-	    1440 * mp_br_tableL3[pMP3Stream->id][br_index] / mp_sr20_table[pMP3Stream->id][pMP3Stream->sr_index];
-      }
-      else
-      {
+		1440 * mp_br_tableL3[pMP3Stream->id][br_index] / mp_sr20_table[pMP3Stream->id][pMP3Stream->sr_index];
+	  }
+	  else
+	  {
 	 pMP3Stream->framebytes =
-	    2880 * mp_br_tableL3[pMP3Stream->id][br_index] / mp_sr20_table[pMP3Stream->id][pMP3Stream->sr_index];
-       //if( pMP3Stream->sr_index == 2 ) return 0;  // fail mpeg25 8khz
-      }
+		2880 * mp_br_tableL3[pMP3Stream->id][br_index] / mp_sr20_table[pMP3Stream->id][pMP3Stream->sr_index];
+	   //if( pMP3Stream->sr_index == 2 ) return 0;  // fail mpeg25 8khz
+	  }
    }
    side_info.main_data_begin = bitget(8);
    if (side_info.mode == 3)
    {
-      side_info.private_bits = bitget(1);
-      pMP3Stream->nchan = 1;
-//      stereo_flag = 0;
-      side_bytes = (4 + 9);
+	  side_info.private_bits = bitget(1);
+	  pMP3Stream->nchan = 1;
+//	  stereo_flag = 0;
+	  side_bytes = (4 + 9);
 /*-- with header --*/
    }
    else
    {
-      side_info.private_bits = bitget(2);
-      pMP3Stream->nchan = 2;
-//      stereo_flag = 1;
-      side_bytes = (4 + 17);
+	  side_info.private_bits = bitget(2);
+	  pMP3Stream->nchan = 2;
+//	  stereo_flag = 1;
+	  side_bytes = (4 + 17);
 /*-- with header --*/
    }
    side_info.scfsi[1] = side_info.scfsi[0] = 0;
@@ -575,15 +575,15 @@ static int unpack_side_MPEG2(int igr)
 
    for (ch = 0; ch < pMP3Stream->nchan; ch++)
    {
-      side_info.gr[igr][ch].part2_3_length = bitget(12);
-      side_info.gr[igr][ch].big_values = bitget(9);
-      side_info.gr[igr][ch].global_gain = bitget(8) + pMP3Stream->gain_adjust;
-      if (pMP3Stream->ms_mode)
+	  side_info.gr[igr][ch].part2_3_length = bitget(12);
+	  side_info.gr[igr][ch].big_values = bitget(9);
+	  side_info.gr[igr][ch].global_gain = bitget(8) + pMP3Stream->gain_adjust;
+	  if (pMP3Stream->ms_mode)
 	 side_info.gr[igr][ch].global_gain -= 2;
-      side_info.gr[igr][ch].scalefac_compress = bitget(9);
-      side_info.gr[igr][ch].window_switching_flag = bitget(1);
-      if (side_info.gr[igr][ch].window_switching_flag)
-      {
+	  side_info.gr[igr][ch].scalefac_compress = bitget(9);
+	  side_info.gr[igr][ch].window_switching_flag = bitget(1);
+	  if (side_info.gr[igr][ch].window_switching_flag)
+	  {
 	 side_info.gr[igr][ch].block_type = bitget(2);
 	 side_info.gr[igr][ch].mixed_block_flag = bitget(1);
 	 side_info.gr[igr][ch].table_select[0] = bitget(5);
@@ -591,7 +591,7 @@ static int unpack_side_MPEG2(int igr)
 	 side_info.gr[igr][ch].subblock_gain[0] = bitget(3);
 	 side_info.gr[igr][ch].subblock_gain[1] = bitget(3);
 	 side_info.gr[igr][ch].subblock_gain[2] = bitget(3);
-       /* region count set in terms of long block cb's/bands  */
+	   /* region count set in terms of long block cb's/bands  */
        /* r1 set so r0+r1+1 = 21 (lookup produces 576 bands ) */
        /* bt=1 or 3       54 samples */
        /* bt=2 mixed=0    36 samples */
@@ -1188,45 +1188,45 @@ int L3audio_decode_init(MPEG_HEAD * h, int framebytes_arg,
 /*----------------------------------------------*/
    pMP3Stream->gain_adjust = 0;		/* adjust gain e.g. cvt to mono sum channel */
    if ((h->mode != 3) && (convert_code == 1))
-      pMP3Stream->gain_adjust = -4;
+	  pMP3Stream->gain_adjust = -4;
 
    pMP3Stream->outvalues = 1152 >> reduction_code;
    if (h->id == 0)
-      pMP3Stream->outvalues /= 2;
+	  pMP3Stream->outvalues /= 2;
 
    out_chans = 2;
    if (h->mode == 3)
-      out_chans = 1;
+	  out_chans = 1;
    if (convert_code)
-      out_chans = 1;
+	  out_chans = 1;
 
    pMP3Stream->sbt_L3 = sbt_table[bit_code][reduction_code][out_chans - 1];
    k = 1 + convert_code;
    if (h->mode == 3)
-      k = 0;
+	  k = 0;
    pMP3Stream->Xform = xform_table[k];
 
 
    pMP3Stream->outvalues *= out_chans;
 
    if (bit_code)
-      pMP3Stream->outbytes = pMP3Stream->outvalues;
+	  pMP3Stream->outbytes = pMP3Stream->outvalues;
    else
-      pMP3Stream->outbytes = sizeof(short) * pMP3Stream->outvalues;
+	  pMP3Stream->outbytes = sizeof(short) * pMP3Stream->outvalues;
 
    if (bit_code)
-      pMP3Stream->zero_level_pcm = 128;	/* 8 bit output */
+	  pMP3Stream->zero_level_pcm = 128;	/* 8 bit output */
    else
-      pMP3Stream->zero_level_pcm = 0;
+	  pMP3Stream->zero_level_pcm = 0;
 
 
    decinfo.channels = out_chans;
    decinfo.outvalues = pMP3Stream->outvalues;
    decinfo.samprate = samprate >> reduction_code;
    if (bit_code)
-      decinfo.bits = 8;
+	  decinfo.bits = 8;
    else
-      decinfo.bits = sizeof(short) * 8;
+	  decinfo.bits = sizeof(short) * 8;
 
    decinfo.framebytes = pMP3Stream->framebytes;
    decinfo.type = 0;
@@ -1239,16 +1239,16 @@ int L3audio_decode_init(MPEG_HEAD * h, int framebytes_arg,
 
    k = h->id;
    if ((h->sync & 1) == 0)
-      k = 2;			// mpeg 2.5
+	  k = 2;			// mpeg 2.5
 
    for (i = 0; i < 22; i++)
-      pMP3Stream->sfBandIndex[0][i] = sfBandIndexTable[k][h->sr_index].l[i + 1];
+	  pMP3Stream->sfBandIndex[0][i] = sfBandIndexTable[k][h->sr_index].l[i + 1];
    for (i = 0; i < 13; i++)
-      pMP3Stream->sfBandIndex[1][i] = 3 * sfBandIndexTable[k][h->sr_index].s[i + 1];
+	  pMP3Stream->sfBandIndex[1][i] = 3 * sfBandIndexTable[k][h->sr_index].s[i + 1];
    for (i = 0; i < 22; i++)
-      pMP3Stream->nBand[0][i] = sfBandIndexTable[k][h->sr_index].l[i + 1] - sfBandIndexTable[k][h->sr_index].l[i];
+	  pMP3Stream->nBand[0][i] = sfBandIndexTable[k][h->sr_index].l[i + 1] - sfBandIndexTable[k][h->sr_index].l[i];
    for (i = 0; i < 13; i++)
-      pMP3Stream->nBand[1][i] = sfBandIndexTable[k][h->sr_index].s[i + 1] - sfBandIndexTable[k][h->sr_index].s[i];
+	  pMP3Stream->nBand[1][i] = sfBandIndexTable[k][h->sr_index].s[i + 1] - sfBandIndexTable[k][h->sr_index].s[i];
 
 
 /* init tables */
@@ -1263,23 +1263,23 @@ int L3audio_decode_init(MPEG_HEAD * h, int framebytes_arg,
 
 /*--- clear buffers --*/
    for (i = 0; i < 576; i++)
-      yout[i] = 0.0f;
+	  yout[i] = 0.0f;
    for (j = 0; j < 2; j++)
    {
-      for (k = 0; k < 2; k++)
-      {
+	  for (k = 0; k < 2; k++)
+	  {
 	 for (i = 0; i < 576; i++)
 	 {
-	    pMP3Stream->sample[j][k][i].x = 0.0f;
-	    pMP3Stream->sample[j][k][i].s = 0;
+		pMP3Stream->sample[j][k][i].x = 0.0f;
+		pMP3Stream->sample[j][k][i].s = 0;
 	 }
-      }
+	  }
    }
 
    if (h->id == 1)
-      pMP3Stream->decode_function = L3audio_decode_MPEG1;
+	  pMP3Stream->decode_function = L3audio_decode_MPEG1;
    else
-      pMP3Stream->decode_function = L3audio_decode_MPEG2;
+	  pMP3Stream->decode_function = L3audio_decode_MPEG2;
 
    return 1;
 }

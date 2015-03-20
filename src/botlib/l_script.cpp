@@ -490,7 +490,7 @@ int PS_ReadString(script_t *script, token_t *token, int quote)
 				ScriptError(script, "missing trailing quote");
 				return 0;
 			} //end if
-	      if (*script->script_p == '\n')
+		  if (*script->script_p == '\n')
 			{
 				token->string[len] = 0;
 				ScriptError(script, "newline inside string %s", token->string);
@@ -697,7 +697,7 @@ int PS_ReadNumber(script_t *script, token_t *token)
 		c = *script->script_p;
 		//check for a LONG number
 		if ( (c == 'l' || c == 'L') // bk001204 - brackets
-		     && !(token->subtype & TT_LONG))
+			 && !(token->subtype & TT_LONG))
 		{
 			script->script_p++;
 			token->subtype |= TT_LONG;
@@ -1450,7 +1450,7 @@ script_t *LoadScriptFile(const char *filename) {
 	int inlength, outlength, plength;
 	char *inbuffer, *outbuffer, *pbuffer;
 	script_t *script;
-	
+
 	if (strlen(basefolder)) {
 		Com_sprintf(pathname, sizeof(pathname), "%s/%s", basefolder, filename);
 		Com_sprintf(pathpatch, sizeof(pathpatch), "%s/%s_patch", basefolder, filename);
@@ -1489,7 +1489,7 @@ script_t *LoadScriptFile(const char *filename) {
 		outbuffer = inbuffer;
 		outlength = inlength;
 	}
-	
+
 	script = (script_t *)GetClearedMemory(sizeof(script_t) + outlength + 1);
 	Com_Memset(script, 0, sizeof(script_t));
 	strcpy(script->filename, filename);
@@ -1503,7 +1503,7 @@ script_t *LoadScriptFile(const char *filename) {
 	script->line = 1;
 	script->lastline = 1;
 	SetScriptPunctuations(script, NULL);
-	
+
 	Com_Memcpy(script->buffer, outbuffer, outlength);
 	FreeMemory(outbuffer);
 

@@ -22,7 +22,7 @@ Ghoul2 Insert End
 //   G H O U L  I I  D E F I N E S
 //
 // we save the whole surfaceInfo_t struct
-struct surfaceInfo_t 
+struct surfaceInfo_t
 {
 	int			offFlags;		// what the flags are for this model
 	int			surface;		// index into array held inside the model definition of pointers to the actual surface data loaded in - used by both client and game
@@ -30,7 +30,7 @@ struct surfaceInfo_t
 	float		genBarycentricI;	// point 1 barycentric coors - point 2 is 1 - point0 - point1
 	int			genPolySurfaceIndex; // used to point back to the original surface and poly if this is a generated surface
 	int			genLod;			// used to determine original lod of original surface and poly hit location
-	
+
 surfaceInfo_t():
 	offFlags(0),
 	surface(0),
@@ -82,16 +82,16 @@ boneInfo_t():
 	boneBlendStart(0),
 	lastTime(0)
 	{
-		matrix.matrix[0][0] = matrix.matrix[0][1] = matrix.matrix[0][2] = matrix.matrix[0][3] = 
-		matrix.matrix[1][0] = matrix.matrix[1][1] = matrix.matrix[1][2] = matrix.matrix[1][3] = 
+		matrix.matrix[0][0] = matrix.matrix[0][1] = matrix.matrix[0][2] = matrix.matrix[0][3] =
+		matrix.matrix[1][0] = matrix.matrix[1][1] = matrix.matrix[1][2] = matrix.matrix[1][3] =
 		matrix.matrix[2][0] = matrix.matrix[2][1] = matrix.matrix[2][2] = matrix.matrix[2][3] = 0.0f;
 	}
 
 };
 //we save from top to boltUsed here. Don't bother saving the position, it gets rebuilt every frame anyway
 struct boltInfo_t{
-	int			boneNumber;		// bone number bolt attaches to	
-	int			surfaceNumber;	// surface number bolt attaches to 
+	int			boneNumber;		// bone number bolt attaches to
+	int			surfaceNumber;	// surface number bolt attaches to
 	int			surfaceType;	// if we attach to a surface, this tells us if it is an original surface or a generated one - doesn't go across the network
 	int			boltUsed;		// nor does this
 	mdxaBone_t	position;		// this does not go across the network
@@ -134,7 +134,7 @@ struct SSkinGoreData
 	float			TSize;			// size of splotch in the T texture direction in world units
 	float			theta;			// angle to rotate the splotch
 
-//	qhandle_t		shader;			// handle to shader for gore, this better be rendered after the shader of the underlying surface					
+//	qhandle_t		shader;			// handle to shader for gore, this better be rendered after the shader of the underlying surface
 									// this shader should also have "clamp" mode, not tiled.
 	goreEnum_t		shaderEnum;		// enum that'll get switched over to the shader's actual handle
 };
@@ -157,7 +157,7 @@ typedef vector <pair<int,mdxaBone_t> > mdxaBone_v;
 class CGhoul2Info
 {
 public:
-	surfaceInfo_v 	mSlist;
+	surfaceInfo_v	mSlist;
 	boltInfo_v		mBltlist;
 	boneInfo_v		mBlist;
 // save from here

@@ -42,7 +42,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
   // workaround for systems that use the old MAP_ANON macro
   #ifndef MAP_ANONYMOUS
-    #define MAP_ANONYMOUS MAP_ANON
+	#define MAP_ANONYMOUS MAP_ANON
   #endif
 #endif
 
@@ -55,7 +55,7 @@ static void VM_Destroy_Compiled(vm_t* self);
   ecx		scratch (required for shifts)
   edx		scratch (required for divisions)
   esi		program stack
-  edi   	opStack base
+  edi	opStack base
 x86_64:
   r8		vm->instructionPointers
   r9		vm->dataBase

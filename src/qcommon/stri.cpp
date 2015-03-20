@@ -101,7 +101,7 @@ enum
 };
 
 
-char *Tokens[TK_END] = 
+char *Tokens[TK_END] =
 {
 	"VERSION",
 	"ID",
@@ -125,15 +125,15 @@ char *Tokens[TK_END] =
 	"NOTES",
 	"CONFIG",
 	"TEXT_LANGUAGE1",
-	"TEXT_LANGUAGE2", 
-	"TEXT_LANGUAGE3", 
-	"TEXT_LANGUAGE4", 
-	"TEXT_LANGUAGE5", 
-	"TEXT_LANGUAGE6", 
-	"TEXT_LANGUAGE7", 
-	"TEXT_LANGUAGE8", 
-	"TEXT_LANGUAGE9", 
-	"TEXT_LANGUAGE10" 
+	"TEXT_LANGUAGE2",
+	"TEXT_LANGUAGE3",
+	"TEXT_LANGUAGE4",
+	"TEXT_LANGUAGE5",
+	"TEXT_LANGUAGE6",
+	"TEXT_LANGUAGE7",
+	"TEXT_LANGUAGE8",
+	"TEXT_LANGUAGE9",
+	"TEXT_LANGUAGE10"
 };
 
 
@@ -240,7 +240,7 @@ bool ReadData(char *&Data, int &Size, char *Result, int Result_Size)
 	} while(Size > 0 && Result_Size > 0 && *(Data-1) != '\n');
 
 	*pos = 0;
-  
+
 	return true;
 }
 
@@ -288,7 +288,7 @@ void GetLine(char *&Data, int &Size, int &token, char *&data)
 		pos++;
 	}
 	token = FindToken(test_token, true);
-	
+
 	while((*pos) && strchr(" \n\r", *pos))
 	{	// remove white space
 		pos++;
@@ -299,7 +299,7 @@ void GetLine(char *&Data, int &Size, int &token, char *&data)
 		pos++;
 		test_token = save_data;
 		memset(save_data, 0, sizeof(save_data));
-		
+
 		while(((*pos) != '\"' || !strchr("\n\r", (*(pos+1)))) && (*pos))
 		{
 			if ((*pos) == '\\' && (*(pos+1)) == 'n')
@@ -471,9 +471,9 @@ void cStrings::Clear(void)
  * return:
  *
  ************************************************************************************************/
-void cStrings::SetFlags(unsigned int newFlags) 
-{ 
-	Flags = newFlags; 
+void cStrings::SetFlags(unsigned int newFlags)
+{
+	Flags = newFlags;
 }
 
 
@@ -816,7 +816,7 @@ void cStringsSingle::SetText(const char *newText)
 	}
 	strcpy(Dest, newText);
 }
-	
+
 // fix problems caused by fucking morons entering clever "rich" chars in to new text files *after* the auto-stripper
 //	removed them all in the first place...
 //
@@ -1234,7 +1234,7 @@ bool cStringPackageED::GenerateCHeader(char *FileName)
 			*Test = '_';
 		}
 	}
-	
+
 	fprintf(FH, "#ifndef __%s\n",FileNamePos);
 	fprintf(FH, "#define __%s\n",FileNamePos);
 	fprintf(FH, "\n\n");
@@ -1312,7 +1312,7 @@ bool cStringPackageED::GenerateDSHeader(char *FileName)
 			*Test = '_';
 		}
 	}
-	
+
 	fprintf(FH, "// __%s\n",FileNamePos);
 	fprintf(FH, "//\n");
 	fprintf(FH, "\n\n");
@@ -1498,12 +1498,12 @@ cStringPackageSingle *SP_Register(const char *inPackage, unsigned char Registrat
 			}
 			return NULL;
 		}
-		
+
 		// Create the new string package
 		new_sp = new cStringPackageSingle(Package);
 		new_sp->Load(buffer, size );
 		FS_FreeFile(buffer);
-		
+
 		if (Registration & SP_REGISTER_CLIENT)
 		{
 			Com_DPrintf(S_COLOR_YELLOW "SP_Register: Registered client string package '%s' with ID %02x\n", Package, (int)new_sp->GetID());
@@ -1512,7 +1512,7 @@ cStringPackageSingle *SP_Register(const char *inPackage, unsigned char Registrat
 		{
 			Com_DPrintf(S_COLOR_YELLOW "SP_Register: Registered string package '%s' with ID %02x\n", Package, (int)new_sp->GetID());
 		}
-		
+
 		// Insert into the name vs package map
 		SP_ListByName[Package] = new_sp;
 		// Insert into the id vs package map
@@ -1665,7 +1665,7 @@ static void SP_UpdateLanguage(void)
 	// Reinitialise with new language
 	for(spit = sps.begin(); spit != sps.end(); spit++)
 	{
-		SP_Register((*spit).GetName(), (*spit).GetReg());	
+		SP_Register((*spit).GetName(), (*spit).GetReg());
 	}
 	sps.clear();
 }
