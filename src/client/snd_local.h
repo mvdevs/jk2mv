@@ -6,7 +6,7 @@
 #include "../game/q_shared.h"
 #include "../qcommon/qcommon.h"
 #include "snd_public.h"
-#include "../mp3code/mp3struct.h"
+#include "mp3struct.h"
 
 #ifndef WIN32
 #include "../unix/unix_local.h"
