@@ -1861,9 +1861,9 @@ int Key_GetProtocolKey(mvversion_t protocol, int key16) {
 		return K_KP_INS;
 	case A_KP_DEL:
 		return K_KP_DEL;
-	case A_KP_SLASH:
-		return K_KP_SLASH;
 		*/
+	case A_DIVIDE:
+		return K_KP_SLASH;
 	case A_KP_MINUS:
 		return K_KP_MINUS;
 	case A_KP_PLUS:
@@ -1871,8 +1871,10 @@ int Key_GetProtocolKey(mvversion_t protocol, int key16) {
 		/*
 	case A_KP_NUMBLOCK:
 		return K_KP_NUMLOCK;
-	case A_KP_STAR:
+		*/
+	case A_MULTIPLY:
 		return K_KP_STAR;
+		/*
 	case A_KP_EQUALS:
 		return K_KP_EQUALS;
 		*/
@@ -2120,9 +2122,9 @@ int Key_GetProtocolKey15(mvversion_t protocol, int key15) {
 		return A_KP_INS;
 	case K_KP_DEL:
 		return A_KP_DEL;
-	case K_KP_SLASH:
-		return A_KP_SLASH;
 		*/
+	case K_KP_SLASH:
+		return A_DIVIDE;
 	case K_KP_MINUS:
 		return A_KP_MINUS;
 	case K_KP_PLUS:
@@ -2130,8 +2132,10 @@ int Key_GetProtocolKey15(mvversion_t protocol, int key15) {
 		/*
 	case K_KP_NUMBLOCK:
 		return A_KP_NUMLOCK;
+		*/
 	case K_KP_STAR:
-		return A_KP_STAR;
+		return A_MULTIPLY;
+		/*
 	case K_KP_EQUALS:
 		return A_KP_EQUALS;
 		*/
