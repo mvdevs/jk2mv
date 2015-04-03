@@ -206,7 +206,6 @@ static void Sys_Exit( int ex ) {
 
 	NET_Shutdown();
 
-	Com_ShutdownHunkMemory();
 	Com_ShutdownZoneMemory();
 
 	CON_Shutdown();

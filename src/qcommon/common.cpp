@@ -1665,12 +1665,6 @@ void Com_InitHunkMemory( void ) {
 #endif
 }
 
-void Com_ShutdownHunkMemory(void)
-{
-    // ouned: does only happen when ending the executable
-    // let the bs do the freeing
-}
-
 /*
 ====================
 Hunk_MemoryRemaining

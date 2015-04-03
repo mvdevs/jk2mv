@@ -148,7 +148,6 @@ void QDECL Sys_Error(const char *error, ...) {
 
 	Sys_DestroyConsole();
 	Com_ShutdownZoneMemory();
-	Com_ShutdownHunkMemory();
 
 	exit(1);
 }
@@ -163,7 +162,6 @@ void Sys_Quit(void) {
 	IN_Shutdown();
 	Sys_DestroyConsole();
 	Com_ShutdownZoneMemory();
-	Com_ShutdownHunkMemory();
 
 	exit(0);
 }
