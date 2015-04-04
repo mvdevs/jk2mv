@@ -679,10 +679,32 @@ CFontInfo *GetFont(int index)
 
 
 int RE_Font_StrLenPixels(const char *psText, const int iFontHandle, const float fScale)
-{
-	int x = 0;
+{			
+	int			x = 0, i = 0, r = 0;
+	CFontInfo	*curfont;
+	char		parseText[8192];
 
-	CFontInfo *curfont = curfont = GetFont(iFontHandle);
+	//It gets confused about ^blah here too and reports an inaccurate length as a result
+	while (psText[i] && r < sizeof(parseText))
+	{
+		if (psText[i] == '^')
+		{
+			if ((i < 1 || psText[i - 1] != '^') &&
+				(!psText[i + 1] || psText[i + 1] != '^'))
+			{ //If char before or after ^ is ^ then it prints ^ instead of accepting a colorcode
+				i += 2;
+			}
+		}
+
+		parseText[r] = psText[i];
+		r++;
+		i++;
+	}
+	parseText[r] = 0;
+	
+	const char *constParseText = parseText;
+
+	curfont = GetFont(iFontHandle);
 	if(!curfont)
 	{
 		return(0);
@@ -694,22 +716,14 @@ int RE_Font_StrLenPixels(const char *psText, const int iFontHandle, const float 
 		fScaleA = fScale * 0.75f;
 	}
 
-	while(*psText)
+	while(*constParseText)
 	{
 		int iAdvanceCount;
-		unsigned int uiLetter = AnyLanguage_ReadCharFromString( psText, &iAdvanceCount, NULL );
-		psText += iAdvanceCount;
+		unsigned int uiLetter = AnyLanguage_ReadCharFromString(constParseText, &iAdvanceCount, NULL);
+		constParseText += iAdvanceCount;
 
-		if (uiLetter == '^' && *psText != '^')
-		{
-			x -= curfont->GetLetterHorizAdvance('^');
-		}
-		else
-		{
-			int a = curfont->GetLetterHorizAdvance( uiLetter );
-
-			x += Round ( a * ((uiLetter > 255) ? fScaleA : fScale) );
-		}
+		int a = curfont->GetLetterHorizAdvance(uiLetter);
+		x += Round(a * ((uiLetter > 255) ? fScaleA : fScale));
 	}
 
 	return(x);
