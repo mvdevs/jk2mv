@@ -3706,29 +3706,60 @@ void	FS_Flush( fileHandle_t f ) {
 
 // ouned: only referenced pk3 files can be downloaded
 // this automatically fixes q3dirtrav
-qboolean FS_MV_VerifyDownloadPath(const char *pk3file) {
+qboolean FS_MV_VerifyDownloadPath(const char *pk3file)
+{
 	searchpath_t	*search;
 	char ospath[MAX_OSPATH];
+
+	qboolean returnValue = qfalse;
+	
+	// Daggolin: Load the lists
+	char *mv_whitelist = NULL;
+	char *mv_blacklist = NULL;
+	char *mv_reflist = NULL;
+
+	FS_ReadFile( "ref_whitelist.txt", (void **)&mv_whitelist );
+	FS_ReadFile( "ref_blacklist.txt", (void **)&mv_blacklist );
+	FS_ReadFile( "ref_forcelist.txt", (void **)&mv_reflist );
 
 	Com_sprintf(ospath, sizeof(ospath), "%s/%s", fs_basepath->string, pk3file);
 	FS_ReplaceSeparators(ospath);
 
-	for (search = fs_searchpaths; search; search = search->next) {
+	for (search = fs_searchpaths; search; search = search->next)
+	{
 		char tmp[MAX_QPATH];
 
 		if (!search->pack)
 			continue;
-
+		
 		Com_sprintf(tmp, sizeof(tmp), "%s/%s", search->pack->pakGamename, search->pack->pakBasename);
 		if (FS_idPak(tmp, "base"))
 			continue;
 
-		if (!Q_stricmp(search->pack->pakFilename, ospath) && search->pack->referenced) {
-			return qtrue;
+		if (!Q_stricmp(search->pack->pakFilename, ospath))
+		{
+			// Daggolin: Whitelist
+			if ( mv_whitelist && !Q_stristr(mv_whitelist, va("\n%s/%s.pk3", search->pack->pakGamename, search->pack->pakBasename)) )
+				returnValue = qfalse;
+
+			// Daggolin: Blacklist
+			else if ( mv_blacklist && Q_stristr(mv_blacklist, va("\n%s/%s.pk3", search->pack->pakGamename, search->pack->pakBasename)) )
+				returnValue = qfalse;
+
+			// Daggolin: Reflist
+			else if ( (mv_reflist && Q_stristr(mv_reflist, va("\n%s/%s.pk3", search->pack->pakGamename, search->pack->pakBasename))) || search->pack->referenced || Q_stricmpn(search->pack->pakGamename, BASEGAME, (int)strlen(BASEGAME)) )
+				returnValue = qtrue;
+
+			break;
 		}
 	}
 
-	return qfalse;
+	// Daggolin: Unload the lists.
+	if ( mv_whitelist != NULL ) Z_Free( mv_whitelist );
+	if ( mv_blacklist != NULL ) Z_Free( mv_blacklist );
+	if ( mv_reflist   != NULL ) Z_Free( mv_reflist );
+
+	return returnValue;
 }
 
 const char *FS_MV_GetOSDLPath(const char *qdlpath) {

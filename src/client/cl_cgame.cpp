@@ -759,7 +759,7 @@ intptr_t CL_CgameSystemCalls(intptr_t *args) {
 		S_AddLoopingSound( args[1], (const float *)VMA(2), (const float *)VMA(3), args[4] );
 		return 0;
 	case CG_S_ADDREALLOOPINGSOUND:
-		S_AddLoopingSound( args[1], (const float *)VMA(2), (const float *)VMA(3), args[4] );
+		S_AddRealLoopingSound( args[1], (const float *)VMA(2), (const float *)VMA(3), args[4] );
 		return 0;
 	case CG_S_STOPLOOPINGSOUND:
 		S_StopLoopingSound( args[1] );
