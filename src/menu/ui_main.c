@@ -4983,7 +4983,7 @@ UI_BuildServerDisplayList
 ==================
 */
 static void UI_BuildServerDisplayList(qboolean force) {
-	int i, count, clients, maxClients, ping, game, visible;
+	int i, count, maxClients, ping, game, visible;
 	size_t len;
 	char info[MAX_STRING_CHARS];
 //	qboolean startRefresh = qtrue; TTimo: unused
@@ -5043,11 +5043,21 @@ static void UI_BuildServerDisplayList(qboolean force) {
 
 			trap_LAN_GetServerInfo(ui_netSource.integer, i, info, MAX_STRING_CHARS);
 
-			clients = atoi(Info_ValueForKey(info, "clients"));
-			uiInfo.serverStatus.numPlayersOnServers += clients;
+			// ouned: botfilter
+			int clients = atoi(Info_ValueForKey(info, "clients"));
+			int bots = atoi(Info_ValueForKey(info, "bots"));
+
+			int realPlayers;
+			if (trap_Cvar_VariableValue("ui_botfilter")) {
+				realPlayers = clients - bots;
+			} else {
+				realPlayers = clients;
+			}
+
+			uiInfo.serverStatus.numPlayersOnServers += realPlayers;
 
 			if (ui_browserShowEmpty.integer == 0) {
-				if (clients == 0) {
+				if (realPlayers <= 0) {
 					trap_LAN_MarkServerVisible(ui_netSource.integer, i, qfalse);
 					continue;
 				}
