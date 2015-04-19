@@ -141,7 +141,12 @@ static fakeAscii_t IN_TranslateSDLToJKKey( SDL_Keysym *keysym, qboolean down ) {
 	if( keysym->sym >= SDLK_SPACE && keysym->sym < SDLK_DELETE )
 	{
 		// These happen to match the ASCII chars
-		key = (fakeAscii_t)keysym->sym;
+		// ouned: jk2 expects uppercased chars
+		if (keysym->sym >= SDLK_a && keysym->sym <= SDLK_z) {
+			key = (fakeAscii_t)('A' + (keysym->sym - SDLK_a));
+		} else {
+			key = (fakeAscii_t)keysym->sym;
+		}
 	}
 	else
 	{
