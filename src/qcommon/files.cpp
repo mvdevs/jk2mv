@@ -216,6 +216,7 @@ typedef struct {
 	int				pure_checksum;				// checksum for pure
 	int				numfiles;					// number of files in pk3
 	int				referenced;					// referenced file flags
+	qboolean		noref;						// ouend: reference lists
 	int				hashSize;					// hash table size (power of 2)
 	fileInPack_t*	*hashTable;					// hash table
 	fileInPack_t*	buildBuffer;				// buffer with the filenames etc.
@@ -1182,7 +1183,8 @@ int FS_FOpenFileReadHash(const char *filename, fileHandle_t *file, qboolean uniq
 				if ( !FS_FilenameCompare( pakFile->name, filename ) ) {
 					// found it!
 
-					if (Q_stricmp(pak->pakBasename, "assetsmv")) {
+					// ouned: reference lists
+					if (Q_stricmp(pak->pakBasename, "assetsmv") && !pak->noref ) {
 						// mark the pak as having been referenced and mark specifics on cgame and ui
 						// shaders, txt, arena files  by themselves do not count as a reference as
 						// these are loaded from all pk3s
@@ -2909,9 +2911,10 @@ static void FS_Startup( const char *gameName ) {
 #if !defined(PORTABLE) && !defined(DEDICATED)
 	const char *assetsPath;
 #endif
-#ifdef USE_CD_KEY
-	cvar_t	*fs;
-#endif	// USE_CD_KEY
+	char *mv_whitelist;
+	char *mv_blacklist;
+	char *mv_reflist;
+	searchpath_t *search;
 
 	Com_Printf( "----- FS_Startup -----\n" );
 
@@ -2981,14 +2984,6 @@ static void FS_Startup( const char *gameName ) {
 		}
 	}
 
-#ifdef USE_CD_KEY
-	Com_ReadCDKey( "base" );
-	fs = Cvar_Get ("fs_game", "", CVAR_INIT|CVAR_SYSTEMINFO );
-	if (fs && fs->string[0] != 0) {
-		Com_AppendCDKey( fs->string );
-	}
-#endif // USE_CD_KEY
-
 	// add our commands
 	Cmd_AddCommand ("path", FS_Path_f);
 	Cmd_AddCommand ("dir", FS_Dir_f );
@@ -2999,6 +2994,37 @@ static void FS_Startup( const char *gameName ) {
 	FS_Path_f();
 
 	fs_gamedirvar->modified = qfalse; // We just loaded, it's not modified
+
+	// ouned: reference lists
+	FS_ReadFile("ref_whitelist.txt", (void **)&mv_whitelist);
+	FS_ReadFile("ref_blacklist.txt", (void **)&mv_blacklist);
+	FS_ReadFile("ref_forcelist.txt", (void **)&mv_reflist);
+
+	if (mv_whitelist) {
+		Com_Printf("JK2MV: using whitelist for referenced files...\n");
+	}
+	if (mv_blacklist) {
+		Com_Printf("JK2MV: using blacklist for referenced files...\n");
+	}
+	if (mv_reflist) {
+		Com_Printf("JK2MV: using forcelist for referenced files...\n");
+	}
+
+	for (search = fs_searchpaths; search; search = search->next) {
+		if (search->pack) {
+			if (mv_whitelist && !Q_stristr(mv_whitelist, va("\n%s/%s.pk3", search->pack->pakGamename, search->pack->pakBasename))) {
+				search->pack->noref = qtrue;
+			} else if (mv_blacklist && Q_stristr(mv_blacklist, va("\n%s/%s.pk3", search->pack->pakGamename, search->pack->pakBasename))) {
+				search->pack->noref = qtrue;
+			} else if ((mv_reflist && Q_stristr(mv_reflist, va("\n%s/%s.pk3", search->pack->pakGamename, search->pack->pakBasename)))) {
+				search->pack->referenced |= FS_GENERAL_REF;
+			}
+		}
+	}
+
+	Z_Free(mv_whitelist);
+	Z_Free(mv_blacklist);
+	Z_Free(mv_reflist);
 
 	Com_Printf( "----------------------\n" );
 
@@ -3214,15 +3240,6 @@ const char *FS_ReferencedPakChecksums( void ) {
 	static char	info[BIG_INFO_STRING];
 	searchpath_t *search;
 
-	// Daggolin: Load the lists
-	char *mv_whitelist = NULL;
-	char *mv_blacklist = NULL;
-	char *mv_reflist = NULL;
-
-	FS_ReadFile( "ref_whitelist.txt", (void **)&mv_whitelist );
-	FS_ReadFile( "ref_blacklist.txt", (void **)&mv_blacklist );
-	FS_ReadFile( "ref_forcelist.txt", (void **)&mv_reflist );
-
 	info[0] = 0;
 
 
@@ -3235,25 +3252,11 @@ const char *FS_ReferencedPakChecksums( void ) {
 			if (MV_GetCurrentGameversion() == VERSION_1_03 && (!Q_stricmp(search->pack->pakBasename, "assets5")))
 				continue;
 
-			// Daggolin: Whitelist
-			if ( mv_whitelist && !Q_stristr(mv_whitelist, va("\n%s/%s.pk3", search->pack->pakGamename, search->pack->pakBasename)) )
-				continue;
-
-			// Daggolin: Blacklist
-			if ( mv_blacklist && Q_stristr(mv_blacklist, va("\n%s/%s.pk3", search->pack->pakGamename, search->pack->pakBasename)) )
-				continue;
-
-			// Daggolin: Reflist
-			if ( (mv_reflist && Q_stristr(mv_reflist, va("\n%s/%s.pk3", search->pack->pakGamename, search->pack->pakBasename))) || search->pack->referenced || Q_stricmpn(search->pack->pakGamename, BASEGAME, (int)strlen(BASEGAME))) {
-				Q_strcat( info, sizeof( info ), va("%i ", search->pack->checksum ) );
+			if (search->pack->referenced || Q_stricmpn(search->pack->pakGamename, BASEGAME, (int)strlen(BASEGAME))) {
+				Q_strcat(info, sizeof(info), va("%i ", search->pack->checksum));
 			}
 		}
 	}
-
-	// Daggolin: Unload the lists.
-	if ( mv_whitelist != NULL ) Z_Free( mv_whitelist );
-	if ( mv_blacklist != NULL ) Z_Free( mv_blacklist );
-	if ( mv_reflist   != NULL ) Z_Free( mv_reflist );
 
 	return info;
 }
@@ -3327,15 +3330,6 @@ const char *FS_ReferencedPakNames( void ) {
 	static char	info[BIG_INFO_STRING];
 	searchpath_t	*search;
 
-	// Daggolin: Load the lists
-	char *mv_whitelist = NULL;
-	char *mv_blacklist = NULL;
-	char *mv_reflist = NULL;
-
-	FS_ReadFile( "ref_whitelist.txt", (void **)&mv_whitelist );
-	FS_ReadFile( "ref_blacklist.txt", (void **)&mv_blacklist );
-	FS_ReadFile( "ref_forcelist.txt", (void **)&mv_reflist );
-
 	info[0] = 0;
 
 	// we want to return ALL pk3's from the fs_game path
@@ -3349,31 +3343,17 @@ const char *FS_ReferencedPakNames( void ) {
 			if (MV_GetCurrentGameversion() == VERSION_1_03 && (!Q_stricmp(search->pack->pakBasename, "assets5")))
 				continue;
 
-			// Daggolin: Whitelist
-			if ( mv_whitelist && !Q_stristr(mv_whitelist, va("\n%s/%s.pk3", search->pack->pakGamename, search->pack->pakBasename)) )
-				continue;
-
-			// Daggolin: Blacklist
-			if ( mv_blacklist && Q_stristr(mv_blacklist, va("\n%s/%s.pk3", search->pack->pakGamename, search->pack->pakBasename)) )
-				continue;
-
 			if (*info) {
 				Q_strcat(info, sizeof( info ), " " );
 			}
 
-			// Daggolin: Reflist
-			if ( (mv_reflist && Q_stristr(mv_reflist, va("\n%s/%s.pk3", search->pack->pakGamename, search->pack->pakBasename))) || search->pack->referenced || Q_stricmpn(search->pack->pakGamename, BASEGAME, (int)strlen(BASEGAME))) {
-				Q_strcat( info, sizeof( info ), search->pack->pakGamename );
-				Q_strcat( info, sizeof( info ), "/" );
-				Q_strcat( info, sizeof( info ), search->pack->pakBasename );
+			if (search->pack->referenced || Q_stricmpn(search->pack->pakGamename, BASEGAME, (int)strlen(BASEGAME))) {
+				Q_strcat(info, sizeof(info), search->pack->pakGamename);
+				Q_strcat(info, sizeof(info), "/");
+				Q_strcat(info, sizeof(info), search->pack->pakBasename);
 			}
 		}
 	}
-
-	// Daggolin: Unload the lists.
-	if ( mv_whitelist != NULL ) Z_Free( mv_whitelist );
-	if ( mv_blacklist != NULL ) Z_Free( mv_blacklist );
-	if ( mv_reflist   != NULL ) Z_Free( mv_reflist );
 
 	return info;
 }
@@ -3706,27 +3686,14 @@ void	FS_Flush( fileHandle_t f ) {
 
 // ouned: only referenced pk3 files can be downloaded
 // this automatically fixes q3dirtrav
-qboolean FS_MV_VerifyDownloadPath(const char *pk3file)
-{
+qboolean FS_MV_VerifyDownloadPath(const char *pk3file) {
 	searchpath_t	*search;
 	char ospath[MAX_OSPATH];
-
-	qboolean returnValue = qfalse;
-	
-	// Daggolin: Load the lists
-	char *mv_whitelist = NULL;
-	char *mv_blacklist = NULL;
-	char *mv_reflist = NULL;
-
-	FS_ReadFile( "ref_whitelist.txt", (void **)&mv_whitelist );
-	FS_ReadFile( "ref_blacklist.txt", (void **)&mv_blacklist );
-	FS_ReadFile( "ref_forcelist.txt", (void **)&mv_reflist );
 
 	Com_sprintf(ospath, sizeof(ospath), "%s/%s", fs_basepath->string, pk3file);
 	FS_ReplaceSeparators(ospath);
 
-	for (search = fs_searchpaths; search; search = search->next)
-	{
+	for (search = fs_searchpaths; search; search = search->next) {
 		char tmp[MAX_QPATH];
 
 		if (!search->pack)
@@ -3736,30 +3703,11 @@ qboolean FS_MV_VerifyDownloadPath(const char *pk3file)
 		if (FS_idPak(tmp, "base"))
 			continue;
 
-		if (!Q_stricmp(search->pack->pakFilename, ospath))
-		{
-			// Daggolin: Whitelist
-			if ( mv_whitelist && !Q_stristr(mv_whitelist, va("\n%s/%s.pk3", search->pack->pakGamename, search->pack->pakBasename)) )
-				returnValue = qfalse;
-
-			// Daggolin: Blacklist
-			else if ( mv_blacklist && Q_stristr(mv_blacklist, va("\n%s/%s.pk3", search->pack->pakGamename, search->pack->pakBasename)) )
-				returnValue = qfalse;
-
-			// Daggolin: Reflist
-			else if ( (mv_reflist && Q_stristr(mv_reflist, va("\n%s/%s.pk3", search->pack->pakGamename, search->pack->pakBasename))) || search->pack->referenced || Q_stricmpn(search->pack->pakGamename, BASEGAME, (int)strlen(BASEGAME)) )
-				returnValue = qtrue;
-
-			break;
-		}
+		if (!Q_stricmp(search->pack->pakFilename, ospath) && search->pack->referenced)
+			return qtrue;
 	}
 
-	// Daggolin: Unload the lists.
-	if ( mv_whitelist != NULL ) Z_Free( mv_whitelist );
-	if ( mv_blacklist != NULL ) Z_Free( mv_blacklist );
-	if ( mv_reflist   != NULL ) Z_Free( mv_reflist );
-
-	return returnValue;
+	return qfalse;
 }
 
 const char *FS_MV_GetOSDLPath(const char *qdlpath) {
