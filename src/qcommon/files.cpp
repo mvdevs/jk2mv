@@ -1158,6 +1158,8 @@ int FS_FOpenFileReadHash(const char *filename, fileHandle_t *file, qboolean uniq
 				continue;
 			}
 #endif
+
+#ifndef DEDICATED
 			// Daggolin: Only load qvms from "o10#_" or "dl_" when found in base
 			if ( !Q_stricmp(search->pack->pakGamename, BASEGAME)
 				 && !(!Q_stricmp(search->pack->pakBasename, "assets0") || !Q_stricmp(search->pack->pakBasename, "assets1") || !Q_stricmp(search->pack->pakBasename, "assets2") || !Q_stricmp(search->pack->pakBasename, "assets5"))
@@ -1169,6 +1171,7 @@ int FS_FOpenFileReadHash(const char *filename, fileHandle_t *file, qboolean uniq
 			{
 				continue;
 			}
+#endif
 
 			// ouned: patchfiles are only allowed from within assetsmv.pk3
 			if (!Q_stricmp(get_filename_ext(filename), "menu_patch") && Q_stricmp(search->pack->pakBasename, "assetsmv")) {
