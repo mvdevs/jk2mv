@@ -2612,7 +2612,7 @@ qboolean Item_Multi_HandleKey(itemDef_t *item, int key) {
 	multiDef_t *multiPtr = (multiDef_t*)item->typeData;
 	if (multiPtr) {
 	  if (Rect_ContainsPoint(&item->window.rect, DC->cursorx, DC->cursory) && item->window.flags & WINDOW_HASFOCUS && item->cvar) {
-			if (key == A_MOUSE1 || key == A_ENTER || key == A_MOUSE2 || key == A_MOUSE3) {
+			if (key == A_MOUSE1 || key == A_ENTER || key == A_MOUSE3) {
 				int current = Item_Multi_FindCvarByValue(item) + 1;
 				int max = Item_Multi_CountSettings(item);
 				if ( current < 0 || current >= max ) {
@@ -2627,6 +2627,26 @@ qboolean Item_Multi_HandleKey(itemDef_t *item, int key) {
 					}
 					else {
 						DC->setCVar(item->cvar, va("%f", value ));
+					}
+				}
+				return qtrue;
+			}
+			else if (key == A_MOUSE2) {
+				int current = Item_Multi_FindCvarByValue(item) - 1;
+				int max = Item_Multi_CountSettings(item);
+				if (current < 0) {
+					current = max;
+				}
+				if (multiPtr->strDef) {
+					DC->setCVar(item->cvar, multiPtr->cvarStr[current]);
+				}
+				else {
+					float value = multiPtr->cvarValue[current];
+					if (((float)((int)value)) == value) {
+						DC->setCVar(item->cvar, va("%i", (int)value));
+					}
+					else {
+						DC->setCVar(item->cvar, va("%f", value));
 					}
 				}
 				return qtrue;
