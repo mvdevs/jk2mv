@@ -2937,7 +2937,7 @@ static void FS_Startup( const char *gameName ) {
 #if !defined(PORTABLE) && !defined(DEDICATED)
 	assetsPath = Sys_DefaultAssetsPath();
 	if (!assetsPath && !FS_Base_FileExists("assets5.pk3")) {
-		Com_Error(ERR_FATAL, "could not find JK2 installation (asset files).. make sure you have JK2 installed");
+		Com_Error(ERR_FATAL, "could not find JK2 installation (asset files).. make sure you have JK2 installed\n");
 		return;
 	}
 
