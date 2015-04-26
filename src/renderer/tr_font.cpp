@@ -693,6 +693,7 @@ int RE_Font_StrLenPixels(const char *psText, const int iFontHandle, const float 
 				(!psText[i + 1] || psText[i + 1] != '^'))
 			{ //If char before or after ^ is ^ then it prints ^ instead of accepting a colorcode
 				i += 2;
+				continue;
 			}
 		}
 
