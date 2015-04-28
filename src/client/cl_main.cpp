@@ -2782,7 +2782,7 @@ void CL_Shutdown( void ) {
 static void CL_SetServerInfo(serverInfo_t *server, const char *info, int ping) {
 	if (server) {
 		if (info) {
-			server->clients = atoi(Info_ValueForKey(info, "clients"));
+			//server->clients = atoi(Info_ValueForKey(info, "clients"));
 			Q_strncpyz(server->hostName,Info_ValueForKey(info, "hostname"), MAX_NAME_LENGTH);
 			Q_strncpyz(server->mapName, Info_ValueForKey(info, "mapname"), MAX_NAME_LENGTH);
 			server->maxClients = atoi(Info_ValueForKey(info, "sv_maxclients"));
@@ -2835,7 +2835,7 @@ static void CL_SetServerInfoByAddress(netadr_t from, const char *info, int ping)
 // Daggolin: For 1.03 in the menu...
 // ouned: now also used for botfiltering, leave serverInfo_t.clients untouched for backwards compatibility with old menu VM's
 // the new one just uses clients - bots = realplayers
-void MV_SetServerFakeInfoByAddress( netadr_t from, mvversion_t version, int bots ) {
+void MV_SetServerFakeInfoByAddress( netadr_t from, mvversion_t version, int clients, int bots ) {
 	int i;
 
 	for (i = 0; i < MAX_OTHER_SERVERS; i++) {
@@ -2843,8 +2843,10 @@ void MV_SetServerFakeInfoByAddress( netadr_t from, mvversion_t version, int bots
 			if (version != VERSION_UNDEF)
 				cls.localServers[i].gameVersion = version;
 
-			if (bots != -1)
+			if (clients != -1) {
+				cls.localServers[i].clients = clients;
 				cls.localServers[i].bots = bots;
+			}
 		}
 	}
 
@@ -2853,8 +2855,10 @@ void MV_SetServerFakeInfoByAddress( netadr_t from, mvversion_t version, int bots
 			if (version != VERSION_UNDEF)
 				cls.mplayerServers[i].gameVersion = version;
 
-			if (bots != -1)
+			if (clients != -1) {
+				cls.mplayerServers[i].clients = clients;
 				cls.mplayerServers[i].bots = bots;
+			}
 		}
 	}
 
@@ -2863,8 +2867,10 @@ void MV_SetServerFakeInfoByAddress( netadr_t from, mvversion_t version, int bots
 			if (version != VERSION_UNDEF)
 				cls.globalServers[i].gameVersion = version;
 
-			if (bots != -1)
+			if (clients != -1) {
+				cls.globalServers[i].clients = clients;
 				cls.globalServers[i].bots = bots;
+			}
 		}
 	}
 
@@ -2873,8 +2879,10 @@ void MV_SetServerFakeInfoByAddress( netadr_t from, mvversion_t version, int bots
 			if (version != VERSION_UNDEF)
 				cls.favoriteServers[i].gameVersion = version;
 
-			if (bots != -1)
+			if (clients != -1) {
+				cls.favoriteServers[i].clients = clients;
 				cls.favoriteServers[i].bots = bots;
+			}
 		}
 	}
 }
@@ -3132,7 +3140,7 @@ void CL_ServerStatusResponse( netadr_t from, msg_t *msg ) {
 	versionString = Info_ValueForKey(s, "version");
 	if (versionString && strlen(versionString) && strstr(versionString, "1.03"))
 	{
-		MV_SetServerFakeInfoByAddress(from, VERSION_1_03, -1);
+		MV_SetServerFakeInfoByAddress(from, VERSION_1_03, -1, -1);
 	} else
 	{
 		mvprotocol_t prot;
@@ -3141,10 +3149,10 @@ void CL_ServerStatusResponse( netadr_t from, msg_t *msg ) {
 		switch (prot)
 		{
 		case PROTOCOL15:
-			MV_SetServerFakeInfoByAddress(from, VERSION_1_02, -1);
+			MV_SetServerFakeInfoByAddress(from, VERSION_1_02, -1, -1);
 			break;
 		case PROTOCOL16:
-			MV_SetServerFakeInfoByAddress(from, VERSION_1_04, -1);
+			MV_SetServerFakeInfoByAddress(from, VERSION_1_04, -1, -1);
 			break;
 		}
 	}
@@ -3257,7 +3265,7 @@ void CL_ServerStatusResponse( netadr_t from, msg_t *msg ) {
 		}
 	}
 
-	MV_SetServerFakeInfoByAddress(from, VERSION_UNDEF, bots);
+	MV_SetServerFakeInfoByAddress(from, VERSION_UNDEF, i, bots);
 
 	len = (int)strlen(serverStatus->string);
 	Com_sprintf(&serverStatus->string[len], sizeof(serverStatus->string)-len, "\\");

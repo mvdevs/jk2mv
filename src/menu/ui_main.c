@@ -5057,7 +5057,7 @@ static void UI_BuildServerDisplayList(qboolean force) {
 			uiInfo.serverStatus.numPlayersOnServers += realPlayers;
 
 			if (ui_browserShowEmpty.integer == 0) {
-				if (realPlayers <= 0) {
+				if (realPlayers == 0) {
 					trap_LAN_MarkServerVisible(ui_netSource.integer, i, qfalse);
 					continue;
 				}
@@ -5817,9 +5817,6 @@ static const char *UI_FeederItemText(float feederID, int index, int column,
 					} else {
 						realPlayers = clients;
 					}
-
-					if (realPlayers < 0)
-						realPlayers = 0;
 
 					Com_sprintf(clientBuff, sizeof(clientBuff), "%i (%i)", realPlayers, maxclients);
 					return clientBuff;
