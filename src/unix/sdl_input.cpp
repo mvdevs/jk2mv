@@ -249,7 +249,6 @@ IN_ActivateMouse
 */
 static void IN_ActivateMouse( void )
 {
-#if !(defined(DEBUG) && defined(__linux__))
 	if (!mouseAvailable || !SDL_WasInit( SDL_INIT_VIDEO ) )
 		return;
 
@@ -276,7 +275,6 @@ static void IN_ActivateMouse( void )
 	}
 
 	mouseActive = qtrue;
-#endif
 }
 
 /*
