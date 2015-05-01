@@ -461,6 +461,10 @@ LINES_REPLACE 1529 [
 			rect				120 413 170 30
 ]
 
+LINES_REPLACE 2020 [
+				play			"sound/interface/button1.wav"
+]
+
 LINES_DELETE 2494 2527
 
 LINES_REPLACE 2543 [
