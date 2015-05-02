@@ -4,6 +4,19 @@ Website: http://jk2mv.org
 --------------------------------------------------
 
 -----------------------------------
+1.0rc1
+-----------------------------------
+- fixed demo playback on linux/macosx
+- fixed binding some keys on 1.02
+- fixed loopsounds
+- playername of the player with the highest score now centered correctly
+- fixed several bugs concerning the botfilter
+- fixed binding keys which were already bound to something else on linux/macosx
+- fixed mouse input on linux in debug mode
+- fixed error messages when viewing driver details in the setup menu
+- right clicking an option in the menu goes backwards in the list
+
+-----------------------------------
 1.0b3
 -----------------------------------
 - the mousewheel can now be used to scroll in the console

@@ -7,7 +7,7 @@
 #define MV_MFDOWNLOADS
 #define NTCLIENT_WORKAROUND
 
-#define JK2MV_VERSION "1.0b3"
+#define JK2MV_VERSION "1.0rc1"
 
 #ifndef _DEBUG
 #	define	Q3_VERSION		"JK2MV: v" JK2MV_VERSION

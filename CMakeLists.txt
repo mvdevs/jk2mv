@@ -22,8 +22,8 @@ project(${ProjectName})
 
 set(MV_MAJOR_VERSION 1)
 set(MV_MINOR_VERSION 0)
-set(MV_EXT_VERSION "b3")
-set(MV_ECMP_VERSION 3) # increasing number to detect new version without parsing stuff like 1.0b1
+set(MV_EXT_VERSION "rc1")
+set(MV_ECMP_VERSION 4) # increasing number to detect new version without parsing stuff like 1.0b1
 set(MV_VERSION "${MV_MAJOR_VERSION}.${MV_MINOR_VERSION}${MV_EXT_VERSION}")
 
 # Languages
