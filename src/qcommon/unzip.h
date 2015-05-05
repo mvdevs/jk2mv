@@ -48,12 +48,8 @@
 extern "C" {
 #endif
 
-#ifdef WIN32
-#include "../zlib/zlib.h"
-#else
-#include <zlib.h>
-#endif
 
+#include "zlib.h"
 #include "ioapi.h"
 
 #define NOUNCRYPT

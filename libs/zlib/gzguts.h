@@ -212,4 +212,6 @@ unsigned ZLIB_INTERNAL gz_intmax OF((void));
 #		undef write
 #	endif
 #define write _write
+#else
+#   include <unistd.h>
 #endif

@@ -3056,7 +3056,7 @@ PrintMatches
 */
 static void PrintMatches( const char *s ) {
 	if (!Q_stricmpn(s, shortestMatch, (int)strlen(shortestMatch))) {
-		Com_Printf( S_COMPLETION_COLOR"Cmd  "S_COLOR_WHITE"%s\n", s );
+		Com_Printf(S_COMPLETION_COLOR "Cmd  " S_COLOR_WHITE "%s\n", s);
 	}
 }
 
@@ -3084,7 +3084,7 @@ PrintKeyMatches
 */
 static void PrintKeyMatches( const char *s ) {
 	if ( !Q_stricmpn( s, shortestMatch, (int)strlen( shortestMatch ) ) ) {
-		Com_Printf( S_COMPLETION_COLOR"Key  "S_COLOR_WHITE"%s\n", s );
+		Com_Printf( S_COMPLETION_COLOR "Key  " S_COLOR_WHITE "%s\n", s );
 	}
 }
 #endif
@@ -3097,7 +3097,7 @@ PrintFileMatches
 */
 static void PrintFileMatches( const char *s ) {
 	if (!Q_stricmpn(s, shortestMatch, (int)strlen(shortestMatch))) {
-		Com_Printf( S_COMPLETION_COLOR"File "S_COLOR_WHITE"%s\n", s );
+		Com_Printf(S_COMPLETION_COLOR "File " S_COLOR_WHITE "%s\n", s);
 	}
 }
 
@@ -3112,7 +3112,7 @@ static void PrintCvarMatches( const char *s ) {
 
 	if ( !Q_stricmpn( s, shortestMatch, (int)strlen( shortestMatch ) ) ) {
 		Com_TruncateLongString( value, Cvar_VariableString( s ) );
-		Com_Printf( S_COMPLETION_COLOR"Cvar "S_COLOR_WHITE"%s = "S_COMPLETION_COLOR"\""S_COLOR_WHITE"%s"S_COMPLETION_COLOR"\""S_COLOR_WHITE"\n", s, value );
+		Com_Printf(S_COMPLETION_COLOR "Cvar " S_COLOR_WHITE "%s = " S_COMPLETION_COLOR "\"" S_COLOR_WHITE "%s" S_COMPLETION_COLOR "\"" S_COLOR_WHITE "\n", s, value);
 	}
 }
 /*

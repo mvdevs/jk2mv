@@ -52,6 +52,7 @@ if (BuildMVMP OR BuildMVDED)
 			"${LIBDir}/zlib/zutil.c"
 		)
 		source_group("zlib" FILES ${ZLIBFiles})
+		set(MVMPDEDIncludeDirs ${MVMPDEDIncludeDirs} "${LIBDir}/zlib")
 		set(MVMPDEDFiles ${MVMPDEDFiles} ${ZLIBFiles})
 	else()
 		find_package(ZLIB)
