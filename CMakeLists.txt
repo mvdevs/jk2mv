@@ -38,8 +38,10 @@ option(BuildPortableVersion "Build portable version (does not read or write file
 option(BuildMVMP "Whether to create projects for the client (jk2mvmp & jk2mvmenu)" ON)
 option(BuildMVDED "Whether to create projects for the dedicated server (jk2mvded)" ON)
 
-if(WIN32 OR APPLE)
-	option(BuildPack "Whether to create the image / installer" OFF)
+if(WIN32)
+	option(BuildPack "Whether to create the installer package" OFF)
+elseif(APPLE)
+	option(BuildPack "Whether to create the app package" ON)
 endif()
 
 if(WIN32)
