@@ -57,79 +57,6 @@ static void IN_PrintKey( const SDL_Keysym *keysym, fakeAscii_t key, qboolean dow
 	Com_Printf( " Q:0x%02x(%s)\n", key, Key_KeynumToString( key ) );
 }
 
-#define MAX_CONSOLE_KEYS 16
-
-/*
-===============
-IN_IsConsoleKey
-
-TODO: If the SDL_Scancode situation improves, use it instead of
-	  both of these methods
-===============
-*/
-
-static qboolean IN_IsConsoleKey( fakeAscii_t key, int character )
-{
-	typedef struct consoleKey_s
-	{
-		enum
-		{
-			QUAKE_KEY,
-			CHARACTER
-		} type;
-
-		union
-		{
-			fakeAscii_t key;
-			int character;
-		} u;
-	} consoleKey_t;
-
-	consoleKey_t consoleKeys[ MAX_CONSOLE_KEYS ];
-	int i;
-
-	// ouned: I really don't get how exactly this works
-#ifdef MACOS_X
-    consoleKeys[0].type = consoleKey_t::CHARACTER;
-    consoleKeys[0].u.character = 0xB0; // ouned: '°'
-    int numConsoleKeys = 1;
-#else
-    consoleKeys[0].type = consoleKey_t::CHARACTER;
-    consoleKeys[0].u.character = '~';
-    consoleKeys[1].type = consoleKey_t::CHARACTER;
-    consoleKeys[1].u.character = '`';
-    consoleKeys[2].type = consoleKey_t::QUAKE_KEY;
-    consoleKeys[2].u.key = (fakeAscii_t)0x7e;
-    consoleKeys[3].type = consoleKey_t::QUAKE_KEY;
-    consoleKeys[3].u.key = (fakeAscii_t)0x60;
-    int numConsoleKeys = 4;
-#endif
-
-	// If the character is the same as the key, prefer the character
-	if( key == character )
-		key = A_NULL;
-
-	for( i = 0; i < numConsoleKeys; i++ )
-	{
-		consoleKey_t *c = &consoleKeys[ i ];
-
-		switch( c->type )
-		{
-			case consoleKey_t::QUAKE_KEY:
-				if( key && c->u.key == key )
-					return qtrue;
-				break;
-
-			case consoleKey_t::CHARACTER:
-				if( c->u.character == character )
-					return qtrue;
-				break;
-		}
-	}
-
-	return qfalse;
-}
-
 /*
 ===============
 IN_TranslateSDLToJKKey
@@ -213,12 +140,6 @@ static fakeAscii_t IN_TranslateSDLToJKKey( SDL_Keysym *keysym, qboolean down ) {
 
 	if( in_keyboardDebug->integer )
 		IN_PrintKey( keysym, key, down );
-
-	if( IN_IsConsoleKey( key, 0 ) )
-	{
-		// Console keys can't be bound or generate characters
-		key = A_CONSOLE;
-	}
 
 	return key;
 }
@@ -477,6 +398,7 @@ static void IN_ProcessEvents( void )
 	SDL_Event e;
 	fakeAscii_t key = A_NULL;
 	static fakeAscii_t lastKeyDown = A_NULL;
+	static qboolean shiftdown;
 
 	if( !SDL_WasInit( SDL_INIT_VIDEO ) )
 			return;
@@ -495,13 +417,25 @@ static void IN_ProcessEvents( void )
 				else if ( kg.keys[A_CTRL].down && key >= 'a' && key <= 'z' )
 					Sys_QueEvent( 0, SE_CHAR, CTRL(key), qfalse, 0, NULL );
 
-				lastKeyDown = key;
+                if (e.key.keysym.scancode == SDL_SCANCODE_LSHIFT) {
+                    shiftdown = qtrue;
+                } else if (e.key.keysym.scancode == SDL_SCANCODE_GRAVE && shiftdown) {
+                    Sys_QueEvent( 0, SE_KEY, A_CONSOLE, qtrue, 0, NULL );
+                    Sys_QueEvent( 0, SE_KEY, A_CONSOLE, qfalse, 0, NULL );
+                    lastKeyDown = A_CONSOLE;
+                } else {
+                    lastKeyDown = key;
+				}
 				break;
 
 			case SDL_KEYUP:
 				key = IN_TranslateSDLToJKKey( &e.key.keysym, qfalse );
 				if( key != A_NULL )
 					Sys_QueEvent( 0, SE_KEY, key, qfalse, 0, NULL );
+
+                if (e.key.keysym.scancode == SDL_SCANCODE_LSHIFT) {
+                    shiftdown = qfalse;
+                }
 
 				lastKeyDown = A_NULL;
 				break;
@@ -544,13 +478,7 @@ static void IN_ProcessEvents( void )
 
 						if( utf32 != 0 )
 						{
-							if( IN_IsConsoleKey( A_NULL, utf32 ) )
-							{
-								Sys_QueEvent( 0, SE_KEY, A_CONSOLE, qtrue, 0, NULL );
-								Sys_QueEvent( 0, SE_KEY, A_CONSOLE, qfalse, 0, NULL );
-							}
-							else
-								Sys_QueEvent( 0, SE_CHAR, utf32, 0, 0, NULL );
+                            Sys_QueEvent( 0, SE_CHAR, utf32, 0, 0, NULL );
 						}
 					}
 				}
