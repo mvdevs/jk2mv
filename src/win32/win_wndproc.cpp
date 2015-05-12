@@ -516,10 +516,7 @@ LONG WINAPI MainWndProc (
 		break;
 
 	case WM_CHAR:
-		if(((lParam >> 16) & 0xff) != CONSOLE_SCAN_CODE)
-		{
-			Sys_QueEvent( g_wv.sysMsgTime, SE_CHAR, wParam, 0, 0, NULL );
-		}
+		Sys_QueEvent( g_wv.sysMsgTime, SE_CHAR, wParam, 0, 0, NULL );
 		// Output any debug prints
 //		if(in_debug && in_debug->integer & 2)
 //		{

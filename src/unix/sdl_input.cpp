@@ -397,8 +397,6 @@ static void IN_ProcessEvents( void )
 {
 	SDL_Event e;
 	fakeAscii_t key = A_NULL;
-	static fakeAscii_t lastKeyDown = A_NULL;
-	static qboolean shiftdown;
 
 	if( !SDL_WasInit( SDL_INIT_VIDEO ) )
 			return;
@@ -408,41 +406,32 @@ static void IN_ProcessEvents( void )
 		switch( e.type )
 		{
 			case SDL_KEYDOWN:
-				key = IN_TranslateSDLToJKKey( &e.key.keysym, qtrue );
-				if ( key != A_NULL )
-					Sys_QueEvent( 0, SE_KEY, key, qtrue, 0, NULL );
+				if (e.key.keysym.scancode == SDL_SCANCODE_GRAVE) {
+					Sys_QueEvent( 0, SE_KEY, A_CONSOLE, qtrue, 0, NULL );
+				} else {
+					key = IN_TranslateSDLToJKKey( &e.key.keysym, qtrue );
+					if ( key != A_NULL )
+						Sys_QueEvent( 0, SE_KEY, key, qtrue, 0, NULL );
 
-				if ( key == A_BACKSPACE )
-					Sys_QueEvent( 0, SE_CHAR, CTRL('h'), qfalse, 0, NULL);
-				else if ( kg.keys[A_CTRL].down && key >= 'a' && key <= 'z' )
-					Sys_QueEvent( 0, SE_CHAR, CTRL(key), qfalse, 0, NULL );
-
-                if (e.key.keysym.scancode == SDL_SCANCODE_LSHIFT) {
-                    shiftdown = qtrue;
-                } else if (e.key.keysym.scancode == SDL_SCANCODE_GRAVE && shiftdown) {
-                    Sys_QueEvent( 0, SE_KEY, A_CONSOLE, qtrue, 0, NULL );
-                    Sys_QueEvent( 0, SE_KEY, A_CONSOLE, qfalse, 0, NULL );
-                    lastKeyDown = A_CONSOLE;
-                } else {
-                    lastKeyDown = key;
+					if ( key == A_BACKSPACE )
+						Sys_QueEvent( 0, SE_CHAR, CTRL('h'), qfalse, 0, NULL);
+					else if ( kg.keys[A_CTRL].down && key >= 'a' && key <= 'z' )
+						Sys_QueEvent( 0, SE_CHAR, CTRL(key), qfalse, 0, NULL );
 				}
 				break;
 
 			case SDL_KEYUP:
-				key = IN_TranslateSDLToJKKey( &e.key.keysym, qfalse );
-				if( key != A_NULL )
-					Sys_QueEvent( 0, SE_KEY, key, qfalse, 0, NULL );
-
-                if (e.key.keysym.scancode == SDL_SCANCODE_LSHIFT) {
-                    shiftdown = qfalse;
-                }
-
-				lastKeyDown = A_NULL;
+				if (e.key.keysym.scancode == SDL_SCANCODE_GRAVE) {
+					Sys_QueEvent( 0, SE_KEY, A_CONSOLE, qfalse, 0, NULL );
+				} else {
+					key = IN_TranslateSDLToJKKey( &e.key.keysym, qfalse );
+					if( key != A_NULL )
+						Sys_QueEvent( 0, SE_KEY, key, qfalse, 0, NULL );
+				}
 				break;
 
 			case SDL_TEXTINPUT:
-				if( lastKeyDown != A_CONSOLE )
-				{
+			{
 					char *c = e.text.text;
 
 					// Quick and dirty UTF-8 to UTF-32 conversion
@@ -478,12 +467,11 @@ static void IN_ProcessEvents( void )
 
 						if( utf32 != 0 )
 						{
-                            Sys_QueEvent( 0, SE_CHAR, utf32, 0, 0, NULL );
+							Sys_QueEvent( 0, SE_CHAR, utf32, 0, 0, NULL );
 						}
 					}
-				}
-				break;
-
+					break;
+			}
 			case SDL_MOUSEMOTION:
 				if( mouseActive )
 					Sys_QueEvent( 0, SE_MOUSE, e.motion.xrel, e.motion.yrel, 0, NULL );

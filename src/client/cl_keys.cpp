@@ -1518,6 +1518,9 @@ CL_KeyEvent
 Called by the system for both key up and key down events
 ===================
 */
+
+qboolean ignoreNextChar;
+
 void CL_KeyEvent (int key, qboolean down, unsigned time) {
 	char	*kb;
 	char	cmd[1024];
@@ -1550,12 +1553,15 @@ void CL_KeyEvent (int key, qboolean down, unsigned time) {
 			return;
 
 		}
-#ifdef FINAL_BUILD
-		if (!(cls.keyCatchers & KEYCATCH_CONSOLE) && !kg.keys[A_SHIFT].down )	//we're not in the console
-		{//so we require the control kg.keys to get in
-			return;
+
+		if (!(cls.keyCatchers & KEYCATCH_CONSOLE) )	{
+			if (!kg.keys[A_SHIFT].down) {
+				return;
+			}
+
+			ignoreNextChar = qtrue;
 		}
-#endif
+
 		Con_ToggleConsole_f ();
 		return;
 	}
@@ -1688,8 +1694,8 @@ Normal keyboard characters, already shifted / capslocked / etc
 ===================
 */
 void CL_CharEvent( int key ) {
-	// the console key should never be used as a char
-	if ( key == '`' || key == '~' ) {
+	if (ignoreNextChar) {
+		ignoreNextChar = qfalse;
 		return;
 	}
 
