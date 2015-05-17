@@ -32,12 +32,7 @@ typedef unsigned int glIndex_t;
 #define MAX_STATE_NAME 32
 
 // ouned: gamma correction
-// for some reason postprocessing is broken on linux
-#ifndef __linux__
-#	define GAMMA_DEFAULT "2" /* GAMMA_POSTPROCESSING */
-#else
-#	define GAMMA_DEFAULT "1" /* GAMMA_HARDWARE */
-#endif
+#define GAMMA_DEFAULT "2" /* GAMMA_POSTPROCESSING */
 
 typedef enum {
 	GAMMA_NONE,
@@ -380,11 +375,8 @@ typedef struct {
 	qboolean		isDetail;
 	surfaceSprite_t	ss;
 
-#ifdef JKA_DYNAMIC_GLOW
 	// Whether this object emits a glow or not.
 	bool			glow;
-#endif
-
 } shaderStage_t;
 
 struct shaderCommands_s;
@@ -481,22 +473,21 @@ Ghoul2 Insert End
 
 	void		(*optimalStageIteratorFunc)( void );
 
-  float clampTime;                                  // time this shader is clamped to
-  float timeOffset;                                 // current time offset for this shader
+	float clampTime;                                  // time this shader is clamped to
+	float timeOffset;                                 // current time offset for this shader
 
-  int numStates;                                    // if non-zero this is a state shader
-  struct shader_s *currentShader;                   // current state if this is a state shader
-  struct shader_s *parentShader;                    // current state if this is a state shader
-  int currentState;                                 // current state index for cycle purposes
-  int expireTime;                                  // time in milliseconds this expires
-#ifdef JKA_DYNAMIC_GLOW // GLOWXXX
+	int numStates;                                    // if non-zero this is a state shader
+	struct shader_s *currentShader;                   // current state if this is a state shader
+	struct shader_s *parentShader;                    // current state if this is a state shader
+	int currentState;                                 // current state index for cycle purposes
+	int expireTime;                                  // time in milliseconds this expires
+	
 	// True if this shader has a stage with glow in it (just an optimization).
 	bool hasGlow;
-#endif
 
-  struct shader_s *remappedShader;                  // current shader this one is remapped too
+	struct shader_s *remappedShader;                  // current shader this one is remapped too
 
-  int shaderStates[MAX_STATES_PER_SHADER];          // index to valid shader states
+	int shaderStates[MAX_STATES_PER_SHADER];          // index to valid shader states
 
 	struct	shader_s	*next;
 } shader_t;
@@ -1048,7 +1039,7 @@ typedef struct {
 	image_t					*flareImage;
 	image_t					*whiteImage;			// full of 0xff
 	image_t					*identityLightImage;	// full of tr.identityLightByte
-#ifdef JKA_DYNAMIC_GLOW // GLOWXXX
+
 	// Handle to the Glow Effect Vertex Shader. - AReis
 	GLuint					glowVShader;
 
@@ -1063,7 +1054,6 @@ typedef struct {
 
 	// Image used to downsample and blur scene to.	- AReis
 	GLuint					blurImage;
-#endif
 
 	shader_t				*defaultShader;
 	shader_t				*shadowShader;
@@ -1127,12 +1117,8 @@ typedef struct {
 
 	// ouned: gamma correction
 	GLhandleARB gammaProgram, m_hVShader, m_hFShader;
-	GLint gammaUniformLoc;
-	GLint gammaSceneBufferLoc;
-
-	GLuint gammaScreen;
-	GLuint gammaFramebuffer;
-	GLuint gammaRenderDepthBuffer, gammaRenderTarget;
+	GLint sceneUniformLoc, gammaUniformLoc;
+	GLuint gammaRenderTarget;
 } trGlobals_t;
 
 
@@ -1230,7 +1216,6 @@ extern cvar_t	*r_ext_compiled_vertex_array;
 extern cvar_t	*r_ext_texture_env_add;
 extern cvar_t	*r_ext_texture_filter_anisotropic;
 
-#ifdef JKA_DYNAMIC_GLOW
 extern cvar_t	*r_DynamicGlow;
 extern cvar_t	*r_DynamicGlowPasses;
 extern cvar_t	*r_DynamicGlowDelta;
@@ -1238,7 +1223,6 @@ extern cvar_t	*r_DynamicGlowIntensity;
 extern cvar_t	*r_DynamicGlowSoft;
 extern cvar_t	*r_DynamicGlowWidth;
 extern cvar_t	*r_DynamicGlowHeight;
-#endif
 
 extern	cvar_t	*r_nobind;						// turns off binding to appropriate textures
 extern	cvar_t	*r_singleShader;				// make most world faces use default shader

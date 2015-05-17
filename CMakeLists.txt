@@ -135,7 +135,6 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/out)
 set(CPACK_PACKAGE_DIRECTORY ${CMAKE_BINARY_DIR}/out)
 
 # Compiler defines / settings
-set(GlobalDefines ${GlobalDefines} "JKA_DYNAMIC_GLOW")
 set(GlobalDefines ${GlobalDefines} "BOTLIB")
 set(GlobalDefines ${GlobalDefines} "_JK2")
 

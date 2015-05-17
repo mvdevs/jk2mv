@@ -2333,7 +2333,7 @@ void R_CreateBuiltinImages( void ) {
 	// we use a solid white image instead of disabling texturing
 	Com_Memset( data, 255, sizeof( data ) );
 	tr.whiteImage = R_CreateImage("*white", (byte *)data, 8, 8, qfalse, qfalse, qfalse, GL_REPEAT );
-#ifdef JKA_DYNAMIC_GLOW
+
 	// Create the scene glow image. - AReis
 	tr.screenGlow = 1024 + giTextureBindNum++;
 	qglDisable( GL_TEXTURE_2D );
@@ -2372,7 +2372,6 @@ void R_CreateBuiltinImages( void ) {
 	qglTexParameteri( GL_TEXTURE_RECTANGLE_EXT, GL_TEXTURE_WRAP_T, GL_CLAMP );
 	qglDisable( GL_TEXTURE_RECTANGLE_EXT );
 	qglEnable( GL_TEXTURE_2D );
-#endif
 
 	// with overbright bits active, we need an image which is some fraction of full color,
 	// for default lightmaps, etc

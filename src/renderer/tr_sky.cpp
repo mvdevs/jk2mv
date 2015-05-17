@@ -6,9 +6,8 @@
 
 static float s_cloudTexCoords[6][SKY_SUBDIVISIONS+1][SKY_SUBDIVISIONS+1][2];
 static float s_cloudTexP[6][SKY_SUBDIVISIONS+1][SKY_SUBDIVISIONS+1];
-#ifdef JKA_DYNAMIC_GLOW
+
 extern bool g_bRenderGlowingObjects;
-#endif
 
 /*
 ===================================================================================
@@ -777,10 +776,9 @@ Other things could be stuck in here, like birds in the sky, etc
 ================
 */
 void RB_StageIteratorSky( void ) {
-#ifdef JKA_DYNAMIC_GLOW
 	if ( g_bRenderGlowingObjects )
 		return;
-#endif
+
 	if ( r_fastsky->integer ) {
 		return;
 	}

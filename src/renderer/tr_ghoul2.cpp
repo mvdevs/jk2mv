@@ -2140,19 +2140,15 @@ void RB_SurfaceGhoul( CRenderableSurface *surf ) {
 	// point us at the bone structure that should have been pre-computed
 	mdxaBone_v &bonePtr = *((mdxaBone_v *)surf->boneList);
 
-#ifdef JKA_DYNAMIC_GLOW
 	// NOTE: This is required because a ghoul model might need to be rendered twice a frame (don't cringe,
 	// it's not THAT bad), so we only delete it when doing the glow pass. Warning though, this assumes that
 	// the glow is rendered _second_!!! If that changes, change this!
 	extern bool g_bRenderGlowingObjects;
 	extern bool g_bDynamicGlowSupported;
-	if ( !tess.shader->hasGlow || g_bRenderGlowingObjects || !g_bDynamicGlowSupported || !r_DynamicGlow->integer )
-	{
-#endif
+	if ( !tess.shader->hasGlow || g_bRenderGlowingObjects || !g_bDynamicGlowSupported || !r_DynamicGlow->integer ) {
 		delete surf;
-#ifdef JKA_DYNAMIC_GLOW
 	}
-#endif
+
 	//
 	// deform the vertexes by the lerped bones
 	//

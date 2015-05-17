@@ -692,18 +692,14 @@ GLimp_InitExtensions
 ===============
 */
 
-#ifdef JKA_DYNAMIC_GLOW
 extern bool g_bDynamicGlowSupported;
-#endif
 
 static void GLimp_InitExtensions( void )
 {
 	if ( !r_allowExtensions->integer )
 	{
 		Com_Printf ("*** IGNORING OPENGL EXTENSIONS ***\n" );
-#ifdef JKA_DYNAMIC_GLOW
 		g_bDynamicGlowSupported = false;
-#endif
 		ri.Cvar_Set( "r_DynamicGlow","0" );
 		return;
 	}
@@ -970,17 +966,13 @@ static void GLimp_InitExtensions( void )
 	if ( bTexRectSupported && bARBVertexProgram && qglActiveTextureARB && glConfig.maxActiveTextures >= 4 &&
 		( ( bNVRegisterCombiners && iNumGeneralCombiners >= 2 ) || bARBFragmentProgram ) )
 	{
-	#ifdef JKA_DYNAMIC_GLOW
 		g_bDynamicGlowSupported = true;
-	#endif
 		// this would overwrite any achived setting gwg
 		// Cvar_Set( "r_DynamicGlow", "1" );
 	}
 	else
 	{
-#ifdef JKA_DYNAMIC_GLOW
 		g_bDynamicGlowSupported = false;
-#endif
 		ri.Cvar_Set( "r_DynamicGlow","0" );
 	}
 
@@ -988,8 +980,7 @@ static void GLimp_InitExtensions( void )
 	if ( GL_CheckForExtension( "GL_ARB_shader_objects" ) &&
 		GL_CheckForExtension( "GL_ARB_shading_language_100" ) &&
 		GL_CheckForExtension( "GL_ARB_vertex_shader" ) &&
-		GL_CheckForExtension( "GL_ARB_fragment_shader" ) &&
-		GL_CheckForExtension( "GL_EXT_framebuffer_object" ) ) {
+		GL_CheckForExtension( "GL_ARB_fragment_shader" ) ) {
 		qglCreateShaderObjectARB = (PFNGLCREATESHADEROBJECTARBPROC)SDL_GL_GetProcAddress("glCreateShaderObjectARB");
 		qglShaderSourceARB = (PFNGLSHADERSOURCEARBPROC)SDL_GL_GetProcAddress("glShaderSourceARB");
 		qglCompileShaderARB = (PFNGLCOMPILESHADERARBPROC)SDL_GL_GetProcAddress("glCompileShaderARB");
@@ -1011,23 +1002,10 @@ static void GLimp_InitExtensions( void )
 		qglGetObjectParameterivARB = (PFNGLGETOBJECTPARAMETERIVARBPROC)SDL_GL_GetProcAddress("glGetObjectParameterivARB");
 		qglGetAttachedObjectsARB = (PFNGLGETATTACHEDOBJECTSARBPROC)SDL_GL_GetProcAddress("glGetAttachedObjectsARB");
 
-		qglGenFramebuffersEXT = (PFNGLGENFRAMEBUFFERSEXTPROC)SDL_GL_GetProcAddress("glGenFramebuffersEXT");
-		qglDeleteFramebuffersEXT = (PFNGLDELETEFRAMEBUFFERSEXTPROC)SDL_GL_GetProcAddress("glDeleteFramebuffersEXT");
-		qglBindFramebufferEXT = (PFNGLBINDFRAMEBUFFEREXTPROC)SDL_GL_GetProcAddress("glBindFramebufferEXT");
-		qglFramebufferTexture2DEXT = (PFNGLFRAMEBUFFERTEXTURE2DEXTPROC)SDL_GL_GetProcAddress("glFramebufferTexture2DEXT");
-		qglCheckFramebufferStatusEXT = (PFNGLCHECKFRAMEBUFFERSTATUSEXTPROC)SDL_GL_GetProcAddress("glCheckFramebufferStatusEXT");
-		qglGenRenderbuffersEXT = (PFNGLGENRENDERBUFFERSEXTPROC)SDL_GL_GetProcAddress("glGenRenderbuffersEXT");
-		qglDeleteRenderbuffersEXT = (PFNGLDELETERENDERBUFFERSEXTPROC)SDL_GL_GetProcAddress("glDeleteRenderbuffersEXT");
-		qglBindRenderbufferEXT = (PFNGLBINDRENDERBUFFEREXTPROC)SDL_GL_GetProcAddress("glBindRenderbufferEXT");
-		qglRenderbufferStorageEXT = (PFNGLRENDERBUFFERSTORAGEEXTPROC)SDL_GL_GetProcAddress("glRenderbufferStorageEXT");
-		qglFramebufferRenderbufferEXT = (PFNGLFRAMEBUFFERRENDERBUFFEREXTPROC)SDL_GL_GetProcAddress("glFramebufferRenderbufferEXT");
-		qglGenerateMipmapEXT = (PFNGLGENERATEMIPMAPEXTPROC)SDL_GL_GetProcAddress("glGenerateMipmapEXT");
-
 		ri.Printf(PRINT_ALL, "...using GL_ARB_shader_objects\n");
 		ri.Printf(PRINT_ALL, "...using GL_ARB_shading_language_100\n");
 		ri.Printf(PRINT_ALL, "...using GL_ARB_vertex_shader\n");
 		ri.Printf(PRINT_ALL, "...using GL_ARB_fragment_shader\n");
-		ri.Printf(PRINT_ALL, "...using GL_EXT_framebuffer_object\n");
 
 		glConfig.deviceSupportsPostprocessingGamma = qtrue;
 	} else {

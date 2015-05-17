@@ -16,9 +16,8 @@ static qboolean	setArraysOnce;
 
 color4ub_t	styleColors[MAX_LIGHT_STYLES];
 
-#ifdef JKA_DYNAMIC_GLOW
 extern bool g_bRenderGlowingObjects;
-#endif
+
 /*
 ================
 R_ArrayElementDiscrete
@@ -1141,13 +1140,12 @@ static void RB_IterateStagesGeneric( shaderCommands_t *input )
 		{
 			break;
 		}
-#ifdef JKA_DYNAMIC_GLOW
+
 		// Reject this stage if it's not a glow stage but we are doing a glow pass.
 		if ( g_bRenderGlowingObjects && !pStage->glow )
 		{
 			continue;
 		}
-#endif
 
 		if ( stage && r_lightmap->integer && !( pStage->bundle[0].isLightmap || pStage->bundle[1].isLightmap || pStage->bundle[0].vertexLightmap ) )
 		{

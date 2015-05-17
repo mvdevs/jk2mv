@@ -9,7 +9,6 @@
 backEndData_t	*backEndData[SMP_FRAMES];
 backEndState_t	backEnd;
 
-#ifdef JKA_DYNAMIC_GLOW
 static void RB_DrawGlowOverlay();
 static void RB_BlurGlowTexture();
 
@@ -18,7 +17,6 @@ bool g_bRenderGlowingObjects = false;
 
 // Whether the current hardware supports dynamic glows/flares.
 bool g_bDynamicGlowSupported = false;
-#endif
 
 
 static float	s_flipMatrix[16] = {
@@ -468,11 +466,7 @@ void RB_BeginDrawingView (void) {
 	{
 		clearBits |= GL_STENCIL_BUFFER_BIT;
 	}
-	if ( r_fastsky->integer && !( backEnd.refdef.rdflags & RDF_NOWORLDMODEL )
-#ifdef JKA_DYNAMIC_GLOW
-		&& !g_bRenderGlowingObjects
-#endif
-		)
+	if ( r_fastsky->integer && !( backEnd.refdef.rdflags & RDF_NOWORLDMODEL ) && !g_bRenderGlowingObjects )
 	{
 		clearBits |= GL_COLOR_BUFFER_BIT;	// FIXME: only if sky shaders have been used
 #ifdef _DEBUG
@@ -481,7 +475,7 @@ void RB_BeginDrawingView (void) {
 		qglClearColor( 0.0f, 0.0f, 0.0f, 1.0f );	// FIXME: get color of sky
 #endif
 	}
-#ifdef JKA_DYNAMIC_GLOW
+
 	if ( /*tr.refdef.rdflags & RDF_AUTOMAP ||*/ (!( backEnd.refdef.rdflags & RDF_NOWORLDMODEL ) && r_DynamicGlow->integer && !g_bRenderGlowingObjects ) )
 	{
 		if (tr.world && tr.world->globalFog != -1)
@@ -499,7 +493,7 @@ void RB_BeginDrawingView (void) {
 	{
 		clearBits &= ~GL_DEPTH_BUFFER_BIT;
 	}
-#endif
+
 	qglClear( clearBits );
 
 	if ( ( backEnd.refdef.rdflags & RDF_HYPERSPACE ) )
@@ -558,9 +552,8 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 	drawSurf_t		*drawSurf;
 	int				oldSort;
 	float			originalTime;
-#ifdef JKA_DYNAMIC_GLOW
 	bool			didShadowPass = false;
-#endif
+
 #ifdef __MACOS__
 	int				macEventTime;
 
@@ -571,12 +564,10 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 	macEventTime = ri.Milliseconds() + MAC_EVENT_PUMP_MSEC;
 #endif
 
-#ifdef JKA_DYNAMIC_GLOW
 	if (g_bRenderGlowingObjects)
 	{ //only shadow on initial passes
 		didShadowPass = true;
 	}
-#endif
 
 	// save original time for entity shader offsets
 	originalTime = backEnd.refdef.floatTime;
@@ -602,7 +593,7 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 			rb_surfaceTable[ *drawSurf->surface ]( drawSurf->surface );
 			continue;
 		}
-#ifdef JKA_DYNAMIC_GLOW // GLOWXXX
+
 		R_DecomposeSort( drawSurf->sort, &entityNum, &shader, &fogNum, &dlighted );
 		// If we're rendering glowing objects, but this shader has no stages with glow, skip it!
 		if ( g_bRenderGlowingObjects && !shader->hasGlow )
@@ -614,10 +605,6 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 			continue;
 		}
 		oldSort = drawSurf->sort;
-#else
-		oldSort = drawSurf->sort;
-		R_DecomposeSort( drawSurf->sort, &entityNum, &shader, &fogNum, &dlighted );
-#endif
 
 		//
 		// change the tess parameters if needed
@@ -730,14 +717,14 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 #if 0
 	RB_DrawSun();
 #endif
-#ifdef JKA_DYNAMIC_GLOW
+
 	if (!didShadowPass)
 	{
 		// darken down any stencil shadows
 		RB_ShadowFinish();
 		didShadowPass = true;
 	}
-#endif
+
 	// darken down any stencil shadows
 	RB_ShadowFinish();
 
@@ -1109,7 +1096,6 @@ const void	*RB_DrawSurfs( const void *data ) {
 
 	RB_RenderDrawSurfList( cmd->drawSurfs, cmd->numDrawSurfs );
 
-#ifdef JKA_DYNAMIC_GLOW	// GLOWXXX
 	if ( !(backEnd.refdef.rdflags & RDF_NOWORLDMODEL) && g_bDynamicGlowSupported && r_DynamicGlow->integer )
 	{
 		// Copy the normal scene to texture.
@@ -1166,7 +1152,6 @@ const void	*RB_DrawSurfs( const void *data ) {
 		// Draw the glow additively over the screen.
 		RB_DrawGlowOverlay();
 	}
-#endif
 
 	return (const void *)(cmd + 1);
 }
@@ -1309,38 +1294,35 @@ const void	*RB_SwapBuffers( const void *data ) {
 
 	// ouned: gamma correction
 	if (glConfig.deviceSupportsPostprocessingGamma && r_gammamethod->integer == GAMMA_POSTPROCESSING) {
-		qglBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
-		qglBindRenderbufferEXT(GL_RENDERBUFFER_EXT, 0);
-
-		qglViewport(0, 0, glConfig.vidWidth, glConfig.vidHeight);
-		qglScissor(0, 0, glConfig.vidWidth, glConfig.vidHeight);
 		qglMatrixMode(GL_PROJECTION);
 		qglLoadIdentity();
 		qglOrtho(0, glConfig.vidWidth, glConfig.vidHeight, 0, 0, 1);
 		qglMatrixMode(GL_MODELVIEW);
 		qglLoadIdentity();
-
 		GL_State(GLS_DEPTHTEST_DISABLE);
 
 		qglUseProgramObjectARB(tr.gammaProgram);
+
+		qglUniform1fARB(tr.gammaUniformLoc, r_gamma->value);
+		qglUniform1iARB(tr.sceneUniformLoc, 0);
+
+		qglDisable(GL_TEXTURE_2D);
+		qglEnable(GL_TEXTURE_RECTANGLE_EXT);
+		qglBindTexture(GL_TEXTURE_RECTANGLE_EXT, tr.gammaRenderTarget);
+		qglCopyTexSubImage2D(GL_TEXTURE_RECTANGLE_EXT, 0, 0, 0, 0, 0, glConfig.vidWidth, glConfig.vidHeight);
+		qglDisable(GL_TEXTURE_RECTANGLE_EXT);
 		qglEnable(GL_TEXTURE_2D);
 
-		qglUniform1iARB(tr.gammaSceneBufferLoc, 0);
-		qglUniform1fARB(tr.gammaUniformLoc, r_gamma->value);
-
-		qglColor3f(tr.identityLight, tr.identityLight, tr.identityLight);
-		qglActiveTextureARB(GL_TEXTURE0_ARB);
-		qglBindTexture(GL_TEXTURE_2D, tr.gammaRenderTarget);
-
 		qglBegin(GL_QUADS);
-		qglTexCoord2f(0, 1);
-		qglVertex2f(0, 0);
-		qglTexCoord2f(1, 1);
-		qglVertex2f(glConfig.vidWidth, 0);
-		qglTexCoord2f(1, 0);
-		qglVertex2f(glConfig.vidWidth, glConfig.vidHeight);
-		qglTexCoord2f(0, 0);
-		qglVertex2f(0, glConfig.vidHeight);
+			qglColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+			qglTexCoord2f(0, glConfig.vidHeight);
+			qglVertex2f(0, 0);
+			qglTexCoord2f(0, 0);
+			qglVertex2f(0, glConfig.vidHeight);
+			qglTexCoord2f(glConfig.vidWidth, 0);
+			qglVertex2f(glConfig.vidWidth, glConfig.vidHeight);
+			qglTexCoord2f(glConfig.vidWidth, glConfig.vidHeight);
+			qglVertex2f(glConfig.vidWidth, 0);
 		qglEnd();
 
 		qglUseProgramObjectARB(0);
@@ -1436,7 +1418,6 @@ void RB_RenderThread( void ) {
 		renderThreadActive = qfalse;
 	}
 }
-#ifdef JKA_DYNAMIC_GLOW // GLOWXXX
 
 // What Pixel Shader type is currently active (regcoms or fragment programs).
 GLuint g_uiCurrentPixelShaderType = 0x0;
@@ -1801,6 +1782,4 @@ static inline void RB_DrawGlowOverlay()
 
 	qglEnable( GL_DEPTH_TEST );
 }
-#endif
-
 #endif //!DEDICATED

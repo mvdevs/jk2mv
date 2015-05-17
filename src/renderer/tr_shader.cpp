@@ -2,7 +2,6 @@
 
 // tr_shader.c -- this file deals with the parsing and definition of shaders
 
-#ifdef JKA_DYNAMIC_GLOW
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Vertex and Pixel Shader definitions.	- AReis
 /***********************************************************************************************************/
@@ -87,11 +86,11 @@ const unsigned char g_strGlowPShaderARB[] =
 	END"
 };
 /***********************************************************************************************************/
-#endif
+
 static char *s_shaderText;
-#ifdef JKA_DYNAMIC_GLOW // Daggolin: Dynamic Glow
+
+// Daggolin: Dynamic Glow
 static char *mv_dynGlowShaders = NULL;
-#endif
 
 // the shader is parsed into these global variables, then copied into
 // dynamically allocated memory if it is valid.
@@ -1627,7 +1626,7 @@ static qboolean ParseStage( shaderStage_t *stage, const char **text )
 
 			continue;
 		}
-#ifdef JKA_DYNAMIC_GLOW
+
 		// If this stage has glow...	GLOWXXX
 		else if ( Q_stricmp( token, "glow" ) == 0 )
 		{
@@ -1635,7 +1634,7 @@ static qboolean ParseStage( shaderStage_t *stage, const char **text )
 
 			continue;
 		}
-#endif
+
 		//
 		// surfaceSprites <type> ...
 		//
@@ -2166,12 +2165,12 @@ static qboolean ParseShader( const char **text )
 				return qfalse;
 			}
 			stages[s].active = qtrue;
-#ifdef JKA_DYNAMIC_GLOW // GLOWXXX
+
 			if ( stages[s].glow )
 			{
 				shader.hasGlow = true;
 			}
-#endif
+
 			s++;
 			continue;
 		}
@@ -3376,7 +3375,7 @@ inline qboolean IsShader(shader_t *sh, const char *name, const int *lightmapInde
 	return qtrue;
 }
 
-#ifdef JKA_DYNAMIC_GLOW // Daggolin: Dynamic Glow
+// Daggolin: Dynamic Glow
 qboolean MV_IsGlowStage( shader_t *shader, shaderStage_t *stage )
 {
 	int i;
@@ -3396,7 +3395,6 @@ qboolean MV_IsGlowStage( shader_t *shader, shaderStage_t *stage )
 
 	return qfalse;
 }
-#endif
 
 /*
 ===============
@@ -3895,10 +3893,8 @@ static void ScanAndLoadShaderFiles( const char *path )
 	int i;
 	char *oldp, *token, *hashMem;
 	int shaderTextHashTableSizes[MAX_SHADERTEXT_HASH], hash, size;
-#ifdef JKA_DYNAMIC_GLOW // Daggolin: Dynamic Glow
 	int numDynGlowShaders;
 	char *dynGlowBuffers[MAX_SHADER_FILES];
-#endif
 
 	int sum = 0;
 	// scan for shader files
@@ -3943,8 +3939,6 @@ static void ScanAndLoadShaderFiles( const char *path )
 	// free up memory
 	ri.FS_FreeFileList( shaderFiles );
 
-
-#ifdef JKA_DYNAMIC_GLOW // Daggolin: Dynamic Glow
 	shaderFiles = ri.FS_ListFiles( path, ".dynGlow", &numDynGlowShaders );
 
 	if ( !shaderFiles || !numDynGlowShaders )
@@ -3987,7 +3981,6 @@ static void ScanAndLoadShaderFiles( const char *path )
 		// free up memory
 		ri.FS_FreeFileList( shaderFiles );
 	}
-#endif
 
 	Com_Memset(shaderTextHashTableSizes, 0, sizeof(shaderTextHashTableSizes));
 	size = 0;
@@ -4069,13 +4062,13 @@ const char *g_GammaVertexShaderARB = {
 };
 
 const char *g_GammaFragmentShaderARB = {
-	"uniform sampler2D sceneBuffer;" "\n"
+	"uniform sampler2DRect sceneBuffer;" "\n"
 	"uniform float gamma;" "\n"
 	"\n"
 	"void main(void)" "\n"
 	"{" "\n"
 		"vec2 uv = gl_TexCoord[0].xy;" "\n"
-		"vec3 color = texture2D(sceneBuffer, uv).rgb;" "\n"
+		"vec3 color = texture2DRect(sceneBuffer, uv).rgb;" "\n"
 		"gl_FragColor.rgb = pow(color, vec3(1.0 / gamma));" "\n"
 	"}"
 };
@@ -4101,7 +4094,7 @@ qboolean MV_GammaGenerateProgram() {
 	qglUseProgramObjectARB(tr.gammaProgram);
 
 	tr.gammaUniformLoc = qglGetUniformLocationARB(tr.gammaProgram, "gamma");
-	tr.gammaSceneBufferLoc = qglGetUniformLocationARB(tr.gammaProgram, "sceneBuffer");
+	tr.sceneUniformLoc = qglGetUniformLocationARB(tr.gammaProgram, "sceneBuffer");
 
 	qglValidateProgramARB(tr.gammaProgram);
 	qglGetObjectParameterivARB(tr.gammaProgram, GL_OBJECT_VALIDATE_STATUS_ARB, &objStatus);
@@ -4111,36 +4104,17 @@ qboolean MV_GammaGenerateProgram() {
 
 	qglUseProgramObjectARB(0);
 
-	// framebuffer object
-	tr.gammaFramebuffer = 0;
-	qglGenFramebuffersEXT(1, &tr.gammaFramebuffer);
-	qglBindFramebufferEXT(GL_FRAMEBUFFER_EXT, tr.gammaFramebuffer);
-
-	// depth buffer
-	tr.gammaRenderDepthBuffer = 0;
-	qglGenRenderbuffersEXT(1, &tr.gammaRenderDepthBuffer);
-	qglBindRenderbufferEXT(GL_RENDERBUFFER_EXT, tr.gammaRenderDepthBuffer);
-	qglRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, GL_DEPTH_COMPONENT, glConfig.vidWidth, glConfig.vidHeight);
-
 	// texture
 	tr.gammaRenderTarget = 0;
 	qglGenTextures(1, &tr.gammaRenderTarget);
-	qglBindTexture(GL_TEXTURE_2D, tr.gammaRenderTarget);
-	qglTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, glConfig.vidWidth, glConfig.vidHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
-	qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-	qglFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, tr.gammaRenderTarget, 0);
-	qglFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, tr.gammaRenderDepthBuffer);
-	qglDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);
-
-	qglBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
-
-	if (qglCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT) != GL_FRAMEBUFFER_COMPLETE_EXT) {
-		return qtrue;
-	}
+	qglEnable(GL_TEXTURE_RECTANGLE_EXT);
+	qglBindTexture(GL_TEXTURE_RECTANGLE_EXT, tr.gammaRenderTarget);
+	qglTexImage2D(GL_TEXTURE_RECTANGLE_EXT, 0, GL_RGB, glConfig.vidWidth, glConfig.vidHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
+	qglTexParameteri(GL_TEXTURE_RECTANGLE_EXT, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	qglTexParameteri(GL_TEXTURE_RECTANGLE_EXT, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	qglTexParameteri(GL_TEXTURE_RECTANGLE_EXT, GL_TEXTURE_WRAP_S, GL_CLAMP);
+	qglTexParameteri(GL_TEXTURE_RECTANGLE_EXT, GL_TEXTURE_WRAP_T, GL_CLAMP);
+	qglDisable(GL_TEXTURE_RECTANGLE_EXT);
 
 	return qfalse;
 }
@@ -4172,8 +4146,8 @@ static void CreateInternalShaders( void ) {
 	Q_strncpyz( shader.name, "<stencil shadow>", sizeof( shader.name ) );
 	shader.sort = SS_STENCIL_SHADOW;
 	tr.shadowShader = FinishShader();
-#ifdef JKA_DYNAMIC_GLOW
-#ifndef DEDICATED// GLOWXXX
+
+#ifndef DEDICATED
 	#define GL_PROGRAM_ERROR_STRING_ARB						0x8874
 	#define GL_PROGRAM_ERROR_POSITION_ARB					0x864B
 
@@ -4254,7 +4228,7 @@ static void CreateInternalShaders( void ) {
 		assert( iErrPos == -1 );
 	}
 #endif
-#endif
+
 
 #ifndef DEDICATED
 	// ouned: gamma correction

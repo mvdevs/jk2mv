@@ -101,7 +101,6 @@ cvar_t	*r_ext_compiled_vertex_array;
 cvar_t	*r_ext_texture_env_add;
 cvar_t	*r_ext_texture_filter_anisotropic;
 
-#ifdef JKA_DYNAMIC_GLOW
 cvar_t	*r_DynamicGlow;
 cvar_t	*r_DynamicGlowPasses;
 cvar_t	*r_DynamicGlowDelta;
@@ -109,7 +108,6 @@ cvar_t	*r_DynamicGlowIntensity;
 cvar_t	*r_DynamicGlowSoft;
 cvar_t	*r_DynamicGlowWidth;
 cvar_t	*r_DynamicGlowHeight;
-#endif
 
 cvar_t	*r_ignoreGLErrors;
 cvar_t	*r_logFile;
@@ -211,7 +209,6 @@ void ( APIENTRY * qglUnlockArraysEXT) ( void );
 void ( APIENTRY * qglPointParameterfEXT)( GLenum, GLfloat);
 void ( APIENTRY * qglPointParameterfvEXT)( GLenum, GLfloat *);
 
-#ifdef JKA_DYNAMIC_GLOW// GLOWXXX
 // Declare Register Combiners function pointers.
 PFNGLCOMBINERPARAMETERFVNV				qglCombinerParameterfvNV = NULL;
 PFNGLCOMBINERPARAMETERIVNV				qglCombinerParameterivNV = NULL;
@@ -264,7 +261,6 @@ PFNGLGETPROGRAMLOCALPARAMETERFVARBPROC qglGetProgramLocalParameterfvARB = NULL;
 PFNGLGETPROGRAMIVARBPROC qglGetProgramivARB = NULL;
 PFNGLGETPROGRAMSTRINGARBPROC qglGetProgramStringARB = NULL;
 PFNGLISPROGRAMARBPROC qglIsProgramARB = NULL;
-#endif
 
 // ouned: gamma correction
 PFNGLGETHANDLEARBPROC qglGetHandleARB = NULL;
@@ -286,25 +282,6 @@ PFNGLUNIFORM4FVARBPROC qglUniform4fvARB = NULL;
 PFNGLGETINFOLOGARBPROC qglGetInfoLogARB = NULL;
 PFNGLGETOBJECTPARAMETERIVARBPROC qglGetObjectParameterivARB = NULL;
 PFNGLGETATTACHEDOBJECTSARBPROC qglGetAttachedObjectsARB = NULL;
-
-GLboolean(APIENTRY * qglIsRenderbufferEXT) (GLuint renderbuffer);
-void			(APIENTRY * qglBindRenderbufferEXT) (GLenum target, GLuint renderbuffer);
-void			(APIENTRY * qglDeleteRenderbuffersEXT) (GLsizei n, const GLuint * renderbuffers);
-void			(APIENTRY * qglGenRenderbuffersEXT) (GLsizei n, GLuint * renderbuffers);
-void			(APIENTRY * qglRenderbufferStorageEXT) (GLenum target, GLenum internalformat, GLsizei width, GLsizei height);
-void			(APIENTRY * qglGetRenderbufferParameterivEXT) (GLenum target, GLenum pname, GLint * params);
-GLboolean(APIENTRY * qglIsFramebufferEXT) (GLuint framebuffer);
-void			(APIENTRY * qglBindFramebufferEXT) (GLenum target, GLuint framebuffer);
-void			(APIENTRY * qglDeleteFramebuffersEXT) (GLsizei n, const GLuint * framebuffers);
-void			(APIENTRY * qglGenFramebuffersEXT) (GLsizei n, GLuint * framebuffers);
-GLenum(APIENTRY * qglCheckFramebufferStatusEXT) (GLenum target);
-void			(APIENTRY * qglFramebufferTexture1DEXT) (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level);
-void			(APIENTRY * qglFramebufferTexture2DEXT) (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level);
-void			(APIENTRY * qglFramebufferTexture3DEXT) (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level, GLint zoffset);
-void			(APIENTRY * qglFramebufferRenderbufferEXT) (GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer);
-void			(APIENTRY * qglGetFramebufferAttachmentParameterivEXT) (GLenum target, GLenum attachment, GLenum pname, GLint * params);
-void			(APIENTRY * qglGenerateMipmapEXT) (GLenum target);
-void			(APIENTRY * qglBlitFramebufferEXT) (GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter);
 
 #endif
 
@@ -891,9 +868,7 @@ void GL_SetDefaultState( void )
 GfxInfo_f
 ================
 */
-#ifdef JKA_DYNAMIC_GLOW
 extern bool g_bTextureRectangleHack;
-#endif
 void GfxInfo_f( void )
 {
 	const char *enablestrings[] =
@@ -975,10 +950,8 @@ void GfxInfo_f( void )
 	ri.Printf( PRINT_ALL, "compressed lightmaps: %s\n", enablestrings[(r_ext_compressed_lightmaps->integer != 0 && glConfig.textureCompression != TC_NONE)] );
 	ri.Printf( PRINT_ALL, "texture compression method: %s\n", tc_table[glConfig.textureCompression] );
 	ri.Printf( PRINT_ALL, "anisotropic filtering: %s\n", enablestrings[(r_ext_texture_filter_anisotropic->integer != 0) && glConfig.textureFilterAnisotropicAvailable] );
-#ifdef JKA_DYNAMIC_GLOW
 	ri.Printf( PRINT_ALL, "Dynamic Glow: %s\n", enablestrings[r_DynamicGlow->integer] );
 	if (g_bTextureRectangleHack) ri.Printf( PRINT_ALL, "Dynamic Glow ATI BAD DRIVER HACK %s\n", enablestrings[g_bTextureRectangleHack] );
-#endif
 
 	if ( glConfig.smpActive ) {
 		ri.Printf( PRINT_ALL, "Using dual processor acceleration\n" );
@@ -1024,7 +997,6 @@ void R_Register( void )
 	r_ext_texture_env_add = ri.Cvar_Get("r_ext_texture_env_add", "1", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);
 	r_ext_texture_filter_anisotropic = ri.Cvar_Get("r_ext_texture_filter_anisotropic", "1", CVAR_ARCHIVE | CVAR_GLOBAL);
 
-#ifdef JKA_DYNAMIC_GLOW
 	r_DynamicGlow = ri.Cvar_Get( "r_DynamicGlow", "0", CVAR_ARCHIVE | CVAR_GLOBAL );
 	r_DynamicGlowPasses = ri.Cvar_Get("r_DynamicGlowPasses", "5", CVAR_ARCHIVE | CVAR_GLOBAL);
 	r_DynamicGlowDelta = ri.Cvar_Get("r_DynamicGlowDelta", "0.8f", CVAR_ARCHIVE | CVAR_GLOBAL);
@@ -1032,8 +1004,6 @@ void R_Register( void )
 	r_DynamicGlowSoft = ri.Cvar_Get("r_DynamicGlowSoft", "1", CVAR_ARCHIVE | CVAR_GLOBAL);
 	r_DynamicGlowWidth = ri.Cvar_Get("r_DynamicGlowWidth", "320", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);
 	r_DynamicGlowHeight = ri.Cvar_Get("r_DynamicGlowHeight", "240", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);
-#endif
-
 
 	r_picmip = ri.Cvar_Get("r_picmip", "1", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);
 	r_colorMipLevels = ri.Cvar_Get ("r_colorMipLevels", "0", CVAR_LATCH );
@@ -1327,8 +1297,8 @@ void RE_Shutdown( qboolean destroyWindow ) {
 	ri.Cmd_RemoveCommand ("r_we");
 	ri.Cmd_RemoveCommand ("modelcacheinfo");
 	ri.Cmd_RemoveCommand ("imagecacheinfo");
+
 #ifndef DEDICATED
-#ifdef JKA_DYNAMIC_GLOW // GLOWXXX
 	if ( r_DynamicGlow && r_DynamicGlow->integer )
 	{
 		// Release the Glow Vertex Shader.
@@ -1361,7 +1331,6 @@ void RE_Shutdown( qboolean destroyWindow ) {
 		// Release the blur texture.
 		qglDeleteTextures( 1, &tr.blurImage );
 	}
-#endif
 
 	// ouned: gamma correction
 	if (tr.m_hVShader) {
@@ -1384,15 +1353,6 @@ void RE_Shutdown( qboolean destroyWindow ) {
 
 	if (tr.gammaRenderTarget) {
 		qglDeleteTextures(1, &tr.gammaRenderTarget);
-	}
-
-	if (tr.gammaRenderDepthBuffer) {
-		qglDeleteRenderbuffersEXT(1, &tr.gammaRenderDepthBuffer);
-	}
-
-	if (tr.gammaFramebuffer) {
-		qglBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
-		qglDeleteFramebuffersEXT(1, &tr.gammaFramebuffer);
 	}
 	// --------
 
