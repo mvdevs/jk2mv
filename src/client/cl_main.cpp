@@ -1744,6 +1744,7 @@ void CL_InitServerInfo( serverInfo_t *server, serverAddress_t *address ) {
 	server->adr.ip[3] = address->ip[3];
 	server->adr.port  = address->port;
 	server->clients = 0;
+	server->bots = 0; // Daggolin: botfilter
 	server->hostName[0] = '\0';
 	server->mapName[0] = '\0';
 	server->maxClients = 0;
