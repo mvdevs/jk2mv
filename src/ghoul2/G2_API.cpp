@@ -24,7 +24,7 @@
 
 #ifdef assert
 #	undef assert
-#	define assert
+#	define assert(x) ((void)0)
 #endif
 
 extern mdxaBone_t		worldMatrix;
