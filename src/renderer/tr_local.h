@@ -1116,8 +1116,7 @@ typedef struct {
 	float					fogTable[FOG_TABLE_SIZE];
 
 	// ouned: gamma correction
-	GLhandleARB gammaProgram, m_hVShader, m_hFShader;
-	GLint sceneUniformLoc, gammaUniformLoc;
+	GLuint gammaVertexShader, gammaPixelShader;
 	GLuint gammaRenderTarget;
 } trGlobals_t;
 

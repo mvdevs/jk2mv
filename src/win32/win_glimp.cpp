@@ -1472,36 +1472,7 @@ static void GLW_InitExtensions( void )
 	}
 
 	// ouned: gamma correction
-	if (strstr(glConfig.extensions_string, "GL_ARB_shader_objects") &&
-		strstr(glConfig.extensions_string, "GL_ARB_shading_language_100") &&
-		strstr(glConfig.extensions_string, "GL_ARB_vertex_shader") &&
-		strstr(glConfig.extensions_string, "GL_ARB_fragment_shader") ) {
-		qglCreateShaderObjectARB = (PFNGLCREATESHADEROBJECTARBPROC)qwglGetProcAddress("glCreateShaderObjectARB");
-		qglShaderSourceARB = (PFNGLSHADERSOURCEARBPROC)qwglGetProcAddress("glShaderSourceARB");
-		qglCompileShaderARB = (PFNGLCOMPILESHADERARBPROC)qwglGetProcAddress("glCompileShaderARB");
-
-		qglGetHandleARB = (PFNGLGETHANDLEARBPROC)qwglGetProcAddress("glGetHandleARB");
-		qglDeleteObjectARB = (PFNGLDELETEOBJECTARBPROC)qwglGetProcAddress("glDeleteObjectARB");
-		qglDetachObjectARB = (PFNGLDETACHOBJECTARBPROC)qwglGetProcAddress("glDetachObjectARB");
-		qglCreateProgramObjectARB = (PFNGLCREATEPROGRAMOBJECTARBPROC)qwglGetProcAddress("glCreateProgramObjectARB");
-		qglAttachObjectARB = (PFNGLATTACHOBJECTARBPROC)qwglGetProcAddress("glAttachObjectARB");
-		qglLinkProgramARB = (PFNGLLINKPROGRAMARBPROC)qwglGetProcAddress("glLinkProgramARB");
-		qglUseProgramObjectARB = (PFNGLUSEPROGRAMOBJECTARBPROC)qwglGetProcAddress("glUseProgramObjectARB");
-		qglValidateProgramARB = (PFNGLVALIDATEPROGRAMARBPROC)qwglGetProcAddress("glValidateProgramARB");
-		qglGetUniformLocationARB = (PFNGLGETUNIFORMLOCATIONARBPROC)qwglGetProcAddress("glGetUniformLocationARB");
-		qglUniform1iARB = (PFNGLUNIFORM1IARBPROC)qwglGetProcAddress("glUniform1iARB");
-		qglUniform1fARB = (PFNGLUNIFORM1FARBPROC)qwglGetProcAddress("glUniform1fARB");
-		qglUniform4fARB = (PFNGLUNIFORM4FARBPROC)qwglGetProcAddress("glUniform4fARB");
-		qglUniform4fvARB = (PFNGLUNIFORM4FVARBPROC)qwglGetProcAddress("glUniform4fvARB");
-		qglGetInfoLogARB = (PFNGLGETINFOLOGARBPROC)qwglGetProcAddress("glGetInfoLogARB");
-		qglGetObjectParameterivARB = (PFNGLGETOBJECTPARAMETERIVARBPROC)qwglGetProcAddress("glGetObjectParameterivARB");
-		qglGetAttachedObjectsARB = (PFNGLGETATTACHEDOBJECTSARBPROC)qwglGetProcAddress("glGetAttachedObjectsARB");
-
-		ri.Printf(PRINT_ALL, "...using GL_ARB_shader_objects\n");
-		ri.Printf(PRINT_ALL, "...using GL_ARB_shading_language_100\n");
-		ri.Printf(PRINT_ALL, "...using GL_ARB_vertex_shader\n");
-		ri.Printf(PRINT_ALL, "...using GL_ARB_fragment_shader\n");
-
+	if (bTexRectSupported && bARBVertexProgram && bARBFragmentProgram) {
 		glConfig.deviceSupportsPostprocessingGamma = qtrue;
 	} else {
 		glConfig.deviceSupportsPostprocessingGamma = qfalse;

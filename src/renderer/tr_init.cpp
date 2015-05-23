@@ -262,27 +262,6 @@ PFNGLGETPROGRAMIVARBPROC qglGetProgramivARB = NULL;
 PFNGLGETPROGRAMSTRINGARBPROC qglGetProgramStringARB = NULL;
 PFNGLISPROGRAMARBPROC qglIsProgramARB = NULL;
 
-// ouned: gamma correction
-PFNGLGETHANDLEARBPROC qglGetHandleARB = NULL;
-PFNGLDELETEOBJECTARBPROC qglDeleteObjectARB = NULL;
-PFNGLDETACHOBJECTARBPROC qglDetachObjectARB = NULL;
-PFNGLCREATESHADEROBJECTARBPROC qglCreateShaderObjectARB = NULL;
-PFNGLSHADERSOURCEARBPROC qglShaderSourceARB = NULL;
-PFNGLCOMPILESHADERARBPROC qglCompileShaderARB = NULL;
-PFNGLCREATEPROGRAMOBJECTARBPROC qglCreateProgramObjectARB = NULL;
-PFNGLATTACHOBJECTARBPROC qglAttachObjectARB = NULL;
-PFNGLLINKPROGRAMARBPROC	qglLinkProgramARB = NULL;
-PFNGLUSEPROGRAMOBJECTARBPROC qglUseProgramObjectARB = NULL;
-PFNGLVALIDATEPROGRAMARBPROC	qglValidateProgramARB = NULL;
-PFNGLGETUNIFORMLOCATIONARBPROC qglGetUniformLocationARB = NULL;
-PFNGLUNIFORM1IARBPROC qglUniform1iARB = NULL;
-PFNGLUNIFORM1FARBPROC qglUniform1fARB = NULL;
-PFNGLUNIFORM4FARBPROC qglUniform4fARB = NULL;
-PFNGLUNIFORM4FVARBPROC qglUniform4fvARB = NULL;
-PFNGLGETINFOLOGARBPROC qglGetInfoLogARB = NULL;
-PFNGLGETOBJECTPARAMETERIVARBPROC qglGetObjectParameterivARB = NULL;
-PFNGLGETATTACHEDOBJECTSARBPROC qglGetAttachedObjectsARB = NULL;
-
 #endif
 
 void RE_SetLightStyle(int style, int color);
@@ -1333,22 +1312,12 @@ void RE_Shutdown( qboolean destroyWindow ) {
 	}
 
 	// ouned: gamma correction
-	if (tr.m_hVShader) {
-		qglDetachObjectARB(tr.gammaProgram, tr.m_hVShader);
-		qglDeleteObjectARB(tr.m_hVShader);
-
-		tr.m_hVShader = 0;
-	}
-	if (tr.m_hFShader) {
-		qglDetachObjectARB(tr.gammaProgram, tr.m_hFShader);
-		qglDeleteObjectARB(tr.m_hFShader);
-
-		tr.m_hFShader = 0;
+	if (tr.gammaPixelShader) {
+		qglDeleteProgramsARB(1, &tr.gammaPixelShader);
 	}
 
-	if (tr.gammaProgram) {
-		qglDeleteObjectARB(tr.gammaProgram);
-		tr.gammaProgram = 0;
+	if (tr.gammaVertexShader) {
+		qglDeleteProgramsARB(1, &tr.gammaVertexShader);
 	}
 
 	if (tr.gammaRenderTarget) {

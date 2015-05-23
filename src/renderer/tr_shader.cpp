@@ -4054,55 +4054,47 @@ MV_GammaGenerateProgram
 */
 #ifndef DEDICATED
 const char *g_GammaVertexShaderARB = {
-	"void main(void)" "\n"
-	"{" "\n"
-		"gl_Position = ftransform();" "\n"
-		"gl_TexCoord[0] = gl_MultiTexCoord0;"  "\n"
-	"}"
+	"!!ARBvp1.0" "\n"
+	"DP4 result.position.x, state.matrix.mvp.row[0], vertex.position;" "\n"
+	"DP4 result.position.y, state.matrix.mvp.row[1], vertex.position;" "\n"
+	"DP4 result.position.z, state.matrix.mvp.row[2], vertex.position;" "\n"
+	"DP4 result.position.w, state.matrix.mvp.row[3], vertex.position;" "\n"
+	"MOV result.texcoord[0], vertex.texcoord;" "\n"
+	"END"
 };
 
-const char *g_GammaFragmentShaderARB = {
-	"uniform sampler2DRect sceneBuffer;" "\n"
-	"uniform float gamma;" "\n"
-	"\n"
-	"void main(void)" "\n"
-	"{" "\n"
-		"vec2 uv = gl_TexCoord[0].xy;" "\n"
-		"vec3 color = texture2DRect(sceneBuffer, uv).rgb;" "\n"
-		"gl_FragColor.rgb = pow(color, vec3(1.0 / gamma));" "\n"
-	"}"
+const char *g_GammaPixelShaderARB = {
+	"!!ARBfp1.0" "\n"
+	"PARAM c[1] = { program.env[0] };" "\n"
+	"TEMP R0;" "\n"
+
+	"TEX R0.xyz, fragment.texcoord[0], texture[0], RECT;" "\n"
+	"POW result.color.x, R0.x, c[0].x;" "\n"
+	"POW result.color.y, R0.y, c[0].x;" "\n"
+	"POW result.color.z, R0.z, c[0].x;" "\n"
+	"END"
 };
 
 qboolean MV_GammaGenerateProgram() {
-	GLint objStatus;
+	int err = 0;
 
-	// shader
-	tr.m_hVShader = qglCreateShaderObjectARB(GL_VERTEX_SHADER_ARB);
-	qglShaderSourceARB(tr.m_hVShader, 1, (const GLcharARB **)&g_GammaVertexShaderARB, NULL);
-	qglCompileShaderARB(tr.m_hVShader);
-
-	tr.m_hFShader = qglCreateShaderObjectARB(GL_FRAGMENT_SHADER_ARB);
-	qglShaderSourceARB(tr.m_hFShader, 1, (const GLcharARB **)&g_GammaFragmentShaderARB, NULL);
-	qglCompileShaderARB(tr.m_hFShader);
-
-	// program
-	tr.gammaProgram = qglCreateProgramObjectARB();
-	qglAttachObjectARB(tr.gammaProgram, tr.m_hVShader);
-	qglAttachObjectARB(tr.gammaProgram, tr.m_hFShader);
-	qglLinkProgramARB(tr.gammaProgram);
-
-	qglUseProgramObjectARB(tr.gammaProgram);
-
-	tr.gammaUniformLoc = qglGetUniformLocationARB(tr.gammaProgram, "gamma");
-	tr.sceneUniformLoc = qglGetUniformLocationARB(tr.gammaProgram, "sceneBuffer");
-
-	qglValidateProgramARB(tr.gammaProgram);
-	qglGetObjectParameterivARB(tr.gammaProgram, GL_OBJECT_VALIDATE_STATUS_ARB, &objStatus);
-	if (!objStatus) {
+	// vertex shader
+	qglGenProgramsARB(1, &tr.gammaVertexShader);
+	qglBindProgramARB(GL_VERTEX_PROGRAM_ARB, tr.gammaVertexShader);
+	qglProgramStringARB(GL_VERTEX_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, (int)strlen((char *)g_GammaVertexShaderARB), g_GammaVertexShaderARB);
+	qglGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &err);
+	if (err != -1) {
 		return qtrue;
 	}
 
-	qglUseProgramObjectARB(0);
+	// pixel shader
+	qglGenProgramsARB(1, &tr.gammaPixelShader);
+	qglBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, tr.gammaPixelShader);
+	qglProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, (int)strlen((char *)g_GammaPixelShaderARB), g_GammaPixelShaderARB);
+	qglGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &err);
+	if (err != -1) {
+		return qtrue;
+	}
 
 	// texture
 	tr.gammaRenderTarget = 0;
@@ -4148,9 +4140,6 @@ static void CreateInternalShaders( void ) {
 	tr.shadowShader = FinishShader();
 
 #ifndef DEDICATED
-	#define GL_PROGRAM_ERROR_STRING_ARB						0x8874
-	#define GL_PROGRAM_ERROR_POSITION_ARB					0x864B
-
 	// Allocate and Load the global 'Glow' Vertex Program. - AReis
 	if ( qglGenProgramsARB )
 	{

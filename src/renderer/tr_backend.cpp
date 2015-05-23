@@ -1301,10 +1301,12 @@ const void	*RB_SwapBuffers( const void *data ) {
 		qglLoadIdentity();
 		GL_State(GLS_DEPTHTEST_DISABLE);
 
-		qglUseProgramObjectARB(tr.gammaProgram);
+		qglEnable(GL_VERTEX_PROGRAM_ARB);
+		qglBindProgramARB(GL_VERTEX_PROGRAM_ARB, tr.gammaVertexShader);
+		qglEnable(GL_FRAGMENT_PROGRAM_ARB);
+		qglBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, tr.gammaPixelShader);
 
-		qglUniform1fARB(tr.gammaUniformLoc, r_gamma->value);
-		qglUniform1iARB(tr.sceneUniformLoc, 0);
+		qglProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 0, 1 / r_gamma->value, 0.0f, 0.0f, 0.0f);
 
 		qglDisable(GL_TEXTURE_2D);
 		qglEnable(GL_TEXTURE_RECTANGLE_EXT);
@@ -1314,7 +1316,7 @@ const void	*RB_SwapBuffers( const void *data ) {
 		qglEnable(GL_TEXTURE_2D);
 
 		qglBegin(GL_QUADS);
-			qglColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+			qglColor4f(0.0f, 0.0f, 0.0f, 0.0f);
 			qglTexCoord2f(0, glConfig.vidHeight);
 			qglVertex2f(0, 0);
 			qglTexCoord2f(0, 0);
@@ -1325,10 +1327,11 @@ const void	*RB_SwapBuffers( const void *data ) {
 			qglVertex2f(glConfig.vidWidth, 0);
 		qglEnd();
 
-		qglUseProgramObjectARB(0);
+		qglDisable(GL_VERTEX_PROGRAM_ARB);
+		qglDisable(GL_FRAGMENT_PROGRAM_ARB);
 	}
 
-	if ( !glState.finishCalled ) {
+	if (!glState.finishCalled) {
 		qglFinish();
 	}
 
