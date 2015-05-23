@@ -780,7 +780,7 @@ void cStringsSingle::Clear(void)
 
 	if (Text)
 	{
-		delete Text;
+		delete[] Text;
 		Text = NULL;
 	}
 }
@@ -792,7 +792,7 @@ void cStringsSingle::SetText(const char *newText)
 
 	if (Text)
 	{
-		delete Text;
+		delete[] Text;
 		Text = NULL;
 	}
 

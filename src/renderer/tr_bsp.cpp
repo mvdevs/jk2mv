@@ -1973,8 +1973,7 @@ static void RE_LoadWorldMap_Actual( const char *name ) {
 	Com_Memset( &s_worldData, 0, sizeof( s_worldData ) );
 	Q_strncpyz( s_worldData.name, name, sizeof( s_worldData.name ) );
 
-	Q_strncpyz( s_worldData.baseName, COM_SkipPath( s_worldData.name ), sizeof( s_worldData.name ) );
-	COM_StripExtension( s_worldData.baseName, s_worldData.baseName, sizeof(s_worldData.baseName) );
+	COM_StripExtension(COM_SkipPath(s_worldData.name), s_worldData.baseName, sizeof(s_worldData.baseName));
 
 	startMarker = (unsigned char *)ri.Hunk_Alloc(0, h_low);
 	c_gridVerts = 0;
