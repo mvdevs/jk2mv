@@ -463,7 +463,7 @@ void SVC_Status( netadr_t from ) {
 	char	infostring[MAX_INFO_STRING];
 
 	// Prevent using getstatus as an amplifier
-	if (SVC_RateLimitAddress(from, 10, 1000)) {
+	if (SVC_RateLimitAddress(from, 30, 1000)) {
 		Com_DPrintf("SVC_Status: rate limit from %s exceeded, dropping request\n",
 			NET_AdrToString(from));
 		return;
@@ -471,7 +471,7 @@ void SVC_Status( netadr_t from ) {
 
 	// Allow getstatus to be DoSed relatively easily, but prevent
 	// excess outbound bandwidth usage when being flooded inbound
-	if (SVC_RateLimit(&outboundLeakyBucket, 10, 100)) {
+	if (SVC_RateLimit(&outboundLeakyBucket, 30, 100)) {
 		Com_DPrintf("SVC_Status: rate limit exceeded, dropping request\n");
 		return;
 	}
@@ -529,7 +529,7 @@ void SVC_Info( netadr_t from ) {
 	char	infostring[MAX_INFO_STRING];
 
 	// Prevent using getinfo as an amplifier
-	if (SVC_RateLimitAddress(from, 10, 1000)) {
+	if (SVC_RateLimitAddress(from, 30, 1000)) {
 		Com_DPrintf("SVC_Info: rate limit from %s exceeded, dropping request\n",
 			NET_AdrToString(from));
 		return;
@@ -537,7 +537,7 @@ void SVC_Info( netadr_t from ) {
 
 	// Allow getinfo to be DoSed relatively easily, but prevent
 	// excess outbound bandwidth usage when being flooded inbound
-	if (SVC_RateLimit(&outboundLeakyBucket, 10, 100)) {
+	if (SVC_RateLimit(&outboundLeakyBucket, 30, 100)) {
 		Com_DPrintf("SVC_Info: rate limit exceeded, dropping request\n");
 		return;
 	}
@@ -628,7 +628,7 @@ void SVC_RemoteCommand( netadr_t from, msg_t *msg ) {
 	char		sv_outputbuf[SV_OUTPUTBUF_LENGTH];
 
 	// Prevent using rcon as an amplifier and make dictionary attacks impractical
-	if (SVC_RateLimitAddress(from, 10, 1000)) {
+	if (SVC_RateLimitAddress(from, 30, 1000)) {
 		Com_DPrintf("SVC_RemoteCommand: rate limit from %s exceeded, dropping request\n",
 			NET_AdrToString(from));
 		return;
