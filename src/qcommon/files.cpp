@@ -540,20 +540,27 @@ static void FS_CopyFile( char *fromOSPath, char *toOSPath ) {
 	// we are using direct malloc instead of Z_Malloc here, so it
 	// probably won't work on a mac... Its only for developers anyway...
 	buf = (unsigned char *)malloc( len );
-	if (fread( buf, 1, len, f ) != len)
+	if (fread( buf, 1, len, f ) != len) {
+		free( buf );
 		Com_Error( ERR_FATAL, "Short read in FS_Copyfiles()\n" );
+	}
 	fclose( f );
 
 	if( FS_CreatePath( toOSPath ) ) {
+		free( buf );
 		return;
 	}
 
 	f = fopen( toOSPath, "wb" );
 	if ( !f ) {
+		free( buf );
 		return;
 	}
-	if (fwrite( buf, 1, len, f ) != len)
+	if (fwrite( buf, 1, len, f ) != len) {
+		free( buf );
 		Com_Error( ERR_FATAL, "Short write in FS_Copyfiles()\n" );
+	}
+	
 	fclose( f );
 	free( buf );
 }
