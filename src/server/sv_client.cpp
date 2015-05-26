@@ -4,6 +4,8 @@
 #include "../qcommon/strip.h"
 #include "../meerkat/meerkat.h"
 
+#include "../qcommon/game_version.h"
+
 mvmutex_t m_webreq;
 qboolean m_reqpending;
 char m_reqpath[MAX_QPATH];
@@ -673,6 +675,8 @@ void SV_ClientEnterWorld( client_t *client, usercmd_t *cmd ) {
 	client->deltaMessage = -1;
 	client->nextSnapshotTime = svs.time;	// generate a snapshot immediately
 	client->lastUsercmd = *cmd;
+
+	SV_SendServerCommand(client, "print \"^1[ ^7JK2MV ^1v^7" JK2MV_VERSION " ^1| ^7http://jk2mv.org ^1]\n\"");
 
 	// call the game begin function
 	VM_Call( gvm, GAME_CLIENT_BEGIN, client - svs.clients );
