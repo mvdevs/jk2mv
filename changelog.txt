@@ -4,6 +4,18 @@ Website: http://jk2mv.org
 --------------------------------------------------
 
 -----------------------------------
+1.0rc2
+-----------------------------------
+- fixed compiling in c11, c++11 and c++14 mode
+- reworked console key detection
+- shift now required to close console
+- fixed resolution 2560x1440
+- fixed yet another bug concerning the botfilter
+- fixed a few memory bugs / leaks
+- fixed postprocessing gamma correction on linux
+- added a discrete message about the jk2mv version the server is using on clientbegin
+
+-----------------------------------
 1.0rc1
 -----------------------------------
 - fixed demo playback on linux/macosx
