@@ -14,7 +14,7 @@ Main Features:
 - Support for modern screen resolutions
 - Fixes for all known security bugs
 - Minimizer: Press the Windows key in fullscreen mode to minimize (Windows only)
-- Improved gamma correction (Windows & MacOSX)
+- Improved gamma correction
 - Tons of other fixes and improvements in the engine, see the changelog for detailed information
 - Opensource (GPLv2)
 
