@@ -60,7 +60,7 @@ typedef struct
 
 static WinConData s_wcd;
 
-static LONG WINAPI ConWndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+static LRESULT WINAPI ConWndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	const char *cmdString;
 	static qboolean s_timePolarity;
@@ -114,7 +114,7 @@ static LONG WINAPI ConWndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 		{
 			SetBkColor( ( HDC ) wParam, RGB( 0, 0, 0 ) );
 			SetTextColor( ( HDC ) wParam, RGB( 249, 249, 000 ) );
-			return ( long ) s_wcd.hbrEditBackground;
+			return (LRESULT)s_wcd.hbrEditBackground;
 		}
 		else if ( ( HWND ) lParam == s_wcd.hwndErrorBox )
 		{
@@ -128,7 +128,7 @@ static LONG WINAPI ConWndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 				SetBkColor(   ( HDC ) wParam, RGB( 0x80, 0x80, 0x80 ) );
 				SetTextColor( ( HDC ) wParam, RGB( 0x00, 0x00, 0x00 ) );
 			}
-			return ( long ) s_wcd.hbrErrorBackground;
+			return (LRESULT)s_wcd.hbrErrorBackground;
 		}
 		return FALSE;
 		break;

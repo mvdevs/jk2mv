@@ -373,9 +373,9 @@ int AAS_NearestEntity(vec3_t origin, int modelindex)
 		ent = &aasworld.entities[i];
 		if (ent->i.modelindex != modelindex) continue;
 		VectorSubtract(ent->i.origin, origin, dir);
-		if (abs(dir[0]) < 40)
+		if (abs((int)dir[0]) < 40)
 		{
-			if (abs(dir[1]) < 40)
+			if (abs((int)dir[1]) < 40)
 			{
 				dist = VectorLength(dir);
 				if (dist < bestdist)
