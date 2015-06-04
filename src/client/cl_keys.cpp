@@ -1553,11 +1553,11 @@ void CL_KeyEvent (int key, qboolean down, unsigned time) {
 			return;
 		}
 
-		if (!kg.keys[A_SHIFT].down) {
-			return;
-		}
-
 		if (!(cls.keyCatchers & KEYCATCH_CONSOLE) )	{
+			if (!kg.keys[A_SHIFT].down) {
+				return;
+			}
+
 			ignoreNextChar = qtrue;
 		}
 
