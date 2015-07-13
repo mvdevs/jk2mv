@@ -384,36 +384,15 @@ void SCR_Init( void ) {
 
 void MV_DrawConnectingInfo( void )
 { //Daggolin - Versioninfo when loading...
-	vec4_t	 color = {1.0, 1.0, 1.0, 1.0};
-	int		 xPos = 470;
 	int		 yPos = 5;
 	int		 line = 17;
-	float	 size = 8.5;
-	char	 version[8];
+	char	 txtbuf[128];
 
-	/*
-	SCR_DrawStringExt(xPos, yPos+(line*0), size, "^4[ ^7JK2MV ^4]", color, qfalse);
-	SCR_DrawStringExt(xPos, yPos+(line*1), size, va("JK2MV-Version: %s", JK2MV_VERSION), color, qfalse);
-	SCR_DrawStringExt(xPos, yPos+(line*2), size, va(" Game-Version: %s", (MV_GetCurrentGameversion() == VERSION_1_02 ? "1.02" : "1.04")), color, qfalse);
-	*/
+	Com_sprintf(txtbuf, sizeof(txtbuf), "^1[ ^7JK2MV " JK2MV_VERSION " " CPUSTRING " ^1]");
+	SCR_DrawStringExt(320 - ((int)strlen(txtbuf) - 6) * 4, yPos + (line * 0), 8, txtbuf, g_color_table[7], qfalse);
 
-	SCR_DrawStringExt(xPos, yPos+(line*0), size, va("^1[ ^7JK2MV %s ^1]", JK2MV_VERSION), color, qfalse);
-	switch ( MV_GetCurrentGameversion() )
-	{
-		case VERSION_1_02:
-			Q_strncpyz( version, "02", sizeof(version) );
-			break;
-		case VERSION_1_03:
-			Q_strncpyz( version, "03", sizeof(version) );
-			break;
-		case VERSION_1_04:
-			Q_strncpyz( version, "04", sizeof(version) );
-			break;
-		default:
-			SCR_DrawStringExt(xPos, yPos+(line*1), size, va("^7Game^1-^7Version^1: ^7Error"), color, qfalse);
-			return;
-	}
-	SCR_DrawStringExt(xPos, yPos+(line*1), size, va("^7Game^1-^7Version^1: ^71^1.^7%s", version), color, qfalse);
+	Com_sprintf(txtbuf, sizeof(txtbuf), "Game-Version^1: ^71.%02d", (int)MV_GetCurrentGameversion());
+	SCR_DrawStringExt(320 - ((int)strlen(txtbuf) - 6) * 4, yPos + (line * 1), 8, txtbuf, g_color_table[7], qfalse);
 }
 /*
 ==================
