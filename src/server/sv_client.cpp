@@ -676,8 +676,6 @@ void SV_ClientEnterWorld( client_t *client, usercmd_t *cmd ) {
 	client->nextSnapshotTime = svs.time;	// generate a snapshot immediately
 	client->lastUsercmd = *cmd;
 
-	SV_SendServerCommand(client, "print \"^1[ ^7JK2MV ^1v^7" JK2MV_VERSION " ^1| ^7http://jk2mv.org ^1]\n\"");
-
 	// call the game begin function
 	VM_Call( gvm, GAME_CLIENT_BEGIN, client - svs.clients );
 }
@@ -1596,6 +1594,8 @@ static void SV_UserMove( client_t *cl, msg_t *msg, qboolean delta ) {
 	// if this is the first usercmd we have received
 	// this gamestate, put the client into the world
 	if ( cl->state == CS_PRIMED ) {
+		SV_SendServerCommand(cl, "print \"^1[ ^7This server is running JK2MV ^1v^7" JK2MV_VERSION " ^1| ^7http://jk2mv.org ^1]\n\"");
+
 		SV_ClientEnterWorld( cl, &cmds[0] );
 		// the moves can be processed normaly
 	}
