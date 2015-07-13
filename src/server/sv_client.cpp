@@ -1337,10 +1337,6 @@ void SV_UserinfoChanged( client_t *cl ) {
 		Q_strncpyz(model, Info_ValueForKey(cl->userinfo, "model"), sizeof(model));
 		if (Q_stristr(model, "kyle/fpls") || (Q_stristr(model, "morgan") && (stricmp(model, "morgan/default_mp") && stricmp(model, "morgan/red") && stricmp(model, "morgan/blue"))))
 			Info_SetValueForKey(cl->userinfo, "model", "kyle/default");
-
-		Q_strncpyz(model, Info_ValueForKey(cl->userinfo, "team_model"), sizeof(model));
-		if (Q_stristr(model, "kyle/fpls") || (Q_stristr(model, "morgan") && (stricmp(model, "morgan/default_mp") && stricmp(model, "morgan/red") && stricmp(model, "morgan/blue"))))
-			Info_SetValueForKey(cl->userinfo, "team_model", "kyle/default");
 	}
 }
 
