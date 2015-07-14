@@ -1263,35 +1263,6 @@ const void	*RB_SwapBuffers( const void *data ) {
 		RB_EndSurface();
 	}
 
-	// texture swapping test
-	if ( r_showImages->integer ) {
-		RB_ShowImages();
-	}
-
-	RB_RenderWorldEffects();
-
-	cmd = (const swapBuffersCommand_t *)data;
-
-	// we measure overdraw by reading back the stencil buffer and
-	// counting up the number of increments that have happened
-	if ( r_measureOverdraw->integer ) {
-		int i;
-		int sum = 0;
-		unsigned char *stencilReadback;
-
-		stencilReadback = (unsigned char *)ri.Hunk_AllocateTempMemory( glConfig.vidWidth * glConfig.vidHeight );
-		qglReadPixels( 0, 0, glConfig.vidWidth, glConfig.vidHeight, GL_STENCIL_INDEX, GL_UNSIGNED_BYTE, stencilReadback );
-
-		for ( i = 0; i < glConfig.vidWidth * glConfig.vidHeight; i++ ) {
-			sum += stencilReadback[i];
-		}
-
-		backEnd.pc.c_overDraw += sum;
-		ri.Hunk_FreeTempMemory( stencilReadback );
-	}
-
-	backEnd.projection2D = qfalse;
-
 	// ouned: gamma correction
 	if (glConfig.deviceSupportsPostprocessingGamma && r_gammamethod->integer == GAMMA_POSTPROCESSING) {
 		qglMatrixMode(GL_PROJECTION);
@@ -1330,6 +1301,35 @@ const void	*RB_SwapBuffers( const void *data ) {
 		qglDisable(GL_VERTEX_PROGRAM_ARB);
 		qglDisable(GL_FRAGMENT_PROGRAM_ARB);
 	}
+
+    // texture swapping test
+	if ( r_showImages->integer ) {
+		RB_ShowImages();
+	}
+
+	RB_RenderWorldEffects();
+
+	cmd = (const swapBuffersCommand_t *)data;
+
+	// we measure overdraw by reading back the stencil buffer and
+	// counting up the number of increments that have happened
+	if ( r_measureOverdraw->integer ) {
+		int i;
+		int sum = 0;
+		unsigned char *stencilReadback;
+
+		stencilReadback = (unsigned char *)ri.Hunk_AllocateTempMemory( glConfig.vidWidth * glConfig.vidHeight );
+		qglReadPixels( 0, 0, glConfig.vidWidth, glConfig.vidHeight, GL_STENCIL_INDEX, GL_UNSIGNED_BYTE, stencilReadback );
+
+		for ( i = 0; i < glConfig.vidWidth * glConfig.vidHeight; i++ ) {
+			sum += stencilReadback[i];
+		}
+
+		backEnd.pc.c_overDraw += sum;
+		ri.Hunk_FreeTempMemory( stencilReadback );
+	}
+
+	backEnd.projection2D = qfalse;
 
 	if (!glState.finishCalled) {
 		qglFinish();
