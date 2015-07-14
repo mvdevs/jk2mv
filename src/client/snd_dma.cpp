@@ -3294,8 +3294,8 @@ void S_StartBackgroundTrack( const char *intro, const char *loop, qboolean bRetu
 		loop = intro;
 	}
 
-	Q_strncpyz(gsIntroMusic,intro, sizeof(gsIntroMusic));
-	Q_strncpyz(gsLoopMusic, loop,  sizeof(gsLoopMusic));
+	memmove(gsIntroMusic, intro, sizeof(gsIntroMusic));
+	memmove(gsLoopMusic, loop, sizeof(gsLoopMusic));
 
 	// do NOT start music from cgame now, the functions Com_TouchMemory() and RegisterMedia_LevelLoadEnd()
 	//	can take some time to execute (after music start), and can stutter it. So now, RegisterMedia_LevelLoadEnd()
