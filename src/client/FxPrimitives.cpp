@@ -140,7 +140,7 @@ bool CCloud::Update()
 
 		g2Handle = mBoltInterface.GetG2Handle();
 
-		if (!g2Handle || !G2API_HaveWeGhoul2Models(*((CGhoul2Info_v *)g2Handle)))
+		if (!g2Handle || !G2API_HaveWeGhoul2Models(g2Handle))
 		{
 			return false;
 		}
@@ -163,7 +163,7 @@ bool CCloud::Update()
 		{
 			gG2_GBMNoReconstruct = qtrue;
 		}
-		G2API_GetBoltMatrix(*((CGhoul2Info_v *)g2Handle), mBoltInterface.GetModelNum(), mBoltInterface.GetBoltNum(), &boltMatrix, objAng, objOrg, theFxHelper.mTime, NULL, objScale);
+		G2API_GetBoltMatrix(g2Handle, mBoltInterface.GetModelNum(), mBoltInterface.GetBoltNum(), &boltMatrix, objAng, objOrg, theFxHelper.mTime, NULL, objScale);
 
 		G2API_GiveMeVectorFromMatrix(&boltMatrix, ORIGIN, org);
 
@@ -388,7 +388,7 @@ bool CParticle::Update()
 
 		g2Handle = mObj->GetG2Handle();
 
-		if (!g2Handle || !G2API_HaveWeGhoul2Models(*((CGhoul2Info_v *)g2Handle)))
+		if (!g2Handle || !G2API_HaveWeGhoul2Models(g2Handle))
 		{
 			return false;
 		}
@@ -407,7 +407,7 @@ bool CParticle::Update()
 
 		mObj->GetScale(objScale);
 
-		G2API_GetBoltMatrix(*((CGhoul2Info_v *)g2Handle), mObj->GetModelNum(), mObj->GetBoltNum(), &boltMatrix, objAng, objOrg, theFxHelper.mTime, /*MODELLIST*/NULL, objScale);
+		G2API_GetBoltMatrix(g2Handle, mObj->GetModelNum(), mObj->GetBoltNum(), &boltMatrix, objAng, objOrg, theFxHelper.mTime, /*MODELLIST*/NULL, objScale);
 
 		G2API_GiveMeVectorFromMatrix(&boltMatrix, ORIGIN, org);
 

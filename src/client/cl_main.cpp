@@ -3839,7 +3839,7 @@ void VM_AddRefEntityToScene(refEntity_t *r) {
 	hptr = (qhandle_t *)(&r->ghoul2);
 	handle = *hptr;
 
-	tmp_r.ghoul2 = (void *)(&GhoulHandle(handle));
+	tmp_r.ghoul2 = (void *)(GhoulHandle(handle));
 	re.AddRefEntityToScene(&tmp_r);
 }
 #endif

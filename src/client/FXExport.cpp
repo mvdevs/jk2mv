@@ -45,7 +45,7 @@ void FX_VM_PlayBoltedEffectID(int id, vmsharedBoltInterface_t *fxObj) {
 	obj.SetEntNum(fxObj->entNum);
 	obj.SetBoltNum(fxObj->boltNum);
 	obj.SetForward(fxObj->angles);
-	obj.SetG2Handle(&GhoulHandle(fxObj->ghoul2));
+	obj.SetG2Handle(GhoulHandle(fxObj->ghoul2));
 	obj.SetModelNum(fxObj->modelNum);
 	obj.SetOrigin(fxObj->origin);
 	obj.SetScale(fxObj->scale);

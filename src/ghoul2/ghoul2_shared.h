@@ -254,9 +254,9 @@ enum EWraithInstFlags
 CGhoul2Info_v *GetGhoul2InfovByHandle(qhandle_t handle);
 
 #if id386
-#	define GhoulHandle(x) *((CGhoul2Info_v *)x)
+#	define GhoulHandle(x) ((CGhoul2Info_v *)x)
 #else
-#	define GhoulHandle(x) *GetGhoul2InfovByHandle(x)
+#	define GhoulHandle(x) GetGhoul2InfovByHandle(x)
 #endif
 
 //====================================================================

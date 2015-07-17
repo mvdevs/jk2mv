@@ -1050,7 +1050,7 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 		return (int)G2API_HasGhoul2ModelOnIndex((CGhoul2Info_v **)VMA(1), args[2]);
 #else
 		{
-			CGhoul2Info_v *ptr = &GhoulHandle(*(qhandle_t *)VMA(1));
+			CGhoul2Info_v *ptr = GhoulHandle(*(qhandle_t *)VMA(1));
 			return (int)G2API_HasGhoul2ModelOnIndex(&ptr, args[2]);
 		}
 #endif

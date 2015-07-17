@@ -1322,7 +1322,7 @@ void CFxScheduler::CreateEffect( CPrimitiveTemplate *fx, CFxBoltInterface *obj, 
 
 	g2Handle = obj->GetG2Handle();
 
-	if (!g2Handle || !G2API_HaveWeGhoul2Models(*((CGhoul2Info_v *)g2Handle)))
+	if (!g2Handle || !G2API_HaveWeGhoul2Models((CGhoul2Info_v *)g2Handle))
 	{
 		return;
 	}
@@ -1331,7 +1331,7 @@ void CFxScheduler::CreateEffect( CPrimitiveTemplate *fx, CFxBoltInterface *obj, 
 	obj->GetForward(objAng);
 	obj->GetScale(objScale);
 
-	G2API_GetBoltMatrix(*((CGhoul2Info_v *)g2Handle), obj->GetModelNum(), obj->GetBoltNum(), &boltMatrix, objAng, objOrg, theFxHelper.mTime, /*MODELLIST*/NULL, objScale);
+	G2API_GetBoltMatrix((CGhoul2Info_v *)g2Handle, obj->GetModelNum(), obj->GetBoltNum(), &boltMatrix, objAng, objOrg, theFxHelper.mTime, /*MODELLIST*/NULL, objScale);
 
 	G2API_GiveMeVectorFromMatrix(&boltMatrix, ORIGIN, origin);
 	G2API_GiveMeVectorFromMatrix(&boltMatrix, NEGATIVE_Y, ang);
