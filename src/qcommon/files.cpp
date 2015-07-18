@@ -2921,9 +2921,10 @@ static void FS_Startup( const char *gameName ) {
 #if !defined(PORTABLE) && !defined(DEDICATED)
 	const char *assetsPath;
 #endif
-	char *mv_whitelist;
-	char *mv_blacklist;
-	char *mv_reflist;
+	char *mv_whitelist, *mv_blacklist, *mv_forcelist;
+	fileHandle_t f_w, f_b, f_f;
+	int f_wl, f_bl, f_fl;
+	int s;
 	searchpath_t *search;
 
 	Com_Printf( "----- FS_Startup -----\n" );
@@ -3006,35 +3007,64 @@ static void FS_Startup( const char *gameName ) {
 	fs_gamedirvar->modified = qfalse; // We just loaded, it's not modified
 
 	// ouned: reference lists
-	FS_ReadFile("ref_whitelist.txt", (void **)&mv_whitelist);
-	FS_ReadFile("ref_blacklist.txt", (void **)&mv_blacklist);
-	FS_ReadFile("ref_forcelist.txt", (void **)&mv_reflist);
+	f_wl = FS_FOpenFileRead("ref_whitelist.txt", &f_w, qfalse);
+	f_bl = FS_FOpenFileRead("ref_blacklist.txt", &f_b, qfalse);
+	f_fl = FS_FOpenFileRead("ref_forcelist.txt", &f_f, qfalse);
 
-	if (mv_whitelist) {
+	if (f_w) {
 		Com_Printf("JK2MV: using whitelist for referenced files...\n");
+
+		mv_whitelist = (char *)Hunk_AllocateTempMemory(1 + f_wl + 1);
+		mv_whitelist[0] = '\n';
+		s = FS_Read(mv_whitelist + 1, f_wl, f_w);
+		mv_whitelist[s + 1] = 0;
 	}
-	if (mv_blacklist) {
+
+	if (f_b) {
 		Com_Printf("JK2MV: using blacklist for referenced files...\n");
+
+		mv_blacklist = (char *)Hunk_AllocateTempMemory(1 + f_bl + 1);
+		mv_blacklist[0] = '\n';
+		s = FS_Read(mv_blacklist + 1, f_bl, f_b);
+		mv_blacklist[s + 1] = 0;
 	}
-	if (mv_reflist) {
+
+	if (f_f) {
 		Com_Printf("JK2MV: using forcelist for referenced files...\n");
+
+		mv_forcelist = (char *)Hunk_AllocateTempMemory(1 + f_fl + 1);
+		mv_forcelist[0] = '\n';
+		s = FS_Read(mv_forcelist + 1, f_fl, f_f);
+		mv_forcelist[s + 1] = 0;
 	}
 
 	for (search = fs_searchpaths; search; search = search->next) {
 		if (search->pack) {
-			if (mv_whitelist && !Q_stristr(mv_whitelist, va("\n%s/%s.pk3", search->pack->pakGamename, search->pack->pakBasename))) {
+			char packstr[MAX_QPATH];
+			Com_sprintf(packstr, sizeof(packstr), "\n%s/%s.pk3", search->pack->pakGamename, search->pack->pakBasename);
+
+			if (f_w && !Q_stristr(mv_whitelist, packstr)) {
 				search->pack->noref = qtrue;
-			} else if (mv_blacklist && Q_stristr(mv_blacklist, va("\n%s/%s.pk3", search->pack->pakGamename, search->pack->pakBasename))) {
+			} else if (f_b && Q_stristr(mv_blacklist, packstr)) {
 				search->pack->noref = qtrue;
-			} else if ((mv_reflist && Q_stristr(mv_reflist, va("\n%s/%s.pk3", search->pack->pakGamename, search->pack->pakBasename)))) {
+			} else if (f_f && Q_stristr(mv_forcelist, packstr)) {
 				search->pack->referenced |= FS_GENERAL_REF;
 			}
 		}
 	}
 
-	Z_Free(mv_whitelist);
-	Z_Free(mv_blacklist);
-	Z_Free(mv_reflist);
+	if (f_w) {
+		FS_FCloseFile(f_w);
+		Hunk_FreeTempMemory(mv_whitelist);
+	}
+	if (f_b) {
+		FS_FCloseFile(f_b);
+		Hunk_FreeTempMemory(mv_blacklist);
+	}
+	if (f_f) {
+		FS_FCloseFile(f_f);
+		Hunk_FreeTempMemory(mv_forcelist);
+	}
 
 	Com_Printf( "----------------------\n" );
 
