@@ -91,3 +91,4 @@ Desktop.ini
 
 # ignore all subdirectories of the build directory
 build/*/*
+src/qcommon/game_version.h

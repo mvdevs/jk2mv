@@ -244,7 +244,13 @@ if(BuildPortableVersion)
 	set(GlobalDefines ${GlobalDefines} "PORTABLE")
 endif()
 
-# package
+# game_version.h preparation
+include(GetGitRevisionDescription)
+get_git_head_revision(GIT_REFSPEC GIT_SHA1)
+
+configure_file("${SRCDir}/qcommon/game_version.h.in" "${SRCDir}/qcommon/game_version.h" @ONLY)
+
+# Package
 set(CPACK_PACKAGE_NAME ${ProjectName})
 set(CPACK_PACKAGE_VENDOR "jk2mv.org")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "JK2 MultiVersion")
