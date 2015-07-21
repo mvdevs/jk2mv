@@ -694,7 +694,7 @@ static void SV_Status_f( void )
 
 	Com_Printf ("map: %s\n", sv_mapname->string );
 
-	Com_Printf ("num score ping name			lastmsg address			   qport rate\n");
+	Com_Printf ("num score ping name            lastmsg address               qport rate\n");
 	Com_Printf ("--- ----- ---- --------------- ------- --------------------- ----- -----\n");
 	for (i=0,cl=svs.clients ; i < sv_maxclients->integer ; i++,cl++)
 	{
