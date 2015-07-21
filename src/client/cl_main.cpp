@@ -73,6 +73,7 @@ cvar_t	*cl_autolodscale;
 cvar_t	*mv_slowrefresh;
 cvar_t	*mv_nameShadows;
 cvar_t	*mv_colorStrings;
+cvar_t	*mv_consoleShiftRequirement;
 
 vec3_t cl_windVec;
 
@@ -2662,6 +2663,7 @@ void CL_Init( void ) {
 	mv_slowrefresh = Cvar_Get("mv_slowrefresh", "3", CVAR_ARCHIVE | CVAR_GLOBAL);
 	mv_nameShadows	= Cvar_Get("mv_nameShadows"	, "2", CVAR_ARCHIVE | CVAR_GLOBAL);
 	mv_colorStrings	= Cvar_Get("mv_colorStrings", "0", CVAR_ARCHIVE | CVAR_GLOBAL);
+	mv_consoleShiftRequirement = Cvar_Get("mv_consoleShiftRequirement", "1", CVAR_ARCHIVE | CVAR_GLOBAL);
 
 	//
 	// register our commands

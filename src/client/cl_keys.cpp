@@ -1552,9 +1552,13 @@ void CL_KeyEvent (int key, qboolean down, unsigned time) {
 		if (!down) {
 			return;
 		}
+		
+		if (!kg.keys[A_SHIFT].down && mv_consoleShiftRequirement->integer == 2) {
+			return;
+		}
 
 		if (!(cls.keyCatchers & KEYCATCH_CONSOLE) )	{
-			if (!kg.keys[A_SHIFT].down) {
+			if (!kg.keys[A_SHIFT].down && mv_consoleShiftRequirement->integer >= 1) {
 				return;
 			}
 
