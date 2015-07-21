@@ -3285,7 +3285,7 @@ const char *FS_ReferencedPakChecksums( void ) {
 
 	for ( search = fs_searchpaths ; search ; search = search->next ) {
 		// is the element a pak file?
-		if ( search->pack ) {
+		if ( search->pack && !search->pack->noref ) { // Daggolin: reference lists
 			if (MV_GetCurrentGameversion() == VERSION_1_02 && (!Q_stricmp(search->pack->pakBasename, "assets2") || !Q_stricmp(search->pack->pakBasename, "assets5")))
 				continue;
 
@@ -3331,7 +3331,7 @@ const char *FS_ReferencedPakPureChecksums( void ) {
 		}
 		for ( search = fs_searchpaths ; search ; search = search->next ) {
 			// is the element a pak file and has it been referenced based on flag?
-			if ( search->pack && (search->pack->referenced & nFlags)) {
+			if ( search->pack && (search->pack->referenced & nFlags) && !search->pack->noref) { // Daggolin: reference lists
 				if (MV_GetCurrentGameversion() == VERSION_1_02 && (!Q_stricmp(search->pack->pakBasename, "assets2") || !Q_stricmp(search->pack->pakBasename, "assets5")))
 					continue;
 
@@ -3376,7 +3376,7 @@ const char *FS_ReferencedPakNames( void ) {
 	// and referenced one's from base
 	for ( search = fs_searchpaths ; search ; search = search->next ) {
 		// is the element a pak file?
-		if ( search->pack ) {
+		if ( search->pack && !search->pack->noref ) { // Daggolin: reference lists
 			if (MV_GetCurrentGameversion() == VERSION_1_02 && (!Q_stricmp(search->pack->pakBasename, "assets2") || !Q_stricmp(search->pack->pakBasename, "assets5")))
 				continue;
 
