@@ -602,7 +602,7 @@ void Con_DrawSolidConsole( float frac ) {
 	re.DrawStretchPic( 0, y, SCREEN_WIDTH, 2, 0, 0, 0, 0, cls.whiteShader );
 
 #ifdef _DEBUG
-	vertext = "REV "JK2MV_GITREVISION " " __DATE__;
+	vertext = "REV " JK2MV_GITREVISION " " __DATE__;
 #else
 	vertext = Q3_VERSION;
 #endif

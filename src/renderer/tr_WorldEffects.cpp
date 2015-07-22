@@ -1667,7 +1667,7 @@ void CSnowSystem::Update(float elapseTime)
 
 const float	attenuation[3] =
 {
-	1, 0.0, 0.0004
+	1.0f, 0.0f, 0.0004f
 };
 
 void CSnowSystem::Render(void)
