@@ -90,5 +90,5 @@ Desktop.ini
 *.so
 
 # ignore all subdirectories of the build directory
-build/*/*
-src/qcommon/game_version.h
+/build/*/*
+/src/qcommon/game_version.h
