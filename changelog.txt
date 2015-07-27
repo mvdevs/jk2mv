@@ -4,6 +4,18 @@ Website: http://jk2mv.org
 --------------------------------------------------
 
 -----------------------------------
+1.0
+-----------------------------------
+- shift not required to close console (optional via cvar: mv_consoleShiftRequirement)
+- fixed gamma correction in connecting screen
+- fixed the crash on macosx after some seconds on a server
+- fixed the black-, white- and forcelists
+- no new line on the beginning of the reference list files required anymore
+- preventing the server from overwriting existing cvars on the client
+- fixed the headline in rcon status
+- visual studio 2015 support
+
+-----------------------------------
 1.0rc2
 -----------------------------------
 - fixed compiling in c11, c++11 and c++14 mode
