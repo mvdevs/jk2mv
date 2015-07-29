@@ -777,6 +777,7 @@ void CompleteCommand( void )
 void CompleteCommand( void )
 { // Daggolin: This is now calling Field_AutoComplete2 and adds a '\' if we found a match... (Hybrid between the old and the new Completion)
 	field_t		*edit;
+	field_t		temp;
 
 	// Field_AutoComplete( &kg.g_consoleField );
 	Field_AutoComplete2( &kg.g_consoleField, qtrue, qtrue, qfalse );
@@ -804,11 +805,20 @@ void CompleteCommand( void )
 		return;	// no matches
 	}
 
-	if ( kg.g_consoleField.buffer && strlen(kg.g_consoleField.buffer) && kg.g_consoleField.buffer[0] != '\\' && kg.g_consoleField.buffer[0] != '/'
-		 && (Field_GetLastMatchCount() || !Field_WasComplete() || matchCount) )
-	{ // Add the '\' if it's not there already.
-		Com_sprintf( kg.g_consoleField.buffer, sizeof(kg.g_consoleField.buffer), "\\%s", kg.g_consoleField.buffer );
-		kg.g_consoleField.cursor++;
+	Com_Memcpy(&temp, edit, sizeof(field_t));
+
+	Com_sprintf(edit->buffer, sizeof(edit->buffer), "\\%s", shortestMatch);
+	if (matchCount == 1) {
+		if (Cmd_Argc() == 1) {
+			Q_strcat(edit->buffer, sizeof(edit->buffer), " ");
+		} else {
+			ConcatRemaining(temp.buffer, completionString);
+		}
+		edit->cursor = (int)strlen(edit->buffer);
+	} else {
+		// multiple matches, complete to shortest
+		edit->cursor = (int)strlen(edit->buffer);
+		ConcatRemaining(temp.buffer, completionString);
 	}
 }
 
