@@ -4096,18 +4096,6 @@ qboolean MV_GammaGenerateProgram() {
 		return qtrue;
 	}
 
-	// texture
-	tr.gammaRenderTarget = 0;
-	qglGenTextures(1, &tr.gammaRenderTarget);
-	qglEnable(GL_TEXTURE_RECTANGLE_EXT);
-	qglBindTexture(GL_TEXTURE_RECTANGLE_EXT, tr.gammaRenderTarget);
-	qglTexImage2D(GL_TEXTURE_RECTANGLE_EXT, 0, GL_RGB, glConfig.vidWidth, glConfig.vidHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
-	qglTexParameteri(GL_TEXTURE_RECTANGLE_EXT, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	qglTexParameteri(GL_TEXTURE_RECTANGLE_EXT, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	qglTexParameteri(GL_TEXTURE_RECTANGLE_EXT, GL_TEXTURE_WRAP_S, GL_CLAMP);
-	qglTexParameteri(GL_TEXTURE_RECTANGLE_EXT, GL_TEXTURE_WRAP_T, GL_CLAMP);
-	qglDisable(GL_TEXTURE_RECTANGLE_EXT);
-
 	return qfalse;
 }
 #endif

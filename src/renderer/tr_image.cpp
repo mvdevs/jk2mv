@@ -2401,6 +2401,19 @@ void R_CreateBuiltinImages( void ) {
 		R_CreateDlightImage();
 	}
 	R_CreateFogImage();
+
+	// gamma render target
+	if (glConfig.deviceSupportsPostprocessingGamma && r_gammamethod->integer == GAMMA_POSTPROCESSING) {
+		tr.gammaRenderTarget = 1024 + giTextureBindNum++;
+		qglEnable(GL_TEXTURE_RECTANGLE_EXT);
+		qglBindTexture(GL_TEXTURE_RECTANGLE_EXT, tr.gammaRenderTarget);
+		qglTexImage2D(GL_TEXTURE_RECTANGLE_EXT, 0, GL_RGB, glConfig.vidWidth, glConfig.vidHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
+		qglTexParameteri(GL_TEXTURE_RECTANGLE_EXT, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		qglTexParameteri(GL_TEXTURE_RECTANGLE_EXT, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		qglTexParameteri(GL_TEXTURE_RECTANGLE_EXT, GL_TEXTURE_WRAP_S, GL_CLAMP);
+		qglTexParameteri(GL_TEXTURE_RECTANGLE_EXT, GL_TEXTURE_WRAP_T, GL_CLAMP);
+		qglDisable(GL_TEXTURE_RECTANGLE_EXT);
+	}
 }
 
 
