@@ -2724,6 +2724,11 @@ static void FS_AddGameDirectory( const char *path, const char *dir, qboolean ass
 		// store the game name for downloading
 		strcpy(pak->pakGamename, dir);
 
+		// ouned: if the pk3 is not in base, always reference it (standard jk2 behaviour)
+		if (Q_stricmpn(pak->pakGamename, BASEGAME, (int)strlen(BASEGAME))) {
+			pak->referenced |= FS_GENERAL_REF;
+		}
+
 		search = (searchpath_s *)Z_Malloc (sizeof(searchpath_t), TAG_FILESYS, qtrue);
 		search->pack = pak;
 		search->next = fs_searchpaths;
@@ -3285,14 +3290,14 @@ const char *FS_ReferencedPakChecksums( void ) {
 
 	for ( search = fs_searchpaths ; search ; search = search->next ) {
 		// is the element a pak file?
-		if ( search->pack && !search->pack->noref ) { // Daggolin: reference lists
+		if ( search->pack ) {
 			if (MV_GetCurrentGameversion() == VERSION_1_02 && (!Q_stricmp(search->pack->pakBasename, "assets2") || !Q_stricmp(search->pack->pakBasename, "assets5")))
 				continue;
 
 			if (MV_GetCurrentGameversion() == VERSION_1_03 && (!Q_stricmp(search->pack->pakBasename, "assets5")))
 				continue;
 
-			if (search->pack->referenced || Q_stricmpn(search->pack->pakGamename, BASEGAME, (int)strlen(BASEGAME))) {
+			if (search->pack->referenced) {
 				Q_strcat(info, sizeof(info), va("%i ", search->pack->checksum));
 			}
 		}
@@ -3331,7 +3336,7 @@ const char *FS_ReferencedPakPureChecksums( void ) {
 		}
 		for ( search = fs_searchpaths ; search ; search = search->next ) {
 			// is the element a pak file and has it been referenced based on flag?
-			if ( search->pack && (search->pack->referenced & nFlags) && !search->pack->noref) { // Daggolin: reference lists
+			if ( search->pack && (search->pack->referenced & nFlags)) {
 				if (MV_GetCurrentGameversion() == VERSION_1_02 && (!Q_stricmp(search->pack->pakBasename, "assets2") || !Q_stricmp(search->pack->pakBasename, "assets5")))
 					continue;
 
@@ -3376,7 +3381,7 @@ const char *FS_ReferencedPakNames( void ) {
 	// and referenced one's from base
 	for ( search = fs_searchpaths ; search ; search = search->next ) {
 		// is the element a pak file?
-		if ( search->pack && !search->pack->noref ) { // Daggolin: reference lists
+		if ( search->pack ) {
 			if (MV_GetCurrentGameversion() == VERSION_1_02 && (!Q_stricmp(search->pack->pakBasename, "assets2") || !Q_stricmp(search->pack->pakBasename, "assets5")))
 				continue;
 
@@ -3387,7 +3392,7 @@ const char *FS_ReferencedPakNames( void ) {
 				Q_strcat(info, sizeof( info ), " " );
 			}
 
-			if (search->pack->referenced || Q_stricmpn(search->pack->pakGamename, BASEGAME, (int)strlen(BASEGAME))) {
+			if (search->pack->referenced) {
 				Q_strcat(info, sizeof(info), search->pack->pakGamename);
 				Q_strcat(info, sizeof(info), "/");
 				Q_strcat(info, sizeof(info), search->pack->pakBasename);
