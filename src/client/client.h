@@ -333,6 +333,9 @@ typedef struct {
 	qhandle_t	consoleShader;
 
 	qboolean ignoreNextDownloadList;
+
+	CURL *curl;
+	CURLM *curlm;
 } clientStatic_t;
 
 #define	CON_TEXTSIZE	32768 * 4 // ouned: increased
@@ -493,27 +496,13 @@ int Key_GetProtocolKey(mvversion_t protocol, int key16);
 //
 extern int cl_connectedToPureServer;
 
-typedef enum {
-	MVHTTP_NOTHING,
-	MVHTTP_RUNNING,
-	MVHTTP_PROCESS,
-	MVHTTP_FINISHED
-} mvhttpstatus_t;
-
-extern mvmutex_t m_dl;
-extern char m_remotepath[MAX_STRING_CHARS];
-extern char m_tmppath[MAX_QPATH];
-extern char m_tmpospath[MAX_OSPATH];
-extern mvhttpstatus_t m_status;
-extern CURLcode m_error;
-extern size_t m_filesize, m_filecount;
-
-void *CL_MV_HTTP_FileDownload_ExtThread(void *unused);
-void CL_MV_HTTP_HTTPControl_MainThread(qboolean abort);
-
 void CL_SystemInfoChanged( void );
 void CL_ParseServerMessage( msg_t *msg );
 void CL_SP_Print(const word ID, byte *Data);
+
+size_t CL_ParseHTTPDownload(char *ptr, size_t size, size_t nmemb, void *dummy);
+void CL_EndHTTPDownload(qboolean abort);
+int CL_ProgressHTTPDownload(void *clientp, double dltotal, double dlnow, double ultotal, double ulnow);
 
 //====================================================================
 

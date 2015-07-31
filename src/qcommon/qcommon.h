@@ -680,7 +680,6 @@ qboolean FS_ComparePaks( char *neededpaks, int len, qboolean dlstring );
 void FS_Rename( const char *from, const char *to );
 
 qboolean FS_MV_VerifyDownloadPath(const char *pk3file);
-const char *FS_MV_GetOSDLPath(const char *qdlpath);
 
 /*
 ==============================================================

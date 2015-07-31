@@ -75,14 +75,14 @@ cvar_t	*mv_nameShadows;
 cvar_t	*mv_colorStrings;
 cvar_t	*mv_consoleShiftRequirement;
 
+cvar_t	*cl_downloadName;
+cvar_t	*cl_downloadLocalName;
+cvar_t	*cl_downloadSize;
+cvar_t	*cl_downloadCount;
+cvar_t	*cl_downloadTime;
+cvar_t	*cl_downloadProtocol;
+
 vec3_t cl_windVec;
-
-#ifdef USE_CD_KEY
-char	cl_cdkey[34] = "                                ";
-
-
-#endif	// USE_CD_KEY
-
 
 clientActive_t		cl;
 clientConnection_t	clc;
@@ -617,7 +617,10 @@ CL_ShutdownAll
 =====================
 */
 void CL_ShutdownAll(void) {
-	CL_MV_HTTP_HTTPControl_MainThread(qtrue); // ouned: so the download stopps when the server changes map while downloading something
+	// ouned: so the download stopps when the server changes map while downloading something
+	if (cls.curl) {
+		curl_multi_remove_handle(cls.curlm, cls.curl);
+	}
 
 	// clear sounds
 	S_DisableSounds();
@@ -762,8 +765,12 @@ void CL_Disconnect( qboolean showMainMenu ) {
 		clc.download = 0;
 	}
 	*clc.downloadTempName = *clc.downloadName = 0;
-	Cvar_Set( "cl_downloadName", "" );
-	CL_MV_HTTP_HTTPControl_MainThread(qtrue);
+	Cvar_Set("cl_downloadName", "");
+
+	// if a HTTP download is running, kill it
+	if (cls.curl) {
+		curl_multi_remove_handle(cls.curlm, cls.curl);
+	}
 
 	if ( clc.demofile ) {
 		FS_FCloseFile( clc.demofile );
@@ -1436,17 +1443,16 @@ void CL_DownloadsComplete( void ) {
 =================
 CL_BeginDownload
 
-Requests a file to download from the server.  Stores it in the current
-game directory.
+Requests a file to download from the server.
+The UI opens a window in which the user can decide to download it.
 =================
 */
 void CL_BeginDownload( const char *localName, const char *remoteName ) {
 	// ouned: the ui decides if this file is going to be downloaded
-
 	Cvar_Set("cl_downloadName", remoteName);
 	Cvar_Set("cl_downloadLocalName", localName);
-	Cvar_Set("cl_downloadSize", "0");
-	Cvar_Set("cl_downloadCount", "0");
+	Cvar_SetValue("cl_downloadSize", 0);
+	Cvar_SetValue("cl_downloadCount", 0);
 	Cvar_SetValue("cl_downloadTime", 0);
 
 	if (clc.http_port != 0 && clc.serverAddress.type == NA_IP) {
@@ -1459,6 +1465,14 @@ void CL_BeginDownload( const char *localName, const char *remoteName ) {
 	VM_Call(uivm, UI_SET_ACTIVE_MENU, UIMENU_MV_DOWNLOAD_POPUP);
 }
 
+/*
+=================
+CL_ContinueCurrentDownload
+
+After the user decided wether the file should be downloaded.
+Stores it in the current game directory.
+=================
+*/
 void CL_ContinueCurrentDownload(qboolean abort) {
 	if (abort) {
 		// user disallowed the download
@@ -1466,45 +1480,47 @@ void CL_ContinueCurrentDownload(qboolean abort) {
 		return;
 	}
 
-	Com_DPrintf("***** CL_BeginDownload *****\n"
+	Com_Printf("^1****** ^7File Download ^1******^7\n"
 		"Localname: %s\n"
 		"Remotename: %s\n"
 		"Protocol: %s\n"
-		"****************************\n", Cvar_Get("cl_downloadLocalName", "", 0)->string, Cvar_Get("cl_downloadName", "", 0)->string, Cvar_Get("cl_downloadProtocol", "", 0)->string);
+		"^1***************************\n", cl_downloadLocalName->string, cl_downloadName->string, cl_downloadProtocol->string);
 
 	// Set so UI gets access to it
-	Cvar_Set("cl_downloadSize", "0");
-	Cvar_Set("cl_downloadCount", "0");
 	Cvar_SetValue("cl_downloadTime", (float)cls.realtime);
+	Q_strncpyz(clc.downloadName, cl_downloadLocalName->string, sizeof(clc.downloadName));
+	Com_sprintf(clc.downloadTempName, sizeof(clc.downloadTempName), "%s.tmp", cl_downloadLocalName->string);
 
-	if (!Q_stricmp(Cvar_Get("cl_downloadProtocol", "", 0)->string, "HTTP")) {
-		const char *ospath;
+	if (!Q_stricmp(cl_downloadProtocol->string, "HTTP")) {
+		char remotepath[MAX_STRING_CHARS];
 
-		ospath = FS_MV_GetOSDLPath(Cvar_Get("cl_downloadLocalName", "", 0)->string);
-		if (!ospath) {
+		Q_strncpyz(remotepath, va("http://%i.%i.%i.%i:%i/%s", clc.serverAddress.ip[0], clc.serverAddress.ip[1], clc.serverAddress.ip[2], clc.serverAddress.ip[3],
+			clc.http_port, cl_downloadName->string), sizeof(remotepath));
+		Com_DPrintf("HTTP URL: %s\n", remotepath);
+
+		cls.curl = curl_easy_init();
+		if (!cls.curl) {
+			Com_DPrintf("failed initializing curl handle\n");
 			CL_NextDownload();
 			return;
 		}
 
-		Q_strncpyz(m_remotepath, va("http://%i.%i.%i.%i:%i/%s", clc.serverAddress.ip[0], clc.serverAddress.ip[1], clc.serverAddress.ip[2], clc.serverAddress.ip[3],
-			clc.http_port, Cvar_Get("cl_downloadName", "", 0)->string), sizeof(m_remotepath));
+		curl_easy_setopt(cls.curl, CURLOPT_URL, remotepath);
+		curl_easy_setopt(cls.curl, CURLOPT_WRITEFUNCTION, CL_ParseHTTPDownload);
+		curl_easy_setopt(cls.curl, CURLOPT_PROGRESSFUNCTION, CL_ProgressHTTPDownload);
+		curl_easy_setopt(cls.curl, CURLOPT_NOPROGRESS, 0);
+		curl_easy_setopt(cls.curl, CURLOPT_CONNECTTIMEOUT, 8);
+		curl_easy_setopt(cls.curl, CURLOPT_BUFFERSIZE, 16384);
+#ifdef _DEBUG
+		//curl_easy_setopt(cls.curl, CURLOPT_MAX_RECV_SPEED_LARGE, (curl_off_t)(2.5 * 1024 * 1024)); // ouned: my eyes aren't fast enough for this
+#endif
+		curl_multi_add_handle(cls.curlm, cls.curl);
 
-		Q_strncpyz(m_tmppath, va("%s.tmp", Cvar_Get("cl_downloadLocalName", "", 0)->string), sizeof(m_tmppath));
-		Q_strncpyz(m_tmpospath, va("%s.tmp", ospath), sizeof(m_tmpospath));
-		m_status = MVHTTP_NOTHING;
-		m_error = CURLE_OK;
-		m_filesize = 0;
-		m_filecount = 0;
-
-		MV_StartThread((void *)CL_MV_HTTP_FileDownload_ExtThread);
 	} else {
-		Q_strncpyz(clc.downloadName, Cvar_Get("cl_downloadLocalName", "", 0)->string, sizeof(clc.downloadName));
-		Com_sprintf(clc.downloadTempName, sizeof(clc.downloadTempName), "%s.tmp", Cvar_Get("cl_downloadLocalName", "", 0)->string);
-
 		clc.downloadBlock = 0; // Starting new file
 		clc.downloadCount = 0;
 
-		CL_AddReliableCommand(va("download %s", Cvar_Get("cl_downloadName", "", 0)->string));
+		CL_AddReliableCommand(va("download %s", cl_downloadName->string));
 	}
 }
 
@@ -2239,6 +2255,7 @@ static unsigned int frameCount;
 static float avgFrametime=0.0;
 extern void SP_CheckForLanguageUpdates(void);
 void CL_Frame ( int msec ) {
+	int runningcurls;
 
 	if ( !com_cl_running->integer ) {
 		return;
@@ -2290,6 +2307,34 @@ void CL_Frame ( int msec ) {
 		frameCount++;
 	}
 
+	// progress http downloads
+	curl_multi_perform(cls.curlm, &runningcurls);
+	if (runningcurls == 0 && cls.curl) {
+		int msgs;
+		CURLMsg *msg;
+
+		msg = curl_multi_info_read(cls.curlm, &msgs);
+		if (msg) {
+			if (msg->data.result == CURLE_OK) {
+				CL_EndHTTPDownload(qfalse);
+			} else {
+				CL_EndHTTPDownload(qtrue);
+				Com_Error(ERR_DROP, "^3JK2MV: HTTP Download of %s failed with error %s\n", cl_downloadLocalName->string, curl_easy_strerror(msg->data.result));
+			}
+		} else {
+			// this case means it has been aborted by the user
+			Com_DPrintf("HTTP Download aborted by user\n");
+			CL_EndHTTPDownload(qtrue);
+		}
+
+		curl_easy_cleanup(cls.curl);
+		cls.curl = NULL;
+
+		if (cls.state > CA_DISCONNECTED) {
+			CL_NextDownload();
+		}
+	}
+
 	cls.realtime += cls.frametime;
 
 #ifdef _DONETPROFILE_
@@ -2336,8 +2381,6 @@ void CL_Frame ( int msec ) {
 		G2VertSpaceServer->ResetHeap();
 	}
 #endif
-
-	CL_MV_HTTP_HTTPControl_MainThread(qfalse);
 
 	cls.framecount++;
 }
@@ -2665,6 +2708,13 @@ void CL_Init( void ) {
 	mv_colorStrings	= Cvar_Get("mv_colorStrings", "0", CVAR_ARCHIVE | CVAR_GLOBAL);
 	mv_consoleShiftRequirement = Cvar_Get("mv_consoleShiftRequirement", "1", CVAR_ARCHIVE | CVAR_GLOBAL);
 
+	cl_downloadName = Cvar_Get("cl_downloadName", "", CVAR_INTERNAL);
+	cl_downloadLocalName = Cvar_Get("cl_downloadLocalName", "", CVAR_INTERNAL);
+	cl_downloadSize = Cvar_Get("cl_downloadSize", "", CVAR_INTERNAL);
+	cl_downloadCount = Cvar_Get("cl_downloadCount", "", CVAR_INTERNAL);
+	cl_downloadTime = Cvar_Get("cl_downloadTime", "", CVAR_INTERNAL);
+	cl_downloadProtocol = Cvar_Get("cl_downloadProtocol", "", CVAR_INTERNAL);
+
 	//
 	// register our commands
 	//
@@ -2706,7 +2756,7 @@ void CL_Init( void ) {
 #endif
 
 	curl_global_init(CURL_GLOBAL_ALL);
-	m_dl = MV_CreateMutex();
+	cls.curlm = curl_multi_init();
 
 	Com_Printf( "----- Client Initialization Complete -----\n" );
 }
@@ -2774,9 +2824,8 @@ void CL_Shutdown( void ) {
 
 	Com_Memset( &cls, 0, sizeof( cls ) );
 
+	curl_multi_cleanup(cls.curlm);
 	curl_global_cleanup();
-	MV_DestroyMutex(m_dl);
-	m_dl = NULL;
 
 	Com_Printf( "-----------------------\n" );
 

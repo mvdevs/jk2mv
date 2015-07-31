@@ -474,155 +474,16 @@ void CL_ParseGamestate( msg_t *msg ) {
 	Cvar_Set( "cl_paused", "0" );
 }
 
-
 //=====================================================================
 
 /*
 =====================
 CL_ParseDownload
 
-A download message has been received from the server
+A UDP download message has been received from the server
 =====================
 */
-
-mvmutex_t m_dl;
-char m_remotepath[MAX_STRING_CHARS];
-char m_tmppath[MAX_QPATH];
-char m_tmpospath[MAX_OSPATH];
-mvhttpstatus_t m_status;
-CURLcode m_error;
-size_t m_filesize, m_filecount;
-
-// ouned: this is ugly but it syncs everything correctly
-// THIS FUNCTION IS NOT CALLED ON THE MAIN THREAD
-size_t CL_MV_HTTP_FileWriter_ExtThread(void *ptr, size_t size, size_t nmemb, FILE *stream) {
-	size_t written = fwrite(ptr, size, nmemb, stream);
-	return written;
-}
-
-// http://curl.haxx.se/libcurl/c/CURLOPT_XFERINFOFUNCTION.html
-// atleast called one time per second (good for aborting)
-int CL_MV_HTTP_Process_ExtThread(void *clientp, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow) {
-	MV_LockMutex(m_dl);
-
-	if (m_status == MVHTTP_NOTHING) {
-		MV_ReleaseMutex(m_dl);
-		return 1;
-	}
-
-	if (dltotal && dlnow) {
-		m_status = MVHTTP_PROCESS;
-	}
-
-	m_filesize = (unsigned long)dltotal;
-	m_filecount = (unsigned long)dlnow;
-
-	MV_ReleaseMutex(m_dl);
-	return 0;
-}
-
-#ifndef INTERNAL_CURL
-int CL_MV_HTTP_OldProcess_ExtThread(void *clientp, double dltotal, double dlnow, double ultotal, double ulnow) {
-	return CL_MV_HTTP_Process_ExtThread(clientp, (curl_off_t)dltotal, (curl_off_t)dlnow, (curl_off_t)ultotal, (curl_off_t)ulnow);
-}
-#endif
-
-void *CL_MV_HTTP_FileDownload_ExtThread(void *unused) {
-	char m_int_remotepath[MAX_STRING_CHARS];
-	char m_int_tmppath[MAX_OSPATH];
-	CURL *curl;
-	CURLcode code;
-	FILE *tmpfile;
-
-	MV_LockMutex(m_dl);
-
-	// ouned: copy over download paths to be sure
-	strcpy(m_int_remotepath, m_remotepath);
-	strcpy(m_int_tmppath, m_tmpospath);
-
-	curl = curl_easy_init();
-	if (!curl) {
-		m_status = MVHTTP_FINISHED;
-		m_error = CURLE_FAILED_INIT;
-		MV_ReleaseMutex(m_dl);
-		return NULL;
-	}
-
-	tmpfile = fopen(m_int_tmppath, "wb");
-	if (!tmpfile) {
-		m_status = MVHTTP_FINISHED;
-		m_error = CURLE_WRITE_ERROR;
-		curl_easy_cleanup(curl);
-		MV_ReleaseMutex(m_dl);
-		return NULL;
-	}
-
-	m_status = MVHTTP_RUNNING;
-	MV_ReleaseMutex(m_dl);
-
-	curl_easy_setopt(curl, CURLOPT_URL, m_int_remotepath);
-	curl_easy_setopt(curl, CURLOPT_WRITEDATA, tmpfile);
-	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CL_MV_HTTP_FileWriter_ExtThread);
-#ifndef INTERNAL_CURL
-	// ouned: XFERINFOFUNCTION is pretty new...
-	curl_easy_setopt(curl, CURLOPT_PROGRESSFUNCTION, CL_MV_HTTP_OldProcess_ExtThread);
-#else
-	curl_easy_setopt(curl, CURLOPT_XFERINFOFUNCTION, CL_MV_HTTP_Process_ExtThread);
-#endif
-	curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0);
-	curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 8);
-#ifdef _DEBUG
-	curl_easy_setopt(curl, CURLOPT_MAX_RECV_SPEED_LARGE, (curl_off_t)(2.5 * 1024 * 1024)); // ouned: my eyes aren't fast enough for this
-#endif
-	code = curl_easy_perform(curl);
-	curl_easy_cleanup(curl);
-	fclose(tmpfile);
-
-	MV_LockMutex(m_dl);
-
-	m_status = MVHTTP_FINISHED;
-	m_error = code;
-
-	MV_ReleaseMutex(m_dl);
-	return NULL;
-}
-
-void CL_MV_HTTP_HTTPControl_MainThread(qboolean abort) {
-	MV_LockMutex(m_dl);
-
-	if (m_status == MVHTTP_PROCESS) {
-		Cvar_SetValue("cl_downloadSize", (int)m_filesize);
-		Cvar_SetValue("cl_downloadCount", (int)m_filecount);
-	} else if (m_status == MVHTTP_FINISHED) {
-		if (m_error == CURLE_OK) {
-			// file is there
-			FS_SV_Rename(m_tmppath, Cvar_Get("cl_downloadLocalName", "", 0)->string);
-		} else {
-			remove(m_tmpospath);
-			if (m_error != CURLE_ABORTED_BY_CALLBACK)
-				Com_Error(ERR_DROP, "^3JK2MV: HTTP Download of %s failed with error %s\n", Cvar_Get("cl_downloadLocalName", "", 0)->string, curl_easy_strerror(m_error));
-			else
-				Com_Printf("JK2MV: HTTP Download aborted by user\n");
-		}
-
-		m_status = MVHTTP_NOTHING;
-		m_error = CURLE_OK;
-		m_filesize = 0;
-		m_filecount = 0;
-		Cvar_Set("cl_downloadName", "");
-
-		if (cls.state > CA_DISCONNECTED)
-			CL_NextDownload();
-	}
-
-	if (abort) {
-		m_status = MVHTTP_NOTHING;
-	}
-
-	MV_ReleaseMutex(m_dl);
-}
-
-void CL_ParseDownload ( msg_t *msg ) {
+void CL_ParseUDPDownload ( msg_t *msg ) {
 	int		size;
 	unsigned char data[MAX_MSGLEN];
 	int block;
@@ -705,6 +566,59 @@ void CL_ParseDownload ( msg_t *msg ) {
 		// get another file if needed
 		CL_NextDownload ();
 	}
+}
+
+/*
+=====================
+CL_ParseHTTPDownload
+
+A HTTP download chunk has been received from the server
+=====================
+*/
+size_t CL_ParseHTTPDownload(char *ptr, size_t size, size_t nmemb, void *dummy) {
+	// open the file if not opened yet
+	if (!clc.download) {
+		clc.download = FS_SV_FOpenFileWrite(clc.downloadTempName);
+	}
+
+	return (size_t)FS_Write(ptr, (int)(size * nmemb), clc.download);
+}
+
+/*
+=====================
+CL_EndHTTPDownload
+
+A HTTP download chunk has been received from the server
+=====================
+*/
+void CL_EndHTTPDownload(qboolean abort) {
+	if (clc.download) {
+		FS_FCloseFile(clc.download);
+		clc.download = 0;
+	}
+
+	if (!abort) {
+		FS_SV_Rename(clc.downloadTempName, clc.downloadName);
+	}
+
+	*clc.downloadTempName = *clc.downloadName = 0;
+	Cvar_Set("cl_downloadName", "");
+}
+
+/*
+=====================
+CL_ProgressHTTPDownload
+
+Current status of the HTTP download has changed
+=====================
+*/
+int CL_ProgressHTTPDownload(void *clientp, double dltotal, double dlnow, double ultotal, double ulnow) {
+	if (dltotal && dlnow) {
+		Cvar_SetValue("cl_downloadSize", (int)dltotal);
+		Cvar_SetValue("cl_downloadCount", (int)dlnow);
+	}
+
+	return 0;
 }
 
 /*
@@ -805,7 +719,7 @@ void CL_ParseServerMessage( msg_t *msg ) {
 			CL_ParseSnapshot( msg );
 			break;
 		case svc_download:
-			CL_ParseDownload( msg );
+			CL_ParseUDPDownload( msg );
 			break;
 		case svc_mapchange:
 			if (cgvm)

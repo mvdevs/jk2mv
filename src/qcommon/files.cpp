@@ -3750,18 +3750,6 @@ qboolean FS_MV_VerifyDownloadPath(const char *pk3file) {
 	return qfalse;
 }
 
-const char *FS_MV_GetOSDLPath(const char *qdlpath) {
-	static char path[MAX_OSPATH];
-
-	if (strstr(qdlpath, "..") || strstr(qdlpath, "::")) {
-		return NULL;
-	}
-
-	Com_sprintf(path, sizeof(path), "%s/%s", fs_homepath->string, qdlpath);
-	FS_ReplaceSeparators(path);
-	return path;
-}
-
 void FS_FilenameCompletion( const char *dir, const char *ext, qboolean stripExt, callbackFunc_t callback, qboolean allowNonPureFilesOnDisk ) { // Daggolin: for auto-complete (copied from OpenJK)
 	int nfiles;
 	char **filenames, filename[MAX_STRING_CHARS];
