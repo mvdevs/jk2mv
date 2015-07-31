@@ -1509,8 +1509,11 @@ void CL_ContinueCurrentDownload(qboolean abort) {
 		curl_easy_setopt(cls.curl, CURLOPT_WRITEFUNCTION, CL_ParseHTTPDownload);
 		curl_easy_setopt(cls.curl, CURLOPT_PROGRESSFUNCTION, CL_ProgressHTTPDownload);
 		curl_easy_setopt(cls.curl, CURLOPT_NOPROGRESS, 0);
-		curl_easy_setopt(cls.curl, CURLOPT_CONNECTTIMEOUT, 8);
+		curl_easy_setopt(cls.curl, CURLOPT_CONNECTTIMEOUT, 5);
 		curl_easy_setopt(cls.curl, CURLOPT_BUFFERSIZE, 16384);
+		curl_easy_setopt(cls.curl, CURLOPT_FAILONERROR, 1);
+		curl_easy_setopt(cls.curl, CURLOPT_USERAGENT, Q3_VERSION);
+		curl_easy_setopt(cls.curl, CURLOPT_REFERER, va("jk2://%s", NET_AdrToString(clc.serverAddress)));
 #ifdef _DEBUG
 		//curl_easy_setopt(cls.curl, CURLOPT_MAX_RECV_SPEED_LARGE, (curl_off_t)(2.5 * 1024 * 1024)); // ouned: my eyes aren't fast enough for this
 #endif
@@ -2308,30 +2311,33 @@ void CL_Frame ( int msec ) {
 	}
 
 	// progress http downloads
-	curl_multi_perform(cls.curlm, &runningcurls);
-	if (runningcurls == 0 && cls.curl) {
-		int msgs;
-		CURLMsg *msg;
+	for (int i = 0; i < 10; i++) {
+		curl_multi_perform(cls.curlm, &runningcurls);
+		if (runningcurls == 0 && cls.curl) {
+			int msgs;
+			CURLMsg *msg;
 
-		msg = curl_multi_info_read(cls.curlm, &msgs);
-		if (msg) {
-			if (msg->data.result == CURLE_OK) {
-				CL_EndHTTPDownload(qfalse);
+			msg = curl_multi_info_read(cls.curlm, &msgs);
+			if (msg) {
+				if (msg->data.result == CURLE_OK) {
+					CL_EndHTTPDownload(qfalse);
+				} else {
+					CL_EndHTTPDownload(qtrue);
+					Com_Error(ERR_DROP, "^3JK2MV: HTTP Download of %s failed with error %s\n", cl_downloadLocalName->string, curl_easy_strerror(msg->data.result));
+				}
 			} else {
+				// this case means it has been aborted by the user
+				Com_DPrintf("HTTP Download aborted by user\n");
 				CL_EndHTTPDownload(qtrue);
-				Com_Error(ERR_DROP, "^3JK2MV: HTTP Download of %s failed with error %s\n", cl_downloadLocalName->string, curl_easy_strerror(msg->data.result));
 			}
-		} else {
-			// this case means it has been aborted by the user
-			Com_DPrintf("HTTP Download aborted by user\n");
-			CL_EndHTTPDownload(qtrue);
-		}
 
-		curl_easy_cleanup(cls.curl);
-		cls.curl = NULL;
+			curl_easy_cleanup(cls.curl);
+			cls.curl = NULL;
 
-		if (cls.state > CA_DISCONNECTED) {
-			CL_NextDownload();
+			if (cls.state > CA_DISCONNECTED) {
+				CL_NextDownload();
+				break;
+			}
 		}
 	}
 
