@@ -838,8 +838,8 @@ int SV_MV_Websrv_Request_ExtThread(struct mg_connection *conn, enum mg_event ev)
 		if (res) {
 			return MG_FALSE;
 		} else {
-			mg_send_header(conn, "Content-Type", "text/plain");
 			mg_send_status(conn, 403);
+			mg_send_header(conn, "Content-Type", "text/plain");
 			mg_printf_data(conn, "403 forbidden");
 			return MG_TRUE;
 		}
