@@ -4,6 +4,16 @@ Website: http://jk2mv.org
 --------------------------------------------------
 
 -----------------------------------
+1.0.1
+-----------------------------------
+- fixed auto-referencing pk3s from fs_game directories
+- yet another bug concerning gamma correction on linux fixed
+- internal http server returns correct error code on failure
+- fixed command autocompletion on pressing enter
+- fixed alignment of info message in connecting screen
+- single threaded http downloads
+
+-----------------------------------
 1.0
 -----------------------------------
 - shift not required to close console (optional via cvar: mv_consoleShiftRequirement)
