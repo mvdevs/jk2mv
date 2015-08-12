@@ -643,32 +643,46 @@ void	* QDECL Sys_LoadDll(const char *name, intptr_t(QDECL **entryPoint)(int, ...
   // bk001129 - from cvs1.17 (mkv), was fname not fn
   libHandle = dlopen( fn, Q_RTLD );
 
-  if ( !libHandle ) {
-	if( cdpath[0] ) {
-	  // bk001206 - report any problem
-	  Com_Printf( "Sys_LoadDll(%s) failed: \"%s\"\n", fn, dlerror() );
-
-	  fn = FS_BuildOSPath( cdpath, gamedir, fname );
-	  libHandle = dlopen( fn, Q_RTLD );
-	  if ( !libHandle ) {
+  if ( !libHandle )
+  {
 	// bk001206 - report any problem
 	Com_Printf( "Sys_LoadDll(%s) failed: \"%s\"\n", fn, dlerror() );
+
+	if( cdpath[0] )
+	{
+	  fn = FS_BuildOSPath( cdpath, gamedir, fname );
+	  libHandle = dlopen( fn, Q_RTLD );
+
+	  if ( !libHandle )
+	  {
+		// bk001206 - report any problem
+		Com_Printf( "Sys_LoadDll(%s) failed: \"%s\"\n", fn, dlerror() );
 	  }
 	  else
-	Com_Printf ( "Sys_LoadDll(%s): succeeded ...\n", fn );
+	  {
+		Com_Printf ( "Sys_LoadDll(%s): succeeded from cdpath ...\n", fn );
+	  }
 	}
 	else
-	  Com_Printf ( "Sys_LoadDll(%s): succeeded ...\n", fn );
-
-	if ( !libHandle ) {
-#ifdef NDEBUG // bk001206 - in debug abort on failure
-	  Com_Error ( ERR_FATAL, "Sys_LoadDll(%s) failed dlopen() completely!\n", name  );
-#else
-	  Com_Printf ( "Sys_LoadDll(%s) failed dlopen() completely!\n", name );
-#endif
-	  return NULL;
+	{
+	  Com_Printf ( "Sys_LoadDll(%s): no cdpath, giving up ...\n", fn );
 	}
   }
+  else
+  {
+    Com_Printf( "Sys_LoadDll(%s): suceeded ..\n", fn );
+  }
+
+  if ( !libHandle )
+  {
+#ifdef NDEBUG // bk001206 - in debug abort on failure
+    Com_Error ( ERR_FATAL, "Sys_LoadDll(%s) failed dlopen() completely!\n", name  );
+#else
+    Com_Printf ( "Sys_LoadDll(%s) failed dlopen() completely!\n", name );
+#endif
+    return NULL;
+  }
+
   // bk001206 - no different behavior
   //#ifndef NDEBUG }
   //else Com_Printf ( "Sys_LoadDll(%s): succeeded ...\n", loadname );
