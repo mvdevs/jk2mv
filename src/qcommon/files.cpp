@@ -3296,6 +3296,8 @@ const char *FS_ReferencedPakChecksums( void ) {
 
 			if (MV_GetCurrentGameversion() == VERSION_1_03 && (!Q_stricmp(search->pack->pakBasename, "assets5")))
 				continue;
+            
+            if ( search->pack->noref ) continue; // Daggolin: Only do this if noref is NOT set to make sure whitelist and blacklist are not ignored.
 
 			if (search->pack->referenced) {
 				Q_strcat(info, sizeof(info), va("%i ", search->pack->checksum));
@@ -3387,6 +3389,8 @@ const char *FS_ReferencedPakNames( void ) {
 
 			if (MV_GetCurrentGameversion() == VERSION_1_03 && (!Q_stricmp(search->pack->pakBasename, "assets5")))
 				continue;
+
+            if ( search->pack->noref ) continue; // Daggolin: Only do this if noref is NOT set to make sure whitelist and blacklist are not ignored.
 
 			if (*info) {
 				Q_strcat(info, sizeof( info ), " " );
@@ -3747,6 +3751,9 @@ qboolean FS_MV_VerifyDownloadPath(const char *pk3file) {
 		Com_sprintf(tmp, sizeof(tmp), "%s/%s", search->pack->pakGamename, search->pack->pakBasename);
 		if (FS_idPak(tmp, "base"))
 			continue;
+
+        if (!Q_stricmp(search->pack->pakFilename, ospath) && search->pack->noref) // Daggolin: Make sure "noref" files are not downloadable, even if they got referenced by accident.
+            return qfalse;
 
 		if (!Q_stricmp(search->pack->pakFilename, ospath) && search->pack->referenced)
 			return qtrue;
