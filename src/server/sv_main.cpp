@@ -43,6 +43,7 @@ cvar_t	*mv_fixgalaking;
 cvar_t	*mv_fixbrokenmodels;
 cvar_t	*mv_fixturretcrash;
 cvar_t	*mv_blockchargejump;
+cvar_t	*mv_blockspeedhack;
 
 /*
 =============================================================================

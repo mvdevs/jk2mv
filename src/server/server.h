@@ -243,6 +243,7 @@ extern	cvar_t	*mv_fixgalaking;
 extern	cvar_t	*mv_fixbrokenmodels;
 extern	cvar_t	*mv_fixturretcrash;
 extern	cvar_t	*mv_blockchargejump;
+extern	cvar_t	*mv_blockspeedhack;
 
 //===========================================================
 

@@ -316,6 +316,7 @@ void SV_GetUsercmd( int clientNum, usercmd_t *cmd ) {
 	*cmd = svs.clients[clientNum].lastUsercmd;
 
 	if ( cmd->forcesel == FP_LEVITATION && mv_blockchargejump->integer ) cmd->forcesel = FP_PUSH; // Daggolin: Prevent modified clients from using the "ChargeJump" (higher jumping, double-kicks, ...), but let the server toggle this (in case they are using a mod where it is a feature).
+	if ( mv_blockspeedhack->integer ) cmd->angles[ROLL] = 0; // Daggolin: Prevent modified clients from gaining more speed than others...
 }
 
 //==============================================
