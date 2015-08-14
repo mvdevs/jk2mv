@@ -3050,8 +3050,10 @@ static void FS_Startup( const char *gameName ) {
 
 			if (f_w && !Q_stristr(mv_whitelist, packstr)) {
 				search->pack->noref = qtrue;
+				search->pack->referenced = 0;
 			} else if (f_b && Q_stristr(mv_blacklist, packstr)) {
 				search->pack->noref = qtrue;
+				search->pack->referenced = 0;
 			} else if (f_f && Q_stristr(mv_forcelist, packstr)) {
 				search->pack->referenced |= FS_GENERAL_REF;
 			}
