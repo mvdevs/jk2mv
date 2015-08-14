@@ -4,6 +4,13 @@ Website: http://jk2mv.org
 --------------------------------------------------
 
 -----------------------------------
+1.0.2
+-----------------------------------
+- anti speedhack
+- fixed black and whitlists for files not in base
+- minor improvements (see github)
+
+-----------------------------------
 1.0.1
 -----------------------------------
 - fixed auto-referencing pk3s from fs_game directories
