@@ -3747,8 +3747,11 @@ qboolean FS_MV_VerifyDownloadPath(const char *pk3file) {
 			continue;
 		
 		Com_sprintf(tmp, sizeof(tmp), "%s/%s", search->pack->pakGamename, search->pack->pakBasename);
-		if (FS_idPak(tmp, "base"))
+		if (FS_idPak(tmp, BASEGAME))
 			continue;
+
+		if (!Q_stricmp(search->pack->pakFilename, ospath) && search->pack->noref)
+			return qfalse;
 
 		if (!Q_stricmp(search->pack->pakFilename, ospath) && search->pack->referenced)
 			return qtrue;
