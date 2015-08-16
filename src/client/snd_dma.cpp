@@ -3343,6 +3343,13 @@ static qboolean S_UpdateBackgroundTrack_Actual( MusicInfo_t *pMusicInfo )
 
 	float fMasterVol = (s_musicVolume->value*s_musicMult->value);
 
+	#ifndef WIN32
+	//When minizming the game on UNIX, the game sound still plays. This is a workaround for that. I'm not sure if it's relevant for Mac, though.
+	extern cvar_t *com_minimized;
+	if (com_minimized && com_minimized->integer)
+		return qfalse;
+	#endif
+
 	static	float	musicVolume = 0.25f;
 
 // this is to work around an obscure issue to do with sliding decoder windows and amounts being requested, since the

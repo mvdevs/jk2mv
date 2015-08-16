@@ -946,10 +946,13 @@ void Q_strcat( char *dest, size_t size, const char *src ) {
 	Q_strncpyz( dest + l1, src, size - l1 );
 }
 
+#define MV_Use102Color ((MV_GetCurrentGameversion() == VERSION_1_02 || MV_GetCurrentGameversion() == VERSION_1_03))
 
-int Q_PrintStrlen( const char *string ) {
+
+int Q_PrintStrlen( const char *string, qboolean use102color ) {
 	int			len;
 	const char	*p;
+
 
 	if( !string ) {
 		return 0;
@@ -958,7 +961,7 @@ int Q_PrintStrlen( const char *string ) {
 	len = 0;
 	p = string;
 	while( *p ) {
-		if( Q_IsColorString( p ) ) {
+		if ( Q_IsColorString( p ) || (use102color && Q_IsColorString_1_02(p)) ) {
 			p += 2;
 			continue;
 		}
@@ -970,7 +973,7 @@ int Q_PrintStrlen( const char *string ) {
 }
 
 
-char *Q_CleanStr( char *string ) {
+char *Q_CleanStr( char *string, qboolean use102color ) {
 	char*	d;
 	char*	s;
 	int		c;
@@ -978,7 +981,7 @@ char *Q_CleanStr( char *string ) {
 	s = string;
 	d = string;
 	while ((c = *s) != 0 ) {
-		if ( Q_IsColorString( s ) ) {
+		if ( Q_IsColorString( s ) || (use102color && Q_IsColorString_1_02(s)) ) {
 			s++;
 		}
 		else if ( c >= 0x20 && c <= 0x7E ) {

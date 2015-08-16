@@ -350,22 +350,15 @@ char *Sys_DefaultHomePath(void)
 #endif
 }
 
-// ouned: try to find assets from /Applications (Appstore JK2) or Steam
+// ouned: try to find assets in app from /Applications (Appstore)
 // if not found try to find it in the same directory this app is
 char *Sys_DefaultAssetsPath() {
 #ifdef MACOS_X
     static char path[MAX_OSPATH];
     char *override;
 
-    // AppStore version
     if (access("/Applications/Jedi Knight II.app/Contents/base/assets0.pk3", F_OK) != -1) {
         return "/Applications/Jedi Knight II.app/Contents";
-    }
-    
-    // Steam version
-    if (access(va("%s/Library/Application Support/Steam/steamapps/common/Jedi Outcast/Jedi Knight II.app/Contents/base/assets0.pk3", getenv("HOME")), F_OK) != -1) {
-        Q_strncpyz(path, va("%s/Library/Application Support/Steam/steamapps/common/Jedi Outcast/Jedi Knight II.app/Contents", getenv("HOME")), sizeof(path));
-        return path;
     }
 
     uint32_t size = sizeof(path);
