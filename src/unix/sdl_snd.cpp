@@ -53,7 +53,7 @@ static void SNDDMA_AudioCallback(void *userdata, Uint8 *stream, int len)
 	if (pos >= dmasize)
 		dmapos = pos = 0;
 
-	if (!snd_inited)  /* shouldn't happen, but just in case... */
+	if (!snd_inited || Cvar_VariableIntegerValue("com_unfocused"))
 	{
 		memset(stream, '\0', len);
 		return;

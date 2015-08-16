@@ -3,6 +3,7 @@
 #include "../game/q_shared.h"
 #include "../client/client.h"
 #include "unix_local.h"
+#include "../client/snd_local.h"
 
 static cvar_t *in_keyboardDebug	 = NULL;
 
@@ -428,6 +429,12 @@ static void IN_ProcessEvents( void )
 					if( key != A_NULL )
 						Sys_QueEvent( 0, SE_KEY, key, qfalse, 0, NULL );
 				}
+				
+				if ( ( e.key.keysym.scancode == SDL_SCANCODE_LGUI || e.key.keysym.scancode == SDL_SCANCODE_RGUI ) &&
+					Cvar_VariableIntegerValue("r_fullscreen")) {
+					SDL_MinimizeWindow(SDL_window);
+				}
+				
 				break;
 
 			case SDL_TEXTINPUT:
@@ -518,10 +525,17 @@ static void IN_ProcessEvents( void )
 					case SDL_WINDOWEVENT_MINIMIZED:    Cvar_SetValue( "com_minimized", 1 ); break;
 					case SDL_WINDOWEVENT_RESTORED:
 					case SDL_WINDOWEVENT_MAXIMIZED:    Cvar_SetValue( "com_minimized", 0 ); break;
-					case SDL_WINDOWEVENT_FOCUS_LOST:   Cvar_SetValue( "com_unfocused", 1 ); break;
-					case SDL_WINDOWEVENT_FOCUS_GAINED: Cvar_SetValue( "com_unfocused", 0 ); break;
+					case SDL_WINDOWEVENT_FOCUS_LOST:
+						Cvar_SetValue( "com_unfocused", 1 );
+						S_MuteAllSounds(true);
+
+						break;
+					case SDL_WINDOWEVENT_FOCUS_GAINED:
+						Cvar_SetValue( "com_unfocused", 0 );
+						S_MuteAllSounds(false);
+
+						break;
 				}
-				break;
 
 			default:
 				break;
