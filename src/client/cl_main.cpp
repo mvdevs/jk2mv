@@ -877,8 +877,11 @@ void CL_RequestMotd( void ) {
 
 	Info_SetValueForKey( info, "challenge", cls.updateChallenge );
 	Info_SetValueForKey( info, "renderer", cls.glconfig.renderer_string );
-	Info_SetValueForKey( info, "version", com_version->string );
-	Info_SetValueForKey(info, "JK2MV", JK2MV_VERSION);
+//	Info_SetValueForKey( info, "version", com_version->string );
+
+	// Always send the jk2mv "version" to the MOTD server
+	Info_SetValueForKey( info, "version", va("%s %s %s", Q3_VERSION, CPUSTRING, __DATE__ ) );
+	Info_SetValueForKey( info, "JK2MV", JK2MV_VERSION );
 
 	NET_OutOfBandPrint( NS_CLIENT, cls.updateServer, "getmotd \"%s\"\n", info );
 }

@@ -510,8 +510,7 @@ void SVC_Status( netadr_t from ) {
 		}
 	}
 
-	// ouned: send fake version string
-	Info_SetValueForKey(infostring, "version", va("JK2MP: v%smv %s %s", (MV_GetCurrentGameversion() == VERSION_1_04 ? "1.04" : (MV_GetCurrentGameversion() == VERSION_1_03 ? "1.03" : "1.02")), CPUSTRING, __DATE__)); //Daggolin: Added 1.03 // ouned: the fuck
+	Info_SetValueForKey(infostring, "version", com_version->string);
 
 	NET_OutOfBandPrint( NS_SERVER, from, "statusResponse\n%s\n%s", infostring, status );
 }

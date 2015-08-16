@@ -2943,6 +2943,12 @@ mvversion_t glbpro;
 
 void MV_SetCurrentGameversion(mvversion_t version) {
 	glbpro = version;
+
+	if ( com_fullyInitialized )
+	{ // Only do this if we're fully initialized
+		if ( version == VERSION_UNDEF )	Cvar_Set("version", va("%s %s %s", Q3_VERSION, CPUSTRING, __DATE__ ));
+		else							Cvar_Set("version", va("JK2MP: v1.%02dmv %s %s", version, CPUSTRING, __DATE__)); // Set the version to JK2MP for compatibility reasons
+	}
 }
 
 mvversion_t MV_GetCurrentGameversion() {
