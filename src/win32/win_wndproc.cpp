@@ -503,7 +503,7 @@ LONG WINAPI MainWndProc (
 	case WM_SYSKEYUP:
 	case WM_KEYUP:
 		// ouned: minimizer
-		if (wParam == VK_LWIN && r_fullscreen->integer) {
+		if ( ( wParam == VK_LWIN || wParam == VK_RWIN ) && r_fullscreen->integer) {
 			WG_RestoreGamma();
 			ShowWindow(hWnd, SW_MINIMIZE);
 		}

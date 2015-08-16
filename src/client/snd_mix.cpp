@@ -255,13 +255,6 @@ void S_PaintChannels( int endtime ) {
 
 	snd_vol = s_volume->value*256;
 
-	#ifndef WIN32
-	//When minizming the game on UNIX, the game sound still plays. This is a workaround for that. I'm not sure if it's relevant for Mac, though.
-	extern cvar_t *com_minimized;
-	if (com_minimized && com_minimized->integer)
-		snd_vol = 0;
-	#endif
-
 //Com_Printf ("%i to %i\n", s_paintedtime, endtime);
 	while ( s_paintedtime < endtime ) {
 		// if paintbuffer is smaller than DMA buffer
