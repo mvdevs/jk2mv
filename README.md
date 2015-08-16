@@ -1,5 +1,5 @@
 # JK2MV
-http://jk2mv.org
+https://jk2mv.org
 
 JK2MV (Multi Version) is a modification for Jedi Knight II: Jedi Outcast. It supports all three game versions and comes with various features and optimizations.
 
