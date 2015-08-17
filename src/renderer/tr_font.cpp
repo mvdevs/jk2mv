@@ -681,26 +681,23 @@ int RE_Font_StrLenPixels(const char *psText, const int iFontHandle, const float 
 {			
 	int			x = 0, i = 0, r = 0;
 	CFontInfo	*curfont;
-	char		parseText[8192];
+	char		parseText[8192] = {0};
+	float 		fTotalWidth = 0.0f;
 
 	//It gets confused about ^blah here too and reports an inaccurate length as a result
-	while (psText[i] && r < sizeof(parseText))
-	{
-		if (psText[i] == '^')
-		{
-			if ((i < 1 || psText[i - 1] != '^') &&
-				(!psText[i + 1] || psText[i + 1] != '^'))
-			{ //If char before or after ^ is ^ then it prints ^ instead of accepting a colorcode
-				i += 2;
-				continue;
-			}
+	const char *pch = psText;
+	while (*pch && i < sizeof(parseText)-1) {
+		if (*pch == '^') {
+			++pch;	//skip past ^
+			if (*pch)
+				++pch;	//skip past the char after ^
 		}
-
-		parseText[r] = psText[i];
-		r++;
-		i++;
+		else {
+			parseText[i++] = *(pch++);
+		}
 	}
-	parseText[r] = 0;
+	parseText[i] = 0;
+
 	
 	const char *constParseText = parseText;
 
@@ -716,17 +713,19 @@ int RE_Font_StrLenPixels(const char *psText, const int iFontHandle, const float 
 		fScaleA = fScale * 0.75f;
 	}
 
+
 	while(*constParseText)
 	{
 		int iAdvanceCount;
 		unsigned int uiLetter = AnyLanguage_ReadCharFromString(constParseText, &iAdvanceCount, NULL);
-		constParseText += iAdvanceCount;
+		int iPixelAdvance;
 
-		int a = curfont->GetLetterHorizAdvance(uiLetter);
-		x += Round(a * ((uiLetter > 255) ? fScaleA : fScale));
+		constParseText += iAdvanceCount;
+		iPixelAdvance = curfont->GetLetterHorizAdvance(uiLetter);
+		fTotalWidth += (iPixelAdvance * ((uiLetter > 255) ? fScaleA : fScale));
 	}
 
-	return(x);
+	return (int)(ceilf(fTotalWidth));
 }
 
 // not really a font function, but keeps naming consistant...
@@ -774,7 +773,8 @@ int RE_Font_HeightPixels(const int iFontHandle, const float fScale)
 qboolean gbInShadow = qfalse;	// MUST default to this
 void RE_Font_DrawString(int ox, int oy, const char *psText, const float *rgba, const int iFontHandle, int iCharLimit, const float fScale)
 {
-	int					x, y, colour, offset;
+	int					colour, offset;
+	float				fox, foy, fx, fy;
 	const glyphInfo_t	*pLetter;
 	qhandle_t			hShader;
 	qboolean			qbThisCharCountsAsLetter;	// logic for this bool must be kept same in this function and RE_Font_StrLenChars()
@@ -787,75 +787,72 @@ void RE_Font_DrawString(int ox, int oy, const char *psText, const float *rgba, c
 		}
 	}
 
-/*	if (Language_IsTaiwanese())
-	{
-		psText = "Wp:¶}·F§a ¿p·G´µ¡A§Æ±æ§A¹³¥L­Ì»¡ªº¤@¼Ë¦æ¡C";
-	}
-	else
-	if (Language_IsKorean())
-	{
-		psText = "Wp:¼îÅ¸ÀÓÀÌ´Ù ¸Ö¸°. ±×µéÀÌ ¸»ÇÑ´ë·Î ³×°¡ ÀßÇÒÁö ±â´ëÇÏ°Ú´Ù.";
-	}
-*/
 	CFontInfo *curfont = GetFont(iFontHandle);
 	if(!curfont)
 	{
 		return;
 	}
 
+
 	float fScaleA = fScale;
 	int iAsianYAdjust = 0;
 	if (Language_IsAsian())
 	{
 		fScaleA = fScale * 0.75f;
-		iAsianYAdjust = /*Round*/((((float)curfont->GetPointSize() * fScale) - ((float)curfont->GetPointSize() * fScaleA))/2);
+		iAsianYAdjust = (((float)curfont->GetPointSize() * fScale) - ((float)curfont->GetPointSize() * fScaleA)) / 2;
 	}
 
 
 	// Draw a dropshadow if required
-	if ( (iFontHandle & STYLE_DROPSHADOW && (MV_GetCurrentGameversion() == VERSION_1_02 || Cvar_VariableIntegerValue("mv_nameShadows") == 1)) && Cvar_VariableIntegerValue("mv_nameShadows") )
-	{ //Daggolin: jk2 1.02 shadows
-		int i = 0, r = 0;
-		char dropShadowText[1024];
-		static const vec4_t v4DKGREY2 = {0.15f, 0.15f, 0.15f, 1};
-
-		offset = Round(curfont->GetPointSize() * fScale * 0.075f);
-
-		//^blah stuff confuses shadows, so parse it out first
-		while (psText[i] && r < 1024)
+	if ( iFontHandle & STYLE_DROPSHADOW ) {
+		if ( MV_USE102COLOR )
 		{
-			if (psText[i] == '^')
+			int i = 0, r = 0;
+			char dropShadowText[1024];
+			static const vec4_t v4DKGREY2 = {0.15f, 0.15f, 0.15f, 1};
+
+			offset = Round(curfont->GetPointSize() * fScale * 0.075f);
+
+			//^blah stuff confuses shadows, so parse it out first
+			while (psText[i] && r < 1024)
 			{
-				if ( (i < 1 || psText[i-1] != '^') &&
-					(!psText[i+1] || psText[i+1] != '^') )
-				{ //If char before or after ^ is ^ then it prints ^ instead of accepting a colorcode
-					i += 2;
+				if (psText[i] == '^')
+				{
+					if ( (i < 1 || psText[i-1] != '^') &&
+						(!psText[i+1] || psText[i+1] != '^') )
+					{ //If char before or after ^ is ^ then it prints ^ instead of accepting a colorcode
+						i += 2;
+					}
 				}
+
+				dropShadowText[r] = psText[i];
+				r++;
+				i++;
 			}
+			dropShadowText[r] = 0;
 
-			dropShadowText[r] = psText[i];
-			r++;
-			i++;
+			RE_Font_DrawString(ox + offset, oy + offset, dropShadowText, v4DKGREY2, iFontHandle & SET_MASK, iCharLimit, fScale);
 		}
-		dropShadowText[r] = 0;
+		else
+		{
+			static const vec4_t v4DKGREY2 = {0.15f, 0.15f, 0.15f, 1};
 
-		RE_Font_DrawString(ox + offset, oy + offset, dropShadowText, v4DKGREY2, iFontHandle & SET_MASK, iCharLimit, fScale);
-	}
-	else if(iFontHandle & STYLE_DROPSHADOW)
-	{
-		static const vec4_t v4DKGREY2 = {0.15f, 0.15f, 0.15f, 1};
+			offset = Round(curfont->GetPointSize() * fScale * 0.075f);
 
-		offset = Round(curfont->GetPointSize() * fScale * 0.075f);
-
-		gbInShadow = qtrue;
-		RE_Font_DrawString(ox + offset, oy + offset, psText, v4DKGREY2, iFontHandle & SET_MASK, iCharLimit, fScale);
-		gbInShadow = qfalse;
+			gbInShadow = qtrue;
+			RE_Font_DrawString(ox + offset, oy + offset, psText, v4DKGREY2, iFontHandle & SET_MASK, iCharLimit, fScale);
+			gbInShadow = qfalse;
+		}
 	}
 
 	RE_SetColor( rgba );
 
-	x = ox;
-	oy += Round((curfont->GetHeight() - (curfont->GetDescender() >> 1)) * fScale);
+	//use floats to avoid text bumping up and down.
+	foy = oy;
+	fox = ox;
+
+	fx = fox;
+	foy += (curfont->GetHeight() - (curfont->GetDescender() >> 1)) * fScale;
 
 	while(*psText)
 	{
@@ -868,28 +865,23 @@ void RE_Font_DrawString(int ox, int oy, const char *psText, const float *rgba, c
 		switch( uiLetter )
 		{
 		case '^':
-		{
-			colour = ColorIndex(*psText++);
+			colour = ColorIndex(*psText);
 			if (!gbInShadow)
 			{
 				RE_SetColor( g_color_table[colour] );
 			}
-		}
-		break;
+			++psText;
+			break;
 		case 10:						//linefeed
-			x = ox;
-			oy += Round(curfont->GetPointSize() * fScale);
-//			if (Language_IsAsian())
-//			{
-//				oy += 4;	// this only comes into effect when playing in asian (for SP, though I'm going to keep it in MP probbly) "A long time ago in a galaxy" etc, all other text is line-broken in feeder functions
-//			}
+			fx = fox;
+			foy += (float)curfont->GetPointSize() * fScale;
 			break;
 		case 13:						// Return
 			break;
 		case 32:						// Space
 			qbThisCharCountsAsLetter = qtrue;
 			pLetter = curfont->GetLetter(' ');
-			x += Round(pLetter->horizAdvance * fScale);
+			fx += (float)pLetter->horizAdvance * fScale;
 			break;
 
 		default:
@@ -905,21 +897,20 @@ void RE_Font_DrawString(int ox, int oy, const char *psText, const float *rgba, c
 			// this 'mbRoundCalcs' stuff is crap, but the only way to make the font code work. Sigh...
 			//
 			float fThisScale = uiLetter > 255 ? fScaleA : fScale;
-			y = oy - (curfont->mbRoundCalcs ? Round(pLetter->baseline * fThisScale) : pLetter->baseline * fThisScale);
+			fy = foy - ((float)pLetter->baseline * fThisScale);	//fixed
 
-			RE_StretchPic ( x + Round(pLetter->horizOffset * fThisScale), // float x
-							(uiLetter > 255) ? y - iAsianYAdjust : y,	// float y
-							curfont->mbRoundCalcs ? Round(pLetter->width * fThisScale) : pLetter->width * fThisScale,	// float w
-							curfont->mbRoundCalcs ? Round(pLetter->height * fThisScale) : pLetter->height * fThisScale, // float h
+			RE_StretchPic ( fx + (float)pLetter->horizOffset * fThisScale, // float x
+							(uiLetter > 255) ? fy - iAsianYAdjust : fy,	// float y
+							(float)pLetter->width * fThisScale,	// float w
+							(float)pLetter->height * fThisScale, // float h
 							pLetter->s,						// float s1
 							pLetter->t,						// float t1
 							pLetter->s2,					// float s2
 							pLetter->t2,					// float t2
-							//lastcolour.c,
 							hShader							// qhandle_t hShader
 							);
 
-			x += Round(pLetter->horizAdvance * fThisScale);
+			fx += (float)pLetter->horizAdvance * fThisScale;
 			break;
 		}
 
