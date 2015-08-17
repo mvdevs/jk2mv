@@ -18,7 +18,7 @@
 #define COMMAND_HISTORY		(32*4) //Daggolin: Increased by "*4*
 
 //For determining whether to allow 1.02 color codes:
-#define MV_USE102COLOR (MV_GetCurrentGameversion() == VERSION_1_02 || MV_GetCurrentGameversion() == VERSION_1_03)
+#define MV_USE102COLOR (MV_GetCurrentGameversion() != VERSION_1_04 )
 
 typedef struct {
 	int		cursor;
