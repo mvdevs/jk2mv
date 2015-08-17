@@ -1273,12 +1273,6 @@ Ghoul2 Insert Start
 	case CG_G2_SETBOLTON:
 		G2API_SetBoltInfo(GhoulHandle(args[1]), args[2], args[3]);
 		return 0;
-
-#ifdef _SOF2
-	case CG_G2_ADDSKINGORE:
-		G2API_AddSkinGore(*((CGhoul2Info_v *)args[1]),*(SSkinGoreData *)VMA(2));
-		return 0;
-#endif // _SOF2
 /*
 Ghoul2 Insert End
 */

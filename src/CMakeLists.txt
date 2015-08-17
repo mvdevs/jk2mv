@@ -141,7 +141,6 @@ if (BuildMVMP OR BuildMVDED)
 
 	set(MVMPDEDGhoulFiles
 		"${SRCDir}/ghoul2/G2.h"
-		"${SRCDir}/ghoul2/G2_gore.h"
 		"${SRCDir}/ghoul2/G2_local.h"
 		"${SRCDir}/ghoul2/ghoul2_shared.h"
 

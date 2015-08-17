@@ -44,12 +44,6 @@ static void Z_Details_f(void);
 
 jmp_buf abortframe;		// an ERR_DROP occured, exit the entire frame
 
-#ifdef USE_CD_KEY
-
-extern char cl_cdkey[34];
-
-#endif // USE_CD_KEY
-
 FILE *debuglogfile;
 static fileHandle_t logfile;
 fileHandle_t	com_journalFile;			// events are written here
@@ -2587,11 +2581,6 @@ Writes key bindings and archived cvars to config file if modified
 ===============
 */
 void Com_WriteConfiguration( void ) {
-#ifndef DEDICATED // bk001204
-#ifdef USE_CD_KEY
-	cvar_t	*fs;
-#endif	// USE_CD_KEY
-#endif
 	// if we are quiting without fully initializing, make sure
 	// we don't write out anything
 	if ( !com_fullyInitialized ) {
@@ -2607,18 +2596,6 @@ void Com_WriteConfiguration( void ) {
 	Com_WriteConfigToFile( "jk2mvserver.cfg", NULL );
 #else
 	Com_WriteConfigToFile("jk2mvconfig.cfg", "jk2mvglobal.cfg");
-#endif
-
-	// bk001119 - tentative "not needed for dedicated"
-#ifndef DEDICATED
-#ifdef USE_CD_KEY
-	fs = Cvar_Get ("fs_game", "", CVAR_INIT|CVAR_SYSTEMINFO );
-	if (UI_usesUniqueCDKey() && fs && fs->string[0] != 0) {
-		Com_WriteCDKey( fs->string, &cl_cdkey[16] );
-	} else {
-		Com_WriteCDKey( "base", cl_cdkey );
-	}
-#endif	// USE_CD_KEY
 #endif
 }
 

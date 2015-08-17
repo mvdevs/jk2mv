@@ -294,20 +294,6 @@ static char		*fs_serverReferencedPakNames[MAX_SEARCH_PATHS];		// pk3 names
 char lastValidBase[MAX_OSPATH];
 char lastValidGame[MAX_OSPATH];
 
-// productId: This file is copyright 2000 Raven Software, and may not be duplicated except during a licensed installation of the full commercial version of Star Wars: Jedi Outcast
-static byte fs_scrambledProductId[165] = {
- 42, 143, 149, 190,  10, 197, 225, 133, 243,  63, 189, 182, 226,  56, 143,  17, 215,  37, 197, 218,  50, 103,  24, 235, 246, 191, 180, 149, 160, 170, 230,
- 52, 176, 231,  15, 194, 236, 247, 159, 168, 132, 154,  24, 133,  67,  85,  36,  97,  99,  86, 117, 189, 212, 156, 236, 153,  68,  10, 196, 241,  39,
-219, 156,  88,  93, 198, 200, 232, 142,  67,  45, 209,  53, 186, 228, 241, 162, 127, 213,  83,   7, 121,  11,  93, 123, 243, 148, 240, 229,  42,  42,
-  6, 215, 239, 112, 120, 240, 244, 104,  12,  38,  47, 201, 253, 223, 208, 154,  69, 141, 157,  32, 117, 166, 146, 236,  59,  15, 223,  52,  89, 133,
- 64, 201,  56, 119,  25, 211, 152, 159,  11,  92,  59, 207,  81, 123,   0, 121, 241, 116,  42,  36, 251,  51, 149,  79, 165,  12, 106, 187, 225, 203,
- 99, 102,  69,  97,  81,  27, 107,  95, 164,  42,  36, 189,  94, 126
-};
-
-#ifdef FS_MISSING
-FILE*		missingFiles = NULL;
-#endif
-
 /*
 ==============
 FS_Initialized
@@ -1348,11 +1334,6 @@ int FS_FOpenFileReadHash(const char *filename, fileHandle_t *file, qboolean uniq
 	}
 
 	Com_DPrintf ("Can't find %s\n", filename);
-#ifdef FS_MISSING
-	if (missingFiles) {
-		fprintf(missingFiles, "%s\n", filename);
-	}
-#endif
 	*file = 0;
 	return -1;
 }
@@ -2901,20 +2882,7 @@ void FS_Shutdown( qboolean closemfp ) {
 	Cmd_RemoveCommand( "dir" );
 	Cmd_RemoveCommand( "fdir" );
 	Cmd_RemoveCommand( "touchFile" );
-
-#ifdef FS_MISSING
-	if (closemfp) {
-		fclose(missingFiles);
-	}
-#endif
 }
-
-#ifdef USE_CD_KEY
-
-void Com_AppendCDKey( const char *filename );
-void Com_ReadCDKey( const char *filename );
-
-#endif // USE_CD_KEY
 
 /*
 ================
@@ -3074,74 +3042,7 @@ static void FS_Startup( const char *gameName ) {
 	}
 
 	Com_Printf( "----------------------\n" );
-
-#ifdef FS_MISSING
-	if (missingFiles == NULL) {
-		missingFiles = fopen( "\\missing.txt", "ab" );
-	}
-#endif
 	Com_Printf( "%d files in pk3 files\n", fs_packFiles );
-}
-
-
-/*
-===================
-FS_SetRestrictions
-
-Looks for product keys and restricts media add on ability
-if the full version is not found
-===================
-*/
-static void FS_SetRestrictions( void ) {
-	searchpath_t	*path;
-
-#ifndef PRE_RELEASE_DEMO
-	char	*productId;
-
-	// if fs_restrict is set, don't even look for the id file,
-	// which allows the demo release to be tested even if
-	// the full game is present
-	if ( !fs_restrict->integer ) {
-		// look for the full game id
-		FS_ReadFile( "productid.txt", (void **)&productId );
-		if ( productId ) {
-			// check against the hardcoded string
-			int		seed, i;
-
-			seed = 102270;
-			for ( i = 0 ; i < sizeof( fs_scrambledProductId ) ; i++ ) {
-				if ( ( fs_scrambledProductId[i] ^ (seed&255) ) != productId[i] ) {
-					break;
-				}
-				seed = (69069 * seed + 1);
-			}
-
-			FS_FreeFile( productId );
-
-			if ( i == sizeof( fs_scrambledProductId ) ) {
-				return;	// no restrictions
-			}
-			Com_Error( ERR_FATAL, "Invalid product identification" );
-		}
-	}
-#endif
-	Cvar_Set( "fs_restrict", "1" );
-
-	Com_Printf( "\nRunning in restricted demo mode.\n\n" );
-
-	// restart the filesystem with just the demo directory
-	FS_Shutdown(qfalse);
-	FS_Startup( DEMOGAME );
-
-	// make sure that the pak file has the header checksum we expect
-	for ( path = fs_searchpaths ; path ; path = path->next ) {
-		if ( path->pack ) {
-			// a tiny attempt to keep the checksum from being scannable from the exe
-			if ( (path->pack->checksum ^ 0x02261994u) != (DEMO_PAK_CHECKSUM ^ 0x02261994u) ) {
-				Com_Error( ERR_FATAL, "Corrupted pak0.pk3: %u", path->pack->checksum );
-			}
-		}
-	}
 }
 
 /*
@@ -3546,9 +3447,6 @@ void FS_InitFilesystem( void ) {
 	// try to start up normally
 	FS_Startup( BASEGAME );
 
-	// see if we are going to allow add-ons
-	FS_SetRestrictions();
-
 	// if we can't find default.cfg, assume that the paths are
 	// busted and error out now, rather than getting an unreadable
 	// graphics screen when the font fails to load
@@ -3582,9 +3480,6 @@ void FS_Restart( int checksumFeed ) {
 
 	// try to start up normally
 	FS_Startup( BASEGAME );
-
-	// see if we are going to allow add-ons
-	FS_SetRestrictions();
 
 	// if we can't find default.cfg, assume that the paths are
 	// busted and error out now, rather than getting an unreadable

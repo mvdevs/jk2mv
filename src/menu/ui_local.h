@@ -982,14 +982,6 @@ int				trap_LAN_ServerStatus( const char *serverAddress, char *serverStatus, int
 int				trap_LAN_CompareServers( int source, int sortKey, int sortDir, int s1, int s2 );
 int				trap_MemoryRemaining( void );
 
-#ifdef USE_CD_KEY
-
-void			trap_GetCDKey( char *buf, int buflen );
-void			trap_SetCDKey( char *buf );
-qboolean		trap_VerifyCDKey( const char *key, const char *chksum);
-
-#endif // USE_CD_KEY
-
 qhandle_t		trap_R_RegisterFont( const char *name );
 int				trap_R_Font_StrLenPixels(const char *text, const int iFontIndex, const float scale);
 int				trap_R_Font_StrLenChars(const char *text);

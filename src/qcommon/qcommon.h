@@ -6,10 +6,6 @@
 #include "../qcommon/cm_public.h"
 #include "../game/q_shared.h"
 
-//#define	PRE_RELEASE_DEMO
-
-//#define		USE_CD_KEY
-
 //============================================================================
 
 // Daggolin: for auto-complete (copied from OpenJK)
@@ -253,14 +249,7 @@ PROTOCOL
 
 #define	MAX_MASTER_SERVERS	8
 
-//v1.03 #define	PROTOCOL_VERSION	15
-//#define	PROTOCOL_VERSION	16	//v1.04
-
 #define	UPDATE_SERVER_NAME		"update.jk2mv.org"
-
-#ifdef USE_CD_KEY
-#define	AUTHORIZE_SERVER_NAME	"authorizejk2.ravensoft.com"
-#endif
 
 #define	PORT_MASTER			28060
 #define	PORT_UPDATE			28061

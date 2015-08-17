@@ -1414,39 +1414,3 @@ void G2API_LoadSaveCodeDestructGhoul2Info(CGhoul2Info_v *ghoul2)
 {
 	ghoul2->~CGhoul2Info_v();	// so I can load junk over it then memset to 0 without orphaning
 }
-
-#ifdef _SOF2
-void ResetGoreTag(); // put here to reduce coupling
-
-void G2API_AddSkinGore(CGhoul2Info_v &ghoul2,SSkinGoreData &gore)
-{
-	if (VectorLength(gore.rayDirection)<.1f)
-	{
-		assert(0); // can't add gore without a shot direction
-		return;
-	}
-
-	// make sure we have transformed the whole skeletons for each model
-	G2_ConstructGhoulSkeleton(ghoul2, gore.currentTime, NULL, true, gore.angles, gore.position, gore.scale, false);
-
-	// pre generate the world matrix - used to transform the incoming ray
-	G2_GenerateWorldMatrix(gore.angles, gore.position);
-
-	// first up, translate the ray to model space
-	vec3_t	transRayDirection, transHitLocation;
-	TransformAndTranslatePoint(gore.hitLocation, transHitLocation, &worldMatrixInv);
-	TransformPoint(gore.rayDirection, transRayDirection, &worldMatrixInv);
-
-	int lod;
-	ResetGoreTag();
-	for (lod=0;lod<4;lod++)
-	{
-		// now having done that, time to build the model
-		// FIXME: where does G2VertSpaceServer come from?
-//		G2_TransformModel(ghoul2, gore.currentTime, gore.scale,G2VertSpaceServer, lod,true);
-
-		// now walk each model and compute new texture coordinates
-		G2_TraceModels(ghoul2, transHitLocation, transRayDirection, 0, gore.entNum, 0, lod);
-	}
-}
-#endif

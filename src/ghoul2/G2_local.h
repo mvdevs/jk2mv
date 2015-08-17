@@ -170,8 +170,3 @@ extern qboolean gG2_GBMNoReconstruct;
 extern qboolean gG2_GBMUseSPMethod;
 // From tr_ghoul2.cpp
 void		G2_ConstructGhoulSkeleton( CGhoul2Info_v &ghoul2, const int frameNum, qhandle_t *modelList, bool checkForNewOrigin, const vec3_t angles, const vec3_t position, const vec3_t scale, bool modelSet);
-
-#ifdef _SOF2
-void		G2API_AddSkinGore(CGhoul2Info_v &ghoul2,SSkinGoreData &gore);
-#endif // _SOF2
-
