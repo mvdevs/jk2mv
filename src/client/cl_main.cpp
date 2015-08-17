@@ -259,7 +259,7 @@ record <demoname>
 Begins recording a demo from the current position
 ====================
 */
-static char		demoName[MAX_QPATH];	// compiler bug workaround
+
 void CL_Record_f( void ) {
 	char		name[MAX_OSPATH];
 	byte		bufData[MAX_MSGLEN];
@@ -269,6 +269,7 @@ void CL_Record_f( void ) {
 	entityState_t	*ent;
 	entityState_t	nullstate;
 	char		*s;
+	char		demoName[MAX_OSPATH];	//bufsize was MAX_QPATH, but it should be MAX_OSPATH since this is the assumed buffersize in CL_DemoFilename
 
 	if ( Cmd_Argc() > 2 ) {
 		Com_Printf ("record <demoname>\n");
@@ -287,10 +288,12 @@ void CL_Record_f( void ) {
 		return;
 	}
 
+	#if 0 //annoyance
 	if ( !Cvar_VariableValue( "g_synchronousClients" ) ) {
 		Com_Printf ("The server must have 'g_synchronousClients 1' set for demos\n");
 		return;
 	}
+	#endif
 
 	if ( Cmd_Argc() == 2 ) {
 		s = Cmd_Argv(1);
