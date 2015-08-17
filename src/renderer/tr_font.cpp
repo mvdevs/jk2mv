@@ -771,6 +771,7 @@ int RE_Font_HeightPixels(const int iFontHandle, const float fScale)
 // iCharLimit is -1 for "all of string", else MBCS char count...
 //
 qboolean gbInShadow = qfalse;	// MUST default to this
+extern cvar_t	*mv_nameShadows;
 void RE_Font_DrawString(int ox, int oy, const char *psText, const float *rgba, const int iFontHandle, int iCharLimit, const float fScale)
 {
 	int					colour, offset;
@@ -805,7 +806,7 @@ void RE_Font_DrawString(int ox, int oy, const char *psText, const float *rgba, c
 
 	// Draw a dropshadow if required
 	if ( iFontHandle & STYLE_DROPSHADOW ) {
-		if ( MV_USE102COLOR )
+		if ((MV_GetCurrentGameversion() == VERSION_1_02 || mv_nameShadows->integer == 1) && mv_nameShadows->integer)
 		{
 			int i = 0, r = 0;
 			char dropShadowText[1024];
