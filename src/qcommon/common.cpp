@@ -91,6 +91,7 @@ int			com_frameNumber;
 
 qboolean	com_errorEntered;
 qboolean	com_fullyInitialized;
+qboolean	com_demoplaying;
 
 char	com_errorMessage[MAXPRINTMSG];
 

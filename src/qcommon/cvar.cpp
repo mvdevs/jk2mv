@@ -346,7 +346,7 @@ cvar_t *Cvar_Set2( const char *var_name, const char *value, qboolean force ) {
 			return var;
 		}
 
-		if ( (var->flags & CVAR_CHEAT) && !cvar_cheats->integer )
+		if ( (var->flags & CVAR_CHEAT) && !cvar_cheats->integer && !com_demoplaying ) //Allow cheat cvars during demo playback.
 		{
 			Com_Printf ("%s is cheat protected.\n", var_name);
 			return var;

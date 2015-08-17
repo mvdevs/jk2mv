@@ -565,6 +565,8 @@ void CL_PlayDemo_f( void ) {
 
 	cls.state = CA_CONNECTED;
 	clc.demoplaying = qtrue;
+	com_demoplaying = qtrue;
+
 	Q_strncpyz( cls.servername, Cmd_Argv(1), sizeof( cls.servername ) );
 
 	//Daggolin: Set the protocol according to the the demo-file.
@@ -774,6 +776,8 @@ void CL_Disconnect( qboolean showMainMenu ) {
 	if ( clc.demorecording ) {
 		CL_StopRecord_f ();
 	}
+
+	com_demoplaying = qfalse;
 
 	if (clc.download) {
 		FS_FCloseFile( clc.download );
@@ -1096,6 +1100,8 @@ void CL_Connect_f( void ) {
 
 	Cvar_Set("ui_singlePlayerActive", "0");
 
+	com_demoplaying = qfalse;
+
 	// fire a message off to the motd server
 	CL_RequestMotd();
 
@@ -1141,6 +1147,8 @@ void CL_Connect_f( void ) {
 	} else {
 		cls.state = CA_CONNECTING;
 	}
+
+
 
 	cls.keyCatchers = 0;
 	clc.connectTime = -99999;	// CL_CheckForResend() will fire immediately

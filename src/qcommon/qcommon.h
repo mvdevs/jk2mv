@@ -37,6 +37,8 @@ void Field_CompleteCommand( char *cmd, qboolean doCommands, qboolean doCvars, qb
 int Field_GetLastMatchCount();
 qboolean Field_WasComplete();
 
+extern qboolean com_demoplaying;
+
 // cl_keys.cpp
 void Key_KeynameCompletion ( void(*callback)( const char *s ) );
 
