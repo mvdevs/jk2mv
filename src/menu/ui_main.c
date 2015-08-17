@@ -3719,6 +3719,12 @@ static void UI_LoadMovies() {
 }
 
 
+static int demosort (const void **a, const void **b) {
+	const char *aa = *(const char **)a;
+	const char *bb = *(const char **)b;
+
+	return strcmp(aa, bb);
+}
 
 /*
 ===============
@@ -3758,6 +3764,9 @@ static void UI_LoadDemos() {
 		}
 		oldCount = uiInfo.demoCount;
 	}
+
+	//Sort demos by name.
+	qsort(uiInfo.demoList, uiInfo.demoCount, sizeof(uiInfo.demoList[0]), demosort);
 }
 
 
