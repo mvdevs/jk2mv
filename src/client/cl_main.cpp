@@ -799,6 +799,8 @@ void CL_Disconnect( qboolean showMainMenu ) {
 		VM_Call( uivm, UI_SET_ACTIVE_MENU, UIMENU_NONE );
 	}
 
+	Cvar_Set("timescale", "1");	//in case we dropped from a timescaled demo, ensure we are at normal speed again.
+
 	SCR_StopCinematic ();
 	S_ClearSoundBuffer();
 
