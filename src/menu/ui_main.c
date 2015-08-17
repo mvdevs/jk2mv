@@ -3766,7 +3766,7 @@ static void UI_LoadDemos() {
 	}
 
 	//Sort demos by name.
-	qsort(uiInfo.demoList, uiInfo.demoCount, sizeof(uiInfo.demoList[0]), demosort);
+	qsort((void *)uiInfo.demoList, uiInfo.demoCount, sizeof(uiInfo.demoList[0]), demosort);
 }
 
 
