@@ -755,21 +755,24 @@ void Con_RunConsole (void) {
 	else
 		con.finalFrac = 0;				// none visible
 
-	// scroll towards the destination height
-	if (con.finalFrac < con.displayFrac)
-	{
-		con.displayFrac -= con_conspeed->value*(float)(cls.realFrametime*0.001);
-		if (con.finalFrac > con.displayFrac)
-			con.displayFrac = con.finalFrac;
-
-	}
-	else if (con.finalFrac > con.displayFrac)
-	{
-		con.displayFrac += con_conspeed->value*(float)(cls.realFrametime*0.001);
+	if ( clc.demoplaying && (com_timescale->value < 1 || cl_paused->integer) ) {
+		con.displayFrac = con.finalFrac;	// set console height instantly if timescale is very low or 0 in demo playback (happens when menu is up)
+	} else {
+		// scroll towards the destination height
 		if (con.finalFrac < con.displayFrac)
-			con.displayFrac = con.finalFrac;
-	}
+		{
+			con.displayFrac -= con_conspeed->value*(float)(cls.realFrametime*0.001);
+			if (con.finalFrac > con.displayFrac)
+				con.displayFrac = con.finalFrac;
 
+		}
+		else if (con.finalFrac > con.displayFrac)
+		{
+			con.displayFrac += con_conspeed->value*(float)(cls.realFrametime*0.001);
+			if (con.finalFrac < con.displayFrac)
+				con.displayFrac = con.finalFrac;
+		}
+	}
 }
 
 
