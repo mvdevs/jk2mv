@@ -187,7 +187,7 @@ void QDECL Com_Printf( const char *fmt, ... ) {
 #if defined(_WIN32) && defined(_DEBUG)
 	if ( *msg )
 	{
-		OutputDebugStringA ( Q_CleanStr(msg) );
+		OutputDebugStringA ( Q_CleanStr(msg, MV_Use102Color) );
 		OutputDebugStringA ("\n");
 	}
 #endif
@@ -2968,17 +2968,30 @@ mvprotocol_t MV_GetCurrentProtocol() {
 	}
 }
 
+
+
 void MV_CopyStringWithColors( const char *src, char *dst, int dstSize, int nonColors )
 {
 	int i;
-	int nonColorCount;
+	int nonColorCount = 0;
 
-	nonColorCount = 0;
-	for ( i = 0; i < strlen(src); i++ )
+	const bool use102color = MV_Use102Color;
+
+	const size_t srclen = strlen(src);
+
+	for ( i = 0; i < srclen; i++ )
 	{
 		if ( i >= dstSize ) break;
 		if ( nonColorCount >= nonColors ) break;
-		if ( !Q_IsColorString(&src[i]) && (i < 1 || !Q_IsColorString(&src[i-1])) ) nonColorCount++;
+
+		if (!use102color) {
+			if ( !Q_IsColorString(&src[i]) && (i < 1 || !Q_IsColorString(&src[i-1])) )
+				nonColorCount++;
+		} else {
+			if ( !Q_IsColorString_1_02(&src[i]) && (i < 1 || !Q_IsColorString_1_02(&src[i-1])) )
+				nonColorCount++;
+		}
+
 		dst[i] = src[i];
 	}
 
@@ -2991,10 +3004,14 @@ int MV_StrlenSkipColors( const char *str )
 	int	  len = 0;
 	const char *strPtr = str;
 
+	const bool use102color = MV_Use102Color;
+
 	while ( *strPtr != '\0' )
 	{
-		if ( Q_IsColorString(strPtr) ) strPtr++;
-		else						   len++;
+		if ( Q_IsColorString(strPtr) || (use102color && Q_IsColorString_1_02(strPtr)) )
+			strPtr++;
+		else
+			len++;
 
 		strPtr++;
 	}

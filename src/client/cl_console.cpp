@@ -328,6 +328,7 @@ All console printing must go through this in order to be logged to disk
 If no console is visible, the text will appear at the top of the game window
 ================
 */
+
 void CL_ConsolePrint( char *txt ) {
 	int		y;
 	int		c, l;
@@ -350,8 +351,12 @@ void CL_ConsolePrint( char *txt ) {
 
 	color = ColorIndex(COLOR_WHITE);
 
+	const bool use102color = MV_Use102Color;
+
 	while ( (c = (unsigned char) *txt) != 0 ) {
-		if ( Q_IsColorString( (unsigned char*) txt ) || ((MV_GetCurrentGameversion() == VERSION_1_02 || MV_GetCurrentGameversion() == VERSION_1_03 || !Q_stricmp(Cvar_VariableString("mv_colorStrings"), "1.02") || !Q_stricmp(Cvar_VariableString("mv_colorStrings"), "1.03")) && Q_IsColorString_1_02( (unsigned char*) txt ) && Q_stricmp(Cvar_VariableString("mv_colorStrings"), "1.04")) ) { //Daggolin: 1.02 ColorStrings (console)
+
+		if ( Q_IsColorString( (unsigned char*) txt ) ||
+			  	( use102color && Q_IsColorString_1_02( (unsigned char*) txt ) ) ) {
 			color = ColorIndex( *(txt+1) );
 			txt += 2;
 			continue;

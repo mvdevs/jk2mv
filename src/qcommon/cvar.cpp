@@ -491,7 +491,8 @@ qboolean Cvar_Command( void ) {
 	}
 	else
 	{
-		Cvar_Set2 (v->name, value, qfalse);// set the value if forcing isn't required
+		//Cvar_Set2 (v->name, value, qfalse);// set the value if forcing isn't required
+		Cvar_Set2 (v->name, Cmd_ArgsFrom(1), qfalse);// instead of only taking 1 argument, take the entire args; this allow for eg "/name hello there"
 	}
 
 	return qtrue;

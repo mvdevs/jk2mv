@@ -629,8 +629,6 @@ extern	vec4_t		colorDkBlue;
 #define Q_IsColorString(p)	( p && *(p) == Q_COLOR_ESCAPE && *((p)+1) && *((p)+1) != Q_COLOR_ESCAPE && *((p)+1) <= '7' && *((p)+1) >= '0' )
 #define Q_IsColorString_1_02(p)	( p && *(p) == Q_COLOR_ESCAPE && *((p)+1) && *((p)+1) != Q_COLOR_ESCAPE ) //Daggolin: 1.02 ColorStrings
 
-#define Q_IsColorStringExt(p)	((p) && *(p) == Q_COLOR_ESCAPE && *((p)+1) && *((p)+1) >= '0' && *((p)+1) <= '7') // ^[0-7]
-
 #define COLOR_BLACK		'0'
 #define COLOR_RED		'1'
 #define COLOR_GREEN		'2'
@@ -980,9 +978,9 @@ void	Q_strncpyz( char *dest, const char *src, size_t destsize );
 void	Q_strcat( char *dest, size_t size, const char *src );
 
 // strlen that discounts Quake color sequences
-int Q_PrintStrlen( const char *string );
+int Q_PrintStrlen( const char *string, qboolean use102color );
 // removes color sequences from string
-char *Q_CleanStr( char *string );
+char *Q_CleanStr( char *string, qboolean use102color ) ;
 
 //=============================================
 

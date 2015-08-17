@@ -150,10 +150,16 @@ to a fixed color.
 Coordinates are at 640 by 480 virtual resolution
 ==================
 */
+
+
+
+
 void SCR_DrawStringExt( int x, int y, float size, const char *string, float *setColor, qboolean forceColor ) {
 	vec4_t		color;
 	const char	*s;
 	int			xx;
+
+	const bool use102color = MV_Use102Color;
 
 	// draw the drop shadow
 	color[0] = color[1] = color[2] = 0;
@@ -162,7 +168,7 @@ void SCR_DrawStringExt( int x, int y, float size, const char *string, float *set
 	s = string;
 	xx = x;
 	while ( *s ) {
-		if ( Q_IsColorString( s ) ) {
+		if ( Q_IsColorString( s ) || (use102color && Q_IsColorString_1_02( s ))) {
 			s += 2;
 			continue;
 		}
@@ -177,7 +183,7 @@ void SCR_DrawStringExt( int x, int y, float size, const char *string, float *set
 	xx = x;
 	re.SetColor( setColor );
 	while ( *s ) {
-		if ( Q_IsColorString( s ) ) {
+		if ( Q_IsColorString( s ) || (use102color && Q_IsColorString_1_02( s ))) {
 			if ( !forceColor ) {
 				Com_Memcpy( color, g_color_table[ColorIndex(*(s+1))], sizeof( color ) );
 				color[3] = setColor[3];
@@ -222,12 +228,14 @@ void SCR_DrawSmallStringExt( int x, int y, const char *string, float *setColor, 
 	const char	*s;
 	int			xx;
 
+	const bool use102color = MV_Use102Color;
+
 	// draw the colored text
 	s = string;
 	xx = x;
 	re.SetColor( setColor );
 	while ( *s ) {
-		if ( Q_IsColorString( s ) ) {
+		if ( Q_IsColorString( s ) || (use102color && Q_IsColorString_1_02( s ))) {
 			if ( !forceColor ) {
 				Com_Memcpy( color, g_color_table[ColorIndex(*(s+1))], sizeof( color ) );
 				color[3] = setColor[3];
@@ -252,8 +260,10 @@ static int SCR_Strlen( const char *str ) {
 	const char *s = str;
 	int count = 0;
 
+	const bool use102color = MV_Use102Color;
+
 	while ( *s ) {
-		if ( Q_IsColorString( s ) ) {
+		if ( Q_IsColorString( s ) || (use102color && Q_IsColorString_1_02( s ))) {
 			s += 2;
 		} else {
 			count++;

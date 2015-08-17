@@ -436,6 +436,8 @@ void CL_StartDemoLoop( void );
 void CL_NextDemo( void );
 void CL_ReadDemoMessage( void );
 
+qboolean CL_ServerVersionIs103 (const char *versionstr);
+
 void CL_InitDownloads(void);
 void CL_NextDownload(void);
 void CL_DownloadsComplete(void);
