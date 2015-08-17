@@ -5041,12 +5041,14 @@ static void UI_BuildServerDisplayList(qboolean force) {
 		ping = trap_LAN_GetServerPing(ui_netSource.integer, i);
 		if (ping > 0 || ui_netSource.integer == AS_FAVORITES) {
 			// ouned: botfilter
-			int clients = atoi(Info_ValueForKey(info, "clients"));
-			int bots = atoi(Info_ValueForKey(info, "bots"));
-
 			int realPlayers;
+			int clients;
+			int bots;
 
 			trap_LAN_GetServerInfo(ui_netSource.integer, i, info, MAX_STRING_CHARS);
+
+			clients = atoi(Info_ValueForKey(info, "clients"));
+			bots = atoi(Info_ValueForKey(info, "bots"));
 
 			if (trap_Cvar_VariableValue("ui_botfilter")) {
 				realPlayers = clients - bots;
