@@ -188,7 +188,7 @@ void QDECL Com_Printf( const char *fmt, ... ) {
 #if defined(_WIN32) && defined(_DEBUG)
 	if ( *msg )
 	{
-		OutputDebugStringA ( Q_CleanStr(msg, MV_USE102COLOR) );
+		OutputDebugStringA ( Q_CleanStr(msg, (qboolean)MV_USE102COLOR) );
 		OutputDebugStringA ("\n");
 	}
 #endif
