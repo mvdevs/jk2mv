@@ -426,6 +426,8 @@ void CL_FlushMemory(void);
 void CL_ShutdownAll(void);
 void CL_AddReliableCommand( const char *cmd );
 
+qboolean CL_ServerVersionIs103 (const char *versionstr);
+
 void CL_StartHunkUsers( void );
 
 void CL_Disconnect_f (void);

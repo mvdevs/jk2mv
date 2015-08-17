@@ -72,7 +72,6 @@ cvar_t	*cl_autolodscale;
 
 cvar_t	*mv_slowrefresh;
 cvar_t	*mv_nameShadows;
-cvar_t	*mv_colorStrings;
 cvar_t	*mv_consoleShiftRequirement;
 
 cvar_t	*cl_downloadName;
@@ -259,7 +258,7 @@ record <demoname>
 Begins recording a demo from the current position
 ====================
 */
-static char		demoName[MAX_QPATH];	// compiler bug workaround
+
 void CL_Record_f( void ) {
 	char		name[MAX_OSPATH];
 	byte		bufData[MAX_MSGLEN];
@@ -269,6 +268,7 @@ void CL_Record_f( void ) {
 	entityState_t	*ent;
 	entityState_t	nullstate;
 	char		*s;
+	char		demoName[MAX_OSPATH];	//bufsize was MAX_QPATH, but it should be MAX_OSPATH since this is the assumed buffersize in CL_DemoFilename
 
 	if ( Cmd_Argc() > 2 ) {
 		Com_Printf ("record <demoname>\n");
@@ -287,10 +287,12 @@ void CL_Record_f( void ) {
 		return;
 	}
 
+	#if 0 //annoyance
 	if ( !Cvar_VariableValue( "g_synchronousClients" ) ) {
 		Com_Printf ("The server must have 'g_synchronousClients 1' set for demos\n");
 		return;
 	}
+	#endif
 
 	if ( Cmd_Argc() == 2 ) {
 		s = Cmd_Argv(1);
@@ -487,12 +489,19 @@ demo <demoname>
 
 ====================
 */
+
+bool demoCheckFor103 = false;	//When a protocol15 demo has been started, we need to ascertain whether the demo is 1.03 or 1.02 version.
+
+qboolean CL_ServerVersionIs103 (const char *versionstr) {
+	return strstr(versionstr, "v1.03") ? qtrue : qfalse;
+}
+
 void CL_PlayDemo_f( void ) {
 	char		name[MAX_OSPATH]/*, extension[32]*/;
 	char		*arg;
 
 	if (Cmd_Argc() != 2) {
-		Com_Printf ("playdemo <demoname>\n");
+		Com_Printf ("demo <demoname>\n");
 		return;
 	}
 
@@ -507,7 +516,7 @@ void CL_PlayDemo_f( void ) {
 
 	// open the demo file
 	arg = Cmd_Argv(1);
-//	Com_sprintf(extension, sizeof(extension), ".dm_%d", MV_GetCurrentProtocol());
+
 	if ( !Q_stricmp( arg + strlen(arg) - strlen(".dm_15"), ".dm_15" ) || !Q_stricmp( arg + strlen(arg) - strlen(".dm_16"), ".dm_16" ) )
 	{ //Daggolin: Load "dm_15" and "dm_16" demos.
 		Com_sprintf (name, sizeof(name), "demos/%s", arg);
@@ -555,11 +564,18 @@ void CL_PlayDemo_f( void ) {
 
 	cls.state = CA_CONNECTED;
 	clc.demoplaying = qtrue;
+	com_demoplaying = qtrue;
+
 	Q_strncpyz( cls.servername, Cmd_Argv(1), sizeof( cls.servername ) );
 
 	//Daggolin: Set the protocol according to the the demo-file.
-	if ( !Q_stricmp( name + strlen(name) - strlen(".dm_15"), ".dm_15" ) ) MV_SetCurrentGameversion(VERSION_1_02);
-	if ( !Q_stricmp( name + strlen(name) - strlen(".dm_16"), ".dm_16" ) ) MV_SetCurrentGameversion(VERSION_1_04);
+	if ( !Q_stricmp( name + strlen(name) - strlen(".dm_15"), ".dm_15" ) ) {
+		MV_SetCurrentGameversion(VERSION_1_02);
+		demoCheckFor103 = true;	//if this demo happens to be a 1.03 demo, check for that in CL_ParseGamestate
+	}
+	else if ( !Q_stricmp( name + strlen(name) - strlen(".dm_16"), ".dm_16" ) ) {
+		MV_SetCurrentGameversion(VERSION_1_04);
+	}
 
 	// read demo messages until connected
 	while ( cls.state >= CA_CONNECTED && cls.state < CA_PRIMED ) {
@@ -760,6 +776,8 @@ void CL_Disconnect( qboolean showMainMenu ) {
 		CL_StopRecord_f ();
 	}
 
+	com_demoplaying = qfalse;
+
 	if (clc.download) {
 		FS_FCloseFile( clc.download );
 		clc.download = 0;
@@ -780,6 +798,8 @@ void CL_Disconnect( qboolean showMainMenu ) {
 	if ( uivm && showMainMenu ) {
 		VM_Call( uivm, UI_SET_ACTIVE_MENU, UIMENU_NONE );
 	}
+
+	Cvar_Set("timescale", "1");	//in case we dropped from a timescaled demo, ensure we are at normal speed again.
 
 	SCR_StopCinematic ();
 	S_ClearSoundBuffer();
@@ -1081,6 +1101,8 @@ void CL_Connect_f( void ) {
 
 	Cvar_Set("ui_singlePlayerActive", "0");
 
+	com_demoplaying = qfalse;
+
 	// fire a message off to the motd server
 	CL_RequestMotd();
 
@@ -1126,6 +1148,8 @@ void CL_Connect_f( void ) {
 	} else {
 		cls.state = CA_CONNECTING;
 	}
+
+
 
 	cls.keyCatchers = 0;
 	clc.connectTime = -99999;	// CL_CheckForResend() will fire immediately
@@ -2714,7 +2738,6 @@ void CL_Init( void ) {
 	// mv cvars
 	mv_slowrefresh = Cvar_Get("mv_slowrefresh", "3", CVAR_ARCHIVE | CVAR_GLOBAL);
 	mv_nameShadows	= Cvar_Get("mv_nameShadows"	, "2", CVAR_ARCHIVE | CVAR_GLOBAL);
-	mv_colorStrings	= Cvar_Get("mv_colorStrings", "0", CVAR_ARCHIVE | CVAR_GLOBAL);
 	mv_consoleShiftRequirement = Cvar_Get("mv_consoleShiftRequirement", "1", CVAR_ARCHIVE | CVAR_GLOBAL);
 
 	cl_downloadName = Cvar_Get("cl_downloadName", "", CVAR_INTERNAL);
@@ -3199,7 +3222,7 @@ void CL_ServerStatusResponse( netadr_t from, msg_t *msg ) {
 
 	// Daggolin: For 1.03 in the menu...
 	versionString = Info_ValueForKey(s, "version");
-	if (versionString && strlen(versionString) && strstr(versionString, "1.03"))
+	if (versionString && CL_ServerVersionIs103(versionString))
 	{
 		MV_SetServerFakeInfoByAddress(from, VERSION_1_03, -1, -1);
 	} else
@@ -3225,7 +3248,7 @@ void CL_ServerStatusResponse( netadr_t from, msg_t *msg ) {
 		versionString = Info_ValueForKey(s, "version");
 
 		//Daggolin: We used to seperate "1.02" and "1.04" by protocol "15" and "16". As "1.03" is using protocol "15", too we just look at the "version" to detect "1.03". If we don't find "1.03" we handle by protocol again.
-		if ( versionString && strlen(versionString) && strstr(versionString, "1.03") )
+		if ( versionString && CL_ServerVersionIs103(versionString) )
 		{
 			MV_SetCurrentGameversion(VERSION_1_03);
 		}

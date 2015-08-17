@@ -383,6 +383,9 @@ void CL_SystemInfoChanged( void ) {
 CL_ParseGamestate
 ==================
 */
+
+extern bool demoCheckFor103;
+
 void CL_ParseGamestate( msg_t *msg ) {
 	int				i;
 	entityState_t	*es;
@@ -427,6 +430,18 @@ void CL_ParseGamestate( msg_t *msg ) {
 
 			if ( len + 1 + cl.gameState.dataCount > MAX_GAMESTATE_CHARS ) {
 				Com_Error( ERR_DROP, "MAX_GAMESTATE_CHARS exceeded" );
+			}
+
+			if ( demoCheckFor103 && i == CS_SERVERINFO ) {
+				//This is the big serverinfo string containing the value of the "version" cvar of the server.
+				//If we are about to play a demo, we can use this information to ascertain whether this demo was recorded on
+				//a 1.03 server.
+				if ( CL_ServerVersionIs103( Info_ValueForKey(s, "version") ) ) {
+					//A 1.03 demo - set the proper game version internally so parsing snapshots etc won't fail
+					MV_SetCurrentGameversion( VERSION_1_03 );
+				}
+
+				demoCheckFor103 = false; //No need to check this again while playing the demo.
 			}
 
 			// append it to the gameState string buffer
