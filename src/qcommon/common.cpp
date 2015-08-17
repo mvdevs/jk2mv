@@ -2669,6 +2669,10 @@ int Com_ModifyMsec( int msec ) {
 		msec = clampTime;
 	}
 
+	if ( com_demoplaying && ( (cl_paused && cl_paused->integer) || !com_timescale->value)) {
+		msec = 0;	// if we're playing demo and brought up menu via ESC or have timescale set to 0, pause demo
+	}
+
 	return msec;
 }
 
