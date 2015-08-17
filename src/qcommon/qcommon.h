@@ -17,6 +17,9 @@
 #define	MAX_EDIT_LINE		256
 #define COMMAND_HISTORY		(32*4) //Daggolin: Increased by "*4*
 
+//For determining whether to allow 1.02 color codes:
+#define MV_USE102COLOR (MV_GetCurrentGameversion() == VERSION_1_02 || MV_GetCurrentGameversion() == VERSION_1_03)
+
 typedef struct {
 	int		cursor;
 	int		scroll;

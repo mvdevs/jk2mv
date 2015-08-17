@@ -348,10 +348,13 @@ void CL_ConsolePrint( char *txt ) {
 		con.initialized = qtrue;
 	}
 
+	const bool use102color = MV_USE102COLOR;
+
 	color = ColorIndex(COLOR_WHITE);
 
 	while ( (c = (unsigned char) *txt) != 0 ) {
-		if ( Q_IsColorString( (unsigned char*) txt ) || ((MV_GetCurrentGameversion() == VERSION_1_02 || MV_GetCurrentGameversion() == VERSION_1_03 || !Q_stricmp(Cvar_VariableString("mv_colorStrings"), "1.02") || !Q_stricmp(Cvar_VariableString("mv_colorStrings"), "1.03")) && Q_IsColorString_1_02( (unsigned char*) txt ) && Q_stricmp(Cvar_VariableString("mv_colorStrings"), "1.04")) ) { //Daggolin: 1.02 ColorStrings (console)
+		if ( Q_IsColorString( (unsigned char*) txt ) ||
+			  	( use102color && Q_IsColorString_1_02( (unsigned char*) txt ) ) ) {
 			color = ColorIndex( *(txt+1) );
 			txt += 2;
 			continue;

@@ -551,9 +551,11 @@ void Sys_AnsiColorPrint( const char *msg )
 		0,  // COLOR_WHITE
 	};
 
+	const bool use102col = MV_USE102COLOR;
+
 	while ( *msg )
 	{
-		if ( Q_IsColorStringExt( msg ) || *msg == '\n' )
+		if ( Q_IsColorString( msg ) || (use102col && Q_IsColorString_1_02(msg)) || *msg == '\n' )
 		{
 			// First empty the buffer
 			if ( length > 0 )

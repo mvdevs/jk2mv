@@ -67,7 +67,7 @@ static client_t *SV_GetPlayerByName( void ) {
 		}
 
 		Q_strncpyz( cleanName, cl->name, sizeof(cleanName) );
-		Q_CleanStr( cleanName );
+		Q_CleanStr( cleanName, (qboolean)MV_USE102COLOR );
 		if ( !Q_stricmp( cleanName, s ) ) {
 			return cl;
 		}
@@ -373,7 +373,7 @@ static client_t *SV_GetPlayerByFedName( const char *name )
 		}
 
 		Q_strncpyz( cleanName, cl->name, sizeof(cleanName) );
-		Q_CleanStr( cleanName );
+		Q_CleanStr( cleanName, (qboolean)MV_USE102COLOR );
 		if ( !Q_stricmp( cleanName, name ) )
 		{
 			return cl;

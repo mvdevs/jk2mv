@@ -204,12 +204,15 @@ static void CON_Show( void )
 	// set color to white
 	attrib = CON_ColorCharToAttrib( COLOR_WHITE );
 
+	const bool use102color = MV_USE102COLOR;
+
 	// build a space-padded CHAR_INFO array
 	for( i = 0; i < MAX_EDIT_LINE; i++ )
 	{
 		if( i < qconsole_linelen )
 		{
-			if( i + 1 < qconsole_linelen && Q_IsColorString( qconsole_line + i ) )
+			if( i + 1 < qconsole_linelen &&
+					(Q_IsColorString( qconsole_line + i ) || (use102color && Q_IsColorString_1_02( qconsole_line + i )) )
 				attrib = CON_ColorCharToAttrib( *( qconsole_line + i + 1 ) );
 
 			line[ i ].Char.AsciiChar = qconsole_line[ i ];
@@ -493,11 +496,13 @@ void CON_WindowsColorPrint( const char *msg )
 	static char buffer[ MAXPRINTMSG ];
 	int		 length = 0;
 
+	const bool use102color = MV_USE102COLOR;
+
 	while( *msg )
 	{
 		qconsole_drawinput = ( *msg == '\n' );
 
-		if( Q_IsColorString( msg ) || *msg == '\n' )
+		if( Q_IsColorString( msg ) || (use102color && Q_IsColorString_1_02(msg)) || *msg == '\n' )
 		{
 			// First empty the buffer
 			if( length > 0 )
