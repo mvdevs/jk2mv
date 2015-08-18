@@ -305,9 +305,19 @@ cvar_t *Cvar_Set2( const char *var_name, const char *value, qboolean force ) {
 		value = var->resetString;
 	}
 
-	if (!strcmp(value,var->string)) {
+	if (!strcmp(value, var->string)) {
+
+		if ( (var->flags & CVAR_LATCH) && var->latchedString ) {
+			Com_Printf("Cvar %s is no longer latched to \"%s\".\n", var->name, var->latchedString);
+			Z_Free (var->latchedString);
+			var->latchedString = NULL;
+			var->modified = qtrue;
+			var->modificationCount++;
+		}
+
 		return var;
 	}
+
 	// note what types of cvars have been modified (userinfo, archive, serverinfo, systeminfo)
 	cvar_modifiedFlags |= var->flags;
 
@@ -330,7 +340,10 @@ cvar_t *Cvar_Set2( const char *var_name, const char *value, qboolean force ) {
 			if (var->latchedString)
 			{
 				if (strcmp(value, var->latchedString) == 0)
+				{
+					Com_Printf("Cvar %s is already latched to \"%s\".\n", var->name, value);
 					return var;
+				}
 				Z_Free (var->latchedString);
 			}
 			else
