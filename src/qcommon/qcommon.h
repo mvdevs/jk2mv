@@ -31,7 +31,7 @@ void Field_Clear( field_t *edit );
 void Field_AutoComplete( field_t *edit );
 void Field_AutoComplete2( field_t *field, qboolean doCommands, qboolean doCvars, qboolean doArguments );
 void Field_CompleteKeyname( void );
-void Field_CompleteFilename( const char *dir, const char *ext, qboolean stripExt, qboolean allowNonPureFilesOnDisk );
+void Field_CompleteFilename( const char *dir, const char *ext, qboolean stripExt );
 void Field_CompleteCommand( char *cmd, qboolean doCommands, qboolean doCvars, qboolean doArguments );
 int Field_GetLastMatchCount();
 qboolean Field_WasComplete();
@@ -42,7 +42,7 @@ extern qboolean com_demoplaying;
 void Key_KeynameCompletion ( void(*callback)( const char *s ) );
 
 // files.cpp
-void FS_FilenameCompletion( const char *dir, const char *ext, qboolean stripExt, callbackFunc_t callback, qboolean allowNonPureFilesOnDisk );
+void FS_FilenameCompletion( const char *dir, const char *ext, qboolean stripExt, callbackFunc_t callback );
 
 // cmd.cpp
 static void Cmd_TokenizeString2( const char *text_in, qboolean ignoreQuotes );

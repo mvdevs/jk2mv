@@ -1232,6 +1232,17 @@ static void CL_CompleteRcon( char *args, int argNum )
 }
 
 /*
+==================
+CL_CompleteDemoName
+==================
+*/
+static void CL_CompleteDemoName( char *args, int argNum )
+{
+	if( argNum == 2 )
+		Field_CompleteFilename( "demos", "dm_15|dm_16", qfalse );
+}
+
+/*
 =================
 CL_SendPureChecksums
 =================
@@ -2758,6 +2769,7 @@ void CL_Init( void ) {
 	Cmd_AddCommand ("disconnect", CL_Disconnect_f);
 	Cmd_AddCommand ("record", CL_Record_f);
 	Cmd_AddCommand ("demo", CL_PlayDemo_f);
+	Cmd_SetCommandCompletionFunc( "demo", CL_CompleteDemoName );
 	Cmd_AddCommand ("cinematic", CL_PlayCinematic_f);
 	Cmd_AddCommand ("stoprecord", CL_StopRecord_f);
 	Cmd_AddCommand ("connect", CL_Connect_f);
