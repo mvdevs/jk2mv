@@ -539,6 +539,7 @@ static const intString_t cvarflags[] = {
 	{CVAR_CHEAT, "CHEAT"},
 	{CVAR_NORESTART, "NO RESTART"},
 	{CVAR_INTERNAL, "INTERNAL"},
+	{CVAR_GLOBAL, "GLOBAL"},
 };
 
 #define ARRAY_LEN(x) (sizeof (x) / sizeof( *(x) ))

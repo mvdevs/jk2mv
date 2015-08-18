@@ -274,8 +274,8 @@ Con_Init
 void Con_Init (void) {
 	int		i;
 
-	con_notifytime = Cvar_Get ("con_notifytime", "3", 0);
-	con_conspeed = Cvar_Get ("scr_conspeed", "3", 0);
+	con_notifytime = Cvar_Get ("con_notifytime", "3", CVAR_GLOBAL);
+	con_conspeed = Cvar_Get ("scr_conspeed", "3", CVAR_GLOBAL);
 
 	Field_Clear( &kg.g_consoleField );
 	kg.g_consoleField.widthInChars = g_console_field_width;
