@@ -1880,7 +1880,7 @@ qboolean Item_TextScroll_HandleKey ( itemDef_t *item, int key, qboolean down, qb
 		max = Item_TextScroll_MaxScroll(item);
 
 		viewmax = (item->window.rect.h / scrollPtr->lineHeight);
-		if ( key == A_CURSOR_UP || key == A_KP_8 || key == A_MWHEELUP ) // Daggolin: Enable scrolling with the mousewheel.
+		if ( key == A_CURSOR_UP || key == A_KP_8 || key == A_MWHEELUP ) // Enable scrolling with the mousewheel.
 		{
 			scrollPtr->startPos--;
 			if (scrollPtr->startPos < 0)
@@ -1890,7 +1890,7 @@ qboolean Item_TextScroll_HandleKey ( itemDef_t *item, int key, qboolean down, qb
 			return qtrue;
 		}
 
-		if ( key == A_CURSOR_DOWN || key == A_KP_2 || key == A_MWHEELDOWN ) // Daggolin: Enable scrolling with the mousewheel.
+		if ( key == A_CURSOR_DOWN || key == A_KP_2 || key == A_MWHEELDOWN ) // Enable scrolling with the mousewheel.
 		{
 			scrollPtr->startPos++;
 			if (scrollPtr->startPos > max)
@@ -2311,7 +2311,7 @@ qboolean Item_ListBox_HandleKey(itemDef_t *item, int key, qboolean down, qboolea
 			viewmax = (item->window.rect.w / listPtr->elementWidth);
 
 			if ( key == A_MWHEELUP || key == A_MWHEELDOWN )
-			{ // Daggolin: Enable scrolling with the mousewheel.
+			{ // Enable scrolling with the mousewheel.
 				if ( key == A_MWHEELUP )	listPtr->startPos--;
 				if ( key == A_MWHEELDOWN )	listPtr->startPos++;
 
@@ -2371,7 +2371,7 @@ qboolean Item_ListBox_HandleKey(itemDef_t *item, int key, qboolean down, qboolea
 			viewmax = (item->window.rect.h / listPtr->elementHeight);
 
 			if ( key == A_MWHEELUP || key == A_MWHEELDOWN )
-			{ // Daggolin: Enable scrolling with the mousewheel.
+			{ // Enable scrolling with the mousewheel.
 				if ( key == A_MWHEELUP )	listPtr->startPos--;
 				if ( key == A_MWHEELDOWN )	listPtr->startPos++;
 
@@ -3210,7 +3210,7 @@ itemDef_t *Menu_SetPrevCursorItem(menuDef_t *menu) {
 
 		if (Item_SetFocus(menu->items[menu->cursorItem], DC->cursorx, DC->cursory)) {
 			Menu_HandleMouseMove(menu, menu->items[menu->cursorItem]->window.rect.x + 1, menu->items[menu->cursorItem]->window.rect.y + 1);
-			if ( oldCursor > 0 && menu->items[oldCursor] ) Item_MouseLeave(menu->items[oldCursor]); // Daggolin: Stop highlighting the last element.
+			if ( oldCursor > 0 && menu->items[oldCursor] ) Item_MouseLeave(menu->items[oldCursor]); // Stop highlighting the last element.
       return menu->items[menu->cursorItem];
     }
   }
@@ -3239,7 +3239,7 @@ itemDef_t *Menu_SetNextCursorItem(menuDef_t *menu) {
     }
 		if (Item_SetFocus(menu->items[menu->cursorItem], DC->cursorx, DC->cursory)) {
 			Menu_HandleMouseMove(menu, menu->items[menu->cursorItem]->window.rect.x + 1, menu->items[menu->cursorItem]->window.rect.y + 1);
-			if ( oldCursor > 0 && menu->items[oldCursor] ) Item_MouseLeave(menu->items[oldCursor]); // Daggolin: Stop highlighting the last element.
+			if ( oldCursor > 0 && menu->items[oldCursor] ) Item_MouseLeave(menu->items[oldCursor]); // Stop highlighting the last element.
       return menu->items[menu->cursorItem];
     }
 
@@ -4682,7 +4682,7 @@ void Item_ListBox_Paint(itemDef_t *item) {
 						else
 						*/
 
-						//Daggolin: Mark 1.04 server BEFORE writing text (so the "box" is under the text, not over it)
+						// Mark 1.04 server BEFORE writing text (so the "box" is under the text, not over it)
 						if (optionalImage4 >= 0)
 						{
 							if (protocol == 16)
@@ -4709,7 +4709,7 @@ void Item_ListBox_Paint(itemDef_t *item) {
 						}
 						DC->setColor( NULL );
 
-						// ouned: serverversion icon
+						// serverversion icon
 						if (optionalImage4 >= 0) {
 							DC->drawHandlePic(540, y + 2, listPtr->elementHeight, listPtr->elementHeight, optionalImage4);
 						}
@@ -7314,7 +7314,7 @@ void Menu_PaintAll() {
 		DC->drawText(5, 45, .5, v, va("x: %d  y:%d", DC->cursorx,DC->cursory), 0, 0, 0, 0);
 	}
 
-	// ouned: motd
+	// motd
 	trap_Cvar_VariableStringBuffer("cl_motdString", motd, sizeof(motd));
 	if (strlen(motd)) {
 		DC->drawText(10, 465, 0.6f, v, motd, 0, 0, 0, 0);

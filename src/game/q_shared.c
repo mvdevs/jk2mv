@@ -83,7 +83,7 @@ char *COM_SkipPath (char *pathname)
 ============
 COM_StripExtension
 
-ouned: fixing R_RemapShader exploit
+R_RemapShader exploit
 http://www.exploit-db.com/exploits/1750/
 http://ioqsrc.vampireducks.com/d8/dbe/q__shared_8c-source.html#l00061
 ============
@@ -1313,7 +1313,7 @@ void Info_SetValueForKey( char *s, const char *key, const char *value ) {
 
 	Com_sprintf (newi, sizeof(newi), "\\%s\\%s", key, value);
 
-	// ouned: q3infoboom exploit
+	// q3infoboom exploit
 	if (strlen(newi) + strlen(s) >= MAX_INFO_STRING)
 	{
 		Com_Printf ("Info string length exceeded\n");
@@ -1362,7 +1362,7 @@ void Info_SetValueForKey_Big( char *s, const char *key, const char *value ) {
 
 	Com_sprintf (newi, sizeof(newi), "\\%s\\%s", key, value);
 
-	// ouned: q3infoboom exploit
+	// q3infoboom exploit
 	if (strlen(newi) + strlen(s) >= BIG_INFO_STRING)
 	{
 		Com_Printf ("BIG Info string length exceeded\n");
@@ -1387,7 +1387,7 @@ int Q_irand(int value1, int value2)
 //====================================================================
 
 
-// Daggolin: for auto-complete (copied from OpenJK)
+// for auto-complete (copied from OpenJK)
 
 /*
 ============

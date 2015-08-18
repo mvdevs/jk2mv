@@ -153,7 +153,7 @@ static void R_DrawElements( int numIndexes, const glIndex_t *indexes ) {
 
 	primitives = r_primitives->integer;
 
-	if ( primitives < 0 || primitives >= 4 ) Cvar_Set("r_primitives", "0"); //Daggolin: If primitives is not in the range from 0 to 3 set it back to 0, as we wouldn't see anything valid onscreen otherwise (new players are often tricked into setting r_primitives to such values and don't know how to set it back, as not even the console is displayed properly)
+	if ( primitives < 0 || primitives >= 4 ) Cvar_Set("r_primitives", "0"); // If primitives is not in the range from 0 to 3 set it back to 0, as we wouldn't see anything valid onscreen otherwise (new players are often tricked into setting r_primitives to such values and don't know how to set it back, as not even the console is displayed properly)
 
 	// default is to use triangles if compiled vertex arrays are present
 	if ( primitives == 0 ) {

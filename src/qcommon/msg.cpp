@@ -470,7 +470,7 @@ char *MSG_ReadBigString(msg_t *msg) {
 }
 
 char *MSG_ReadStringLine(msg_t *msg) {
-	static char	string[MAX_STRING_CHARS]; // Now 320 and not 1024 (jk2 crashes at ~850) //Daggolin: Reverted to MAX_STRING_CHARS (1024) - had bad side effects -> TODO
+	static char	string[MAX_STRING_CHARS];
 	int		l, c;
 
 	l = 0;

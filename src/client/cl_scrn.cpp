@@ -389,7 +389,7 @@ void SCR_Init( void ) {
 //=======================================================
 
 void MV_DrawConnectingInfo( void )
-{ //Daggolin - Versioninfo when loading...
+{ // Versioninfo when loading...
 	int		 yPos = 5;
 	int		 line = 17;
 	char	 txtbuf[128];
@@ -454,7 +454,7 @@ void SCR_DrawScreenField( stereoFrame_t stereoFrame ) {
 			// draw the game information screen and loading progress
 			CL_CGameRendering( stereoFrame );
 
-			MV_DrawConnectingInfo(); //Daggolin
+			MV_DrawConnectingInfo();
 
 			// also draw the connection information, so it doesn't
 			// flash away too briefly on local or lan games

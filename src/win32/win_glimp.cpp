@@ -718,7 +718,7 @@ static rserr_t GLW_SetMode( int mode,
 	//
 	ri.Printf( PRINT_ALL, "...setting mode %d:", mode );
 
-	// ouned: native resolution
+	// native resolution
 	glConfig.vidWidth = glw_state.desktopWidth;
 	glConfig.vidHeight = glw_state.desktopHeight;
 
@@ -1471,7 +1471,7 @@ static void GLW_InitExtensions( void )
 		Cvar_Set( "r_DynamicGlow","0" );
 	}
 
-	// ouned: gamma correction
+	// gamma correction
 	if (bTexRectSupported && bARBVertexProgram && bARBFragmentProgram) {
 		glConfig.deviceSupportsPostprocessingGamma = qtrue;
 	} else {

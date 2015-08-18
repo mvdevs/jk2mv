@@ -1289,13 +1289,8 @@ int FileLength(FILE *fp)
 	return end;
 } //end of the function FileLength
 #endif
-//============================================================================
-//
-// Parameter:				-
-// Returns:					-
-// Changes Globals:		-
-//============================================================================
-// ouned: patchfile system
+
+// patchfile system
 struct line_t {
 	int vline;
 	std::string str;

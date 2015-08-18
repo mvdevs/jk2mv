@@ -182,7 +182,7 @@ else()
 	set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -ggdb")
 	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -ggdb")
 
-	# ouned: need sse optimizations in debug configuration, too because of the inline assembler which is sse code
+	# we need sse optimizations in debug configuration, too because of the inline assembler which is sse code
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -msse2")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse2")
 

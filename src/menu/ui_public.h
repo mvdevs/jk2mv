@@ -162,7 +162,7 @@ typedef enum {
 #define SORT_CLIENTS		2
 #define SORT_GAME			3
 #define SORT_PING			4
-#define SORT_CLIENTS_NOBOTS 5 // ouned: botfilter
+#define SORT_CLIENTS_NOBOTS 5 // botfilter
 
 typedef enum {
 	UI_GETAPIVERSION = 0,	// system reserved

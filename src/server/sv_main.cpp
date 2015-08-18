@@ -5,7 +5,7 @@ serverStatic_t	svs;				// persistant server info
 server_t		sv;					// local server
 vm_t			*gvm = NULL;				// game virtual machine // bk001212 init
 
-netadr_t		mv_lastAdr;		// Daggolin: MV-API
+netadr_t		mv_lastAdr;		// MV-API
 
 cvar_t	*sv_fps;				// time rate for running non-clients
 cvar_t	*sv_timeout;			// seconds without any message
@@ -36,7 +36,7 @@ cvar_t	*sv_allowAnonymous;
 cvar_t	*sv_needpass;
 cvar_t	*mv_serverversion;
 
-// ouned: toggleable fixes
+// jk2mv's toggleable fixes
 cvar_t	*mv_fixnamecrash;
 cvar_t	*mv_fixforcecrash;
 cvar_t	*mv_fixgalaking;
@@ -164,7 +164,7 @@ void QDECL SV_SendServerCommand(client_t *cl, const char *fmt, ...) {
 	vsprintf ((char *)message, fmt,argptr);
 	va_end (argptr);
 
-	// ouned: q3msgboom exploit
+	// q3msgboom exploit
 	if (strlen((char *)message) > 1022) {
 		return;
 	}
@@ -542,7 +542,7 @@ void SVC_Info( netadr_t from ) {
 		return;
 	}
 
-	// ouned: q3infoboom exploit
+	// q3infoboom exploit
 	if (strlen(Cmd_Argv(1)) > 128)
 		return;
 
@@ -593,7 +593,7 @@ void SVC_Info( netadr_t from ) {
 	}
 	Info_SetValueForKey( infostring, "sv_allowAnonymous", va("%i", sv_allowAnonymous->integer) );
 
-	// ouned: webserver port
+	// webserver port
 	if (mv_httpdownloads->integer) {
 		Info_SetValueForKey(infostring, "mvhttp", va("%i", sv.http_port));
 	}
@@ -717,7 +717,7 @@ void SV_ConnectionlessPacket( netadr_t from, msg_t *msg ) {
 		// server disconnect messages when their new server sees our final
 		// sequenced messages to the old client
 	} else {
-		// Daggolin: MV-API
+		// MV-API
 		memcpy(&mv_lastAdr, &from, sizeof(netadr_t));
 		if ( !VM_Call(gvm, MV_CONNECTIONLESS_PACKET, from.ip[0], from.ip[1], from.ip[2], from.ip[3]) )
 		{

@@ -805,23 +805,19 @@ void RE_Font_DrawString(int ox, int oy, const char *psText, const float *rgba, c
 
 
 	// Draw a dropshadow if required
-	if ( iFontHandle & STYLE_DROPSHADOW ) {
-		if ((MV_GetCurrentGameversion() == VERSION_1_02 || mv_nameShadows->integer == 1) && mv_nameShadows->integer)
-		{
+	if (iFontHandle & STYLE_DROPSHADOW) {
+		if ((MV_GetCurrentGameversion() == VERSION_1_02 || mv_nameShadows->integer == 1) && mv_nameShadows->integer) {
 			int i = 0, r = 0;
 			char dropShadowText[1024];
-			static const vec4_t v4DKGREY2 = {0.15f, 0.15f, 0.15f, 1};
+			static const vec4_t v4DKGREY2 = { 0.15f, 0.15f, 0.15f, 1 };
 
 			offset = Round(curfont->GetPointSize() * fScale * 0.075f);
 
 			//^blah stuff confuses shadows, so parse it out first
-			while (psText[i] && r < 1024)
-			{
-				if (psText[i] == '^')
-				{
-					if ( (i < 1 || psText[i-1] != '^') &&
-						(!psText[i+1] || psText[i+1] != '^') )
-					{ //If char before or after ^ is ^ then it prints ^ instead of accepting a colorcode
+			while (psText[i] && r < 1024) {
+				if (psText[i] == '^') {
+					if ((i < 1 || psText[i - 1] != '^') &&
+						(!psText[i + 1] || psText[i + 1] != '^')) { //If char before or after ^ is ^ then it prints ^ instead of accepting a colorcode
 						i += 2;
 					}
 				}

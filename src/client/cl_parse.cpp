@@ -356,7 +356,7 @@ void CL_SystemInfoChanged( void ) {
 			gameSet = qtrue;
 		}
 
-		//[Daggolin] - Prevent the server from overwriting existing cVars (like graphic settings)
+		// Prevent the server from overwriting existing cVars (like graphic settings)
 		cvar_t *var = Cvar_FindVar (key);
 
 		if ( !var )
@@ -369,7 +369,6 @@ void CL_SystemInfoChanged( void ) {
 		{ // Cvar already exists and is SYSTEMINFO, just set its value
 			Cvar_Set( key, value );
 		}
-		//[/Daggolin]
 	}
 	// if game folder should not be set and it is set at the client side
 	if ( !gameSet && *Cvar_VariableString("fs_game") ) {

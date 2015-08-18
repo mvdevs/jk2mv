@@ -1263,7 +1263,7 @@ const void	*RB_SwapBuffers( const void *data ) {
 		RB_EndSurface();
 	}
 
-	// ouned: gamma correction
+	// gamma correction
 	if (glConfig.deviceSupportsPostprocessingGamma && r_gammamethod->integer == GAMMA_POSTPROCESSING) {
 		qglMatrixMode(GL_PROJECTION);
 		qglLoadIdentity();

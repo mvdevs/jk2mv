@@ -20,7 +20,7 @@ void WG_CheckHardwareGamma( void )
 
 	glConfig.deviceSupportsGamma = qfalse;
 
-	// ouned: gamma correction
+	// gamma correction
 	// for the fallback, always check if it will work
 	if ( r_gammamethod->integer >= GAMMA_HARDWARE ) {
 		hDC = GetDC( GetDesktopWindow() );
@@ -83,7 +83,7 @@ void GLimp_SetGamma( unsigned char red[256], unsigned char green[256], unsigned 
 	}
 
 	// Win2K puts this odd restriction on gamma ramps...
-	// ouned: https://github.com/JACoders/OpenJK/commit/43322f7f25dfce966bdbed7376c698cddf796284
+	// https://github.com/JACoders/OpenJK/commit/43322f7f25dfce966bdbed7376c698cddf796284
 	vinfo.dwOSVersionInfoSize = sizeof(vinfo);
 	GetVersionEx( &vinfo );
 	if ( vinfo.dwMajorVersion >= 5 && vinfo.dwPlatformId == VER_PLATFORM_WIN32_NT ) {
@@ -121,7 +121,7 @@ void GLimp_SetGamma( unsigned char red[256], unsigned char green[256], unsigned 
 ** WG_RestoreGamma
 */
 void WG_RestoreGamma( void ) {
-	// ouned: gamma correction
+	// gamma correction
 	if (r_gammamethod->integer != GAMMA_HARDWARE) {
 		return;
 	}

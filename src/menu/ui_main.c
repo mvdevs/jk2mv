@@ -2528,7 +2528,7 @@ static void UI_DrawKeyBindStatus(rectDef_t *rect, float scale, vec4_t color, int
 static void UI_DrawGLInfo(rectDef_t *rect, float scale, vec4_t color, int textStyle,int iMenuFont)
 {
 	char * eptr;
-	char buff[4096*8]; // ouned: increased
+	static char buff[32768]; // increased in jk2mv
 	const char *lines[128*8];
 	int y, numLines, i;
 
@@ -2537,7 +2537,7 @@ static void UI_DrawGLInfo(rectDef_t *rect, float scale, vec4_t color, int textSt
 	Text_Paint(rect->x + 2, rect->y + 30, scale, color, va ("GL_PIXELFORMAT: color(%d-bits) Z(%d-bits) stencil(%d-bits)", uiInfo.uiDC.glconfig.colorBits, uiInfo.uiDC.glconfig.depthBits, uiInfo.uiDC.glconfig.stencilBits), 0, 30, textStyle,iMenuFont);
 
 	// build null terminated extension strings
-	Q_strncpyz(buff, uiInfo.uiDC.glconfig.extensions_string, 4096);
+	Q_strncpyz(buff, uiInfo.uiDC.glconfig.extensions_string, sizeof(buff));
 	eptr = buff;
 	y = rect->y + 45;
 	numLines = 0;
@@ -3590,7 +3590,7 @@ UI_ServersQsortCompare
 static int QDECL UI_ServersQsortCompare( const void *arg1, const void *arg2 ) {
 	int fakeKey = uiInfo.serverStatus.sortKey;
 
-	// ouned: fake over to new sorting without bots
+	// fake over to new sorting without bots
 	if (fakeKey == SORT_CLIENTS && trap_Cvar_VariableValue("ui_botfilter")) {
 		fakeKey = SORT_CLIENTS_NOBOTS;
 	}
@@ -3738,7 +3738,7 @@ static void UI_LoadDemos() {
 	int		i;
 	size_t len;
 
-	//Daggolin: Load "dm_15" and "dm_16" demos.
+	// Load "dm_15" and "dm_16" demos.
 	int		protocol;
 	int		oldCount = 0;
 	uiInfo.demoCount = 0;
@@ -3903,21 +3903,7 @@ static void UI_Update(const char *name) {
 
  	if (Q_stricmp(name, "ui_SetName") == 0) {
 		trap_Cvar_Set( "name", UI_Cvar_VariableString("ui_Name"));
- 	} else if (Q_stricmp(name, "ui_setRate") == 0) {
-		// ouned: not in 2014
-
-		/*float rate = trap_Cvar_VariableValue("rate");
-		if (rate >= 5000) {
-			trap_Cvar_Set("cl_maxpackets", "30");
-			trap_Cvar_Set("cl_packetdup", "1");
-		} else if (rate >= 4000) {
-			trap_Cvar_Set("cl_maxpackets", "15");
-			trap_Cvar_Set("cl_packetdup", "2");		// favor less prediction errors when there's packet loss
-		} else {
-			trap_Cvar_Set("cl_maxpackets", "15");
-			trap_Cvar_Set("cl_packetdup", "1");		// favor lower bandwidth
-		}*/
-	}
+ 	}
 	else if (Q_stricmp(name, "ui_GetName") == 0)
 	{
 		trap_Cvar_Set( "ui_Name", UI_Cvar_VariableString("name"));
@@ -4040,7 +4026,7 @@ static void UI_Update(const char *name) {
 			trap_Cvar_SetValue( "m_pitch", -0.022f );
 		}
 	}
-	// ouned: screen resolutions
+	// screen resolutions
 	else if (!Q_stricmp(name, "ui_r_aspectratio")) {
 		int r_mode = (int)trap_Cvar_VariableValue("ui_r_mode");
 
@@ -4193,7 +4179,7 @@ void UI_GetVideoSetup ( void )
 	trap_Cvar_Set ( "ui_cg_shadows", UI_Cvar_VariableString ( "cg_shadows" ) );
 	trap_Cvar_Set ( "ui_r_modified", "0" );
 
-	// ouned: screen resolutions
+	// screen resolutions
 	trap_Cvar_Register(NULL, "ui_r_aspectratio", "0", CVAR_ROM | CVAR_INTERNAL);
 	trap_Cvar_Set("ui_r_aspectratio", UI_Cvar_VariableString("r_aspectratio"));
 }
@@ -4740,7 +4726,7 @@ static void UI_RunMenuScript(char **args)
 			}
 		}
 		else if (Q_stricmp(name, "MVContinueDownload") == 0) {
-			// ouned: download popup
+			// download popup
 			trap_Key_SetCatcher(trap_Key_GetCatcher() & ~KEYCATCH_UI);
 			trap_Key_ClearStates();
 			Menus_CloseAll();
@@ -4958,7 +4944,7 @@ static void UI_BinaryServerInsertion(int num) {
 
 		fakeKey = uiInfo.serverStatus.sortKey;
 
-		// ouned: fake over to new sorting without bots
+		// fake over to new sorting without bots
 		if (fakeKey == SORT_CLIENTS && trap_Cvar_VariableValue("ui_botfilter")) {
 			fakeKey = SORT_CLIENTS_NOBOTS;
 		}
@@ -5049,7 +5035,7 @@ static void UI_BuildServerDisplayList(qboolean force) {
 		// get the ping for this server
 		ping = trap_LAN_GetServerPing(ui_netSource.integer, i);
 		if (ping > 0 || ui_netSource.integer == AS_FAVORITES) {
-			// ouned: botfilter
+			// botfilter
 			int realPlayers;
 			int clients;
 			int bots;
@@ -5090,9 +5076,9 @@ static void UI_BuildServerDisplayList(qboolean force) {
 				}
 			}
 
-			// ouned: serverlist filtering
+			// serverlist filtering
 			if (ui_serverFilterType.integer > 0) {
-				int gameVersion = 0; // Daggolin: Using the "gameVersion" now to support seperate lists for 1.02, 1.03 and 1.04
+				int gameVersion = 0; // Using the "gameVersion" now to support seperate lists for 1.02, 1.03 and 1.04
 
 				if (ui_serverFilterType.integer == 1)
 					gameVersion = 2;
@@ -5729,11 +5715,11 @@ static const char *UI_FeederItemText(float feederID, int index, int column,
 							*handle3 = trap_R_RegisterShaderNoMip( "gfx/menus/needpass" );
 						}
 
-						// ouned: serverversion icon
+						// serverversion icon
 						int_protocol = atoi(Info_ValueForKey(info, "protocol"));
 						*protocol = int_protocol;
 
-						// Daggolin: 1.03
+						// 1.03
 						*gameVersion = atoi(Info_ValueForKey(info, "gameVersion"));
 
 						// do this only if no gameversion is selected
@@ -5817,7 +5803,7 @@ static const char *UI_FeederItemText(float feederID, int index, int column,
 					return Info_ValueForKey(info, "mapname");
 				case SORT_CLIENTS:
 				{
-					// ouned: botfilter
+					// botfilter
 					int clients = atoi(Info_ValueForKey(info, "clients"));
 					int bots = atoi(Info_ValueForKey(info, "bots"));
 					int maxclients = atoi(Info_ValueForKey(info, "sv_maxclients"));
@@ -6635,7 +6621,7 @@ void _UI_Init( qboolean inGameLoad ) {
 		if (!trap_SP_Register(va("menus%d",i)))	//, /*SP_REGISTER_REQUIRED|*/SP_REGISTER_MENU))
 			break;
 	}
-	trap_SP_Register("mv"); // ouned: language file
+	trap_SP_Register("mv"); // language file
 
 
 	Init_Display(&uiInfo.uiDC);
@@ -6707,9 +6693,9 @@ void _UI_Init( qboolean inGameLoad ) {
 
 	trap_Cvar_Set("ui_actualNetGameType", va("%d", ui_netGameType.integer));
 
-	trap_Cvar_Register(&ui_serverFilterType, "ui_serverFilterType", "0", CVAR_ARCHIVE | CVAR_GLOBAL); //Daggolin
+	trap_Cvar_Register(&ui_serverFilterType, "ui_serverFilterType", "0", CVAR_ARCHIVE | CVAR_GLOBAL);
 
-	// ouned: botfilter
+	// botfilter
 	trap_Cvar_Register(&ui_botfilter, "ui_botfilter", "0", CVAR_ARCHIVE | CVAR_GLOBAL);
 }
 
@@ -6874,7 +6860,7 @@ void _UI_SetActiveMenu( uiMenuCommand_t menu ) {
 			Menus_ActivateByName("ingame_playerforce");
 			UpdateForceUsed();
 		  return;
-		  // ouned: download popup
+		  // download popup
 	  case UIMENU_MV_DOWNLOAD_POPUP:
 			trap_Key_SetCatcher(KEYCATCH_UI);
 			Menus_CloseAll();
@@ -6928,7 +6914,7 @@ void Text_PaintCenter(float x, float y, float scale, vec4_t color, const char *t
 	Text_Paint(x - len / 2, y, scale, color, text, 0, 0, ITEM_TEXTSTYLE_SHADOWEDMORE, iMenuFont);
 }
 
-// ouned: made this look a little bit better
+// made this look a little bit better
 // also prints the download method now
 static void UI_DisplayDownloadInfo( const char *downloadName, float centerPoint, float yStart, float scale, int iMenuFont) {
 	char sDownLoading[256];
@@ -6971,7 +6957,7 @@ static void UI_DisplayDownloadInfo( const char *downloadName, float centerPoint,
 
 		UI_SetColor(colorWhite);
 
-		// ouned: round() = floor(x + 0.5)
+		// round() = floor(x + 0.5)
 		// microsoft has no round() in vs2010, wtf?
 		percent = (int)floor((double)downloadCount * 100 / downloadSize + 0.5);
 		xes = (int)floor((double)X_NUM / 100 * percent + 0.5);
@@ -7277,7 +7263,7 @@ vmCvar_t	ui_realWarmUp;
 vmCvar_t	ui_serverStatusTimeOut;
 vmCvar_t	s_language;
 
-//ouned: botfilter
+// botfilter
 vmCvar_t	ui_botfilter;
 
 // bk001129 - made static to avoid aliasing
@@ -7526,7 +7512,7 @@ static void UI_StartServerRefresh(qboolean full)
 
 	qtime_t q;
 	trap_RealTime(&q);
-	// ouned: serverlist refresh datetime fix
+	// serverlist refresh datetime fix
 	Com_sprintf(cvarstr, sizeof(cvarstr), "ui_lastServerRefresh_%i", ui_netSource.integer);
 	trap_Cvar_Set(cvarstr, va("%s-%i, %i @ %02i:%02i", GetMonthAbbrevString(q.tm_mon), q.tm_mday, 1900 + q.tm_year, q.tm_hour, q.tm_min));
 

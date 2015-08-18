@@ -65,7 +65,7 @@ typedef struct {
 
 	int				http_port;
 
-	//Daggolin: MV-API
+	// MV-API
 	sharedEntityMV_t *gentitiesMV;
 	int				  gentitySizeMV;
 } server_t;
@@ -205,7 +205,7 @@ extern	serverStatic_t	svs;				// persistant server info across maps
 extern	server_t		sv;					// cleared each map
 extern	vm_t			*gvm;				// game virtual machine
 
-extern	netadr_t		mv_lastAdr;			// Daggolin: MV-API
+extern	netadr_t		mv_lastAdr;			// MV-API
 
 extern	cvar_t	*sv_fps;
 extern	cvar_t	*sv_timeout;
@@ -236,7 +236,7 @@ extern	cvar_t	*sv_allowAnonymous;
 extern	cvar_t	*sv_needpass;
 extern	cvar_t	*mv_serverversion;
 
-// ouned: toggleable fixes
+// toggleable fixes
 extern	cvar_t	*mv_fixnamecrash;
 extern	cvar_t	*mv_fixforcecrash;
 extern	cvar_t	*mv_fixgalaking;
@@ -347,7 +347,7 @@ void SV_SendClientSnapshot( client_t *client );
 //
 int	SV_NumForGentity( sharedEntity_t *ent );
 sharedEntity_t *SV_GentityNum( int num );
-sharedEntityMV_t *MV_EntityNum( int num ); //Daggolin: MV-API
+sharedEntityMV_t *MV_EntityNum( int num ); // MV-API
 playerState_t *SV_GameClientNum( int num );
 svEntity_t	*SV_SvEntityForGentity( sharedEntity_t *gEnt );
 sharedEntity_t *SV_GEntityForSvEntity( svEntity_t *svEnt );
@@ -355,7 +355,7 @@ void		SV_InitGameProgs ( void );
 void		SV_ShutdownGameProgs ( void );
 void		SV_RestartGameProgs( void );
 qboolean	SV_inPVS (const vec3_t p1, const vec3_t p2);
-void		MV_SendConnectionlessPacket(char *msg); // Daggolin: MV-API
+void		MV_SendConnectionlessPacket(char *msg); // MV-API
 
 //
 // sv_bot.c

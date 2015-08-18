@@ -89,7 +89,7 @@ const unsigned char g_strGlowPShaderARB[] =
 
 static char *s_shaderText;
 
-// Daggolin: Dynamic Glow
+// Dynamic Glow
 static char *mv_dynGlowShaders = NULL;
 
 // the shader is parsed into these global variables, then copied into
@@ -3375,7 +3375,7 @@ inline qboolean IsShader(shader_t *sh, const char *name, const int *lightmapInde
 	return qtrue;
 }
 
-// Daggolin: Dynamic Glow
+// Dynamic Glow
 qboolean MV_IsGlowStage( shader_t *shader, shaderStage_t *stage )
 {
 	int i;
@@ -3502,7 +3502,7 @@ shader_t *R_FindShader( const char *name, const int *lightmapIndex, const byte *
 			// had errors, so use default shader
 			shader.defaultShader = qtrue;
 		}
-		// Daggolin: Dynamic Glow
+		// Dynamic Glow
 		for ( i = 0; i < MAX_SHADER_STAGES; i++ )
 		{
 			if ( MV_IsGlowStage( &shader, &stages[i] ) )
@@ -4208,7 +4208,7 @@ static void CreateInternalShaders( void ) {
 
 
 #ifndef DEDICATED
-	// ouned: gamma correction
+	// gamma correction
 	if (glConfig.deviceSupportsPostprocessingGamma && r_gammamethod->integer == GAMMA_POSTPROCESSING) {
 		if (MV_GammaGenerateProgram()) {
 			ri.Printf(PRINT_WARNING, "WARNING: failed initializing gamma program... falling back to hardware gamma correction\n");

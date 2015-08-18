@@ -302,7 +302,7 @@ static void SV_AddEntitiesVisibleFromPoint( vec3_t origin, clientSnapshot_t *fra
 			ent->s.number = e;
 		}
 
-		//Daggolin: MV-API
+		// MV-API
 		if ( sv.gentitiesMV != NULL && sv.gentitySizeMV > 0 )
 		{
 			sharedEntityMV_t *mvEnt = MV_EntityNum(e);
@@ -452,7 +452,7 @@ static void SV_BuildClientSnapshot( client_t *client ) {
 	if (MV_GetCurrentGameversion() != VERSION_1_02) {
 		frame->ps = *ps;
 	} else {
-		// ouned: tricky but works atleast on x86
+		// tricky but works atleast on x86
 		playerState15_t *ps15 = (playerState15_t *)ps;
 
 		memcpy(&frame->ps, ps15, (((size_t)&ps15->saberIndex) - (size_t)ps15));

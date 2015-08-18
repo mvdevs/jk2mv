@@ -266,7 +266,7 @@ void SV_DirectConnect( netadr_t from ) {
 		Info_SetValueForKey( userinfo, "ip", "localhost" );
 	}
 
-	// ouned: q3fill protection
+	// q3fill protection
 	if (!Sys_IsLANAddress(from)) {
 		int connectingip = 0;
 
@@ -691,7 +691,7 @@ Downloads are finished
 ==================
 */
 void SV_DoneDownload_f( client_t *cl ) {
-	// ouned: donedl-flageating bugfix
+	// donedl-flageating bugfix
 	if (cl->state == CS_ACTIVE) {
 		return;
 	}
@@ -750,7 +750,7 @@ void SV_MV_Websrv_Request_MainThread() {
 	MV_ReleaseMutex(m_webreq);
 }
 
-// ouned: this is ugly but it syncs everything correctly
+// this is ugly but it syncs everything correctly
 // THIS FUNCTION IS NOT CALLED ON THE MAIN THREAD
 int SV_MV_Websrv_Request_ExtThread(struct mg_connection *conn, enum mg_event ev) {
 	if (ev == MG_REQUEST) {
@@ -1205,7 +1205,7 @@ void SV_UserinfoChanged( client_t *cl ) {
 		cl->snapshotMsec = 50;
 	}
 
-	// ouned: namecrash fix
+	// namecrash fix
 #define VALIDNAMECHARS " aäbcdefghijklmnoöpqrstuüvwxyzßAÄBCDEFGHIJKLMNOÖPQRSTUÜVWXYZ1234567890^$&/()=?!´`'+#*.,:<>|{[]}-_~@%§\x0B\x7F"
 	if (mv_fixnamecrash->integer) {
 		char name[61], cleanedName[61]; // 60 because some mods increased this
@@ -1224,7 +1224,7 @@ void SV_UserinfoChanged( client_t *cl ) {
 		Info_SetValueForKey(cl->userinfo, "name", cleanedName);
 	}
 
-	// ouned: forcecrash fix
+	// forcecrash fix
 	if (mv_fixforcecrash->integer) {
 		char forcePowers[30];
 		Q_strncpyz(forcePowers, Info_ValueForKey(cl->userinfo, "forcepowers"), sizeof(forcePowers));
@@ -1269,7 +1269,7 @@ void SV_UserinfoChanged( client_t *cl ) {
 		Info_SetValueForKey(cl->userinfo, "forcepowers", forcePowers);
 	}
 
-	// ouned: serverside galaking fix
+	// serverside galaking fix
 	if (mv_fixgalaking->integer) {
 		char model[80];
 
@@ -1282,7 +1282,7 @@ void SV_UserinfoChanged( client_t *cl ) {
 			Info_SetValueForKey(cl->userinfo, "team_model", "galak/default");
 	}
 
-	// ouned: serverside broken models fix (head only model)
+	// serverside broken models fix (head only model)
 	if (mv_fixbrokenmodels->integer) {
 		char model[80];
 
@@ -1328,7 +1328,7 @@ static void SV_UpdateUserinfo_f( client_t *cl ) {
 	// call prog code to allow overrides
 	VM_Call( gvm, GAME_CLIENT_USERINFO_CHANGED, cl - svs.clients );
 
-	// ouned: get the name out of the game and set it in the engine
+	// get the name out of the game and set it in the engine
 	SV_GetConfigstring(CS_PLAYERS + (cl - svs.clients), info, sizeof(info));
 	Info_SetValueForKey(cl->userinfo, "name", Info_ValueForKey(info, "n"));
 	Q_strncpyz(cl->name, Info_ValueForKey(info, "n"), sizeof(cl->name));
@@ -1378,7 +1378,7 @@ void SV_ExecuteClientCommand( client_t *cl, const char *s, qboolean clientOK ) {
 		}
 	}
 
-	// ouned: q3cbufexec fix
+	// q3cbufexec fix
 	if (!Q_stricmp(cmd, "say") || !Q_stricmp(cmd, "say_team") || !Q_stricmp(cmd, "tell")) {
 		for (int i = 1; i < Cmd_Argc(); i++) {
 			if (strchr(Cmd_Argv(i), '\n') || strchr(Cmd_Argv(i), '\r')) {
@@ -1387,20 +1387,20 @@ void SV_ExecuteClientCommand( client_t *cl, const char *s, qboolean clientOK ) {
 		}
 	}
 
-	// ouned: disable useless vsay commands (because?)
+	// disable useless vsay commands (because?)
 	if (!Q_stricmp(cmd, "vsay") || !Q_stricmp(cmd, "vsay_team") || !Q_stricmp(cmd, "vtell") || !Q_stricmp(cmd, "vosay") ||
 		!Q_stricmp(cmd, "vosay_team") || !Q_stricmp(cmd, "votell") || !Q_stricmp(cmd, "vtaunt")) {
 		return;
 	}
 
-	// ouned: q3cbufexec fix
+	// q3cbufexec fix
 	if ((!Q_stricmp(cmd, "callvote") || !Q_stricmp(cmd, "callteamvote"))) {
 		if (strchr(arg1, ';') || strchr(arg2, ';') || strchr(arg1, '\n') || strchr(arg2, '\n') || strchr(arg1, '\r') || strchr(arg2, '\r')) {
 			return;
 		}
 	}
 
-	// ouned: teamcmd crash fix
+	// teamcmd crash fix
 	if (!Q_stricmp(cmd, "team") && (!Q_stricmp(arg1, "follow1") || !Q_stricmp(arg1, "follow2"))) {
 		return;
 	}

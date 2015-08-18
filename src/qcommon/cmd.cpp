@@ -290,14 +290,14 @@ typedef struct cmd_function_s
 	struct cmd_function_s	*next;
 	char					*name;
 	xcommand_t				function;
-	completionFunc_t		complete; // Daggolin: for auto-complete (copied from OpenJK)
+	completionFunc_t		complete; // for auto-complete (copied from OpenJK)
 } cmd_function_t;
 
 
 static	int			cmd_argc;
 static	char		*cmd_argv[MAX_STRING_TOKENS];		// points into cmd_tokenized
 static	char		cmd_tokenized[BIG_INFO_STRING+MAX_STRING_TOKENS];	// will have 0 bytes inserted
-// Daggolin: for auto-complete (copied from OpenJK)
+// for auto-complete (copied from OpenJK)
 static	char		cmd_cmd[BIG_INFO_STRING]; // the original command we received (no token processing)
 
 static	cmd_function_t	*cmd_functions;		// possible commands to execute
@@ -418,7 +418,7 @@ void	Cmd_AddCommand( const char *cmd_name, xcommand_t function ) {
 	cmd = (struct cmd_function_s *)S_Malloc (sizeof(cmd_function_t));
 	cmd->name = CopyString( cmd_name );
 	cmd->function = function;
-	cmd->complete = NULL; // Daggolin: for auto-complete (copied from OpenJK)
+	cmd->complete = NULL; // for auto-complete (copied from OpenJK)
 	cmd->next = cmd_functions;
 	cmd_functions = cmd;
 }
@@ -560,7 +560,7 @@ void Cmd_List_f (void)
 Cmd_CompleteCfgName
 ==================
 */
-void Cmd_CompleteCfgName( char *args, int argNum ) { // Daggolin: for auto-complete (copied from OpenJK)
+void Cmd_CompleteCfgName( char *args, int argNum ) { // for auto-complete (copied from OpenJK)
 	if( argNum == 2 ) {
 		Field_CompleteFilename( "", "cfg", qfalse, qtrue );
 	}
@@ -581,7 +581,7 @@ void Cmd_Init (void) {
 	Cmd_AddCommand ("wait", Cmd_Wait_f);
 }
 
-// Daggolin: for auto-complete (copied from OpenJK)
+// for auto-complete (copied from OpenJK)
 /*
 ============
 Cmd_TokenizeString

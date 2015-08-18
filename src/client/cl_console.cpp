@@ -593,7 +593,7 @@ void Con_DrawSolidConsole( float frac ) {
 		SCR_DrawPic( 0, 0, SCREEN_WIDTH, (float) y, cls.consoleShader );
 	}
 
-	//Daggolin: Different color when compiling a DEBUG build.
+	// Different color when compiling a DEBUG build.
 #ifdef _DEBUG
 	const vec4_t color = /*{ 0.509f, 0.609f, 0.847f,  1.0f}*/{.70f, 0, 0, 1};
 #else

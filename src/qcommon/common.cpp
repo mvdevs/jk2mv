@@ -15,7 +15,7 @@
 #include <windows.h>
 #endif
 
-#define	MAXPRINTMSG	4096*2*2*2 // ouned: increased
+#define	MAXPRINTMSG	16384 // increased in jk2mv
 
 #define MAX_NUM_ARGVS	50
 
@@ -717,7 +717,7 @@ int Com_RealTime(qtime_t *qtime) {
 		qtime->tm_isdst = tms->tm_isdst;
 	}
 
-    // ouned: there is no other way
+    // there is no other way then casting
     // since mods could use the unix time
 	return (int)t;
 }
@@ -2371,7 +2371,7 @@ void Com_Init( char *commandLine ) {
 
 	Sys_SetFloatEnv();
 
-	// ouned: multiprotocol support
+	// multiprotocol support
 	// startup will be UNDEFINED
 	MV_SetCurrentGameversion(VERSION_UNDEF);
 
@@ -2504,23 +2504,6 @@ void Com_Init( char *commandLine ) {
 	// command line it will still be able to count on com_frameTime
 	// being random enough for a serverid
 	com_frameTime = Com_Milliseconds();
-
-
-	// add + commands from command line
-	if ( !Com_AddStartupCommands() )
-	{
-		// if the user didn't give any commands, run default action
-		if ( !com_dedicated->integer )
-		{
-			// ouned: doesn't work in widescreen anyway
-			//Cbuf_AddText ("cinematic openinglogos.roq\n");
-			// intro.roq is iD's.
-//				if( !com_introPlayed->integer ) {
-//					Cvar_Set( com_introPlayed->name, "1" );
-//					Cvar_Set( "nextmap", "cinematic intro.RoQ" );
-//				}
-		}
-	}
 
 	// start in full screen ui mode
 	Cvar_Set("r_uiFullScreen", "1");
@@ -2920,7 +2903,7 @@ float Q_acos(float c) {
 	return angle;
 }
 
-// ouned: multiprotocol support
+// multiprotocol support
 mvversion_t glbpro;
 
 void MV_SetCurrentGameversion(mvversion_t version) {
@@ -3000,7 +2983,7 @@ int MV_StrlenSkipColors( const char *str )
 }
 
 
-// Daggolin: for auto-complete (copied from OpenJK)
+// for auto-complete (copied from OpenJK)
 /*
 =============================================================================
 

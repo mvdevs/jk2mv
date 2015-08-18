@@ -45,7 +45,7 @@ sharedEntity_t *SV_GentityNum( int num ) {
 	return ent;
 }
 
-//Daggolin: MV-API
+// MV-API
 sharedEntityMV_t *MV_EntityNum( int num )
 {
 	sharedEntityMV_t *mvEnt = (sharedEntityMV_t *)( (byte *)sv.gentitiesMV + (sv.gentitySizeMV*num) );
@@ -294,7 +294,7 @@ MV_LocateGameData
 
 ===============
 */
-//Daggolin: MV-API
+// MV-API
 void MV_LocateGameData( sharedEntityMV_t *mvEnts, int numGEntities, int sizeofGEntityMV_t )
 {
 	sv.gentitiesMV = mvEnts;
@@ -315,8 +315,8 @@ void SV_GetUsercmd( int clientNum, usercmd_t *cmd ) {
 	}
 	*cmd = svs.clients[clientNum].lastUsercmd;
 
-	if ( cmd->forcesel == FP_LEVITATION && mv_blockchargejump->integer ) cmd->forcesel = FP_PUSH; // Daggolin: Prevent modified clients from using the "ChargeJump" (higher jumping, double-kicks, ...), but let the server toggle this (in case they are using a mod where it is a feature).
-	if ( mv_blockspeedhack->integer ) cmd->angles[ROLL] = 0; // Daggolin: Prevent modified clients from gaining more speed than others...
+	if ( cmd->forcesel == FP_LEVITATION && mv_blockchargejump->integer ) cmd->forcesel = FP_PUSH; // Prevent modified clients from using the "ChargeJump" (higher jumping, double-kicks, ...), but let the server toggle this (in case they are using a mod where it is a feature).
+	if ( mv_blockspeedhack->integer ) cmd->angles[ROLL] = 0; // Prevent modified clients from gaining more speed than others...
 }
 
 //==============================================
@@ -346,10 +346,10 @@ The module is making a system call
 extern bool RicksCrazyOnServer;
 
 intptr_t SV_GameSystemCalls( intptr_t *args ) {
-	// ouned: fix syscalls from 1.02 to match 1.04
+	// fix syscalls from 1.02 to match 1.04
 	// this is a mess... can it be done better?
 	if (MV_GetCurrentGameversion() == VERSION_1_02) {
-		if (args[0] > G_G2_GETBOLT_NOREC && args[0] < MV_G_LOCATE_GAME_DATA) { //Daggolin: MV-API
+		if (args[0] > G_G2_GETBOLT_NOREC && args[0] < MV_G_LOCATE_GAME_DATA) { // MV-API
 			args[0]++;
 		}
 	}
@@ -403,7 +403,7 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 	case G_LOCATE_GAME_DATA:
 		SV_LocateGameData( (sharedEntity_t *)VMA(1), args[2], args[3], (struct playerState_s *)VMA(4), args[5] );
 		return 0;
-	case MV_G_LOCATE_GAME_DATA: //Daggolin: MV-API
+	case MV_G_LOCATE_GAME_DATA: // MV-API
 		MV_LocateGameData( (sharedEntityMV_t*)VMA(1), args[2], args[3] );
 		return 0;
 	case G_DROP_CLIENT:
@@ -1087,7 +1087,7 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 			VMF(12));
 #endif
 		return 0;
-	// Daggolin: MV-API
+	// MV-API
 	case MV_SEND_CONNECTIONLESSPACKET:
 		MV_SendConnectionlessPacket((char*)VMA(1));
 		return 0;
@@ -1127,7 +1127,7 @@ static void SV_InitGameVM( qboolean restart ) {
 	// start the entity parsing at the beginning
 	sv.entityParsePoint = CM_EntityString();
 
-	//Daggolin: MV-API
+	// MV-API
 	VM_Call( gvm, MV_API_INIT, MV_API_VERSION );
 	sv.gentitiesMV = NULL;
 	sv.gentitySizeMV = 0;
@@ -1213,7 +1213,7 @@ qboolean SV_GameCommand( void ) {
 	return (qboolean)VM_Call( gvm, GAME_CONSOLE_COMMAND );
 }
 
-// Daggolin: MV-API
+// MV-API
 void MV_SendConnectionlessPacket(char *msg)
 {
 	NET_OutOfBandPrint(NS_SERVER, mv_lastAdr, msg);

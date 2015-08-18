@@ -8,10 +8,10 @@
 
 //============================================================================
 
-// Daggolin: for auto-complete (copied from OpenJK)
+// for auto-complete (copied from OpenJK)
 #define CONSOLE_PROMPT_CHAR ']'
 #define	MAX_EDIT_LINE		256
-#define COMMAND_HISTORY		(32*4) //Daggolin: Increased by "*4*
+#define COMMAND_HISTORY		128 // increased in jk2mv
 
 //For determining whether to allow 1.02 color codes:
 #define MV_USE102COLOR (MV_GetCurrentGameversion() == VERSION_1_02 || MV_GetCurrentGameversion() == VERSION_1_03)
@@ -551,7 +551,7 @@ issues.
 // number of id paks that will never be autodownloaded from base
 #define NUM_ID_PAKS		9
 
-#define	MAX_FILE_HANDLES	256 // ouned: increased from 64
+#define	MAX_FILE_HANDLES	256 // increased from 64 in jk2mv
 
 qboolean FS_Initialized();
 
@@ -1096,7 +1096,7 @@ extern huffman_t clientHuffTables;
 #define	CL_ENCODE_START		12
 #define CL_DECODE_START		4
 
-// ouned: multiprotocol support
+// multiprotocol support
 typedef enum {
 	VERSION_UNDEF = 0,
 	VERSION_1_02 = 2,

@@ -4,7 +4,7 @@
 // g_public.h -- game module information visible to server
 
 #define	GAME_API_VERSION	8
-#define	MV_API_VERSION		1 //Daggolin: MV-API
+#define	MV_API_VERSION		1 // MV-API
 
 // entity->svFlags
 // the server does not know how to interpret most of the values
@@ -78,7 +78,7 @@ typedef struct {
 	entityShared_t	r;				// shared by both the server system and game
 } sharedEntity_t;
 
-typedef struct { //Daggolin: MV-API
+typedef struct { // MV-API
 	byte	snapshotIgnore[MAX_CLIENTS];
 	byte	snapshotEnforce[MAX_CLIENTS];
 } sharedEntityMV_t;
@@ -432,7 +432,7 @@ Ghoul2 Insert Start
 /*
 Ghoul2 Insert End
 */
-	//Daggolin: MV-API
+	// MV-API
 	MV_G_LOCATE_GAME_DATA = 800,
 	MV_SEND_CONNECTIONLESSPACKET,
 
@@ -476,7 +476,7 @@ typedef enum {
 
 	GAME_ROFF_NOTETRACK_CALLBACK,	// int entnum, char *notetrack
 
-	//Daggolin: MV-API
+	// MV-API
 	MV_API_INIT = 30,
 	MV_CONNECTIONLESS_PACKET,
 

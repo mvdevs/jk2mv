@@ -40,7 +40,7 @@ properly.
 
 
 #define	MAX_FACETS			1024
-#define	MAX_PATCH_PLANES	4096 // ouned: doubled
+#define	MAX_PATCH_PLANES	4096 // doubled in jk2mv
 
 typedef struct {
 	float	plane[4];

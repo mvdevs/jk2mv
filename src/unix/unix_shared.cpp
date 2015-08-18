@@ -294,7 +294,7 @@ char *Sys_DefaultInstallPath(void)
         return installPath;
     } else {
 #if defined(MACOS_X) && !defined(DEDICATED) && !defined(PORTABLE)
-        // ouned: Inside the app...
+        // Inside the app...
         static char path[MAX_OSPATH];
         char *override;
 
@@ -321,7 +321,7 @@ void Sys_SetDefaultHomePath(const char *path)
 	Q_strncpyz(homePath, path, sizeof(homePath));
 }
 
-// ouned: if dedicated, i think it's a good idea to default fs_homepath to fs_basepath on unix, too
+// if dedicated, i think it's a good idea to default fs_homepath to fs_basepath on unix, too
 // remember it's only the default value
 char *Sys_DefaultHomePath(void)
 {
@@ -350,7 +350,7 @@ char *Sys_DefaultHomePath(void)
 #endif
 }
 
-// ouned: try to find assets from /Applications (Appstore JK2) or Steam
+// try to find assets from /Applications (Appstore JK2) or Steam
 // if not found try to find it in the same directory this app is
 char *Sys_DefaultAssetsPath() {
 #ifdef MACOS_X
@@ -481,7 +481,7 @@ void MV_MSleep(unsigned int msec) {
 	usleep(msec);
 }
 
-// ouned: from ioq3 requires sse
+// from ioq3 requires sse
 // i do not care about processors without sse
 
 #if idx64

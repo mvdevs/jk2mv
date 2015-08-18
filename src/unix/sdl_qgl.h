@@ -379,7 +379,7 @@ extern PFNGLGETPROGRAMIVARBPROC qglGetProgramivARB;
 extern PFNGLGETPROGRAMSTRINGARBPROC qglGetProgramStringARB;
 extern PFNGLISPROGRAMARBPROC qglIsProgramARB;
 
-// ouned: gamma correction
+// gamma correction
 extern		  GLboolean(APIENTRYP qglIsRenderbufferEXT) (GLuint renderbuffer);
 extern void	 (APIENTRYP qglBindRenderbufferEXT) (GLenum target, GLuint renderbuffer);
 extern void	 (APIENTRYP qglDeleteRenderbuffersEXT) (GLsizei n, const GLuint * renderbuffers);

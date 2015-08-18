@@ -302,7 +302,7 @@ typedef struct {
 	qboolean				stereoEnabled;
 	qboolean				smpActive;		// dual processor
 
-	// ouned: gamma correction
+	// gamma correction
 	qboolean				deviceSupportsPostprocessingGamma;
 } glconfig_t;
 

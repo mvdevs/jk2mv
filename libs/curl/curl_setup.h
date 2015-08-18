@@ -22,7 +22,7 @@
  *
  ***************************************************************************/
 
-// ouned: only http required
+// only http required from libcurl
 #define HTTP_ONLY
 #define CURL_DISABLE_CRYPTO_AUTH
 

@@ -12,7 +12,7 @@ if (BuildMVMP OR BuildMVDED)
 		set(MVMPDEDLibraries ${MVMPDEDLibraries} ${CMAKE_THREAD_LIBS_INIT})
 		set(MVMPDEDLibraries ${MVMPDEDLibraries} ${CMAKE_DL_LIBS})
 
-		# ouned: FIXME SDL2 is currently required even for building only the jk2mvded
+		# FIXME SDL2 is currently required even for building only the jk2mvded
 		# only the headers though
 		find_package(SDL2)
 		if(NOT SDL2_FOUND)
@@ -551,7 +551,7 @@ if (BuildMVMP)
 		find_program(ZIP_EXECUTABLE zip)
 		if(ZIP_EXECUTABLE)
 			add_custom_command(TARGET ${MVMP} POST_BUILD
-				# ouned: this is kind of tricky
+				# this is kind of tricky
 				COMMAND sh -c \"cd ${CMAKE_SOURCE_DIR}/assets && zip -r $<TARGET_FILE_DIR:${MVMP}>/base/assetsmv.pk3 *\"
 			)
 		endif()
@@ -571,7 +571,7 @@ if (BuildMVMP)
 	elseif(APPLE)
 		install(TARGETS ${MVMP} BUNDLE DESTINATION ".")
 
-		# ouned: copy over frameworks into the app
+		# copy over frameworks into the app
 		# for this to work it's required that the SDL2.framework is under ~/Library/Frameworks
         # and SDL2 has to be compiled without @rpath (builds from website are with @rpath)
         SET(APPS "\${CMAKE_INSTALL_PREFIX}/${MVMP}.app")

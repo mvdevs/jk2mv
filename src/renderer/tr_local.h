@@ -31,7 +31,7 @@ typedef unsigned int glIndex_t;
 #define MAX_STATES_PER_SHADER 32
 #define MAX_STATE_NAME 32
 
-// ouned: gamma correction
+// gamma correction
 #define GAMMA_DEFAULT "2" /* GAMMA_POSTPROCESSING */
 
 typedef enum {
@@ -1115,7 +1115,7 @@ typedef struct {
 	float					inverseSawToothTable[FUNCTABLE_SIZE];
 	float					fogTable[FOG_TABLE_SIZE];
 
-	// ouned: gamma correction
+	// gamma correction
 	GLuint gammaVertexShader, gammaPixelShader;
 	GLuint gammaRenderTarget;
 } trGlobals_t;
@@ -1201,7 +1201,7 @@ extern cvar_t	*r_windPointY;
 extern cvar_t	*r_mode;				// video mode
 extern cvar_t	*r_fullscreen;
 extern cvar_t	*r_gamma;
-extern cvar_t	*r_gammamethod;			// ouned: gamma correction
+extern cvar_t	*r_gammamethod;			// gamma correction
 extern cvar_t	*r_displayRefresh;		// optional display refresh option
 
 extern cvar_t	*r_allowExtensions;				// global enable/disable of OpenGL extensions

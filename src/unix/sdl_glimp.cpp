@@ -69,7 +69,7 @@ PFNGLISPROGRAMARBPROC qglIsProgramARB = NULL;
 void ( * qglLockArraysEXT)( int, int);
 void ( * qglUnlockArraysEXT) ( void );
 
-// ouned: gamma correction
+// gamma correction
 PFNGLGETHANDLEARBPROC qglGetHandleARB = NULL;
 PFNGLDELETEOBJECTARBPROC qglDeleteObjectARB = NULL;
 PFNGLDETACHOBJECTARBPROC qglDetachObjectARB = NULL;
@@ -976,7 +976,7 @@ static void GLimp_InitExtensions( void )
 		ri.Cvar_Set( "r_DynamicGlow","0" );
 	}
 
-	// ouned: gamma correction
+	// gamma correction
 	if (bTexRectSupported && bARBVertexProgram && bARBFragmentProgram) {
 		glConfig.deviceSupportsPostprocessingGamma = qtrue;
 	} else {
@@ -1056,7 +1056,7 @@ success:
 	// This values force the UI to disable driver selection
 	//	glConfig.driverType = GLDRV_ICD;
 	//	glConfig.hardwareType = GLHW_GENERIC;
-	glConfig.deviceSupportsGamma = (qboolean)(SDL_SetWindowBrightness( screen, 1.0f ) >= 0); // ouned: gamma correction
+	glConfig.deviceSupportsGamma = (qboolean)(SDL_SetWindowBrightness( screen, 1.0f ) >= 0); // gamma correction
 
 	// get our config strings
     Q_strncpyz(glConfig.vendor_string, (const char *)qglGetString(GL_VENDOR), sizeof(glConfig.vendor_string));

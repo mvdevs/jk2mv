@@ -27,7 +27,7 @@ extern char cl_cdkey[34];
 
 #endif // USE_CD_KEY
 
-// ouned: the UI keeps it's own protocol from init to shutdown to keep the keymapping
+// the UI keeps it's own protocol from init to shutdown to keep the keymapping
 // working correctly. (on a 1.02 server in the connecting screen the engine already communicates with protocol 15, but the jk2mvmenu is still running which needs keys16)
 mvversion_t uigameversion;
 
@@ -340,7 +340,7 @@ static void LAN_GetServerInfo( int source, int n, char *buf, int buflen ) {
 		Info_SetValueForKey( info, "wdisable", va("%i", server->weaponDisable ) );
 		Info_SetValueForKey( info, "fdisable", va("%i", server->forceDisable ) );
 		Info_SetValueForKey(info, "protocol", va("%i", server->protocol));
-		Info_SetValueForKey( info, "gameVersion", va("%i", server->gameVersion) ); // Daggolin: For 1.03 in the menu...
+		Info_SetValueForKey( info, "gameVersion", va("%i", server->gameVersion) ); // For 1.03 in the menu...
 //		Info_SetValueForKey( info, "pure", va("%i", server->pure ) );
 		Q_strncpyz(buf, info, buflen);
 	} else {
@@ -440,7 +440,7 @@ static int LAN_CompareServers( int source, int sortKey, int sortDir, int s1, int
 		case SORT_MAP:
 			res = Q_stricmp( server1->mapName, server2->mapName );
 			break;
-		case SORT_CLIENTS: // ouned: still there for backwards compatibility with "old" VM's
+		case SORT_CLIENTS: // still there for backwards compatibility with "old" VM's
 			if (server1->clients < server2->clients) {
 				res = -1;
 			}
@@ -818,7 +818,7 @@ The ui module is making a system call
 */
 
 intptr_t CL_UISystemCalls(intptr_t *args) {
-	// ouned: fix syscalls from 1.02 to match 1.04
+	// fix syscalls from 1.02 to match 1.04
 	// this is a mess... can it be done better?
 	if (UI_GetCurrentGameversion() == VERSION_1_02) {
 		if (args[0] == 61) {
@@ -967,19 +967,19 @@ intptr_t CL_UISystemCalls(intptr_t *args) {
 		return 0;
 
 	case UI_KEY_KEYNUMTOSTRINGBUF:
-		Key_KeynumToStringBuf(Key_GetProtocolKey15(UI_GetCurrentGameversion(), args[1]), (char *)VMA(2), args[3]); //Daggolin: 1.02 keynums -> 1.04 keynums
+		Key_KeynumToStringBuf(Key_GetProtocolKey15(UI_GetCurrentGameversion(), args[1]), (char *)VMA(2), args[3]); // 1.02 keynums -> 1.04 keynums
 		return 0;
 
 	case UI_KEY_GETBINDINGBUF:
-		Key_GetBindingBuf(Key_GetProtocolKey15(UI_GetCurrentGameversion(), args[1]), (char *)VMA(2), args[3]); //Daggolin: 1.02 keynums -> 1.04 keynums
+		Key_GetBindingBuf(Key_GetProtocolKey15(UI_GetCurrentGameversion(), args[1]), (char *)VMA(2), args[3]); // 1.02 keynums -> 1.04 keynums
 		return 0;
 
 	case UI_KEY_SETBINDING:
-		Key_SetBinding(Key_GetProtocolKey15(UI_GetCurrentGameversion(), args[1]), (const char *)VMA(2)); //Daggolin: 1.02 keynums -> 1.04 keynums
+		Key_SetBinding(Key_GetProtocolKey15(UI_GetCurrentGameversion(), args[1]), (const char *)VMA(2)); // 1.02 keynums -> 1.04 keynums
 		return 0;
 
 	case UI_KEY_ISDOWN:
-		return Key_IsDown(Key_GetProtocolKey15(UI_GetCurrentGameversion(), args[1])); //Daggolin: 1.02 keynums -> 1.04 keynums
+		return Key_IsDown(Key_GetProtocolKey15(UI_GetCurrentGameversion(), args[1])); // 1.02 keynums -> 1.04 keynums
 
 	case UI_KEY_GETOVERSTRIKEMODE:
 		return Key_GetOverstrikeMode();
@@ -1221,7 +1221,7 @@ Ghoul2 Insert Start
 Ghoul2 Insert End
 */
 
-	// ouned: download popup
+	// download popup
 	case UI_MV_CONTINUE_DOWNLOAD:
 		CL_ContinueCurrentDownload((qboolean)args[1]);
 		return 0;
@@ -1255,7 +1255,7 @@ void CL_ShutdownUI( void ) {
 /*
 ====================
 CL_InitUI
-ouned: jk2mv has it's own menu dll for the main menu
+jk2mv has it's own dll for the main menu
 ====================
 */
 void CL_InitUI(qboolean mainMenu) {

@@ -468,7 +468,7 @@ LONG WINAPI MainWndProc (
 		break;
 
 	case WM_SYSCOMMAND:
-		// ouned: minimizer
+		// minimizer
 		if (wParam == SC_RESTORE && r_fullscreen->integer) {
 			cvar_t *gamma = Cvar_Get("r_gamma", "", 0);
 			gamma->modified = qtrue;
@@ -502,7 +502,7 @@ LONG WINAPI MainWndProc (
 
 	case WM_SYSKEYUP:
 	case WM_KEYUP:
-		// ouned: minimizer
+		// minimizer
 		if ( ( wParam == VK_LWIN || wParam == VK_RWIN ) && r_fullscreen->integer) {
 			WG_RestoreGamma();
 			ShowWindow(hWnd, SW_MINIMIZE);

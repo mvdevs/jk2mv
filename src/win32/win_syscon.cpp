@@ -219,7 +219,7 @@ LRESULT APIENTRY InputLineWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 				GetWindowTextA( s_wcd.hwndInputLine, inputBuffer, sizeof( inputBuffer ) );
 				strcpy(kg.g_consoleField.buffer, inputBuffer);
 //				CompleteCommand();
-				Field_AutoComplete( &kg.g_consoleField ); // Daggolin: for auto-complete (copied from OpenJK)
+				Field_AutoComplete( &kg.g_consoleField ); // for auto-complete (copied from OpenJK)
 				SetWindowTextA( s_wcd.hwndInputLine, kg.g_consoleField.buffer);
 				SendMessage(s_wcd.hwndInputLine, EM_SETSEL, strlen(kg.g_consoleField.buffer) , MAKELONG(0xffff, 0xffff) );
 			}
@@ -465,21 +465,23 @@ char *Sys_ConsoleInput( void )
 	return s_wcd.returnedText;
 }
 
+#define CONSOLE_BUFFER_SIZE 32768 // increased in jk2mv
+
 /*
 ** Conbuf_AppendText
 */
 void Conbuf_AppendText( const char *pMsg )
 {
-#define CONSOLE_BUFFER_SIZE		16384*2 // ouned: increased
-	if ( !s_wcd.hWnd ) {
-		return;
-	}
-	char buffer[CONSOLE_BUFFER_SIZE*4];
+	static char buffer[CONSOLE_BUFFER_SIZE*4];
 	char *b = buffer;
 	const char *msg;
 	int bufLen;
 	int i = 0;
 	static unsigned long s_totalChars;
+
+	if (!s_wcd.hWnd) {
+		return;
+	}
 
 	//
 	// if the message is REALLY long, use just the last portion of it

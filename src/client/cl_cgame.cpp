@@ -124,8 +124,7 @@ void	CL_GetCurrentSnapshotNumber( int *snapshotNumber, int *serverTime ) {
 
 /*
 ====================
-CL_GetSnapshot
-ouned: multiprotocol support
+multiprotocol support
 ====================
 */
 qboolean	CL_GetSnapshot16(int snapshotNumber, snapshot_t *snapshot) {
@@ -161,7 +160,7 @@ qboolean	CL_GetSnapshot16(int snapshotNumber, snapshot_t *snapshot) {
 	Com_Memcpy( snapshot->areamask, clSnap->areamask, sizeof( snapshot->areamask ) );
 	snapshot->ps = clSnap->ps;
 
-	// ouned: wp glowing workaround.. this keeps yourself from glowing like a candle when and after charging the blaster pistol on high svs.time
+	// wp glowing workaround.. this keeps yourself from glowing like a candle when and after charging the blaster pistol on high svs.time
 	if (snapshot->ps.weaponstate != WEAPON_CHARGING_ALT && snapshot->ps.weaponstate != WEAPON_CHARGING)
 		snapshot->ps.weaponChargeTime = 0;
 
@@ -179,7 +178,7 @@ qboolean	CL_GetSnapshot16(int snapshotNumber, snapshot_t *snapshot) {
 		// copy everything but the ghoul2 pointer
 		memcpy(&snapshot->entities[i], &cl.parseEntities[ entNum ], sizeof(entityState_t));
 
-		// ouned: wp glowing workaround.. this keeps others from glowing like a candle when and after charging the blaster pistol on high svs.time
+		// wp glowing workaround.. this keeps others from glowing like a candle when and after charging the blaster pistol on high svs.time
 		if (snapshot->entities[i].eType == ET_BODY || snapshot->entities[i].eType == ET_PLAYER) {
 			snapshot->entities[i].constantLight = 0;
 		}
@@ -206,7 +205,7 @@ clSnapshot15_t *CL_GetSnapshot15from16(clSnapshot_t *snapshot) {
 	retn.parseEntitiesNum = snapshot->parseEntitiesNum;
 	retn.serverCommandNum = snapshot->serverCommandNum;
 
-	// ouned: tricky but works atleast on x86
+	// tricky but works atleast on x86
 	memcpy(&retn.ps, &snapshot->ps, (((size_t)&snapshot->ps.saberIndex) - (size_t)&snapshot->ps));
 	memcpy(&retn.ps.saberIndex, &snapshot->ps.saberIndex, ((size_t)&(&snapshot->ps)[1] - (size_t)&snapshot->ps.saberIndex));
 
@@ -246,7 +245,7 @@ qboolean	CL_GetSnapshot15(int snapshotNumber, snapshot15_t *snapshot) {
 	Com_Memcpy(snapshot->areamask, clSnap->areamask, sizeof(snapshot->areamask));
 	snapshot->ps = clSnap->ps;
 
-	// ouned: wp glowing workaround.. this keeps yourself from glowing like a candle when and after charging the blaster pistol on high svs.time
+	// wp glowing workaround.. this keeps yourself from glowing like a candle when and after charging the blaster pistol on high svs.time
 	if (snapshot->ps.weaponstate != WEAPON_CHARGING_ALT && snapshot->ps.weaponstate != WEAPON_CHARGING)
 		snapshot->ps.weaponChargeTime = 0;
 
@@ -264,7 +263,7 @@ qboolean	CL_GetSnapshot15(int snapshotNumber, snapshot15_t *snapshot) {
 		// copy everything but the ghoul2 pointer
 		memcpy(&snapshot->entities[i], &cl.parseEntities[entNum], sizeof(entityState_t));
 
-		// ouned: wp glowing workaround.. this keeps others from glowing like a candle when and after charging the blaster pistol on high svs.time
+		// wp glowing workaround.. this keeps others from glowing like a candle when and after charging the blaster pistol on high svs.time
 		if (snapshot->entities[i].eType == ET_BODY || snapshot->entities[i].eType == ET_PLAYER) {
 			snapshot->entities[i].constantLight = 0;
 		}
@@ -398,7 +397,7 @@ void CL_ConfigstringModified( void ) {
 			Com_Error( ERR_DROP, "MAX_GAMESTATE_CHARS exceeded" );
 		}
 
-		// Daggolin: ClientSide AntiGalak - replace "galak_mech" with "galak-mech"...
+		// ClientSide AntiGalak - replace "galak_mech" with "galak-mech"...
 		if ( i >= CS_PLAYERS && i < (CS_PLAYERS + MAX_CLIENTS) )
 		{
 			char *model;
@@ -610,7 +609,7 @@ static int	FloatAsInt( float f ) {
 	return temp;
 }
 
-// ouned: wp glowing workaround.. this keeps yourself from glowing like a candle when charging the blaster pistol on high svs.time
+// wp glowing workaround.. this keeps yourself from glowing like a candle when charging the blaster pistol on high svs.time
 void MV_AddLightToScene(const vec3_t org, float intensity, float r, float g, float b) {
 	if (cl.snap.valid) {
 		if (cl.snap.ps.weaponstate == WEAPON_CHARGING_ALT || cl.snap.ps.weaponstate == WEAPON_CHARGING) {
@@ -643,7 +642,7 @@ The cgame module is making a system call
 extern bool RicksCrazyOnServer;
 
 intptr_t CL_CgameSystemCalls(intptr_t *args) {
-	// ouned: fix syscalls from 1.02 to match 1.04
+	// fix syscalls from 1.02 to match 1.04
 	// this is a mess... can it be done better?
 	if (MV_GetCurrentGameversion() == VERSION_1_02) {
 		if (args[0] == 52)
@@ -881,14 +880,14 @@ intptr_t CL_CgameSystemCalls(intptr_t *args) {
 	case CG_MEMORY_REMAINING:
 		return Hunk_MemoryRemaining();
   case CG_KEY_ISDOWN:
-		return Key_IsDown( Key_GetProtocolKey15(MV_GetCurrentGameversion(), args[1]) ); //Daggolin: 1.02 keynums -> 1.04 keynums
+		return Key_IsDown( Key_GetProtocolKey15(MV_GetCurrentGameversion(), args[1]) ); // 1.02 keynums -> 1.04 keynums
   case CG_KEY_GETCATCHER:
 		return Key_GetCatcher();
   case CG_KEY_SETCATCHER:
 		Key_SetCatcher( args[1] );
 	return 0;
   case CG_KEY_GETKEY:
-	  return Key_GetProtocolKey(MV_GetCurrentGameversion(), Key_GetKey((const char *)VMA(1))); //Daggolin: 1.04 keynums -> 1.02 keynums (return)
+	  return Key_GetProtocolKey(MV_GetCurrentGameversion(), Key_GetKey((const char *)VMA(1))); // 1.04 keynums -> 1.02 keynums (return)
 
 
 

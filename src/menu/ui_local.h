@@ -112,7 +112,7 @@ extern vmCvar_t	ui_smallFont;
 extern vmCvar_t	ui_bigFont;
 extern vmCvar_t ui_serverStatusTimeOut;
 
-// ouned: botfilter
+// botfilter
 extern vmCvar_t	ui_botfilter;
 
 
@@ -605,7 +605,7 @@ typedef struct {
 #define UI_FONT_THRESHOLD		0.1
 #define MAX_DISPLAY_SERVERS		2048
 #define MAX_SERVERSTATUS_LINES	128
-#define MAX_SERVERSTATUS_TEXT	8192 // ouned: (was 1024) this is the reason why we never saw the full playerlist ingame.. getstatus requests can get way bigger
+#define MAX_SERVERSTATUS_TEXT	8192 // (was 1024) this is the reason why we never saw the full playerlist ingame.. getstatus requests can get way bigger
 #define MAX_FOUNDPLAYER_SERVERS	16
 #define TEAM_MEMBERS 8//5
 #define GAMES_ALL			0

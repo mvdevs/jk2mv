@@ -453,7 +453,6 @@ extern CMiniHeap *G2VertSpaceServer;
 #define G2_VERT_SPACE_SERVER_SIZE 256
 #endif
 
-// ouned
 // THIS FUNCTION IS NOT CALLED ON THE MAIN THREAD
 void *SV_MV_Websrv_Loop_ExtThread(void *server) {
 	while (1) {
@@ -474,7 +473,7 @@ void *SV_MV_Websrv_Loop_ExtThread(void *server) {
 }
 
 void SV_MV_Websrv_Shutdown() {
-	Com_Printf("JK2MV: shutting down webserver...\n");
+	Com_Printf("shutting down webserver...\n");
 
 	MV_LockMutex(m_srv);
 	m_end = qtrue;
@@ -619,17 +618,17 @@ Ghoul2 Insert End
 		sv.configstrings[i] = CopyString("");
 	}
 
-	// ouned: decide which serverversion to host
+	// decide which serverversion to host
 	mv_serverversion = Cvar_Get("mv_serverversion", "1.04", CVAR_ARCHIVE | CVAR_LATCH | CVAR_GLOBAL);
 	if (FS_AllPath_Base_FileExists("assets5.pk3") && (!strcmp(mv_serverversion->string, "auto") || !strcmp(mv_serverversion->string, "1.04"))) {
-		Com_Printf("JK2MV: serverversion set to 1.04\n");
+		Com_Printf("serverversion set to 1.04\n");
 		MV_SetCurrentGameversion(VERSION_1_04);
 	}
 	else if (FS_AllPath_Base_FileExists("assets2.pk3") && (!strcmp(mv_serverversion->string, "auto") || !strcmp(mv_serverversion->string, "1.03"))) {
-		Com_Printf("JK2MV: serverversion set to 1.03\n");
+		Com_Printf("serverversion set to 1.03\n");
 		MV_SetCurrentGameversion(VERSION_1_03);
 	} else {
-		Com_Printf("JK2MV: serverversion set to 1.02\n");
+		Com_Printf("serverversion set to 1.02\n");
 		MV_SetCurrentGameversion(VERSION_1_02);
 	}
 
@@ -791,7 +790,6 @@ Ghoul2 Insert End
 	}
 	*/
 
-	// ouned: webserver
 	// shutdown webserver
 	if (mgsrv && ((mv_httpdownloads->latchedString && !atoi(mv_httpdownloads->latchedString)) || mv_httpserverport->latchedString)) {
 		SV_MV_Websrv_Shutdown();
@@ -823,9 +821,9 @@ Ghoul2 Insert End
 
 		if (!err) {
 			sv.http_port = port;
-			Com_Printf("JK2MV: webserver running on port %i...\n", port);
+			Com_Printf("webserver running on port %i...\n", port);
 		}  else {
-			Com_Error(ERR_DROP, "JK2MV: webserver startup failed: %s", err);
+			Com_Error(ERR_DROP, "webserver startup failed: %s", err);
 		}
 
 		mg_start_thread(SV_MV_Websrv_Loop_ExtThread, mgsrv);
@@ -908,7 +906,7 @@ void SV_Init (void) {
 	sv_allowDownload = Cvar_Get ("sv_allowDownload", "0", CVAR_SERVERINFO);
 	sv_master[0] = Cvar_Get("sv_master1", "masterjk2.ravensoft.com", CVAR_ROM);
 	Cvar_Set("sv_master1", "masterjk2.ravensoft.com");
-	sv_master[1] = Cvar_Get("sv_master2", "master.jk2mv.org", CVAR_ROM); // ouned: multimaster
+	sv_master[1] = Cvar_Get("sv_master2", "master.jk2mv.org", CVAR_ROM); // multimaster
 	Cvar_Set("sv_master2", "master.jk2mv.org");
 	sv_master[2] = Cvar_Get("sv_master3", "master.jkhub.org", CVAR_ROM);
 	Cvar_Set("sv_master3", "master.jkhub.org");
@@ -1029,7 +1027,7 @@ Ghoul2 Insert Start
 	// disconnect any local clients
 	CL_Disconnect( qfalse );
 
-	// ouned: shutdown webserver
+	// shutdown webserver
 	if (mgsrv) {
 		SV_MV_Websrv_Shutdown();
 	}

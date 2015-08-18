@@ -30,7 +30,7 @@
 extern mdxaBone_t		worldMatrix;
 extern mdxaBone_t		worldMatrixInv;
 
-// ouned: normally a ghoul2 handle is a 4 byte pointer directly to CGhoul2Info_v*
+// normally a ghoul2 handle is a 4 byte pointer directly to CGhoul2Info_v*
 // which is saved and used inside the VM, but on 64 bit we have 8 byte pointers (can't be stored inside int32_t^^)
 // solution is to use it as an actual handle and save them in the (already there anyway) table
 
@@ -53,7 +53,7 @@ set<ghoul2entry_t>	ghoultable[2];
 
 qhandle_t currghoul2Handle = 1;
 
-// ouned: logarithmic complexity
+// logarithmic complexity
 CGhoul2Info_v *GetGhoul2InfovByHandle(qhandle_t handle) {
 	ghoul2entry_t ventry(NULL, handle);
 
@@ -70,7 +70,7 @@ CGhoul2Info_v *GetGhoul2InfovByHandle(qhandle_t handle) {
 	return NULL;
 }
 
-// ouned: linear complexity
+// linear complexity
 qhandle_t GetHandleByGhoul2Infov(CGhoul2Info_v *ghoul2inf) {
 	set<ghoul2entry_t>::iterator i = std::find(ghoultable[0].begin(), ghoultable[0].end(), ghoul2inf);
 	if (i != ghoultable[0].end()) {
@@ -181,13 +181,6 @@ int G2API_InitGhoul2Model(CGhoul2Info_v **ghoul2Ptr, const char *fileName, int m
 		assert(0);
 		return -1;
 	}
-
-	// ouned: clientside galak_mech "fix"
-	/* // Daggolin: Not the model itself is the problem, but when the game tries to load it as playermodel. This blocks the entire model. Let's find another way. ;)
-	if (Q_stristr((char *)fileName, "/galak_mech/")) {
-		return -1;
-	}
-	*/
 
 	if (!(*ghoul2Ptr))
 	{

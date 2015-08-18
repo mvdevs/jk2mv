@@ -272,8 +272,8 @@ typedef struct {
 	int			weaponDisable;
 	int			forceDisable;
 //	qboolean	pure;
-	int			gameVersion; // Daggolin: For 1.03 in the menu...
-	int			bots; // ouned: botfiltering
+	int			gameVersion; // For 1.03 in the menu...
+	int			bots; // botfiltering
 } serverInfo_t;
 
 typedef struct {
@@ -338,7 +338,7 @@ typedef struct {
 	CURLM *curlm;
 } clientStatic_t;
 
-#define	CON_TEXTSIZE	32768 * 4 // ouned: increased
+#define	CON_TEXTSIZE	65536 // increased in jk2mv
 #define	NUM_CON_TIMES	4
 
 typedef struct {

@@ -350,7 +350,7 @@ keyname_t keynames[MAX_KEYS] =
     { 0x13e, 0x13e, "AUX30", A_AUX30, false								},
     { 0x13f, 0x13f, "AUX31", A_AUX31, false								}
 };
-static const size_t numKeynames = (sizeof(keynames) / sizeof(keynames[0])); //Daggolin: for auto-complete
+static const size_t numKeynames = (sizeof(keynames) / sizeof(keynames[0])); // for auto-complete
 
 
 
@@ -775,7 +775,7 @@ void CompleteCommand( void )
 }
 */
 void CompleteCommand( void )
-{ // Daggolin: This is now calling Field_AutoComplete2 and adds a '\' if we found a match... (Hybrid between the old and the new Completion)
+{ // This is now calling Field_AutoComplete2 and adds a '\' if we found a match... (Hybrid between the old and the new Completion)
 	field_t		*edit;
 	field_t		temp;
 
@@ -888,7 +888,7 @@ void Console_Key (int key) {
 
 	if (key == A_TAB) {
 		//CompleteCommand();
-		Field_AutoComplete( &kg.g_consoleField ); // Daggolin: for auto-complete (copied from OpenJK)
+		Field_AutoComplete( &kg.g_consoleField ); // for auto-complete (copied from OpenJK)
 		return;
 	}
 
@@ -913,7 +913,7 @@ void Console_Key (int key) {
 		return;
 	}
 
-	//Daggolin: Fast scrolling and mousewheel-scrolling
+	// Fast scrolling and mousewheel-scrolling
 	if ( (key == A_PAGE_UP || kg.keys[A_MWHEELUP].down) && kg.keys[A_CTRL].down ) {
 		Con_PageUp(2*4);
 		return;
@@ -1417,7 +1417,7 @@ void Key_Bindlist_f( void ) {
 Key_KeynameCompletion
 ============
 */
-void Key_KeynameCompletion( callbackFunc_t callback ) { // Daggolin: for auto-complete (copied from OpenJK)
+void Key_KeynameCompletion( callbackFunc_t callback ) { // for auto-complete (copied from OpenJK)
 	for ( size_t i=0; i<numKeynames; i++ ) {
 		if ( keynames[i].name )
 			callback( keynames[i].name );
@@ -1429,7 +1429,7 @@ void Key_KeynameCompletion( callbackFunc_t callback ) { // Daggolin: for auto-co
 Key_CompleteUnbind
 ====================
 */
-static void Key_CompleteUnbind( char *args, int argNum ) { // Daggolin: for auto-complete (copied from OpenJK)
+static void Key_CompleteUnbind( char *args, int argNum ) { // for auto-complete (copied from OpenJK)
 	if ( argNum == 2 ) {
 		// Skip "unbind "
 		char *p = Com_SkipTokens( args, 1, " " );
@@ -1443,7 +1443,7 @@ static void Key_CompleteUnbind( char *args, int argNum ) { // Daggolin: for auto
 Key_CompleteBind
 ====================
 */
-static void Key_CompleteBind( char *args, int argNum ) { // Daggolin: for auto-complete (copied from OpenJK)
+static void Key_CompleteBind( char *args, int argNum ) { // for auto-complete (copied from OpenJK)
 	char *p;
 
 	if ( argNum == 2 ) {
@@ -1606,7 +1606,7 @@ void CL_KeyEvent (int key, qboolean down, unsigned time) {
 		}
 
 		if ( !( cls.keyCatchers & KEYCATCH_UI ) ) {
-			if ( cls.state == CA_ACTIVE /*&& !clc.demoplaying*/ ) { //Daggolin: Allow pressing of buttons in demos (so you can view the console and menus)
+			if ( cls.state == CA_ACTIVE /*&& !clc.demoplaying*/ ) { // Allow pressing of buttons in demos (so you can view the console and menus)
 				VM_Call(uivm, UI_SET_ACTIVE_MENU, UIMENU_INGAME);
 			}
 			else {
@@ -1755,8 +1755,7 @@ void Key_ClearStates (void)
 
 /*
 ===================
-ouned: multiprotocol support
-Key_GetKey15From16
+multiprotocol support
 ===================
 */
 
@@ -2277,7 +2276,7 @@ int Key_GetProtocolKey15(mvversion_t protocol, int key15) {
 		return MAX_KEYS;
 	}
 
-	//Daggolin: Prevent double entries for 1.02 (Example: if 1.02 asks for K_CTRL it will be as if it asked for A_CTRL, if 1.02 asks for something that has the same number as A_CTRL it will count as A_CTRL, too: the CTRL key is handled twice. Solution: check if key15 would get altered by the inverse replacement).
+	// Prevent double entries for 1.02 (Example: if 1.02 asks for K_CTRL it will be as if it asked for A_CTRL, if 1.02 asks for something that has the same number as A_CTRL it will count as A_CTRL, too: the CTRL key is handled twice. Solution: check if key15 would get altered by the inverse replacement).
 	if ( Key_GetProtocolKey(protocol, key15) != key15 ) return -1;
 
 	if ( key15 >= K_LAST_KEY ) return -1;

@@ -627,7 +627,7 @@ extern	vec4_t		colorDkBlue;
 #define Q_COLOR_BITS 0x7
 // you MUST have the last bit on here about colour strings being less than 7 or taiwanese strings register as colour!!!!
 #define Q_IsColorString(p)	( p && *(p) == Q_COLOR_ESCAPE && *((p)+1) && *((p)+1) != Q_COLOR_ESCAPE && *((p)+1) <= '7' && *((p)+1) >= '0' )
-#define Q_IsColorString_1_02(p)	( p && *(p) == Q_COLOR_ESCAPE && *((p)+1) && *((p)+1) != Q_COLOR_ESCAPE ) //Daggolin: 1.02 ColorStrings
+#define Q_IsColorString_1_02(p)	( p && *(p) == Q_COLOR_ESCAPE && *((p)+1) && *((p)+1) != Q_COLOR_ESCAPE ) // 1.02 ColorStrings
 
 #define Q_IsColorStringExt(p)	((p) && *(p) == Q_COLOR_ESCAPE && *((p)+1) && *((p)+1) >= '0' && *((p)+1) <= '7') // ^[0-7]
 
@@ -938,7 +938,7 @@ void Parse3DMatrix (const char **buf_p, int z, int y, int x, float *m);
 
 void	QDECL Com_sprintf (char *dest, size_t size, const char *fmt, ...);
 
-// Daggolin: for auto-complete (copied from OpenJK)
+// for auto-complete (copied from OpenJK)
 #define TRUNCATE_LENGTH	64
 void Com_TruncateLongString( char *buffer, const char *s );
 char *Com_SkipTokens( char *s, int numTokens, char *sep );
@@ -1064,7 +1064,7 @@ default values.
 #define CVAR_NORESTART		0x00000400		// do not clear when a cvar_restart is issued
 #define CVAR_INTERNAL		0x00000800		// cvar won't be displayed, ever (for passwords and such)
 #define	CVAR_PARENTAL		0x00001000		// lets cvar system know that parental stuff needs to be updated
-#define	CVAR_GLOBAL			0x00002000		// ouned: the cvar is going to be written into jk2mvglobal.cfg rather then jk2mvconfig.cfg
+#define	CVAR_GLOBAL			0x00002000		// the cvar is going to be written into jk2mvglobal.cfg rather then jk2mvconfig.cfg
 
 // nothing outside the Cvar_*() functions should modify these fields!
 typedef struct cvar_s {
@@ -2126,7 +2126,7 @@ typedef enum _flag_status {
 #define	MAX_GLOBAL_SERVERS			2048
 #define	MAX_OTHER_SERVERS			128
 #define MAX_PINGREQUESTS			32
-#define MAX_SERVERSTATUSREQUESTS	MAX_PINGREQUESTS // ouned: needs to be the same because both are sent the same time for version detection
+#define MAX_SERVERSTATUSREQUESTS	MAX_PINGREQUESTS // needs to be the same because both are sent the same time for version detection
 
 #define SAY_ALL		0
 #define SAY_TEAM	1

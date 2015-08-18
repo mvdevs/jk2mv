@@ -834,7 +834,7 @@ static void SV_KillServer_f( void ) {
 SV_CompleteMapName
 ==================
 */
-static void SV_CompleteMapName( char *args, int argNum ) { // Daggolin: for auto-complete (copied from OpenJK)
+static void SV_CompleteMapName( char *args, int argNum ) { // for auto-complete (copied from OpenJK)
 	if ( argNum == 2 )
 		Field_CompleteFilename( "maps", "bsp", qtrue, qfalse );
 }

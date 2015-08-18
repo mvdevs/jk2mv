@@ -177,7 +177,7 @@ int		max_polyverts;
 cvar_t	*r_modelpoolmegs;
 cvar_t *r_screenshotJpegQuality;
 
-// ouned: gamma correction
+// gamma correction
 cvar_t *r_gammamethod;
 
 /*
@@ -384,7 +384,7 @@ typedef struct vidmode_s
 	float		pixelAspect;		// pixel width / height
 } vidmode_t;
 
-// ouned: screen resolutions
+// screen resolutions
 vidmode_t r_vidModes[] = {
 	// 4:3
 	{ "Mode  0:  320x240",	320,  240,  1 },
@@ -443,7 +443,7 @@ qboolean R_GetModeInfo( int *width, int *height, float *windowAspect, int mode )
 		return qtrue;
 	}
 
-	// ouned: native resolution
+	// native resolution
 	if (mode == -2) {
 		return qtrue;
 	}
@@ -885,7 +885,7 @@ void GfxInfo_f( void )
 		ri.Printf( PRINT_ALL, "N/A\n" );
 	}
 
-	// ouned: gamma correction
+	// gamma correction
 	if (glConfig.deviceSupportsPostprocessingGamma) {
 		ri.Printf(PRINT_ALL, "GAMMA_METHOD: postprocessing\n");
 	}
@@ -958,15 +958,7 @@ void R_Register( void )
 	//
 	// latched and archived variables
 	//
-
-	// ouned: atleast fedora has problems with this..
-	// ouned: fuck you fedora
-//#ifndef __linux__
 	r_allowExtensions = ri.Cvar_Get("r_allowExtensions", "1", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);
-//#else
-//	r_allowExtensions = ri.Cvar_Get("r_allowExtensions", "0", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);
-//#endif
-
 	r_ext_compressed_textures = ri.Cvar_Get("r_ext_compress_textures", "1", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);
 	r_ext_compressed_lightmaps = ri.Cvar_Get("r_ext_compress_lightmaps", "0", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);
 	r_ext_preferred_tc_method = ri.Cvar_Get("r_ext_preferred_tc_method", "0", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);
@@ -997,7 +989,7 @@ void R_Register( void )
 	r_overBrightBits = ri.Cvar_Get("r_overBrightBits", "1", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);
 	r_intensity = ri.Cvar_Get("r_intensity", "1", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);
 	r_mode = ri.Cvar_Get("r_mode", "-2", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);
-	r_aspectratio = ri.Cvar_Get("r_aspectratio", "-1", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH); // ouned: screen resolutions
+	r_aspectratio = ri.Cvar_Get("r_aspectratio", "-1", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH); // screen resolutions
 	r_fullscreen = ri.Cvar_Get("r_fullscreen", "1", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);
 	r_customwidth = ri.Cvar_Get("r_customwidth", "1600", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);
 	r_customheight = ri.Cvar_Get("r_customheight", "1024", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);
@@ -1037,7 +1029,7 @@ void R_Register( void )
 	r_textureMode = ri.Cvar_Get("r_textureMode", "GL_LINEAR_MIPMAP_NEAREST", CVAR_ARCHIVE | CVAR_GLOBAL);
 	r_swapInterval = ri.Cvar_Get("r_swapInterval", "0", CVAR_ARCHIVE | CVAR_GLOBAL);
 
-	// ouned: gamma correction
+	// gamma correction
 	r_gamma = ri.Cvar_Get("r_gamma", "1", CVAR_ARCHIVE | CVAR_GLOBAL);
 	r_gammamethod = ri.Cvar_Get("r_gammamethod", GAMMA_DEFAULT, CVAR_ARCHIVE | CVAR_LATCH | CVAR_GLOBAL);
 
@@ -1228,7 +1220,7 @@ void R_Init( void ) {
 	}
 	InitOpenGL();
 
-	// ouned: gamma correction
+	// gamma correction
 	if (r_gammamethod->integer == GAMMA_POSTPROCESSING && !glConfig.deviceSupportsPostprocessingGamma) {
 		r_gammamethod->integer = GAMMA_HARDWARE; // temporary fallback to hardware gamma
 	}
@@ -1311,7 +1303,7 @@ void RE_Shutdown( qboolean destroyWindow ) {
 		qglDeleteTextures( 1, &tr.blurImage );
 	}
 
-	// ouned: gamma correction
+	// gamma correction
 	if (tr.gammaPixelShader) {
 		qglDeleteProgramsARB(1, &tr.gammaPixelShader);
 	}

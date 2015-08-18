@@ -7,7 +7,7 @@ cvar_t		*cvar_vars;
 cvar_t		*cvar_cheats;
 int			cvar_modifiedFlags;
 
-#define	MAX_CVARS	2048 // ouned: increased
+#define	MAX_CVARS	2048 // increased in jk2mv
 cvar_t		cvar_indexes[MAX_CVARS];
 int			cvar_numIndexes;
 
@@ -901,7 +901,7 @@ Cvar_CompleteCvarName
 ==================
 */
 void Cvar_CompleteCvarName( char *args, int argNum )
-{ // Daggolin: for auto-complete (copied from OpenJK)
+{ // for auto-complete (copied from OpenJK)
 	if( argNum == 2 )
 	{
 		// Skip "<cmd> "

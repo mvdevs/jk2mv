@@ -2431,7 +2431,7 @@ void R_SetColorMappings( void ) {
 	// setup the overbright lighting
 	tr.overbrightBits = r_overBrightBits->integer;
 
-	// ouned: gamma correction
+	// gamma correction
 	if (!glConfig.deviceSupportsGamma && !glConfig.deviceSupportsPostprocessingGamma) {
 		tr.overbrightBits = 0;		// need hardware gamma for overbright
 	}
@@ -2492,7 +2492,7 @@ void R_SetColorMappings( void ) {
 		s_intensitytable[i] = j;
 	}
 
-	// ouned: gamma correction
+	// gamma correction
 	if (glConfig.deviceSupportsGamma && r_gammamethod->integer == GAMMA_HARDWARE) {
 		GLimp_SetGamma( s_gammatable, s_gammatable, s_gammatable );
 	}

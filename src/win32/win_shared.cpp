@@ -69,7 +69,7 @@ char *Sys_DefaultHomePath(void) {
 #endif
 }
 
-// ouned: read the path from the registry on windows... steam also sets it, but with "InstallPath" instead of "Install Path"
+// read the path from the registry on windows... steam also sets it, but with "InstallPath" instead of "Install Path"
 char *Sys_DefaultAssetsPath() {
 	HKEY hKey;
 	static char installPath[MAX_OSPATH];

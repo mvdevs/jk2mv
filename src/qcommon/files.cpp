@@ -312,7 +312,7 @@ FS_PakIsPure
 qboolean FS_PakIsPure( pack_t *pack ) {
 	int i;
 
-	// ouned: actually, I created a bypass for sv_pure here but since jk2 is opensource I really don't see a point in supporting pure
+	// actually, I created a bypass for sv_pure here but since jk2 is opensource I really don't see a point in supporting pure
 	if (!Q_stricmp(pack->pakBasename, "assets2") || !Q_stricmp(pack->pakBasename, "assets5") || !Q_stricmp(pack->pakBasename, "assetsmv"))
 		return qtrue;
 
@@ -1125,27 +1125,27 @@ int FS_FOpenFileReadHash(const char *filename, fileHandle_t *file, qboolean uniq
 				continue;
 			}
 
-			// ouned: if scanning for cgame, ui or jk2mpgame and we are in 1.02 mode ignore assets5.pk3 and assets2.pk3
+			// if scanning for cgame, ui or jk2mpgame and we are in 1.02 mode ignore assets5.pk3 and assets2.pk3
 			if (MV_GetCurrentGameversion() == VERSION_1_02 &&
 				(!Q_stricmp(filename, "vm/cgame.qvm") || !Q_stricmp(filename, "vm/ui.qvm") || !Q_stricmp(filename, "vm/jk2mpgame.qvm")) &&
 				(!Q_stricmp(search->pack->pakBasename, "assets2") || !Q_stricmp(search->pack->pakBasename, "assets5"))) {
 				continue;
 			}
 
-			// Daggolin: if scanning for cgame, ui or jk2mpgame and we are in 1.03 mode ignore assets5.pk3
+			// if scanning for cgame, ui or jk2mpgame and we are in 1.03 mode ignore assets5.pk3
 			if (MV_GetCurrentGameversion() == VERSION_1_03 &&
 				(!Q_stricmp(filename, "vm/cgame.qvm") || !Q_stricmp(filename, "vm/ui.qvm") || !Q_stricmp(filename, "vm/jk2mpgame.qvm")) &&
 				!Q_stricmp(search->pack->pakBasename, "assets5")) {
 				continue;
 			}
 
-			// ouned: ignore the jk2ffa.dm_15 from 1.03 because it can't be played
+			// ignore the jk2ffa.dm_15 from 1.03 because it can't be played
 			if (!Q_stricmp(filename, "demos/jk2ffa.dm_15") && !Q_stricmp(search->pack->pakBasename, "assets2")) {
 				continue;
 			}
 
 #ifdef NTCLIENT_WORKAROUND
-			// ouned: this should do the trick for the moment
+			// this should do the trick for the moment
 			if (!Q_stricmpn(search->pack->pakGamename, "nt", 2) && !Q_stricmpn(search->pack->pakBasename, "dl_nt", 5) &&
 				!Q_stricmp(filename, "vm/ui.qvm")) {
 				continue;
@@ -1153,7 +1153,7 @@ int FS_FOpenFileReadHash(const char *filename, fileHandle_t *file, qboolean uniq
 #endif
 
 #ifndef DEDICATED
-			// Daggolin: Only load qvms from "o10#_" or "dl_" when found in base
+			// Only load qvms from "o10#_" or "dl_" when found in base
 			if ( !Q_stricmp(search->pack->pakGamename, BASEGAME)
 				 && !(!Q_stricmp(search->pack->pakBasename, "assets0") || !Q_stricmp(search->pack->pakBasename, "assets1") || !Q_stricmp(search->pack->pakBasename, "assets2") || !Q_stricmp(search->pack->pakBasename, "assets5"))
 				 && !( (!Q_stricmpn(search->pack->pakBasename, "o102_", 5) && MV_GetCurrentGameversion() == VERSION_1_02)
@@ -1166,7 +1166,7 @@ int FS_FOpenFileReadHash(const char *filename, fileHandle_t *file, qboolean uniq
 			}
 #endif
 
-			// ouned: patchfiles are only allowed from within assetsmv.pk3
+			// patchfiles are only allowed from within assetsmv.pk3
 			if (!Q_stricmp(get_filename_ext(filename), "menu_patch") && Q_stricmp(search->pack->pakBasename, "assetsmv")) {
 				continue;
 			}
@@ -1179,7 +1179,7 @@ int FS_FOpenFileReadHash(const char *filename, fileHandle_t *file, qboolean uniq
 				if ( !FS_FilenameCompare( pakFile->name, filename ) ) {
 					// found it!
 
-					// ouned: reference lists
+					// reference lists
 					if (Q_stricmp(pak->pakBasename, "assetsmv") && !pak->noref ) {
 						// mark the pak as having been referenced and mark specifics on cgame and ui
 						// shaders, txt, arena files  by themselves do not count as a reference as
@@ -1252,7 +1252,7 @@ int FS_FOpenFileReadHash(const char *filename, fileHandle_t *file, qboolean uniq
 #endif
 #endif // DEDICATED
 
-					// ouned: return the hash of the file
+					// return the hash of the file
 					if (filehash) {
 						unz_file_info fi;
 
@@ -1579,7 +1579,7 @@ int	FS_FileIsInPAK(const char *filename, int *pChecksum ) {
 				continue;
 			}
 
-			// ouned: if scanning for cgame, ui or jk2mpgame and we are in 1.02 mode ignore assets5.pk3 and assets2.pk3
+			// if scanning for cgame, ui or jk2mpgame and we are in 1.02 mode ignore assets5.pk3 and assets2.pk3
 			if (MV_GetCurrentGameversion() == VERSION_1_02 &&
 				(!Q_stricmp(filename, "vm/cgame.qvm") || !Q_stricmp(filename, "vm/ui.qvm") || !Q_stricmp(filename, "vm/jk2mpgame.qvm")) &&
 				(!Q_stricmp(search->pack->pakBasename, "assets2") || !Q_stricmp(search->pack->pakBasename, "assets5"))) {
@@ -2664,7 +2664,7 @@ static void FS_AddGameDirectory( const char *path, const char *dir, qboolean ass
 			}
 		}
 
-		// ouned: version prefixes: load a file called e.g. 102_mod.pk3 only when joining a 1.02 server
+		// version prefixes: load a file called e.g. 102_mod.pk3 only when joining a 1.02 server
 		if (!Q_stricmpn(filename, "o102_", 5) && MV_GetCurrentGameversion() != VERSION_1_02) {
 			continue;
 		}
@@ -2680,7 +2680,7 @@ static void FS_AddGameDirectory( const char *path, const char *dir, qboolean ass
 		if ( ( pak = FS_LoadZipFile( pakfile, sorted[i] ) ) == 0 )
 			continue;
 
-		// ouned: files beginning with "dl_" are only loaded when referenced by the server
+		// files beginning with "dl_" are only loaded when referenced by the server
 		if (!Q_stricmpn(filename, "dl_", 3)) {
 			int j;
 			qboolean found = qfalse;
@@ -2705,7 +2705,7 @@ static void FS_AddGameDirectory( const char *path, const char *dir, qboolean ass
 		// store the game name for downloading
 		strcpy(pak->pakGamename, dir);
 
-		// ouned: if the pk3 is not in base, always reference it (standard jk2 behaviour)
+		// if the pk3 is not in base, always reference it (standard jk2 behaviour)
 		if (Q_stricmpn(pak->pakGamename, BASEGAME, (int)strlen(BASEGAME))) {
 			pak->referenced |= FS_GENERAL_REF;
 		}
@@ -2979,13 +2979,13 @@ static void FS_Startup( const char *gameName ) {
 
 	fs_gamedirvar->modified = qfalse; // We just loaded, it's not modified
 
-	// ouned: reference lists
+	// reference lists
 	f_wl = FS_FOpenFileRead("ref_whitelist.txt", &f_w, qfalse);
 	f_bl = FS_FOpenFileRead("ref_blacklist.txt", &f_b, qfalse);
 	f_fl = FS_FOpenFileRead("ref_forcelist.txt", &f_f, qfalse);
 
 	if (f_w) {
-		Com_Printf("JK2MV: using whitelist for referenced files...\n");
+		Com_Printf("using whitelist for referenced files...\n");
 
 		mv_whitelist = (char *)Hunk_AllocateTempMemory(1 + f_wl + 1);
 		mv_whitelist[0] = '\n';
@@ -2994,7 +2994,7 @@ static void FS_Startup( const char *gameName ) {
 	}
 
 	if (f_b) {
-		Com_Printf("JK2MV: using blacklist for referenced files...\n");
+		Com_Printf("using blacklist for referenced files...\n");
 
 		mv_blacklist = (char *)Hunk_AllocateTempMemory(1 + f_bl + 1);
 		mv_blacklist[0] = '\n';
@@ -3003,7 +3003,7 @@ static void FS_Startup( const char *gameName ) {
 	}
 
 	if (f_f) {
-		Com_Printf("JK2MV: using forcelist for referenced files...\n");
+		Com_Printf("using forcelist for referenced files...\n");
 
 		mv_forcelist = (char *)Hunk_AllocateTempMemory(1 + f_fl + 1);
 		mv_forcelist[0] = '\n';
@@ -3552,7 +3552,7 @@ int FS_FOpenFileByModeHash( const char *qpath, fileHandle_t *f, fsMode_t mode, u
 
 	sync = qfalse;
 
-	// ouned: VMs are not allowed to write binary files
+	// VMs are not allowed to write binary files
 	// a vm can write e.g. cgamex86.dll and then set vm_cgame to 0...
 	// unix doesn't really care for the ext but jk2 still only loads them with this extension
 	// writing qvm's & pk3's could bypass mv's dl pk3 loading restriction
@@ -3626,7 +3626,7 @@ void	FS_Flush( fileHandle_t f ) {
 	fflush(fsh[f].handleFiles.file.o);
 }
 
-// ouned: only referenced pk3 files can be downloaded
+// only referenced pk3 files can be downloaded
 // this automatically fixes q3dirtrav
 qboolean FS_MV_VerifyDownloadPath(const char *pk3file) {
 	searchpath_t	*search;
@@ -3655,7 +3655,7 @@ qboolean FS_MV_VerifyDownloadPath(const char *pk3file) {
 	return qfalse;
 }
 
-void FS_FilenameCompletion( const char *dir, const char *ext, qboolean stripExt, callbackFunc_t callback, qboolean allowNonPureFilesOnDisk ) { // Daggolin: for auto-complete (copied from OpenJK)
+void FS_FilenameCompletion( const char *dir, const char *ext, qboolean stripExt, callbackFunc_t callback, qboolean allowNonPureFilesOnDisk ) { // for auto-complete (copied from OpenJK)
 	int nfiles;
 	char **filenames, filename[MAX_STRING_CHARS];
 

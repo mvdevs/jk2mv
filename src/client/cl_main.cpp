@@ -421,7 +421,7 @@ void CL_DemoCompleted( void ) {
 	//I'm not sure why it ever worked in TA, but whatever. This code will bring us back to the main menu
 	//after a demo is finished playing instead.
 	CL_Disconnect_f();
-	MV_SetCurrentGameversion(VERSION_UNDEF); //Daggolin: Set the protocol to undefined after completing the demo.
+	MV_SetCurrentGameversion(VERSION_UNDEF); // Set the protocol to undefined after completing the demo.
 	S_StopAllSounds();
 	VM_Call( uivm, UI_SET_ACTIVE_MENU, UIMENU_MAIN );
 
@@ -518,7 +518,7 @@ void CL_PlayDemo_f( void ) {
 	arg = Cmd_Argv(1);
 
 	if ( !Q_stricmp( arg + strlen(arg) - strlen(".dm_15"), ".dm_15" ) || !Q_stricmp( arg + strlen(arg) - strlen(".dm_16"), ".dm_16" ) )
-	{ //Daggolin: Load "dm_15" and "dm_16" demos.
+	{ // Load "dm_15" and "dm_16" demos.
 		Com_sprintf (name, sizeof(name), "demos/%s", arg);
 
 		FS_FOpenFileRead( name, &clc.demofile, qtrue );
@@ -537,7 +537,7 @@ void CL_PlayDemo_f( void ) {
 	}
 	else
 	{
-		//Daggolin: Check for both, "dm_15" and "dm_16".
+		// Check for both, "dm_15" and "dm_16".
 		Com_sprintf(name, sizeof(name), "demos/%s.dm_15", arg);
 		FS_FOpenFileRead( name, &clc.demofile, qtrue );
 		if ( !clc.demofile )
@@ -568,7 +568,7 @@ void CL_PlayDemo_f( void ) {
 
 	Q_strncpyz( cls.servername, Cmd_Argv(1), sizeof( cls.servername ) );
 
-	//Daggolin: Set the protocol according to the the demo-file.
+	// Set the protocol according to the the demo-file.
 	if ( !Q_stricmp( name + strlen(name) - strlen(".dm_15"), ".dm_15" ) ) {
 		MV_SetCurrentGameversion(VERSION_1_02);
 		demoCheckFor103 = true;	//if this demo happens to be a 1.03 demo, check for that in CL_ParseGamestate
@@ -633,7 +633,7 @@ CL_ShutdownAll
 =====================
 */
 void CL_ShutdownAll(void) {
-	// ouned: so the download stopps when the server changes map while downloading something
+	// so the download aborts when the server changes map while downloading something
 	if (cls.curl) {
 		curl_multi_remove_handle(cls.curlm, cls.curl);
 	}
@@ -1123,7 +1123,7 @@ void CL_Connect_f( void ) {
 	CL_Disconnect( qtrue );
 	Con_Close();
 
-	// ouned: needed because protocol may has changed
+	// needed because the protocol could have been changed
 	CL_FlushMemory();
 
 	Q_strncpyz( cls.servername, server, sizeof(cls.servername) );
@@ -1220,7 +1220,7 @@ CL_CompleteRcon
 ==================
 */
 static void CL_CompleteRcon( char *args, int argNum )
-{ // Daggolin: for auto-complete (copied from OpenJK)
+{ // for auto-complete (copied from OpenJK)
 	if( argNum == 2 )
 	{
 		// Skip "rcon "
@@ -1475,7 +1475,7 @@ The UI opens a window in which the user can decide to download it.
 =================
 */
 void CL_BeginDownload( const char *localName, const char *remoteName ) {
-	// ouned: the ui decides if this file is going to be downloaded
+	// the ui decides if this file is going to be downloaded
 	Cvar_Set("cl_downloadName", remoteName);
 	Cvar_Set("cl_downloadLocalName", localName);
 	Cvar_SetValue("cl_downloadSize", 0);
@@ -1542,7 +1542,7 @@ void CL_ContinueCurrentDownload(qboolean abort) {
 		curl_easy_setopt(cls.curl, CURLOPT_USERAGENT, Q3_VERSION);
 		curl_easy_setopt(cls.curl, CURLOPT_REFERER, va("jk2://%s", NET_AdrToString(clc.serverAddress)));
 #ifdef _DEBUG
-		//curl_easy_setopt(cls.curl, CURLOPT_MAX_RECV_SPEED_LARGE, (curl_off_t)(2.5 * 1024 * 1024)); // ouned: my eyes aren't fast enough for this
+		curl_easy_setopt(cls.curl, CURLOPT_MAX_RECV_SPEED_LARGE, (curl_off_t)(2.5 * 1024 * 1024)); // my eyes aren't fast enough for this (limit to max. 2.5MB/s)
 #endif
 		curl_multi_add_handle(cls.curlm, cls.curl);
 
@@ -1630,7 +1630,7 @@ void CL_InitDownloads(void) {
 		if (*clc.downloadList && (clc.udpdl || clc.http_port)) {
 			cls.state = CA_CONNECTED;
 
-			// ouned: to get the download popup jk2mvmenu must be loaded instaed of the normal ui
+			// to get the download popup jk2mvmenu must be loaded instaed of the normal ui
 			// CL_DownloadsComplete restarts the ui after the download process anyway
 			CL_ShutdownUI();
 			CL_InitUI(qtrue);
@@ -1791,7 +1791,7 @@ void CL_InitServerInfo( serverInfo_t *server, serverAddress_t *address ) {
 	server->adr.ip[3] = address->ip[3];
 	server->adr.port  = address->port;
 	server->clients = 0;
-	server->bots = 0; // Daggolin: botfilter
+	server->bots = 0; // botfilter
 	server->hostName[0] = '\0';
 	server->mapName[0] = '\0';
 	server->maxClients = 0;
@@ -1806,12 +1806,12 @@ void CL_InitServerInfo( serverInfo_t *server, serverAddress_t *address ) {
 	server->weaponDisable = 0;
 	server->forceDisable = 0;
 	//server->pure = qfalse;
-	server->gameVersion = VERSION_UNDEF; // Daggolin: For 1.03 in the menu...
+	server->gameVersion = VERSION_UNDEF; // For 1.03 in the menu...
 }
 
 #define MAX_SERVERSPERPACKET	256
 
-// ouned: multimaster
+// multimaster
 serverInfo_t *IsAlreadyInGlobalServerList(serverAddress_t *addr) {
 	int j;
 
@@ -1912,7 +1912,7 @@ void CL_ServersResponsePacket( netadr_t from, msg_t *msg ) {
 	for (i = 0; i < numservers && count < max; i++) {
 		serverInfo_t *server;
 
-		// ouned: multimaster
+		// multimaster
 		server = IsAlreadyInGlobalServerList(&addresses[i]);
 		if (cls.masterNum != 0 || !server) {
 			server = (cls.masterNum == 0) ? &cls.globalServers[count] : &cls.mplayerServers[count];
@@ -1928,7 +1928,7 @@ void CL_ServersResponsePacket( netadr_t from, msg_t *msg ) {
 			for (; i < numservers && count >= max; i++) {
 				serverAddress_t *addr;
 
-				// ouned: multimaster
+				// multimaster
 				if (cls.masterNum == 0 && IsAlreadyInGlobalServerList(&addresses[i])) {
 					continue;
 				}
@@ -2679,7 +2679,7 @@ void CL_Init( void ) {
 
 	cl_showMouseRate = Cvar_Get ("cl_showmouserate", "0", 0);
 	cl_framerate	= Cvar_Get ("cl_framerate", "0", CVAR_TEMP);
-	mv_allowDownload = Cvar_Get("mv_allowDownload", "1", CVAR_ARCHIVE | CVAR_GLOBAL); // ouned: renamed so old configs do not override
+	mv_allowDownload = Cvar_Get("mv_allowDownload", "1", CVAR_ARCHIVE | CVAR_GLOBAL); // renamed so old configs do not override
 
 	cl_autolodscale = Cvar_Get("cl_autolodscale", "1", CVAR_ARCHIVE | CVAR_GLOBAL);
 
@@ -2916,8 +2916,8 @@ static void CL_SetServerInfoByAddress(netadr_t from, const char *info, int ping)
 
 }
 
-// Daggolin: For 1.03 in the menu...
-// ouned: now also used for botfiltering, leave serverInfo_t.clients untouched for backwards compatibility with old menu VM's
+// For 1.03 in the menu...
+// now also used for botfiltering, leave serverInfo_t.clients untouched for backwards compatibility with old menu VM's
 // the new one just uses clients - bots = realplayers
 void MV_SetServerFakeInfoByAddress( netadr_t from, mvversion_t version, int clients, int bots ) {
 	int i;
@@ -2993,7 +2993,7 @@ void CL_ServerInfoPacket( netadr_t from, msg_t *msg ) {
 	}
 
 
-	// ouned: multiprotocol support
+	// multiprotocol support
 	if (cls.state == CA_CONNECTING && NET_CompareAdr(from, clc.serverAddress)) {
 		if ( MV_GetCurrentGameversion() == VERSION_UNDEF )
 		{
@@ -3220,7 +3220,7 @@ void CL_ServerStatusResponse( netadr_t from, msg_t *msg ) {
 
 	s = MSG_ReadStringLine(msg);
 
-	// Daggolin: For 1.03 in the menu...
+	// For 1.03 in the menu...
 	versionString = Info_ValueForKey(s, "version");
 	if (versionString && CL_ServerVersionIs103(versionString))
 	{
@@ -3241,13 +3241,13 @@ void CL_ServerStatusResponse( netadr_t from, msg_t *msg ) {
 		}
 	}
 
-	// ouned: multiprotocol support
+	// multiprotocol support
 	if (cls.state == CA_CONNECTING && NET_CompareAdr(from, clc.serverAddress))
 	{
 		char *versionString;
 		versionString = Info_ValueForKey(s, "version");
 
-		//Daggolin: We used to seperate "1.02" and "1.04" by protocol "15" and "16". As "1.03" is using protocol "15", too we just look at the "version" to detect "1.03". If we don't find "1.03" we handle by protocol again.
+		// We used to seperate "1.02" and "1.04" by protocol "15" and "16". As "1.03" is using protocol "15", too we just look at the "version" to detect "1.03". If we don't find "1.03" we handle by protocol again.
 		if ( versionString && CL_ServerVersionIs103(versionString) )
 		{
 			MV_SetCurrentGameversion(VERSION_1_03);
@@ -3426,25 +3426,11 @@ void CL_GlobalServers_f( void ) {
 	cls.numglobalservers = -1;
 	cls.pingUpdateSource = AS_GLOBAL;
 
-	// ouned: ignore argv(2) and send out requests for 1.02 and 1.04
+	// ignore argv(2) and send out requests for 1.02 and 1.04
 	sprintf(command102, "getservers 15");
 	sprintf(command104, "getservers 16");
 
-	// ouned: seems to be unused anyway
-	// tack on keywords
-	/*
-	buffptr = command + strlen( command );
-	count   = Cmd_Argc();
-	for (i=3; i<count; i++)
-		buffptr += sprintf( buffptr, " %s", Cmd_Argv(i) );
-
-
-	// if we are a demo, automatically add a "demo" keyword
-	if ( Cvar_VariableValue( "fs_restrict" ) ) {
-		buffptr += sprintf( buffptr, " demo" );
-	}*/
-
-	// ouned: multimaster
+	// multimaster
 	for (i = 0; i < MAX_MASTER_SERVERS; i++) {
 		cvar_t *master = Cvar_FindVar(va("sv_master%i", i + 1));
 		if (master == NULL || !strlen(master->string))
@@ -3687,7 +3673,7 @@ qboolean CL_UpdateVisiblePings_f(int source) {
 
 	cls.pingUpdateSource = source;
 
-	// ouned: some providers will block a large amount of UDP packets to a huge range of IP addresses in a very short time
+	// some providers will block a large amount of UDP packets to a huge range of IP addresses in a very short time
 	if (mv_slowrefresh->integer) {
 		max_req = mv_slowrefresh->integer;
 	} else {
@@ -3915,7 +3901,7 @@ void VM_AddRefEntityToScene(refEntity_t *r) {
 	qhandle_t *hptr;
 	qhandle_t handle;
 
-	// ouned: we need a temp copy of it because the sizeof is different
+	// we need a temp copy of it because the sizeof is different
 	// (why did they use pointers for the ghoul2 "handles" :/ ?)
 	memcpy(&tmp_r, r, sizeof(tmp_r));
 
