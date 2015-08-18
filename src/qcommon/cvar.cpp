@@ -818,13 +818,6 @@ void Cvar_List_f( void ) {
 	for (i = 0; i < numSorted; ++i)
 	{
 		var = sortedCvars[i];
-		// Dont show internal cvars
-		if ( var->flags & CVAR_INTERNAL )
-		{
-			continue;
-		}
-
-		if (match && !Com_Filter(match, var->name, qfalse)) continue;
 
 		if (var->flags & CVAR_SERVERINFO) {
 			Com_Printf("S");
