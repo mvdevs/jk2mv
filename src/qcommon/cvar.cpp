@@ -469,6 +469,20 @@ Cvar_Command
 Handles variable inspection and changing from the console
 ============
 */
+
+void Cvar_Print (cvar_t *v) {
+	Com_Printf ("\"%s\" is:\"%s" S_COLOR_WHITE "\" ", v->name, v->string);
+
+	if (strcmp(v->string, v->resetString))
+		Com_Printf("default:\"%s" S_COLOR_WHITE "\"\n", v->resetString );
+	else
+		Com_Printf("(the default)\n");
+
+	if ( v->latchedString ) {
+		Com_Printf( "latched: \"%s\"\n", v->latchedString );
+	}
+}
+
 qboolean Cvar_Command( void ) {
 	cvar_t			*v;
 
@@ -486,10 +500,7 @@ qboolean Cvar_Command( void ) {
 			return qtrue;
 		}
 */
-		Com_Printf ("\"%s\" is:\"%s" S_COLOR_WHITE "\" default:\"%s" S_COLOR_WHITE "\"\n", v->name, v->string, v->resetString );
-		if ( v->latchedString ) {
-			Com_Printf( "latched: \"%s\"\n", v->latchedString );
-		}
+		Cvar_Print( v );
 		return qtrue;
 	}
 
@@ -509,6 +520,80 @@ qboolean Cvar_Command( void ) {
 	}
 
 	return qtrue;
+}
+
+typedef struct {
+	int i;
+	const char *s;
+} intString_t;
+
+static const intString_t cvarflags[] = {
+	{CVAR_USER_CREATED, "USER CREATED"},
+	{CVAR_ARCHIVE, "ARCHIVE"},
+	{CVAR_LATCH, "LATCH"},
+	{CVAR_USERINFO, "USERINFO"},
+	{CVAR_SERVERINFO, "SERVERINFO"},
+	{CVAR_SYSTEMINFO, "SYSTEMINFO"},
+	{CVAR_INIT, "WRITE PROTECTED"},
+	{CVAR_ROM, "READONLY"},
+	{CVAR_CHEAT, "CHEAT"},
+	{CVAR_NORESTART, "NO RESTART"},
+	{CVAR_INTERNAL, "INTERNAL"},
+};
+
+#define ARRAY_LEN(x) (sizeof (x) / sizeof( *(x) ))
+static const size_t numCvarFlags = ARRAY_LEN( cvarflags );
+
+static void Cvar_PrintFlags (cvar_t* cv) {
+	char buf[1024] = {0};
+
+	Com_sprintf(buf, sizeof(buf), "Flags: ");
+
+	if ( !(cv->flags & ~CVAR_TEMP) )
+		//discard CVAR_TEMP flag because it is useless /not used for anything
+		Q_strcat(buf, sizeof(buf), "none");
+	else {
+		for (int i = 0; i < numCvarFlags; ++i) {
+			if (cv->flags & cvarflags[i].i)
+				Q_strcat(buf, sizeof(buf), va("%s, ", cvarflags[i].s));
+		}
+
+		int ln = strlen( buf );
+		if (ln && buf[ln - 1] == ' ')
+			buf[ln - 2] = 0;	//cut off ", "
+	}
+	Com_Printf("%s\n",buf);
+}
+
+
+/*
+============
+Cvar_Print_f
+
+Print out the contents of a cvar
+============
+*/
+static void Cvar_Print_f(void)
+{
+	char *name;
+	cvar_t *cv;
+
+	if(Cmd_Argc() != 2)
+	{
+		Com_Printf ("Usage: %s <cvar>\n", Cmd_Argv(0));
+		return;
+	}
+
+	name = Cmd_Argv(1);
+
+	cv = Cvar_FindVar(name);
+	if(cv)
+	{
+		Cvar_Print(cv);
+		Cvar_PrintFlags(cv);
+	}
+	else
+		Com_Printf ("Cvar \"%s\" does not exist.\n", name);
 }
 
 
@@ -976,6 +1061,9 @@ Reads in all archived cvars
 */
 void Cvar_Init (void) {
 	cvar_cheats = Cvar_Get("sv_cheats", "0", CVAR_ROM | CVAR_SYSTEMINFO );
+
+	Cmd_AddCommand ("print", Cvar_Print_f );
+	Cmd_SetCommandCompletionFunc( "print", Cvar_CompleteCvarName );
 
 	Cmd_AddCommand ("toggle", Cvar_Toggle_f);
 	Cmd_SetCommandCompletionFunc( "toggle", Cvar_CompleteCvarName );
