@@ -709,9 +709,28 @@ void Cvar_List_f( void ) {
 		match = NULL;
 	}
 
-	i = 0;
-	for (var = cvar_vars ; var ; var = var->next, i++)
+	cvar_t *sortedCvars[MAX_CVARS];
+
+	size_t numSorted = 0;
+	for (var = cvar_vars ; var ; var = var->next) {
+		// Dont show internal cvars
+		if ( var->flags & CVAR_INTERNAL )
+			continue;
+
+		if (match && !Com_Filter(match, var->name, qfalse))
+			continue;
+
+		sortedCvars[numSorted++] = var;
+	}
+
+	if (!numSorted)
+		return;
+
+	qsort(sortedCvars, numSorted, sizeof(sortedCvars[0]), Cvar_CvarCmp);
+
+	for (i = 0; i < numSorted; ++i)
 	{
+		var = sortedCvars[i];
 		// Dont show internal cvars
 		if ( var->flags & CVAR_INTERNAL )
 		{
