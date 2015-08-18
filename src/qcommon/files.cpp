@@ -3655,11 +3655,20 @@ qboolean FS_MV_VerifyDownloadPath(const char *pk3file) {
 	return qfalse;
 }
 
-void FS_FilenameCompletion( const char *dir, const char *ext, qboolean stripExt, callbackFunc_t callback, qboolean allowNonPureFilesOnDisk ) { // for auto-complete (copied from OpenJK)
+void FS_FilenameCompletion( const char *dir, const char *ext, qboolean stripExt, callbackFunc_t callback ) { // for auto-complete (copied from OpenJK)
 	int nfiles;
 	char **filenames, filename[MAX_STRING_CHARS];
 
-	filenames = FS_ListFilteredFiles( dir, ext, NULL, &nfiles );
+	char realExt[32];
+	// add: if ext is like "cfg|txt|bsp", we will first use a list of cfg files, then txt files, then bsp files
+	const char *pch = strchr(ext, '|');
+
+	if (pch)
+		Q_strncpyz(realExt, ext , pch - ext + 1);	//parse out the ext before the '|', i.e. "txt|cfg" will turn to "txt"
+	else
+		Q_strncpyz(realExt, ext, sizeof(realExt));
+
+	filenames = FS_ListFilteredFiles( dir, realExt, NULL, &nfiles );
 
 	FS_SortFileList( filenames, nfiles );
 
@@ -3674,4 +3683,8 @@ void FS_FilenameCompletion( const char *dir, const char *ext, qboolean stripExt,
 		callback( filename );
 	}
 	FS_FreeFileList( filenames );
+
+	if (pch)
+		//there are remaining extensions to list.
+		FS_FilenameCompletion(dir, pch + 1, stripExt, callback);
 }

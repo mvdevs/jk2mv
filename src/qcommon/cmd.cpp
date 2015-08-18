@@ -533,6 +533,14 @@ void	Cmd_ExecuteString( const char *text ) {
 Cmd_List_f
 ============
 */
+
+static int Cmd_CommandCmp(const void *p1, const void *p2) {
+    const cmd_function_t **e1 = (const cmd_function_t **)p1;
+    const cmd_function_t **e2 = (const cmd_function_t **)p2;
+
+	return strcmp( (*e1)->name, (*e2)->name );
+}
+
 void Cmd_List_f (void)
 {
 	cmd_function_t	*cmd;
@@ -545,12 +553,24 @@ void Cmd_List_f (void)
 		match = NULL;
 	}
 
-	i = 0;
-	for (cmd=cmd_functions ; cmd ; cmd=cmd->next) {
-		if (match && !Com_Filter(match, cmd->name, qfalse)) continue;
+	//sorting the cmdlist
+	cmd_function_t	*sortedCommands[1024];
 
+	i = 0;
+	int numSorted = 0;
+	for (cmd=cmd_functions ; cmd && numSorted < 1024; cmd=cmd->next, ++i) {
+		if (match && !Com_Filter(match, cmd->name, qfalse))
+			continue;
+
+		sortedCommands[numSorted++] = cmd;
+	}
+
+	if (numSorted)
+		qsort(sortedCommands, numSorted, sizeof(sortedCommands[0]), Cmd_CommandCmp);
+
+	for (i = 0 ; i < numSorted ; ++i) {
+		cmd = sortedCommands[i];
 		Com_Printf ("%s\n", cmd->name);
-		i++;
 	}
 	Com_Printf ("%i commands\n", i);
 }
@@ -562,7 +582,7 @@ Cmd_CompleteCfgName
 */
 void Cmd_CompleteCfgName( char *args, int argNum ) { // for auto-complete (copied from OpenJK)
 	if( argNum == 2 ) {
-		Field_CompleteFilename( "", "cfg", qfalse, qtrue );
+		Field_CompleteFilename( "", "cfg", qfalse );
 	}
 }
 
@@ -732,7 +752,7 @@ Cmd_CompleteTxtName
 */
 void Cmd_CompleteTxtName( char *args, int argNum ) {
 	if ( argNum == 2 )
-		Field_CompleteFilename( "", "txt", qfalse, qtrue );
+		Field_CompleteFilename( "", "txt", qfalse );
 }
 
 /*

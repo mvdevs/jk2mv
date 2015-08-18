@@ -305,9 +305,19 @@ cvar_t *Cvar_Set2( const char *var_name, const char *value, qboolean force ) {
 		value = var->resetString;
 	}
 
-	if (!strcmp(value,var->string)) {
+	if (!strcmp(value, var->string)) {
+
+		if ( (var->flags & CVAR_LATCH) && var->latchedString ) {
+			Com_Printf("Cvar %s is no longer latched to \"%s\".\n", var->name, var->latchedString);
+			Z_Free (var->latchedString);
+			var->latchedString = NULL;
+			var->modified = qtrue;
+			var->modificationCount++;
+		}
+
 		return var;
 	}
+
 	// note what types of cvars have been modified (userinfo, archive, serverinfo, systeminfo)
 	cvar_modifiedFlags |= var->flags;
 
@@ -330,7 +340,10 @@ cvar_t *Cvar_Set2( const char *var_name, const char *value, qboolean force ) {
 			if (var->latchedString)
 			{
 				if (strcmp(value, var->latchedString) == 0)
+				{
+					Com_Printf("Cvar %s is already latched to \"%s\".\n", var->name, value);
 					return var;
+				}
 				Z_Free (var->latchedString);
 			}
 			else
@@ -346,7 +359,7 @@ cvar_t *Cvar_Set2( const char *var_name, const char *value, qboolean force ) {
 			return var;
 		}
 
-		if ( (var->flags & CVAR_CHEAT) && !cvar_cheats->integer && !com_demoplaying ) //Allow cheat cvars during demo playback.
+		if ( (var->flags & CVAR_CHEAT) && !cvar_cheats->integer && !com_demoplaying ) //Allow modifying cheat cvars during demo playback.
 		{
 			Com_Printf ("%s is cheat protected.\n", var_name);
 			return var;
@@ -456,6 +469,20 @@ Cvar_Command
 Handles variable inspection and changing from the console
 ============
 */
+
+void Cvar_Print (cvar_t *v) {
+	Com_Printf ("\"%s\" is:\"%s" S_COLOR_WHITE "\" ", v->name, v->string);
+
+	if (strcmp(v->string, v->resetString))
+		Com_Printf("default:\"%s" S_COLOR_WHITE "\"\n", v->resetString );
+	else
+		Com_Printf("(the default)\n");
+
+	if ( v->latchedString ) {
+		Com_Printf( "latched: \"%s\"\n", v->latchedString );
+	}
+}
+
 qboolean Cvar_Command( void ) {
 	cvar_t			*v;
 
@@ -473,17 +500,15 @@ qboolean Cvar_Command( void ) {
 			return qtrue;
 		}
 */
-		Com_Printf ("\"%s\" is:\"%s" S_COLOR_WHITE "\" default:\"%s" S_COLOR_WHITE "\"\n", v->name, v->string, v->resetString );
-		if ( v->latchedString ) {
-			Com_Printf( "latched: \"%s\"\n", v->latchedString );
-		}
+		Cvar_Print( v );
 		return qtrue;
 	}
 
 //JFM toggle test
 	char *value;
 	value = Cmd_Argv(1);
-	if (value[0] =='!')	//toggle
+
+	if (!strcmp(value, "!")) //toggle
 	{
 		char buff[5];
 		sprintf(buff,"%i",!v->value);
@@ -495,6 +520,81 @@ qboolean Cvar_Command( void ) {
 	}
 
 	return qtrue;
+}
+
+typedef struct {
+	int i;
+	const char *s;
+} intString_t;
+
+static const intString_t cvarflags[] = {
+	{CVAR_USER_CREATED, "USER CREATED"},
+	{CVAR_ARCHIVE, "ARCHIVE"},
+	{CVAR_LATCH, "LATCH"},
+	{CVAR_USERINFO, "USERINFO"},
+	{CVAR_SERVERINFO, "SERVERINFO"},
+	{CVAR_SYSTEMINFO, "SYSTEMINFO"},
+	{CVAR_INIT, "WRITE PROTECTED"},
+	{CVAR_ROM, "READONLY"},
+	{CVAR_CHEAT, "CHEAT"},
+	{CVAR_NORESTART, "NO RESTART"},
+	{CVAR_INTERNAL, "INTERNAL"},
+	{CVAR_GLOBAL, "GLOBAL"},
+};
+
+#define ARRAY_LEN(x) (sizeof (x) / sizeof( *(x) ))
+static const size_t numCvarFlags = ARRAY_LEN( cvarflags );
+
+static void Cvar_PrintFlags (cvar_t* cv) {
+	char buf[1024] = {0};
+
+	Com_sprintf(buf, sizeof(buf), "Flags: ");
+
+	if ( !(cv->flags & ~CVAR_TEMP) )
+		//discard CVAR_TEMP flag because it is useless /not used for anything
+		Q_strcat(buf, sizeof(buf), "none");
+	else {
+		for (int i = 0; i < numCvarFlags; ++i) {
+			if (cv->flags & cvarflags[i].i)
+				Q_strcat(buf, sizeof(buf), va("%s, ", cvarflags[i].s));
+		}
+
+		int ln = strlen( buf );
+		if (ln && buf[ln - 1] == ' ')
+			buf[ln - 2] = 0;	//cut off ", "
+	}
+	Com_Printf("%s\n",buf);
+}
+
+
+/*
+============
+Cvar_Print_f
+
+Print out the contents of a cvar
+============
+*/
+static void Cvar_Print_f(void)
+{
+	char *name;
+	cvar_t *cv;
+
+	if(Cmd_Argc() != 2)
+	{
+		Com_Printf ("Usage: %s <cvar>\n", Cmd_Argv(0));
+		return;
+	}
+
+	name = Cmd_Argv(1);
+
+	cv = Cvar_FindVar(name);
+	if(cv)
+	{
+		Cvar_Print(cv);
+		Cvar_PrintFlags(cv);
+	}
+	else
+		Com_Printf ("Cvar \"%s\" does not exist.\n", name);
 }
 
 
@@ -640,21 +740,43 @@ Appends lines containing "set variable value" for all variables
 with the archive flag set to qtrue.
 ============
 */
-void Cvar_WriteVariables(fileHandle_t f, qboolean locals) {
+
+static int Cvar_CvarCmp(const void *p1, const void *p2) {
+    const cvar_t **e1 = (const cvar_t **)p1;
+    const cvar_t **e2 = (const cvar_t **)p2;
+
+	return strcmp( (*e1)->name, (*e2)->name );
+}
+
+void Cvar_WriteVariables( fileHandle_t f, qboolean locals ) {
 	cvar_t	*var;
 	char	buffer[1024];
+	cvar_t *sortedCvars[MAX_CVARS];
 
+	int i;
+	size_t numSorted = 0;
 	for (var = cvar_vars ; var ; var = var->next) {
 		if((var->flags & CVAR_ARCHIVE) &&
-			( ( locals && !(var->flags & CVAR_GLOBAL) ) || ( !locals && (var->flags & CVAR_GLOBAL) ) ) ) {
-			// write the latched value, even if it hasn't taken effect yet
-			if ( var->latchedString ) {
-				Com_sprintf (buffer, sizeof(buffer), "seta %s \"%s\"\n", var->name, var->latchedString);
-			} else {
-				Com_sprintf (buffer, sizeof(buffer), "seta %s \"%s\"\n", var->name, var->string);
-			}
-			FS_Printf (f, "%s", buffer);
+				( ( locals && !(var->flags & CVAR_GLOBAL) ) || ( !locals && (var->flags & CVAR_GLOBAL) ) ) ) {
+			sortedCvars[numSorted++] = var;
 		}
+	}
+
+	if (!numSorted)
+		return;
+
+	qsort(sortedCvars, numSorted, sizeof(sortedCvars[0]), Cvar_CvarCmp);
+
+	for (i = 0; i < numSorted ; ++i) {
+		var = sortedCvars[i];
+
+		// write the latched value, even if it hasn't taken effect yet
+		if ( var->latchedString ) {
+			Com_sprintf (buffer, sizeof(buffer), "seta %s \"%s\"\n", var->name, var->latchedString);
+		} else {
+			Com_sprintf (buffer, sizeof(buffer), "seta %s \"%s\"\n", var->name, var->string);
+		}
+		FS_Printf (f, "%s", buffer);
 	}
 }
 
@@ -674,16 +796,28 @@ void Cvar_List_f( void ) {
 		match = NULL;
 	}
 
-	i = 0;
-	for (var = cvar_vars ; var ; var = var->next, i++)
-	{
+	cvar_t *sortedCvars[MAX_CVARS];
+
+	size_t numSorted = 0;
+	for (var = cvar_vars ; var ; var = var->next) {
 		// Dont show internal cvars
 		if ( var->flags & CVAR_INTERNAL )
-		{
 			continue;
-		}
 
-		if (match && !Com_Filter(match, var->name, qfalse)) continue;
+		if (match && !Com_Filter(match, var->name, qfalse))
+			continue;
+
+		sortedCvars[numSorted++] = var;
+	}
+
+	if (!numSorted)
+		return;
+
+	qsort(sortedCvars, numSorted, sizeof(sortedCvars[0]), Cvar_CvarCmp);
+
+	for (i = 0; i < numSorted; ++i)
+	{
+		var = sortedCvars[i];
 
 		if (var->flags & CVAR_SERVERINFO) {
 			Com_Printf("S");
@@ -921,6 +1055,9 @@ Reads in all archived cvars
 */
 void Cvar_Init (void) {
 	cvar_cheats = Cvar_Get("sv_cheats", "0", CVAR_ROM | CVAR_SYSTEMINFO );
+
+	Cmd_AddCommand ("print", Cvar_Print_f );
+	Cmd_SetCommandCompletionFunc( "print", Cvar_CompleteCvarName );
 
 	Cmd_AddCommand ("toggle", Cvar_Toggle_f);
 	Cmd_SetCommandCompletionFunc( "toggle", Cvar_CompleteCvarName );
