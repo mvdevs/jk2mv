@@ -214,7 +214,8 @@ typedef struct {
 	char		downloadList[MAX_INFO_STRING]; // list of paks we need to download
 	qboolean	downloadRestart;	// if true, we need to do another FS_Restart because we downloaded a pak
 
-	int http_port;
+	char httpdl[128];
+	qboolean httpdlvalid;
 	int udpdl;
 
 	// demo information

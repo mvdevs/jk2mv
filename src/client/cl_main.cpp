@@ -1493,7 +1493,7 @@ void CL_BeginDownload( const char *localName, const char *remoteName ) {
 	Cvar_SetValue("cl_downloadCount", 0);
 	Cvar_SetValue("cl_downloadTime", 0);
 
-	if (clc.http_port != 0 && clc.serverAddress.type == NA_IP) {
+	if (clc.httpdl[0]) {
 		// downloading over http has priority
 		Cvar_Set("cl_downloadProtocol", "HTTP");
 	} else {
@@ -1532,8 +1532,7 @@ void CL_ContinueCurrentDownload(qboolean abort) {
 	if (!Q_stricmp(cl_downloadProtocol->string, "HTTP")) {
 		char remotepath[MAX_STRING_CHARS];
 
-		Q_strncpyz(remotepath, va("http://%i.%i.%i.%i:%i/%s", clc.serverAddress.ip[0], clc.serverAddress.ip[1], clc.serverAddress.ip[2], clc.serverAddress.ip[3],
-			clc.http_port, cl_downloadName->string), sizeof(remotepath));
+		Q_strncpyz(remotepath, va("%s/%s", clc.httpdl, cl_downloadName->string), sizeof(remotepath));
 		Com_DPrintf("HTTP URL: %s\n", remotepath);
 
 		cls.curl = curl_easy_init();
@@ -1638,7 +1637,7 @@ void CL_InitDownloads(void) {
 	} else if ( FS_ComparePaks( clc.downloadList, sizeof( clc.downloadList ) , qtrue ) ) {
 		Com_Printf("Need paks: %s\n", clc.downloadList );
 
-		if (*clc.downloadList && (clc.udpdl || clc.http_port)) {
+		if (*clc.downloadList && (clc.udpdl || clc.httpdl[0])) {
 			cls.state = CA_CONNECTED;
 
 			// to get the download popup jk2mvmenu must be loaded instaed of the normal ui
@@ -1693,7 +1692,8 @@ void CL_CheckForResend( void ) {
 			CL_RequestAuthorization();
 		}
 #endif	// USE_CD_KEY
-		clc.http_port = -1;
+		clc.httpdl[0] = 0;
+		clc.httpdlvalid = qfalse;
 		clc.udpdl = -1;
 #ifdef MV_MFDOWNLOADS
 		NET_OutOfBandPrint(NS_CLIENT, clc.serverAddress, "jk2mfport");
@@ -1704,7 +1704,7 @@ void CL_CheckForResend( void ) {
 		break;
 
 	case CA_CHALLENGING:
-		if (MV_GetCurrentGameversion() == VERSION_UNDEF || clc.http_port == -1 || clc.udpdl == -1)
+		if (MV_GetCurrentGameversion() == VERSION_UNDEF || !clc.httpdlvalid || clc.udpdl == -1)
 			break;
 
 		// sending back the challenge
@@ -2159,9 +2159,8 @@ void CL_ConnectionlessPacket( netadr_t from, msg_t *msg ) {
 	}
 
 #ifdef MV_MFDOWNLOADS
-	int mfport = atoi(c);
-	if (cls.state == CA_CONNECTING && NET_CompareAdr(from, clc.serverAddress) && mfport > 0 && clc.http_port == -1) {
-		clc.http_port = mfport;
+	if (strtol(c, NULL, 10) && cls.state == CA_CONNECTING && NET_CompareAdr(from, clc.serverAddress)) {
+		Q_strncpyz(clc.httpdl, va("http://%i.%i.%i.%i:%s", clc.serverAddress.ip[0], clc.serverAddress.ip[1], clc.serverAddress.ip[2], clc.serverAddress.ip[3], c), sizeof(clc.httpdl));
 
 		return;
 	}
@@ -3020,8 +3019,25 @@ void CL_ServerInfoPacket( netadr_t from, msg_t *msg ) {
 			}
 		}
 
-		if (clc.http_port == -1)
-			clc.http_port = atoi(Info_ValueForKey(infoString, "mvhttp"));
+		if (!clc.httpdl[0]) {
+			char *val;
+			
+			val = Info_ValueForKey(infoString, "mvhttp");
+			if (strtol(val, NULL, 10)) {
+				Q_strncpyz(clc.httpdl, va("http://%i.%i.%i.%i:%s", clc.serverAddress.ip[0], clc.serverAddress.ip[1], clc.serverAddress.ip[2], clc.serverAddress.ip[3], val), sizeof(clc.httpdl));
+			} else if ((val = Info_ValueForKey(infoString, "mvhttpurl")) && Q_stristr(val, "http://")) {
+				Q_strncpyz(clc.httpdl, val, sizeof(clc.httpdl));
+
+				// make sure there is no "/" on the end
+				// so it always is in the format "http://a.org"
+				size_t len = strlen(clc.httpdl);
+				if (clc.httpdl[len - 1] == '/') {
+					clc.httpdl[len - 1] = 0;
+				}
+			}
+
+			clc.httpdlvalid = qtrue;
+		}
 
 		return;
 	}

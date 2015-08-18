@@ -473,7 +473,7 @@ void *SV_MV_Websrv_Loop_ExtThread(void *server) {
 }
 
 void SV_MV_Websrv_Shutdown() {
-	Com_Printf("shutting down webserver...\n");
+	Com_Printf("HTTP Downloads: shutting down webserver...\n");
 
 	MV_LockMutex(m_srv);
 	m_end = qtrue;
@@ -800,33 +800,37 @@ Ghoul2 Insert End
 	mv_httpserverport = Cvar_Get("mv_httpserverport", "0", CVAR_ARCHIVE | CVAR_LATCH);
 
 	// start webserver
-	if (!mgsrv && mv_httpdownloads->integer) {
-		const char *err = NULL;
-		int port;
+	if (mv_httpdownloads->integer) {
+		if (Q_stristr(mv_httpserverport->string, "http://")) {
+			Com_Printf("HTTP Downloads: redirecting to %s\n", mv_httpserverport->string);
+		} else if (!mgsrv) {
+			const char *err = NULL;
+			int port;
 
-		mgsrv = mg_create_server(NULL, SV_MV_Websrv_Request_ExtThread);
-		mg_set_option(mgsrv, "document_root", Cvar_Get("fs_basepath", "", 0)->string);
+			mgsrv = mg_create_server(NULL, SV_MV_Websrv_Request_ExtThread);
+			mg_set_option(mgsrv, "document_root", Cvar_Get("fs_basepath", "", 0)->string);
 
-		if (mv_httpserverport->integer) {
-			port = mv_httpserverport->integer;
-			err = mg_set_option(mgsrv, "listening_port", va("%i", port));
-		} else {
-			for (port = HTTPSRV_STDPORT; port <= HTTPSRV_STDPORT + 15; port++) {
+			if (mv_httpserverport->integer) {
+				port = mv_httpserverport->integer;
 				err = mg_set_option(mgsrv, "listening_port", va("%i", port));
-				if (!err) {
-					break;
+			} else {
+				for (port = HTTPSRV_STDPORT; port <= HTTPSRV_STDPORT + 15; port++) {
+					err = mg_set_option(mgsrv, "listening_port", va("%i", port));
+					if (!err) {
+						break;
+					}
 				}
 			}
-		}
 
-		if (!err) {
-			sv.http_port = port;
-			Com_Printf("webserver running on port %i...\n", port);
-		}  else {
-			Com_Error(ERR_DROP, "webserver startup failed: %s", err);
-		}
+			if (!err) {
+				sv.http_port = port;
+				Com_Printf("HTTP Downloads: webserver running on port %i...\n", port);
+			} else {
+				Com_Error(ERR_DROP, "HTTP Downloads: webserver startup failed: %s", err);
+			}
 
-		mg_start_thread(SV_MV_Websrv_Loop_ExtThread, mgsrv);
+			mg_start_thread(SV_MV_Websrv_Loop_ExtThread, mgsrv);
+		}
 	}
 }
 

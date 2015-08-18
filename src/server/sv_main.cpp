@@ -595,7 +595,11 @@ void SVC_Info( netadr_t from ) {
 
 	// webserver port
 	if (mv_httpdownloads->integer) {
-		Info_SetValueForKey(infostring, "mvhttp", va("%i", sv.http_port));
+		if (Q_stristr(mv_httpserverport->string, "http://")) {
+			Info_SetValueForKey(infostring, "mvhttpurl", mv_httpserverport->string);
+		} else {
+			Info_SetValueForKey(infostring, "mvhttp", va("%i", sv.http_port));
+		}
 	}
 
 	NET_OutOfBandPrint( NS_SERVER, from, "infoResponse\n%s", infostring );

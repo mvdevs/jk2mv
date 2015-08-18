@@ -559,7 +559,7 @@ static void Cvar_PrintFlags (cvar_t* cv) {
 				Q_strcat(buf, sizeof(buf), va("%s, ", cvarflags[i].s));
 		}
 
-		int ln = strlen( buf );
+		size_t ln = strlen( buf );
 		if (ln && buf[ln - 1] == ' ')
 			buf[ln - 2] = 0;	//cut off ", "
 	}
