@@ -359,7 +359,7 @@ cvar_t *Cvar_Set2( const char *var_name, const char *value, qboolean force ) {
 			return var;
 		}
 
-		if ( (var->flags & CVAR_CHEAT) && !cvar_cheats->integer && !com_demoplaying ) //Allow cheat cvars during demo playback.
+		if ( (var->flags & CVAR_CHEAT) && !cvar_cheats->integer && !com_demoplaying ) //Allow modifying cheat cvars during demo playback.
 		{
 			Com_Printf ("%s is cheat protected.\n", var_name);
 			return var;
@@ -653,21 +653,43 @@ Appends lines containing "set variable value" for all variables
 with the archive flag set to qtrue.
 ============
 */
-void Cvar_WriteVariables(fileHandle_t f, qboolean locals) {
+
+static int Cvar_CvarCmp(const void *p1, const void *p2) {
+    const cvar_t **e1 = (const cvar_t **)p1;
+    const cvar_t **e2 = (const cvar_t **)p2;
+
+	return strcmp( (*e1)->name, (*e2)->name );
+}
+
+void Cvar_WriteVariables( fileHandle_t f, qboolean locals ) {
 	cvar_t	*var;
 	char	buffer[1024];
+	cvar_t *sortedCvars[MAX_CVARS];
 
+	int i;
+	size_t numSorted = 0;
 	for (var = cvar_vars ; var ; var = var->next) {
 		if((var->flags & CVAR_ARCHIVE) &&
-			( ( locals && !(var->flags & CVAR_GLOBAL) ) || ( !locals && (var->flags & CVAR_GLOBAL) ) ) ) {
-			// write the latched value, even if it hasn't taken effect yet
-			if ( var->latchedString ) {
-				Com_sprintf (buffer, sizeof(buffer), "seta %s \"%s\"\n", var->name, var->latchedString);
-			} else {
-				Com_sprintf (buffer, sizeof(buffer), "seta %s \"%s\"\n", var->name, var->string);
-			}
-			FS_Printf (f, "%s", buffer);
+				( ( locals && !(var->flags & CVAR_GLOBAL) ) || ( !locals && (var->flags & CVAR_GLOBAL) ) ) ) {
+			sortedCvars[numSorted++] = var;
 		}
+	}
+
+	if (!numSorted)
+		return;
+
+	qsort(sortedCvars, numSorted, sizeof(sortedCvars[0]), Cvar_CvarCmp);
+
+	for (i = 0; i < numSorted ; ++i) {
+		var = sortedCvars[i];
+
+		// write the latched value, even if it hasn't taken effect yet
+		if ( var->latchedString ) {
+			Com_sprintf (buffer, sizeof(buffer), "seta %s \"%s\"\n", var->name, var->latchedString);
+		} else {
+			Com_sprintf (buffer, sizeof(buffer), "seta %s \"%s\"\n", var->name, var->string);
+		}
+		FS_Printf (f, "%s", buffer);
 	}
 }
 
