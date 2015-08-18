@@ -496,7 +496,8 @@ qboolean Cvar_Command( void ) {
 //JFM toggle test
 	char *value;
 	value = Cmd_Argv(1);
-	if (value[0] =='!')	//toggle
+
+	if (!strcmp(value, "!")) //toggle
 	{
 		char buff[5];
 		sprintf(buff,"%i",!v->value);
