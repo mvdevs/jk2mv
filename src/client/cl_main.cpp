@@ -1802,7 +1802,7 @@ void CL_CheckForResend( void ) {
 		break;
 
 	case CA_CHALLENGING:
-		if (MV_GetCurrentGameversion() == VERSION_UNDEF || !clc.httpdlvalid || clc.udpdl == -1)
+		if (MV_GetCurrentGameversion() == VERSION_UNDEF || ( ( !clc.httpdlvalid || clc.udpdl == -1 ) && com_dedicated->integer) )
 			break;
 
 		// sending back the challenge

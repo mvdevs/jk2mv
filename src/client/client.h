@@ -15,7 +15,7 @@
 #	include <curl/curl.h>
 #endif
 
-#define	RETRANSMIT_TIMEOUT	5000	// time between connection packet retransmits
+#define	RETRANSMIT_TIMEOUT	3000	// time between connection packet retransmits
 
 // Wind
 extern vec3_t cl_windVec;
