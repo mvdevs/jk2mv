@@ -2505,6 +2505,9 @@ void Com_Init( char *commandLine ) {
 	// being random enough for a serverid
 	com_frameTime = Com_Milliseconds();
 
+	// add + commands from command line
+	Com_AddStartupCommands();
+
 	// start in full screen ui mode
 	Cvar_Set("r_uiFullScreen", "1");
 
