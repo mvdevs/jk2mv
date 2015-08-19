@@ -339,7 +339,7 @@ typedef struct {
 	CURLM *curlm;
 } clientStatic_t;
 
-#define	CON_TEXTSIZE	65536 // increased in jk2mv
+#define	CON_TEXTSIZE	65536*2 // increased in jk2mv
 #define	NUM_CON_TIMES	4
 
 typedef struct {
