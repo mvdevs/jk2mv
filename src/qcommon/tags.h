@@ -46,6 +46,9 @@
 	TAGDEF(VM),							// stuff for VM, may be zapped later?
 	TAGDEF(GRIDMESH),					// some specific temp workspace that only seems to be in the MP codebase
 	TAGDEF(SPECIAL_MEM_TEST),			// special usage for testing z_malloc recover only
+
+	TAGDEF(DOWNLOADBLACKLIST),
+
 /*	TAGDEF(SHADER),
 	TAGDEF(RMAP),
 	TAGDEF(CURVES),

@@ -4730,9 +4730,17 @@ static void UI_RunMenuScript(char **args)
 			trap_Key_SetCatcher(trap_Key_GetCatcher() & ~KEYCATCH_UI);
 			trap_Key_ClearStates();
 			Menus_CloseAll();
-			trap_CL_ContinueCurrentDownload((!(qboolean)atoi(args[0])));
-		} else
-		{
+
+			if (String_Parse(args, &name2)) {
+				if (!Q_stricmp(name2, "accept")) {
+					trap_CL_ContinueCurrentDownload(DL_ACCEPT);
+				} else if (!Q_stricmp(name2, "deny")) {
+					trap_CL_ContinueCurrentDownload(DL_ABORT);
+				} else if (!Q_stricmp(name2, "deny_blacklist")) {
+					trap_CL_ContinueCurrentDownload(DL_ABORT_BLACKLIST);
+				}
+			}
+		} else {
 			Com_Printf("unknown UI script %s\n", name);
 		}
 	}

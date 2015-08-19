@@ -212,6 +212,8 @@ typedef struct {
 	int			downloadCount;	// how many bytes we got
 	int			downloadSize;	// how many bytes we got
 	char		downloadList[MAX_INFO_STRING]; // list of paks we need to download
+	int			downloadIndex;	// current index in downloadChksums
+	int			downloadChksums[64]; // contains checksums of the currently requested paks
 	qboolean	downloadRestart;	// if true, we need to do another FS_Restart because we downloaded a pak
 
 	char httpdl[128];
@@ -282,6 +284,14 @@ typedef struct {
 	unsigned short	port;
 } serverAddress_t;
 
+#define BLACKLIST_FILE_VERSION 1
+typedef struct {
+	char name[MAX_QPATH];
+	int checksum;
+	time_t time;
+	netadr_t server;
+} blacklistentry_t;
+
 typedef struct {
 	connstate_t	state;				// connection status
 	int			keyCatchers;		// bit flags
@@ -333,6 +343,8 @@ typedef struct {
 	qhandle_t	whiteShader;
 	qhandle_t	consoleShader;
 
+	blacklistentry_t *downloadBlacklist;
+	size_t downloadBlacklistLen;
 	qboolean ignoreNextDownloadList;
 
 	CURL *curl;
@@ -442,7 +454,7 @@ void CL_ReadDemoMessage( void );
 void CL_InitDownloads(void);
 void CL_NextDownload(void);
 void CL_DownloadsComplete(void);
-void CL_ContinueCurrentDownload(qboolean abort);
+void CL_ContinueCurrentDownload(dldecision_t decision);
 
 void CL_GetPing( int n, char *buf, int buflen, int *pingtime );
 void CL_GetPingInfo( int n, char *buf, int buflen );

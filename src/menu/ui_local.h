@@ -1010,7 +1010,7 @@ qboolean trap_G2API_SetBoneAngles(void *ghoul2, int modelIndex, const char *bone
 Ghoul2 Insert End
 */
 
-void trap_CL_ContinueCurrentDownload(qboolean abort);
+void trap_CL_ContinueCurrentDownload(dldecision_t decision);
 
 //
 // ui_addbots.c

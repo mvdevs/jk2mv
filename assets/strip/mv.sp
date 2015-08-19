@@ -1,6 +1,6 @@
 VERSION 1
 REFERENCE MV
-COUNT 17
+COUNT 19
 INDEX 0
 {
    REFERENCE GAME_VERSION
@@ -138,6 +138,24 @@ INDEX 14
 }
 INDEX 15
 {
+   REFERENCE DL_NEVER
+   TEXT_LANGUAGE1 "Never"
+   TEXT_LANGUAGE2 "Never"
+   TEXT_LANGUAGE3 "Nie"
+   TEXT_LANGUAGE6 "Never"
+   TEXT_LANGUAGE8 "Never"
+}
+INDEX 16
+{
+   REFERENCE DL_NEVER_INFO
+   TEXT_LANGUAGE1 "Continue connecting and never ask me again to download this file."
+   TEXT_LANGUAGE2 "Continue connecting and never ask me again to download this file."
+   TEXT_LANGUAGE3 "Fortsetzen und diese Datei jetzt und in Zukunft nie herunterladen."
+   TEXT_LANGUAGE6 "Continue connecting and never ask me again to download this file."
+   TEXT_LANGUAGE8 "Continue connecting and never ask me again to download this file."
+}
+INDEX 17
+{
    REFERENCE BOTFILTER
    TEXT_LANGUAGE1 "Show bots:"
    TEXT_LANGUAGE2 "Show bots:"
@@ -145,7 +163,7 @@ INDEX 15
    TEXT_LANGUAGE6 "Show bots:"
    TEXT_LANGUAGE8 "Show bots:"
 }
-INDEX 16
+INDEX 18
 {
    REFERENCE BOTFILTER_INFO
    TEXT_LANGUAGE1 "Include bots in player count."

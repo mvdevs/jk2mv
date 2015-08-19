@@ -2768,7 +2768,7 @@ we are not interested in a download string format, we want something human-reada
 (this is used for diagnostics while connecting to a pure server)
 ================
 */
-qboolean FS_ComparePaks( char *neededpaks, int len, qboolean dlstring ) {
+qboolean FS_ComparePaks( char *neededpaks, int len, int *chksums, size_t maxchksums, qboolean dlstring ) {
 	searchpath_t	*sp;
 	qboolean havepak, badchecksum;
 	int i;
@@ -2785,7 +2785,7 @@ qboolean FS_ComparePaks( char *neededpaks, int len, qboolean dlstring ) {
 		havepak = qfalse;
 
 		// never autodownload any of the id paks
-		if ( FS_idPak(fs_serverReferencedPakNames[i], "base") ) {
+		if ( FS_idPak(fs_serverReferencedPakNames[i], BASEGAME) ) {
 			continue;
 		}
 
@@ -2821,6 +2821,10 @@ qboolean FS_ComparePaks( char *neededpaks, int len, qboolean dlstring ) {
 
 					Com_sprintf(st, sizeof(st), "%s/dl_%s.pk3", moddir, filename);
 					Q_strcat(neededpaks, len, st);
+				}
+
+				if (chksums && i < maxchksums) {
+					chksums[i] = fs_serverReferencedPaks[i];
 				}
 			} else {
 				char st[MAX_ZPATH];

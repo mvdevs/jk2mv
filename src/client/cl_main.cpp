@@ -120,6 +120,8 @@ void CL_ShowIP_f(void);
 void CL_ServerStatus_f(void);
 void CL_ServerStatusResponse( netadr_t from, msg_t *msg );
 
+void CL_BlacklistWriteFile();
+
 /*
 =======================================================================
 
@@ -795,6 +797,8 @@ void CL_Disconnect( qboolean showMainMenu ) {
 		clc.demofile = 0;
 	}
 
+	CL_BlacklistWriteFile();
+
 	if ( uivm && showMainMenu ) {
 		VM_Call( uivm, UI_SET_ACTIVE_MENU, UIMENU_NONE );
 	}
@@ -1420,6 +1424,49 @@ void CL_Clientinfo_f( void ) {
 
 //====================================================================
 
+void CL_BlacklistCurrentFile() {
+	// create a new buffer
+	blacklistentry_t *entrys = (blacklistentry_t *)Z_Malloc((int)((cls.downloadBlacklistLen + 1) * sizeof(blacklistentry_t)), TAG_DOWNLOADBLACKLIST, qtrue);
+	
+	// in case we already had a blacklist, copy it
+	if (cls.downloadBlacklist) {
+		Com_Memcpy(entrys, cls.downloadBlacklist, cls.downloadBlacklistLen * sizeof(blacklistentry_t));
+		Z_Free(cls.downloadBlacklist);
+	}
+
+	// write new blacklist entry to the end
+	blacklistentry_t *entry = &entrys[cls.downloadBlacklistLen++];
+	Q_strncpyz(entry->name, cl_downloadName->string, sizeof(entry->name));
+	entry->checksum = clc.downloadChksums[clc.downloadIndex];
+	entry->time = time(0);
+	entry->server = clc.serverAddress;
+
+	cls.downloadBlacklist = entrys;
+}
+
+void CL_BlacklistWriteFile() {
+	if (cls.downloadBlacklist) {
+		fileHandle_t fblacklist = FS_SV_FOpenFileWrite("dlblacklist.dat");
+		uint8_t version = BLACKLIST_FILE_VERSION;
+
+		if (fblacklist) {
+			if (FS_Write(&version, sizeof(version), fblacklist)) {
+				if (FS_Write(cls.downloadBlacklist, (int)(cls.downloadBlacklistLen * sizeof(blacklistentry_t)), fblacklist)) {
+					Com_Printf("blacklist file written to dlblacklist.dat\n");
+				}
+			}
+
+			FS_FCloseFile(fblacklist);
+		} else {
+			Com_Printf("could not write blacklist file dlblacklist.dat\n");
+		}
+
+		Z_Free(cls.downloadBlacklist);
+		cls.downloadBlacklist = NULL;
+		cls.downloadBlacklistLen = 0;
+	}
+}
+
 /*
 =================
 CL_DownloadsComplete
@@ -1428,6 +1475,7 @@ Called when all downloading has been completed
 =================
 */
 void CL_DownloadsComplete( void ) {
+	CL_BlacklistWriteFile();
 
 	// if we downloaded files we need to restart the file system
 	if (clc.downloadRestart) {
@@ -1486,6 +1534,19 @@ The UI opens a window in which the user can decide to download it.
 =================
 */
 void CL_BeginDownload( const char *localName, const char *remoteName ) {
+	// in case the file has been blacklisted, skip it immediately
+	if (cls.downloadBlacklist) {
+		for (int i = 0; i < cls.downloadBlacklistLen; i++) {
+			if (cls.downloadBlacklist[i].checksum == clc.downloadChksums[clc.downloadIndex]) {
+				// file is blacklisted
+				Com_Printf("Skipping download for blacklisted file %s\n", remoteName);
+				clc.downloadIndex++;
+				CL_NextDownload();
+				return;
+			}
+		}
+	}
+
 	// the ui decides if this file is going to be downloaded
 	Cvar_Set("cl_downloadName", remoteName);
 	Cvar_Set("cl_downloadLocalName", localName);
@@ -1511,56 +1572,64 @@ After the user decided wether the file should be downloaded.
 Stores it in the current game directory.
 =================
 */
-void CL_ContinueCurrentDownload(qboolean abort) {
-	if (abort) {
-		// user disallowed the download
+void CL_ContinueCurrentDownload(dldecision_t decision) {
+	if (decision == DL_ABORT) {
+		// user disallowed the file
+		clc.downloadIndex++;
 		CL_NextDownload();
-		return;
-	}
+	} else if (decision == DL_ABORT_BLACKLIST) {
+		// user disallowed the file and never wants to be asked again
+		Com_DPrintf("Blacklisted file with checksum %i", clc.downloadChksums[clc.downloadIndex]);
+		CL_BlacklistCurrentFile();
 
-	Com_Printf("^1****** ^7File Download ^1******^7\n"
-		"Localname: %s\n"
-		"Remotename: %s\n"
-		"Protocol: %s\n"
-		"^1***************************\n", cl_downloadLocalName->string, cl_downloadName->string, cl_downloadProtocol->string);
-
-	// Set so UI gets access to it
-	Cvar_SetValue("cl_downloadTime", (float)cls.realtime);
-	Q_strncpyz(clc.downloadName, cl_downloadLocalName->string, sizeof(clc.downloadName));
-	Com_sprintf(clc.downloadTempName, sizeof(clc.downloadTempName), "%s.tmp", cl_downloadLocalName->string);
-
-	if (!Q_stricmp(cl_downloadProtocol->string, "HTTP")) {
-		char remotepath[MAX_STRING_CHARS];
-
-		Q_strncpyz(remotepath, va("%s/%s", clc.httpdl, cl_downloadName->string), sizeof(remotepath));
-		Com_DPrintf("HTTP URL: %s\n", remotepath);
-
-		cls.curl = curl_easy_init();
-		if (!cls.curl) {
-			Com_DPrintf("failed initializing curl handle\n");
-			CL_NextDownload();
-			return;
-		}
-
-		curl_easy_setopt(cls.curl, CURLOPT_URL, remotepath);
-		curl_easy_setopt(cls.curl, CURLOPT_WRITEFUNCTION, CL_ParseHTTPDownload);
-		curl_easy_setopt(cls.curl, CURLOPT_PROGRESSFUNCTION, CL_ProgressHTTPDownload);
-		curl_easy_setopt(cls.curl, CURLOPT_NOPROGRESS, 0);
-		curl_easy_setopt(cls.curl, CURLOPT_CONNECTTIMEOUT, 5);
-		curl_easy_setopt(cls.curl, CURLOPT_BUFFERSIZE, 16384);
-		curl_easy_setopt(cls.curl, CURLOPT_FAILONERROR, 1);
-		curl_easy_setopt(cls.curl, CURLOPT_USERAGENT, Q3_VERSION);
-		curl_easy_setopt(cls.curl, CURLOPT_REFERER, va("jk2://%s", NET_AdrToString(clc.serverAddress)));
-#ifdef _DEBUG
-		curl_easy_setopt(cls.curl, CURLOPT_MAX_RECV_SPEED_LARGE, (curl_off_t)(2.5 * 1024 * 1024)); // my eyes aren't fast enough for this (limit to max. 2.5MB/s)
-#endif
-		curl_multi_add_handle(cls.curlm, cls.curl);
-
+		clc.downloadIndex++;
+		CL_NextDownload();
 	} else {
-		clc.downloadBlock = 0; // Starting new file
-		clc.downloadCount = 0;
+		// user accepted the file
+		clc.downloadIndex++;
 
-		CL_AddReliableCommand(va("download %s", cl_downloadName->string));
+		Com_Printf("^1****** ^7File Download ^1******^7\n"
+			"Localname: %s\n"
+			"Remotename: %s\n"
+			"Protocol: %s\n"
+			"^1***************************\n", cl_downloadLocalName->string, cl_downloadName->string, cl_downloadProtocol->string);
+
+		// Set so UI gets access to it
+		Cvar_SetValue("cl_downloadTime", (float)cls.realtime);
+		Q_strncpyz(clc.downloadName, cl_downloadLocalName->string, sizeof(clc.downloadName));
+		Com_sprintf(clc.downloadTempName, sizeof(clc.downloadTempName), "%s.tmp", cl_downloadLocalName->string);
+
+		if (!Q_stricmp(cl_downloadProtocol->string, "HTTP")) {
+			char remotepath[MAX_STRING_CHARS];
+
+			Q_strncpyz(remotepath, va("%s/%s", clc.httpdl, cl_downloadName->string), sizeof(remotepath));
+			Com_DPrintf("HTTP URL: %s\n", remotepath);
+
+			cls.curl = curl_easy_init();
+			if (cls.curl) {
+				curl_easy_setopt(cls.curl, CURLOPT_URL, remotepath);
+				curl_easy_setopt(cls.curl, CURLOPT_WRITEFUNCTION, CL_ParseHTTPDownload);
+				curl_easy_setopt(cls.curl, CURLOPT_PROGRESSFUNCTION, CL_ProgressHTTPDownload);
+				curl_easy_setopt(cls.curl, CURLOPT_NOPROGRESS, 0);
+				curl_easy_setopt(cls.curl, CURLOPT_CONNECTTIMEOUT, 5);
+				curl_easy_setopt(cls.curl, CURLOPT_BUFFERSIZE, 16384);
+				curl_easy_setopt(cls.curl, CURLOPT_FAILONERROR, 1);
+				curl_easy_setopt(cls.curl, CURLOPT_USERAGENT, Q3_VERSION);
+				curl_easy_setopt(cls.curl, CURLOPT_REFERER, va("jk2://%s", NET_AdrToString(clc.serverAddress)));
+#ifdef _DEBUG
+				curl_easy_setopt(cls.curl, CURLOPT_MAX_RECV_SPEED_LARGE, (curl_off_t)(2.5 * 1024 * 1024)); // my eyes aren't fast enough for this (limit to max. 2.5MB/s)
+#endif
+				curl_multi_add_handle(cls.curlm, cls.curl);
+			} else {
+				Com_DPrintf("failed initializing curl handle\n");
+				CL_NextDownload();
+			}
+		} else {
+			clc.downloadBlock = 0; // Starting new file
+			clc.downloadCount = 0;
+
+			CL_AddReliableCommand(va("download %s", cl_downloadName->string));
+		}
 	}
 }
 
@@ -1574,6 +1643,7 @@ A download completed or failed
 void CL_NextDownload(void) {
 	char *s;
 	char *remoteName, *localName;
+	char remoteNameCpy[MAX_QPATH], localNameCpy[MAX_QPATH];
 
 	// We are looking to start a download here
 	if (*clc.downloadList) {
@@ -1598,12 +1668,15 @@ void CL_NextDownload(void) {
 		else
 			s = localName + strlen(localName); // point at the nul byte
 
-		CL_BeginDownload( localName, remoteName );
-
 		clc.downloadRestart = qtrue;
+
+		Q_strncpyz(remoteNameCpy, remoteName, sizeof(remoteNameCpy));
+		Q_strncpyz(localNameCpy, localName, sizeof(localNameCpy));
 
 		// move over the rest
 		memmove( clc.downloadList, s, strlen(s) + 1);
+
+		CL_BeginDownload(localNameCpy, remoteNameCpy);
 
 		return;
 	}
@@ -1622,20 +1695,45 @@ and determine if we need to download them
 void CL_InitDownloads(void) {
 	char missingfiles[1024];
 
+	clc.downloadIndex = 0;
+
 	if (cls.ignoreNextDownloadList) {
 	  cls.ignoreNextDownloadList = qfalse;
 	} else if ( !mv_allowDownload->integer ) {
 		// autodownload is disabled on the client
 		// but it's possible that some referenced files on the server are missing
-		if (FS_ComparePaks( missingfiles, sizeof( missingfiles ), qfalse ) ) {
+		if (FS_ComparePaks( missingfiles, sizeof( missingfiles ), NULL, 0, qfalse ) ) {
 			// NOTE TTimo I would rather have that printed as a modal message box
 			//   but at this point while joining the game we don't know wether we will successfully join or not
 			Com_Printf( "\nWARNING: You are missing some files referenced by the server:\n%s"
 				"You might not be able to join the game\n"
 				"Go to the setting menu to turn on autodownload, or get the file elsewhere\n\n", missingfiles );
 		}
-	} else if ( FS_ComparePaks( clc.downloadList, sizeof( clc.downloadList ) , qtrue ) ) {
+	} else if ( FS_ComparePaks( clc.downloadList, sizeof(clc.downloadList), clc.downloadChksums, sizeof(clc.downloadChksums) / sizeof(int), qtrue ) ) {
+		fileHandle_t fblacklist;
+		int len;
+
 		Com_Printf("Need paks: %s\n", clc.downloadList );
+
+		// read the current blacklist
+		len = FS_SV_FOpenFileRead("dlblacklist.dat", &fblacklist);
+		if (len >= sizeof(uint8_t)) {
+			uint8_t version;
+
+			FS_Read(&version, sizeof(uint8_t), fblacklist);
+			if (version == BLACKLIST_FILE_VERSION) {
+				size_t entryslen = len - sizeof(uint8_t);
+				if (entryslen) {
+					cls.downloadBlacklist = (blacklistentry_t *)Z_Malloc((int)entryslen, TAG_DOWNLOADBLACKLIST, qtrue);
+					FS_Read(cls.downloadBlacklist, (int)entryslen, fblacklist);
+					cls.downloadBlacklistLen = entryslen / sizeof(blacklistentry_t);
+				}
+			} else {
+				Com_Printf("blacklist file version mismatch\n");
+			}
+
+			FS_FCloseFile(fblacklist);
+		}
 
 		if (*clc.downloadList && (clc.udpdl || clc.httpdl[0])) {
 			cls.state = CA_CONNECTED;

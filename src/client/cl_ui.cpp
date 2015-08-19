@@ -1223,7 +1223,7 @@ Ghoul2 Insert End
 
 	// download popup
 	case UI_MV_CONTINUE_DOWNLOAD:
-		CL_ContinueCurrentDownload((qboolean)args[1]);
+		CL_ContinueCurrentDownload((dldecision_t)args[1]);
 		return 0;
 
 	default:

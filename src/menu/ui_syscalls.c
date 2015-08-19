@@ -443,6 +443,6 @@ qboolean trap_G2API_SetBoneAngles(void *ghoul2, int modelIndex, const char *bone
 Ghoul2 Insert End
 */
 
-void trap_CL_ContinueCurrentDownload(qboolean abort) {
-	engine_syscall(UI_MV_CONTINUE_DOWNLOAD, abort);
+void trap_CL_ContinueCurrentDownload(dldecision_t decision) {
+	engine_syscall(UI_MV_CONTINUE_DOWNLOAD, decision);
 }

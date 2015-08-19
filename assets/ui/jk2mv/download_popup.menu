@@ -138,7 +138,7 @@
 			name			yesButton
 			group			none
 			style			WINDOW_STYLE_SHADER
-			rect			15 215 45 30
+			rect			8 215 45 30
 			background		"gfx/menus/menu_buttonback"
 			forecolor		1 1 1 1
 			decoration
@@ -160,8 +160,7 @@
 			action
 			{
 				play		"sound/interface/button1.wav"
-				uiScript	MVContinueDownload "1"
-				close		download_popup
+				uiScript	MVContinueDownload "accept"
 			}
 
 			mouseEnter 
@@ -181,7 +180,7 @@
 			name			noButton
 			group			none
 			style			WINDOW_STYLE_SHADER
-			rect			70 215 45 30
+			rect			72 215 45 30
 			background		"gfx/menus/menu_buttonback"
 			forecolor		1 1 1 1
 			decoration
@@ -203,8 +202,7 @@
 			action
 			{
 				play		"sound/interface/button1.wav"
-				uiScript	MVContinueDownload "0"
-				close		download_popup
+				uiScript	MVContinueDownload "deny"
 			}
 
 			mouseEnter
@@ -215,6 +213,48 @@
 			mouseExit
 			{
 				hide		noButton
+			}
+		}
+		
+		// never button
+		itemDef
+		{
+			name			neverButton
+			group			none
+			style			WINDOW_STYLE_SHADER
+			rect			125 215 45 30
+			background		"gfx/menus/menu_buttonback"
+			forecolor		1 1 1 1
+			decoration
+			visible			0
+		}
+		
+		itemDef
+		{
+			name			neverText
+			text			@MV_DL_NEVER
+			descText		@MV_DL_NEVER_INFO
+			type			1
+			font			3
+			textscale		.7
+			rect			135 220 45 30
+			forecolor		0.65 0.65 1 1
+			visible			1
+
+			action
+			{
+				play		"sound/interface/button1.wav"
+				uiScript	MVContinueDownload "deny_blacklist"
+			}
+
+			mouseEnter
+			{
+				show	neverButton
+			}
+
+			mouseExit
+			{
+				hide		neverButton
 			}
 		}
 

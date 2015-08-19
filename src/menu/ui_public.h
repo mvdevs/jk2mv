@@ -6,6 +6,12 @@
 #define UI_API_15_VERSION	6
 #define UI_API_16_VERSION	7
 
+typedef enum {
+	DL_ACCEPT,
+	DL_ABORT,
+	DL_ABORT_BLACKLIST,
+} dldecision_t;
+
 typedef struct {
 	connstate_t		connState;
 	int				connectPacketCount;
