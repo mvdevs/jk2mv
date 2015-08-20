@@ -506,7 +506,7 @@ qboolean Cvar_Command( void ) {
 
 //JFM toggle test
 	char *value;
-	value = Cmd_Argv(1);
+	value = Cmd_ArgsFrom(1);
 
 	if (!strcmp(value, "!")) //toggle
 	{
@@ -724,12 +724,28 @@ void Cvar_SetA_f( void ) {
 Cvar_Reset_f
 ============
 */
+
 void Cvar_Reset_f( void ) {
 	if ( Cmd_Argc() != 2 ) {
-		Com_Printf ("usage: reset <variable>\n");
+		Com_Printf ("Usage: reset <variable>\n");
 		return;
 	}
-	Cvar_Reset( Cmd_Argv( 1 ) );
+
+	const char *s = Cmd_Argv(1);
+	cvar_t *test = Cvar_FindVar( s );
+
+	if (!test) {
+		Com_Printf("reset: no such variable \"%s\"\n", s);
+		return;
+	}
+
+	if (!strcmp(test->resetString, test->string)) {
+		Com_Printf("\"%s\" is already set to its default value: \"%s^7\".\n", test->name, test->resetString);
+		return;
+	}
+
+	Com_Printf( "\"%s\" was reset to its default value \"%s^7\" from \"%s^7\".\n", test->name, test->resetString, test->string );
+	Cvar_Reset( s );
 }
 
 /*
