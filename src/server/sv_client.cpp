@@ -378,6 +378,7 @@ gotnewcl:
 
 	// save the userinfo
 	Q_strncpyz( newcl->userinfo, userinfo, sizeof(newcl->userinfo) );
+	SV_UserinfoChanged(newcl);
 
 	// get the game a chance to reject this connection or modify the userinfo
 	denied = (char *)VM_Call( gvm, GAME_CLIENT_CONNECT, clientNum, qtrue, qfalse ); // firstTime = qtrue
@@ -1207,7 +1208,7 @@ void SV_UserinfoChanged( client_t *cl ) {
 
 	// namecrash fix
 #define VALIDNAMECHARS " aäbcdefghijklmnoöpqrstuüvwxyzßAÄBCDEFGHIJKLMNOÖPQRSTUÜVWXYZ1234567890^$&/()=?!´`'+#*.,:<>|{[]}-_~@%§\x0B\x7F"
-	if (mv_fixnamecrash->integer) {
+	if (mv_fixnamecrash->integer && !(sv.fixes & MVFIX_NAMECRASH)) {
 		char name[61], cleanedName[61]; // 60 because some mods increased this
 		Q_strncpyz(name, Info_ValueForKey(cl->userinfo, "name"), sizeof(name));
 		int count = 0;
@@ -1225,7 +1226,7 @@ void SV_UserinfoChanged( client_t *cl ) {
 	}
 
 	// forcecrash fix
-	if (mv_fixforcecrash->integer) {
+	if (mv_fixforcecrash->integer && !(sv.fixes & MVFIX_FORCECRASH)) {
 		char forcePowers[30];
 		Q_strncpyz(forcePowers, Info_ValueForKey(cl->userinfo, "forcepowers"), sizeof(forcePowers));
 
@@ -1270,7 +1271,7 @@ void SV_UserinfoChanged( client_t *cl ) {
 	}
 
 	// serverside galaking fix
-	if (mv_fixgalaking->integer) {
+	if (mv_fixgalaking->integer && !(sv.fixes & MVFIX_GALAKING)) {
 		char model[80];
 
 		Q_strncpyz(model, Info_ValueForKey(cl->userinfo, "model"), sizeof(model));
@@ -1283,7 +1284,7 @@ void SV_UserinfoChanged( client_t *cl ) {
 	}
 
 	// serverside broken models fix (head only model)
-	if (mv_fixbrokenmodels->integer) {
+	if (mv_fixbrokenmodels->integer && !(sv.fixes & MVFIX_BROKENMODEL)) {
 		char model[80];
 
 		Q_strncpyz(model, Info_ValueForKey(cl->userinfo, "model"), sizeof(model));

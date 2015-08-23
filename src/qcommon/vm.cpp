@@ -940,3 +940,11 @@ void VM_BlockCopy(unsigned int dest, unsigned int src, size_t n)
 
 	Com_Memcpy(currentVM->dataBase + dest, currentVM->dataBase + src, n);
 }
+
+int	VM_MVAPILevel(const vm_t *vm) {
+	return vm->mvapilevel;
+}
+
+void VM_SetMVAPILevel(vm_t *vm, int level) {
+	vm->mvapilevel = level;
+}

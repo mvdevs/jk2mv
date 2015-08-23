@@ -4,7 +4,6 @@
 // g_public.h -- game module information visible to server
 
 #define	GAME_API_VERSION	8
-#define	MV_API_VERSION		1 // MV-API
 
 // entity->svFlags
 // the server does not know how to interpret most of the values
@@ -77,13 +76,6 @@ typedef struct {
 	entityState_t	s;				// communicated by server to clients
 	entityShared_t	r;				// shared by both the server system and game
 } sharedEntity_t;
-
-typedef struct { // MV-API
-	byte	snapshotIgnore[MAX_CLIENTS];
-	byte	snapshotEnforce[MAX_CLIENTS];
-} sharedEntityMV_t;
-
-
 
 //===============================================================
 
@@ -406,8 +398,8 @@ typedef enum {
 	BOTLIB_PC_SOURCE_FILE_AND_LINE,
 
 	/*
-Ghoul2 Insert Start
-*/
+	Ghoul2 Insert Start
+	*/
 	G_G2_LISTBONES,
 	G_G2_LISTSURFACES,
 	G_G2_HAVEWEGHOULMODELS,
@@ -428,14 +420,9 @@ Ghoul2 Insert Start
 	G_G2_REMOVEGHOUL2MODEL,
 	G_G2_CLEANMODELS,
 	G_G2_COLLISIONDETECT,
-
-/*
-Ghoul2 Insert End
-*/
-	// MV-API
-	MV_G_LOCATE_GAME_DATA = 800,
-	MV_SEND_CONNECTIONLESSPACKET,
-
+	/*
+	Ghoul2 Insert End
+	*/
 } gameImport_t;
 
 
@@ -475,10 +462,5 @@ typedef enum {
 	BOTAI_START_FRAME,				// ( int time );
 
 	GAME_ROFF_NOTETRACK_CALLBACK,	// int entnum, char *notetrack
-
-	// MV-API
-	MV_API_INIT = 30,
-	MV_CONNECTIONLESS_PACKET,
-
 } gameExport_t;
 

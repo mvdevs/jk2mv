@@ -302,12 +302,11 @@ static void SV_AddEntitiesVisibleFromPoint( vec3_t origin, clientSnapshot_t *fra
 			ent->s.number = e;
 		}
 
-		// MV-API
 		if ( sv.gentitiesMV != NULL && sv.gentitySizeMV > 0 )
 		{
-			sharedEntityMV_t *mvEnt = MV_EntityNum(e);
+			mvsharedEntity_t *mvEnt = MV_EntityNum(e);
 
-				 if ( mvEnt->snapshotIgnore[frame->ps.clientNum] ) continue;
+			if ( mvEnt->snapshotIgnore[frame->ps.clientNum] ) continue;
 			else if ( mvEnt->snapshotEnforce[frame->ps.clientNum] )
 			{
 				SV_AddEntToSnapshot( svEnt, ent, eNums );

@@ -268,6 +268,12 @@ if (BuildMVMP OR BuildMVDED)
 		source_group("sys" FILES ${MVMPDEDSysFiles})
 		set(MVMPDEDFiles ${MVMPDEDFiles} ${MVMPDEDSysFiles})
 	endif()
+	
+	set(MVMPDEDApiFiles
+		"${SRCDir}/api/mvapi.h"
+	)
+	source_group("api" FILES ${MVMPDEDApiFiles})
+	set(MVMPDEDFiles ${MVMPDEDFiles} ${MVMPDEDApiFiles})
 endif()
 
 # jk2mvmp

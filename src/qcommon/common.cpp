@@ -74,6 +74,8 @@ cvar_t	*com_cameraMode;
 cvar_t	*com_noErrorInterrupt;
 #endif
 
+cvar_t	*mv_apienabled;
+
 // com_speeds times
 int		time_game;
 int		time_frontend;		// renderer frontend time
@@ -2469,6 +2471,8 @@ void Com_Init( char *commandLine ) {
 #if defined(_WIN32) && defined(_DEBUG)
 	com_noErrorInterrupt = Cvar_Get( "com_noErrorInterrupt", "0", 0 );
 #endif
+
+	mv_apienabled = Cvar_Get("mv_apienabled", "1", CVAR_ROM);
 
 	if ( com_dedicated->integer ) {
 		if ( !com_viewlog->integer ) {

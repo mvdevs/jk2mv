@@ -356,6 +356,9 @@ void	*VM_ExplicitArgPtr(vm_t *vm, intptr_t intValue);
 void	VM_Forced_Unload_Start(void);
 void	VM_Forced_Unload_Done(void);
 
+int	VM_MVAPILevel(const vm_t *vm);
+void VM_SetMVAPILevel(vm_t *vm, int level);
+
 //Ignore __attribute__ on non-gcc platforms
 #ifndef __GNUC__
 #ifndef __attribute__
