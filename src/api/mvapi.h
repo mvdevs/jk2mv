@@ -2,10 +2,10 @@
 #define MVAPI_H
 
 #ifndef Q3_VM
-#include <stdint.h>
+	#include <stdint.h>
 #else
-typedef unsigned char uint8_t;
-typedef unsigned short uint16_t;
+	typedef unsigned char uint8_t;
+	typedef unsigned short uint16_t;
 #endif
 
 // -------------------------------------- API Version -------------------------------------- //
@@ -38,51 +38,53 @@ typedef struct {
 } mvsharedEntity_t;
 
 typedef enum {
-	MVFIX_NAMECRASH = 1,
-	MVFIX_FORCECRASH = 2,
-	MVFIX_GALAKING = 4,
-	MVFIX_BROKENMODEL = 8,
-	MVFIX_TURRETCRASH = 16,
-	MVFIX_CHARGEJUMP = 32,
-	MVFIX_SPEEDHACK = 64
+	MVFIX_NONE                = 0,
+
+	/* GAME */
+	MVFIX_NAMECRASH           = (1 << 0),
+	MVFIX_FORCECRASH          = (1 << 1),
+	MVFIX_GALAKING            = (1 << 2),
+	MVFIX_BROKENMODEL         = (1 << 3),
+	MVFIX_TURRETCRASH         = (1 << 4),
+	MVFIX_CHARGEJUMP          = (1 << 5),
+	MVFIX_SPEEDHACK           = (1 << 6),
+
+	/* CGAME */
+	MVFIX_WPGLOWING           = (1 << 16),
 } mvfix_t;
 
-// ------------------------------------ Shared Functions ----------------------------------- //
-
+// ------------------------------------ SHARED Functions ----------------------------------- //
 // ******** SYSCALLS ******** //
 
 // qboolean trap_MVAPI_ControlFixes(mvfix_t fixes);
-// Since MV_APILEVEL 1
 #define MVAPI_CONTROL_FIXES 703                  /* asm: -704 */
 
 // ************************** //
+// ******** VMCALLS ******** //
 
+// vmMain(MVAPI_AFTER_INIT, ...)
+#define MVAPI_AFTER_INIT 100
+
+// ************************** //
 // ------------------------------------ GAME Functions ------------------------------------- //
-
 // ******** SYSCALLS ******** //
 
 // qboolean trap_MVAPI_SendConnectionlessPacket(const mvaddr_t *addr, const char *message);
-// Since MV_APILEVEL 1
 #define MVAPI_SEND_CONNECTIONLESSPACKET 700      /* asm: -701 */
 
 // qboolean trap_MVAPI_GetConnectionlessPacket(mvaddr_t *addr, char *buf, unsigned int bufsize);
-// Since MV_APILEVEL 1
 #define MVAPI_GET_CONNECTIONLESSPACKET 701       /* asm: -702 */
 
 // qboolean trap_MVAPI_LocateGameData(mvsharedEntity_t *mvEnts, int numGEntities, int sizeofmvsharedEntity_t);
-// Since MV_APILEVEL 1
 #define MVAPI_LOCATE_GAME_DATA 702               /* asm: -703 */
 
 // ************************** //
-
 // ******** VMCALLS ******** //
 
 // vmMain(MVAPI_RECV_CONNECTIONLESSPACKET, ...)
-// Since MV_APILEVEL 1
-#define MVAPI_RECV_CONNECTIONLESSPACKET 21
+#define MVAPI_RECV_CONNECTIONLESSPACKET 101
 
 // ************************** //
-
 // ----------------------------------------------------------------------------------------- //
 
 #endif /* MVAPI_H */

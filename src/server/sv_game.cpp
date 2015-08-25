@@ -1119,6 +1119,7 @@ void SV_ShutdownGameProgs( void ) {
 	VM_Call( gvm, GAME_SHUTDOWN, qfalse );
 	VM_Free( gvm );
 	gvm = NULL;
+	sv.fixes = MVFIX_NONE;
 }
 
 /*
@@ -1141,7 +1142,9 @@ static void SV_InitGameVM( qboolean restart ) {
 	VM_SetMVAPILevel(gvm, apireq);
 	Com_DPrintf("GameVM uses MVAPI level %i.\n", apireq);
 
-
+	if (apireq >= 1) {
+		VM_Call(gvm, MVAPI_AFTER_INIT);
+	}
 
 	// clear all gentity pointers that might still be set from
 	// a previous level

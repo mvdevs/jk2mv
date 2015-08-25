@@ -161,7 +161,7 @@ qboolean	CL_GetSnapshot16(int snapshotNumber, snapshot_t *snapshot) {
 	snapshot->ps = clSnap->ps;
 
 	// wp glowing workaround.. this keeps yourself from glowing like a candle when and after charging the blaster pistol on high svs.time
-	if (snapshot->ps.weaponstate != WEAPON_CHARGING_ALT && snapshot->ps.weaponstate != WEAPON_CHARGING)
+	if (!(cls.fixes & MVFIX_WPGLOWING) && snapshot->ps.weaponstate != WEAPON_CHARGING_ALT && snapshot->ps.weaponstate != WEAPON_CHARGING)
 		snapshot->ps.weaponChargeTime = 0;
 
 	count = clSnap->numEntities;
@@ -179,7 +179,7 @@ qboolean	CL_GetSnapshot16(int snapshotNumber, snapshot_t *snapshot) {
 		memcpy(&snapshot->entities[i], &cl.parseEntities[ entNum ], sizeof(entityState_t));
 
 		// wp glowing workaround.. this keeps others from glowing like a candle when and after charging the blaster pistol on high svs.time
-		if (snapshot->entities[i].eType == ET_BODY || snapshot->entities[i].eType == ET_PLAYER) {
+		if (!(cls.fixes & MVFIX_WPGLOWING) && ( snapshot->entities[i].eType == ET_BODY || snapshot->entities[i].eType == ET_PLAYER )) {
 			snapshot->entities[i].constantLight = 0;
 		}
 	}
@@ -246,7 +246,7 @@ qboolean	CL_GetSnapshot15(int snapshotNumber, snapshot15_t *snapshot) {
 	snapshot->ps = clSnap->ps;
 
 	// wp glowing workaround.. this keeps yourself from glowing like a candle when and after charging the blaster pistol on high svs.time
-	if (snapshot->ps.weaponstate != WEAPON_CHARGING_ALT && snapshot->ps.weaponstate != WEAPON_CHARGING)
+	if (!(cls.fixes & MVFIX_WPGLOWING) && snapshot->ps.weaponstate != WEAPON_CHARGING_ALT && snapshot->ps.weaponstate != WEAPON_CHARGING)
 		snapshot->ps.weaponChargeTime = 0;
 
 	count = clSnap->numEntities;
@@ -264,7 +264,7 @@ qboolean	CL_GetSnapshot15(int snapshotNumber, snapshot15_t *snapshot) {
 		memcpy(&snapshot->entities[i], &cl.parseEntities[entNum], sizeof(entityState_t));
 
 		// wp glowing workaround.. this keeps others from glowing like a candle when and after charging the blaster pistol on high svs.time
-		if (snapshot->entities[i].eType == ET_BODY || snapshot->entities[i].eType == ET_PLAYER) {
+		if (!(cls.fixes & MVFIX_WPGLOWING) && (snapshot->entities[i].eType == ET_BODY || snapshot->entities[i].eType == ET_PLAYER)) {
 			snapshot->entities[i].constantLight = 0;
 		}
 	}
@@ -596,6 +596,7 @@ void CL_ShutdownCGame( void ) {
 	VM_Call( cgvm, CG_SHUTDOWN );
 	VM_Free( cgvm );
 	cgvm = NULL;
+	cls.fixes = MVFIX_NONE;
 #ifdef _DONETPROFILE_
 	ClReadProf().ShowTotals();
 #endif
@@ -611,7 +612,7 @@ static int	FloatAsInt( float f ) {
 
 // wp glowing workaround.. this keeps yourself from glowing like a candle when charging the blaster pistol on high svs.time
 void MV_AddLightToScene(const vec3_t org, float intensity, float r, float g, float b) {
-	if (cl.snap.valid) {
+	if (!(cls.fixes & MVFIX_WPGLOWING) && cl.snap.valid) {
 		if (cl.snap.ps.weaponstate == WEAPON_CHARGING_ALT || cl.snap.ps.weaponstate == WEAPON_CHARGING) {
 			int	scl;
 			int	si, sr, sg, sb;
@@ -1323,6 +1324,9 @@ Ghoul2 Insert End
 		cl.mSharedMemory = ((char *)VMA(1));
 		return 0;
 
+	case MVAPI_CONTROL_FIXES:
+		return (int)CL_MVAPI_ControlFixes((mvfix_t)args[1]);
+
 	default:
 			assert(0); // bk010102
 		Com_Error( ERR_DROP, "Bad cgame system trap: %i", args[0] );
@@ -1343,6 +1347,7 @@ void CL_InitCGame( void ) {
 	const char			*mapname;
 	int					t1, t2;
 	vmInterpret_t		interpret;
+	int apireq;
 
 	t1 = Sys_Milliseconds();
 
@@ -1371,7 +1376,13 @@ void CL_InitCGame( void ) {
 	// init for this gamestate
 	// use the lastExecutedServerCommand instead of the serverCommandSequence
 	// otherwise server commands sent just before a gamestate are dropped
-	VM_Call( cgvm, CG_INIT, clc.serverMessageSequence, clc.lastExecutedServerCommand, clc.clientNum );
+	apireq = VM_Call(cgvm, CG_INIT, clc.serverMessageSequence, clc.lastExecutedServerCommand, clc.clientNum, 0, 0, 0, 0, 0, 0, 0, 0, MV_APILEVEL);
+	VM_SetMVAPILevel(cgvm, apireq);
+	Com_DPrintf("CGameVM uses MVAPI level %i.\n", apireq);
+
+	if (apireq >= 1) {
+		VM_Call(cgvm, MVAPI_AFTER_INIT);
+	}
 
 	// we will send a usercmd this frame, which
 	// will cause the server to send us the first snapshot
@@ -1665,5 +1676,20 @@ void CL_SetCGameTime( void ) {
 
 }
 
+/*
+====================
+CL_MVAPI_ControlFixes
 
+disable / enable toggleable fixes from the cgvm
+====================
+*/
+qboolean CL_MVAPI_ControlFixes(mvfix_t fixes) {
+	if (VM_MVAPILevel(cgvm) < 1) {
+		return qtrue;
+	}
+
+	cls.fixes = fixes;
+
+	return qfalse;
+}
 
