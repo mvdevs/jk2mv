@@ -1230,6 +1230,9 @@ Ghoul2 Insert End
 		CL_ContinueCurrentDownload((dldecision_t)args[1]);
 		return 0;
 
+	case MVAPI_GET_VERSION:
+		return (int)MV_GetCurrentGameversion();
+
 	default:
 		Com_Error( ERR_DROP, "Bad UI system trap: %i", args[0] );
 

@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include "../qcommon/cm_public.h"
 #include "../game/q_shared.h"
+#include "../api/mvapi.h"
 
 //============================================================================
 
@@ -1100,13 +1101,6 @@ extern huffman_t clientHuffTables;
 #define CL_DECODE_START		4
 
 // multiprotocol support
-typedef enum {
-	VERSION_UNDEF = 0,
-	VERSION_1_02 = 2,
-	VERSION_1_03 = 3,
-	VERSION_1_04 = 4,
-} mvversion_t;
-
 typedef enum {
 	PROTOCOL_UNDEF = 0,
 	PROTOCOL15 = 15,

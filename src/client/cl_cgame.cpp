@@ -1327,6 +1327,9 @@ Ghoul2 Insert End
 	case MVAPI_CONTROL_FIXES:
 		return (int)CL_MVAPI_ControlFixes((mvfix_t)args[1]);
 
+	case MVAPI_GET_VERSION:
+		return (int)MV_GetCurrentGameversion();
+
 	default:
 			assert(0); // bk010102
 		Com_Error( ERR_DROP, "Bad cgame system trap: %i", args[0] );

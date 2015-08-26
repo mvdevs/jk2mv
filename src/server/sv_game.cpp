@@ -1099,6 +1099,9 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 	case MVAPI_CONTROL_FIXES:
 		return (int)SV_MVAPI_ControlFixes((mvfix_t)args[1]);
 
+	case MVAPI_GET_VERSION:
+		return (int)MV_GetCurrentGameversion();
+
 	default:
 		Com_Error( ERR_DROP, "Bad game system trap: %i", args[0] );
 	}
