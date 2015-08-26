@@ -17,6 +17,37 @@
 #define MV_MIN_VERSION "1.1"
 // ----------------------------------------------------------------------------------------- //
 
+// ----------------------------------------- SHARED ---------------------------------------- //
+
+typedef enum {
+	MVFIX_NONE = 0,
+
+	/* GAME */
+	MVFIX_NAMECRASH = (1 << 0),
+	MVFIX_FORCECRASH = (1 << 1),
+	MVFIX_GALAKING = (1 << 2),
+	MVFIX_BROKENMODEL = (1 << 3),
+	MVFIX_TURRETCRASH = (1 << 4),
+	MVFIX_CHARGEJUMP = (1 << 5),
+	MVFIX_SPEEDHACK = (1 << 6),
+
+	/* CGAME */
+	MVFIX_WPGLOWING = (1 << 16),
+} mvfix_t;
+
+// ******** SYSCALLS ******** //
+
+// qboolean trap_MVAPI_ControlFixes(mvfix_t fixes);
+#define MVAPI_CONTROL_FIXES 703                  /* asm: -704 */
+
+// ******** VMCALLS ******** //
+
+// vmMain(MVAPI_AFTER_INIT, ...)
+#define MVAPI_AFTER_INIT 100
+
+// ************************** //
+// ----------------------------------------- GAME ------------------------------------------ //
+
 typedef enum {
 	MV_IPV4
 } mviptype_t;
@@ -37,36 +68,6 @@ typedef struct {
 	uint8_t snapshotEnforce[32];
 } mvsharedEntity_t;
 
-typedef enum {
-	MVFIX_NONE                = 0,
-
-	/* GAME */
-	MVFIX_NAMECRASH           = (1 << 0),
-	MVFIX_FORCECRASH          = (1 << 1),
-	MVFIX_GALAKING            = (1 << 2),
-	MVFIX_BROKENMODEL         = (1 << 3),
-	MVFIX_TURRETCRASH         = (1 << 4),
-	MVFIX_CHARGEJUMP          = (1 << 5),
-	MVFIX_SPEEDHACK           = (1 << 6),
-
-	/* CGAME */
-	MVFIX_WPGLOWING           = (1 << 16),
-} mvfix_t;
-
-// ------------------------------------ SHARED Functions ----------------------------------- //
-// ******** SYSCALLS ******** //
-
-// qboolean trap_MVAPI_ControlFixes(mvfix_t fixes);
-#define MVAPI_CONTROL_FIXES 703                  /* asm: -704 */
-
-// ************************** //
-// ******** VMCALLS ******** //
-
-// vmMain(MVAPI_AFTER_INIT, ...)
-#define MVAPI_AFTER_INIT 100
-
-// ************************** //
-// ------------------------------------ GAME Functions ------------------------------------- //
 // ******** SYSCALLS ******** //
 
 // qboolean trap_MVAPI_SendConnectionlessPacket(const mvaddr_t *addr, const char *message);
@@ -78,13 +79,15 @@ typedef enum {
 // qboolean trap_MVAPI_LocateGameData(mvsharedEntity_t *mvEnts, int numGEntities, int sizeofmvsharedEntity_t);
 #define MVAPI_LOCATE_GAME_DATA 702               /* asm: -703 */
 
-// ************************** //
 // ******** VMCALLS ******** //
 
 // vmMain(MVAPI_RECV_CONNECTIONLESSPACKET, ...)
 #define MVAPI_RECV_CONNECTIONLESSPACKET 101
 
-// ************************** //
+// ------------------------------------------ UI ------------------------------------------- //
+
+#define MVSORT_CLIENTS_NOBOTS 5
+
 // ----------------------------------------------------------------------------------------- //
 
 #endif /* MVAPI_H */

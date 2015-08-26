@@ -15,6 +15,7 @@ USER INTERFACE MAIN
 #include "../qcommon/qfiles.h"
 #include "../qcommon/game_version.h"
 #include "ui_force.h"
+#include "../api/mvapi.h"
 
 /*
 ================
@@ -32,6 +33,8 @@ void _UI_Shutdown( void );
 void _UI_KeyEvent( int key, qboolean down );
 void _UI_MouseEvent( int dx, int dy );
 void _UI_Refresh( int realtime );
+int MVAPI_Init(int apilevel);
+
 qboolean _UI_IsFullscreen( void );
 LIBEXPORT int QDECL vmMain(int command, int arg0, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7, int arg8, int arg9, int arg10, int arg11) {
   switch ( command ) {
@@ -40,7 +43,7 @@ LIBEXPORT int QDECL vmMain(int command, int arg0, int arg1, int arg2, int arg3, 
 
 	  case UI_INIT:
 		  _UI_Init(arg0);
-		  return 0;
+		  return MVAPI_Init(arg11);
 
 	  case UI_SHUTDOWN:
 		  _UI_Shutdown();
@@ -77,6 +80,16 @@ LIBEXPORT int QDECL vmMain(int command, int arg0, int arg1, int arg2, int arg3, 
 	}
 
 	return -1;
+}
+
+int MVAPI_Init(int apilevel) {
+	if (!((int)trap_Cvar_VariableValue("mv_apienabled")) || apilevel < MV_APILEVEL) {
+		// using the mvmenu without jk2mv is useless
+		trap_Error("This mvmenu version requires JK2MV " MV_MIN_VERSION "\n");
+	}
+
+	// always using the newest api internally.
+	return MV_APILEVEL;
 }
 
 menuDef_t *Menus_FindByName(const char *p);
@@ -3592,7 +3605,7 @@ static int QDECL UI_ServersQsortCompare( const void *arg1, const void *arg2 ) {
 
 	// fake over to new sorting without bots
 	if (fakeKey == SORT_CLIENTS && trap_Cvar_VariableValue("ui_botfilter")) {
-		fakeKey = SORT_CLIENTS_NOBOTS;
+		fakeKey = MVSORT_CLIENTS_NOBOTS;
 	}
 
 	return trap_LAN_CompareServers(ui_netSource.integer, fakeKey, uiInfo.serverStatus.sortDir, *(int*)arg1, *(int*)arg2);
@@ -4954,7 +4967,7 @@ static void UI_BinaryServerInsertion(int num) {
 
 		// fake over to new sorting without bots
 		if (fakeKey == SORT_CLIENTS && trap_Cvar_VariableValue("ui_botfilter")) {
-			fakeKey = SORT_CLIENTS_NOBOTS;
+			fakeKey = MVSORT_CLIENTS_NOBOTS;
 		}
 
 		res = trap_LAN_CompareServers(ui_netSource.integer, fakeKey,

@@ -887,16 +887,18 @@ void VM_VmInfo_f( void ) {
 		Com_Printf( "%s : ", vm->name );
 		if ( vm->dllHandle ) {
 			Com_Printf( "native\n" );
-			continue;
-		}
-		if ( vm->compiled ) {
-			Com_Printf( "compiled on load\n" );
 		} else {
-			Com_Printf( "interpreted\n" );
+			if (vm->compiled) {
+				Com_Printf("compiled on load\n");
+			} else {
+				Com_Printf("interpreted\n");
+			}
+			Com_Printf("    code length : %7i\n", vm->codeLength);
+			Com_Printf("    table length: %7i\n", vm->instructionCount * 4);
+			Com_Printf("    data length : %7i\n", vm->dataMask + 1);
 		}
-		Com_Printf( "	code length : %7i\n", vm->codeLength );
-		Com_Printf( "	table length: %7i\n", vm->instructionCount*4 );
-		Com_Printf( "	data length : %7i\n", vm->dataMask + 1 );
+
+		Com_Printf("    mvapi level : %i\n", vm->mvapilevel);
 	}
 }
 

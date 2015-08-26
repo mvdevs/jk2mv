@@ -325,7 +325,11 @@ static void LAN_GetServerInfo( int source, int n, char *buf, int buflen ) {
 		Info_SetValueForKey( info, "hostname", server->hostName);
 		Info_SetValueForKey( info, "mapname", server->mapName);
 		Info_SetValueForKey( info, "clients", va("%i",server->clients));
-		Info_SetValueForKey( info, "bots", va("%i", server->bots));
+
+		if (VM_MVAPILevel(uivm) >= 1) {
+			Info_SetValueForKey(info, "bots", va("%i", server->bots));
+		}
+
 		Info_SetValueForKey( info, "sv_maxclients", va("%i",server->maxClients));
 		Info_SetValueForKey( info, "ping", va("%i",server->ping));
 		Info_SetValueForKey( info, "minping", va("%i",server->minPing));
@@ -451,7 +455,7 @@ static int LAN_CompareServers( int source, int sortKey, int sortDir, int s1, int
 				res = 0;
 			}
 			break;
-		case SORT_CLIENTS_NOBOTS:
+		case MVSORT_CLIENTS_NOBOTS:
 		{
 			int s1realClients = server1->clients - server1->bots;
 			int s2realClients = server2->clients - server2->bots;
@@ -1287,13 +1291,16 @@ void CL_InitUI(qboolean mainMenu) {
 	if (v != UI_API_16_VERSION && v != UI_API_15_VERSION) {
 		Com_Error(ERR_DROP, "User Interface is version %d, expected %d or %d", v, UI_API_16_VERSION, UI_API_15_VERSION);
 		cls.uiStarted = qfalse;
-	}
-	else {
-		// init for this gamestate
-		//rww - changed to <= CA_ACTIVE, because that is the state when we did a vid_restart
-		//ingame (was just < CA_ACTIVE before, resulting in ingame menus getting wiped and
-		//not reloaded on vid restart from ingame menu)
-		VM_Call( uivm, UI_INIT, mainMenu ? qfalse : (cls.state >= CA_AUTHORIZING && cls.state <= CA_ACTIVE) );
+	} else {
+		int apireq;
+
+		apireq = VM_Call( uivm, UI_INIT, mainMenu ? qfalse : (cls.state >= CA_AUTHORIZING && cls.state <= CA_ACTIVE), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, MV_APILEVEL );
+		VM_SetMVAPILevel(uivm, apireq);
+		Com_DPrintf("UIVM uses MVAPI level %i.\n", apireq);
+
+		if (apireq >= 1) {
+			VM_Call(uivm, MVAPI_AFTER_INIT);
+		}
 	}
 }
 
