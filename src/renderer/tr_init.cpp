@@ -262,6 +262,9 @@ PFNGLGETPROGRAMIVARBPROC qglGetProgramivARB = NULL;
 PFNGLGETPROGRAMSTRINGARBPROC qglGetProgramStringARB = NULL;
 PFNGLISPROGRAMARBPROC qglIsProgramARB = NULL;
 
+PFNGLTEXIMAGE3DPROC qglTexImage3D;
+PFNGLTEXSUBIMAGE3DPROC qglTexSubImage3D;
+
 #endif
 
 void RE_SetLightStyle(int style, int color);
@@ -1312,8 +1315,8 @@ void RE_Shutdown( qboolean destroyWindow ) {
 		qglDeleteProgramsARB(1, &tr.gammaVertexShader);
 	}
 
-	if (tr.gammaRenderTarget) {
-		qglDeleteTextures(1, &tr.gammaRenderTarget);
+	if (tr.gammaLUTImage) {
+		qglDeleteTextures(1, &tr.gammaLUTImage);
 	}
 	// --------
 
