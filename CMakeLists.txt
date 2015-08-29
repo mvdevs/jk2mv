@@ -26,6 +26,7 @@ set(MV_PATCH_VERSION 2)
 set(MV_EXT_VERSION "")
 set(MV_ECMP_VERSION 8) # increasing number to detect new version without parsing stuff like 1.0b1
 set(MV_VERSION "${MV_MAJOR_VERSION}.${MV_MINOR_VERSION}.${MV_PATCH_VERSION}${MV_EXT_VERSION}")
+message(STATUS "${ProjectName} Version: ${MV_VERSION}")
 
 # Languages
 if(WIN32)
@@ -43,6 +44,8 @@ if(WIN32)
 	option(BuildPack "Whether to create the installer package" OFF)
 elseif(APPLE)
 	option(BuildPack "Whether to create the app package" ON)
+else()
+	option(BuildPack "Whether to create the DEB package" ON)
 endif()
 
 if(WIN32)
@@ -245,19 +248,16 @@ if(BuildPortableVersion)
 	set(GlobalDefines ${GlobalDefines} "PORTABLE")
 endif()
 
-# game_version.h preparation
-include(GetGitRevisionDescription)
-get_git_head_revision(GIT_REFSPEC GIT_SHA1)
-
-configure_file("${SRCDir}/qcommon/game_version.h.in" "${SRCDir}/qcommon/game_version.h" @ONLY)
-
 # Package
 set(CPACK_PACKAGE_NAME ${ProjectName})
 set(CPACK_PACKAGE_VENDOR "jk2mv.org")
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "JK2 MultiVersion")
+set(CPACK_PACKAGE_CONTACT "jk2mv.org")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "JK2MV (Multi Version) is a modification for Jedi Knight II: Jedi Outcast.")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "${CPACK_PACKAGE_DESCRIPTION_SUMMARY} It supports all three game versions and comes with various features and optimizations.")
 set(CPACK_PACKAGE_VERSION "${MV_VERSION}")
 set(CPACK_PACKAGE_VERSION_MAJOR "${MV_MAJOR_VERSION}")
 set(CPACK_PACKAGE_VERSION_MINOR "${MV_MINOR_VERSION}")
+set(CPACK_PACKAGE_VERSION_PATCH "${MV_PATCH_VERSION}")
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE")
 
 if(BuildPack)
@@ -270,13 +270,25 @@ if(BuildPack)
 			${CMAKE_CURRENT_BINARY_DIR}/res/NSIS.definitions.nsh
 		)
 		string(REGEX REPLACE "/" "\\\\\\\\" CPACK_NSIS_INCLFILE "${CMAKE_CURRENT_BINARY_DIR}/res/NSIS.definitions.nsh")
-
-		include(CPack)
 	elseif(APPLE)
-		# TODO
 		set(CPACK_GENERATOR "Bundle")
 		set(CPACK_BUNDLE_NAME ${ProjectName})
+    else()
+		set(CPACK_GENERATOR "DEB")
+		set(CPACK_DEBIAN_PACKAGE_NAME "jk2mv") # debian packages are lowercase
+		set(CPACK_DEBIAN_PACKAGE_SECTION "games")
+		set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE ${Architecture})
+		set(CPACK_DEBIAN_PACKAGE_DEPENDS "libc6 (>= 2.0), libgcc1 (>= 1:4.0), libstdc++6 (>= 4.0), libsdl2-2.0-0 (>= 2.0), libopenal1 (>= 1:1.0)")
+
+		set(CPACK_PACKAGING_INSTALL_PREFIX "/usr")
 	endif()
+
+	include(CPack)
 endif()
+
+# game_version.h preparation
+include(GetGitRevisionDescription)
+get_git_head_revision(GIT_REFSPEC GIT_SHA1)
+configure_file("${SRCDir}/qcommon/game_version.h.in" "${SRCDir}/qcommon/game_version.h" @ONLY)
 
 add_subdirectory(${SRCDir})

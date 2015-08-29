@@ -582,8 +582,8 @@ if (BuildMVMP)
 			fixup_bundle(\"${APPS}\" \"\" \"\")
 		")
 	else()
-		install(TARGETS ${MVMP} RUNTIME DESTINATION ${ProjectName})
-		install(FILES ${CMAKE_CURRENT_BINARY_DIR}/assetsmv.pk3 DESTINATION "${ProjectName}/base")
+		install(TARGETS ${MVMP} RUNTIME DESTINATION "bin")
+		install(FILES ${CMAKE_CURRENT_BINARY_DIR}/assetsmv.pk3 DESTINATION "share/jk2mv/base")
 	endif()
 
 	# jk2mvmenu and assetsmv are required to run JK2MV
