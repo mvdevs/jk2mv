@@ -123,7 +123,7 @@ if(NOT APPLE)
 	set(MVMENU "jk2mvmenu_${Architecture}")
 	set(MVDED "jk2mvded_${Architecture}")
 else()
-	set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/out/install")
+	set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/out/bundle")
 
 	set(MVMP "jk2mvmp")
 	set(MVMENU "jk2mvmenu")
@@ -263,7 +263,7 @@ set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE")
 if(BuildPack)
 	if(WIN32)
 		set(CPACK_GENERATOR "NSIS")
-		set(CPACK_NSIS_URL_INFO_ABOUT "http://jk2mv.org")
+		set(CPACK_NSIS_URL_INFO_ABOUT "https://jk2mv.org")
 
 		configure_file(
 			${RESDir}/NSIS.definitions.nsh.in

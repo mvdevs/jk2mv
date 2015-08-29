@@ -542,27 +542,23 @@ if (BuildMVMP)
 	endif()
 
 	# generate assetsmv.pk3
-	add_custom_command(TARGET ${MVMP} POST_BUILD
-		COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:${MVMP}>/base"
-		COMMAND ${CMAKE_COMMAND} -E remove "$<TARGET_FILE_DIR:${MVMP}>/base/assetsmv.pk3"
+	include(InstallZIP)
+	add_zip_command("${CMAKE_CURRENT_BINARY_DIR}/assetsmv.pk3"
+		DIR "${CMAKE_SOURCE_DIR}/assets"
+		FILES "*"
 	)
-
-	if(WIN32)
-		add_custom_command(TARGET ${MVMP} POST_BUILD
-			COMMAND "${CMAKE_SOURCE_DIR}/tools/7za.exe" -tzip a
-			"$<TARGET_FILE_DIR:${MVMP}>/base/assetsmv.pk3"
-			"${CMAKE_SOURCE_DIR}/assets/*"
-		)
-	else()
-		find_program(ZIP_EXECUTABLE zip)
-		if(ZIP_EXECUTABLE)
-			add_custom_command(TARGET ${MVMP} POST_BUILD
-				# this is kind of tricky
-				COMMAND sh -c \"cd ${CMAKE_SOURCE_DIR}/assets && zip -r $<TARGET_FILE_DIR:${MVMP}>/base/assetsmv.pk3 *\"
-			)
-		endif()
-	endif()
-
+	add_custom_target(assets
+		ALL
+		DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/assetsmv.pk3"
+	)
+	
+	# copy 
+	add_custom_command(TARGET ${MVMP} POST_BUILD
+		COMMAND ${CMAKE_COMMAND} -E copy_if_different
+		"${CMAKE_CURRENT_BINARY_DIR}/assetsmv.pk3"
+		"$<TARGET_FILE_DIR:${MVMP}>/base/assetsmv.pk3"
+	)
+	
 	set_target_properties(${MVMP} PROPERTIES COMPILE_DEFINITIONS_RELEASE "${ReleaseDefines};${GlobalDefines}")
 	set_target_properties(${MVMP} PROPERTIES COMPILE_DEFINITIONS_DEBUG "${DebugDefines};${GlobalDefines}")
 	set_target_properties(${MVMP} PROPERTIES INCLUDE_DIRECTORIES "${MVMPIncludeDirs}")
@@ -571,25 +567,27 @@ if (BuildMVMP)
 
 	# installation
 	if(WIN32)
-		install(TARGETS ${MVMP} DESTINATION ".")
+		install(TARGETS ${MVMP} RUNTIME DESTINATION ".")
 		install(FILES "${LIBDir}/softoal_${Architecture}.dll" DESTINATION ".")
-		install(FILES $<TARGET_FILE_DIR:${MVMP}>/base/assetsmv.pk3 DESTINATION "base")
+		install(FILES ${CMAKE_CURRENT_BINARY_DIR}/assetsmv.pk3 DESTINATION "base")
 	elseif(APPLE)
 		install(TARGETS ${MVMP} BUNDLE DESTINATION ".")
 
 		# copy over frameworks into the app
 		# for this to work it's required that the SDL2.framework is under ~/Library/Frameworks
-        # and SDL2 has to be compiled without @rpath (builds from website are with @rpath)
-        SET(APPS "\${CMAKE_INSTALL_PREFIX}/${MVMP}.app")
-        install(CODE "
-            include(BundleUtilities)
-            fixup_bundle(\"${APPS}\" \"\" \"\")
-        ")
-        #install(FILES $<TARGET_FILE_DIR:${MVMP}>/base/assetsmv.pk3 BUNDLE DESTINATION "Resources/base")
-    endif()
+		# and SDL2 has to be compiled without @rpath (builds from website are with @rpath)
+		SET(APPS "\${CMAKE_INSTALL_PREFIX}/${MVMP}.app")
+		install(CODE "
+			include(BundleUtilities)
+			fixup_bundle(\"${APPS}\" \"\" \"\")
+		")
+	else()
+		install(TARGETS ${MVMP} RUNTIME DESTINATION ${ProjectName})
+		install(FILES ${CMAKE_CURRENT_BINARY_DIR}/assetsmv.pk3 DESTINATION "${ProjectName}/base")
+	endif()
 
-    # jk2mvmenu - jk2mvmp doesn't work without it
-	add_dependencies(${MVMP} ${MVMENU})
+	# jk2mvmenu and assetsmv are required to run JK2MV
+	add_dependencies(${MVMP} ${MVMENU} assets)
 	add_subdirectory("${SRCDir}/menu")
 endif()
 

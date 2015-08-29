@@ -13,5 +13,5 @@ if not defined FOUND (
 )
 mkdir msvc12_x64
 cd msvc12_x64
-cmake -G "Visual Studio 12 Win64" -D CMAKE_INSTALL_PREFIX=./install ../..
+cmake -G "Visual Studio 12 Win64" ../..
 pause

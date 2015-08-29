@@ -13,5 +13,5 @@ if not defined FOUND (
 )
 mkdir msvc14_x86
 cd msvc14_x86
-cmake -G "Visual Studio 14" -D CMAKE_INSTALL_PREFIX=./install ../..
+cmake -G "Visual Studio 14" ../..
 pause
