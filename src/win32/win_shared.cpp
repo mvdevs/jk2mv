@@ -456,6 +456,11 @@ void * QDECL Sys_LoadDll(const char *name, intptr_t(QDECL **entryPoint)(int, ...
 	Com_sprintf(filename, sizeof(filename), "%s_x64.dll", name);
 #endif
 
+#ifdef INSTALLED
+	if (!strcmp(name, "jk2mvmenu")) {
+		Com_sprintf(filename, sizeof(filename), "%s.dll", name);
+	}
+#endif
 
 #ifdef NDEBUG
 	timestamp = Sys_Milliseconds();
