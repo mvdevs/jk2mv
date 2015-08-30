@@ -584,6 +584,9 @@ if (BuildMVMP)
 	else()
 		install(TARGETS ${MVMP} RUNTIME DESTINATION "bin")
 		install(FILES ${CMAKE_CURRENT_BINARY_DIR}/assetsmv.pk3 DESTINATION "share/jk2mv/base")
+		
+		install(FILES ${RESDir}/jk2mv.desktop DESTINATION "share/applications")
+		install(FILES ${RESDir}/jk2mv.png DESTINATION "share/pixmaps")
 	endif()
 
 	# jk2mvmenu and assetsmv are required to run JK2MV

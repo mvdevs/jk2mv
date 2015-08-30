@@ -644,7 +644,7 @@ void	* QDECL Sys_LoadDll(const char *name, intptr_t(QDECL **entryPoint)(int, ...
 
   if (!strcmp(name, "jk2mvmenu")) {
 #if !defined(MACOS_X) && !defined(PORTABLE)
-	sprintf(mvmenu, MV_UNIX_INSTALL "/lib/%s", fname);
+	sprintf(mvmenu, MV_UNIX_INSTALL "/lib/%s.so", name);
 	fn = mvmenu;
 #else
 	sprintf(mvmenu, "%s/%s", basepath, fname);

@@ -126,16 +126,19 @@ endif()
 message(STATUS "Architecture is ${Architecture}")
 
 # Binary names
-if(NOT APPLE)
+if(BuildPortableVersion)
 	set(MVMP "jk2mvmp_${Architecture}")
 	set(MVMENU "jk2mvmenu_${Architecture}")
 	set(MVDED "jk2mvded_${Architecture}")
 else()
-	set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/out/bundle")
-
 	set(MVMP "jk2mvmp")
 	set(MVMENU "jk2mvmenu")
 	set(MVDED "jk2mvded")
+endif()
+
+# OSX install target is more like a finalization step
+if(APPLE)
+	set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/out/bundle")
 endif()
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/out)
