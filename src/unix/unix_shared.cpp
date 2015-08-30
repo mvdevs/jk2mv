@@ -357,7 +357,7 @@ char *Sys_DefaultHomePath(void)
 // try to find assets from /Applications (Appstore JK2) or Steam
 // if not found try to find it in the same directory this app is
 char *Sys_DefaultAssetsPath() {
-#ifdef MACOS_X
+#if defined(MACOS_X) && !defined(DEDICATED)
     static char path[MAX_OSPATH];
     char *override;
 

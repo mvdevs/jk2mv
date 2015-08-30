@@ -47,6 +47,10 @@ elseif(APPLE)
 else()
 	option(BuildPackDEB "Whether to create the DEB package" OFF)
 	option(BuildPackRPM "Whether to create the RPM package" OFF)
+	
+	if (BuildPackRPM AND CMAKE_MAJOR_VERSION LESS 3)
+		message(WARNING "Generated RPM file will not work on newer distributions")
+	endif()
 endif()
 
 if(WIN32)
@@ -247,6 +251,8 @@ endif()
 
 if(BuildPortableVersion)
 	set(GlobalDefines ${GlobalDefines} "PORTABLE")
+else()
+	set(GlobalDefines ${GlobalDefines} "INSTALLED")
 endif()
 
 # Package
@@ -275,21 +281,25 @@ if (((WIN32 OR APPLE) AND BuildPack) OR BuildPackDEB OR BuildPackRPM)
 		set(CPACK_GENERATOR "Bundle")
 		set(CPACK_BUNDLE_NAME ${ProjectName})
 	else()
-		set(CPACK_GENERATOR "DEB" "RPM")
-
 		# DEB
-		set(CPACK_DEBIAN_PACKAGE_NAME "jk2mv") # debian packages are lowercase
-		set(CPACK_DEBIAN_PACKAGE_SECTION "games")
-		set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE ${Architecture})
-		set(CPACK_DEBIAN_PACKAGE_DEPENDS "libc6 (>= 2.0), libgcc1 (>= 1:4.0), libstdc++6 (>= 4.0), libsdl2-2.0-0 (>= 2.0), libopenal1 (>= 1:1.0)")
+		if(BuildPackDEB)
+			set(CPACK_GENERATOR ${CPACK_GENERATOR} "DEB")
+			set(CPACK_DEBIAN_PACKAGE_NAME "jk2mv") # debian packages are lowercase
+			set(CPACK_DEBIAN_PACKAGE_SECTION "games")
+			set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE ${Architecture})
+			set(CPACK_DEBIAN_PACKAGE_DEPENDS "libc6 (>= 2.0), libgcc1 (>= 1:4.0), libstdc++6 (>= 4.0), libsdl2-2.0-0 (>= 2.0), libopenal1 (>= 1:1.0)")
+		endif()
 
 		# RPM
-		set(CPACK_RPM_PACKAGE_NAME "jk2mv")
-		set(CPACK_RPM_PACKAGE_LICENSE "GPLv2")
-		set(CPACK_RPM_PACKAGE_GROUP "Amusements/Games")
-		set(CPACK_RPM_PACKAGE_DESCRIPTION "JK2MV")
-		set(CPACK_RPM_PACKAGE_REQUIRES "glibc, libgcc, libstdc++, SDL2, openal-soft")
-
+		if(BuildPackRPM)
+			set(CPACK_GENERATOR ${CPACK_GENERATOR} "RPM")
+			set(CPACK_RPM_PACKAGE_NAME "jk2mv")
+			set(CPACK_RPM_PACKAGE_LICENSE "GPLv2")
+			set(CPACK_RPM_PACKAGE_GROUP "Amusements/Games")
+			set(CPACK_RPM_PACKAGE_DESCRIPTION "JK2MV")
+			set(CPACK_RPM_PACKAGE_REQUIRES "glibc, libgcc, libstdc++, SDL2, openal-soft")
+		endif()
+		
 		set(CPACK_PACKAGING_INSTALL_PREFIX "/usr")
 	endif()
 

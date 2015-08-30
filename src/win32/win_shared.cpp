@@ -71,6 +71,7 @@ char *Sys_DefaultHomePath(void) {
 
 // read the path from the registry on windows... steam also sets it, but with "InstallPath" instead of "Install Path"
 char *Sys_DefaultAssetsPath() {
+#ifndef DEDICATED
 	HKEY hKey;
 	static char installPath[MAX_OSPATH];
 	DWORD installPathSize;
@@ -92,6 +93,9 @@ char *Sys_DefaultAssetsPath() {
 	RegCloseKey(hKey);
 	Q_strcat(installPath, sizeof(installPath), "\\GameData");
 	return installPath;
+#else
+	return NULL;
+#endif
 }
 
 char *Sys_DefaultInstallPath(void)
