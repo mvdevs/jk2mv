@@ -337,6 +337,9 @@
 #define qglVertexPointer glVertexPointer
 #define qglViewport glViewport
 
+#define qglTexImage3D glTexImage3D
+#define qglTexSubImage3D glTexSubImage3D
+
 extern void (APIENTRYP qglActiveTextureARB) (GLenum texture);
 extern void (APIENTRYP qglClientActiveTextureARB) (GLenum texture);
 extern void (APIENTRYP qglMultiTexCoord2fARB) (GLenum target, GLfloat s, GLfloat t);
@@ -378,10 +381,6 @@ extern PFNGLGETPROGRAMLOCALPARAMETERFVARBPROC qglGetProgramLocalParameterfvARB;
 extern PFNGLGETPROGRAMIVARBPROC qglGetProgramivARB;
 extern PFNGLGETPROGRAMSTRINGARBPROC qglGetProgramStringARB;
 extern PFNGLISPROGRAMARBPROC qglIsProgramARB;
-
-// gamma correction
-extern PFNGLTEXIMAGE3DPROC qglTexImage3D;
-extern PFNGLTEXSUBIMAGE3DPROC qglTexSubImage3D;
 
 extern void ( * qglLockArraysEXT)( int, int);
 extern void ( * qglUnlockArraysEXT) ( void );

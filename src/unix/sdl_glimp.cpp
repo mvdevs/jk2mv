@@ -69,10 +69,6 @@ PFNGLISPROGRAMARBPROC qglIsProgramARB = NULL;
 void ( * qglLockArraysEXT)( int, int);
 void ( * qglUnlockArraysEXT) ( void );
 
-// gamma correction
-PFNGLTEXIMAGE3DPROC qglTexImage3D;
-PFNGLTEXSUBIMAGE3DPROC qglTexSubImage3D;
-
 /*
 ===============
 GLimp_Minimize
@@ -942,9 +938,6 @@ static void GLimp_InitExtensions( void )
 
 	// gamma correction
 	if (qglActiveTextureARB && bTexRectSupported && bARBVertexProgram && bARBFragmentProgram) {
-        qglTexImage3D = (PFNGLTEXIMAGE3DPROC)SDL_GL_GetProcAddress("glTexImage3D");
-        qglTexSubImage3D = (PFNGLTEXSUBIMAGE3DPROC)SDL_GL_GetProcAddress("glTexSubImage3D");
-
 		glConfig.deviceSupportsPostprocessingGamma = qtrue;
 	} else {
 		glConfig.deviceSupportsPostprocessingGamma = qfalse;
