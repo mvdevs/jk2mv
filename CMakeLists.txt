@@ -45,7 +45,8 @@ if(WIN32)
 elseif(APPLE)
 	option(BuildPack "Whether to create the app package" ON)
 else()
-	option(BuildPack "Whether to create the DEB package" ON)
+	option(BuildPackDEB "Whether to create the DEB package" OFF)
+	option(BuildPackRPM "Whether to create the RPM package" OFF)
 endif()
 
 if(WIN32)
@@ -260,7 +261,7 @@ set(CPACK_PACKAGE_VERSION_MINOR "${MV_MINOR_VERSION}")
 set(CPACK_PACKAGE_VERSION_PATCH "${MV_PATCH_VERSION}")
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE")
 
-if(BuildPack)
+if (((WIN32 OR APPLE) AND BuildPack) OR BuildPackDEB OR BuildPackRPM)
 	if(WIN32)
 		set(CPACK_GENERATOR "NSIS")
 		set(CPACK_NSIS_URL_INFO_ABOUT "https://jk2mv.org")
@@ -273,12 +274,21 @@ if(BuildPack)
 	elseif(APPLE)
 		set(CPACK_GENERATOR "Bundle")
 		set(CPACK_BUNDLE_NAME ${ProjectName})
-    else()
-		set(CPACK_GENERATOR "DEB")
+	else()
+		set(CPACK_GENERATOR "DEB" "RPM")
+
+		# DEB
 		set(CPACK_DEBIAN_PACKAGE_NAME "jk2mv") # debian packages are lowercase
 		set(CPACK_DEBIAN_PACKAGE_SECTION "games")
 		set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE ${Architecture})
 		set(CPACK_DEBIAN_PACKAGE_DEPENDS "libc6 (>= 2.0), libgcc1 (>= 1:4.0), libstdc++6 (>= 4.0), libsdl2-2.0-0 (>= 2.0), libopenal1 (>= 1:1.0)")
+
+		# RPM
+		set(CPACK_RPM_PACKAGE_NAME "jk2mv")
+		set(CPACK_RPM_PACKAGE_LICENSE "GPLv2")
+		set(CPACK_RPM_PACKAGE_GROUP "Amusements/Games")
+		set(CPACK_RPM_PACKAGE_DESCRIPTION "JK2MV")
+		set(CPACK_RPM_PACKAGE_REQUIRES "glibc, libgcc, libstdc++, SDL2, openal-soft")
 
 		set(CPACK_PACKAGING_INSTALL_PREFIX "/usr")
 	endif()
