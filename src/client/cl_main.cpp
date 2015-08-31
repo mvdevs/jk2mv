@@ -1467,6 +1467,98 @@ void CL_BlacklistWriteFile() {
 	}
 }
 
+static int CL_ServerNumForString (const char *buf) {
+
+	if (!buf)
+		return -1;
+
+	int i, k;
+
+	for (k = 0; k < 8; ++k) {
+		for (i = 0; i < cls.numglobalservers; ++i) {
+			serverInfo_t *srv = &cls.globalServers[i];
+			char name[128];
+
+			Q_strncpyz(name, srv->hostName, sizeof(name));
+
+			if (k % 2) {
+				Q_CleanStr(name, (qboolean)MV_USE102COLOR);
+			}
+
+			switch( k )
+			{
+				case 0:
+				case 1:
+					if (!strcmp(name,buf))
+						return i;
+
+					break;
+				case 2:
+				case 3:
+					if (!Q_stricmp(name,buf))
+						return i;
+
+					break;
+				case 4:
+				case 5:
+					if (strstr(name,buf))
+						return i;
+
+					break;
+				case 6:
+				case 7:
+					if (Q_stristr(name, (char*)buf))
+						return i;
+
+					break;
+				default:
+					break;
+			}
+		}
+	}
+
+	return -1;
+}
+
+
+static void CL_JoinServer_f (void){
+	char buf[128] = {0};
+	int servernum = -1;
+
+	if (Cmd_Argc() < 2) {
+		Com_Printf("Usage: joinserver <server name>\n");
+		return;
+	}
+
+	Q_strncpyz(buf, Cmd_Args(), sizeof(buf));
+
+	servernum = CL_ServerNumForString(buf);
+
+	if (servernum != -1 && servernum < MAX_GLOBAL_SERVERS && servernum >= 0){
+		Com_Printf("Connecting to server \"%s^7\" (%s) ^7...\n", cls.globalServers[servernum].hostName, NET_AdrToString(cls.globalServers[servernum].adr));
+		Cbuf_ExecuteText( EXEC_APPEND, va("connect %s\n", NET_AdrToString(cls.globalServers[servernum].adr)) );
+	} else {
+		Com_Printf("Couldn't find server \"%s\".\n", buf);
+	}
+
+}
+
+void Field_CompleteServerName ( void );
+
+void CL_ServernameCompletion( void(*callback)(const char *s, mvversion_t serverversion) ) {
+
+	for (int i = 0; i < cls.numglobalservers; ++i) {
+		serverInfo_t *srv = &cls.globalServers[i];
+
+		callback(srv->hostName, (mvversion_t)srv->gameVersion);
+	}
+}
+
+void CL_CompleteServerName (char *args, int argNum) {
+	if( argNum == 2 )
+		Field_CompleteServerName();
+}
+
 /*
 =================
 CL_DownloadsComplete
@@ -2870,6 +2962,8 @@ void CL_Init( void ) {
 	Cmd_AddCommand ("cinematic", CL_PlayCinematic_f);
 	Cmd_AddCommand ("stoprecord", CL_StopRecord_f);
 	Cmd_AddCommand ("connect", CL_Connect_f);
+	Cmd_AddCommand ("joinserver", CL_JoinServer_f);
+	Cmd_SetCommandCompletionFunc( "joinserver", CL_CompleteServerName );
 	Cmd_AddCommand ("reconnect", CL_Reconnect_f);
 	Cmd_AddCommand ("localservers", CL_LocalServers_f);
 	Cmd_AddCommand ("globalservers", CL_GlobalServers_f);
@@ -2949,6 +3043,7 @@ void CL_Shutdown( void ) {
 	Cmd_RemoveCommand ("cinematic");
 	Cmd_RemoveCommand ("stoprecord");
 	Cmd_RemoveCommand ("connect");
+	Cmd_RemoveCommand ("joinserver");
 	Cmd_RemoveCommand ("localservers");
 	Cmd_RemoveCommand ("globalservers");
 	Cmd_RemoveCommand ("rcon");
@@ -3920,7 +4015,7 @@ void CL_ServerStatus_f(void) {
 	Com_Memset( &to, 0, sizeof(netadr_t) );
 
 	if ( Cmd_Argc() != 2 ) {
-		if ( cls.state != CA_ACTIVE || clc.demoplaying ) {
+		if ( cls.state < CA_CONNECTED || clc.demoplaying ) {
 			Com_Printf ("Not connected to a server.\n");
 			Com_Printf( "Usage: serverstatus [server]\n");
 			return;

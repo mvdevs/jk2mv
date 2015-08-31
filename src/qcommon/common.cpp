@@ -3108,6 +3108,116 @@ static void PrintCvarMatches( const char *s ) {
 		Com_Printf(S_COMPLETION_COLOR "Cvar " S_COLOR_WHITE "%s = " S_COMPLETION_COLOR "\"" S_COLOR_WHITE "%s" S_COMPLETION_COLOR "\"" S_COLOR_WHITE "\n", s, value);
 	}
 }
+
+
+#ifndef DEDICATED
+/*
+===============
+Com_CleanServerName
+Removes weird dot characters from a server name for display
+===============
+*/
+void Com_CleanServerName ( char *str, int bufsize, bool skipTrailingWhitespace ) {
+	char	out[1024] = {0};
+	char 	*outp = out;
+	char 	*s;
+	int		c;
+
+
+	if ( !str || !*str )
+		return;
+
+	s = str;
+
+	if ( skipTrailingWhitespace ) {
+		while ( *s && *s <= ' ' )
+			++s;
+	}
+
+	while ( (c = *s) != 0 ) {
+		if ( c >= ' ' )
+			*(outp++) = c;
+
+		++s;
+	}
+	*outp = 0;
+
+	Q_strncpyz( str, out, bufsize );
+}
+
+static void PrintMatchesServers( const char *s, mvversion_t serverversion ) {
+
+	char srvname[256] = {0};
+	char nocolor[256] = {0};
+	char *versionstring = NULL;
+
+	Q_strncpyz( srvname, s, sizeof(srvname) );
+	Com_CleanServerName( srvname, sizeof(srvname), true );
+
+	Q_strncpyz( nocolor, srvname, sizeof(nocolor) );
+
+	Q_CleanStr( nocolor, (qboolean)(serverversion == VERSION_1_03 || serverversion == VERSION_1_02) );
+
+	switch (serverversion)
+	{
+		case VERSION_1_02:
+			versionstring = "1.02"; break;
+		case VERSION_1_03:
+			versionstring = "1.03"; break;
+		case VERSION_1_04:
+			versionstring = "1.04"; break;
+		default:
+			versionstring = "?"; break;
+	}
+
+	if (Q_stristr(nocolor, shortestMatch)) {
+		Com_Printf( S_COMPLETION_COLOR "Server %s "S_COLOR_WHITE"%s\n", versionstring, srvname );
+	}
+}
+
+
+static void FindMatchesServer( const char *s, mvversion_t serverversion ) {
+	char buf[256] = {0};
+
+	Q_strncpyz( buf, s, sizeof(buf) );
+	Q_CleanStr( buf, (qboolean)(serverversion == VERSION_1_03 || serverversion == VERSION_1_02) );
+
+	if ( !Q_stristr( buf, (char *)completionString ) ) {
+		return;
+	}
+
+	if ( ++matchCount == 1 ) {
+		Q_strncpyz(buf, s, sizeof(buf));
+		Com_CleanServerName(buf, sizeof(buf), true);
+
+		Q_strncpyz( shortestMatch, buf, sizeof( shortestMatch ) );
+	}
+	else
+		Q_strncpyz( shortestMatch, completionString, sizeof( shortestMatch ) );
+}
+
+
+
+void CL_ServernameCompletion( void(*callback)(const char *s, mvversion_t serverversion) );
+
+/*
+===============
+Field_CompleteServerName
+===============
+*/
+static qboolean Field_Complete( void );
+void Field_CompleteServerName ( void )
+{
+	matchCount = 0;
+	shortestMatch[ 0 ] = 0;
+
+	CL_ServernameCompletion( FindMatchesServer );
+
+	if( !Field_Complete( ) )
+		CL_ServernameCompletion( PrintMatchesServers );
+}
+#endif	//#ifndef DEDICATED
+
 /*
 ==================
 Field_Clear
@@ -3183,6 +3293,9 @@ void Field_CompleteKeyname( void )
 		Key_KeynameCompletion( PrintKeyMatches );
 }
 #endif
+
+
+
 
 /*
 ===============
