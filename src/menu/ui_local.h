@@ -9,6 +9,7 @@
 #include "keycodes.h"
 #include "../game/bg_public.h"
 #include "ui_shared.h"
+#include "../api/mvapi.h"	//for mvversion_t
 
 // global display context
 
@@ -1011,6 +1012,7 @@ Ghoul2 Insert End
 */
 
 void trap_CL_ContinueCurrentDownload(dldecision_t decision);
+mvversion_t trap_MVAPI_GetVersion(void);
 
 //
 // ui_addbots.c

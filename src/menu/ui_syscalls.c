@@ -446,3 +446,7 @@ Ghoul2 Insert End
 void trap_CL_ContinueCurrentDownload(dldecision_t decision) {
 	engine_syscall(UI_MV_CONTINUE_DOWNLOAD, decision);
 }
+
+mvversion_t trap_MVAPI_GetVersion(void) {
+	return engine_syscall(UI_MV_GETGAMEVERSION);
+}

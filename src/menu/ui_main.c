@@ -2369,6 +2369,15 @@ static void UI_DrawCrosshair(rectDef_t *rect, float scale, vec4_t color) {
  	trap_R_SetColor( NULL );
 }
 
+static qboolean UI_Use102Colors (void) {
+	mvversion_t ver = trap_MVAPI_GetVersion();
+
+	if (ver == VERSION_1_02 || ver == VERSION_1_03)
+		return qtrue;
+
+	return qfalse;
+}
+
 /*
 ===============
 UI_BuildPlayerList
@@ -2378,6 +2387,7 @@ static void UI_BuildPlayerList() {
 	uiClientState_t	cs;
 	int		n, count, team, team2, playerTeamNumber;
 	char	info[MAX_INFO_STRING];
+	qboolean	use102col = UI_Use102Colors();
 
 	trap_GetClientState( &cs );
 	trap_GetConfigString( CS_PLAYERS + cs.clientNum, info, MAX_INFO_STRING );
@@ -2394,13 +2404,13 @@ static void UI_BuildPlayerList() {
 
 		if (info[0]) {
 			Q_strncpyz( uiInfo.playerNames[uiInfo.playerCount], Info_ValueForKey( info, "n" ), MAX_NAME_LENGTH );
-			Q_CleanStr( uiInfo.playerNames[uiInfo.playerCount], qfalse );
+			Q_CleanStr( uiInfo.playerNames[uiInfo.playerCount], use102col );
 			uiInfo.playerIndexes[uiInfo.playerCount] = n;
 			uiInfo.playerCount++;
 			team2 = atoi(Info_ValueForKey(info, "t"));
 			if (team2 == team && n != uiInfo.playerNumber) {
 				Q_strncpyz( uiInfo.teamNames[uiInfo.myTeamCount], Info_ValueForKey( info, "n" ), MAX_NAME_LENGTH );
-				Q_CleanStr( uiInfo.teamNames[uiInfo.myTeamCount], qfalse );
+				Q_CleanStr( uiInfo.teamNames[uiInfo.myTeamCount], use102col );
 				uiInfo.teamClientNums[uiInfo.myTeamCount] = n;
 				if (uiInfo.playerNumber == n) {
 					playerTeamNumber = uiInfo.myTeamCount;
@@ -5331,7 +5341,7 @@ static void UI_BuildFindPlayerList(qboolean force) {
 		uiInfo.numFoundPlayerServers = 0;
 		uiInfo.currentFoundPlayerServer = 0;
 		trap_Cvar_VariableStringBuffer( "ui_findPlayer", uiInfo.findPlayerName, sizeof(uiInfo.findPlayerName));
-		Q_CleanStr(uiInfo.findPlayerName, qfalse);
+		Q_CleanStr(uiInfo.findPlayerName, UI_Use102Colors());
 		// should have a string of some length
 		if (!strlen(uiInfo.findPlayerName)) {
 			uiInfo.nextFindPlayerRefresh = 0;
@@ -5368,7 +5378,7 @@ static void UI_BuildFindPlayerList(qboolean force) {
 					}
 					// clean string first
 					Q_strncpyz(name, info.lines[j][3], sizeof(name));
-					Q_CleanStr(name, qfalse);
+					Q_CleanStr(name, UI_Use102Colors());
 					// if the player name is a substring
 					if (stristr(name, uiInfo.findPlayerName)) {
 						// add to found server list if we have space (always leave space for a line with the number found)

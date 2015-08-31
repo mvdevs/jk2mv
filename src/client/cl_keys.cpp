@@ -924,6 +924,18 @@ void Console_Key (int key) {
 		return;
 	}
 
+    // ctrl-home = top of console (or ALT+MWHEELUP)
+    if ( (key == A_HOME && kg.keys[A_CTRL].down) || (key == A_MWHEELUP && kg.keys[A_ALT].down) ) {
+        Con_Top();
+        return;
+    }
+
+    // ctrl-end = bottom of console (or ALT+MWHEELDOWN)
+    if ( (key == A_END && kg.keys[A_CTRL].down) || (key == A_MWHEELDOWN && kg.keys[A_ALT].down) ) {
+        Con_Bottom();
+        return;
+    }
+
 	// console scrolling
 	if ( key == A_PAGE_UP || kg.keys[A_MWHEELUP].down ) {
 		Con_PageUp(2);
@@ -935,17 +947,7 @@ void Console_Key (int key) {
 		return;
 	}
 
-	// ctrl-home = top of console
-	if ( key == A_HOME && kg.keys[A_CTRL].down ) {
-		Con_Top();
-		return;
-	}
-
-	// ctrl-end = bottom of console
-	if ( key == A_END && kg.keys[A_CTRL].down ) {
-		Con_Bottom();
-		return;
-	}
+	
 
 	// pass to the normal editline routine
 	Field_KeyDownEvent( &kg.g_consoleField, key );

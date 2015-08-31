@@ -149,7 +149,8 @@ Ghoul2 Insert Start
 Ghoul2 Insert End
 */
 
-	UI_MV_CONTINUE_DOWNLOAD
+	UI_MV_CONTINUE_DOWNLOAD,
+	UI_MV_GETGAMEVERSION = -705
 } uiImport_t;
 
 typedef enum {
