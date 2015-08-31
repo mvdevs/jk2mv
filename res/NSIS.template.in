@@ -44,7 +44,7 @@ jkfound:
 	IfFileExists $R0\GameData\base\assets5.pk3 patched
 	MessageBox MB_ICONEXCLAMATION "Jedi Knight II found, but seems to be 1.02 / 1.03. ${APPNAME} works with all versions but needs JK2 1.04 installed.$\r$\n\
 								   A website will open on which you can download the patch."
-	ExecShell "open" "http://jk2mv.org/Downloads"
+	ExecShell "open" "https://jk2mv.org/Downloads"
 	Abort
 
 patched:

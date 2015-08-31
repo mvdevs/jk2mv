@@ -13,5 +13,5 @@ if not defined FOUND (
 )
 mkdir msvc10_x64
 cd msvc10_x64
-cmake -G "Visual Studio 10 Win64" -D CMAKE_INSTALL_PREFIX=./install ../..
+cmake -G "Visual Studio 10 Win64" ../..
 pause

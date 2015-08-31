@@ -71,6 +71,7 @@ char *Sys_DefaultHomePath(void) {
 
 // read the path from the registry on windows... steam also sets it, but with "InstallPath" instead of "Install Path"
 char *Sys_DefaultAssetsPath() {
+#ifndef DEDICATED
 	HKEY hKey;
 	static char installPath[MAX_OSPATH];
 	DWORD installPathSize;
@@ -92,6 +93,9 @@ char *Sys_DefaultAssetsPath() {
 	RegCloseKey(hKey);
 	Q_strcat(installPath, sizeof(installPath), "\\GameData");
 	return installPath;
+#else
+	return NULL;
+#endif
 }
 
 char *Sys_DefaultInstallPath(void)
@@ -452,6 +456,11 @@ void * QDECL Sys_LoadDll(const char *name, intptr_t(QDECL **entryPoint)(int, ...
 	Com_sprintf(filename, sizeof(filename), "%s_x64.dll", name);
 #endif
 
+#ifdef INSTALLED
+	if (!strcmp(name, "jk2mvmenu")) {
+		Com_sprintf(filename, sizeof(filename), "%s.dll", name);
+	}
+#endif
 
 #ifdef NDEBUG
 	timestamp = Sys_Milliseconds();

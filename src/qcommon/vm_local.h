@@ -184,6 +184,8 @@ struct vm_s {
 
 	byte		*jumpTableTargets;
 	int			numJumpTableTargets;
+
+	int			mvapilevel;
 };
 
 

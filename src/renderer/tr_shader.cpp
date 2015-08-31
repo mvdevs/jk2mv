@@ -4055,23 +4055,17 @@ MV_GammaGenerateProgram
 #ifndef DEDICATED
 const char *g_GammaVertexShaderARB = {
 	"!!ARBvp1.0" "\n"
-	"DP4 result.position.x, state.matrix.mvp.row[0], vertex.position;" "\n"
-	"DP4 result.position.y, state.matrix.mvp.row[1], vertex.position;" "\n"
-	"DP4 result.position.z, state.matrix.mvp.row[2], vertex.position;" "\n"
-	"DP4 result.position.w, state.matrix.mvp.row[3], vertex.position;" "\n"
-	"MOV result.texcoord[0], vertex.texcoord;" "\n"
+	"MOV result.position, vertex.position;" "\n"
+	"MOV result.texcoord[0], vertex.texcoord[0];" "\n"
 	"END"
 };
 
 const char *g_GammaPixelShaderARB = {
 	"!!ARBfp1.0" "\n"
-	"PARAM c[1] = { program.env[0] };" "\n"
-	"TEMP R0;" "\n"
+	"TEMP r0;" "\n"
 
-	"TEX R0.xyz, fragment.texcoord[0], texture[0], RECT;" "\n"
-	"POW result.color.x, R0.x, c[0].x;" "\n"
-	"POW result.color.y, R0.y, c[0].x;" "\n"
-	"POW result.color.z, R0.z, c[0].x;" "\n"
+	"TEX r0.xyz, fragment.texcoord[0], texture[0], RECT;" "\n"
+	"TEX result.color, r0, texture[1], 3D;" "\n"
 	"END"
 };
 

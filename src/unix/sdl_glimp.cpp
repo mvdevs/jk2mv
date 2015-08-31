@@ -69,46 +69,6 @@ PFNGLISPROGRAMARBPROC qglIsProgramARB = NULL;
 void ( * qglLockArraysEXT)( int, int);
 void ( * qglUnlockArraysEXT) ( void );
 
-// gamma correction
-PFNGLGETHANDLEARBPROC qglGetHandleARB = NULL;
-PFNGLDELETEOBJECTARBPROC qglDeleteObjectARB = NULL;
-PFNGLDETACHOBJECTARBPROC qglDetachObjectARB = NULL;
-PFNGLCREATESHADEROBJECTARBPROC qglCreateShaderObjectARB = NULL;
-PFNGLSHADERSOURCEARBPROC qglShaderSourceARB = NULL;
-PFNGLCOMPILESHADERARBPROC qglCompileShaderARB = NULL;
-PFNGLCREATEPROGRAMOBJECTARBPROC qglCreateProgramObjectARB = NULL;
-PFNGLATTACHOBJECTARBPROC qglAttachObjectARB = NULL;
-PFNGLLINKPROGRAMARBPROC	qglLinkProgramARB = NULL;
-PFNGLUSEPROGRAMOBJECTARBPROC qglUseProgramObjectARB = NULL;
-PFNGLVALIDATEPROGRAMARBPROC	qglValidateProgramARB = NULL;
-PFNGLGETUNIFORMLOCATIONARBPROC qglGetUniformLocationARB = NULL;
-PFNGLUNIFORM1IARBPROC qglUniform1iARB = NULL;
-PFNGLUNIFORM1FARBPROC qglUniform1fARB = NULL;
-PFNGLUNIFORM4FARBPROC qglUniform4fARB = NULL;
-PFNGLUNIFORM4FVARBPROC qglUniform4fvARB = NULL;
-PFNGLGETINFOLOGARBPROC qglGetInfoLogARB = NULL;
-PFNGLGETOBJECTPARAMETERIVARBPROC qglGetObjectParameterivARB = NULL;
-PFNGLGETATTACHEDOBJECTSARBPROC qglGetAttachedObjectsARB = NULL;
-
-GLboolean(APIENTRYP qglIsRenderbufferEXT) (GLuint renderbuffer);
-void			(APIENTRYP qglBindRenderbufferEXT) (GLenum target, GLuint renderbuffer);
-void			(APIENTRYP qglDeleteRenderbuffersEXT) (GLsizei n, const GLuint * renderbuffers);
-void			(APIENTRYP qglGenRenderbuffersEXT) (GLsizei n, GLuint * renderbuffers);
-void			(APIENTRYP qglRenderbufferStorageEXT) (GLenum target, GLenum internalformat, GLsizei width, GLsizei height);
-void			(APIENTRYP qglGetRenderbufferParameterivEXT) (GLenum target, GLenum pname, GLint * params);
-GLboolean(APIENTRYP qglIsFramebufferEXT) (GLuint framebuffer);
-void			(APIENTRYP qglBindFramebufferEXT) (GLenum target, GLuint framebuffer);
-void			(APIENTRYP qglDeleteFramebuffersEXT) (GLsizei n, const GLuint * framebuffers);
-void			(APIENTRYP qglGenFramebuffersEXT) (GLsizei n, GLuint * framebuffers);
-GLenum(APIENTRYP qglCheckFramebufferStatusEXT) (GLenum target);
-void			(APIENTRYP qglFramebufferTexture1DEXT) (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level);
-void			(APIENTRYP qglFramebufferTexture2DEXT) (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level);
-void			(APIENTRYP qglFramebufferTexture3DEXT) (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level, GLint zoffset);
-void			(APIENTRYP qglFramebufferRenderbufferEXT) (GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer);
-void			(APIENTRYP qglGetFramebufferAttachmentParameterivEXT) (GLenum target, GLenum attachment, GLenum pname, GLint * params);
-void			(APIENTRYP qglGenerateMipmapEXT) (GLenum target);
-void			(APIENTRYP qglBlitFramebufferEXT) (GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter);
-
 /*
 ===============
 GLimp_Minimize
@@ -977,7 +937,7 @@ static void GLimp_InitExtensions( void )
 	}
 
 	// gamma correction
-	if (bTexRectSupported && bARBVertexProgram && bARBFragmentProgram) {
+	if (qglActiveTextureARB && bTexRectSupported && bARBVertexProgram && bARBFragmentProgram) {
 		glConfig.deviceSupportsPostprocessingGamma = qtrue;
 	} else {
 		glConfig.deviceSupportsPostprocessingGamma = qfalse;

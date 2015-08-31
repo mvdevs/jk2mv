@@ -1472,7 +1472,10 @@ static void GLW_InitExtensions( void )
 	}
 
 	// gamma correction
-	if (bTexRectSupported && bARBVertexProgram && bARBFragmentProgram) {
+	if (qglActiveTextureARB && bTexRectSupported && bARBVertexProgram && bARBFragmentProgram) {
+		qglTexImage3D = (PFNGLTEXIMAGE3DPROC)qwglGetProcAddress("glTexImage3D");
+		qglTexSubImage3D = (PFNGLTEXSUBIMAGE3DPROC)qwglGetProcAddress("glTexSubImage3D");
+
 		glConfig.deviceSupportsPostprocessingGamma = qtrue;
 	} else {
 		glConfig.deviceSupportsPostprocessingGamma = qfalse;

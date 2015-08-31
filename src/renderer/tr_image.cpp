@@ -2401,19 +2401,6 @@ void R_CreateBuiltinImages( void ) {
 		R_CreateDlightImage();
 	}
 	R_CreateFogImage();
-
-	// gamma render target
-	if (glConfig.deviceSupportsPostprocessingGamma && r_gammamethod->integer == GAMMA_POSTPROCESSING) {
-		tr.gammaRenderTarget = 1024 + giTextureBindNum++;
-		qglEnable(GL_TEXTURE_RECTANGLE_EXT);
-		qglBindTexture(GL_TEXTURE_RECTANGLE_EXT, tr.gammaRenderTarget);
-		qglTexImage2D(GL_TEXTURE_RECTANGLE_EXT, 0, GL_RGB, glConfig.vidWidth, glConfig.vidHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
-		qglTexParameteri(GL_TEXTURE_RECTANGLE_EXT, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		qglTexParameteri(GL_TEXTURE_RECTANGLE_EXT, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		qglTexParameteri(GL_TEXTURE_RECTANGLE_EXT, GL_TEXTURE_WRAP_S, GL_CLAMP);
-		qglTexParameteri(GL_TEXTURE_RECTANGLE_EXT, GL_TEXTURE_WRAP_T, GL_CLAMP);
-		qglDisable(GL_TEXTURE_RECTANGLE_EXT);
-	}
 }
 
 
@@ -2431,13 +2418,7 @@ void R_SetColorMappings( void ) {
 	// setup the overbright lighting
 	tr.overbrightBits = r_overBrightBits->integer;
 
-	// gamma correction
-	if (!glConfig.deviceSupportsGamma && !glConfig.deviceSupportsPostprocessingGamma) {
-		tr.overbrightBits = 0;		// need hardware gamma for overbright
-	}
-
-	// never overbright in windowed mode or when postprocessing
-	if (!glConfig.isFullscreen || r_gammamethod->integer == GAMMA_POSTPROCESSING)
+	if (!glConfig.isFullscreen && r_gammamethod->integer != GAMMA_POSTPROCESSING)
 	{
 		tr.overbrightBits = 0;
 	}
@@ -2465,23 +2446,54 @@ void R_SetColorMappings( void ) {
 	}
 
 	g = r_gamma->value;
-
 	shift = tr.overbrightBits;
 
-	for ( i = 0; i < 256; i++ ) {
-		if ( g == 1 ) {
-			inf = i;
-		} else {
-			inf = 255 * pow ( i/255.0f, 1.0f / g ) + 0.5f;
+	if (r_gammamethod->integer != GAMMA_POSTPROCESSING) {
+		for (i = 0; i < 256; i++) {
+			if (g == 1) {
+				inf = i;
+			} else {
+				inf = 255 * pow(i / 255.0f, 1.0f / g) + 0.5f;
+			}
+			inf <<= shift;
+			if (inf < 0) {
+				inf = 0;
+			}
+			if (inf > 255) {
+				inf = 255;
+			}
+			s_gammatable[i] = inf;
 		}
-		inf <<= shift;
-		if (inf < 0) {
-			inf = 0;
+	} else {
+		byte gammaCorrected[64];
+		
+		for (int i = 0; i < 64; i++) {
+			if (g == 1.0f) {
+				inf = (int)(((float)i / 63.0f) * 255.0f + 0.5f);
+			} else {
+				inf = (int)(255.0f * pow((float)i / 63.0f, 1.0f / g) + 0.5f);
+			}
+
+			gammaCorrected[i] = Com_Clampi(0, 255, inf << shift);
 		}
-		if (inf > 255) {
-			inf = 255;
+		
+		byte *lutTable = (byte *)Hunk_AllocateTempMemory(64 * 64 * 64 * 3);
+		byte *write = lutTable;
+		for (int z = 0; z < 64; z++) {
+			for (int y = 0; y < 64; y++) {
+				for (int x = 0; x < 64; x++) {
+					*write++ = gammaCorrected[x];
+					*write++ = gammaCorrected[y];
+					*write++ = gammaCorrected[z];
+				}
+			}
 		}
-		s_gammatable[i] = inf;
+
+		qglBindTexture(GL_TEXTURE_3D, tr.gammaLUTImage);
+		qglPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+		qglTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, 0, 64, 64, 64, GL_RGB, GL_UNSIGNED_BYTE, lutTable);
+		
+		Hunk_FreeTempMemory(lutTable);
 	}
 
 	for (i=0 ; i<256 ; i++) {
@@ -2504,7 +2516,21 @@ R_InitImages
 ===============
 */
 void	R_InitImages( void ) {
-	//memset(hashTable, 0, sizeof(hashTable));	// DO NOT DO THIS NOW (because of image cacheing)	-ste.
+	// gamma render target
+	if (glConfig.deviceSupportsPostprocessingGamma && r_gammamethod->integer == GAMMA_POSTPROCESSING) {
+		qglEnable(GL_TEXTURE_3D);
+		tr.gammaLUTImage = 1024 + giTextureBindNum++;
+		qglBindTexture(GL_TEXTURE_3D, tr.gammaLUTImage);
+		qglTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA8, 64, 64, 64, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+		qglTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		qglTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		qglTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		qglTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+		qglTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		qglDisable(GL_TEXTURE_3D);
+		qglEnable(GL_TEXTURE_2D);
+	}
+
 	// build brightness translation tables
 	R_SetColorMappings();
 

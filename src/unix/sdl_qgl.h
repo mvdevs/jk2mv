@@ -337,6 +337,9 @@
 #define qglVertexPointer glVertexPointer
 #define qglViewport glViewport
 
+#define qglTexImage3D glTexImage3D
+#define qglTexSubImage3D glTexSubImage3D
+
 extern void (APIENTRYP qglActiveTextureARB) (GLenum texture);
 extern void (APIENTRYP qglClientActiveTextureARB) (GLenum texture);
 extern void (APIENTRYP qglMultiTexCoord2fARB) (GLenum target, GLfloat s, GLfloat t);
@@ -378,63 +381,6 @@ extern PFNGLGETPROGRAMLOCALPARAMETERFVARBPROC qglGetProgramLocalParameterfvARB;
 extern PFNGLGETPROGRAMIVARBPROC qglGetProgramivARB;
 extern PFNGLGETPROGRAMSTRINGARBPROC qglGetProgramStringARB;
 extern PFNGLISPROGRAMARBPROC qglIsProgramARB;
-
-// gamma correction
-extern		  GLboolean(APIENTRYP qglIsRenderbufferEXT) (GLuint renderbuffer);
-extern void	 (APIENTRYP qglBindRenderbufferEXT) (GLenum target, GLuint renderbuffer);
-extern void	 (APIENTRYP qglDeleteRenderbuffersEXT) (GLsizei n, const GLuint * renderbuffers);
-extern void	 (APIENTRYP qglGenRenderbuffersEXT) (GLsizei n, GLuint * renderbuffers);
-extern void	 (APIENTRYP qglRenderbufferStorageEXT) (GLenum target, GLenum internalformat, GLsizei width, GLsizei height);
-extern void	 (APIENTRYP qglGetRenderbufferParameterivEXT) (GLenum target, GLenum pname, GLint * params);
-extern		  GLboolean(APIENTRYP qglIsFramebufferEXT) (GLuint framebuffer);
-extern void	 (APIENTRYP qglBindFramebufferEXT) (GLenum target, GLuint framebuffer);
-extern void	 (APIENTRYP qglDeleteFramebuffersEXT) (GLsizei n, const GLuint * framebuffers);
-extern void	 (APIENTRYP qglGenFramebuffersEXT) (GLsizei n, GLuint * framebuffers);
-extern		  GLenum(APIENTRYP qglCheckFramebufferStatusEXT) (GLenum target);
-extern void	 (APIENTRYP qglFramebufferTexture1DEXT) (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level);
-extern void	 (APIENTRYP qglFramebufferTexture2DEXT) (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level);
-extern void	 (APIENTRYP qglFramebufferTexture3DEXT) (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level, GLint zoffset);
-extern void	 (APIENTRYP qglFramebufferRenderbufferEXT) (GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer);
-extern void	 (APIENTRYP qglGetFramebufferAttachmentParameterivEXT) (GLenum target, GLenum attachment, GLenum pname, GLint * params);
-extern void	 (APIENTRYP qglGenerateMipmapEXT) (GLenum target);
-
-typedef GLboolean(APIENTRYP PFNGLISRENDERBUFFEREXTPROC) (GLuint renderbuffer);
-typedef void (APIENTRYP PFNGLBINDRENDERBUFFEREXTPROC) (GLenum target, GLuint renderbuffer);
-typedef void (APIENTRYP PFNGLDELETERENDERBUFFERSEXTPROC) (GLsizei n, const GLuint *renderbuffers);
-typedef void (APIENTRYP PFNGLGENRENDERBUFFERSEXTPROC) (GLsizei n, GLuint *renderbuffers);
-typedef void (APIENTRYP PFNGLRENDERBUFFERSTORAGEEXTPROC) (GLenum target, GLenum internalformat, GLsizei width, GLsizei height);
-typedef void (APIENTRYP PFNGLGETRENDERBUFFERPARAMETERIVEXTPROC) (GLenum target, GLenum pname, GLint *params);
-typedef GLboolean(APIENTRYP PFNGLISFRAMEBUFFEREXTPROC) (GLuint framebuffer);
-typedef void (APIENTRYP PFNGLBINDFRAMEBUFFEREXTPROC) (GLenum target, GLuint framebuffer);
-typedef void (APIENTRYP PFNGLDELETEFRAMEBUFFERSEXTPROC) (GLsizei n, const GLuint *framebuffers);
-typedef void (APIENTRYP PFNGLGENFRAMEBUFFERSEXTPROC) (GLsizei n, GLuint *framebuffers);
-typedef GLenum(APIENTRYP PFNGLCHECKFRAMEBUFFERSTATUSEXTPROC) (GLenum target);
-typedef void (APIENTRYP PFNGLFRAMEBUFFERTEXTURE1DEXTPROC) (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level);
-typedef void (APIENTRYP PFNGLFRAMEBUFFERTEXTURE2DEXTPROC) (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level);
-typedef void (APIENTRYP PFNGLFRAMEBUFFERTEXTURE3DEXTPROC) (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level, GLint zoffset);
-typedef void (APIENTRYP PFNGLFRAMEBUFFERRENDERBUFFEREXTPROC) (GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer);
-typedef void (APIENTRYP PFNGLGETFRAMEBUFFERATTACHMENTPARAMETERIVEXTPROC) (GLenum target, GLenum attachment, GLenum pname, GLint *params);
-typedef void (APIENTRYP PFNGLGENERATEMIPMAPEXTPROC) (GLenum target);
-
-extern PFNGLGETHANDLEARBPROC qglGetHandleARB;
-extern PFNGLDELETEOBJECTARBPROC qglDeleteObjectARB;
-extern PFNGLDETACHOBJECTARBPROC qglDetachObjectARB;
-extern PFNGLCREATESHADEROBJECTARBPROC qglCreateShaderObjectARB;
-extern PFNGLSHADERSOURCEARBPROC qglShaderSourceARB;
-extern PFNGLCOMPILESHADERARBPROC qglCompileShaderARB;
-extern PFNGLCREATEPROGRAMOBJECTARBPROC qglCreateProgramObjectARB;
-extern PFNGLATTACHOBJECTARBPROC qglAttachObjectARB;
-extern PFNGLLINKPROGRAMARBPROC	qglLinkProgramARB;
-extern PFNGLUSEPROGRAMOBJECTARBPROC qglUseProgramObjectARB;
-extern PFNGLVALIDATEPROGRAMARBPROC	qglValidateProgramARB;
-extern PFNGLGETUNIFORMLOCATIONARBPROC qglGetUniformLocationARB;
-extern PFNGLUNIFORM1IARBPROC qglUniform1iARB;
-extern PFNGLUNIFORM1FARBPROC qglUniform1fARB;
-extern PFNGLUNIFORM4FARBPROC qglUniform4fARB;
-extern PFNGLUNIFORM4FVARBPROC qglUniform4fvARB;
-extern PFNGLGETINFOLOGARBPROC qglGetInfoLogARB;
-extern PFNGLGETOBJECTPARAMETERIVARBPROC qglGetObjectParameterivARB;
-extern PFNGLGETATTACHEDOBJECTSARBPROC qglGetAttachedObjectsARB;
 
 extern void ( * qglLockArraysEXT)( int, int);
 extern void ( * qglUnlockArraysEXT) ( void );

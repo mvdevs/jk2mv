@@ -238,9 +238,7 @@ static	char		fs_gamedir[MAX_OSPATH];	// this will be a single file name with no 
 static	cvar_t		*fs_debug;
 static	cvar_t		*fs_homepath;
 static	cvar_t		*fs_basepath;
-#if !defined(PORTABLE) && !defined(DEDICATED)
 static	cvar_t		*fs_assetspath;
-#endif
 static	cvar_t		*fs_basegame;
 static	cvar_t		*fs_cdpath;
 static	cvar_t		*fs_copyfiles;
@@ -591,7 +589,7 @@ qboolean FS_Base_FileExists(const char *file)
 	FILE *f;
 	char *testpath;
 
-	testpath = FS_BuildOSPath(fs_basepath->string, "base", file);
+	testpath = FS_BuildOSPath(fs_basepath->string, BASEGAME, file);
 
 	f = fopen(testpath, "rb");
 	if (f) {
@@ -606,7 +604,14 @@ qboolean FS_AllPath_Base_FileExists(const char *file)
 	FILE *f;
 	char *testpath;
 
-	testpath = FS_BuildOSPath(fs_basepath->string, "base", file);
+	testpath = FS_BuildOSPath(fs_basepath->string, BASEGAME, file);
+	f = fopen(testpath, "rb");
+	if (f) {
+		fclose(f);
+		return qtrue;
+	}
+
+	testpath = FS_BuildOSPath(fs_homepath->string, BASEGAME, file);
 	f = fopen(testpath, "rb");
 	if (f) {
 		fclose(f);
@@ -614,13 +619,36 @@ qboolean FS_AllPath_Base_FileExists(const char *file)
 	}
 
 #if !defined(PORTABLE) && !defined(DEDICATED)
-	testpath = FS_BuildOSPath(fs_assetspath->string, "base", file);
+	if (strlen(fs_assetspath->string)) {
+		testpath = FS_BuildOSPath(fs_assetspath->string, BASEGAME, file);
+		f = fopen(testpath, "rb");
+		if (f) {
+			fclose(f);
+			return qtrue;
+		}
+	}
+#endif
+
+	return qfalse;
+}
+
+qboolean FS_BaseHome_Base_FileExists(const char *file) {
+	FILE *f;
+	char *testpath;
+
+	testpath = FS_BuildOSPath(fs_basepath->string, BASEGAME, file);
 	f = fopen(testpath, "rb");
 	if (f) {
 		fclose(f);
 		return qtrue;
 	}
-#endif
+
+	testpath = FS_BuildOSPath(fs_homepath->string, BASEGAME, file);
+	f = fopen(testpath, "rb");
+	if (f) {
+		fclose(f);
+		return qtrue;
+	}
 
 	return qfalse;
 }
@@ -2895,9 +2923,7 @@ FS_Startup
 */
 static void FS_Startup( const char *gameName ) {
 	const char *homePath;
-#if !defined(PORTABLE) && !defined(DEDICATED)
 	const char *assetsPath;
-#endif
 	char *mv_whitelist, *mv_blacklist, *mv_forcelist;
 	fileHandle_t f_w, f_b, f_f;
 	int f_wl, f_bl, f_fl;
@@ -2919,19 +2945,29 @@ static void FS_Startup( const char *gameName ) {
 	fs_gamedirvar = Cvar_Get ("fs_game", "", CVAR_INIT|CVAR_SYSTEMINFO );
 	fs_restrict = Cvar_Get ("fs_restrict", "", CVAR_INIT );
 
-#if !defined(PORTABLE) && !defined(DEDICATED)
 	assetsPath = Sys_DefaultAssetsPath();
-	if (!assetsPath && !FS_Base_FileExists("assets5.pk3")) {
-		Com_Error(ERR_FATAL, "could not find JK2 installation (asset files).. make sure you have JK2 installed\n");
+	fs_assetspath = Cvar_Get("fs_assetspath", assetsPath ? assetsPath : "", CVAR_INIT);
+
+	if (!FS_AllPath_Base_FileExists("assets5.pk3")) {
+		// assets files found in none of the paths
+#if defined(INSTALLED) && !defined(DEDICATED)
+#ifdef WIN32
+		Com_Error(ERR_FATAL, "could not find JK2 installation... make sure you have JK2 installed (CD or Steam).\n");
+#elif MACOS_X
+		Com_Error(ERR_FATAL, "could not find JK2 App... put it either in /Applications or side by side with the JK2MV app.\n");
+#else
+		Com_Error(ERR_FATAL, "could not find assets(0,1,2,5).pk3 files... copy them into the base directory (%s/base or %s/base).\n", fs_basepath->string, fs_homepath->string);
+#endif
+#else
+		Com_Error(ERR_FATAL, "could not find assets(0,1,2,5).pk3 files... copy them into the base directory.\n");
+#endif
 		return;
 	}
 
-	fs_assetspath = Cvar_Get("fs_assetspath", assetsPath ? assetsPath : "", CVAR_INIT);
-
-	if (assetsPath && !FS_Base_FileExists("assets5.pk3")) {
+	// don't use the assetspath if assets files already found in fs_basepath or fs_homepath
+	if (assetsPath && !FS_BaseHome_Base_FileExists("assets5.pk3")) {
 		FS_AddGameDirectory(assetsPath, BASEGAME, qtrue);
 	}
-#endif
 
 	// add search path elements in reverse priority order
 	if (fs_cdpath->string[0]) {

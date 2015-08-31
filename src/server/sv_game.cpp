@@ -13,6 +13,8 @@
 	#include "../ghoul2/G2_local.h"
 #endif
 
+#include "../api/mvapi.h"
+
 botlib_export_t	*botlib_export;
 
 #ifdef G2_COLLISION_ENABLED
@@ -45,10 +47,9 @@ sharedEntity_t *SV_GentityNum( int num ) {
 	return ent;
 }
 
-// MV-API
-sharedEntityMV_t *MV_EntityNum( int num )
+mvsharedEntity_t *MV_EntityNum( int num )
 {
-	sharedEntityMV_t *mvEnt = (sharedEntityMV_t *)( (byte *)sv.gentitiesMV + (sv.gentitySizeMV*num) );
+	mvsharedEntity_t *mvEnt = (mvsharedEntity_t *)( (byte *)sv.gentitiesMV + (sv.gentitySizeMV*num) );
 	return mvEnt;
 }
 
@@ -257,7 +258,6 @@ void SV_GetServerinfo( char *buffer, int bufferSize ) {
 /*
 ===============
 SV_LocateGameData
-
 ===============
 */
 void SV_LocateGameData( sharedEntity_t *gEnts, int numGEntities, int sizeofGEntity_t,
@@ -269,7 +269,7 @@ void SV_LocateGameData( sharedEntity_t *gEnts, int numGEntities, int sizeofGEnti
 	sv.gameClients = clients;
 	sv.gameClientSize = sizeofGameClient;
 
-	if (mv_fixturretcrash->integer && numGEntities > 1020) {
+	if (mv_fixturretcrash->integer && !(sv.fixes & MVFIX_TURRETCRASH) && numGEntities > 1020) {
 		int remEnts = 0;
 
 		for (int i = 32; i < numGEntities; i++) {
@@ -290,16 +290,19 @@ void SV_LocateGameData( sharedEntity_t *gEnts, int numGEntities, int sizeofGEnti
 
 /*
 ===============
-MV_LocateGameData
-
+MVAPI_LocateGameData
 ===============
 */
-// MV-API
-void MV_LocateGameData( sharedEntityMV_t *mvEnts, int numGEntities, int sizeofGEntityMV_t )
-{
+qboolean MVAPI_LocateGameData(mvsharedEntity_t *mvEnts, int numGEntities, int sizeofmvsharedEntity_t) {
+	if (VM_MVAPILevel(gvm) < 1) {
+		return qtrue;
+	}
+
 	sv.gentitiesMV = mvEnts;
-	sv.gentitySizeMV = sizeofGEntityMV_t;
+	sv.gentitySizeMV = sizeofmvsharedEntity_t;
 	sv.num_entities = numGEntities;
+
+	return qfalse;
 }
 
 
@@ -315,8 +318,8 @@ void SV_GetUsercmd( int clientNum, usercmd_t *cmd ) {
 	}
 	*cmd = svs.clients[clientNum].lastUsercmd;
 
-	if ( cmd->forcesel == FP_LEVITATION && mv_blockchargejump->integer ) cmd->forcesel = FP_PUSH; // Prevent modified clients from using the "ChargeJump" (higher jumping, double-kicks, ...), but let the server toggle this (in case they are using a mod where it is a feature).
-	if ( mv_blockspeedhack->integer ) cmd->angles[ROLL] = 0; // Prevent modified clients from gaining more speed than others...
+	if ( cmd->forcesel == FP_LEVITATION && mv_blockchargejump->integer && !(sv.fixes & MVFIX_CHARGEJUMP)) cmd->forcesel = FP_PUSH; // Prevent modified clients from using the "ChargeJump" (higher jumping, double-kicks, ...), but let the server toggle this (in case they are using a mod where it is a feature).
+	if ( mv_blockspeedhack->integer && !(sv.fixes & MVFIX_SPEEDHACK)) cmd->angles[ROLL] = 0; // Prevent modified clients from gaining more speed than others...
 }
 
 //==============================================
@@ -349,7 +352,7 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 	// fix syscalls from 1.02 to match 1.04
 	// this is a mess... can it be done better?
 	if (MV_GetCurrentGameversion() == VERSION_1_02) {
-		if (args[0] > G_G2_GETBOLT_NOREC && args[0] < MV_G_LOCATE_GAME_DATA) { // MV-API
+		if (args[0] > G_G2_GETBOLT_NOREC && args[0] <= G_G2_COLLISIONDETECT) {
 			args[0]++;
 		}
 	}
@@ -403,9 +406,8 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 	case G_LOCATE_GAME_DATA:
 		SV_LocateGameData( (sharedEntity_t *)VMA(1), args[2], args[3], (struct playerState_s *)VMA(4), args[5] );
 		return 0;
-	case MV_G_LOCATE_GAME_DATA: // MV-API
-		MV_LocateGameData( (sharedEntityMV_t*)VMA(1), args[2], args[3] );
-		return 0;
+	case MVAPI_LOCATE_GAME_DATA:
+		return MVAPI_LocateGameData((mvsharedEntity_t *)VMA(1), args[2], args[3]);
 	case G_DROP_CLIENT:
 		SV_GameDropClient( args[1], (const char *)VMA(2) );
 		return 0;
@@ -1087,10 +1089,18 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 			VMF(12));
 #endif
 		return 0;
-	// MV-API
-	case MV_SEND_CONNECTIONLESSPACKET:
-		MV_SendConnectionlessPacket((char*)VMA(1));
-		return 0;
+
+	case MVAPI_GET_CONNECTIONLESSPACKET:
+		return (int)MVAPI_GetConnectionlessPacket((mvaddr_t *)VMA(1), (char*)VMA(2), (unsigned int)args[3]);
+
+	case MVAPI_SEND_CONNECTIONLESSPACKET:
+		return (int)MVAPI_SendConnectionlessPacket((const mvaddr_t *)VMA(1), (const char*)VMA(2));
+
+	case MVAPI_CONTROL_FIXES:
+		return (int)SV_MVAPI_ControlFixes((mvfix_t)args[1]);
+
+	case MVAPI_GET_VERSION:
+		return (int)MV_GetCurrentGameversion();
 
 	default:
 		Com_Error( ERR_DROP, "Bad game system trap: %i", args[0] );
@@ -1112,6 +1122,7 @@ void SV_ShutdownGameProgs( void ) {
 	VM_Call( gvm, GAME_SHUTDOWN, qfalse );
 	VM_Free( gvm );
 	gvm = NULL;
+	sv.fixes = MVFIX_NONE;
 }
 
 /*
@@ -1123,18 +1134,20 @@ Called for both a full init and a restart
 */
 static void SV_InitGameVM( qboolean restart ) {
 	int		i;
+	int apireq;
 
 	// start the entity parsing at the beginning
 	sv.entityParsePoint = CM_EntityString();
 
-	// MV-API
-	VM_Call( gvm, MV_API_INIT, MV_API_VERSION );
-	sv.gentitiesMV = NULL;
-	sv.gentitySizeMV = 0;
-
 	// use the current msec count for a random seed
 	// init for this gamestate
-	VM_Call( gvm, GAME_INIT, svs.time, Com_Milliseconds(), restart );
+	apireq = VM_Call(gvm, GAME_INIT, svs.time, Com_Milliseconds(), restart, 0, 0, 0, 0, 0, 0, 0, 0, MV_APILEVEL);
+	VM_SetMVAPILevel(gvm, apireq);
+	Com_DPrintf("GameVM uses MVAPI level %i.\n", apireq);
+
+	if (apireq >= 1) {
+		VM_Call(gvm, MVAPI_AFTER_INIT);
+	}
 
 	// clear all gentity pointers that might still be set from
 	// a previous level
@@ -1213,9 +1226,19 @@ qboolean SV_GameCommand( void ) {
 	return (qboolean)VM_Call( gvm, GAME_CONSOLE_COMMAND );
 }
 
-// MV-API
-void MV_SendConnectionlessPacket(char *msg)
-{
-	NET_OutOfBandPrint(NS_SERVER, mv_lastAdr, msg);
-}
+/*
+====================
+SV_MVAPI_ControlFixes
 
+disable / enable toggleable fixes from the gvm
+====================
+*/
+qboolean SV_MVAPI_ControlFixes(mvfix_t fixes) {
+	if (VM_MVAPILevel(gvm) < 1) {
+		return qtrue;
+	}
+
+	sv.fixes = fixes;
+
+	return qfalse;
+}

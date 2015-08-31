@@ -8,6 +8,7 @@
 #include "snd_public.h"
 #include "../cgame/cg_public.h"
 #include "../game/bg_public.h"
+#include "../api/mvapi.h"
 
 #ifdef INTERNAL_CURL
 #	include <curl.h>
@@ -349,6 +350,8 @@ typedef struct {
 
 	CURL *curl;
 	CURLM *curlm;
+
+	mvfix_t fixes;
 } clientStatic_t;
 
 #define	CON_TEXTSIZE	131072 // increased in jk2mv
@@ -597,6 +600,8 @@ void CL_CGameRendering( stereoFrame_t stereo );
 void CL_SetCGameTime( void );
 void CL_FirstSnapshot( void );
 void CL_ShaderStateChanged(void);
+
+qboolean CL_MVAPI_ControlFixes(mvfix_t fixes);
 
 //
 // cl_ui.c

@@ -119,6 +119,10 @@ typedef void (APIENTRY * PFNGLCLIENTACTIVETEXTUREARBPROC) (GLenum target);
 //	- Define the function pointer in tr_init.cpp and possibly add a cvar to track your ext status.
 //	- Load the extension in win_glimp.cpp.
 
+typedef void (APIENTRY * PFNGLTEXIMAGE3DPROC) (GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const GLvoid *pixels);
+typedef void (APIENTRY * PFNGLTEXSUBIMAGE3DPROC) (GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid *pixels);
+extern PFNGLTEXIMAGE3DPROC qglTexImage3D;
+extern PFNGLTEXSUBIMAGE3DPROC qglTexSubImage3D;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Register Combiner extension definitions. - AReis

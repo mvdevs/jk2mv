@@ -1,4 +1,5 @@
 #include "tr_local.h"
+#include "glext.h"
 
 #ifndef DEDICATED
 #if !defined __TR_WORLDEFFECTS_H
@@ -1265,45 +1266,49 @@ const void	*RB_SwapBuffers( const void *data ) {
 
 	// gamma correction
 	if (glConfig.deviceSupportsPostprocessingGamma && r_gammamethod->integer == GAMMA_POSTPROCESSING) {
-		qglMatrixMode(GL_PROJECTION);
-		qglLoadIdentity();
-		qglOrtho(0, glConfig.vidWidth, glConfig.vidHeight, 0, 0, 1);
-		qglMatrixMode(GL_MODELVIEW);
-		qglLoadIdentity();
-		GL_State(GLS_DEPTHTEST_DISABLE);
+		RB_SetGL2D();
 
 		qglEnable(GL_VERTEX_PROGRAM_ARB);
 		qglBindProgramARB(GL_VERTEX_PROGRAM_ARB, tr.gammaVertexShader);
 		qglEnable(GL_FRAGMENT_PROGRAM_ARB);
 		qglBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, tr.gammaPixelShader);
 
-		qglProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 0, 1 / r_gamma->value, 0.0f, 0.0f, 0.0f);
-
-		qglDisable(GL_TEXTURE_2D);
+		GL_SelectTexture(0);
 		qglEnable(GL_TEXTURE_RECTANGLE_EXT);
-		qglBindTexture(GL_TEXTURE_RECTANGLE_EXT, tr.gammaRenderTarget);
-		qglCopyTexSubImage2D(GL_TEXTURE_RECTANGLE_EXT, 0, 0, 0, 0, 0, glConfig.vidWidth, glConfig.vidHeight);
+		qglBindTexture(GL_TEXTURE_RECTANGLE_EXT, tr.sceneImage);
+		qglCopyTexImage2D(GL_TEXTURE_RECTANGLE_EXT, 0, GL_RGBA, 0, 0, glConfig.vidWidth, glConfig.vidHeight, 0);
 		qglDisable(GL_TEXTURE_RECTANGLE_EXT);
-		qglEnable(GL_TEXTURE_2D);
+
+		GL_SelectTexture(1);
+		qglEnable(GL_TEXTURE_3D);
+		qglBindTexture(GL_TEXTURE_3D, tr.gammaLUTImage);
+
+		qglClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+		qglClear(GL_COLOR_BUFFER_BIT);
 
 		qglBegin(GL_QUADS);
-			qglColor4f(0.0f, 0.0f, 0.0f, 0.0f);
-			qglTexCoord2f(0, glConfig.vidHeight);
-			qglVertex2f(0, 0);
-			qglTexCoord2f(0, 0);
-			qglVertex2f(0, glConfig.vidHeight);
-			qglTexCoord2f(glConfig.vidWidth, 0);
-			qglVertex2f(glConfig.vidWidth, glConfig.vidHeight);
-			qglTexCoord2f(glConfig.vidWidth, glConfig.vidHeight);
-			qglVertex2f(glConfig.vidWidth, 0);
+			qglTexCoord2f(0.0f, 0.0f);
+			qglVertex2f(-1.0f, -1.0f);
+
+			qglTexCoord2f(0.0f, (float)glConfig.vidHeight);
+			qglVertex2f(-1.0f, 1.0f);
+
+			qglTexCoord2f((float)glConfig.vidWidth, (float)glConfig.vidHeight);
+			qglVertex2f(1.0f, 1.0f);
+
+			qglTexCoord2f((float)glConfig.vidWidth, 0.0f);
+			qglVertex2f(1.0f, -1.0f);
 		qglEnd();
 
 		qglDisable(GL_VERTEX_PROGRAM_ARB);
 		qglDisable(GL_FRAGMENT_PROGRAM_ARB);
+
+		qglDisable(GL_TEXTURE_3D);
+		GL_SelectTexture(0);
 	}
 
-    // texture swapping test
-	if ( r_showImages->integer ) {
+	// texture swapping test
+	if (r_showImages->integer) {
 		RB_ShowImages();
 	}
 

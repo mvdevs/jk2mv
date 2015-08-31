@@ -21,6 +21,8 @@
 #include "../game/q_shared.h"
 #include "../qcommon/qcommon.h"
 
+#include "../qcommon/game_version.h"
+
 //=============================================================================
 
 // Used to determine CD Path
@@ -310,6 +312,8 @@ char *Sys_DefaultInstallPath(void)
 
         override[5] = 0;
         return path;
+#elif !defined(MACOS_X) && !defined(DEDICATED) && !defined(PORTABLE)
+        return MV_UNIX_INSTALL "/share/jk2mv";
 #else
 		return Sys_Cwd();
 #endif
@@ -353,7 +357,7 @@ char *Sys_DefaultHomePath(void)
 // try to find assets from /Applications (Appstore JK2) or Steam
 // if not found try to find it in the same directory this app is
 char *Sys_DefaultAssetsPath() {
-#ifdef MACOS_X
+#if defined(MACOS_X) && !defined(DEDICATED)
     static char path[MAX_OSPATH];
     char *override;
 
@@ -639,8 +643,13 @@ void	* QDECL Sys_LoadDll(const char *name, intptr_t(QDECL **entryPoint)(int, ...
   gamedir = Cvar_VariableString( "fs_game" );
 
   if (!strcmp(name, "jk2mvmenu")) {
+#if !defined(MACOS_X) && !defined(PORTABLE)
+	sprintf(mvmenu, MV_UNIX_INSTALL "/lib/%s.so", name);
+	fn = mvmenu;
+#else
 	sprintf(mvmenu, "%s/%s", basepath, fname);
 	fn = mvmenu;
+#endif
   } else {
 	fn = FS_BuildOSPath( basepath, gamedir, fname );
   }

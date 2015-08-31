@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include "../qcommon/cm_public.h"
 #include "../game/q_shared.h"
+#include "../api/mvapi.h"
 
 //============================================================================
 
@@ -355,6 +356,9 @@ void	*VM_ExplicitArgPtr(vm_t *vm, intptr_t intValue);
 
 void	VM_Forced_Unload_Start(void);
 void	VM_Forced_Unload_Done(void);
+
+int	VM_MVAPILevel(const vm_t *vm);
+void VM_SetMVAPILevel(vm_t *vm, int level);
 
 //Ignore __attribute__ on non-gcc platforms
 #ifndef __GNUC__
@@ -1097,13 +1101,6 @@ extern huffman_t clientHuffTables;
 #define CL_DECODE_START		4
 
 // multiprotocol support
-typedef enum {
-	VERSION_UNDEF = 0,
-	VERSION_1_02 = 2,
-	VERSION_1_03 = 3,
-	VERSION_1_04 = 4,
-} mvversion_t;
-
 typedef enum {
 	PROTOCOL_UNDEF = 0,
 	PROTOCOL15 = 15,

@@ -13,6 +13,8 @@
 
 #include "../meerkat/meerkat.h"
 
+#include "../api/mvapi.h"
+
 //=============================================================================
 
 #define	PERS_SCORE				0		// !!! MUST NOT CHANGE, SERVER AND
@@ -65,9 +67,10 @@ typedef struct {
 
 	int				http_port;
 
-	// MV-API
-	sharedEntityMV_t *gentitiesMV;
+	mvsharedEntity_t *gentitiesMV;
 	int				  gentitySizeMV;
+
+	mvfix_t			fixes;
 } server_t;
 
 typedef struct {
@@ -205,8 +208,6 @@ extern	serverStatic_t	svs;				// persistant server info across maps
 extern	server_t		sv;					// cleared each map
 extern	vm_t			*gvm;				// game virtual machine
 
-extern	netadr_t		mv_lastAdr;			// MV-API
-
 extern	cvar_t	*sv_fps;
 extern	cvar_t	*sv_timeout;
 extern	cvar_t	*sv_zombietime;
@@ -282,8 +283,8 @@ void SV_RemoveOperatorCommands (void);
 void SV_MasterHeartbeat (void);
 void SV_MasterShutdown (void);
 
-
-
+qboolean MVAPI_GetConnectionlessPacket(mvaddr_t *addr, char *buf, unsigned int bufsize);
+qboolean MVAPI_SendConnectionlessPacket(const mvaddr_t *addr, const char *message);
 
 //
 // sv_init.c
@@ -347,7 +348,7 @@ void SV_SendClientSnapshot( client_t *client );
 //
 int	SV_NumForGentity( sharedEntity_t *ent );
 sharedEntity_t *SV_GentityNum( int num );
-sharedEntityMV_t *MV_EntityNum( int num ); // MV-API
+mvsharedEntity_t *MV_EntityNum( int num );
 playerState_t *SV_GameClientNum( int num );
 svEntity_t	*SV_SvEntityForGentity( sharedEntity_t *gEnt );
 sharedEntity_t *SV_GEntityForSvEntity( svEntity_t *svEnt );
@@ -355,7 +356,8 @@ void		SV_InitGameProgs ( void );
 void		SV_ShutdownGameProgs ( void );
 void		SV_RestartGameProgs( void );
 qboolean	SV_inPVS (const vec3_t p1, const vec3_t p2);
-void		MV_SendConnectionlessPacket(char *msg); // MV-API
+
+qboolean SV_MVAPI_ControlFixes(mvfix_t fixes);
 
 //
 // sv_bot.c

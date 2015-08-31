@@ -5,8 +5,6 @@ serverStatic_t	svs;				// persistant server info
 server_t		sv;					// local server
 vm_t			*gvm = NULL;				// game virtual machine // bk001212 init
 
-netadr_t		mv_lastAdr;		// MV-API
-
 cvar_t	*sv_fps;				// time rate for running non-clients
 cvar_t	*sv_timeout;			// seconds without any message
 cvar_t	*sv_zombietime;			// seconds to sink messages after disconnect
@@ -678,6 +676,54 @@ void SVC_RemoteCommand( netadr_t from, msg_t *msg ) {
 }
 
 /*
+===============
+MVAPI_GetConnectionlessPacket
+===============
+*/
+mvaddr_t curraddr;
+char currmessage[MAX_STRING_CHARS];
+qboolean MVAPI_GetConnectionlessPacket(mvaddr_t *addr, char *buf, unsigned int bufsize) {
+	if (VM_MVAPILevel(gvm) < 1) {
+		return qtrue;
+	}
+
+	if (currmessage[0] == 0) {
+		return qtrue;
+	}
+
+	Com_Memcpy(addr, &curraddr, sizeof(curraddr));
+	Q_strncpyz(buf, currmessage, bufsize);
+	return qfalse;
+}
+
+/*
+===============
+MVAPI_SendConnectionlessPacket
+===============
+*/
+qboolean MVAPI_SendConnectionlessPacket(const mvaddr_t *addr, const char *message) {
+	netadr_t nativeAdr;
+
+	if (VM_MVAPILevel(gvm) < 1) {
+		return qtrue;
+	}
+
+	if (addr->type != MV_IPV4) {
+		return qtrue;
+	}
+
+	nativeAdr.type = NA_IP;
+	nativeAdr.ip[0] = addr->ip.v4[0];
+	nativeAdr.ip[1] = addr->ip.v4[1];
+	nativeAdr.ip[2] = addr->ip.v4[2];
+	nativeAdr.ip[3] = addr->ip.v4[3];
+	nativeAdr.port = addr->port;
+
+	NET_OutOfBandPrint(NS_SERVER, nativeAdr, message);
+	return qfalse;
+}
+
+/*
 =================
 SV_ConnectionlessPacket
 
@@ -720,14 +766,22 @@ void SV_ConnectionlessPacket( netadr_t from, msg_t *msg ) {
 		// if a client starts up a local server, we may see some spurious
 		// server disconnect messages when their new server sees our final
 		// sequenced messages to the old client
-	} else {
-		// MV-API
-		memcpy(&mv_lastAdr, &from, sizeof(netadr_t));
-		if ( !VM_Call(gvm, MV_CONNECTIONLESS_PACKET, from.ip[0], from.ip[1], from.ip[2], from.ip[3]) )
-		{
-			Com_DPrintf ("bad connectionless packet from %s:\n%s\n"
-			, NET_AdrToString (from), s);
+	} else if (!Q_stricmp(c, "mvapi")) {
+		if (VM_MVAPILevel(gvm) >= 1 && from.type == NA_IP) {
+			Q_strncpyz(currmessage, s, sizeof(currmessage));
+			curraddr.type = MV_IPV4;
+			curraddr.ip.v4[0] = from.ip[0];
+			curraddr.ip.v4[1] = from.ip[1];
+			curraddr.ip.v4[2] = from.ip[2];
+			curraddr.ip.v4[3] = from.ip[3];
+			curraddr.port = from.port;
+
+			VM_Call(gvm, MVAPI_RECV_CONNECTIONLESSPACKET);
+
+			currmessage[0] = 0;
 		}
+	} else {
+		Com_DPrintf("bad connectionless packet from %s:\n%s\n", NET_AdrToString(from), s);
 	}
 }
 

@@ -1117,7 +1117,7 @@ typedef struct {
 
 	// gamma correction
 	GLuint gammaVertexShader, gammaPixelShader;
-	GLuint gammaRenderTarget;
+	GLuint gammaLUTImage;
 } trGlobals_t;
 
 

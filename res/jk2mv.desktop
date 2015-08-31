@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Encoding=UTF-8
+Name=JK2MV
+Comment=Play Jedi Knight II
+Categories=Game;Shooter;
+Exec=jk2mvmp
+Icon=jk2mv.png
+Terminal=false

@@ -13,5 +13,5 @@ if not defined FOUND (
 )
 mkdir msvc11_x86
 cd msvc11_x86
-cmake -G "Visual Studio 11" -D CMAKE_INSTALL_PREFIX=./install ../..
+cmake -G "Visual Studio 11" ../..
 pause
