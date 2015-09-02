@@ -172,7 +172,6 @@ if (BuildMVMP OR BuildMVDED)
 		"${SRCDir}/qcommon/cm_polylib.h"
 		"${SRCDir}/qcommon/cm_public.h"
 		"${SRCDir}/qcommon/disablewarnings.h"
-		"${SRCDir}/qcommon/game_version.h"
 		"${SRCDir}/qcommon/hstring.h"
 		"${SRCDir}/qcommon/ioapi.h"
 		"${SRCDir}/qcommon/qcommon.h"
@@ -279,7 +278,7 @@ endif()
 # jk2mvmp
 if (BuildMVMP)
 	set(MVMPFiles ${MVMPDEDFiles})
-	set(MVMPIncludeDirs ${MVMPDEDIncludeDirs})
+	set(MVMPIncludeDirs ${MVGLOBALIncludeDirs} ${MVMPDEDIncludeDirs})
 	set(MVMPLibraries ${MVMPDEDLibraries})
 
 	# Libraries
@@ -597,7 +596,7 @@ endif()
 # jk2mvded
 if (BuildMVDED)
 	set(MVDEDFiles ${MVMPDEDFiles})
-	set(MVDEDIncludeDirs ${MVMPDEDIncludeDirs})
+	set(MVDEDIncludeDirs ${MVGLOBALIncludeDirs} ${MVMPDEDIncludeDirs})
 	set(MVDEDLibraries ${MVMPDEDLibraries})
 
 	# Source

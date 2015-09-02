@@ -19,6 +19,7 @@ set(CMAKE_CONFIGURATION_TYPES Debug Release CACHE TYPE INTERNAL FORCE)
 # Project name & version
 set(ProjectName "JK2MV" CACHE STRING "Project Name")
 project(${ProjectName})
+set(ProjectURL "https://jk2mv.org")
 
 set(MV_MAJOR_VERSION 1)
 set(MV_MINOR_VERSION 0)
@@ -270,16 +271,16 @@ set(CPACK_PACKAGE_VERSION_MINOR "${MV_MINOR_VERSION}")
 set(CPACK_PACKAGE_VERSION_PATCH "${MV_PATCH_VERSION}")
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE")
 
-if (((WIN32 OR APPLE) AND BuildPack) OR BuildPackDEB OR BuildPackRPM)
+if (BuildPack OR BuildPackDEB OR BuildPackRPM)
 	if(WIN32)
 		set(CPACK_GENERATOR "NSIS")
-		set(CPACK_NSIS_URL_INFO_ABOUT "https://jk2mv.org")
+		set(CPACK_NSIS_URL_INFO_ABOUT ${ProjectURL})
 
 		configure_file(
 			${RESDir}/NSIS.definitions.nsh.in
-			${CMAKE_CURRENT_BINARY_DIR}/res/NSIS.definitions.nsh
+			${CMAKE_BINARY_DIR}/res/NSIS.definitions.nsh
 		)
-		string(REGEX REPLACE "/" "\\\\\\\\" CPACK_NSIS_INCLFILE "${CMAKE_CURRENT_BINARY_DIR}/res/NSIS.definitions.nsh")
+		string(REGEX REPLACE "/" "\\\\\\\\" CPACK_NSIS_INCLFILE "${CMAKE_BINARY_DIR}/res/NSIS.definitions.nsh")
 	elseif(APPLE)
 		set(CPACK_GENERATOR "Bundle")
 		set(CPACK_BUNDLE_NAME ${ProjectName})
@@ -289,7 +290,7 @@ if (((WIN32 OR APPLE) AND BuildPack) OR BuildPackDEB OR BuildPackRPM)
 			set(CPACK_GENERATOR ${CPACK_GENERATOR} "DEB")
 			set(CPACK_DEBIAN_PACKAGE_NAME "jk2mv") # debian packages are lowercase
 			set(CPACK_DEBIAN_PACKAGE_SECTION "games")
-			set(CPACK_DEBIAN_PACKAGE_HOMEPAGE "https://jk2mv.org")
+			set(CPACK_DEBIAN_PACKAGE_HOMEPAGE ${ProjectURL})
 			set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE ${Architecture})
 			set(CPACK_DEBIAN_PACKAGE_DEPENDS "libc6 (>= 2.0), libgcc1 (>= 1:4.0), libstdc++6 (>= 4.0), libsdl2-2.0-0 (>= 2.0), libopenal1 (>= 1:1.0)")
 		endif()
@@ -300,7 +301,7 @@ if (((WIN32 OR APPLE) AND BuildPack) OR BuildPackDEB OR BuildPackRPM)
 			set(CPACK_RPM_PACKAGE_NAME "jk2mv")
 			set(CPACK_RPM_PACKAGE_SUMMARY "JK2MV (Multi Version)")
 			set(CPACK_RPM_PACKAGE_DESCRIPTION ${CPACK_PACKAGE_DESCRIPTION_SUMMARY})
-			set(CPACK_RPM_PACKAGE_URL "https://jk2mv.org")
+			set(CPACK_RPM_PACKAGE_URL ${ProjectURL})
 			set(CPACK_RPM_PACKAGE_LICENSE "GPLv2")
 			set(CPACK_RPM_PACKAGE_GROUP "Amusements/Games")
 			set(CPACK_RPM_PACKAGE_DESCRIPTION "JK2MV")
@@ -313,9 +314,10 @@ if (((WIN32 OR APPLE) AND BuildPack) OR BuildPackDEB OR BuildPackRPM)
 	include(CPack)
 endif()
 
-# game_version.h preparation
+# mv_setup.h preparation
+set(MVGLOBALIncludeDirs ${MVGLOBALIncludeDirs} ${CMAKE_BINARY_DIR})
 include(GetGitRevisionDescription)
 get_git_head_revision(GIT_REFSPEC GIT_SHA1)
-configure_file("${SRCDir}/qcommon/game_version.h.in" "${SRCDir}/qcommon/game_version.h" @ONLY)
+configure_file("${SRCDir}/mv_setup.h.in" "${CMAKE_BINARY_DIR}/mv_setup.h" @ONLY)
 
 add_subdirectory(${SRCDir})

@@ -4,7 +4,7 @@
 #include "../qcommon/strip.h"
 #include "../meerkat/meerkat.h"
 
-#include "../qcommon/game_version.h"
+#include "mv_setup.h"
 
 mvmutex_t m_webreq;
 qboolean m_reqpending;

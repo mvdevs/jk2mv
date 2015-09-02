@@ -3,7 +3,7 @@
 #include "client.h"
 #include "../strings/con_text.h"
 #include "../qcommon/strip.h"
-#include "../qcommon/game_version.h"
+#include "mv_setup.h"
 
 
 int g_console_field_width = 78;

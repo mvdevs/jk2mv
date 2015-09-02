@@ -4,6 +4,7 @@ if(NOT InMV)
 endif(NOT InMV)
 
 set(MVMENUDefines "GAME_EXPORTS")
+set(MVMENUIncludeDirs ${MVGLOBALIncludeDirs})
 
 set(MVMENUFiles
 	"${SRCDir}/menu/keycodes.h"
@@ -32,10 +33,11 @@ add_library(${MVMENU} SHARED ${MVMENUFiles})
 
 if(NOT WIN32)
 	set_target_properties(${MVMENU} PROPERTIES PREFIX "") # remove "lib" prefix for .so/.dylib files
-endif(NOT WIN32)
+endif()
 
 set_target_properties(${MVMENU} PROPERTIES COMPILE_DEFINITIONS_RELEASE "${ReleaseDefines};${GlobalDefines};${MVMENUDefines}")
 set_target_properties(${MVMENU} PROPERTIES COMPILE_DEFINITIONS_DEBUG "${DebugDefines};${GlobalDefines};${MVMENUDefines}")
+set_target_properties(${MVMENU} PROPERTIES INCLUDE_DIRECTORIES "${MVMENUIncludeDirs}")
 set_target_properties(${MVMENU} PROPERTIES PROJECT_LABEL "jk2mvmenu")
 
 if(WIN32)

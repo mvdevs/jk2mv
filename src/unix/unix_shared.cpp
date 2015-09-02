@@ -21,7 +21,7 @@
 #include "../game/q_shared.h"
 #include "../qcommon/qcommon.h"
 
-#include "../qcommon/game_version.h"
+#include "mv_setup.h"
 
 //=============================================================================
 

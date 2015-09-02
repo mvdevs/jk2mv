@@ -9,7 +9,7 @@
 #include "../game/q_shared.h"
 #include "qcommon.h"
 #include "strip.h"
-#include "../qcommon/game_version.h"
+#include "mv_setup.h"
 #ifdef WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>

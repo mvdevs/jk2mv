@@ -13,7 +13,7 @@ USER INTERFACE MAIN
 
 #include "ui_local.h"
 #include "../qcommon/qfiles.h"
-#include "../qcommon/game_version.h"
+#include "mv_setup.h"
 #include "ui_force.h"
 #include "../api/mvapi.h"
 

@@ -1,7 +1,7 @@
 
 #include "server.h"
 
-#include "../qcommon/game_version.h"
+#include "mv_setup.h"
 
 #include "../game/q_shared.h"
 /*

@@ -16,7 +16,7 @@
 #include "../client/client.h"
 #include "qcommon.h"
 #include "unzip.h"
-#include "../qcommon/game_version.h"
+#include "mv_setup.h"
 
 /*
 =============================================================================
