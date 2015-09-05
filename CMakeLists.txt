@@ -22,10 +22,10 @@ project(${ProjectName})
 set(ProjectURL "https://jk2mv.org")
 
 set(MV_MAJOR_VERSION 1)
-set(MV_MINOR_VERSION 0)
-set(MV_PATCH_VERSION 2)
-set(MV_EXT_VERSION "")
-set(MV_ECMP_VERSION 8) # increasing number to detect new version without parsing stuff like 1.0b1
+set(MV_MINOR_VERSION 1)
+set(MV_PATCH_VERSION 0)
+set(MV_EXT_VERSION "b1")
+set(MV_ECMP_VERSION 9) # increasing number to detect new version without parsing stuff like 1.0b1
 set(MV_VERSION "${MV_MAJOR_VERSION}.${MV_MINOR_VERSION}.${MV_PATCH_VERSION}${MV_EXT_VERSION}")
 message(STATUS "${ProjectName} Version: ${MV_VERSION}")
 
