@@ -262,7 +262,7 @@ endif()
 # Package
 set(CPACK_PACKAGE_NAME ${ProjectName})
 set(CPACK_PACKAGE_VENDOR "jk2mv.org")
-set(CPACK_PACKAGE_CONTACT "jk2mv.org")
+set(CPACK_PACKAGE_CONTACT "jk2mv.org <contact@jk2mv.org>")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "JK2MV (Multi Version) is a modification for Jedi Knight II: Jedi Outcast.")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "${CPACK_PACKAGE_DESCRIPTION_SUMMARY} It supports all three game versions and comes with various features and optimizations.")
 set(CPACK_PACKAGE_VERSION "${MV_VERSION}")
