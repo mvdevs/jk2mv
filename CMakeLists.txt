@@ -307,8 +307,6 @@ if (BuildPack OR BuildPackDEB OR BuildPackRPM)
 			set(CPACK_RPM_PACKAGE_DESCRIPTION "JK2MV")
 			set(CPACK_RPM_PACKAGE_REQUIRES "glibc, libgcc, libstdc++, SDL2, openal-soft")
 		endif()
-		
-		set(CPACK_PACKAGING_INSTALL_PREFIX "/usr")
 	endif()
 
 	include(CPack)

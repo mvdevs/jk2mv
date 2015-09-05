@@ -2,8 +2,6 @@
 #define Q3_VERSION "JK2MV: v" JK2MV_VERSION
 #define JK2MV_GITREVISION "@GIT_SHA1@"
 
-#define MV_UNIX_INSTALL "@CPACK_PACKAGING_INSTALL_PREFIX@"
-
 // for legacy JK2MF http downloads. Should be undefined as soon as jk2mf is dead,
 // because it's kind of a bad implementation in jk2mf
 #define MV_MFDOWNLOADS

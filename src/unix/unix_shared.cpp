@@ -290,12 +290,34 @@ static char *last_strstr(const char *haystack, const char *needle)
     return result;
 }
 
+#if !defined(MACOS_X) && !defined(DEDICATED) && defined(INSTALLED)
+char *Sys_LinuxGetInstallPrefix() {
+    static char path[MAX_OSPATH];
+    int i;
+
+    readlink("/proc/self/exe", path, sizeof(path));
+
+    // from: /usr/local/bin/jk2mvmp
+    // to: /usr/local
+    for (i = 0; i < 2; i++) {
+        char *l = strrchr(path, '/');
+        if (!l) {
+            break;
+        }
+
+        *l = 0;
+    }
+
+    return path;
+}
+#endif
+
 char *Sys_DefaultInstallPath(void)
 {
     if (*installPath) {
         return installPath;
     } else {
-#if defined(MACOS_X) && !defined(DEDICATED) && !defined(PORTABLE)
+#if defined(MACOS_X) && !defined(DEDICATED) && defined(INSTALLED)
         // Inside the app...
         static char path[MAX_OSPATH];
         char *override;
@@ -312,8 +334,11 @@ char *Sys_DefaultInstallPath(void)
 
         override[5] = 0;
         return path;
-#elif !defined(MACOS_X) && !defined(DEDICATED) && !defined(PORTABLE)
-        return MV_UNIX_INSTALL "/share/jk2mv";
+#elif !defined(MACOS_X) && !defined(DEDICATED) && defined(INSTALLED)
+        static char path[MAX_OSPATH];
+
+        Com_sprintf(path, sizeof(path), "%s/share/jk2mv", Sys_LinuxGetInstallPrefix());
+        return path;
 #else
 		return Sys_Cwd();
 #endif
@@ -329,7 +354,7 @@ void Sys_SetDefaultHomePath(const char *path)
 // remember it's only the default value
 char *Sys_DefaultHomePath(void)
 {
-#if !defined(DEDICATED) && !defined(PORTABLE)
+#if !defined(DEDICATED) && defined(INSTALLED)
 	char *p;
 
         if (*homePath)
@@ -365,7 +390,7 @@ char *Sys_DefaultAssetsPath() {
     if (access("/Applications/Jedi Knight II.app/Contents/base/assets0.pk3", F_OK) != -1) {
         return "/Applications/Jedi Knight II.app/Contents";
     }
-    
+
     // Steam version
     if (access(va("%s/Library/Application Support/Steam/steamapps/common/Jedi Outcast/Jedi Knight II.app/Contents/base/assets0.pk3", getenv("HOME")), F_OK) != -1) {
         Q_strncpyz(path, va("%s/Library/Application Support/Steam/steamapps/common/Jedi Outcast/Jedi Knight II.app/Contents", getenv("HOME")), sizeof(path));
@@ -642,15 +667,18 @@ void	* QDECL Sys_LoadDll(const char *name, intptr_t(QDECL **entryPoint)(int, ...
   cdpath = Cvar_VariableString( "fs_cdpath" );
   gamedir = Cvar_VariableString( "fs_game" );
 
+#ifndef DEDICATED
   if (!strcmp(name, "jk2mvmenu")) {
-#if !defined(MACOS_X) && !defined(PORTABLE)
-	sprintf(mvmenu, MV_UNIX_INSTALL "/lib/%s.so", name);
+#if !defined(MACOS_X) && defined(INSTALLED)
+	sprintf(mvmenu, "%s/lib/%s.so", Sys_LinuxGetInstallPrefix(), name);
 	fn = mvmenu;
 #else
 	sprintf(mvmenu, "%s/%s", basepath, fname);
 	fn = mvmenu;
 #endif
-  } else {
+  } else
+#endif
+  {
 	fn = FS_BuildOSPath( basepath, gamedir, fname );
   }
   // bk001206 - verbose
