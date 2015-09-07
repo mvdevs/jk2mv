@@ -156,36 +156,33 @@ if(NOT MSVC)
 	set(DebugDefines ${DebugDefines} "_DEBUG")
 endif()
 set(DebugDefines ${DebugDefines} "DEBUG")
-
 set(ReleaseDefines "FINAL_BUILD" "NDEBUG")
 
-if(WIN32)
-	if(MSVC)
-		set(GlobalDefines ${GlobalDefines} "_CRT_SECURE_NO_WARNINGS")
+if(MSVC)
+	set(GlobalDefines ${GlobalDefines} "_CRT_SECURE_NO_WARNINGS")
 
-		# Multithreaded
-		set(CMAKE_CXX_FLAGS_RELEASE "/MT" CACHE TYPE INTERNAL FORCE)
-		set(CMAKE_C_FLAGS_RELEASE "/MT" CACHE TYPE INTERNAL FORCE)
+	# Multithreaded
+	set(CMAKE_CXX_FLAGS_RELEASE "/MT" CACHE TYPE INTERNAL FORCE)
+	set(CMAKE_C_FLAGS_RELEASE "/MT" CACHE TYPE INTERNAL FORCE)
 
-		# Platform
-		set(GlobalDefines ${GlobalDefines} "UNICODE" "_UNICODE")
+	# Platform
+	set(GlobalDefines ${GlobalDefines} "UNICODE" "_UNICODE")
 
-		# Optimization
-		set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} /MP") # multiprocessor compilation
-		set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MP")
-		set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} /O2 /Oi /Ot /Ob2 /fp:fast") # maximize speed
-		set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /O2 /Oi /Ot /Ob2 /fp:fast")
+	# Optimization
+	set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} /MP") # multiprocessor compilation
+	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MP")
+	set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} /O2 /Oi /Ot /Ob2 /fp:fast") # maximize speed
+	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /O2 /Oi /Ot /Ob2 /fp:fast")
 
-		if(WIN64)
-			set(GlobalDefines ${GlobalDefines} "WIN64")
-		else()
-			set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /arch:SSE2")
-			set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /arch:SSE2")
+	if(WIN64)
+		set(GlobalDefines ${GlobalDefines} "WIN64")
+	else()
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /arch:SSE2")
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /arch:SSE2")
 
-			set(CMAKE_ASM_MASM_FLAGS "${CMAKE_ASM_MASM_FLAGS} /safeseh") # safe exception handler
-		endif()
+		set(CMAKE_ASM_MASM_FLAGS "${CMAKE_ASM_MASM_FLAGS} /safeseh") # safe exception handler
 	endif()
-else()
+elseif ((("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU") OR ("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang")) AND NOT WIN32)
 	if(APPLE)
 		set(GlobalDefines ${GlobalDefines} "MACOS_X")
 	endif()
@@ -230,6 +227,8 @@ else()
 
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-comment -Wno-deprecated-writable-strings -Wno-reorder -Wunused-value -Wswitch")
 	endif()
+else()
+	message(FATAL_ERROR "Unsupported compiler")
 endif()
 
 if(NOT CMAKE_BUILD_TYPE)
