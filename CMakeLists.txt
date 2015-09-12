@@ -41,11 +41,7 @@ option(BuildPortableVersion "Build portable version (does not read or write file
 option(BuildMVMP "Whether to create projects for the client (jk2mvmp & jk2mvmenu)" ON)
 option(BuildMVDED "Whether to create projects for the dedicated server (jk2mvded)" ON)
 
-if(WIN32)
-	option(BuildPack "Whether to create the installer package" OFF)
-elseif(APPLE)
-	option(BuildPack "Whether to create the app package" ON)
-else()
+if(NOT APPLE AND NOT WIN32)
 	option(BuildPackDEB "Whether to create the DEB package" OFF)
 	option(BuildPackRPM "Whether to create the RPM package" OFF)
 	
@@ -127,15 +123,9 @@ endif()
 message(STATUS "Architecture is ${Architecture}")
 
 # Binary names
-if(BuildPortableVersion)
-	set(MVMP "jk2mvmp_${Architecture}")
-	set(MVMENU "jk2mvmenu_${Architecture}")
-	set(MVDED "jk2mvded_${Architecture}")
-else()
-	set(MVMP "jk2mvmp")
-	set(MVMENU "jk2mvmenu")
-	set(MVDED "jk2mvded")
-endif()
+set(MVMP "jk2mvmp")
+set(MVMENU "jk2mvmenu")
+set(MVDED "jk2mvded")
 
 # OSX install target is more like a finalization step
 if(APPLE)
@@ -259,7 +249,8 @@ else()
 endif()
 
 # Package
-set(CPACK_PACKAGE_NAME ${ProjectName})
+set(CPACK_PACKAGE_NAME ${ProjectName}-)
+set(CPACK_PACKAGE_FILE_NAME "jk2mv-v${MV_VERSION}")
 set(CPACK_PACKAGE_VENDOR "jk2mv.org")
 set(CPACK_PACKAGE_CONTACT "jk2mv.org <contact@jk2mv.org>")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "JK2MV (Multi Version) is a modification for Jedi Knight II: Jedi Outcast.")
@@ -270,20 +261,31 @@ set(CPACK_PACKAGE_VERSION_MINOR "${MV_MINOR_VERSION}")
 set(CPACK_PACKAGE_VERSION_PATCH "${MV_PATCH_VERSION}")
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE")
 
-if (BuildPack OR BuildPackDEB OR BuildPackRPM)
+if (NOT APPLE)
 	if(WIN32)
-		set(CPACK_GENERATOR "NSIS")
-		set(CPACK_NSIS_URL_INFO_ABOUT ${ProjectURL})
+		set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_FILE_NAME}-win-client")
 
-		configure_file(
-			${RESDir}/NSIS.definitions.nsh.in
-			${CMAKE_BINARY_DIR}/res/NSIS.definitions.nsh
-		)
-		string(REGEX REPLACE "/" "\\\\\\\\" CPACK_NSIS_INCLFILE "${CMAKE_BINARY_DIR}/res/NSIS.definitions.nsh")
-	elseif(APPLE)
-		set(CPACK_GENERATOR "Bundle")
-		set(CPACK_BUNDLE_NAME ${ProjectName})
+		if(BuildPortableVersion)
+			set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_FILE_NAME}-portable")
+
+			set(CPACK_GENERATOR "ZIP")
+		else()
+			set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_FILE_NAME}-installer")
+
+			set(CPACK_GENERATOR "NSIS")
+			set(CPACK_NSIS_URL_INFO_ABOUT ${ProjectURL})
+
+			configure_file(
+				${RESDir}/NSIS.definitions.nsh.in
+				${CMAKE_BINARY_DIR}/res/NSIS.definitions.nsh
+			)
+			string(REGEX REPLACE "/" "\\\\\\\\" CPACK_NSIS_INCLFILE "${CMAKE_BINARY_DIR}/res/NSIS.definitions.nsh")
+		endif()
+		
+		include(CPack)
 	else()
+		set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_FILE_NAME}-linux")
+
 		# DEB
 		if(BuildPackDEB)
 			set(CPACK_GENERATOR ${CPACK_GENERATOR} "DEB")
@@ -306,9 +308,11 @@ if (BuildPack OR BuildPackDEB OR BuildPackRPM)
 			set(CPACK_RPM_PACKAGE_DESCRIPTION "JK2MV")
 			set(CPACK_RPM_PACKAGE_REQUIRES "glibc, libgcc, libstdc++, SDL2, openal-soft")
 		endif()
+		
+		if(BuildPackDEB OR BuildPackRPM)
+			include(CPack)
+		endif()
 	endif()
-
-	include(CPack)
 endif()
 
 # mv_setup.h preparation
