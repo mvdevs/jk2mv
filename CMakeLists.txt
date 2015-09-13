@@ -14,19 +14,23 @@ endif()
 # For checks in subdirectories
 set(InMV TRUE)
 
-set(CMAKE_CONFIGURATION_TYPES Debug Release CACHE TYPE INTERNAL FORCE)
+# Paths
+set(SRCDir "${CMAKE_SOURCE_DIR}/src")
+set(LIBDir "${CMAKE_SOURCE_DIR}/libs")
+set(RESDir "${CMAKE_SOURCE_DIR}/res")
+
+# Custom CMake Modules
+list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_SOURCE_DIR}/tools")
+list(INSERT CMAKE_MODULE_PATH 0 "${RESDir}")
 
 # Project name & version
+set(CMAKE_CONFIGURATION_TYPES Debug Release CACHE TYPE INTERNAL FORCE)
 set(ProjectName "JK2MV" CACHE STRING "Project Name")
 project(${ProjectName})
 set(ProjectURL "https://jk2mv.org")
 
-set(MV_MAJOR_VERSION 1)
-set(MV_MINOR_VERSION 1)
-set(MV_PATCH_VERSION 0)
-set(MV_EXT_VERSION "b1")
-set(MV_ECMP_VERSION 9) # increasing number to detect new version without parsing stuff like 1.0b1
-set(MV_VERSION "${MV_MAJOR_VERSION}.${MV_MINOR_VERSION}.${MV_PATCH_VERSION}${MV_EXT_VERSION}")
+include(GetGitRevisionDescription)
+git_describe(MV_VERSION --tags)
 message(STATUS "${ProjectName} Version: ${MV_VERSION}")
 
 # Languages
@@ -77,15 +81,6 @@ if(WIN32)
 else()
 	option(UseInternalCURL "Whether to use the included libcurl instead of a locally installed one" OFF)
 endif()
-
-# Paths
-set(SRCDir "${CMAKE_SOURCE_DIR}/src")
-set(LIBDir "${CMAKE_SOURCE_DIR}/libs")
-set(RESDir "${CMAKE_SOURCE_DIR}/res")
-
-# Custom CMake Modules
-list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_SOURCE_DIR}/tools")
-list(INSERT CMAKE_MODULE_PATH 0 "${RESDir}")
 
 # Architecture
 set(CMAKE_OSX_ARCHITECTURES "i386" "x86_64") # always building both on osx
@@ -249,7 +244,7 @@ else()
 endif()
 
 # Package
-set(CPACK_PACKAGE_NAME ${ProjectName}-)
+set(CPACK_PACKAGE_NAME ${ProjectName})
 set(CPACK_PACKAGE_FILE_NAME "jk2mv-v${MV_VERSION}")
 set(CPACK_PACKAGE_VENDOR "jk2mv.org")
 set(CPACK_PACKAGE_CONTACT "jk2mv.org <contact@jk2mv.org>")
@@ -317,8 +312,6 @@ endif()
 
 # mv_setup.h preparation
 set(MVGLOBALIncludeDirs ${MVGLOBALIncludeDirs} ${CMAKE_BINARY_DIR})
-include(GetGitRevisionDescription)
-get_git_head_revision(GIT_REFSPEC GIT_SHA1)
 configure_file("${SRCDir}/mv_setup.h.in" "${CMAKE_BINARY_DIR}/mv_setup.h" @ONLY)
 
 add_subdirectory(${SRCDir})

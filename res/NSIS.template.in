@@ -51,22 +51,17 @@ patched:
 	; this installation is fine
 
 	; check for previous JK2MV installation
-	ReadRegDWORD $R0 HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "EasyCompare"
-	${If} $R0 == ${VERSION_EASY_COMPARE}
-		MessageBox MB_ICONSTOP "${APPNAME} is already installed."
+	ReadRegStr $R0 HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "DisplayVersion"
+	${If} $R0 == ${MV_VERSION}
+		MessageBox MB_ICONSTOP "This version of ${APPNAME} is already installed."
 		Abort
-	${ElseIf} $R0 > ${VERSION_EASY_COMPARE}
-		MessageBox MB_ICONSTOP "A newer version of ${APPNAME} is already installed."
-		Abort
-	${ElseIf} $R0 < ${VERSION_EASY_COMPARE}
-		${If} $R0 <> 0
-			ReadRegStr $R0 HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "InstallLocation"
-			StrCpy $INSTDIR $R0 -1 1 ; remove quotes
-			StrCpy $1 $INSTDIR
-			ReadRegStr $0 HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "QuietUninstallString"
-			ReadRegStr $R0 HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "DisplayVersion"
-			MessageBox MB_ICONINFORMATION "${APPNAME} $R0 has been found. The installer will upgrade ${APPNAME} to ${VERSIONMAJOR}.${VERSIONMINOR}.${VERSIONPATCH}${VERSION_EXT}."
-		${EndIf}
+	${ElseIf} $R0 != ""
+		ReadRegStr $R0 HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "InstallLocation"
+		StrCpy $INSTDIR $R0 -1 1 ; remove quotes
+		StrCpy $1 $INSTDIR
+		ReadRegStr $0 HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "QuietUninstallString"
+		ReadRegStr $R0 HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "DisplayVersion"
+		MessageBox MB_ICONINFORMATION "${APPNAME} $R0 has been found. The installer will replace it with ${APPNAME} ${MV_VERSION}."
 	${EndIf}
 functionEnd
 
@@ -78,16 +73,8 @@ section "install"
 		rmDir $1
 	${EndIf}
 
-	#setOutPath $INSTDIR\base
-	#file "..\Release\base\assetsmv.pk3"
-
 	setOutPath $INSTDIR
 	@CPACK_NSIS_FULL_INSTALL@
-
-	#file "..\Release\jk2mvmp_x86.exe"
-	#file "..\Release\jk2mvmenu_x86.dll"
-	#file "..\Release\softoal_x86.dll"
-	#file "..\qe3.ico"
 
 	writeUninstaller "$INSTDIR\uninstall.exe"
 
@@ -107,11 +94,8 @@ section "install"
 	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "DisplayIcon" "$\"$INSTDIR\mv.ico$\""
 	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "Publisher" "${APPNAME}"
 	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "HelpLink" "${ABOUTURL}"
-	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "DisplayVersion" "${VERSIONMAJOR}.${VERSIONMINOR}.${VERSIONPATCH}${VERSION_EXT}"
-	WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "VersionMajor" ${VERSIONMAJOR}
-	WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "VersionMinor" ${VERSIONMINOR}
-	WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "VersionPatch" ${VERSIONPATCH}
-	WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "EasyCompare" ${VERSION_EASY_COMPARE}
+	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "DisplayVersion" "${MV_VERSION}"
+	WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "EasyCompare" 100 ; so old installers don't override new versions
 	WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "NoModify" 1
 	WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APPNAME}" "NoRepair" 1
 sectionEnd

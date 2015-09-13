@@ -604,13 +604,9 @@ void Con_DrawSolidConsole( float frac ) {
 	re.SetColor( color );
 	re.DrawStretchPic( 0, y, SCREEN_WIDTH, 2, 0, 0, 0, 0, cls.whiteShader );
 
-#ifdef _DEBUG
-	vertext = "REV " JK2MV_GITREVISION " " __DATE__;
-#else
-	vertext = Q3_VERSION;
-#endif
-	i = (int)strlen(vertext);
 
+	vertext = Q3_VERSION;
+	i = (int)strlen(vertext);
 	for (x=0 ; x<i ; x++) {
 		SCR_DrawSmallChar( cls.glconfig.vidWidth - ( i - x ) * SMALLCHAR_WIDTH,
 			(lines-(SMALLCHAR_HEIGHT+SMALLCHAR_HEIGHT/2)), vertext[x] );
