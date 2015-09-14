@@ -250,57 +250,61 @@ set(CPACK_PACKAGE_VENDOR "jk2mv.org")
 set(CPACK_PACKAGE_CONTACT "jk2mv.org <contact@jk2mv.org>")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Jedi Knight II: Multi Version")
 set(CPACK_PACKAGE_VERSION "${MV_VERSION}")
-set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE")
 
-if (NOT APPLE)
-	if(WIN32)
-		set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_FILE_NAME}-win-client")
+if(WIN32)
+	set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_FILE_NAME}-windows")
 
-		if(BuildPortableVersion)
-			set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_FILE_NAME}-portable")
+	if(BuildPortableVersion)
+		set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_FILE_NAME}-portable")
 
-			set(CPACK_GENERATOR "ZIP")
-		else()
-			set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_FILE_NAME}-installer")
-
-			set(CPACK_GENERATOR "NSIS")
-			set(CPACK_NSIS_URL_INFO_ABOUT ${ProjectURL})
-
-			configure_file(
-				${RESDir}/NSIS.definitions.nsh.in
-				${CMAKE_BINARY_DIR}/res/NSIS.definitions.nsh
-			)
-			string(REGEX REPLACE "/" "\\\\\\\\" CPACK_NSIS_INCLFILE "${CMAKE_BINARY_DIR}/res/NSIS.definitions.nsh")
-		endif()
-		
-		include(CPack)
+		set(CPACK_GENERATOR "ZIP")
 	else()
-		set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_FILE_NAME}-linux")
+		set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_FILE_NAME}-installer")
 
-		# DEB
-		if(BuildPackDEB)
-			set(CPACK_GENERATOR ${CPACK_GENERATOR} "DEB")
-			set(CPACK_DEBIAN_PACKAGE_NAME "jk2mv") # debian packages are lowercase
-			set(CPACK_DEBIAN_PACKAGE_SECTION "games")
-			set(CPACK_DEBIAN_PACKAGE_HOMEPAGE ${ProjectURL})
-			set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE ${Architecture})
-			set(CPACK_DEBIAN_PACKAGE_DEPENDS "libc6 (>= 2.0), libgcc1 (>= 1:4.0), libstdc++6 (>= 4.0), libsdl2-2.0-0 (>= 2.0), libopenal1 (>= 1:1.0)")
-		endif()
+		set(CPACK_GENERATOR "NSIS")
+		set(CPACK_NSIS_URL_INFO_ABOUT ${ProjectURL})
 
-		# RPM
-		if(BuildPackRPM)
-			set(CPACK_GENERATOR ${CPACK_GENERATOR} "RPM")
-			set(CPACK_RPM_PACKAGE_NAME "jk2mv")
-			set(CPACK_RPM_PACKAGE_DESCRIPTION "JK2MV (Multi Version) is a modification for Jedi Knight II: Jedi Outcast. It supports all three game versions and comes with various features and optimizations.")
-			set(CPACK_RPM_PACKAGE_URL ${ProjectURL})
-			set(CPACK_RPM_PACKAGE_LICENSE "GPLv2")
-			set(CPACK_RPM_PACKAGE_GROUP "Amusements/Games")
-			set(CPACK_RPM_PACKAGE_REQUIRES "glibc, libgcc, libstdc++, SDL2, openal-soft")
-		endif()
-		
-		if(BuildPackDEB OR BuildPackRPM)
-			include(CPack)
-		endif()
+		configure_file(
+			${RESDir}/NSIS.definitions.nsh.in
+			${CMAKE_BINARY_DIR}/res/NSIS.definitions.nsh
+		)
+		string(REGEX REPLACE "/" "\\\\\\\\" CPACK_NSIS_INCLFILE "${CMAKE_BINARY_DIR}/res/NSIS.definitions.nsh")
+	endif()
+	
+	include(CPack)
+elseif(APPLE)
+	set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_FILE_NAME}-macosx")
+
+	set(CPACK_GENERATOR "DragNDrop")
+	set(CPACK_DMG_FORMAT "UDBZ")
+
+	include(CPack)
+else()
+	set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_FILE_NAME}-linux")
+
+	# DEB
+	if(BuildPackDEB)
+		set(CPACK_GENERATOR ${CPACK_GENERATOR} "DEB")
+		set(CPACK_DEBIAN_PACKAGE_NAME "jk2mv") # debian packages are lowercase
+		set(CPACK_DEBIAN_PACKAGE_SECTION "games")
+		set(CPACK_DEBIAN_PACKAGE_HOMEPAGE ${ProjectURL})
+		set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE ${Architecture})
+		set(CPACK_DEBIAN_PACKAGE_DEPENDS "libc6 (>= 2.0), libgcc1 (>= 1:4.0), libstdc++6 (>= 4.0), libsdl2-2.0-0 (>= 2.0), libopenal1 (>= 1:1.0)")
+	endif()
+
+	# RPM
+	if(BuildPackRPM)
+		set(CPACK_GENERATOR ${CPACK_GENERATOR} "RPM")
+		set(CPACK_RPM_PACKAGE_NAME "jk2mv")
+		set(CPACK_RPM_PACKAGE_DESCRIPTION "JK2MV (Multi Version) is a modification for Jedi Knight II: Jedi Outcast. It supports all three game versions and comes with various features and optimizations.")
+		set(CPACK_RPM_PACKAGE_URL ${ProjectURL})
+		set(CPACK_RPM_PACKAGE_LICENSE "GPLv2")
+		set(CPACK_RPM_PACKAGE_GROUP "Amusements/Games")
+		set(CPACK_RPM_PACKAGE_REQUIRES "glibc, libgcc, libstdc++, SDL2, openal-soft")
+	endif()
+	
+	if(BuildPackDEB OR BuildPackRPM)
+		include(CPack)
 	endif()
 endif()
 
