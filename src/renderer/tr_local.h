@@ -1272,6 +1272,8 @@ extern	cvar_t	*r_debugSort;
 
 extern	cvar_t	*r_printShaders;
 
+extern	cvar_t	*r_convertModelBones;
+
 /*
 Ghoul2 Insert Start
 */
