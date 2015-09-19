@@ -561,7 +561,7 @@ void R_TakeScreenshot(int x, int y, int width, int height, char *fileName) {
 	memcount = linelen * height;
 
 	// gamma correct
-	if (glConfig.deviceSupportsGamma)
+	if (r_gammamethod->integer == GAMMA_HARDWARE)
 		R_GammaCorrect(allbuf + offset, (int)memcount);
 
 	ri.FS_WriteFile(fileName, buffer, (int)memcount + 18);
@@ -578,7 +578,7 @@ void R_TakeScreenshotJPEG(int x, int y, int width, int height, char *fileName) {
 	memcount = (width * 3 + padlen) * height;
 
 	// gamma correct
-	if (glConfig.deviceSupportsGamma)
+	if (r_gammamethod->integer == GAMMA_HARDWARE)
 		R_GammaCorrect(buffer + offset, (int)memcount);
 
 	SaveJPG(fileName, r_screenshotJpegQuality->integer, width, height, buffer + offset, padlen);
@@ -666,7 +666,7 @@ static void R_LevelShot( void ) {
 	}
 
 	// gamma correct
-	if ( ( tr.overbrightBits > 0 ) && glConfig.deviceSupportsGamma ) {
+	if ( ( tr.overbrightBits > 0 ) && r_gammamethod->integer == GAMMA_HARDWARE) {
 		R_GammaCorrect( buffer + 18, LEVELSHOTSIZE * LEVELSHOTSIZE * 3 );
 	}
 
