@@ -19,6 +19,11 @@ Main Features:
 - Opensource (GPLv2)
 
 # Build
+| Windows | Linux / OSX |
+|---------|-------------|
+| [![Windows Build Status](https://api.travis-ci.org/mvdevs/jk2mv.svg)](https://travis-ci.org/mvdevs/jk2mv/builds) | [![Linux/OSX Build Status](https://ci.appveyor.com/api/projects/status/bwkb8nfl5w6s53u4?svg=true)](https://ci.appveyor.com/project/ouned/jk2mv/history)
+[Download Builds](https://jk2mv.org/builds)
+
 JK2MV uses the cmake build system. CMake generates project files for a lot of different IDE's like Visual Studio, Codeblocks, XCode etc.
 
 Windows:

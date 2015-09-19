@@ -1,0 +1,90 @@
+language: cpp
+sudo: false
+
+env:
+  global:
+    - "FTP_SERVER=ftp://jk2mv.org"
+    - "FTP_USER=ounedcideploy"
+    - secure: "XZBwOWePycNX1Ce4/e8ZKveZYwoWjZYYdYLCN5yk3hDTRvMKTI1n2xBWbsyNjZ35Ep3MYyq9KKA7YqQ9whvV7k3IcK66jUfViWaqvKuu3gm7+pdpyEWHbx5m8uQGqL4irlB2Zo1eNw9QMPwRpaM2hQDCDV8AIzBR4axPIralCOE="
+
+matrix:
+  include:
+# disabled until libopenal-dev:i386 is whitelisted
+#   - os: linux
+#     env: HOST=linux-i686-gcc
+#     addons:
+#       apt:
+#         sources:
+#           - kalakris-cmake
+#         packages:
+#           - gcc-multilib
+#           - g++-multilib
+#           - libgl1-mesa-dev:i386
+#           - libgl1-mesa-glx:i386
+#           - libxext-dev:i386
+#           - libglapi-mesa:i386
+#           - libopenal-dev:i386
+#           - cmake
+#           - devscripts
+#           - debhelper
+#           - rpm
+#           - curl
+    - os: linux
+      env: HOST=linux-x86_64-gcc
+      addons:
+        apt:
+          sources:
+            - kalakris-cmake
+          packages:
+            - cmake
+            - libopenal-dev
+            - devscripts
+            - debhelper
+            - rpm
+            - curl
+    - os: osx
+      env: HOST=macosx-universal-clang
+
+before_install:
+  - git fetch --unshallow
+
+install:
+  - if [[ "$HOST" == linux-i686-gcc ]]; then export CC="$CC -m32"; export CXX="$CXX -m32"; fi
+
+  - export MVDIR=`pwd`
+  - cd ~
+  - curl -O https://www.libsdl.org/release/SDL2-2.0.3.tar.gz
+  - tar xzf SDL2-2.0.3.tar.gz
+
+  - if [[ "$HOST" == linux-*-gcc ]]; then mkdir sdl2install; fi
+  - if [[ "$HOST" == linux-*-gcc ]]; then export SDL2DIR="`pwd`/sdl2install"; fi
+  - if [[ "$HOST" == linux-*-gcc ]]; then cd SDL2-2.0.3; fi
+  - if [[ "$HOST" == linux-*-gcc ]]; then ./configure --prefix=$SDL2DIR; fi
+  - if [[ "$HOST" == linux-*-gcc ]]; then make; fi
+  - if [[ "$HOST" == linux-*-gcc ]]; then make install; fi
+
+  - if [[ "$HOST" == macosx-universal-clang ]]; then cd SDL2-2.0.3/Xcode/SDL; fi
+  - if [[ "$HOST" == macosx-universal-clang ]]; then sed -i -e 's/@rpath//g' SDL.xcodeproj/project.pbxproj; fi
+  - if [[ "$HOST" == macosx-universal-clang ]]; then xcodebuild -configuration Release; fi
+  - if [[ "$HOST" == macosx-universal-clang ]]; then mkdir -p ~/Library/Frameworks/; fi
+  - if [[ "$HOST" == macosx-universal-clang ]]; then ln -s `pwd`/build/Release/SDL2.framework ~/Library/Frameworks/; fi
+
+script:
+  - cd "$MVDIR/build"
+  - mkdir travis_build
+  - cd travis_build
+
+  - if [[ "$HOST" == linux-*-gcc ]]; then cmake -G "Unix Makefiles" -DUseInternalPNG=ON -DUseInternalJPEG=ON -DUseInternalZLIB=ON -DUseInternalCURL=ON -DBuildPackDEB=ON -DBuildPackRPM=ON ../..; fi
+  - if [[ "$HOST" == macosx-universal-clang ]]; then cmake -G "Unix Makefiles" -DUseInternalPNG=ON -DUseInternalJPEG=ON -DUseInternalZLIB=ON -DUseInternalCURL=ON ../..; fi
+
+  - make
+  - make package
+
+after_success: |
+  if [[ "${TRAVIS_PULL_REQUEST}" = "false" ]]; then
+      cd "$MVDIR/build/travis_build/out"
+
+      for i in *.{deb,rpm,dmg}; do
+          curl -T ${i} -u $FTP_USER:$FTP_PASSWORD $FTP_SERVER
+      done
+  fi

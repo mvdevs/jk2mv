@@ -1,0 +1,40 @@
+os: Windows Server 2012 R2
+configuration: Release
+version: jk2mv-{branch}-{build}
+
+environment:
+  matrix:
+    - TYPE: "win-x86-installer"
+    - TYPE: "win-x86-portable"
+    - TYPE: "win-x64-portable"
+
+build_script:
+  - ps: |
+      cd build
+      mkdir appveyor
+      cd appveyor
+
+      if ($env:TYPE -eq "win-x86-installer") {
+        choco install -y nsis
+
+        cmake -G "Visual Studio 12" ../..
+        msbuild /m /p:Configuration=Release PACKAGE.vcxproj
+      } elseif ($env:TYPE -eq "win-x86-portable") {
+        cmake -G "Visual Studio 12" -DBuildPortableVersion=ON ../..
+        msbuild /m /p:Configuration=Release PACKAGE.vcxproj
+      } elseif ($env:TYPE -eq "win-x64-portable") {
+        cmake -G "Visual Studio 12 Win64" -DBuildPortableVersion=ON ../..
+        msbuild /m /p:Configuration=Release PACKAGE.vcxproj
+      }
+
+      cd $env:APPVEYOR_BUILD_FOLDER\build\appveyor\out
+      Get-ChildItem "*.exe" | % { Push-AppveyorArtifact $_.Name }
+      Get-ChildItem "*.zip" | % { Push-AppveyorArtifact $_.Name }
+
+deploy:
+  - provider: FTP
+    protocol: ftp
+    host: jk2mv.org
+    username: ounedcideploy
+    password:
+      secure: g9Yw/gxRzj91kJWpN0kFzQ==
