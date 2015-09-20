@@ -365,7 +365,7 @@ char *Sys_DefaultHomePath(void)
 #ifdef MACOS_X
 		Q_strcat(homePath, sizeof(homePath), "/Library/Application Support/jk2mv");
 #else
-		Q_strcat(homePath, sizeof(homePath), "/jk2mv");
+		Q_strcat(homePath, sizeof(homePath), "/.jk2mv");
 #endif
 		if (mkdir(homePath, 0777)) {
 			if (errno != EEXIST)
