@@ -650,10 +650,8 @@ if (BuildMVDED)
 	set_target_properties(${MVDED} PROPERTIES PROJECT_LABEL "jk2mvded")
 	
 	# installation
-	if(WIN32)
+	if(WIN32 OR APPLE)
 		install(TARGETS ${MVDED} RUNTIME DESTINATION ".")
-	elseif(APPLE)
-		install(TARGETS ${MVDED} BUNDLE DESTINATION ".")
 	else()
 		install(TARGETS ${MVDED} RUNTIME DESTINATION "bin")
 	endif()
