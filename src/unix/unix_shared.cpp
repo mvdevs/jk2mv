@@ -290,7 +290,7 @@ static char *last_strstr(const char *haystack, const char *needle)
     return result;
 }
 
-#if !defined(MACOS_X) && !defined(DEDICATED) && defined(INSTALLED)
+#if !defined(MACOS_X) && defined(INSTALLED)
 char *Sys_LinuxGetInstallPrefix() {
     static char path[MAX_OSPATH];
     int i;
@@ -317,7 +317,7 @@ char *Sys_DefaultInstallPath(void)
     if (*installPath) {
         return installPath;
     } else {
-#if defined(MACOS_X) && !defined(DEDICATED) && defined(INSTALLED)
+#if defined(MACOS_X) && defined(INSTALLED)
         // Inside the app...
         static char path[MAX_OSPATH];
         char *override;
@@ -334,7 +334,7 @@ char *Sys_DefaultInstallPath(void)
 
         override[5] = 0;
         return path;
-#elif !defined(MACOS_X) && !defined(DEDICATED) && defined(INSTALLED)
+#elif !defined(MACOS_X) && defined(INSTALLED)
         static char path[MAX_OSPATH];
 
         Com_sprintf(path, sizeof(path), "%s/share/jk2mv", Sys_LinuxGetInstallPrefix());
@@ -354,7 +354,7 @@ void Sys_SetDefaultHomePath(const char *path)
 // remember it's only the default value
 char *Sys_DefaultHomePath(void)
 {
-#if !defined(DEDICATED) && defined(INSTALLED)
+#if defined(INSTALLED)
 	char *p;
 
         if (*homePath)
@@ -382,7 +382,7 @@ char *Sys_DefaultHomePath(void)
 // try to find assets from /Applications (Appstore JK2) or Steam
 // if not found try to find it in the same directory this app is
 char *Sys_DefaultAssetsPath() {
-#if defined(MACOS_X) && !defined(DEDICATED)
+#if defined(MACOS_X) && defined(INSTALLED)
     static char path[MAX_OSPATH];
     char *override;
 
@@ -667,7 +667,6 @@ void	* QDECL Sys_LoadDll(const char *name, intptr_t(QDECL **entryPoint)(int, ...
   cdpath = Cvar_VariableString( "fs_cdpath" );
   gamedir = Cvar_VariableString( "fs_game" );
 
-#ifndef DEDICATED
   if (!strcmp(name, "jk2mvmenu")) {
 #if !defined(MACOS_X) && defined(INSTALLED)
 	sprintf(mvmenu, "%s/lib/%s.so", Sys_LinuxGetInstallPrefix(), name);
@@ -676,9 +675,7 @@ void	* QDECL Sys_LoadDll(const char *name, intptr_t(QDECL **entryPoint)(int, ...
 	sprintf(mvmenu, "%s/%s", basepath, fname);
 	fn = mvmenu;
 #endif
-  } else
-#endif
-  {
+  } else {
 	fn = FS_BuildOSPath( basepath, gamedir, fname );
   }
   // bk001206 - verbose

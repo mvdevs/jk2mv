@@ -53,7 +53,7 @@ char *Sys_GetCurrentUser( void )
 }
 
 char *Sys_DefaultHomePath(void) {
-#if !defined(DEDICATED) && !defined(PORTABLE)
+#if !defined(PORTABLE)
 	char szPath[MAX_PATH];
 	static char homePath[MAX_OSPATH];
 
@@ -71,7 +71,7 @@ char *Sys_DefaultHomePath(void) {
 
 // read the path from the registry on windows... steam also sets it, but with "InstallPath" instead of "Install Path"
 char *Sys_DefaultAssetsPath() {
-#ifndef DEDICATED
+#ifdef INSTALLED
 	HKEY hKey;
 	static char installPath[MAX_OSPATH];
 	DWORD installPathSize;

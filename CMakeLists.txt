@@ -42,8 +42,8 @@ endif()
 
 # Customizable options
 option(BuildPortableVersion "Build portable version (does not read or write files from your user/home directory" OFF)
-option(BuildMVMP "Whether to create projects for the client (jk2mvmp & jk2mvmenu)" ON)
-option(BuildMVDED "Whether to create projects for the dedicated server (jk2mvded)" ON)
+option(BuildMVMP "Whether to create targets for the client (jk2mvmp & jk2mvmenu)" ON)
+option(BuildMVDED "Whether to create targets for the dedicated server (jk2mvded)" ON)
 
 if(NOT APPLE AND NOT WIN32)
 	option(BuildPackDEB "Whether to create the DEB package" OFF)

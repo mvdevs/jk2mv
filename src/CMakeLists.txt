@@ -273,6 +273,24 @@ if (BuildMVMP OR BuildMVDED)
 	)
 	source_group("api" FILES ${MVMPDEDApiFiles})
 	set(MVMPDEDFiles ${MVMPDEDFiles} ${MVMPDEDApiFiles})
+	
+	# generate assetsmv.pk3
+	include(InstallZIP)
+	add_zip_command("${CMAKE_CURRENT_BINARY_DIR}/assetsmv.pk3"
+		DIR "${CMAKE_SOURCE_DIR}/assets"
+		FILES "*"
+	)
+	add_custom_target(assets
+		ALL
+		DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/assetsmv.pk3"
+	)
+	
+	# installation
+	if(WIN32)
+		install(FILES ${CMAKE_CURRENT_BINARY_DIR}/assetsmv.pk3 DESTINATION "base")
+	elseif(NOT APPLE)
+		install(FILES ${CMAKE_CURRENT_BINARY_DIR}/assetsmv.pk3 DESTINATION "share/jk2mv/base")
+	endif()
 endif()
 
 # jk2mvmp
@@ -539,19 +557,8 @@ if (BuildMVMP)
 			$<TARGET_FILE_DIR:${MVMP}>
 		)
 	endif()
-
-	# generate assetsmv.pk3
-	include(InstallZIP)
-	add_zip_command("${CMAKE_CURRENT_BINARY_DIR}/assetsmv.pk3"
-		DIR "${CMAKE_SOURCE_DIR}/assets"
-		FILES "*"
-	)
-	add_custom_target(assets
-		ALL
-		DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/assetsmv.pk3"
-	)
 	
-	# copy 
+	# copy assetsmv.pk3 to the output directory (for debugging)
 	add_custom_command(TARGET ${MVMP} POST_BUILD
 		COMMAND ${CMAKE_COMMAND} -E copy_if_different
 		"${CMAKE_CURRENT_BINARY_DIR}/assetsmv.pk3"
@@ -571,7 +578,6 @@ if (BuildMVMP)
 		if(NOT BuildPortableVersion)
 			install(FILES "${RESDir}/mv.ico" DESTINATION ".")
 		endif()
-		install(FILES ${CMAKE_CURRENT_BINARY_DIR}/assetsmv.pk3 DESTINATION "base")
 	elseif(APPLE)
 		install(TARGETS ${MVMP} BUNDLE DESTINATION ".")
 
@@ -585,8 +591,6 @@ if (BuildMVMP)
 		")
 	else()
 		install(TARGETS ${MVMP} RUNTIME DESTINATION "bin")
-		install(FILES ${CMAKE_CURRENT_BINARY_DIR}/assetsmv.pk3 DESTINATION "share/jk2mv/base")
-		
 		install(FILES ${RESDir}/jk2mv.desktop DESTINATION "share/applications")
 		install(FILES ${RESDir}/jk2mv.png DESTINATION "share/pixmaps")
 	endif()
@@ -632,9 +636,27 @@ if (BuildMVDED)
 	# Project
 	add_executable(${MVDED} ${MVDEDFiles})
 
+	# copy assetsmv.pk3 to the output directory (for debugging)
+	add_custom_command(TARGET ${MVDED} POST_BUILD
+		COMMAND ${CMAKE_COMMAND} -E copy_if_different
+		"${CMAKE_CURRENT_BINARY_DIR}/assetsmv.pk3"
+		"$<TARGET_FILE_DIR:${MVDED}>/base/assetsmv.pk3"
+	)
+	
 	set_target_properties(${MVDED} PROPERTIES COMPILE_DEFINITIONS_RELEASE "${ReleaseDefines};${GlobalDefines};${MVDEDDefines}")
 	set_target_properties(${MVDED} PROPERTIES COMPILE_DEFINITIONS_DEBUG "${DebugDefines};${GlobalDefines};${MVDEDDefines}")
 	set_target_properties(${MVDED} PROPERTIES INCLUDE_DIRECTORIES "${MVMPIncludeDirs}")
 	target_link_libraries(${MVDED} ${MVDEDLibraries})
 	set_target_properties(${MVDED} PROPERTIES PROJECT_LABEL "jk2mvded")
+	
+	# installation
+	if(WIN32)
+		install(TARGETS ${MVDED} RUNTIME DESTINATION ".")
+	elseif(APPLE)
+		install(TARGETS ${MVDED} BUNDLE DESTINATION ".")
+	else()
+		install(TARGETS ${MVDED} RUNTIME DESTINATION "bin")
+	endif()
+	
+	add_dependencies(${MVDED} assets)
 endif()

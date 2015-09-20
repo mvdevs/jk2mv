@@ -618,7 +618,7 @@ qboolean FS_AllPath_Base_FileExists(const char *file)
 		return qtrue;
 	}
 
-#if !defined(PORTABLE) && !defined(DEDICATED)
+#if !defined(PORTABLE)
 	if (strlen(fs_assetspath->string)) {
 		testpath = FS_BuildOSPath(fs_assetspath->string, BASEGAME, file);
 		f = fopen(testpath, "rb");
@@ -2950,7 +2950,7 @@ static void FS_Startup( const char *gameName ) {
 
 	if (!FS_AllPath_Base_FileExists("assets5.pk3")) {
 		// assets files found in none of the paths
-#if defined(INSTALLED) && !defined(DEDICATED)
+#if defined(INSTALLED)
 #ifdef WIN32
 		Com_Error(ERR_FATAL, "could not find JK2 installation... make sure you have JK2 installed (CD or Steam).\n");
 #elif MACOS_X
@@ -3477,7 +3477,7 @@ void FS_InitFilesystem( void ) {
 	Com_StartupVariable( "fs_cdpath" );
 	Com_StartupVariable( "fs_basepath" );
 	Com_StartupVariable( "fs_homepath" );
-#if !defined(PORTABLE) && !defined(DEDICATED)
+#if !defined(PORTABLE)
 	Com_StartupVariable( "fs_assetspath" );
 #endif
 	Com_StartupVariable( "fs_game" );
