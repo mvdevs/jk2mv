@@ -66,11 +66,7 @@ IN_TranslateSDLToJKKey
 static fakeAscii_t IN_TranslateSDLToJKKey( SDL_Keysym *keysym, qboolean down ) {
 	fakeAscii_t key = A_NULL;
 
-	if (keysym->sym >= A_LOW_A && keysym->sym <= A_LOW_Z) {
-		key = (fakeAscii_t)(A_CAP_A + (keysym->sym - A_LOW_A));
-	} else if (keysym->sym >= A_LOW_AGRAVE && keysym->sym <= A_LOW_THORN && keysym->sym != A_DIVIDE) {
-		key = (fakeAscii_t)(A_CAP_AGRAVE + (keysym->sym - A_LOW_AGRAVE));
-	} else if (keysym->sym >= SDLK_SPACE && keysym->sym < SDLK_DELETE) {
+	if (keysym->sym >= SDLK_SPACE && keysym->sym < SDLK_DELETE) {
 		key = (fakeAscii_t)keysym->sym;
 	} else {
 		switch( keysym->sym )
@@ -411,8 +407,16 @@ static void IN_ProcessEvents( void )
 					Sys_QueEvent( 0, SE_KEY, A_CONSOLE, qtrue, 0, NULL );
 				} else {
 					key = IN_TranslateSDLToJKKey( &e.key.keysym, qtrue );
-					if ( key != A_NULL )
-						Sys_QueEvent( 0, SE_KEY, key, qtrue, 0, NULL );
+					if ( key != A_NULL ) {
+						fakeAscii_t upperKey = key;
+						if (e.key.keysym.sym >= A_LOW_A && e.key.keysym.sym <= A_LOW_Z) {
+							upperKey = (fakeAscii_t)(A_CAP_A + (e.key.keysym.sym - A_LOW_A));
+						} else if (e.key.keysym.sym >= A_LOW_AGRAVE && e.key.keysym.sym <= A_LOW_THORN && e.key.keysym.sym != A_DIVIDE) {
+							upperKey = (fakeAscii_t)(A_CAP_AGRAVE + (e.key.keysym.sym - A_LOW_AGRAVE));
+						}
+
+						Sys_QueEvent( 0, SE_KEY, upperKey, qtrue, 0, NULL );
+					}
 
 					if ( key == A_BACKSPACE )
 						Sys_QueEvent( 0, SE_CHAR, CTRL('h'), qfalse, 0, NULL);
@@ -426,8 +430,16 @@ static void IN_ProcessEvents( void )
 					Sys_QueEvent( 0, SE_KEY, A_CONSOLE, qfalse, 0, NULL );
 				} else {
 					key = IN_TranslateSDLToJKKey( &e.key.keysym, qfalse );
-					if( key != A_NULL )
-						Sys_QueEvent( 0, SE_KEY, key, qfalse, 0, NULL );
+					if( key != A_NULL ) {
+						fakeAscii_t upperKey = key;
+						if (e.key.keysym.sym >= A_LOW_A && e.key.keysym.sym <= A_LOW_Z) {
+							upperKey = (fakeAscii_t)(A_CAP_A + (e.key.keysym.sym - A_LOW_A));
+						} else if (e.key.keysym.sym >= A_LOW_AGRAVE && e.key.keysym.sym <= A_LOW_THORN && e.key.keysym.sym != A_DIVIDE) {
+							upperKey = (fakeAscii_t)(A_CAP_AGRAVE + (e.key.keysym.sym - A_LOW_AGRAVE));
+						}
+
+						Sys_QueEvent( 0, SE_KEY, upperKey, qfalse, 0, NULL );
+					}
 				}
 				
 				if ( ( e.key.keysym.scancode == SDL_SCANCODE_LGUI || e.key.keysym.scancode == SDL_SCANCODE_RGUI ) &&
