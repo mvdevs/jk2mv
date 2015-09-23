@@ -68,7 +68,7 @@ static fakeAscii_t IN_TranslateSDLToJKKey( SDL_Keysym *keysym, qboolean down ) {
 
 	if (keysym->sym >= A_LOW_A && keysym->sym <= A_LOW_Z) {
 		key = (fakeAscii_t)(A_CAP_A + (keysym->sym - A_LOW_A));
-	} else if (keysym->sym >= A_LOW_AGRAVE && keysym->sym <= A_LOW_THORN && keysym->sym != A_MULTIPLY) {
+	} else if (keysym->sym >= A_LOW_AGRAVE && keysym->sym <= A_LOW_THORN && keysym->sym != A_DIVIDE) {
 		key = (fakeAscii_t)(A_CAP_AGRAVE + (keysym->sym - A_LOW_AGRAVE));
 	} else if (keysym->sym >= SDLK_SPACE && keysym->sym < SDLK_DELETE) {
 		key = (fakeAscii_t)keysym->sym;
