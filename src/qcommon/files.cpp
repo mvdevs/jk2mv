@@ -181,9 +181,6 @@ or configs will never get loaded from disk!
 
 */
 
-#define	BASEGAME			"base"
-#define	DEMOGAME			"demo"
-
 // every time a new demo pk3 file is built, this checksum must be updated.
 // the easiest way to get it is to just run the game and see what it spits out
 #define	DEMO_PAK_CHECKSUM	437558517u
@@ -2774,6 +2771,22 @@ qboolean FS_idPak(const char *pak, const char *base) {
 
 /*
 ================
+FS_CheckDirTraversal
+
+Check whether the string contains stuff like "../" to prevent directory traversal bugs
+and return qtrue if it does.
+================
+*/
+
+qboolean FS_CheckDirTraversal(const char *checkdir) {
+	if (strstr(checkdir, "../") || strstr(checkdir, "..\\"))
+		return qtrue;
+
+	return qfalse;
+}
+
+/*
+================
 FS_ComparePaks
 
 if dlstring == qtrue
@@ -2814,6 +2827,12 @@ qboolean FS_ComparePaks( char *neededpaks, int len, int *chksums, size_t maxchks
 
 		// never autodownload any of the id paks
 		if ( FS_idPak(fs_serverReferencedPakNames[i], BASEGAME) ) {
+			continue;
+		}
+
+		// Make sure the server cannot make us write to non-quake3 directories.
+		if (FS_CheckDirTraversal(fs_serverReferencedPakNames[i])) {
+			Com_Printf("WARNING: Invalid download name %s\n", fs_serverReferencedPakNames[i]);
 			continue;
 		}
 

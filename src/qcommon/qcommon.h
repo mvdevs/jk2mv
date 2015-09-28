@@ -546,6 +546,8 @@ issues.
 ==============================================================
 */
 
+#define	BASEGAME			"base"
+
 // referenced flags
 // these are in loop specific order so don't change the order
 #define FS_GENERAL_REF	0x01
@@ -674,6 +676,7 @@ void FS_PureServerSetLoadedPaks( const char *pakSums, const char *pakNames );
 // sole exception of .cfg files.
 
 qboolean FS_idPak(const char *pak, const char *base);
+qboolean FS_CheckDirTraversal(const char *checkdir);
 qboolean FS_ComparePaks(char *neededpaks, int len, int *chksums, size_t maxchksums, qboolean dlstring);
 void FS_Rename( const char *from, const char *to );
 
