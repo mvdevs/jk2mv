@@ -514,7 +514,7 @@ void CL_ParseUDPDownload ( msg_t *msg ) {
 
 	if (!*clc.downloadTempName) {
 		Com_Printf("^3WARNING: Server sending download, but no download was requested\n");
-		CL_AddReliableCommand("stopdl", qfalse);
+		CL_AddReliableCommand("stopdl");
 		return;
 	}
 
