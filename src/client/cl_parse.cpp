@@ -512,6 +512,12 @@ void CL_ParseUDPDownload ( msg_t *msg ) {
 	unsigned char data[MAX_MSGLEN];
 	int block;
 
+	if (!*clc.downloadTempName) {
+		Com_Printf("^3WARNING: Server sending download, but no download was requested\n");
+		CL_AddReliableCommand("stopdl", qfalse);
+		return;
+	}
+
 	// read the data
 	block = (unsigned short)MSG_ReadShort ( msg );
 
@@ -542,12 +548,6 @@ void CL_ParseUDPDownload ( msg_t *msg ) {
 	// open the file if not opened yet
 	if (!clc.download)
 	{
-		if (!*clc.downloadTempName) {
-			Com_Printf("Server sending download, but no download was requested\n");
-			CL_AddReliableCommand( "stopdl" );
-			return;
-		}
-
 		clc.download = FS_SV_FOpenFileWrite( clc.downloadTempName );
 
 		if (!clc.download) {
