@@ -88,6 +88,8 @@ clientConnection_t	clc;
 clientStatic_t		cls;
 vm_t				*cgvm;
 
+netadr_t rcon_address;
+
 // Structure containing functions exported from refresh DLL
 refexport_t	re;
 
@@ -1163,6 +1165,7 @@ void CL_Connect_f( void ) {
 	Cvar_Set( "cl_currentServerAddress", server );
 }
 
+#define MAX_RCON_MESSAGE 1024
 
 /*
 =====================
@@ -1173,13 +1176,11 @@ CL_Rcon_f
 =====================
 */
 void CL_Rcon_f( void ) {
-	char	message[1024];
-	int		i;
-	netadr_t	to;
+	char	message[MAX_RCON_MESSAGE];
 
-	if ( !rcon_client_password->string ) {
-		Com_Printf ("You must set 'rcon_password' before\n"
-					"issuing an rcon command.\n");
+	if (!strlen(rcon_client_password->string)) {
+		Com_Printf("You must set 'rconpassword' before\n"
+			"issuing an rcon command.\n");
 		return;
 	}
 
@@ -1189,33 +1190,31 @@ void CL_Rcon_f( void ) {
 	message[3] = -1;
 	message[4] = 0;
 
-	strcat (message, "rcon ");
+	Q_strcat(message, MAX_RCON_MESSAGE, "rcon ");
 
-	strcat (message, rcon_client_password->string);
-	strcat (message, " ");
+	Q_strcat(message, MAX_RCON_MESSAGE, rcon_client_password->string);
+	Q_strcat(message, MAX_RCON_MESSAGE, " ");
 
-	for (i=1 ; i<Cmd_Argc() ; i++) {
-		strcat (message, Cmd_Argv(i));
-		strcat (message, " ");
-	}
+	// https://zerowing.idsoftware.com/bugzilla/show_bug.cgi?id=543
+	Q_strcat(message, MAX_RCON_MESSAGE, Cmd_Args());
 
-	if ( cls.state >= CA_CONNECTED ) {
-		to = clc.netchan.remoteAddress;
+	if (cls.state >= CA_CONNECTED) {
+		rcon_address = clc.netchan.remoteAddress;
 	} else {
 		if (!strlen(rconAddress->string)) {
-			Com_Printf ("You must either be connected,\n"
-						"or set the 'rconAddress' cvar\n"
-						"to issue rcon commands\n");
+			Com_Printf("You must either be connected,\n"
+				"or set the 'rconAddress' cvar\n"
+				"to issue rcon commands\n");
 
 			return;
 		}
-		NET_StringToAdr (rconAddress->string, &to);
-		if (to.port == 0) {
-			to.port = BigShort (PORT_SERVER);
+		NET_StringToAdr(rconAddress->string, &rcon_address);
+		if (rcon_address.port == 0) {
+			rcon_address.port = BigShort(PORT_SERVER);
 		}
 	}
 
-	NET_SendPacket (NS_CLIENT, (int)strlen(message)+1, message, to);
+	NET_SendPacket(NS_CLIENT, (int)strlen(message) + 1, message, rcon_address);
 }
 
 /*
@@ -2240,12 +2239,14 @@ void CL_ConnectionlessPacket( netadr_t from, msg_t *msg ) {
 	// echo request from server
 	if ( !Q_stricmp(c, "print") )
 	{
-		char sTemp[MAX_STRIPED_SV_STRING];
+		if (NET_CompareAdr(from, clc.serverAddress) || NET_CompareAdr(from, rcon_address)) {
+			char sTemp[MAX_STRIPED_SV_STRING];
 
-		s = MSG_ReadString( msg );
-		CL_CheckSVStripEdRef(sTemp, s);
-		Q_strncpyz( clc.serverMessage, sTemp, sizeof( clc.serverMessage ) );
-		Com_Printf( "%s", sTemp );
+			s = MSG_ReadString( msg );
+			CL_CheckSVStripEdRef(sTemp, s);
+			Q_strncpyz( clc.serverMessage, sTemp, sizeof( clc.serverMessage ) );
+			Com_Printf( "%s", sTemp );
+		}
 		return;
 	}
 
