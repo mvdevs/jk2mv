@@ -8,7 +8,7 @@ INDEX 0
    TEXT_LANGUAGE2 "Version de la partie:"
    TEXT_LANGUAGE3 "Spielversion:"
    TEXT_LANGUAGE6 "Gameversion:"
-   TEXT_LANGUAGE8 "Version Jugable:"
+   TEXT_LANGUAGE8 "Versión del juego:"
 }
 INDEX 1
 {
@@ -17,7 +17,7 @@ INDEX 1
    TEXT_LANGUAGE2 "Présente seulement les serveurs de la version choisie."
    TEXT_LANGUAGE3 "Nur Server mit ausgewählter Spielversion anzeigen."
    TEXT_LANGUAGE6 "Show only servers with selected gameversion."
-   TEXT_LANGUAGE8 "Mostrar solo los servidores con la version jugable seleccionada. "
+   TEXT_LANGUAGE8 "Mostrar solo los servidores de la versión seleccionada."
 }
 INDEX 2
 {
@@ -26,7 +26,7 @@ INDEX 2
    TEXT_LANGUAGE2 "Démarre un serveur de la version choisie."
    TEXT_LANGUAGE3 "Server mit ausgewählter Spielversion starten."
    TEXT_LANGUAGE6 "Start server with the selected gameversion."
-   TEXT_LANGUAGE8 "Comenzar el servidor con la version jugable seleccionada "
+   TEXT_LANGUAGE8 "Comenzar el servidor con la versión seleccionada."
 }
 INDEX 3
 {
@@ -53,7 +53,7 @@ INDEX 5
    TEXT_LANGUAGE2 "Paramètes spécifiques de JK2MV"
    TEXT_LANGUAGE3 "JK2MV-spezifische Einstellungen."
    TEXT_LANGUAGE6 "JK2MV-specific options."
-   TEXT_LANGUAGE8 "JK2MV-opciones espeficicas. "
+   TEXT_LANGUAGE8 "JK2MV-opciones específicas."
 }
 INDEX 6
 {
@@ -71,7 +71,7 @@ INDEX 7
    TEXT_LANGUAGE2 "Lumière Dynamique:"
    TEXT_LANGUAGE3 "Dynamic Glow:"
    TEXT_LANGUAGE6 "Dynamic Glow:"
-   TEXT_LANGUAGE8 "Brillo Dinamico:"
+   TEXT_LANGUAGE8 "Brillo Dinámico:"
 }
 INDEX 8
 {
@@ -80,7 +80,7 @@ INDEX 8
    TEXT_LANGUAGE2 "Sabres Laser plus réalistes, demande une bonne carte graphique."
    TEXT_LANGUAGE3 "Besser aussehende Lichtschwerter, benötigt gute Grafikkarte."
    TEXT_LANGUAGE6 "Much better looking lightsabers, needs a fast graphics card."
-   TEXT_LANGUAGE8 "Mejor aspecto de sables de luz, necesitan una rapida tarjeta grafica."
+   TEXT_LANGUAGE8 "Mejor aspecto de los sables de luz, se necesita una tarjeta gráfica rápida."
 }
 INDEX 9
 {
@@ -107,7 +107,7 @@ INDEX 11
    TEXT_LANGUAGE2 "Voulez-vous télécharger ce fichier?"
    TEXT_LANGUAGE3 "Willst du die Datei herunterladen?"
    TEXT_LANGUAGE6 "Do you want to download the file?"
-   TEXT_LANGUAGE8 "Deseas descargar el archivo ?"
+   TEXT_LANGUAGE8 "Deseas descargar el archivo?"
 }
 INDEX 12
 {
@@ -116,7 +116,7 @@ INDEX 12
    TEXT_LANGUAGE2 "Télécharger le fichier et ensuite se connecter."
    TEXT_LANGUAGE3 "Datei herunterladen und Verbindung aufbauen."
    TEXT_LANGUAGE6 "Download file and continue connecting."
-   TEXT_LANGUAGE8 "Descarga el archivo y continua conectado."
+   TEXT_LANGUAGE8 "Descargar el archivo y continuar conectando."
 }
 INDEX 13
 {
@@ -125,7 +125,7 @@ INDEX 13
    TEXT_LANGUAGE2 "Se connecter sans télécharger le fichier."
    TEXT_LANGUAGE3 "Verbindung aufbauen ohne die Datei herunterzuladen."
    TEXT_LANGUAGE6 "Continue connecting without downloading the file."
-   TEXT_LANGUAGE8 "Continua conectado sin descargar el archivo. "
+   TEXT_LANGUAGE8 "Continuar conectando sin descargar el archivo."
 }
 INDEX 14
 {
@@ -134,7 +134,7 @@ INDEX 14
    TEXT_LANGUAGE2 "Se déconnecter du serveur et retourner au menu principal."
    TEXT_LANGUAGE3 "Verbindung trennen und zum Hauptmenü zurückkehren."
    TEXT_LANGUAGE6 "Disconnect from server and return to the main menu."
-   TEXT_LANGUAGE8 "Desconectarse del servidor y regresar al menu principal."
+   TEXT_LANGUAGE8 "Desconectarse del servidor y volver al menú principal."
 }
 INDEX 15
 {
@@ -143,7 +143,7 @@ INDEX 15
    TEXT_LANGUAGE2 "Never"
    TEXT_LANGUAGE3 "Nie"
    TEXT_LANGUAGE6 "Never"
-   TEXT_LANGUAGE8 "Never"
+   TEXT_LANGUAGE8 "Nunca"
 }
 INDEX 16
 {
@@ -152,7 +152,7 @@ INDEX 16
    TEXT_LANGUAGE2 "Continue connecting and never ask me again to download this file."
    TEXT_LANGUAGE3 "Fortsetzen und diese Datei jetzt und in Zukunft nie herunterladen."
    TEXT_LANGUAGE6 "Continue connecting and never ask me again to download this file."
-   TEXT_LANGUAGE8 "Continue connecting and never ask me again to download this file."
+   TEXT_LANGUAGE8 "Continuar conectando y nunca más sugerir este archivo para descargar."
 }
 INDEX 17
 {
@@ -161,7 +161,7 @@ INDEX 17
    TEXT_LANGUAGE2 "Show bots:"
    TEXT_LANGUAGE3 "Bots zeigen:"
    TEXT_LANGUAGE6 "Show bots:"
-   TEXT_LANGUAGE8 "Show bots:"
+   TEXT_LANGUAGE8 "Ver bots:"
 }
 INDEX 18
 {
@@ -170,5 +170,5 @@ INDEX 18
    TEXT_LANGUAGE2 "Include bots in player count."
    TEXT_LANGUAGE3 "Bots in Spieleranzahl mitzählen."
    TEXT_LANGUAGE6 "Include bots in player count."
-   TEXT_LANGUAGE8 "Include bots in player count."
+   TEXT_LANGUAGE8 "Incluir bots en el conteo de jugadores."
 }
