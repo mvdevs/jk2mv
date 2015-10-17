@@ -35,7 +35,10 @@ void SV_GetChallenge( netadr_t from ) {
 	int		i;
 	int		oldest;
 	int		oldestTime;
+	int		oldestClientTime;
+	int		clientChallenge;
 	challenge_t	*challenge;
+	qboolean wasfound = qfalse;
 
 	// Prevent using getchallenge as an amplifier
 	if (SVC_RateLimitAddress(from, 30, 1000)) {
@@ -52,14 +55,25 @@ void SV_GetChallenge( netadr_t from ) {
 	}
 
 	oldest = 0;
-	oldestTime = 0x7fffffff;
+	oldestClientTime = oldestTime = 0x7fffffff;
 
 	// see if we already have a challenge for this ip
 	challenge = &svs.challenges[0];
-	for (i = 0 ; i < MAX_CHALLENGES ; i++, challenge++) {
-		if ( !challenge->connected && NET_CompareAdr( from, challenge->adr ) ) {
+	clientChallenge = atoi(Cmd_Argv(1));
+
+	for (i = 0; i < MAX_CHALLENGES; i++, challenge++) {
+		if (!challenge->connected && NET_CompareAdr(from, challenge->adr)) {
+			wasfound = qtrue;
+
+			if (challenge->time < oldestClientTime)
+				oldestClientTime = challenge->time;
+		}
+
+		if (wasfound && i >= MAX_CHALLENGES_MULTI) {
+			i = MAX_CHALLENGES;
 			break;
 		}
+
 		if ( challenge->time < oldestTime ) {
 			oldestTime = challenge->time;
 			oldest = i;
@@ -69,24 +83,18 @@ void SV_GetChallenge( netadr_t from ) {
 	if (i == MAX_CHALLENGES) {
 		// this is the first time this client has asked for a challenge
 		challenge = &svs.challenges[oldest];
-
-		challenge->challenge = ( (rand() << 16) ^ rand() ) ^ svs.time;
+		challenge->clientChallenge = clientChallenge;
 		challenge->adr = from;
 		challenge->firstTime = svs.time;
-		challenge->time = svs.time;
 		challenge->connected = qfalse;
-		i = oldest;
 	}
 
-	// if they are on a lan address, send the challengeResponse immediately
-	if ( Sys_IsLANAddress( from ) ) {
-		challenge->pingTime = svs.time;
-		NET_OutOfBandPrint( NS_SERVER, from, "challengeResponse %i", challenge->challenge );
-		return;
-	}
-
+	// always generate a new challenge number, so the client cannot circumvent sv_maxping
+	challenge->challenge = ((rand() << 16) ^ rand()) ^ svs.time;
+	challenge->wasrefused = qfalse;
+	challenge->time = svs.time;
 	challenge->pingTime = svs.time;
-	NET_OutOfBandPrint( NS_SERVER, challenge->adr, "challengeResponse %i", challenge->challenge );
+	NET_OutOfBandPrint(NS_SERVER, challenge->adr, "challengeResponse %i %i", challenge->challenge, clientChallenge);
 }
 
 /*
@@ -225,6 +233,7 @@ void SV_DirectConnect( netadr_t from ) {
 	// see if the challenge is valid (LAN clients don't need to challenge)
 	if ( !NET_IsLocalAddress (from) ) {
 		int		ping;
+		challenge_t *challengeptr;
 
 		for (i=0 ; i<MAX_CHALLENGES ; i++) {
 			if (NET_CompareAdr(from, svs.challenges[i].adr)) {
@@ -237,6 +246,13 @@ void SV_DirectConnect( netadr_t from ) {
 			NET_OutOfBandPrint( NS_SERVER, from, "print\nNo or bad challenge for address.\n" );
 			return;
 		}
+
+		challengeptr = &svs.challenges[i];
+		if (challengeptr->wasrefused) {
+			// Return silently, so that error messages written by the server keep being displayed.
+			return;
+		}
+
 		// force the IP key/value pair so the game can filter based on ip
 		Info_SetValueForKey( userinfo, "ip", NET_AdrToString( from ) );
 
@@ -250,17 +266,18 @@ void SV_DirectConnect( netadr_t from ) {
 				// don't let them keep trying until they get a big delay
 				NET_OutOfBandPrint( NS_SERVER, from, "print\nServer is for high pings only\n" );
 				Com_DPrintf ("Client %i rejected on a too low ping\n", i);
-				// reset the address otherwise their ping will keep increasing
-				// with each connect message and they'd eventually be able to connect
-				svs.challenges[i].adr.port = 0;
+				challengeptr->wasrefused = qtrue;
 				return;
 			}
 			if ( sv_maxPing->value && ping > sv_maxPing->value ) {
 				NET_OutOfBandPrint( NS_SERVER, from, "print\nServer is for low pings only\n" );
 				Com_DPrintf ("Client %i rejected on a too high ping\n", i);
+				challengeptr->wasrefused = qtrue;
 				return;
 			}
 		}
+
+		challengeptr->connected = qtrue;
 	} else {
 		// force the "ip" info key to "localhost"
 		Info_SetValueForKey( userinfo, "ip", "localhost" );
@@ -440,6 +457,18 @@ void SV_DropClient( client_t *drop, const char *reason ) {
 
 	if ( drop->state == CS_ZOMBIE ) {
 		return;		// already dropped
+	}
+
+	if (drop->netchan.remoteAddress.type != NA_BOT) {
+		// see if we already have a challenge for this ip
+		challenge = &svs.challenges[0];
+
+		for (i = 0; i < MAX_CHALLENGES; i++, challenge++) {
+			if (NET_CompareAdr(drop->netchan.remoteAddress, challenge->adr)) {
+				Com_Memset(challenge, 0, sizeof(*challenge));
+				break;
+			}
+		}
 	}
 
 	if ( !drop->gentity || !(drop->gentity->r.svFlags & SVF_BOT) ) {
