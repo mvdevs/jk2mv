@@ -1,5 +1,6 @@
 language: cpp
-sudo: false
+sudo: required
+dist: trusty
 
 env:
   global:
@@ -9,72 +10,48 @@ env:
 
 matrix:
   include:
-# disabled until libopenal-dev:i386 is whitelisted
-#   - os: linux
-#     env: HOST=linux-i686-gcc
-#     addons:
-#       apt:
-#         sources:
-#           - kalakris-cmake
-#         packages:
-#           - gcc-multilib
-#           - g++-multilib
-#           - libgl1-mesa-dev:i386
-#           - libgl1-mesa-glx:i386
-#           - libxext-dev:i386
-#           - libglapi-mesa:i386
-#           - libopenal-dev:i386
-#           - cmake
-#           - devscripts
-#           - debhelper
-#           - rpm
-#           - curl
+    - os: linux
+      env: HOST=linux-i386-gcc
     - os: linux
       env: HOST=linux-x86_64-gcc
-      addons:
-        apt:
-          sources:
-            - kalakris-cmake
-          packages:
-            - cmake
-            - libopenal-dev
-            - devscripts
-            - debhelper
-            - rpm
-            - curl
     - os: osx
       env: HOST=macosx-universal-clang
 
 before_install:
   - git fetch --unshallow
+  - if [[ "$HOST" == linux-i386-gcc ]]; then sudo dpkg --add-architecture i386; fi
+  - if [[ "$HOST" == linux-*-gcc ]]; then sudo apt-get update; fi
 
-install:
-  - if [[ "$HOST" == linux-i686-gcc ]]; then export CC="$CC -m32"; export CXX="$CXX -m32"; fi
+install: |
+  export MVDIR=`pwd`
 
-  - export MVDIR=`pwd`
-  - cd ~
-  - curl -O https://www.libsdl.org/release/SDL2-2.0.3.tar.gz
-  - tar xzf SDL2-2.0.3.tar.gz
+  if [[ "$HOST" == linux-*-gcc ]]; then
+      sudo apt-get install -y cmake curl rpm debhelper devscripts
+  fi
 
-  - if [[ "$HOST" == linux-*-gcc ]]; then mkdir sdl2install; fi
-  - if [[ "$HOST" == linux-*-gcc ]]; then export SDL2DIR="`pwd`/sdl2install"; fi
-  - if [[ "$HOST" == linux-*-gcc ]]; then cd SDL2-2.0.3; fi
-  - if [[ "$HOST" == linux-*-gcc ]]; then ./configure --prefix=$SDL2DIR; fi
-  - if [[ "$HOST" == linux-*-gcc ]]; then make; fi
-  - if [[ "$HOST" == linux-*-gcc ]]; then make install; fi
-
-  - if [[ "$HOST" == macosx-universal-clang ]]; then cd SDL2-2.0.3/Xcode/SDL; fi
-  - if [[ "$HOST" == macosx-universal-clang ]]; then sed -i -e 's/@rpath//g' SDL.xcodeproj/project.pbxproj; fi
-  - if [[ "$HOST" == macosx-universal-clang ]]; then xcodebuild -configuration Release; fi
-  - if [[ "$HOST" == macosx-universal-clang ]]; then mkdir -p ~/Library/Frameworks/; fi
-  - if [[ "$HOST" == macosx-universal-clang ]]; then ln -s `pwd`/build/Release/SDL2.framework ~/Library/Frameworks/; fi
+  if [[ "$HOST" == linux-x86_64-gcc ]]; then
+      sudo apt-get install -y libsdl2-dev libopenal-dev
+  elif [[ "$HOST" == linux-i386-gcc ]]; then
+      sudo apt-get install -y gcc-multilib gcc-4.8-multilib g++-multilib g++-4.8-multilib libsdl2-dev:i386 libopenal-dev:i386
+  else
+      cd ~
+      curl -O https://www.libsdl.org/release/SDL2-2.0.3.tar.gz
+      tar xzf SDL2-2.0.3.tar.gz
+      cd SDL2-2.0.3/Xcode/SDL
+      sed -i -e 's/@rpath//g' SDL.xcodeproj/project.pbxproj
+      xcodebuild -configuration Release
+      mkdir -p ~/Library/Frameworks/
+      ln -s `pwd`/build/Release/SDL2.framework ~/Library/Frameworks/
+  fi
 
 script:
   - cd "$MVDIR/build"
   - mkdir travis_build
   - cd travis_build
 
+  - if [[ "$HOST" == linux-i386-gcc ]]; then export CC="$CC -m32"; export CXX="$CXX -m32"; fi
   - if [[ "$HOST" == linux-*-gcc ]]; then cmake -G "Unix Makefiles" -DUseInternalPNG=ON -DUseInternalJPEG=ON -DUseInternalZLIB=ON -DUseInternalCURL=ON -DBuildPackDEB=ON -DBuildPackRPM=ON ../..; fi
+
   - if [[ "$HOST" == macosx-universal-clang ]]; then cmake -G "Unix Makefiles" -DUseInternalPNG=ON -DUseInternalJPEG=ON -DUseInternalZLIB=ON -DUseInternalCURL=ON ../..; fi
 
   - make
