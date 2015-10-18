@@ -257,8 +257,6 @@ void SV_DirectConnect( netadr_t from ) {
 		Info_SetValueForKey( userinfo, "ip", NET_AdrToString( from ) );
 
 		ping = svs.time - svs.challenges[i].pingTime;
-		Com_Printf( "Client %i connecting with %i challenge ping\n", i, ping );
-		svs.challenges[i].connected = qtrue;
 
 		// never reject a LAN client based on ping
 		if ( !Sys_IsLANAddress( from ) ) {
@@ -277,6 +275,7 @@ void SV_DirectConnect( netadr_t from ) {
 			}
 		}
 
+		Com_Printf("Client %i connecting with %i challenge ping\n", i, ping);
 		challengeptr->connected = qtrue;
 	} else {
 		// force the "ip" info key to "localhost"
