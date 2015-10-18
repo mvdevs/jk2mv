@@ -510,7 +510,7 @@ A UDP download message has been received from the server
 void CL_ParseUDPDownload ( msg_t *msg ) {
 	int		size;
 	unsigned char data[MAX_MSGLEN];
-	int block;
+	uint16_t block;
 
 	if (!*clc.downloadTempName) {
 		Com_Printf("^3WARNING: Server sending download, but no download was requested\n");
@@ -519,9 +519,9 @@ void CL_ParseUDPDownload ( msg_t *msg ) {
 	}
 
 	// read the data
-	block = (unsigned short)MSG_ReadShort ( msg );
+	block = MSG_ReadShort(msg);
 
-	if ( !block )
+	if ( !block && !clc.downloadBlock)
 	{
 		// block zero is special, contains file size
 		clc.downloadSize = MSG_ReadLong ( msg );
@@ -530,15 +530,19 @@ void CL_ParseUDPDownload ( msg_t *msg ) {
 
 		if (clc.downloadSize < 0)
 		{
-			Com_Error(ERR_DROP, MSG_ReadString( msg ));
+			Com_Error(ERR_DROP, "%s", MSG_ReadString(msg));
 			CL_DownloadsComplete();
 			return;
 		}
 	}
 
-	size = (unsigned short)MSG_ReadShort ( msg );
-	if (size > 0)
-		MSG_ReadData( msg, data, size );
+	size = MSG_ReadShort(msg);
+	if (size < 0 || size > sizeof(data)) {
+		Com_Error(ERR_DROP, "CL_ParseDownload: Invalid size %d for download chunk", size);
+		return;
+	}
+
+	MSG_ReadData(msg, data, size);
 
 	if (clc.downloadBlock != block) {
 		Com_DPrintf( "CL_ParseDownload: Expected block %d, got %d\n", clc.downloadBlock, block);
