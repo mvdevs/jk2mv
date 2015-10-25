@@ -1393,6 +1393,7 @@ void SV_ExecuteClientCommand( client_t *cl, const char *s, qboolean clientOK ) {
 	char cmd[MAX_TOKEN_CHARS];
 	char arg1[MAX_TOKEN_CHARS];
 	char arg2[MAX_TOKEN_CHARS];
+	qboolean foundCommand = qfalse;
 
 	Cmd_TokenizeString(s);
 	Q_strncpyz(cmd, Cmd_Argv(0), sizeof(cmd));
@@ -1402,6 +1403,7 @@ void SV_ExecuteClientCommand( client_t *cl, const char *s, qboolean clientOK ) {
 	// see if it is a server level command
 	for (u=ucmds ; u->name ; u++) {
 		if (!strcmp (Cmd_Argv(0), u->name) ) {
+			foundCommand = qtrue;
 			u->func( cl );
 			break;
 		}
@@ -1440,6 +1442,10 @@ void SV_ExecuteClientCommand( client_t *cl, const char *s, qboolean clientOK ) {
 			VM_Call( gvm, GAME_CLIENT_COMMAND, cl - svs.clients );
 		}
 	}
+	else if ( !foundCommand )
+	{
+		Com_DPrintf( "client text ignored for %s\n", cl->name );
+	}
 }
 
 /*
@@ -1477,13 +1483,16 @@ static qboolean SV_ClientCommand( client_t *cl, msg_t *msg ) {
 	// but not other people
 	// We don't do this when the client hasn't been active yet since its
 	// normal to spam a lot of commands when downloading
+
+	// Applying floodprotect only to "CS_ACTIVE" clients leaves too much room for abuse. Extending floodprotect to clients pre CS_ACTIVE shouldn't cause any issues, as the download-commands are handled within the engine and floodprotect only filters calls to the VM.
 	if ( !com_cl_running->integer &&
-		cl->state >= CS_ACTIVE &&
+		/* cl->state >= CS_ACTIVE && */
 		sv_floodProtect->integer &&
 		svs.time < cl->nextReliableTime ) {
 		// ignore any other text messages from this client but let them keep playing
 		clientOk = qfalse;
-		Com_DPrintf( "client text ignored for %s\n", cl->name );
+		// Moved the message into SV_ExecuteClientCommand, cause we can't tell here, whether the command will really be ignored or not.
+		//Com_DPrintf( "client text ignored for %s\n", cl->name );
 		//return qfalse;	// stop processing
 	}
 
