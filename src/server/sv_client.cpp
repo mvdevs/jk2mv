@@ -554,7 +554,8 @@ void SV_SendClientGameState( client_t *client ) {
 
 	Com_DPrintf ("SV_SendClientGameState() for %s\n", client->name);
 	Com_DPrintf( "Going from CS_CONNECTED to CS_PRIMED for %s\n", client->name );
-	client->state = CS_PRIMED;
+	if (client->state == CS_CONNECTED)
+		client->state = CS_PRIMED;
 	client->pureAuthentic = 0;
 
 	// when we receive the first packet from the client, we will
