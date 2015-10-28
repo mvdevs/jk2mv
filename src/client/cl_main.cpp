@@ -2162,7 +2162,7 @@ void CL_ConnectionlessPacket( netadr_t from, msg_t *msg ) {
 	// challenge from the server we are connecting to
 	if ( !Q_stricmp(c, "challengeResponse") ) {
 		if (cls.state != CA_CONNECTING) {
-			Com_Printf("Unwanted challenge response received.  Ignored.\n");
+			Com_DPrintf("Unwanted challenge response received.  Ignored.\n");
 			return;
 		}
 
@@ -2197,16 +2197,16 @@ void CL_ConnectionlessPacket( netadr_t from, msg_t *msg ) {
 	// server connection
 	if ( !Q_stricmp(c, "connectResponse") ) {
 		if ( cls.state >= CA_CONNECTED ) {
-			Com_Printf ("Dup connect received.  Ignored.\n");
+			Com_DPrintf ("Dup connect received.  Ignored.\n");
 			return;
 		}
 		if ( cls.state != CA_CHALLENGING ) {
-			Com_Printf ("connectResponse packet while not connecting. Ignored.\n");
+			Com_DPrintf ("connectResponse packet while not connecting. Ignored.\n");
 			return;
 		}
 		if ( !NET_CompareAdr( from, clc.serverAddress ) ) {
-			Com_Printf( "connectResponse from a different address.  Ignored.\n" );
-			Com_Printf( "%s should have been %s\n", NET_AdrToString( from ),
+			Com_DPrintf( "connectResponse from a different address.  Ignored.\n" );
+			Com_DPrintf( "%s should have been %s\n", NET_AdrToString( from ),
 				NET_AdrToString( clc.serverAddress ) );
 			return;
 		}
