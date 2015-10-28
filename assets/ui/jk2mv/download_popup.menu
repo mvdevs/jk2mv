@@ -138,7 +138,7 @@
 			name			yesButton
 			group			none
 			style			WINDOW_STYLE_SHADER
-			rect			8 215 45 30
+			rect			20 215 50 30
 			background		"gfx/menus/menu_buttonback"
 			forecolor		1 1 1 1
 			decoration
@@ -150,10 +150,14 @@
 			name			yesText
 			text			@MENUS0_YES
 			descText		@MV_DL_CONTINUE
-			type			1
+			type			ITEM_TYPE_BUTTON
+			style			WINDOW_STYLE_FILLED
 			font			3
 			textscale		.7
-			rect			20 220 45 30
+			rect			20 215 50 30
+			textalignx		25
+			textaligny		6
+			textalign		ITEM_ALIGN_CENTER
 			forecolor		0.65 0.65 1 1
 			visible			1
 			
@@ -180,7 +184,7 @@
 			name			noButton
 			group			none
 			style			WINDOW_STYLE_SHADER
-			rect			72 215 45 30
+			rect			80 215 50 30
 			background		"gfx/menus/menu_buttonback"
 			forecolor		1 1 1 1
 			decoration
@@ -192,10 +196,14 @@
 			name			noText
 			text			@MENUS0_NO
 			descText		@MV_DL_SKIP
-			type			1
+			type			ITEM_TYPE_BUTTON
+			style			WINDOW_STYLE_FILLED
 			font			3
 			textscale		.7
-			rect			80 220 45 30
+			rect			80 215 50 30
+			textalignx		25
+			textaligny		6
+			textalign		ITEM_ALIGN_CENTER
 			forecolor		0.65 0.65 1 1
 			visible			1
 
@@ -222,7 +230,7 @@
 			name			neverButton
 			group			none
 			style			WINDOW_STYLE_SHADER
-			rect			125 215 45 30
+			rect			135 215 50 30
 			background		"gfx/menus/menu_buttonback"
 			forecolor		1 1 1 1
 			decoration
@@ -234,10 +242,14 @@
 			name			neverText
 			text			@MV_DL_NEVER
 			descText		@MV_DL_NEVER_INFO
-			type			1
+			type			ITEM_TYPE_BUTTON
+			style			WINDOW_STYLE_FILLED
 			font			3
 			textscale		.7
-			rect			135 220 45 30
+			rect			135 215 50 30
+			textalignx		25
+			textaligny		6
+			textalign		ITEM_ALIGN_CENTER
 			forecolor		0.65 0.65 1 1
 			visible			1
 
@@ -264,7 +276,7 @@
 			name			disconnectButton
 			group			none
 			style			WINDOW_STYLE_SHADER
-			rect			215 215 100 30
+			rect			220 215 100 30
 			background		"gfx/menus/menu_buttonback"
 			forecolor		1 1 1 1
 			decoration
@@ -276,10 +288,14 @@
 			name			disconnectText
 			text			@MENUS0_MAIN_MENU
 			descText		@MV_DL_ABORT
-			type			1
+			type			ITEM_TYPE_BUTTON
+			style			WINDOW_STYLE_FILLED
 			font			3
 			textscale		.7
-			rect			220 220 100 30
+			rect			220 215 100 30
+			textalignx		50
+			textaligny		6
+			textalign		ITEM_ALIGN_CENTER
 			forecolor		0.65 0.65 1 1
 			visible			1
 
