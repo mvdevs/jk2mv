@@ -1913,109 +1913,11 @@ int Key_GetProtocolKey(mvversion_t protocol, int key16) {
 	case A_MWHEELUP:
 		return K_MWHEELUP;
 
-	case A_JOY0:
-		return K_JOY1;
-	case A_JOY1:
-		return K_JOY2;
-	case A_JOY2:
-		return K_JOY3;
-	case A_JOY3:
-		return K_JOY4;
-	case A_JOY4:
-		return K_JOY5;
-	case A_JOY5:
-		return K_JOY6;
-	case A_JOY6:
-		return K_JOY7;
-	case A_JOY7:
-		return K_JOY8;
-	case A_JOY8:
-		return K_JOY9;
-	case A_JOY9:
-		return K_JOY10;
-	case A_JOY10:
-		return K_JOY11;
-	case A_JOY11:
-		return K_JOY12;
-	case A_JOY12:
-		return K_JOY13;
-	case A_JOY13:
-		return K_JOY14;
-	case A_JOY14:
-		return K_JOY15;
-	case A_JOY15:
-		return K_JOY16;
-	case A_JOY16:
-		return K_JOY17;
-	case A_JOY17:
-		return K_JOY18;
-	case A_JOY18:
-		return K_JOY19;
-	case A_JOY19:
-		return K_JOY20;
-	case A_JOY20:
-		return K_JOY21;
-	case A_JOY21:
-		return K_JOY22;
-	case A_JOY22:
-		return K_JOY23;
-	case A_JOY23:
-		return K_JOY24;
-	case A_JOY24:
-		return K_JOY25;
-	case A_JOY25:
-		return K_JOY26;
-	case A_JOY26:
-		return K_JOY27;
-	case A_JOY27:
-		return K_JOY28;
-	case A_JOY28:
-		return K_JOY29;
-	case A_JOY29:
-		return K_JOY30;
-	case A_JOY30:
-		return K_JOY31;
-	case A_JOY31:
-		return K_JOY32;
-
-	case A_AUX1:
-		return K_AUX1;
-	case A_AUX2:
-		return K_AUX2;
-	case A_AUX3:
-		return K_AUX3;
-	case A_AUX4:
-		return K_AUX4;
-	case A_AUX5:
-		return K_AUX5;
-	case A_AUX6:
-		return K_AUX6;
-	case A_AUX7:
-		return K_AUX7;
-	case A_AUX8:
-		return K_AUX8;
-	case A_AUX9:
-		return K_AUX9;
-	case A_AUX10:
-		return K_AUX10;
-	case A_AUX11:
-		return K_AUX11;
-	case A_AUX12:
-		return K_AUX12;
-	case A_AUX13:
-		return K_AUX13;
-	case A_AUX14:
-		return K_AUX14;
-	case A_AUX15:
-		return K_AUX15;
-	case A_AUX16:
-		return K_AUX16;
-
 	case MAX_KEYS:
 		return K_LAST_KEY;
 	}
 
-	if ( key16 >= K_LAST_KEY ) return -1;
+	if ( key16 >= MAX_KEYS) return -1;
 
 	return key16;
 }
@@ -2174,104 +2076,6 @@ int Key_GetProtocolKey15(mvversion_t protocol, int key15) {
 	case K_MWHEELUP:
 		return A_MWHEELUP;
 
-	case K_JOY1:
-		return A_JOY0;
-	case K_JOY2:
-		return A_JOY1;
-	case K_JOY3:
-		return A_JOY2;
-	case K_JOY4:
-		return A_JOY3;
-	case K_JOY5:
-		return A_JOY4;
-	case K_JOY6:
-		return A_JOY5;
-	case K_JOY7:
-		return A_JOY6;
-	case K_JOY8:
-		return A_JOY7;
-	case K_JOY9:
-		return A_JOY8;
-	case K_JOY10:
-		return A_JOY9;
-	case K_JOY11:
-		return A_JOY10;
-	case K_JOY12:
-		return A_JOY11;
-	case K_JOY13:
-		return A_JOY12;
-	case K_JOY14:
-		return A_JOY13;
-	case K_JOY15:
-		return A_JOY14;
-	case K_JOY16:
-		return A_JOY15;
-	case K_JOY17:
-		return A_JOY16;
-	case K_JOY18:
-		return A_JOY17;
-	case K_JOY19:
-		return A_JOY18;
-	case K_JOY20:
-		return A_JOY19;
-	case K_JOY21:
-		return A_JOY20;
-	case K_JOY22:
-		return A_JOY21;
-	case K_JOY23:
-		return A_JOY22;
-	case K_JOY24:
-		return A_JOY23;
-	case K_JOY25:
-		return A_JOY24;
-	case K_JOY26:
-		return A_JOY25;
-	case K_JOY27:
-		return A_JOY26;
-	case K_JOY28:
-		return A_JOY27;
-	case K_JOY29:
-		return A_JOY28;
-	case K_JOY30:
-		return A_JOY29;
-	case K_JOY31:
-		return A_JOY30;
-	case K_JOY32:
-		return A_JOY31;
-
-	case K_AUX1:
-		return A_AUX1;
-	case K_AUX2:
-		return A_AUX2;
-	case K_AUX3:
-		return A_AUX3;
-	case K_AUX4:
-		return A_AUX4;
-	case K_AUX5:
-		return A_AUX5;
-	case K_AUX6:
-		return A_AUX6;
-	case K_AUX7:
-		return A_AUX7;
-	case K_AUX8:
-		return A_AUX8;
-	case K_AUX9:
-		return A_AUX9;
-	case K_AUX10:
-		return A_AUX10;
-	case K_AUX11:
-		return A_AUX11;
-	case K_AUX12:
-		return A_AUX12;
-	case K_AUX13:
-		return A_AUX13;
-	case K_AUX14:
-		return A_AUX14;
-	case K_AUX15:
-		return A_AUX15;
-	case K_AUX16:
-		return A_AUX16;
-
 	case K_LAST_KEY:
 		return MAX_KEYS;
 	}
@@ -2279,7 +2083,7 @@ int Key_GetProtocolKey15(mvversion_t protocol, int key15) {
 	// Prevent double entries for 1.02 (Example: if 1.02 asks for K_CTRL it will be as if it asked for A_CTRL, if 1.02 asks for something that has the same number as A_CTRL it will count as A_CTRL, too: the CTRL key is handled twice. Solution: check if key15 would get altered by the inverse replacement).
 	if ( Key_GetProtocolKey(protocol, key15) != key15 ) return -1;
 
-	if ( key15 >= K_LAST_KEY ) return -1;
+	if ( key15 >= MAX_KEYS ) return -1;
 
 	return key15;
 }
