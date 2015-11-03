@@ -1787,16 +1787,14 @@ int Key_GetProtocolKey(mvversion_t protocol, int key16) {
 	case A_PAUSE:
 		return K_PAUSE;
 
-		/*
-	case A_UPARROW:
+	case A_CURSOR_UP:
 		return K_UPARROW;
-	case A_DOWNARROW:
+	case A_CURSOR_DOWN:
 		return K_DOWNARROW;
-	case A_LEFTARROW:
+	case A_CURSOR_LEFT:
 		return K_LEFTARROW;
-	case A_RIGHTARROW:
+	case A_CURSOR_RIGHT:
 		return K_RIGHTARROW;
-		*/
 
 	case A_ALT:
 		return K_ALT;
@@ -1950,16 +1948,14 @@ int Key_GetProtocolKey15(mvversion_t protocol, int key15) {
 	case K_PAUSE:
 		return A_PAUSE;
 
-		/*
 	case K_UPARROW:
-		return A_UPARROW;
+		return A_CURSOR_UP;
 	case K_DOWNARROW:
-		return A_DOWNARROW;
+		return A_CURSOR_DOWN;
 	case K_LEFTARROW:
-		return A_LEFTARROW;
+		return A_CURSOR_LEFT;
 	case K_RIGHTARROW:
-		return A_RIGHTARROW;
-		*/
+		return A_CURSOR_RIGHT;
 
 	case K_ALT:
 		return A_ALT;
