@@ -1291,7 +1291,7 @@ Info_SetValueForKey
 Changes or adds a key/value pair
 ==================
 */
-void Info_SetValueForKey( char *s, const char *key, const char *value ) {
+qboolean Info_SetValueForKey( char *s, const char *key, const char *value ) {
 	char	newi[MAX_INFO_STRING];
 
 	if ( strlen( s ) >= MAX_INFO_STRING ) {
@@ -1301,24 +1301,24 @@ void Info_SetValueForKey( char *s, const char *key, const char *value ) {
 	if (strchr (key, '\\') || strchr (value, '\\'))
 	{
 		Com_Printf ("Can't use keys or values with a \\\n");
-		return;
+		return qfalse;
 	}
 
 	if (strchr (key, ';') || strchr (value, ';'))
 	{
 		Com_Printf ("Can't use keys or values with a semicolon\n");
-		return;
+		return qfalse;
 	}
 
 	if (strchr (key, '\"') || strchr (value, '\"'))
 	{
 		Com_Printf ("Can't use keys or values with a \"\n");
-		return;
+		return qfalse;
 	}
 
 	Info_RemoveKey (s, key);
 	if (!value || !strlen(value))
-		return;
+		return qfalse;
 
 	Com_sprintf (newi, sizeof(newi), "\\%s\\%s", key, value);
 
@@ -1326,11 +1326,12 @@ void Info_SetValueForKey( char *s, const char *key, const char *value ) {
 	if (strlen(newi) + strlen(s) >= MAX_INFO_STRING)
 	{
 		Com_Printf ("Info string length exceeded\n");
-		return;
+		return qfalse;
 	}
 
 	strcat (newi, s);
 	strcpy (s, newi);
+	return qtrue;
 }
 
 /*

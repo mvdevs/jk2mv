@@ -198,6 +198,7 @@ void SV_DirectConnect( netadr_t from ) {
 	int			startIndex;
 	char		*denied;
 	int			count;
+	char		*ip;
 
 	Com_DPrintf ("SVC_DirectConnect ()\n");
 
@@ -230,6 +231,20 @@ void SV_DirectConnect( netadr_t from ) {
 		}
 	}
 
+	// don't let "ip" overflow userinfo string
+	if ( NET_IsLocalAddress (from) )
+		ip = "localhost";
+	else
+		ip = (char *)NET_AdrToString( from );
+
+	if ( !Info_SetValueForKey( userinfo, "ip", ip ) )
+	{
+		NET_OutOfBandPrint( NS_SERVER, from,
+			"print\nUserinfo string length exceeded.  "
+			"Try removing setu cvars from your config.\n" );
+		return;
+	}
+
 	// see if the challenge is valid (LAN clients don't need to challenge)
 	if ( !NET_IsLocalAddress (from) ) {
 		int		ping;
@@ -253,9 +268,6 @@ void SV_DirectConnect( netadr_t from ) {
 			return;
 		}
 
-		// force the IP key/value pair so the game can filter based on ip
-		Info_SetValueForKey( userinfo, "ip", NET_AdrToString( from ) );
-
 		ping = svs.time - svs.challenges[i].pingTime;
 
 		// never reject a LAN client based on ping
@@ -277,9 +289,6 @@ void SV_DirectConnect( netadr_t from ) {
 
 		Com_Printf("Client %i connecting with %i challenge ping\n", i, ping);
 		challengeptr->connected = qtrue;
-	} else {
-		// force the "ip" info key to "localhost"
-		Info_SetValueForKey( userinfo, "ip", "localhost" );
 	}
 
 	// q3fill protection
@@ -1187,7 +1196,7 @@ into a more C friendly form.
 =================
 */
 void SV_UserinfoChanged( client_t *cl ) {
-	char	*val;
+	char	*val, *ip;
 	int		i;
 
 	// name for C code
@@ -1296,7 +1305,13 @@ void SV_UserinfoChanged( client_t *cl ) {
 			Q_strncpyz(forcePowers, "7-1-030000000000003332", sizeof(forcePowers));
 		}
 
-		Info_SetValueForKey(cl->userinfo, "forcepowers", forcePowers);
+		if ( !Info_SetValueForKey(cl->userinfo, "forcepowers", forcePowers) )
+		{
+			{
+				SV_DropClient( cl, "userinfo string length exceeded");
+				return;
+			}
+		}
 	}
 
 	// serverside galaking fix
@@ -1305,11 +1320,23 @@ void SV_UserinfoChanged( client_t *cl ) {
 
 		Q_strncpyz(model, Info_ValueForKey(cl->userinfo, "model"), sizeof(model));
 		if (Q_stristr(model, "galak_mech"))
-			Info_SetValueForKey(cl->userinfo, "model", "galak/default");
+		{
+			if ( !Info_SetValueForKey(cl->userinfo, "model", "galak/default") )
+			{
+				SV_DropClient( cl, "userinfo string length exceeded");
+				return;
+			}
+		}
 
 		Q_strncpyz(model, Info_ValueForKey(cl->userinfo, "team_model"), sizeof(model));
 		if (Q_stristr(model, "galak_mech"))
-			Info_SetValueForKey(cl->userinfo, "team_model", "galak/default");
+		{
+			if ( !Info_SetValueForKey(cl->userinfo, "team_model", "galak/default") )
+			{
+				SV_DropClient( cl, "userinfo string length exceeded");
+				return;
+			}
+		}
 	}
 
 	// serverside broken models fix (head only model)
@@ -1318,8 +1345,25 @@ void SV_UserinfoChanged( client_t *cl ) {
 
 		Q_strncpyz(model, Info_ValueForKey(cl->userinfo, "model"), sizeof(model));
 		if (Q_stristr(model, "kyle/fpls") || (Q_stristr(model, "morgan") && (stricmp(model, "morgan/default_mp") && stricmp(model, "morgan/red") && stricmp(model, "morgan/blue"))))
-			Info_SetValueForKey(cl->userinfo, "model", "kyle/default");
+		{
+			if ( !Info_SetValueForKey(cl->userinfo, "model", "kyle/default") )
+			{
+				SV_DropClient( cl, "userinfo string length exceeded");
+				return;
+			}
+		}
 	}
+	
+	// TTimo
+	// maintain the IP information
+	// the banning code relies on this being consistently present
+	if( NET_IsLocalAddress(cl->netchan.remoteAddress) )
+		ip = "localhost";
+	else
+		ip = (char*)NET_AdrToString( cl->netchan.remoteAddress );
+
+	if ( !Info_SetValueForKey(cl->userinfo, "ip", ip) )
+		SV_DropClient( cl, "userinfo string length exceeded" );
 }
 
 #define INFO_CHANGE_MIN_INTERVAL	5000
