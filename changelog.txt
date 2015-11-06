@@ -4,6 +4,27 @@ Website: http://jk2mv.org
 --------------------------------------------------
 
 -----------------------------------
+1.1
+-----------------------------------
+- FIXES FOR 6 SEMI-IMPORTANT SECURITY BUGS
+- support for macosx steam version
+- windows: right windows key can be used for minimizing
+- macosx, linux: minimizer (win key, command key), mute sounds if windows has no focus
+- 1.03 demo playback support (by vvvjk2)
+- pause demo playback on pressing ESC key (by vvvjk2)
+- fixed vertical font alignment (by vvvjk2)
+- external url support for http downloads
+- increased console buffer
+- API Level 1
+- r_overbrightbits support for postprocessing gamma method
+- linux: deb and rpm packages
+- macosx: dmg image
+- basic support for JKA models
+- linux: changed default fs_homepath to "$HOME/.jk2mv"
+- macosx, linux: fixed pasting (CTRL+v) in console
+- fixed binding several keys (äöü, arrow keys) in 1.02 mode
+
+-----------------------------------
 1.0.2
 -----------------------------------
 - anti speedhack
