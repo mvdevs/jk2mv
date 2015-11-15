@@ -3733,10 +3733,9 @@ static void UI_LoadMovies() {
 
 }
 
-
-static int demosort (const void **a, const void **b) {
-	const char *aa = *(const char **)a;
-	const char *bb = *(const char **)b;
+int demosort(void const *a, void const *b) {
+	char const *aa = (char const *)a;
+	char const *bb = (char const *)b;
 
 	return strcmp(aa, bb);
 }

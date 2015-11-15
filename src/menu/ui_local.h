@@ -1017,7 +1017,7 @@ Ghoul2 Insert End
 
 void trap_CL_ContinueCurrentDownload(dldecision_t decision);
 
-qboolean trap_FS_GetDLList(dlfile_t *files, int maxfiles);
+int trap_FS_GetDLList(dlfile_t *files, int maxfiles);
 qboolean trap_FS_RMDLPrefix(const char *qpath);
 qboolean trap_UI_DeleteDLFile(const dlfile_t *file);
 
