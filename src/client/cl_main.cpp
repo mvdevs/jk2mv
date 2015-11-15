@@ -122,8 +122,6 @@ void CL_ShowIP_f(void);
 void CL_ServerStatus_f(void);
 void CL_ServerStatusResponse( netadr_t from, msg_t *msg );
 
-void CL_BlacklistWriteFile();
-
 /*
 =======================================================================
 
@@ -799,7 +797,7 @@ void CL_Disconnect( qboolean showMainMenu ) {
 		clc.demofile = 0;
 	}
 
-	CL_BlacklistWriteFile();
+	CL_BlacklistWriteCloseFile();
 
 	if ( uivm && showMainMenu ) {
 		VM_Call( uivm, UI_SET_ACTIVE_MENU, UIMENU_NONE );
@@ -1423,6 +1421,11 @@ void CL_Clientinfo_f( void ) {
 
 //====================================================================
 
+/*
+=================
+CL_BlacklistCurrentFile
+=================
+*/
 void CL_BlacklistCurrentFile() {
 	// create a new buffer
 	blacklistentry_t *entrys = (blacklistentry_t *)Z_Malloc((int)((cls.downloadBlacklistLen + 1) * sizeof(blacklistentry_t)), TAG_DOWNLOADBLACKLIST, qtrue);
@@ -1443,7 +1446,70 @@ void CL_BlacklistCurrentFile() {
 	cls.downloadBlacklist = entrys;
 }
 
-void CL_BlacklistWriteFile() {
+/*
+=================
+CL_ReadBlacklistFile
+
+Reads dlblacklist.dat which contains a list of files which
+the user blocked permanently.
+=================
+*/
+void CL_ReadBlacklistFile() {
+	fileHandle_t fblacklist;
+	int len;
+
+	cls.downloadBlacklistLen = 0;
+	len = FS_SV_FOpenFileRead("dlblacklist.dat", &fblacklist);
+	if (len >= sizeof(uint8_t)) {
+		uint8_t version;
+
+		FS_Read(&version, sizeof(uint8_t), fblacklist);
+		if (version == BLACKLIST_FILE_VERSION) {
+			size_t entryslen = len - sizeof(uint8_t);
+			if (entryslen) {
+				cls.downloadBlacklist = (blacklistentry_t *)Z_Malloc((int)entryslen, TAG_DOWNLOADBLACKLIST, qtrue);
+				FS_Read(cls.downloadBlacklist, (int)entryslen, fblacklist);
+				cls.downloadBlacklistLen = entryslen / sizeof(blacklistentry_t);
+			}
+		} else {
+			Com_Printf("blacklist file version mismatch\n");
+		}
+
+		FS_FCloseFile(fblacklist);
+	}
+}
+
+/*
+=================
+CL_BlacklistRemoveFile
+
+Remove a file from the blacklist
+=================
+*/
+qboolean CL_BlacklistRemoveFile(const blacklistentry_t *file) {
+	int index = file - cls.downloadBlacklist;
+
+	if (index < 0 || index >= cls.downloadBlacklistLen) {
+		return qtrue;
+	}
+
+	if (index < cls.downloadBlacklistLen - 1) {
+		memmove(&cls.downloadBlacklist[index], &cls.downloadBlacklist[index + 1], (cls.downloadBlacklistLen - index - 1) * sizeof(blacklistentry_t));
+	}
+
+	cls.downloadBlacklistLen--;
+	return qfalse;
+}
+
+/*
+=================
+CL_BlacklistWriteCloseFile
+
+Writes dlblacklist.dat which contains a list of files which
+the user blocked permanently.
+=================
+*/
+void CL_BlacklistWriteCloseFile() {
 	if (cls.downloadBlacklist) {
 		fileHandle_t fblacklist = FS_SV_FOpenFileWrite("dlblacklist.dat");
 		uint8_t version = BLACKLIST_FILE_VERSION;
@@ -1451,7 +1517,7 @@ void CL_BlacklistWriteFile() {
 		if (fblacklist) {
 			if (FS_Write(&version, sizeof(version), fblacklist)) {
 				if (FS_Write(cls.downloadBlacklist, (int)(cls.downloadBlacklistLen * sizeof(blacklistentry_t)), fblacklist)) {
-					Com_Printf("blacklist file written to dlblacklist.dat\n");
+					Com_DPrintf("blacklist file written to dlblacklist.dat\n");
 				}
 			}
 
@@ -1474,7 +1540,7 @@ Called when all downloading has been completed
 =================
 */
 void CL_DownloadsComplete( void ) {
-	CL_BlacklistWriteFile();
+	CL_BlacklistWriteCloseFile();
 
 	// if we downloaded files we need to restart the file system
 	if (clc.downloadRestart) {
@@ -1709,30 +1775,9 @@ void CL_InitDownloads(void) {
 				"Go to the setting menu to turn on autodownload, or get the file elsewhere\n\n", missingfiles );
 		}
 	} else if ( FS_ComparePaks( clc.downloadList, sizeof(clc.downloadList), clc.downloadChksums, sizeof(clc.downloadChksums) / sizeof(int), qtrue ) ) {
-		fileHandle_t fblacklist;
-		int len;
-
 		Com_Printf("Need paks: %s\n", clc.downloadList );
 
-		// read the current blacklist
-		len = FS_SV_FOpenFileRead("dlblacklist.dat", &fblacklist);
-		if (len >= sizeof(uint8_t)) {
-			uint8_t version;
-
-			FS_Read(&version, sizeof(uint8_t), fblacklist);
-			if (version == BLACKLIST_FILE_VERSION) {
-				size_t entryslen = len - sizeof(uint8_t);
-				if (entryslen) {
-					cls.downloadBlacklist = (blacklistentry_t *)Z_Malloc((int)entryslen, TAG_DOWNLOADBLACKLIST, qtrue);
-					FS_Read(cls.downloadBlacklist, (int)entryslen, fblacklist);
-					cls.downloadBlacklistLen = entryslen / sizeof(blacklistentry_t);
-				}
-			} else {
-				Com_Printf("blacklist file version mismatch\n");
-			}
-
-			FS_FCloseFile(fblacklist);
-		}
+		CL_ReadBlacklistFile();
 
 		if (*clc.downloadList && (clc.udpdl || clc.httpdl[0])) {
 			cls.state = CA_CONNECTED;

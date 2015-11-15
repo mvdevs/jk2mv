@@ -1,31 +1,31 @@
 ORI_HASH 1700153493
 
 LINES_INSERT 38 [
-			hide			mvoptions;
+			hide			downloads;
 ]
 
 LINES_INSERT 575 [
-			hide			mvoptions;
+			hide			downloads;
 ]
 
 LINES_INSERT 639 [
-			hide			mvoptions;
+			hide			downloads;
 ]
 
 LINES_INSERT 701 [
-			hide			mvoptions;
+			hide			downloads;
 ]
 
 LINES_INSERT 763 [
-			hide			mvoptions;
+			hide			downloads;
 ]
 
 LINES_INSERT 825 [
-			hide			mvoptions;
+			hide			downloads;
 ]
 
 LINES_INSERT 888 [
-			hide			mvoptions;
+			hide			downloads;
 ]
 
 LINES_REPLACE 901 [
@@ -37,7 +37,7 @@ LINES_REPLACE 916 [
 ]
 
 LINES_INSERT 950 [
-			hide			mvoptions;
+			hide			downloads;
 ]
 
 LINES_INSERT 1091 [
@@ -461,6 +461,45 @@ LINES_REPLACE 1529 [
 			rect				120 413 170 30
 ]
 
+LINES_DELETE 1948 1978
+
+LINES_INSERT 1947 [
+		itemDef 
+		{	
+			name				dynamicglow
+			group				video2
+      		type				ITEM_TYPE_MULTI
+			text				@MV_DYNAMIC_GLOW
+			descText			@MV_DYNAMIC_GLOW_INFO
+			cvar				"r_dynamicglow"
+			cvarFloatList		
+			{ 
+				@MENUS0_OFF	 	0
+				@MENUS0_ON 		1
+			}
+			rect				305 371 300 20
+	   		textalign			ITEM_ALIGN_RIGHT
+			textalignx			165
+			textaligny			-2
+			font 				2
+			textscale 			0.8
+			forecolor			1 1 1 1
+			visible			1
+			action
+			{
+				play			"sound/interface/button1.wav" ; 
+			}
+			mouseenter 
+			{ 
+				show			highlight11
+			}
+			mouseexit 
+			{ 
+				hide			highlight11
+			} 
+		}
+]
+
 LINES_REPLACE 2020 [
 				play			"sound/interface/button1.wav"
 ]
@@ -507,16 +546,16 @@ LINES_DELETE 3054 3055
 LINES_INSERT 3053 [
 		//----------------------------------------------------------------------------------------------
 		//
-		//	JK2MV Menu
+		//	Downloads Menu
 		//
 		//----------------------------------------------------------------------------------------------
 		itemDef
 		{
-			name				mvoptionsbutton_glow
+			name				downloadsbutton_glow
 			group				highlights
 			style				WINDOW_STYLE_SHADER
 			rect				120 353 170 30
-			background			"gfx/menus/menu_blendbox2"
+			background			"gfx/menus/menu_blendbox2"			// Frame around button
 			forecolor			1 1 1 1
 			visible			0
 			// appearance_slot		1
@@ -525,9 +564,9 @@ LINES_INSERT 3053 [
 
 		itemDef
 		{
-			name				mvmenubutton
+			name				downloadsbutton
 			group				setup_submenu
-			text				@MV_JK2MV
+			text				@MV_DOWNLOADS
 			type				ITEM_TYPE_BUTTON
 			style				WINDOW_STYLE_EMPTY
 			rect				120 353 170 30
@@ -538,26 +577,25 @@ LINES_INSERT 3053 [
 			textalign			ITEM_ALIGN_RIGHT
 			textstyle			3
 			forecolor			0.65 0.65 1 1
-			visible				1
-			descText			@MV_JK2MV_CONFIGURE_OPTIONS
+			visible			1
+			descText			@MV_DOWNLOADS_INFO
 
-			mouseEnter
-			{
-				show			mvoptionsbutton_glow
+			mouseEnter 
+			{ 
+				show			downloadsbutton_glow
 			}
-
-			mouseExit
-			{
-				hide			mvoptionsbutton_glow
-			}
-
-			action
-			{
+			mouseExit 
+			{ 
+				hide			downloadsbutton_glow
+			}	  	  
+			action 
+			{ 
 				play			"sound/interface/button1.wav"
+				uiScript		LoadDLFiles;
 
 				defer			VideoSetup	videowarningMenu
 				show			setup_background
-				hide			video
+				hide 			video
 				hide			applyChanges
 				hide			player
 				hide			video2
@@ -567,94 +605,202 @@ LINES_INSERT 3053 [
 				hide			langapply
 				hide			mods
 				hide			defaults
-				show			mvoptions
+				show			downloads
 
-				setitemcolor	setup_submenu		forecolor	0.65 0.65 1 1
-				setitemcolor	mvoptionsbutton		forecolor	1 1 1 1
+				setitemcolor	setup_submenu			forecolor	0.65 0.65 1 1 ;
+				setitemcolor	downloadsbutton	forecolor	1 1 1 1 ;
 			}
 		}
-
+		
 		//----------------------------------------------------------------------------------------------
 		//
-		//	JK2MV Fields
+		//	Download Fields
 		//
 		//----------------------------------------------------------------------------------------------
-		itemDef
-		{
+		itemDef 
+		{	
 			name				allowdownload
-			group				mvoptions
-			type				ITEM_TYPE_MULTI
-			text				@MENUS3_ALLOW_DOWNLOADS
-			descText			@MENUS3_ALLOW_DOWNLOADS_INFO
+			group				downloads
+      		type				ITEM_TYPE_MULTI
+			text				@MV_DOWNLOADS_BLOCKALL
+			descText			@MV_DOWNLOADS_BLOCKALL_INFO
 			cvar				"mv_allowDownload"
-			cvarFloatList
-			{
-				@MENUS0_OFF		0
-				@MENUS0_ON		1
+			cvarFloatList		
+			{ 
+				@MENUS0_OFF	 	1
+				@MENUS0_ON 		0
 			}
-
+//			rect				305 331 300 20
 			rect				305 171 300 20
-			textalign			ITEM_ALIGN_RIGHT
+	   		textalign			ITEM_ALIGN_RIGHT
 			textalignx			165
 			textaligny			-2
-			font				2
-			textscale			0.8
+			font 				2
+			textscale 			0.8
 			forecolor			1 1 1 1
-			visible				1
-
+			visible			1
 			action
 			{
-				play			"sound/interface/button1.wav"
+				play			"sound/interface/button1.wav";
 			}
-
-			mouseenter
-			{
+			mouseenter 
+			{ 
 				show			highlight1
 			}
-
-			mouseexit
-			{
+			mouseexit 
+			{ 
 				hide			highlight1
-			}
+			} 
+		}
+		
+		itemDef 
+		{
+			name				downloads_list
+			group				downloads
+			rect				302 194 300 180
+			type				ITEM_TYPE_LISTBOX
+			style				WINDOW_STYLE_FILLED
+			elementwidth		120
+			elementheight		15
+			font				2
+			textscale			0.6
+			border				1
+			bordersize			1
+			bordercolor			.5 .5 .5 .5
+			forecolor			1 1 1 1
+			backcolor			0 0 .5 .25
+			outlinecolor		.5 .5 .5 .5
+			elementtype			LISTBOX_TEXT
+			feeder				17
+			notselectable
+			visible				0
+			columns				1	2 40 40
 		}
 
-		itemDef
+		itemDef 
 		{
-			name				dynamicglow
-			group				mvoptions
-			type				ITEM_TYPE_MULTI
-			text				@MV_DYNAMIC_GLOW
-			descText			@MV_DYNAMIC_GLOW_INFO
-			cvar				"r_dynamicglow"
-			cvarFloatList		
-			{
-				@MENUS0_OFF		0
-				@MENUS0_ON		1
-			}
+			name				dlinfo_button_glow
+			style				WINDOW_STYLE_SHADER
+			rect				325 385 80 25
+			background			"gfx/menus/menu_buttonback"
+			forecolor			1 1 1 1
+			visible				0
+			decoration
+		}
 
-			rect				305 191 300 20
-			textalign			ITEM_ALIGN_RIGHT
-			textalignx			165
-			textaligny			-2
+		itemDef 
+		{
+			name				dlinfo_button
+			group				downloads
+			text				@MV_DOWNLOADS_DLINFO
+			descText			@MV_DOWNLOADS_DLINFO_INFO
+			type				ITEM_TYPE_BUTTON
+			style				WINDOW_STYLE_EMPTY
+			rect				325 385 80 25
+			textalign			ITEM_ALIGN_CENTER
+			textalignx			40
 			font				2
 			textscale			0.8
+			forecolor			0.65 0.65 1 1
+			visible				0
+			action 
+			{ 
+				play			"sound/interface/button1.wav" ; 
+				uiScript		DLInfo;
+			}
+
+			mouseEnter 
+			{ 
+				show			dlinfo_button_glow
+			}
+			mouseExit 
+			{ 
+				hide			dlinfo_button_glow
+			}	  	  
+		}
+
+		itemDef 
+		{
+			name				dlpermanent_button_glow
+			style				WINDOW_STYLE_SHADER
+			rect				410 385 100 25
+			background			"gfx/menus/menu_buttonback"
 			forecolor			1 1 1 1
-			visible				1
+			visible				0
+			decoration
+		}
 
-			action
-			{
-				play			"sound/interface/button1.wav"
+		itemDef 
+		{
+			name				dlpermanent_button
+			group				downloads
+			text				@MV_DOWNLOADS_DLPERMANENT
+			descText			@MV_DOWNLOADS_DLPERMANENT_INFO
+			type				ITEM_TYPE_BUTTON
+			style				WINDOW_STYLE_EMPTY
+			rect				410 385 100 25
+			textalign			ITEM_ALIGN_CENTER
+			textalignx			50
+			font				2
+			textscale			0.8
+			forecolor			0.65 0.65 1 1
+			visible				0
+			action 
+			{ 
+				play			"sound/interface/button1.wav" ; 
+				uiScript		DLPermanent;
 			}
 
-			mouseenter
-			{
-				show			highlight2
+			mouseEnter 
+			{ 
+				show			dlpermanent_button_glow
+			}
+			mouseExit 
+			{ 
+				hide			dlpermanent_button_glow
+			}	  	  
+		}
+
+		itemDef 
+		{
+			name				dlremove_button_glow
+			style				WINDOW_STYLE_SHADER
+			rect				515 385 80 25
+			background			"gfx/menus/menu_buttonback"
+			forecolor			1 1 1 1
+			visible				0
+			decoration
+		}
+
+		itemDef 
+		{
+			name				dlremove_button
+			group				downloads
+			text				@MV_DOWNLOADS_DLREMOVE
+			descText			@MV_DOWNLOADS_DLREMOVE_INFO
+			type				ITEM_TYPE_BUTTON
+			style				WINDOW_STYLE_EMPTY
+			rect				515 385 80 25
+			textalign			ITEM_ALIGN_CENTER
+			textalignx			40
+			font				2
+			textscale			0.8
+			forecolor			0.65 0.65 1 1
+			visible				0
+			action 
+			{ 
+				play			"sound/interface/button1.wav" ; 
+				uiScript		DLRemove;
 			}
 
-			mouseexit
-			{
-				hide			highlight2
+			mouseEnter 
+			{ 
+				show			dlremove_button_glow
 			}
+			mouseExit 
+			{ 
+				hide			dlremove_button_glow
+			}  
 		}
 	}
 }

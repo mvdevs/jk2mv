@@ -1,0 +1,113 @@
+{
+	menuDef
+	{
+		name					"download_info"
+		visible					0
+		fullscreen				0
+		rect					350 190 200 200
+		focusColor				1 1 1 1
+		style					1
+		border					1
+		descX					320
+		descY					450
+		descScale				0.7
+		descColor				.235 .882 .847 1
+		descAlignment			ITEM_ALIGN_CENTER
+		popup
+		
+		onESC 
+		{ 
+			play				"sound/interface/button1.wav"
+			close				all
+			open				setupMenu
+		}
+
+		onClose
+		{
+			play				"sound/interface/button1.wav"
+		}
+		
+		itemDef 
+		{
+			name				dlinfo_background
+			group				none
+			style				WINDOW_STYLE_SHADER
+			rect				0 0 200 200
+			background			"gfx/menus/menu_box_dark"
+			forecolor			1 1 1 1
+			visible				1
+			decoration
+		}
+
+		itemDef
+		{
+			name				dlinfo_title
+			text				@MV_DOWNLOADS_INFOTITLE
+			style				WINDOW_STYLE_SHADER
+			background			"gfx/menus/menu_blendbox"
+			rect				0 5 200 20
+			font				3
+			textscale			0.7
+			textalign			ITEM_ALIGN_CENTER
+			textalignx			100
+			textaligny			1
+			forecolor			1 1 1 1
+			visible				1
+			decoration
+		}
+
+		// file name
+		itemDef
+		{
+			name				dlinfo_filename
+			cvar				"ui_dlinfo_name"
+			style				0
+			decoration
+			font				2
+			textscale			0.6
+			rect				10 30 200 20
+			forecolor			1 1 1 1
+			visible				1
+		}
+
+		itemDef 
+		{
+			name				dlinfo_done_button_glow
+			style				WINDOW_STYLE_SHADER
+			rect				50 175 100 20
+			background			"gfx/menus/menu_buttonback"
+			forecolor			1 1 1 1
+			visible				0
+			decoration
+		}
+
+		itemDef 
+		{
+			name				dlinfo_done_button
+			text				@MENUS1_DONE
+			type				ITEM_TYPE_BUTTON
+			style				WINDOW_STYLE_EMPTY
+			rect				50 175 100 20
+			textalign			ITEM_ALIGN_CENTER
+			textalignx			50
+			font				2
+			textscale			0.8
+			forecolor			0.65 0.65 1 1
+			visible				1
+			action 
+			{ 
+				play			"sound/interface/button1.wav" ; 
+				close			download_info;
+			}
+
+			mouseEnter 
+			{ 
+				show			dlinfo_done_button_glow
+			}
+			mouseExit 
+			{ 
+				hide			dlinfo_done_button_glow
+			}	  	  
+		}
+	}
+}

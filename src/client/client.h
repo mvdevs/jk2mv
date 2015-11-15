@@ -454,6 +454,10 @@ void CL_StartDemoLoop( void );
 void CL_NextDemo( void );
 void CL_ReadDemoMessage( void );
 
+void CL_ReadBlacklistFile();
+qboolean CL_BlacklistRemoveFile(const blacklistentry_t *file);
+void CL_BlacklistWriteCloseFile();
+
 void CL_InitDownloads(void);
 void CL_NextDownload(void);
 void CL_DownloadsComplete(void);

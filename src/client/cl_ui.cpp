@@ -19,13 +19,10 @@ Ghoul2 Insert End
 extern	botlib_export_t	*botlib_export;
 void SP_Register(const char *Package);
 
+int UI_ConcatDLList(dlfile_t *files, int maxfiles);
+qboolean UI_DeleteDLFile(const dlfile_t *file);
+
 vm_t *uivm;
-
-#ifdef USE_CD_KEY
-
-extern char cl_cdkey[34];
-
-#endif // USE_CD_KEY
 
 // the UI keeps it's own protocol from init to shutdown to keep the keymapping
 // working correctly. (on a 1.02 server in the connecting screen the engine already communicates with protocol 15, but the jk2mvmenu is still running which needs keys16)
@@ -729,49 +726,6 @@ void Key_SetCatcher( int catcher ) {
 	cls.keyCatchers = catcher;
 }
 
-
-#ifdef USE_CD_KEY
-
-/*
-====================
-CLUI_GetCDKey
-====================
-*/
-static void CLUI_GetCDKey( char *buf, int buflen ) {
-	cvar_t	*fs;
-	fs = Cvar_Get ("fs_game", "", CVAR_INIT|CVAR_SYSTEMINFO );
-	if (UI_usesUniqueCDKey() && fs && fs->string[0] != 0) {
-		Com_Memcpy( buf, &cl_cdkey[16], 16);
-		buf[16] = 0;
-	} else {
-		Com_Memcpy( buf, cl_cdkey, 16);
-		buf[16] = 0;
-	}
-}
-
-
-/*
-====================
-CLUI_SetCDKey
-====================
-*/
-static void CLUI_SetCDKey( char *buf ) {
-	cvar_t	*fs;
-	fs = Cvar_Get ("fs_game", "", CVAR_INIT|CVAR_SYSTEMINFO );
-	if (UI_usesUniqueCDKey() && fs && fs->string[0] != 0) {
-		Com_Memcpy( &cl_cdkey[16], buf, 16 );
-		cl_cdkey[32] = 0;
-		// set the flag so the fle will be written at the next opportunity
-		cvar_modifiedFlags |= CVAR_ARCHIVE;
-	} else {
-		Com_Memcpy( cl_cdkey, buf, 16 );
-		// set the flag so the fle will be written at the next opportunity
-		cvar_modifiedFlags |= CVAR_ARCHIVE;
-	}
-}
-
-#endif // USE_CD_KEY
-
 /*
 ====================
 GetConfigString
@@ -1227,8 +1181,24 @@ Ghoul2 Insert End
 
 	// download popup
 	case UI_MV_CONTINUE_DOWNLOAD:
-		CL_ContinueCurrentDownload((dldecision_t)args[1]);
+		if (uigameversion == VERSION_UNDEF)
+			CL_ContinueCurrentDownload((dldecision_t)args[1]);
 		return 0;
+
+	case UI_MV_GETDLLIST:
+		if (uigameversion == VERSION_UNDEF)
+			return UI_ConcatDLList((dlfile_t *)VMA(1), args[2]);
+		else return qtrue;
+
+	case UI_MV_RMDLPREFIX:
+		if (uigameversion == VERSION_UNDEF)
+			return FS_RMDLPrefix((const char *)VMA(1));
+		else return qtrue;
+
+	case UI_MV_DELDLFILE:
+		if (uigameversion == VERSION_UNDEF)
+			return UI_DeleteDLFile((const dlfile_t *)VMA(1));
+		else return qtrue;
 
 	case MVAPI_GET_VERSION:
 		return (int)MV_GetCurrentGameversion();
@@ -1336,4 +1306,54 @@ mvversion_t UI_GetCurrentGameversion() {
 
 void UI_SetCurrentGameversion(mvversion_t protocol) {
 	uigameversion = protocol;
+}
+
+/*
+====================
+UI_ConcatDLList
+
+Get both, all downloaded files and all blacklisted entrys
+Load the blacklist entrys first so they have a better chance
+to fit in the buffer
+====================
+*/
+int UI_ConcatDLList(dlfile_t *files, int maxfiles) {
+	int i, c = 0;
+
+	CL_ReadBlacklistFile();
+	for (i = 0; i < cls.downloadBlacklistLen && maxfiles; i++, maxfiles--) {
+		Q_strncpyz(files->name, cls.downloadBlacklist[i].name, sizeof(files->name));
+		files->time = cls.downloadBlacklist[i].time;
+		files->checkksum = cls.downloadBlacklist[i].checksum;
+		files->blacklisted = qtrue;
+
+		c++; files++;
+	}
+	CL_BlacklistWriteCloseFile();
+
+	return c + FS_GetDLList(files, maxfiles);
+}
+
+qboolean UI_DeleteDLFile(const dlfile_t *file) {
+	if (file->blacklisted) {
+		int i;
+
+		CL_ReadBlacklistFile();
+
+		for (i = 0; i < cls.downloadBlacklistLen; i++) {
+			if (cls.downloadBlacklist[i].checksum == file->checkksum) {
+				if (!CL_BlacklistRemoveFile(&cls.downloadBlacklist[i])) {
+					CL_BlacklistWriteCloseFile();
+					return qfalse;
+				}
+
+				break;
+			}
+		}
+
+		CL_BlacklistWriteCloseFile();
+		return qtrue;
+	} else {
+		return FS_DeleteDLFile(file->name);
+	}
 }

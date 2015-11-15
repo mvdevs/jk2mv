@@ -617,6 +617,7 @@ typedef struct {
 #define MAPS_PER_TIER 3
 #define MAX_TIERS 16
 #define MAX_MODS 64
+#define MAX_DOWNLOADS 512
 #define MAX_DEMOS 256
 #define MAX_MOVIES 256
 #define MAX_PLAYERMODELS 256
@@ -793,6 +794,10 @@ typedef struct {
 	modInfo_t modList[MAX_MODS];
 	int modCount;
 	int modIndex;
+
+	dlfile_t downloadsList[MAX_DOWNLOADS];
+	int downloadsCount;
+	int downloadsIndex;
 
 	const char *demoList[MAX_DEMOS];
 	int demoCount;
@@ -1011,6 +1016,10 @@ Ghoul2 Insert End
 */
 
 void trap_CL_ContinueCurrentDownload(dldecision_t decision);
+
+qboolean trap_FS_GetDLList(dlfile_t *files, int maxfiles);
+qboolean trap_FS_RMDLPrefix(const char *qpath);
+qboolean trap_UI_DeleteDLFile(const dlfile_t *file);
 
 //
 // ui_addbots.c

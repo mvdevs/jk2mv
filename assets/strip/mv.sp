@@ -1,6 +1,6 @@
 VERSION 1
 REFERENCE MV
-COUNT 19
+COUNT 30
 INDEX 0
 {
    REFERENCE GAME_VERSION
@@ -171,4 +171,103 @@ INDEX 18
    TEXT_LANGUAGE3 "Bots in Spieleranzahl mitzählen."
    TEXT_LANGUAGE6 "Include bots in player count."
    TEXT_LANGUAGE8 "Incluir bots en el conteo de jugadores."
+}
+INDEX 19
+{
+   REFERENCE DOWNLOADS
+   TEXT_LANGUAGE1 "Downloads"
+   TEXT_LANGUAGE2 "Télécharger"
+   TEXT_LANGUAGE3 "Downloads"
+   TEXT_LANGUAGE6 "Downloads"
+   TEXT_LANGUAGE8 "Downloads"
+}
+INDEX 20
+{
+   REFERENCE DOWNLOADS_INFO
+   TEXT_LANGUAGE1 "List Downloads / Remove files from blacklist"
+   TEXT_LANGUAGE2 "List Downloads / Remove files from blacklist"
+   TEXT_LANGUAGE3 "Downloads auflisten / Blockierte Dateien wieder freigeben."
+   TEXT_LANGUAGE6 "List Downloads / Remove files from blacklist"
+   TEXT_LANGUAGE8 "List Downloads / Remove files from blacklist"
+}
+INDEX 21
+{
+   REFERENCE DOWNLOADS_BLOCKALL
+   TEXT_LANGUAGE1 "Block Downloads:"
+   TEXT_LANGUAGE2 "Block Downloads:"
+   TEXT_LANGUAGE3 "Downloads blockieren:"
+   TEXT_LANGUAGE6 "Block Downloads:"
+   TEXT_LANGUAGE8 "Block Downloads:"
+}
+INDEX 22
+{
+   REFERENCE DOWNLOADS_BLOCKALL_INFO
+   TEXT_LANGUAGE1 "Block all downloads without asking."
+   TEXT_LANGUAGE2 "Block all downloads without asking."
+   TEXT_LANGUAGE3 "Alle Downloads ohne Nachfrage blockieren."
+   TEXT_LANGUAGE6 "Block all downloads without asking."
+   TEXT_LANGUAGE8 "Block all downloads without asking."
+}
+INDEX 23
+{
+   REFERENCE DOWNLOADS_DLINFO
+   TEXT_LANGUAGE1 "Details"
+   TEXT_LANGUAGE2 "Details"
+   TEXT_LANGUAGE3 "Details"
+   TEXT_LANGUAGE6 "Details"
+   TEXT_LANGUAGE8 "Details"
+}
+INDEX 24
+{
+   REFERENCE DOWNLOADS_DLINFO_INFO
+   TEXT_LANGUAGE1 "Show detailed information for this file."
+   TEXT_LANGUAGE2 "Show detailed information for this file."
+   TEXT_LANGUAGE3 "Datails zu dieser Datei anzeigen."
+   TEXT_LANGUAGE6 "Show detailed information for this file."
+   TEXT_LANGUAGE8 "Show detailed information for this file."
+}
+INDEX 25
+{
+   REFERENCE DOWNLOADS_DLREMOVE
+   TEXT_LANGUAGE1 "Delete"
+   TEXT_LANGUAGE2 "Delete"
+   TEXT_LANGUAGE3 "Löschen"
+   TEXT_LANGUAGE6 "Delete"
+   TEXT_LANGUAGE8 "Delete"
+}
+INDEX 26
+{
+   REFERENCE DOWNLOADS_DLREMOVE_INFO
+   TEXT_LANGUAGE1 "Remove file / blacklist entry."
+   TEXT_LANGUAGE2 "Remove file / blacklist entry."
+   TEXT_LANGUAGE3 "Datei löschen / Blockierung aufheben."
+   TEXT_LANGUAGE6 "Remove file / blacklist entry."
+   TEXT_LANGUAGE8 "Remove file / blacklist entry."
+}
+INDEX 27
+{
+   REFERENCE DOWNLOADS_DLPERMANENT
+   TEXT_LANGUAGE1 "Make Permanent"
+   TEXT_LANGUAGE2 "Make Permanent"
+   TEXT_LANGUAGE3 "Immer laden"
+   TEXT_LANGUAGE6 "Make Permanent"
+   TEXT_LANGUAGE8 "Make Permanent"
+}
+INDEX 28
+{
+   REFERENCE DOWNLOADS_DLPERMANENT_INFO
+   TEXT_LANGUAGE1 "Always load this file when JK2 starts."
+   TEXT_LANGUAGE2 "Always load this file when JK2 starts."
+   TEXT_LANGUAGE3 "Datei immer laden wenn JK2 startet."
+   TEXT_LANGUAGE6 "Always load this file when JK2 starts."
+   TEXT_LANGUAGE8 "Always load this file when JK2 starts."
+}
+INDEX 29
+{
+   REFERENCE DOWNLOADS_INFOTITLE
+   TEXT_LANGUAGE1 "File Info"
+   TEXT_LANGUAGE2 "File Info"
+   TEXT_LANGUAGE3 "Datei Informationen"
+   TEXT_LANGUAGE6 "File Info"
+   TEXT_LANGUAGE8 "File Info"
 }

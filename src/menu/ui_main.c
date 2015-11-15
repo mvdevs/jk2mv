@@ -960,7 +960,9 @@ void UI_LoadMenus(const char *menuFile, qboolean reset) {
 			}
 		}
 	}
+
 	UI_ParseMenu("ui/jk2mv/download_popup.menu");
+	UI_ParseMenu("ui/jk2mv/download_info.menu");
 
 	Com_Printf("UI menu load time = %d milli seconds\n", trap_Milliseconds() - start);
 
@@ -3782,6 +3784,26 @@ static void UI_LoadDemos() {
 	qsort((void *)uiInfo.demoList, uiInfo.demoCount, sizeof(uiInfo.demoList[0]), demosort);
 }
 
+/*
+===============
+UI_LoadDLFiles
+===============
+*/
+static void UI_LoadDLFiles() {
+	int i;
+	
+	uiInfo.downloadsCount = trap_FS_GetDLList(uiInfo.downloadsList, MAX_DOWNLOADS);
+
+	// red font for blacklisted entrys
+	for (i = 0; i < uiInfo.downloadsCount; i++) {
+		if (uiInfo.downloadsList[i].blacklisted) {
+			char tmp[256];
+
+			Com_sprintf(tmp, sizeof(tmp), "^1%s", uiInfo.downloadsList[i].name);
+			Q_strncpyz(uiInfo.downloadsList[i].name, tmp, sizeof(uiInfo.downloadsList[i].name));
+		}
+	}
+}
 
 static qboolean UI_SetNextMap(int actual, int index) {
 	int i;
@@ -4372,6 +4394,8 @@ static void UI_RunMenuScript(char **args)
 			UI_LoadMovies();
 		} else if (Q_stricmp(name, "LoadMods") == 0) {
 			UI_LoadMods();
+		} else if (Q_stricmp(name, "LoadDLFiles") == 0) {
+			UI_LoadDLFiles();
 		} else if (Q_stricmp(name, "playMovie") == 0) {
 			if (uiInfo.previewMovie >= 0) {
 			  trap_CIN_StopCinematic(uiInfo.previewMovie);
@@ -4752,6 +4776,22 @@ static void UI_RunMenuScript(char **args)
 				} else if (!Q_stricmp(name2, "deny_blacklist")) {
 					trap_CL_ContinueCurrentDownload(DL_ABORT_BLACKLIST);
 				}
+			}
+		} else if (Q_stricmp(name, "DLInfo") == 0) {
+			if (uiInfo.downloadsCount) {
+				trap_Cvar_Set("ui_dlinfo_name", uiInfo.downloadsList[uiInfo.downloadsIndex].name);
+
+				Menus_ActivateByName("download_info");
+			}
+		} else if (Q_stricmp(name, "DLPermanent") == 0) {
+			if (uiInfo.downloadsCount && !uiInfo.downloadsList[uiInfo.downloadsIndex].blacklisted) {
+				trap_FS_RMDLPrefix(uiInfo.downloadsList[uiInfo.downloadsIndex].name);
+				UI_LoadDLFiles();
+			}
+		} else if (Q_stricmp(name, "DLRemove") == 0) {
+			if (uiInfo.downloadsCount) {
+				trap_UI_DeleteDLFile(&uiInfo.downloadsList[uiInfo.downloadsIndex]);
+				UI_LoadDLFiles();
 			}
 		} else {
 			Com_Printf("unknown UI script %s\n", name);
@@ -5542,6 +5582,9 @@ static int UI_FeederCount(float feederID)
 		case FEEDER_MODS:
 			return uiInfo.modCount;
 
+		case FEEDER_DOWNLOADS:
+			return uiInfo.downloadsCount;
+
 		case FEEDER_DEMOS:
 			return uiInfo.demoCount;
 	}
@@ -5887,6 +5930,10 @@ static const char *UI_FeederItemText(float feederID, int index, int column,
 				return uiInfo.modList[index].modName;
 			}
 		}
+	} else if (feederID == FEEDER_DOWNLOADS) {
+		if (index >= 0 && index < uiInfo.downloadsCount) {
+			return uiInfo.downloadsList[index].name;
+		}
 	} else if (feederID == FEEDER_CINEMATICS) {
 		if (index >= 0 && index < uiInfo.movieCount) {
 			return uiInfo.movieList[index];
@@ -6127,6 +6174,8 @@ qboolean UI_FeederSelection(float feederID, int index) {
 		uiInfo.teamIndex = index;
 	} else if (feederID == FEEDER_MODS) {
 		uiInfo.modIndex = index;
+	} else if (feederID == FEEDER_DOWNLOADS) {
+		uiInfo.downloadsIndex = index;
 	} else if (feederID == FEEDER_CINEMATICS) {
 		uiInfo.movieIndex = index;
 		if (uiInfo.previewMovie >= 0) {

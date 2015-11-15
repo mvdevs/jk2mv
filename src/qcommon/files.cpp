@@ -3747,3 +3747,77 @@ void FS_FilenameCompletion( const char *dir, const char *ext, qboolean stripExt,
 		//there are remaining extensions to list.
 		FS_FilenameCompletion(dir, pch + 1, stripExt, callback);
 }
+
+int FS_GetDLList(dlfile_t *files, int maxfiles) {
+	char **dirs, **pakfiles;
+	int c, d, paknum, dirnum;
+	char *gamepath;
+	int ret = 0;
+
+	// get all fs_game dirs
+	dirs = Sys_ListFiles(fs_homepath->string, "*", NULL, &dirnum, qtrue);
+	if (!dirs) {
+		return qfalse;
+	}
+
+	for (d = 0; d < dirnum; d++) {
+		if (!strcmp(dirs[d], ".") || !strcmp(dirs[d], "..")) {
+			continue;
+		}
+
+		gamepath = FS_BuildOSPath(fs_homepath->string, dirs[d], "");
+		pakfiles = Sys_ListFiles(gamepath, ".pk3", NULL, &paknum, qfalse);
+		if (!pakfiles) {
+			continue;
+		}
+
+		for (c = 0; c < paknum && maxfiles; c++) {
+			if (Q_stricmpn(pakfiles[c], "dl_", 3)) {
+				continue;
+			}
+
+			Com_sprintf(files->name, sizeof(files->name), "%s/%s", dirs[d], pakfiles[c]);
+			files->blacklisted = qfalse;
+			files->time = 0;
+
+			files++; ret++; maxfiles--;
+		}
+
+		Sys_FreeFileList(pakfiles);
+	}
+
+	Sys_FreeFileList(dirs);
+	return ret;
+}
+
+qboolean FS_RMDLPrefix(const char *qpath) {
+	char old_ospath[MAX_OSPATH], new_ospath[MAX_OSPATH];
+
+	Com_sprintf(old_ospath, sizeof(old_ospath), "%s/%s", fs_homepath->string, qpath);
+	FS_ReplaceSeparators(old_ospath);
+
+	const char *name = strchr(qpath, '/');
+	if (name && name != qpath && !strncmp(name, "/dl_", 4) && strlen(name) > 4) {
+		char newqpath[MAX_QPATH];
+
+		memcpy(newqpath, qpath, name - qpath + 1);
+		newqpath[name - qpath + 1] = '\0';
+		Q_strcat(newqpath, sizeof(newqpath), name + 4);
+
+		Com_sprintf(new_ospath, sizeof(new_ospath), "%s/%s", fs_homepath->string, newqpath);
+		FS_ReplaceSeparators(new_ospath);
+
+		return (qboolean)!!rename(old_ospath, new_ospath);
+	}
+
+	return qtrue;
+}
+
+qboolean FS_DeleteDLFile(const char *qpath) {
+	char ospath[MAX_OSPATH];
+
+	Com_sprintf(ospath, sizeof(ospath), "%s/%s", fs_homepath->string, qpath);
+	FS_ReplaceSeparators(ospath);
+
+	return (qboolean)!!remove(ospath);
+}

@@ -6,6 +6,7 @@
 #include "../qcommon/cm_public.h"
 #include "../game/q_shared.h"
 #include "../api/mvapi.h"
+#include "../menu/ui_public.h"
 
 //============================================================================
 
@@ -681,6 +682,10 @@ qboolean FS_ComparePaks(char *neededpaks, int len, int *chksums, size_t maxchksu
 void FS_Rename( const char *from, const char *to );
 
 qboolean FS_MV_VerifyDownloadPath(const char *pk3file);
+
+int FS_GetDLList(dlfile_t *files, int maxfiles);
+qboolean FS_RMDLPrefix(const char *qpath);
+qboolean FS_DeleteDLFile(const char *qpath);
 
 /*
 ==============================================================

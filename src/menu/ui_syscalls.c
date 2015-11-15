@@ -446,3 +446,16 @@ Ghoul2 Insert End
 void trap_CL_ContinueCurrentDownload(dldecision_t decision) {
 	engine_syscall(UI_MV_CONTINUE_DOWNLOAD, decision);
 }
+
+int trap_FS_GetDLList(dlfile_t *files, int maxfiles) {
+	return engine_syscall(UI_MV_GETDLLIST, files, maxfiles);
+}
+
+qboolean trap_FS_RMDLPrefix(const char *qpath) {
+	return engine_syscall(UI_MV_RMDLPREFIX, qpath);
+}
+
+qboolean trap_UI_DeleteDLFile(const dlfile_t *file) {
+	return engine_syscall(UI_MV_DELDLFILE, file);
+}
+
