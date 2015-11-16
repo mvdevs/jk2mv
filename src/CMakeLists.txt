@@ -645,7 +645,7 @@ if (BuildMVDED)
 	
 	set_target_properties(${MVDED} PROPERTIES COMPILE_DEFINITIONS_RELEASE "${ReleaseDefines};${GlobalDefines};${MVDEDDefines}")
 	set_target_properties(${MVDED} PROPERTIES COMPILE_DEFINITIONS_DEBUG "${DebugDefines};${GlobalDefines};${MVDEDDefines}")
-	set_target_properties(${MVDED} PROPERTIES INCLUDE_DIRECTORIES "${MVMPIncludeDirs}")
+	set_target_properties(${MVDED} PROPERTIES INCLUDE_DIRECTORIES "${MVDEDIncludeDirs}")
 	target_link_libraries(${MVDED} ${MVDEDLibraries})
 	set_target_properties(${MVDED} PROPERTIES PROJECT_LABEL "jk2mvded")
 	
