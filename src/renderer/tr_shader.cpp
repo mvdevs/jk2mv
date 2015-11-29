@@ -2582,6 +2582,7 @@ typedef struct {
 	int		multitextureBlend;
 } collapse_t;
 
+#ifndef DEDICATED
 static collapse_t	collapse[] = {
 	{ 0, GLS_DSTBLEND_SRC_COLOR | GLS_SRCBLEND_ZERO,
 		GL_MODULATE, 0 },
@@ -2612,6 +2613,7 @@ static collapse_t	collapse[] = {
 #endif
 	{ -1 }
 };
+#endif
 
 /*
 ================
@@ -2622,11 +2624,13 @@ FIXME: I think modulated add + modulated add collapses incorrectly
 =================
 */
 static qboolean CollapseMultitexture( void ) {
+#ifdef DEDICATED
+	return qfalse;
+#else
 	int abits, bbits;
 	int i;
-#ifndef DEDICATED
 	textureBundle_t tmpBundle;
-#endif
+
 
 	if ( !qglActiveTextureARB ) {
 		return qfalse;
@@ -2661,9 +2665,7 @@ static qboolean CollapseMultitexture( void ) {
 	if ( collapse[i].blendA == -1 ) {
 		return qfalse;
 	}
-#ifdef DEDICATED
-	return qfalse;
-#else
+
 	// GL_ADD is a separate extension
 	if ( collapse[i].multitextureEnv == GL_ADD && !glConfig.textureEnvAddAvailable ) {
 		return qfalse;
@@ -3814,6 +3816,7 @@ Dump information on all valid shaders to the console
 A second parameter will cause it to print in sorted order
 ===============
 */
+#ifndef DEDICATED
 void	R_ShaderList_f (void) {
 	int			i;
 	int			count;
@@ -3873,7 +3876,7 @@ void	R_ShaderList_f (void) {
 	ri.Printf (PRINT_ALL, "%i total shaders\n", count);
 	ri.Printf (PRINT_ALL, "------------------\n");
 }
-
+#endif
 
 /*
 ====================

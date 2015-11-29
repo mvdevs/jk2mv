@@ -14,7 +14,12 @@ typedef const char * LPCSTR;
 #ifdef _WIN32
 	#include "qgl.h"
 #else
+#ifndef DEDICATED
 	#include "../unix/sdl_qgl.h"
+#else
+typedef unsigned int GLuint;
+typedef int GLenum;
+#endif
 #endif
 
 #define GL_INDEX_TYPE		GL_UNSIGNED_INT

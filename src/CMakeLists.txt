@@ -11,14 +11,6 @@ if (BuildMVMP OR BuildMVDED)
 		find_package(Threads)
 		set(MVMPDEDLibraries ${MVMPDEDLibraries} ${CMAKE_THREAD_LIBS_INIT})
 		set(MVMPDEDLibraries ${MVMPDEDLibraries} ${CMAKE_DL_LIBS})
-
-		# FIXME SDL2 is currently required even for building only the jk2mvded
-		# only the headers though
-		find_package(SDL2)
-		if(NOT SDL2_FOUND)
-			message(FATAL_ERROR "libsdl2 dev files not found!")
-		endif()
-		set(MVMPDEDIncludeDirs ${MVMPDEDIncludeDirs} ${SDL2_INCLUDE_DIR})
 	endif()
 
 	if(UseInternalZLIB)
@@ -326,6 +318,11 @@ if (BuildMVMP)
 		set(MVMPLibraries ${MVMPLibraries} ${OPENAL_LIBRARY})
 
 		# SDL2
+		find_package(SDL2)
+		if(NOT SDL2_FOUND)
+			message(FATAL_ERROR "libsdl2 dev files not found!")
+		endif()
+		set(MVMPDEDIncludeDirs ${MVMPDEDIncludeDirs} ${SDL2_INCLUDE_DIR})
 		set(MVMPLibraries ${MVMPLibraries} ${SDL2_LIBRARY})
 	endif()
 

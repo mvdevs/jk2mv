@@ -10,10 +10,12 @@
 #include "../game/bg_public.h"
 #include "../api/mvapi.h"
 
+#ifndef DEDICATED
 #ifdef INTERNAL_CURL
 #	include <curl.h>
 #else
 #	include <curl/curl.h>
+#endif
 #endif
 
 #define	RETRANSMIT_TIMEOUT	3000	// time between connection packet retransmits
@@ -348,8 +350,10 @@ typedef struct {
 	size_t downloadBlacklistLen;
 	qboolean ignoreNextDownloadList;
 
+#ifndef DEDICATED
 	CURL *curl;
 	CURLM *curlm;
+#endif
 
 	mvfix_t fixes;
 } clientStatic_t;

@@ -1,6 +1,9 @@
 // tr_image.c
 #include "tr_local.h"
+
+#ifndef DEDICATED
 #include "glext.h"
+#endif
 
 #pragma warning (push, 3)	//go back down to 3 for the stl include
 #include <map>
@@ -16,13 +19,13 @@ using namespace std;
  * You may also wish to include "jerror.h".
  */
 
+#ifndef DEDICATED
 #ifdef INTERNAL_JPEG
 #   define JPEG_INTERNALS
 #endif
 #include <jpeglib.h>
 #include <png.h>
 
-#ifndef DEDICATED
 static void LoadTGA( const char *name, byte **pic, int *width, int *height );
 static void LoadJPG( const char *name, byte **pic, int *width, int *height );
 

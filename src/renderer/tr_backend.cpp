@@ -1,7 +1,8 @@
 #include "tr_local.h"
-#include "glext.h"
 
 #ifndef DEDICATED
+#include "glext.h"
+
 #if !defined __TR_WORLDEFFECTS_H
 	#include "tr_WorldEffects.h"
 #endif
