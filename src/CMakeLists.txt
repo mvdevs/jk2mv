@@ -322,7 +322,7 @@ if (BuildMVMP)
 		if(NOT SDL2_FOUND)
 			message(FATAL_ERROR "libsdl2 dev files not found!")
 		endif()
-		set(MVMPDEDIncludeDirs ${MVMPDEDIncludeDirs} ${SDL2_INCLUDE_DIR})
+		set(MVMPIncludeDirs ${MVMPIncludeDirs} ${SDL2_INCLUDE_DIR})
 		set(MVMPLibraries ${MVMPLibraries} ${SDL2_LIBRARY})
 	endif()
 
