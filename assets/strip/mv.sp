@@ -179,7 +179,7 @@ INDEX 19
    TEXT_LANGUAGE2 "Télécharger"
    TEXT_LANGUAGE3 "Downloads"
    TEXT_LANGUAGE6 "Downloads"
-   TEXT_LANGUAGE8 "Downloads"
+   TEXT_LANGUAGE8 "Descargas"
 }
 INDEX 20
 {
@@ -188,7 +188,7 @@ INDEX 20
    TEXT_LANGUAGE2 "List Downloads / Remove files from blacklist"
    TEXT_LANGUAGE3 "Downloads auflisten / Blockierte Dateien wieder freigeben."
    TEXT_LANGUAGE6 "List Downloads / Remove files from blacklist"
-   TEXT_LANGUAGE8 "List Downloads / Remove files from blacklist"
+   TEXT_LANGUAGE8 "Lista de descargas / Remover archivos de la lista negra"
 }
 INDEX 21
 {
@@ -197,7 +197,7 @@ INDEX 21
    TEXT_LANGUAGE2 "Block Downloads:"
    TEXT_LANGUAGE3 "Downloads blockieren:"
    TEXT_LANGUAGE6 "Block Downloads:"
-   TEXT_LANGUAGE8 "Block Downloads:"
+   TEXT_LANGUAGE8 "Bloquear Descargas:"
 }
 INDEX 22
 {
@@ -206,7 +206,7 @@ INDEX 22
    TEXT_LANGUAGE2 "Block all downloads without asking."
    TEXT_LANGUAGE3 "Alle Downloads ohne Nachfrage blockieren."
    TEXT_LANGUAGE6 "Block all downloads without asking."
-   TEXT_LANGUAGE8 "Block all downloads without asking."
+   TEXT_LANGUAGE8 "Bloquear todas las descargas sin preguntar."
 }
 INDEX 23
 {
@@ -215,7 +215,7 @@ INDEX 23
    TEXT_LANGUAGE2 "Details"
    TEXT_LANGUAGE3 "Details"
    TEXT_LANGUAGE6 "Details"
-   TEXT_LANGUAGE8 "Details"
+   TEXT_LANGUAGE8 "Detalles"
 }
 INDEX 24
 {
@@ -224,7 +224,7 @@ INDEX 24
    TEXT_LANGUAGE2 "Show detailed information for this file."
    TEXT_LANGUAGE3 "Datails zu dieser Datei anzeigen."
    TEXT_LANGUAGE6 "Show detailed information for this file."
-   TEXT_LANGUAGE8 "Show detailed information for this file."
+   TEXT_LANGUAGE8 "Mostrar información detallada del archivo"
 }
 INDEX 25
 {
@@ -233,7 +233,7 @@ INDEX 25
    TEXT_LANGUAGE2 "Delete"
    TEXT_LANGUAGE3 "Löschen"
    TEXT_LANGUAGE6 "Delete"
-   TEXT_LANGUAGE8 "Delete"
+   TEXT_LANGUAGE8 "Eliminar"
 }
 INDEX 26
 {
@@ -242,7 +242,7 @@ INDEX 26
    TEXT_LANGUAGE2 "Remove file / blacklist entry."
    TEXT_LANGUAGE3 "Datei löschen / Blockierung aufheben."
    TEXT_LANGUAGE6 "Remove file / blacklist entry."
-   TEXT_LANGUAGE8 "Remove file / blacklist entry."
+   TEXT_LANGUAGE8 "Eliminar archivo / añadir a la lista negra"
 }
 INDEX 27
 {
@@ -251,7 +251,7 @@ INDEX 27
    TEXT_LANGUAGE2 "Make Permanent"
    TEXT_LANGUAGE3 "Immer laden"
    TEXT_LANGUAGE6 "Make Permanent"
-   TEXT_LANGUAGE8 "Make Permanent"
+   TEXT_LANGUAGE8 "Hacer Permanente"
 }
 INDEX 28
 {
@@ -260,7 +260,7 @@ INDEX 28
    TEXT_LANGUAGE2 "Always load this file when JK2 starts."
    TEXT_LANGUAGE3 "Datei immer laden wenn JK2 startet."
    TEXT_LANGUAGE6 "Always load this file when JK2 starts."
-   TEXT_LANGUAGE8 "Always load this file when JK2 starts."
+   TEXT_LANGUAGE8 "Cargar siempre este archivo cuando inicie JK2."
 }
 INDEX 29
 {
@@ -269,5 +269,5 @@ INDEX 29
    TEXT_LANGUAGE2 "File Info"
    TEXT_LANGUAGE3 "Datei Informationen"
    TEXT_LANGUAGE6 "File Info"
-   TEXT_LANGUAGE8 "File Info"
+   TEXT_LANGUAGE8 "Información del archivo"
 }
