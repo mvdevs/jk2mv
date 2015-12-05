@@ -1,6 +1,6 @@
 VERSION 1
 REFERENCE MV
-COUNT 30
+COUNT 34
 INDEX 0
 {
    REFERENCE GAME_VERSION
@@ -270,4 +270,40 @@ INDEX 29
    TEXT_LANGUAGE3 "Datei Informationen"
    TEXT_LANGUAGE6 "File Info"
    TEXT_LANGUAGE8 "Información del archivo"
+}
+INDEX 30
+{
+   REFERENCE NAME_SHADOWS
+   TEXT_LANGUAGE1 "Colored Shadows:"
+   TEXT_LANGUAGE2 "Ombres Colorées:"
+   TEXT_LANGUAGE3 "Farbige Schatten:"
+   TEXT_LANGUAGE6 "Colored Shadows:"
+   TEXT_LANGUAGE8 "Sombras Coloreadas:"
+}
+INDEX 31
+{
+   REFERENCE NAME_SHADOWS_INFO
+   TEXT_LANGUAGE1 "Colored shadows in names."
+   TEXT_LANGUAGE2 "Ombres colorées dans les noms."
+   TEXT_LANGUAGE3 "Farbige schatten in namen."
+   TEXT_LANGUAGE6 "Colored shadows in names."
+   TEXT_LANGUAGE8 "Sombras Coloreadas en los nombres."
+}
+INDEX 32
+{
+   REFERENCE CONSOLE_SHIFT
+   TEXT_LANGUAGE1 "Console Shift Key:"
+   TEXT_LANGUAGE2 "Console Maj Clé:"
+   TEXT_LANGUAGE3 "Konsole Shift-Taste:"
+   TEXT_LANGUAGE6 "Console Shift Key:"
+   TEXT_LANGUAGE8 "Tecla Shift Consola:"
+}
+INDEX 33
+{
+   REFERENCE CONSOLE_SHIFT_INFO
+   TEXT_LANGUAGE1 "Shift key required to open the console."
+   TEXT_LANGUAGE2 "Maj clé nécessaire pour ouvrir la console."
+   TEXT_LANGUAGE3 "Shift-Taste erforderlich, um die konsole zu öffnen."
+   TEXT_LANGUAGE6 "Shift key required to open the console."
+   TEXT_LANGUAGE8 "Tecla Shift necesaria para abrir la consola."
 }

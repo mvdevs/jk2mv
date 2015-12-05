@@ -558,4 +558,78 @@ LINES_INSERT 2255 [
 				hide			highlight3
 			}
 		}
+		
+		itemDef
+		{
+			name				nameshadows
+			group				mvoptions
+			type				ITEM_TYPE_MULTI
+			text				@MV_NAME_SHADOWS
+			descText			@MV_NAME_SHADOWS_INFO
+			cvar				"mv_nameShadows"
+			cvarFloatList		
+			{
+				@MENUS0_OFF		0
+				@MENUS0_ON		1
+				@MENUS0_DEFAULT		2
+			}
+
+			rect				220 101 300 20
+			textalign			ITEM_ALIGN_RIGHT
+			textalignx			165
+			textaligny			-2
+			font				2
+			textscale			0.8
+			forecolor			1 1 1 1
+			visible				1
+
+			action
+			{
+				play			"sound/interface/button1.wav"
+			}
+
+			mouseenter
+			{
+				show			highlight4
+			}
+
+			mouseexit
+			{
+				hide			highlight4
+			}
+		}
+		
+		itemDef
+		{
+			name				consoleshift
+			group				mvoptions
+			type				ITEM_TYPE_YESNO
+			text				@MV_CONSOLE_SHIFT
+			descText			@MV_CONSOLE_SHIFT_INFO
+			cvar				"mv_consoleShiftRequirement"
+
+			rect				220 121 300 20
+			textalign			ITEM_ALIGN_RIGHT
+			textalignx			165
+			textaligny			-2
+			font				2
+			textscale			0.8
+			forecolor			1 1 1 1
+			visible				1
+
+			action
+			{
+				play			"sound/interface/button1.wav"
+			}
+
+			mouseenter
+			{
+				show			highlight5
+			}
+
+			mouseexit
+			{
+				hide			highlight5
+			}
+		}
 ]
