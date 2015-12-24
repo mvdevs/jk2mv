@@ -6994,9 +6994,7 @@ static void UI_DisplayDownloadInfo( const char *downloadName, float centerPoint,
 	char sSec[20];
 	char downloadProtocol[32];
 	int downloadSize, downloadCount, downloadTime;
-	int percent, xes, i;
-#define X_NUM 30
-	char xbuf[X_NUM+3];
+	double percent;
 	const char *s;
 	char dlSizeBuf[64], totalSizeBuf[64], xferRateBuf[64], dlTimeBuf[64];
 	int xferRate;
@@ -7028,22 +7026,9 @@ static void UI_DisplayDownloadInfo( const char *downloadName, float centerPoint,
 
 		// round() = floor(x + 0.5)
 		// microsoft has no round() in vs2010, wtf?
-		percent = (int)floor((double)downloadCount * 100 / downloadSize + 0.5);
+		percent = (double)downloadCount * 100 / downloadSize + 0.5;
 
-		//old downloading bar
-		/*xes = (int)floor((double)X_NUM / 100 * percent + 0.5);
-
-		for (i = 0; i < sizeof(xbuf); i++) {
-			if (i != xes) {
-				xbuf[i] = '#';
-			} else {
-				xbuf[i++] = '^';
-				xbuf[i] = '7';
-			}
-		}
-		xbuf[sizeof(xbuf) - 1] = 0;*/
-
-		Text_PaintCenter(centerPoint, yStart + 100, scale, colorWhite, va("%s ^1[^7%s^1] ^1(^7%i%%^1)", sDownLoading, downloadProtocol, percent), 0, iMenuFont);
+		Text_PaintCenter(centerPoint, yStart + 100, scale, colorWhite, va("%s ^1[^7%s^1] ^1(^7%i%%^1)", sDownLoading, downloadProtocol, (int)floor(percent)), 0, iMenuFont);
 
 		Text_PaintCenter(centerPoint, yStart + 125, scale, colorWhite, va("%s", downloadName), 0, iMenuFont);
 
@@ -7051,7 +7036,7 @@ static void UI_DisplayDownloadInfo( const char *downloadName, float centerPoint,
 		
 		//new downloading bar
 		UI_DrawRect( centerPoint - 175, yStart + 157, 350.0f, 20.0f, colorRed );
-		UI_FillRect( centerPoint - 170, yStart + 162, ((float)percent * 3.4), 10.0f, colorRed ); 
+		UI_FillRect( centerPoint - 170, yStart + 162, (percent * 3.4), 10.0f, colorRed ); 
 
 		UI_ReadableSize(dlSizeBuf, sizeof dlSizeBuf, downloadCount);
 		UI_ReadableSize(totalSizeBuf, sizeof totalSizeBuf, downloadSize);
