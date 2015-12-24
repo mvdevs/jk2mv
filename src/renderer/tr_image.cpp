@@ -2669,6 +2669,151 @@ static char *CommaParse( char **data_p ) {
 	return com_token;
 }
 
+/*
+===============
+RE_SplitSkins
+input = skinname, possibly being a macro for three skins
+return= true if three part skins found
+output= qualified names to three skins if return is true, undefined if false
+===============
+*/
+bool RE_SplitSkins(const char *INname, char *skinhead, char *skintorso, char *skinlower)
+{	//INname= "models/players/jedi_tf/|head01_skin1|torso01|lower01";
+	if (strchr(INname, '|'))
+	{
+		char name[MAX_QPATH];
+		Q_strncpyz(name, INname, sizeof(name));
+		char *p = strchr(name, '|');
+		*p=0;
+		p++;
+		//fill in the base path
+		strcpy (skinhead, name);
+		strcpy (skintorso, name);
+		strcpy (skinlower, name);
+
+		//now get the the individual files
+
+		//advance to second
+		char *p2 = strchr(p, '|');
+		assert(p2);
+		if (!p2)
+		{
+			return false;
+		}
+		*p2=0;
+		p2++;
+		strcat (skinhead, p);
+		strcat (skinhead, ".skin");
+
+
+		//advance to third
+		p = strchr(p2, '|');
+		assert(p);
+		if (!p)
+		{
+			return false;
+		}
+		*p=0;
+		p++;
+		strcat (skintorso,p2);
+		strcat (skintorso, ".skin");
+
+		strcat (skinlower,p);
+		strcat (skinlower, ".skin");
+
+		return true;
+	}
+	return false;
+}
+
+// given a name, go get the skin we want and return
+qhandle_t RE_RegisterIndividualSkin( const char *name , qhandle_t hSkin)
+{
+	skin_t			*skin;
+	skinSurface_t	*surf;
+	char			*text, *text_p;
+	char			*token;
+	char			surfName[MAX_QPATH];
+
+	// load and parse the skin file
+	ri.FS_ReadFile( name, (void **)&text );
+	if ( !text ) {
+#ifndef FINAL_BUILD
+		ri.Printf( PRINT_ALL, "WARNING: RE_RegisterSkin( '%s' ) failed to load!\n", name );
+#endif
+		return 0;
+	}
+
+	assert (tr.skins[hSkin]);	//should already be setup, but might be an 3part append
+
+	skin = tr.skins[hSkin];
+
+	text_p = text;
+	while ( text_p && *text_p ) {
+		// get surface name
+		token = CommaParse( &text_p );
+		Q_strncpyz( surfName, token, sizeof( surfName ) );
+
+		if ( !token[0] ) {
+			break;
+		}
+		// lowercase the surface name so skin compares are faster
+		Q_strlwr( surfName );
+
+		if ( *text_p == ',' ) {
+			text_p++;
+		}
+
+		if ( !strncmp( token, "tag_", 4 ) ) {	//these aren't in there, but just in case you load an id style one...
+			continue;
+		}
+
+		// parse the shader name
+		token = CommaParse( &text_p );
+
+		if ( !strcmp( &surfName[strlen(surfName)-4], "_off") )
+		{
+			if ( !strcmp( token ,"*off" ) )
+			{
+				continue;	//don't need these double offs
+			}
+			surfName[strlen(surfName)-4] = 0;	//remove the "_off"
+		}
+		if ( sizeof( skin->surfaces) / sizeof( skin->surfaces[0] ) <= (unsigned)skin->numSurfaces )
+		{
+			assert( sizeof( skin->surfaces) / sizeof( skin->surfaces[0] ) > skin->numSurfaces );
+			ri.Printf( PRINT_ALL, "WARNING: RE_RegisterSkin( '%s' ) more than %u surfaces!\n", name, (unsigned int )(sizeof(skin->surfaces) / sizeof(*(skin->surfaces))) );
+			break;
+		}
+		surf = skin->surfaces[ skin->numSurfaces ] = (skinSurface_t *) Hunk_Alloc( sizeof( *skin->surfaces[0] ), h_low );
+		Q_strncpyz( surf->name, surfName, sizeof( surf->name ) );
+
+		/*
+		if (gServerSkinHack)
+		{
+			surf->shader = R_FindServerShader( token, lightmapsNone, stylesDefault, qtrue );
+		}
+		else
+		{
+		*/
+			surf->shader = R_FindShader( token, lightmapsNone, stylesDefault, qtrue );
+		/*
+		}
+		*/
+		skin->numSurfaces++;
+	}
+
+	ri.FS_FreeFile( text );
+
+
+	// never let a skin have 0 shaders
+	if ( skin->numSurfaces == 0 ) {
+		return 0;		// use default skin
+	}
+
+	return hSkin;
+}
+
 
 /*
 ===============
@@ -2683,10 +2828,26 @@ qhandle_t RE_RegisterSkin( const char *name ) {
 	char		*text, *text_p;
 	char		*token;
 	char		surfName[MAX_QPATH];
+	char		nameBuffer[MAX_QPATH+2]; // +2, so we can detect cases when we exceed MAX_QPATH
 
 	if ( !name || !name[0] ) {
 		Com_Printf( "Empty name passed to RE_RegisterSkin\n" );
 		return 0;
+	}
+
+	if ( r_loadSkinsJKA->integer ) // FIXME: Add a new feature to the cgame API to "control" this and disable this "hack"?
+	{ // JK2 compatibility hack - (the jk2 cgame code calls RegisterSkin with "modelpath/model_*.skin", but the SplitSkin function expects "modelpath/*", so we have to remove the "model_" and ".skin" if it's appears to be a splitable skin)
+		// Doing this in the SplitSkin function isn't an option, as we limited the buffer to MAX_QPATH and increasing it would require changes in a lot more functions.
+		const char *pos = strstr(name, "model_|");
+		if ( pos && strlen(pos) > 7 )
+		{
+			Q_strncpyz(nameBuffer, name, pos-name+1);
+			Q_strcat(nameBuffer, sizeof(nameBuffer), pos+6);
+
+			pos = strstr(nameBuffer, ".skin");
+			if ( pos ) nameBuffer[strlen(nameBuffer)-strlen(pos)] = 0;
+			name = nameBuffer;
+		}
 	}
 
 	if ( strlen( name ) >= MAX_QPATH ) {
@@ -2720,57 +2881,82 @@ qhandle_t RE_RegisterSkin( const char *name ) {
 	// make sure the render thread is stopped
 	R_SyncRenderThread();
 
-	// If not a .skin file, load as a single shader
-	if ( strcmp( name + strlen( name ) - 5, ".skin" ) ) {
-		skin->numSurfaces = 1;
-		skin->surfaces[0] = (skinSurface_t *)ri.Hunk_Alloc( sizeof(skin->surfaces[0]), h_low );
-		skin->surfaces[0]->shader = R_FindShader( name, lightmapsNone, stylesDefault, qtrue );
-		return hSkin;
-	}
-
-	// load and parse the skin file
-    ri.FS_ReadFile( name, (void **)&text );
-	if ( !text ) {
-		return 0;
-	}
-
-	text_p = text;
-	while ( text_p && *text_p ) {
-		// get surface name
-		token = CommaParse( &text_p );
-		Q_strncpyz( surfName, token, sizeof( surfName ) );
-
-		if ( !token[0] ) {
-			break;
+	if ( r_loadSkinsJKA->integer )
+	{ // JKA-Style skin-loading
+		char skinhead[MAX_QPATH]={0};
+		char skintorso[MAX_QPATH]={0};
+		char skinlower[MAX_QPATH]={0};
+		if ( RE_SplitSkins(name, (char*)&skinhead, (char*)&skintorso, (char*)&skinlower ) )
+		{//three part
+			hSkin = RE_RegisterIndividualSkin(skinhead, hSkin);
+			if (hSkin)
+			{
+				hSkin = RE_RegisterIndividualSkin(skintorso, hSkin);
+				if (hSkin)
+				{
+					hSkin = RE_RegisterIndividualSkin(skinlower, hSkin);
+				}
+			}
 		}
-		// lowercase the surface name so skin compares are faster
-		Q_strlwr( surfName );
-
-		if ( *text_p == ',' ) {
-			text_p++;
+		else
+		{//single skin
+			hSkin = RE_RegisterIndividualSkin(name, hSkin);
 		}
-
-		if ( strstr( token, "tag_" ) ) {
-			continue;
-		}
-
-		// parse the shader name
-		token = CommaParse( &text_p );
-
-		assert ( skin->numSurfaces < MD3_MAX_SURFACES );
-
-		surf = skin->surfaces[ skin->numSurfaces ] = (skinSurface_t *)ri.Hunk_Alloc( sizeof( *skin->surfaces[0] ), h_low );
-		Q_strncpyz( surf->name, surfName, sizeof( surf->name ) );
-		surf->shader = R_FindShader( token, lightmapsNone, stylesDefault, qtrue );
-		skin->numSurfaces++;
 	}
+	else
+	{ // Original JK2-Style skin-loading
+		// If not a .skin file, load as a single shader
+		if ( strcmp( name + strlen( name ) - 5, ".skin" ) ) {
+			skin->numSurfaces = 1;
+			skin->surfaces[0] = (skinSurface_t *)ri.Hunk_Alloc( sizeof(skin->surfaces[0]), h_low );
+			skin->surfaces[0]->shader = R_FindShader( name, lightmapsNone, stylesDefault, qtrue );
+			return hSkin;
+		}
+		
+		// load and parse the skin file
+		ri.FS_ReadFile( name, (void **)&text );
+		if ( !text ) {
+			return 0;
+		}
 
-	ri.FS_FreeFile( text );
+		text_p = text;
+		while ( text_p && *text_p ) {
+			// get surface name
+			token = CommaParse( &text_p );
+			Q_strncpyz( surfName, token, sizeof( surfName ) );
+
+			if ( !token[0] ) {
+				break;
+			}
+			// lowercase the surface name so skin compares are faster
+			Q_strlwr( surfName );
+
+			if ( *text_p == ',' ) {
+				text_p++;
+			}
+
+			if ( strstr( token, "tag_" ) ) {
+				continue;
+			}
+
+			// parse the shader name
+			token = CommaParse( &text_p );
+
+			assert ( skin->numSurfaces < MD3_MAX_SURFACES );
+
+			surf = skin->surfaces[ skin->numSurfaces ] = (skinSurface_t *)ri.Hunk_Alloc( sizeof( *skin->surfaces[0] ), h_low );
+			Q_strncpyz( surf->name, surfName, sizeof( surf->name ) );
+			surf->shader = R_FindShader( token, lightmapsNone, stylesDefault, qtrue );
+			skin->numSurfaces++;
+		}
+
+		ri.FS_FreeFile( text );
 
 
-	// never let a skin have 0 shaders
-	if ( skin->numSurfaces == 0 ) {
-		return 0;		// use default skin
+		// never let a skin have 0 shaders
+		if ( skin->numSurfaces == 0 ) {
+			return 0;		// use default skin
+		}
 	}
 
 	return hSkin;

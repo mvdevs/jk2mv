@@ -180,6 +180,7 @@ cvar_t *r_screenshotJpegQuality;
 // gamma correction
 cvar_t *r_gammamethod;
 cvar_t *r_convertModelBones;
+cvar_t *r_loadSkinsJKA;
 
 /*
 Ghoul2 Insert Start
@@ -1105,6 +1106,7 @@ void R_Register( void )
 	r_maxpolyverts = ri.Cvar_Get( "r_maxpolyverts", va("%d", MAX_POLYVERTS), 0);
 
 	r_convertModelBones = ri.Cvar_Get( "r_convertModelBones", "1", CVAR_ARCHIVE | CVAR_GLOBAL );
+	r_loadSkinsJKA = ri.Cvar_Get( "r_loadSkinsJKA", "1", CVAR_ARCHIVE | CVAR_GLOBAL );
 /*
 Ghoul2 Insert Start
 */
