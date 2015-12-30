@@ -575,7 +575,7 @@ typedef struct {
 typedef struct skin_s {
 	char		name[MAX_QPATH];		// game path, including extension
 	int			numSurfaces;
-	skinSurface_t	*surfaces[MD3_MAX_SURFACES];
+	skinSurface_t	*surfaces[/*MD3_MAX_SURFACES*/128];
 } skin_t;
 
 
@@ -1278,6 +1278,7 @@ extern	cvar_t	*r_debugSort;
 extern	cvar_t	*r_printShaders;
 
 extern	cvar_t	*r_convertModelBones;
+extern	cvar_t	*r_loadSkinsJKA;
 
 /*
 Ghoul2 Insert Start

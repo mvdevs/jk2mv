@@ -2658,6 +2658,15 @@ qboolean R_LoadMDXM( model_t *mod, void *buffer, const char *mod_name, qboolean 
 		LL(surfInfo->numChildren);
 		LL(surfInfo->parentIndex);
 
+		if ( isAnNewModelFile )
+		{
+			Q_strlwr(surfInfo->name);	//just in case
+			if ( !strcmp( &surfInfo->name[strlen(surfInfo->name)-4],"_off") )
+			{
+				surfInfo->name[strlen(surfInfo->name)-4]=0;	//remove "_off" from name
+			}
+		}
+
 		// do all the children indexs
 		for (j=0; j<surfInfo->numChildren; j++)
 		{
