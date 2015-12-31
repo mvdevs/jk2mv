@@ -2449,6 +2449,7 @@ static void UI_DrawSelectedPlayer(rectDef_t *rect, float scale, vec4_t color, in
 
 static void UI_DrawServerRefreshDate(rectDef_t *rect, float scale, vec4_t color, int textStyle, int iMenuFont)
 {
+	
 	if (uiInfo.serverStatus.refreshActive)
 	{
 		vec4_t lowLight, newColor;
@@ -2459,15 +2460,20 @@ static void UI_DrawServerRefreshDate(rectDef_t *rect, float scale, vec4_t color,
 		LerpColor(color,lowLight,newColor,0.5+0.5*sin(uiInfo.uiDC.realTime / PULSE_DIVISOR));
 
 		trap_SP_GetStringTextString("INGAMETEXT_GETTINGINFOFORSERVERS", holdSPString, sizeof(holdSPString));
-		Text_Paint(rect->x, rect->y, scale, newColor, va((char *) holdSPString, trap_LAN_GetServerCount(ui_netSource.integer)), 0, 0, textStyle, iMenuFont);
+		Text_Paint(rect->x - 8, rect->y, scale, newColor, va((char *) holdSPString, trap_LAN_GetServerCount(ui_netSource.integer)), 0, 0, textStyle, iMenuFont);
 	}
 	else
 	{
 		char buff[64];
+		char sServers[256];
+		char sPlayers[256];
+
 		Q_strncpyz(buff, UI_Cvar_VariableString(va("ui_lastServerRefresh_%i", ui_netSource.integer)), 64);
 		trap_SP_GetStringTextString("INGAMETEXT_SERVER_REFRESHTIME", holdSPString, sizeof(holdSPString));
-
-		Text_Paint(rect->x, rect->y, scale, color, va("%s: %s", holdSPString, buff), 0, 0, textStyle, iMenuFont);
+		trap_SP_GetStringTextString("MV_REFRESHDATA_SERVERS", sServers, sizeof(sServers));
+		trap_SP_GetStringTextString("MV_REFRESHDATA_PLAYERS", sPlayers, sizeof(sPlayers));
+		
+		Text_Paint(rect->x - 8, rect->y, scale, color, va("%s: %s | %s %d, %s %d", holdSPString, buff, sServers, uiInfo.serverStatus.numDisplayServers, sPlayers, uiInfo.serverStatus.numPlayersOnServers), 0, 0, textStyle, iMenuFont); //new data
 	}
 }
 
