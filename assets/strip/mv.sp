@@ -1,13 +1,13 @@
 VERSION 1
 REFERENCE MV
-COUNT 34
+COUNT 36
 INDEX 0
 {
    REFERENCE GAME_VERSION
-   TEXT_LANGUAGE1 "Gameversion:"
+   TEXT_LANGUAGE1 "Game Version:"
    TEXT_LANGUAGE2 "Version de la partie:"
-   TEXT_LANGUAGE3 "Spielversion:"
-   TEXT_LANGUAGE6 "Gameversion:"
+   TEXT_LANGUAGE3 "Spiel Version:"
+   TEXT_LANGUAGE6 "Game Version:"
    TEXT_LANGUAGE8 "Versión del juego:"
 }
 INDEX 1
@@ -87,7 +87,7 @@ INDEX 9
    REFERENCE DL_SUGGEST
    TEXT_LANGUAGE1 "The server suggests the following file to download:"
    TEXT_LANGUAGE2 "Le serveur suggère de télécharger le fichier suivant:"
-   TEXT_LANGUAGE3 "Der Server schlägt folgende Datei zum Download vor:
+   TEXT_LANGUAGE3 "Der Server schlägt folgende Datei zum Download vor:"
    TEXT_LANGUAGE6 "The server suggests the following file to download:"
    TEXT_LANGUAGE8 "El servidor recomienda el siguiente archivo para descargar:"
 }
@@ -95,8 +95,8 @@ INDEX 10
 {
    REFERENCE DL_PROTOCOL
    TEXT_LANGUAGE1 "Protocol:"
-   TEXT_LANGUAGE2 "Protocol:"
-   TEXT_LANGUAGE3 "Protokoll:
+   TEXT_LANGUAGE2 "Protocole:"
+   TEXT_LANGUAGE3 "Protokoll:"
    TEXT_LANGUAGE6 "Protocol:"
    TEXT_LANGUAGE8 "Protocolo:"
 }
@@ -140,7 +140,7 @@ INDEX 15
 {
    REFERENCE DL_NEVER
    TEXT_LANGUAGE1 "Never"
-   TEXT_LANGUAGE2 "Never"
+   TEXT_LANGUAGE2 "Jamais"
    TEXT_LANGUAGE3 "Nie"
    TEXT_LANGUAGE6 "Never"
    TEXT_LANGUAGE8 "Nunca"
@@ -149,7 +149,7 @@ INDEX 16
 {
    REFERENCE DL_NEVER_INFO
    TEXT_LANGUAGE1 "Continue connecting and never ask me again to download this file."
-   TEXT_LANGUAGE2 "Continue connecting and never ask me again to download this file."
+   TEXT_LANGUAGE2 "Continuez à connecter et de ne jamais me demander pour télécharger ce fichier."
    TEXT_LANGUAGE3 "Fortsetzen und diese Datei jetzt und in Zukunft nie herunterladen."
    TEXT_LANGUAGE6 "Continue connecting and never ask me again to download this file."
    TEXT_LANGUAGE8 "Continuar conectando y nunca más sugerir este archivo para descargar."
@@ -157,17 +157,17 @@ INDEX 16
 INDEX 17
 {
    REFERENCE BOTFILTER
-   TEXT_LANGUAGE1 "Show bots:"
-   TEXT_LANGUAGE2 "Show bots:"
-   TEXT_LANGUAGE3 "Bots zeigen:"
-   TEXT_LANGUAGE6 "Show bots:"
+   TEXT_LANGUAGE1 "Show Bots:"
+   TEXT_LANGUAGE2 "Afficher les bots:"
+   TEXT_LANGUAGE3 "Bots Zeigen:"
+   TEXT_LANGUAGE6 "Show Bots:"
    TEXT_LANGUAGE8 "Ver bots:"
 }
 INDEX 18
 {
    REFERENCE BOTFILTER_INFO
    TEXT_LANGUAGE1 "Include bots in player count."
-   TEXT_LANGUAGE2 "Include bots in player count."
+   TEXT_LANGUAGE2 "Inclure les bots dans le nombre de joueurs."
    TEXT_LANGUAGE3 "Bots in Spieleranzahl mitzählen."
    TEXT_LANGUAGE6 "Include bots in player count."
    TEXT_LANGUAGE8 "Incluir bots en el conteo de jugadores."
@@ -185,8 +185,8 @@ INDEX 20
 {
    REFERENCE DOWNLOADS_INFO
    TEXT_LANGUAGE1 "List Downloads / Remove files from blacklist"
-   TEXT_LANGUAGE2 "List Downloads / Remove files from blacklist"
-   TEXT_LANGUAGE3 "Downloads auflisten / Blockierte Dateien wieder freigeben."
+   TEXT_LANGUAGE2 "Liste de Téléchargement / Supprimer les fichiers de la liste noire"
+   TEXT_LANGUAGE3 "Downloads auflisten / Blockierte Dateien wieder freigeben"
    TEXT_LANGUAGE6 "List Downloads / Remove files from blacklist"
    TEXT_LANGUAGE8 "Lista de descargas / Remover archivos de la lista negra"
 }
@@ -194,7 +194,7 @@ INDEX 21
 {
    REFERENCE DOWNLOADS_BLOCKALL
    TEXT_LANGUAGE1 "Block Downloads:"
-   TEXT_LANGUAGE2 "Block Downloads:"
+   TEXT_LANGUAGE2 "Nier Téléchargements:"
    TEXT_LANGUAGE3 "Downloads blockieren:"
    TEXT_LANGUAGE6 "Block Downloads:"
    TEXT_LANGUAGE8 "Bloquear Descargas:"
@@ -212,7 +212,7 @@ INDEX 23
 {
    REFERENCE DOWNLOADS_DLINFO
    TEXT_LANGUAGE1 "Details"
-   TEXT_LANGUAGE2 "Details"
+   TEXT_LANGUAGE2 "Détails"
    TEXT_LANGUAGE3 "Details"
    TEXT_LANGUAGE6 "Details"
    TEXT_LANGUAGE8 "Detalles"
@@ -221,7 +221,7 @@ INDEX 24
 {
    REFERENCE DOWNLOADS_DLINFO_INFO
    TEXT_LANGUAGE1 "Show detailed information for this file."
-   TEXT_LANGUAGE2 "Show detailed information for this file."
+   TEXT_LANGUAGE2 "Voir les informations détaillées sur le fichier."
    TEXT_LANGUAGE3 "Datails zu dieser Datei anzeigen."
    TEXT_LANGUAGE6 "Show detailed information for this file."
    TEXT_LANGUAGE8 "Mostrar información detallada del archivo"
@@ -230,7 +230,7 @@ INDEX 25
 {
    REFERENCE DOWNLOADS_DLREMOVE
    TEXT_LANGUAGE1 "Delete"
-   TEXT_LANGUAGE2 "Delete"
+   TEXT_LANGUAGE2 "Supprimer"
    TEXT_LANGUAGE3 "Löschen"
    TEXT_LANGUAGE6 "Delete"
    TEXT_LANGUAGE8 "Eliminar"
@@ -239,7 +239,7 @@ INDEX 26
 {
    REFERENCE DOWNLOADS_DLREMOVE_INFO
    TEXT_LANGUAGE1 "Remove file / blacklist entry."
-   TEXT_LANGUAGE2 "Remove file / blacklist entry."
+   TEXT_LANGUAGE2 "Supprimer le fichier / Ajouter à la liste noire."
    TEXT_LANGUAGE3 "Datei löschen / Blockierung aufheben."
    TEXT_LANGUAGE6 "Remove file / blacklist entry."
    TEXT_LANGUAGE8 "Eliminar archivo / añadir a la lista negra"
@@ -248,7 +248,7 @@ INDEX 27
 {
    REFERENCE DOWNLOADS_DLPERMANENT
    TEXT_LANGUAGE1 "Make Permanent"
-   TEXT_LANGUAGE2 "Make Permanent"
+   TEXT_LANGUAGE2 "Rendre Permanent"
    TEXT_LANGUAGE3 "Immer laden"
    TEXT_LANGUAGE6 "Make Permanent"
    TEXT_LANGUAGE8 "Hacer Permanente"
@@ -257,7 +257,7 @@ INDEX 28
 {
    REFERENCE DOWNLOADS_DLPERMANENT_INFO
    TEXT_LANGUAGE1 "Always load this file when JK2 starts."
-   TEXT_LANGUAGE2 "Always load this file when JK2 starts."
+   TEXT_LANGUAGE2 "Toujours charger ce fichier lorsque vous démarrez JK2."
    TEXT_LANGUAGE3 "Datei immer laden wenn JK2 startet."
    TEXT_LANGUAGE6 "Always load this file when JK2 starts."
    TEXT_LANGUAGE8 "Cargar siempre este archivo cuando inicie JK2."
@@ -266,7 +266,7 @@ INDEX 29
 {
    REFERENCE DOWNLOADS_INFOTITLE
    TEXT_LANGUAGE1 "File Info"
-   TEXT_LANGUAGE2 "File Info"
+   TEXT_LANGUAGE2 "Informations sur le fichier"
    TEXT_LANGUAGE3 "Datei Informationen"
    TEXT_LANGUAGE6 "File Info"
    TEXT_LANGUAGE8 "Información del archivo"
@@ -306,4 +306,22 @@ INDEX 33
    TEXT_LANGUAGE3 "Shift-Taste erforderlich, um die konsole zu öffnen."
    TEXT_LANGUAGE6 "Shift key required to open the console."
    TEXT_LANGUAGE8 "Tecla Shift necesaria para abrir la consola."
+}
+INDEX 34
+{
+   REFERENCE REFRESHDATA_SERVERS
+   TEXT_LANGUAGE1 "Servers:"
+   TEXT_LANGUAGE2 "Serveurs:"
+   TEXT_LANGUAGE3 "Server:"
+   TEXT_LANGUAGE6 "Servers:"
+   TEXT_LANGUAGE8 "Servers:"
+}
+INDEX 35
+{
+   REFERENCE REFRESHDATA_PLAYERS
+   TEXT_LANGUAGE1 "Players:"
+   TEXT_LANGUAGE2 "Joueurs:"
+   TEXT_LANGUAGE3 "Spieler:"
+   TEXT_LANGUAGE6 "Players:"
+   TEXT_LANGUAGE8 "Jugads:"
 }
