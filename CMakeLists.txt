@@ -85,33 +85,34 @@ endif()
 # Architecture
 set(CMAKE_OSX_ARCHITECTURES "i386" "x86_64") # always building both on osx
 
-if(CMAKE_SIZEOF_VOID_P MATCHES "8")
-	set(ARCH_BITS 64)
-	if(WIN32)
+if(WIN32)
+	set(X86 ON)
+	if(CMAKE_SIZEOF_VOID_P MATCHES "8")
 		set(Architecture "x64")
 		set(WIN64 TRUE)
-	elseif(APPLE)
-		set(Architecture "universal")
-	else()
-		set(Architecture "amd64")
-	endif()
-
-	if(NOT APPLE)
 		set(GlobalDefines ${GlobalDefines} "_M_X64")
-	endif()
-else()
-	set(ARCH_BITS 32)
-	if(WIN32)
+	else()
 		set(Architecture "x86")
 		set(WIN64 FALSE)
-	elseif(APPLE)
-		set(Architecture "universal")
-	else()
-		set(Architecture "i386")
-	endif()
-
-	if(NOT APPLE)
 		set(GlobalDefines ${GlobalDefines} "_M_IX86")
+	endif()
+elseif(APPLE)
+	set(Architecture "universal")
+else()
+	set(X86 OFF)
+
+	if(CMAKE_SYSTEM_PROCESSOR MATCHES "^arm")
+		set(Architecture "arm")
+		set(ARM ON)
+	elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^i.86$")
+		set(X86 ON)
+		set(Architecture "i386")
+	elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^x86.64$")
+		set(X86 ON)
+		set(Architecture "amd64")
+	else()
+		set(Architecture "${CMAKE_SYSTEM_PROCESSOR}")
+		set(GlobalDefines ${GlobalDefines} "NO_VM_COMPILED")
 	endif()
 endif()
 
@@ -177,15 +178,19 @@ elseif ((("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU") OR ("${CMAKE_C_COMPILER_ID}" 
 	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -ggdb")
 
 	# we need sse optimizations in debug configuration, too because of the inline assembler which is sse code
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -msse2")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse2")
+	if(X86)
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -msse2")
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse2")
+	endif()
 
 	# Optimization
 	set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O3 -ffast-math")
 	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -ffast-math")
 
 	if("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU")
-		set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -mfpmath=sse -fexpensive-optimizations")
+		if(X86)
+			set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -mfpmath=sse -fexpensive-optimizations")
+		endif()
 
 		# Link only libs actually needed
 		set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -Wl,--as-needed,-s")
@@ -198,7 +203,9 @@ elseif ((("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU") OR ("${CMAKE_C_COMPILER_ID}" 
 	endif()
 
 	if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-		set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -mfpmath=sse -fexpensive-optimizations")
+		if(X86)
+			set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -mfpmath=sse -fexpensive-optimizations")
+		endif()
 
 		# Link only libs actually needed
 		set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wl,--as-needed,-s")

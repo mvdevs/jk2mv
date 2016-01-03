@@ -151,6 +151,7 @@ if (BuildMVMP OR BuildMVDED)
 		"${LIBDir}/meerkat/meerkat.c"
 	)
 	source_group("meerkat" FILES ${MVMPDEDMeerkatFiles})
+	set(MVMPDEDIncludeDirs ${MVMPDEDIncludeDirs} "${LIBDir}/meerkat")
 	set(MVMPDEDFiles ${MVMPDEDFiles} ${MVMPDEDMeerkatFiles})
 
 	set(MVMPDEDCommonFiles
@@ -199,8 +200,17 @@ if (BuildMVMP OR BuildMVDED)
 		"${SRCDir}/qcommon/unzip.cpp"
 		"${SRCDir}/qcommon/vm.cpp"
 		"${SRCDir}/qcommon/vm_interpreted.cpp"
-		"${SRCDir}/qcommon/vm_x86.cpp"
 	)
+
+	if(X86)
+		set(MVMPDEDCommonFiles ${MVMPDEDCommonFiles}
+			"${SRCDir}/qcommon/vm_x86.cpp"
+		)
+	elseif(ARM)
+		set(MVMPDEDCommonFiles ${MVMPDEDCommonFiles}
+			"${SRCDir}/qcommon/vm_arm.cpp"
+		)
+	endif()
 	source_group("qcommon" FILES ${MVMPDEDCommonFiles})
 	set(MVMPDEDFiles ${MVMPDEDFiles} ${MVMPDEDCommonFiles})
 
