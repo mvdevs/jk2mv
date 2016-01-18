@@ -346,6 +346,9 @@ typedef struct {
 	qhandle_t	whiteShader;
 	qhandle_t	consoleShader;
 
+	qhandle_t	recordingShader;
+	float		ratioFix;
+
 	blacklistentry_t *downloadBlacklist;
 	size_t downloadBlacklistLen;
 	qboolean ignoreNextDownloadList;
@@ -408,6 +411,8 @@ extern	cvar_t	*cl_showSend;
 extern	cvar_t	*cl_timeNudge;
 extern	cvar_t	*cl_showTimeDelta;
 extern	cvar_t	*cl_freezeDemo;
+
+extern	cvar_t	*cl_drawRecording;
 
 extern	cvar_t	*cl_yawspeed;
 extern	cvar_t	*cl_pitchspeed;
