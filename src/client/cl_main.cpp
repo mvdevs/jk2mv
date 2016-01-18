@@ -38,6 +38,8 @@ cvar_t	*cl_timeNudge;
 cvar_t	*cl_showTimeDelta;
 cvar_t	*cl_freezeDemo;
 
+cvar_t	*cl_drawRecording;
+
 cvar_t	*cl_shownet;
 cvar_t	*cl_showSend;
 cvar_t	*cl_timedemo;
@@ -2489,6 +2491,13 @@ void CL_Frame ( int msec ) {
 		}
 	}
 
+	if (cl_autoDemo->integer && !clc.demoplaying) {
+		if (cls.state != CA_ACTIVE && clc.demorecording)
+			demoAutoComplete();
+		else if (cls.state == CA_ACTIVE && !clc.demorecording)
+			demoAutoRecord();
+	}
+
 	// save the msec before checking pause
 	cls.realFrametime = msec;
 
@@ -2650,6 +2659,8 @@ void CL_InitRenderer( void ) {
 
 	cls.whiteShader = re.RegisterShader( "white" );
 	cls.consoleShader = re.RegisterShader( "console" );
+	cls.recordingShader = re.RegisterShaderNoMip("gfx/2d/demorec");
+	cls.ratioFix = (float)(SCREEN_WIDTH * cls.glconfig.vidHeight) / (float)(SCREEN_HEIGHT * cls.glconfig.vidWidth);
 	g_console_field_width = cls.glconfig.vidWidth / SMALLCHAR_WIDTH - 2;
 	kg.g_consoleField.widthInChars = g_console_field_width;
 }
@@ -2829,6 +2840,8 @@ void CL_Init( void ) {
 	cl_freezeDemo = Cvar_Get ("cl_freezeDemo", "0", CVAR_TEMP );
 	rcon_client_password = Cvar_Get ("rconPassword", "", CVAR_TEMP );
 	cl_activeAction = Cvar_Get( "activeAction", "", CVAR_TEMP );
+	
+	cl_drawRecording = Cvar_Get ("cl_drawRecording", "2", CVAR_ARCHIVE );
 
 	cl_timedemo = Cvar_Get ("timedemo", "0", 0);
 	cl_avidemo = Cvar_Get ("cl_avidemo", "0", 0);
@@ -2905,6 +2918,12 @@ void CL_Init( void ) {
 
 	// cgame might not be initialized before menu is used
 	Cvar_Get ("cg_viewsize", "100", CVAR_ARCHIVE );
+	
+	// autorecord
+	cl_autoDemo = Cvar_Get ("cl_autoDemo", "1", CVAR_ARCHIVE );
+	cl_autoDemoFormat = Cvar_Get ("cl_autoDemoFormat", "%t_%m", CVAR_ARCHIVE );
+	Cmd_AddCommand ("saveDemo", demoAutoSave_f);
+	Cmd_AddCommand ("saveDemoLast", demoAutoSaveLast_f);
 
 	// mv cvars
 	mv_slowrefresh = Cvar_Get("mv_slowrefresh", "3", CVAR_ARCHIVE | CVAR_GLOBAL);

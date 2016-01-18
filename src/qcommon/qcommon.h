@@ -560,6 +560,8 @@ issues.
 
 #define	MAX_FILE_HANDLES	256 // increased from 64 in jk2mv
 
+qboolean FS_CopyFile( char *fromOSPath, char *toOSPath, char *newOSPath = NULL, const int newSize = 0 );
+
 qboolean FS_Initialized();
 
 void	FS_InitFilesystem (void);

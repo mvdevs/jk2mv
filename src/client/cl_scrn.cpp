@@ -286,6 +286,7 @@ SCR_DrawDemoRecording
 =================
 */
 void SCR_DrawDemoRecording( void ) {
+	const float ratio = cls.ratioFix;
 	char	string[1024];
 	int		pos;
 
@@ -296,10 +297,15 @@ void SCR_DrawDemoRecording( void ) {
 		return;
 	}
 
-	pos = FS_FTell( clc.demofile );
-	sprintf( string, "RECORDING %s: %ik", clc.demoName, pos / 1024 );
-
-	SCR_DrawStringExt( 320 - (int)strlen( string ) * 4, 20, 8, string, g_color_table[7], qtrue );
+	if (cl_drawRecording->integer >= 2 && cls.recordingShader) {
+		static const float width = 60.0f, height = 15.0f;
+		re.SetColor(NULL);
+		re.DrawStretchPic(0*ratio, SCREEN_HEIGHT-height, width*ratio, height, 0, 0, 1, 1, cls.recordingShader);
+	} else if (cl_drawRecording->integer) {
+		pos = FS_FTell( clc.demofile );
+		sprintf( string, "RECORDING %s: %ik", clc.demoName, pos / 1024 );
+		SCR_DrawStringExt( 320 - (int)strlen( string ) * 4, 20, 8, string, g_color_table[7], qtrue );
+	}
 }
 
 
