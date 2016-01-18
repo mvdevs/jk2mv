@@ -1026,6 +1026,8 @@ int Q_vsnprintf(char *str, size_t size, const char *format, va_list ap) {
 	}
 	return retval;
 }
+#else
+#define Q_vsnprintf vsnprintf
 #endif
 
 void QDECL Com_sprintf( char *dest, size_t size, const char *fmt, ...) {
