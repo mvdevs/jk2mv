@@ -435,6 +435,9 @@ extern	cvar_t	*cl_conXOffset;
 extern	cvar_t	*cl_inGameVideo;
 extern	cvar_t	*mv_consoleShiftRequirement;
 
+extern	cvar_t	*cl_autoDemo;
+extern	cvar_t	*cl_autoDemoFormat;
+
 //=================================================
 
 //
@@ -630,3 +633,11 @@ void UI_SetCurrentGameversion(mvversion_t protocol);
 void CL_Netchan_Transmit( netchan_t *chan, msg_t* msg);	//int length, const byte *data );
 void CL_Netchan_TransmitNextFragment( netchan_t *chan );
 qboolean CL_Netchan_Process( netchan_t *chan, msg_t *msg );
+
+// cg_demos_auto.c
+
+extern void demoAutoSave_f(void);
+extern void demoAutoSaveLast_f(void);
+extern void demoAutoComplete(void);
+extern void demoAutoRecord(void);
+extern void demoAutoInit(void);

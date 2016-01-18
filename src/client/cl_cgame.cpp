@@ -539,6 +539,11 @@ rescan:
 		// the restart to the cgame
 		Con_ClearNotify();
 		Com_Memset( cl.cmds, 0, sizeof( cl.cmds ) );
+	
+		if (cl_autoDemo->integer && !clc.demoplaying ) {
+			demoAutoComplete();
+			demoAutoRecord();
+		}
 		return qtrue;
 	}
 
@@ -600,6 +605,10 @@ void CL_ShutdownCGame( void ) {
 #ifdef _DONETPROFILE_
 	ClReadProf().ShowTotals();
 #endif
+
+	if (cl_autoDemo->integer && !clc.demoplaying) {
+		demoAutoComplete();
+	}
 }
 
 static int	FloatAsInt( float f ) {
@@ -1386,6 +1395,8 @@ void CL_InitCGame( void ) {
 	if (apireq >= 1) {
 		VM_Call(cgvm, MVAPI_AFTER_INIT);
 	}
+	
+	demoAutoInit();
 
 	// we will send a usercmd this frame, which
 	// will cause the server to send us the first snapshot

@@ -2489,6 +2489,13 @@ void CL_Frame ( int msec ) {
 		}
 	}
 
+	if (cl_autoDemo->integer && !clc.demoplaying) {
+		if (cls.state != CA_ACTIVE && clc.demorecording)
+			demoAutoComplete();
+		else if (cls.state == CA_ACTIVE && !clc.demorecording)
+			demoAutoRecord();
+	}
+
 	// save the msec before checking pause
 	cls.realFrametime = msec;
 
@@ -2905,6 +2912,12 @@ void CL_Init( void ) {
 
 	// cgame might not be initialized before menu is used
 	Cvar_Get ("cg_viewsize", "100", CVAR_ARCHIVE );
+	
+	// autorecord
+	cl_autoDemo = Cvar_Get ("cl_autoDemo", "1", CVAR_ARCHIVE );
+	cl_autoDemoFormat = Cvar_Get ("cl_autoDemoFormat", "%t_%m", CVAR_ARCHIVE );
+	Cmd_AddCommand ("saveDemo", demoAutoSave_f);
+	Cmd_AddCommand ("saveDemoLast", demoAutoSaveLast_f);
 
 	// mv cvars
 	mv_slowrefresh = Cvar_Get("mv_slowrefresh", "3", CVAR_ARCHIVE | CVAR_GLOBAL);

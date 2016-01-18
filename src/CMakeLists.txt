@@ -430,6 +430,7 @@ if (BuildMVMP)
 		"${SRCDir}/client/cl_cgame.cpp"
 		"${SRCDir}/client/cl_cin.cpp"
 		"${SRCDir}/client/cl_console.cpp"
+		"${SRCDir}/client/cl_demos_auto.cpp"
 		"${SRCDir}/client/cl_input.cpp"
 		"${SRCDir}/client/cl_keys.cpp"
 		"${SRCDir}/client/cl_main.cpp"
