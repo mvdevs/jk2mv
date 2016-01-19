@@ -2771,7 +2771,7 @@ qhandle_t RE_RegisterIndividualSkin( const char *name , qhandle_t hSkin)
 		// parse the shader name
 		token = CommaParse( &text_p );
 
-		if ( !strcmp( &surfName[strlen(surfName)-4], "_off") )
+		if ( r_loadSkinsJKA->integer == 2 && !strcmp( &surfName[strlen(surfName)-4], "_off") )
 		{
 			if ( !strcmp( token ,"*off" ) )
 			{
