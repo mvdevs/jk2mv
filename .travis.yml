@@ -49,8 +49,9 @@ script:
   - mkdir travis_build
   - cd travis_build
 
-  - if [[ "$HOST" == linux-i386-gcc ]]; then export CC="$CC -m32"; export CXX="$CXX -m32"; fi
-  - if [[ "$HOST" == linux-*-gcc ]]; then cmake -G "Unix Makefiles" -DUseInternalPNG=ON -DUseInternalJPEG=ON -DUseInternalZLIB=ON -DUseInternalCURL=ON -DBuildPackDEB=ON -DBuildPackRPM=ON ../..; fi
+  - if [[ "$HOST" == linux-i386-gcc ]];   then export CC="$CC -m32"; export CXX="$CXX -m32"; fi
+  - if [[ "$HOST" == linux-i386-gcc ]];   then cmake -G "Unix Makefiles" -DCMAKE_SYSTEM_PROCESSOR="i386" -DUseInternalPNG=ON -DUseInternalJPEG=ON -DUseInternalZLIB=ON -DUseInternalCURL=ON -DBuildPackDEB=ON -DBuildPackRPM=ON ../..; fi
+  - if [[ "$HOST" == linux-x86_64-gcc ]]; then cmake -G "Unix Makefiles" -DUseInternalPNG=ON -DUseInternalJPEG=ON -DUseInternalZLIB=ON -DUseInternalCURL=ON -DBuildPackDEB=ON -DBuildPackRPM=ON ../..; fi
 
   - if [[ "$HOST" == macosx-universal-clang ]]; then cmake -G "Unix Makefiles" -DUseInternalPNG=ON -DUseInternalJPEG=ON -DUseInternalZLIB=ON -DUseInternalCURL=ON ../..; fi
 
