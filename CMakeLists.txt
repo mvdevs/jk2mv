@@ -54,6 +54,9 @@ if(NOT APPLE AND NOT WIN32)
 	endif()
 endif()
 
+option(LegacyHTTPDownloads "Activate this for legacy JK2MF http downloads. Bad code due to bad implementation in jk2mf" OFF)
+option(NTClientWorkaround "Disable loading of NT-Mod pk3 files to prevent crashing the game" ON)
+
 if(WIN32)
 	set(UseInternalPNG ON)
 elseif(APPLE)
@@ -222,6 +225,14 @@ elseif ((("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU") OR ("${CMAKE_C_COMPILER_ID}" 
 	endif()
 else()
 	message(FATAL_ERROR "Unsupported compiler")
+endif()
+
+if(LegacyHTTPDownloads)
+	set(GlobalDefines ${GlobalDefines} "MV_MFDOWNLOADS")
+endif()
+
+if(NTClientWorkaround)
+	set(GlobalDefines ${GlobalDefines} "NTCLIENT_WORKAROUND")
 endif()
 
 if(NOT CMAKE_BUILD_TYPE)
