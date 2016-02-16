@@ -261,7 +261,7 @@ void EmitConstantJumpInstruction(vm_t *vm, opcode_t opCode, uint32_t destination
     }
 }
 
-void VM_ARM_VOp() {
+void __attribute__((optimize("O0"))) VM_ARM_VOp() {
     int32_t nis, tos, op;
     uint32_t parm;
 
@@ -343,7 +343,7 @@ void VM_ARM_VOp() {
     );
 }
 
-void VM_CompiledSyscall() {
+void __attribute__((optimize("O0"))) VM_CompiledSyscall() {
     int *opStack, *sp;
     int nic, opStackIndex;
     vm_t *savedvm;
@@ -977,7 +977,7 @@ void VM_Compile(vm_t *vm, vmHeader_t *header) {
     }
 }
 
-int VM_CallCompiled(vm_t *vm, int *args) {
+int __attribute__((optimize("O0"))) VM_CallCompiled(vm_t *vm, int *args) {
     int     stack[OPSTACK_SIZE / sizeof(int)];
     unsigned int stackIndex;
     int		programStack, stackOnEntry;
