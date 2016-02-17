@@ -35,9 +35,9 @@ install: |
       sudo apt-get install -y gcc-multilib gcc-4.8-multilib g++-multilib g++-4.8-multilib libsdl2-dev:i386 libopenal-dev:i386
   else
       cd ~
-      curl -O https://www.libsdl.org/release/SDL2-2.0.3.tar.gz
-      tar xzf SDL2-2.0.3.tar.gz
-      cd SDL2-2.0.3/Xcode/SDL
+      curl -O https://www.libsdl.org/release/SDL2-2.0.4.tar.gz
+      tar xzf SDL2-2.0.4.tar.gz
+      cd SDL2-2.0.4/Xcode/SDL
       sed -i -e 's/@rpath//g' SDL.xcodeproj/project.pbxproj
       xcodebuild -configuration Release
       mkdir -p ~/Library/Frameworks/
