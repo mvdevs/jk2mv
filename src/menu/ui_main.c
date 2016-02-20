@@ -562,7 +562,7 @@ void _UI_Refresh( int realtime )
 
 		//if (uiMaxRank > ui_rankChange.integer)
 		{
-			uiMaxRank = ui_rankChange.integer;
+			uiMaxRank = Com_Clampi(1, MAX_FORCE_RANK, ui_rankChange.integer);
 			uiForceRank = uiMaxRank;
 
 			/*
@@ -1046,8 +1046,10 @@ static void UI_DrawGameType(rectDef_t *rect, float scale, vec4_t color, int text
 }
 
 static void UI_DrawNetGameType(rectDef_t *rect, float scale, vec4_t color, int textStyle, int iMenuFont) {
-	if (ui_netGameType.integer < 0 || ui_netGameType.integer > uiInfo.numGameTypes) {
+	if (ui_netGameType.integer < 0 || ui_netGameType.integer >= uiInfo.numGameTypes) {
+		ui_netGameType.integer = 0;
 		trap_Cvar_Set("ui_netGameType", "0");
+		ui_actualNetGameType.integer = 0;
 		trap_Cvar_Set("ui_actualNetGameType", "0");
 	}
   Text_Paint(rect->x, rect->y, scale, color, uiInfo.gameTypes[ui_netGameType.integer].gameType , 0, 0, textStyle, iMenuFont);
@@ -1082,7 +1084,8 @@ static void UI_DrawAutoSwitch(rectDef_t *rect, float scale, vec4_t color, int te
 }
 
 static void UI_DrawJoinGameType(rectDef_t *rect, float scale, vec4_t color, int textStyle, int iMenuFont) {
-	if (ui_joinGameType.integer < 0 || ui_joinGameType.integer > uiInfo.numJoinGameTypes) {
+	if (ui_joinGameType.integer < 0 || ui_joinGameType.integer >= uiInfo.numJoinGameTypes) {
+		ui_joinGameType.integer = 0;
 		trap_Cvar_Set("ui_joinGameType", "0");
 	}
   Text_Paint(rect->x, rect->y, scale, color, uiInfo.joinGameTypes[ui_joinGameType.integer].gameType , 0, 0, textStyle, iMenuFont);
@@ -1519,7 +1522,7 @@ static void UI_DrawEffects(rectDef_t *rect, float scale, vec4_t color)
 
 static void UI_DrawMapPreview(rectDef_t *rect, float scale, vec4_t color, qboolean net) {
 	int map = (net) ? ui_currentNetMap.integer : ui_currentMap.integer;
-	if (map < 0 || map > uiInfo.mapCount) {
+	if (map < 0 || map >= uiInfo.mapCount) {
 		if (net) {
 			ui_currentNetMap.integer = 0;
 			trap_Cvar_Set("ui_currentNetMap", "0");
@@ -1544,7 +1547,7 @@ static void UI_DrawMapPreview(rectDef_t *rect, float scale, vec4_t color, qboole
 
 static void UI_DrawMapTimeToBeat(rectDef_t *rect, float scale, vec4_t color, int textStyle, int iMenuFont) {
 	int minutes, seconds, time;
-	if (ui_currentMap.integer < 0 || ui_currentMap.integer > uiInfo.mapCount) {
+	if (ui_currentMap.integer < 0 || ui_currentMap.integer >= uiInfo.mapCount) {
 		ui_currentMap.integer = 0;
 		trap_Cvar_Set("ui_currentMap", "0");
 	}
@@ -1562,7 +1565,7 @@ static void UI_DrawMapTimeToBeat(rectDef_t *rect, float scale, vec4_t color, int
 static void UI_DrawMapCinematic(rectDef_t *rect, float scale, vec4_t color, qboolean net) {
 
 	int map = (net) ? ui_currentNetMap.integer : ui_currentMap.integer;
-	if (map < 0 || map > uiInfo.mapCount) {
+	if (map < 0 || map >= uiInfo.mapCount) {
 		if (net) {
 			ui_currentNetMap.integer = 0;
 			trap_Cvar_Set("ui_currentNetMap", "0");
@@ -1827,7 +1830,7 @@ static void UI_DrawPlayerModel(rectDef_t *rect) {
 */
 static void UI_DrawNetSource(rectDef_t *rect, float scale, vec4_t color, int textStyle, int iMenuFont)
 {
-	if (ui_netSource.integer < 0 || ui_netSource.integer > uiInfo.numGameTypes)
+	if (ui_netSource.integer < 0 || ui_netSource.integer >= numNetSources)
 	{
 		ui_netSource.integer = 0;
 	}
@@ -1847,7 +1850,7 @@ static void UI_DrawNetMapPreview(rectDef_t *rect, float scale, vec4_t color) {
 }
 
 static void UI_DrawNetMapCinematic(rectDef_t *rect, float scale, vec4_t color) {
-	if (ui_currentNetMap.integer < 0 || ui_currentNetMap.integer > uiInfo.mapCount) {
+	if (ui_currentNetMap.integer < 0 || ui_currentNetMap.integer >= uiInfo.mapCount) {
 		ui_currentNetMap.integer = 0;
 		trap_Cvar_Set("ui_currentNetMap", "0");
 	}
@@ -2284,7 +2287,7 @@ static int UI_OwnerDrawWidth(int ownerDraw, float scale) {
 			s = va("%i. %s", iUse, text);
       break;
 		case UI_NETSOURCE:
-			if (ui_netSource.integer < 0 || ui_netSource.integer > uiInfo.numJoinGameTypes) {
+			if (ui_netSource.integer < 0 || ui_netSource.integer >= uiInfo.numJoinGameTypes) {
 				ui_netSource.integer = 0;
 			}
 			trap_SP_GetStringTextString("MENUS3_SOURCE", holdSPString, sizeof(holdSPString));
@@ -3131,7 +3134,7 @@ static qboolean UI_NetGameType_HandleKey(int flags, float *special, int key) {
       ui_netGameType.integer = 0;
     }
 
-  	trap_Cvar_Set( "ui_netGameType", va("%d", ui_netGameType.integer));
+	trap_Cvar_Set( "ui_netGameType", va("%d", ui_netGameType.integer));
   	trap_Cvar_Set( "ui_actualnetGameType", va("%d", uiInfo.gameTypes[ui_netGameType.integer].gtEnum));
   	trap_Cvar_Set( "ui_currentNetMap", "0");
 		UI_MapCountByGameType(qfalse);
@@ -3309,7 +3312,7 @@ static qboolean UI_NetSource_HandleKey(int flags, float *special, int key) {
 		if (ui_netSource.integer != AS_GLOBAL) {
 			UI_StartServerRefresh(qtrue);
 		}
-  	trap_Cvar_Set( "ui_netSource", va("%d", ui_netSource.integer));
+	trap_Cvar_Set( "ui_netSource", va("%d", ui_netSource.integer));
     return qtrue;
   }
   return qfalse;
@@ -4242,7 +4245,7 @@ static void UI_RunMenuScript(char **args)
 			trap_Cvar_Set("cg_cameraOrbit", "0");
 			trap_Cvar_Set("ui_singlePlayerActive", "0");
 			trap_Cvar_SetValue( "dedicated", Com_Clamp( 0, 2, ui_dedicated.integer ) );
-			trap_Cvar_SetValue( "g_gametype", Com_Clamp( 0, 8, uiInfo.gameTypes[ui_netGameType.integer].gtEnum ) );
+			trap_Cvar_SetValue( "g_gametype", Com_Clamp( 0, GT_MAX_GAME_TYPE, uiInfo.gameTypes[ui_netGameType.integer].gtEnum ) );
 			trap_Cvar_Set("g_redTeam", UI_Cvar_VariableString("ui_teamName"));
 			trap_Cvar_Set("g_blueTeam", UI_Cvar_VariableString("ui_opponentName"));
 			trap_Cmd_ExecuteText( EXEC_APPEND, va( "wait ; wait ; map %s\n", uiInfo.mapList[ui_currentNetMap.integer].mapLoadName ) );
@@ -4367,7 +4370,7 @@ static void UI_RunMenuScript(char **args)
 			UI_LoadArenas();
 			UI_MapCountByGameType(qfalse);
 			Menu_SetFeederSelection(NULL, FEEDER_ALLMAPS, gUISelectedMap, "createserver");
-			uiForceRank = trap_Cvar_VariableValue("g_maxForceRank");
+			uiForceRank = Com_Clampi(0, MAX_FORCE_RANK, trap_Cvar_VariableValue("g_maxForceRank"));
 		} else if (Q_stricmp(name, "saveControls") == 0) {
 			Controls_SetConfig(qtrue);
 		} else if (Q_stricmp(name, "loadControls") == 0) {
