@@ -20,8 +20,8 @@ matrix:
 before_install:
   - git fetch --unshallow
   - if [[ "$HOST" == linux-i386-gcc ]]; then sudo dpkg --add-architecture i386; fi
-  - if [[ "$HOST" == linux-*-gcc ]]; then sudo apt-get update; fi
-  - if [[ "$HOST" == linux-*-gcc ]]; then sudo apt-get upgrade; fi
+  - if [[ "$HOST" == linux-*-gcc ]]; then sudo apt-get update -y; fi
+  - if [[ "$HOST" == linux-*-gcc ]]; then sudo apt-get upgrade -y; fi
 
 install: |
   export MVDIR=`pwd`
@@ -40,8 +40,7 @@ install: |
       tar xzf SDL2-2.0.4.tar.gz
       cd SDL2-2.0.4/Xcode/SDL
       sed -i -e 's/@rpath//g' SDL.xcodeproj/project.pbxproj
-      sed -i -e 's/$(ARCHS_STANDARD)/$(ARCHS_STANDARD_32_64_BIT)/g' SDL.xcodeproj/project.pbxproj
-      xcodebuild -configuration Release
+      xcodebuild ARCHS="i386 x86_64" ONLY_ACTIVE_ARCH=NO -configuration Release
       mkdir -p ~/Library/Frameworks/
       ln -s `pwd`/build/Release/SDL2.framework ~/Library/Frameworks/
   fi
