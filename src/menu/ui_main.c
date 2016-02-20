@@ -562,7 +562,7 @@ void _UI_Refresh( int realtime )
 
 		//if (uiMaxRank > ui_rankChange.integer)
 		{
-			uiMaxRank = ui_rankChange.integer;
+			uiMaxRank = Com_Clampi(1, MAX_FORCE_RANK, ui_rankChange.integer);
 			uiForceRank = uiMaxRank;
 
 			/*
@@ -4370,7 +4370,7 @@ static void UI_RunMenuScript(char **args)
 			UI_LoadArenas();
 			UI_MapCountByGameType(qfalse);
 			Menu_SetFeederSelection(NULL, FEEDER_ALLMAPS, gUISelectedMap, "createserver");
-			uiForceRank = trap_Cvar_VariableValue("g_maxForceRank");
+			uiForceRank = Com_Clampi(0, MAX_FORCE_RANK, trap_Cvar_VariableValue("g_maxForceRank"));
 		} else if (Q_stricmp(name, "saveControls") == 0) {
 			Controls_SetConfig(qtrue);
 		} else if (Q_stricmp(name, "loadControls") == 0) {

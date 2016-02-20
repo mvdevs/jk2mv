@@ -527,14 +527,7 @@ void UI_ReadLegalForce(void)
 	i++;
 
 	iBuf = atoi(singleBuf);
-
-	if (iBuf > uiMaxRank || iBuf < 0)
-	{ //this force config uses a rank level higher than our currently restricted level.. so we can't use it
-	  //FIXME: Print a message indicating this to the user
-	//	return;
-	}
-
-	uiForceRank = iBuf;
+	uiForceRank = Com_Clampi(0, uiMaxRank, iBuf);
 
 	while (fcfString[i] && fcfString[i] != '-')
 	{
@@ -651,14 +644,8 @@ void UI_UpdateForcePowers()
 				uiForceSide = 0;
 				goto validitycheck;
 			}
-			uiForceRank = atoi(readBuf);
+			uiForceRank = Com_Clampi(0, uiMaxRank, atoi(readBuf));
 			i_r = 0;
-
-			if (uiForceRank > uiMaxRank)
-			{
-				uiForceRank = uiMaxRank;
-			}
-
 			i++;
 
 			while (forcePowers[i] && forcePowers[i] != '-' && i_r < 255)
@@ -1227,14 +1214,7 @@ void UI_ForceConfigHandle( int oldindex, int newindex )
 	i++;
 
 	iBuf = atoi(singleBuf);
-
-	if (iBuf > uiMaxRank || iBuf < 0)
-	{ //this force config uses a rank level higher than our currently restricted level.. so we can't use it
-	  //FIXME: Print a message indicating this to the user
-		return;
-	}
-
-	uiForceRank = iBuf;
+	uiForceRank = Com_Clampi(0, uiMaxRank, iBuf);
 
 	while (fcfBuffer[i] && fcfBuffer[i] != '-')
 	{
