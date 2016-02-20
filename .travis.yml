@@ -20,9 +20,8 @@ matrix:
 before_install:
   - git fetch --unshallow
   - if [[ "$HOST" == linux-i386-gcc ]]; then sudo dpkg --add-architecture i386; fi
-  - if [[ "$HOST" == linux-*-gcc ]]; then export DEBIAN_FRONTEND=noninteractive; fi
   - if [[ "$HOST" == linux-*-gcc ]]; then sudo apt-get update -y; fi
-  - if [[ "$HOST" == linux-*-gcc ]]; then sudo apt-get upgrade -y; fi
+  - if [[ "$HOST" == linux-*-gcc ]]; then sudo DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confnew" upgrade; fi
 
 install: |
   export MVDIR=`pwd`
