@@ -1344,7 +1344,7 @@ void SV_UserinfoChanged( client_t *cl ) {
 		char model[80];
 
 		Q_strncpyz(model, Info_ValueForKey(cl->userinfo, "model"), sizeof(model));
-		if (Q_stristr(model, "kyle/fpls") || (Q_stristr(model, "morgan") && (stricmp(model, "morgan/default_mp") && stricmp(model, "morgan/red") && stricmp(model, "morgan/blue"))))
+		if (Q_stristr(model, "kyle/fpls") || (!Q_stricmpn(model, "morgan/", 7) && (Q_stricmp(model, "morgan/default_mp") && Q_stricmp(model, "morgan/red") && Q_stricmp(model, "morgan/blue"))))
 		{
 			if ( !Info_SetValueForKey(cl->userinfo, "model", "kyle/default") )
 			{
