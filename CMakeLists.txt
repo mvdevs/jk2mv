@@ -31,6 +31,10 @@ set(ProjectURL "https://jk2mv.org")
 
 include(GetGitRevisionDescription)
 git_describe(MV_VERSION --tags)
+if(NOT MV_VERSION)
+	set(MV_VERSION "UNDEFINED")
+endif()
+
 message(STATUS "${ProjectName} Version: ${MV_VERSION}")
 
 # Languages
