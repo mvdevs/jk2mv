@@ -1102,6 +1102,9 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 	case MVAPI_GET_VERSION:
 		return (int)MV_GetCurrentGameversion();
 
+	case MVAPI_DISABLE_STRUCT_CONVERSION:
+		return (int)MVAPI_DisableStructConversion((qboolean)args[1]);
+
 	default:
 		Com_Error( ERR_DROP, "Bad game system trap: %i", args[0] );
 	}

@@ -448,7 +448,7 @@ static void SV_BuildClientSnapshot( client_t *client ) {
 
 	// grab the current playerState_t
 	ps = SV_GameClientNum( client - svs.clients );
-	if (MV_GetCurrentGameversion() != VERSION_1_02) {
+	if (MV_GetCurrentGameversion() != VERSION_1_02 || mvStructConversionDisabled) {
 		frame->ps = *ps;
 	} else {
 		// tricky but works atleast on x86

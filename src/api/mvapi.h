@@ -13,8 +13,8 @@
 // MV_MIN_VERSION is the minimum required JK2MV version which implements this API-Level.
 // All future JK2MV versions are guaranteed to implement this API-Level.
 // ----------------------------------------------------------------------------------------- //
-#define MV_APILEVEL 1
-#define MV_MIN_VERSION "1.1"
+#define MV_APILEVEL 2
+#define MV_MIN_VERSION "1.2"
 // ----------------------------------------------------------------------------------------- //
 
 // ----------------------------------------- SHARED ---------------------------------------- //
@@ -88,6 +88,9 @@ typedef struct {
 
 // qboolean trap_MVAPI_LocateGameData(mvsharedEntity_t *mvEnts, int numGEntities, int sizeofmvsharedEntity_t);
 #define MVAPI_LOCATE_GAME_DATA 702               /* asm: -703 */
+
+// qboolean trap_MVAPI_DisableStructConversion(qboolean disable);
+#define MVAPI_DISABLE_STRUCT_CONVERSION 705		/* asm: -706 */
 
 // ******** VMCALLS ******** //
 

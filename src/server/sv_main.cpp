@@ -723,6 +723,18 @@ qboolean MVAPI_SendConnectionlessPacket(const mvaddr_t *addr, const char *messag
 	return qfalse;
 }
 
+qboolean mvStructConversionDisabled = qfalse;
+qboolean MVAPI_DisableStructConversion(qboolean disable)
+{
+	if (VM_MVAPILevel(gvm) < 2) {
+		return qtrue;
+	}
+
+	mvStructConversionDisabled = disable;
+
+	return qfalse;
+}
+
 /*
 =================
 SV_ConnectionlessPacket

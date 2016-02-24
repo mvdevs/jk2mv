@@ -291,6 +291,8 @@ void SV_MasterShutdown (void);
 
 qboolean MVAPI_GetConnectionlessPacket(mvaddr_t *addr, char *buf, unsigned int bufsize);
 qboolean MVAPI_SendConnectionlessPacket(const mvaddr_t *addr, const char *message);
+qboolean MVAPI_DisableStructConversion(qboolean disable);
+extern qboolean mvStructConversionDisabled;
 
 //
 // sv_init.c
