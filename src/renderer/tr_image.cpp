@@ -1515,6 +1515,33 @@ TGADone:
 	}
 }
 
+struct jpegErrorManager
+{
+    struct jpeg_error_mgr err;
+    jmp_buf jmp_buffer;
+};
+
+char jpegLastErrorBuffer[JMSG_LENGTH_MAX];
+void R_JPGErrorExit( j_common_ptr cinfo )
+{
+    jpegErrorManager *ownerr = (jpegErrorManager*)cinfo->err;
+
+    /* Create the message */
+    (*cinfo->err->format_message) (cinfo, jpegLastErrorBuffer);
+
+    /* Jump to the jmp point */
+    longjmp(ownerr->jmp_buffer, 1);
+}
+
+static void R_JPGOutputMessage( j_common_ptr cinfo )
+{
+	char buffer[JMSG_LENGTH_MAX];
+
+	/* Create the message */
+	(*cinfo->err->format_message) (cinfo, buffer);
+	Com_Printf("%s\n", buffer);
+}
+
 void LoadJPG( const char *filename, unsigned char **pic, int *width, int *height ) {
 	/* This struct contains the JPEG decompression parameters and pointers to
 	* working space (which is allocated as needed by the JPEG library).
@@ -1532,7 +1559,7 @@ void LoadJPG( const char *filename, unsigned char **pic, int *width, int *height
 	* Note that this struct must live as long as the main JPEG parameter
 	* struct, to avoid dangling-pointer problems.
 	*/
-	struct jpeg_error_mgr jerr;
+	jpegErrorManager jerr;
 	/* More stuff */
 	JSAMPARRAY buffer;		/* Output row buffer */
 	unsigned int row_stride;  /* physical row width in output buffer */
@@ -1562,7 +1589,20 @@ void LoadJPG( const char *filename, unsigned char **pic, int *width, int *height
 	* This routine fills in the contents of struct jerr, and returns jerr's
 	* address which we place into the link field in cinfo.
 	*/
-	cinfo.err = jpeg_std_error(&jerr);
+
+	cinfo.err = jpeg_std_error(&jerr.err);
+	jerr.err.output_message = R_JPGOutputMessage;
+	jerr.err.error_exit = R_JPGErrorExit;
+
+	if ( setjmp(jerr.jmp_buffer) )
+	{
+		Com_Printf("LoadJPG: failed to load jpeg \"%s\", because of error \"%s\".\n", filename, jpegLastErrorBuffer);
+
+		// Free the memory to make sure we don't leak memory
+		ri.FS_FreeFile (fbuffer.v);
+		jpeg_destroy_decompress(&cinfo);
+		return;
+	}
 
 	/* Now we can initialize the JPEG decompression object. */
 	jpeg_create_decompress(&cinfo);
