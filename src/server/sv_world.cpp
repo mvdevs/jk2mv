@@ -198,6 +198,20 @@ void SV_LinkEntity( sharedEntity_t *gEnt ) {
 		SV_UnlinkEntity( gEnt );	// unlink from old position
 	}
 
+	if (gEnt->s.eType == ET_EVENTS + EV_SABER_BLOCK) {
+		if (mv_fixturretcrash->integer && !(sv.fixes & MVFIX_TURRETCRASH)) {
+			sv.saberBlockCounter++;
+
+			// It takes 1 sec to make a temp entity reusable.
+			// saberBlockCounter gets reseted every second. I got max
+			// 55 EV_SABER_BLOCK/second with 30 bots
+			if (sv.saberBlockCounter > 100) {
+				Com_Memset(gEnt, 0, sv.gentitySize);
+				return;
+			}
+		}
+	}
+
 	// encode the size into the entityState_t for client prediction
 	if ( gEnt->r.bmodel ) {
 		gEnt->s.solid = SOLID_BMODEL;		// a solid_box will never create this value

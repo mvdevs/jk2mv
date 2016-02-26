@@ -1073,6 +1073,11 @@ void SV_Frame( int msec ) {
 
 	if (com_dedicated->integer) SV_BotFrame( svs.time );
 
+	if (sv.saberBlockTime < svs.time) {
+		sv.saberBlockCounter = 0;
+		sv.saberBlockTime = svs.time + 1000;
+	}
+
 	// run the game simulation in chunks
 	while ( sv.timeResidual >= frameMsec ) {
 		sv.timeResidual -= frameMsec;
