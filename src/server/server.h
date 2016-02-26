@@ -66,6 +66,8 @@ typedef struct {
 	int				restartTime;
 
 	int				http_port;
+	int				saberBlockCounter;	// for mv_fixturretcrash
+	int				saberBlockTime;		// for mv_fixturretcrash
 
 	mvsharedEntity_t *gentitiesMV;
 	int				  gentitySizeMV;

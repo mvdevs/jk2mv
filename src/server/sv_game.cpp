@@ -268,24 +268,6 @@ void SV_LocateGameData( sharedEntity_t *gEnts, int numGEntities, int sizeofGEnti
 
 	sv.gameClients = clients;
 	sv.gameClientSize = sizeofGameClient;
-
-	if (mv_fixturretcrash->integer && !(sv.fixes & MVFIX_TURRETCRASH) && numGEntities > 1020) {
-		int remEnts = 0;
-
-		for (int i = 32; i < numGEntities; i++) {
-			// can't just use gEnts[] because the size of gentitiy_t is different in each mod.
-			sharedEntity_t *ent = SV_GentityNum(i);
-
-			if (ent->s.eType == ET_EVENTS + EV_SABER_BLOCK || (ent->s.weapon == WP_TURRET && ent->s.eType == ET_MISSILE)) {
-				// Too many tempEntitys and missiles. Remove them all.
-				SV_UnlinkEntity(ent);
-				Com_Memset(ent, 0, sizeofGEntity_t);
-				remEnts++;
-			}
-		}
-
-		sv.num_entities = numGEntities - remEnts;
-	}
 }
 
 /*
