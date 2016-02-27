@@ -703,6 +703,8 @@ signed short ClampShort( int i );
 
 float q3powf ( float x, int y );
 
+qboolean Q_isnan(float f);
+
 // this isn't a real cheap function to call!
 int DirToByte( vec3_t dir );
 void ByteToDir( int b, vec3_t dir );
