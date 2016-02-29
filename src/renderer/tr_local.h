@@ -1287,6 +1287,8 @@ extern	cvar_t	*r_noServerGhoul2;
 /*
 Ghoul2 Insert End
 */
+
+extern	cvar_t *r_fontSharpness;
 //====================================================================
 
 float R_NoiseGet4f( float x, float y, float z, float t );

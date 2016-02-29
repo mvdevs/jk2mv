@@ -12,6 +12,8 @@
 #define GLYPH_MAX_JAPANESE_SHADERS 3
 #define GLYPH_MAX_ASIAN_SHADERS 4	// this MUST equal the larger of the above defines
 
+#define MAX_FONT_VARIANTS 8
+
 class CFontInfo
 {
 private:
@@ -38,12 +40,22 @@ private:
 	bool			m_bAsianLastPageHalfHeight;
 	int				m_iAsianLanguageLoaded;	// doesn't matter what this is, so long as it's comparable as being changed
 
+	CFontInfo		*m_variants[MAX_FONT_VARIANTS];
+	int				m_numVariants;
+	int				m_handle;
+
 public:
 	bool			mbRoundCalcs;	// trying to make this !@#$%^ thing work with scaling
 
 	CFontInfo(const char *fontName);
 	CFontInfo(int fill) { memset(this, fill, sizeof(*this)); }
 	~CFontInfo(void) {}
+
+	int GetHandle();
+
+	void AddVariant(CFontInfo *variant);
+	int GetNumVariants();
+	CFontInfo *GetVariant(int index);
 
 	const int GetPointSize(void) const { return(mPointSize); }
 	const int GetHeight(void) const { return(mHeight); }
@@ -66,10 +78,10 @@ public:
 void R_ShutdownFonts(void);
 void R_InitFonts(void);
 int RE_RegisterFont(const char *psName);
-int RE_Font_StrLenPixels(const char *psText, const int iFontHandle, const float fScale = 1.0f);
+int RE_Font_StrLenPixels(const char *psText, const int iFontHandle, float fScale = 1.0f);
 int RE_Font_StrLenChars(const char *psText);
-int RE_Font_HeightPixels(const int iFontHandle, const float fScale = 1.0f);
-void RE_Font_DrawString(int ox, int oy, const char *psText, const float *rgba, const int iFontHandle, int iCharLimit, const float fScale = 1.0f);
+int RE_Font_HeightPixels(const int iFontHandle, float fScale = 1.0f);
+void RE_Font_DrawString(int ox, int oy, const char *psText, const float *rgba, int iFontHandle, int iCharLimit, float fScale = 1.0f);
 qboolean Language_IsAsian(void);
 qboolean Language_UsesSpaces(void);
 unsigned int AnyLanguage_ReadCharFromString( const char *psText, int *piAdvanceCount, qboolean *pbIsTrailingPunctuation/* = NULL*/ );

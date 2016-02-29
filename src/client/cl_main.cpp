@@ -2657,6 +2657,8 @@ void CL_InitRenderer( void ) {
 	cls.charSetShader = re.RegisterShaderNoMip( "gfx/2d/bigchars" );
 #endif
 
+	cls.font_ocr_a = re.RegisterFont("ocr_a");
+
 	cls.whiteShader = re.RegisterShader( "white" );
 	cls.consoleShader = re.RegisterShader( "console" );
 	cls.recordingShader = re.RegisterShaderNoMip("gfx/2d/demorec");
