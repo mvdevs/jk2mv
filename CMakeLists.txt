@@ -45,7 +45,7 @@ else()
 endif()
 
 # Customizable options
-option(BuildPortableVersion "Build portable version (does not read or write files from your user/home directory" OFF)
+option(BuildPortableVersion "Build portable version (does not read or write files from your user/home directory" ON)
 option(BuildMVMP "Whether to create targets for the client (jk2mvmp & jk2mvmenu)" ON)
 option(BuildMVDED "Whether to create targets for the dedicated server (jk2mvded)" ON)
 
