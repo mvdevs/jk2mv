@@ -685,7 +685,7 @@ void	* QDECL Sys_LoadDll(const char *name, intptr_t(QDECL **entryPoint)(int, ...
 	sprintf(mvmenu, "%s/lib/%s.so", Sys_LinuxGetInstallPrefix(), name);
 	fn = mvmenu;
 #else
-	sprintf(mvmenu, "%s/%s", basepath, fname);
+	sprintf(mvmenu, "%s/%s.so", basepath, name);
 	fn = mvmenu;
 #endif
   } else {

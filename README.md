@@ -50,7 +50,7 @@ Main Features:
     * `CMAKE_BUILD_TYPE=Debug/Release` Debugging symbols enabled/disabled.
 4. Building
   * Unix-Makefiles
-    * `make` Build all previously selected binarys.
+    * `make` Build all previously selected binaries.
     * `make install` Installs JK2MV to `/usr` on Linux. On MacOSX it finishes the App-Package.
     * `make package` Generates rpm/deb packages on Linux and a dmg image on MacOSX.
 

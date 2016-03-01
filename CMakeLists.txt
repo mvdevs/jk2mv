@@ -56,6 +56,10 @@ if(NOT APPLE AND NOT WIN32)
 	if (BuildPackRPM AND CMAKE_MAJOR_VERSION LESS 3)
 		message(WARNING "Generated RPM file will not work on newer distributions")
 	endif()
+	
+	if ((BuildPackDEB OR BuildPackRPM) AND BuildPortableVersion)
+		message(FATAL_ERROR "Packaging the portable version is not supported.")
+	endif()
 endif()
 
 option(LegacyHTTPDownloads "Activate this for legacy JK2MF http downloads. Bad code due to bad implementation in jk2mf" OFF)
