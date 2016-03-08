@@ -47,7 +47,6 @@ void Key_KeynameCompletion ( void(*callback)( const char *s ) );
 void FS_FilenameCompletion( const char *dir, const char *ext, qboolean stripExt, callbackFunc_t callback );
 
 // cmd.cpp
-static void Cmd_TokenizeString2( const char *text_in, qboolean ignoreQuotes );
 void Cmd_TokenizeString( const char *text_in );
 void Cmd_TokenizeStringIgnoreQuotes( const char *text_in );
 void Cmd_CompleteArgument( const char *command, char *args, int argNum );

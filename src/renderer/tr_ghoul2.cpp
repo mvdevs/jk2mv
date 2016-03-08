@@ -609,7 +609,7 @@ void G2_TransformBone (CTransformBone &TB)
 							}
 						}
 						// sanity check
-						assert ((TB.newFrame < endFrame) && (TB.newFrame >= boneList[boneListIndex].startFrame) || (animSize < 10));
+						assert ((TB.newFrame < endFrame && TB.newFrame >= boneList[boneListIndex].startFrame) || animSize < 10);
 					}
 					else
 					{

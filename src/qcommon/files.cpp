@@ -559,7 +559,7 @@ qboolean FS_CopyFile( char *fromOSPath, char *toOSPath, char *newOSPath, const i
 		Q_strncpyz(nExt, lExt, sizeof(nExt));
 		COM_StripExtension(toOSPath, stripped, sizeof(stripped));
 		fileCount++;
-		while (f = fopen(va("%s (%i)%s", stripped, fileCount, nExt), "rb")) {
+		while ((f = fopen(va("%s (%i)%s", stripped, fileCount, nExt), "rb")) != NULL) {
 			fileCount++;
 			fclose(f);
 			localFound = qtrue;
@@ -567,7 +567,7 @@ qboolean FS_CopyFile( char *fromOSPath, char *toOSPath, char *newOSPath, const i
 		if (!localFound) {
 			char *testpath = FS_BuildOSPath( fs_homepath->string, fs_gamedir, toOSPath );
 			COM_StripExtension(testpath, stripped, sizeof(stripped));
-			while (f = fopen(va("%s (%i)%s", stripped, fileCount, nExt), "rb")) {
+			while ((f = fopen(va("%s (%i)%s", stripped, fileCount, nExt), "rb")) != NULL) {
 				fileCount++;
 				fclose(f);
 			}

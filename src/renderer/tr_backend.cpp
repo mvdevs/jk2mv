@@ -1480,7 +1480,7 @@ void EndPixelShader()
 // reason it acts different on radeon! It's against the spec!).
 extern bool g_bTextureRectangleHack;
 
-static inline void RB_BlurGlowTexture()
+static void RB_BlurGlowTexture()
 {
 	qglDisable (GL_CLIP_PLANE0);
 	GL_Cull( CT_TWO_SIDED );
@@ -1657,7 +1657,7 @@ static inline void RB_BlurGlowTexture()
 }
 
 // Draw the glow blur over the screen additively.
-static inline void RB_DrawGlowOverlay()
+static void RB_DrawGlowOverlay()
 {
 	qglDisable (GL_CLIP_PLANE0);
 	GL_Cull( CT_TWO_SIDED );

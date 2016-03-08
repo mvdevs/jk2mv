@@ -16,7 +16,7 @@ cvar_t	*cl_autoDemoFormat;
 #define DEFAULT_NAME "LastDemo/LastDemo_recording"
 #define DEFAULT_NAME_LAST "LastDemo/LastDemo"
 
-struct {
+static struct {
 	char				demoName[MAX_OSPATH];
 	char				customName[MAX_QPATH];
 	int					timeStamps[MAX_TIMESTAMPS];
