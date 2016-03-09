@@ -84,6 +84,21 @@ short   ShortSwap (short l);
 int		LongSwap (int l);
 float	FloatSwap (const float *f);
 
+//================= COMPILER-SPECIFIC DEFINES ===========================
+#ifdef _MSC_VER
+#define Q_NORETURN __declscpec(noreturn)
+#define q_unreachable() abort()
+#elif defined __GNUC__
+#define Q_NORETURN __attribute__((noreturn))
+#define q_unreachable() __builtin_unreachable()
+#elif defined __clang__
+#define Q_NORETURN __attribute__((noreturn))
+#define q_unreachable() __builtin_unreachable()
+#else
+#define Q_NORETURN
+#define q_unreachable() abort()
+#endif
+
 //======================= WIN32 DEFINES =================================
 
 #ifdef WIN32
@@ -1038,7 +1053,7 @@ qboolean Info_Validate( const char *s );
 void Info_NextPair( const char **s, char *key, char *value );
 
 // this is only here so the functions in q_shared.c and bg_*.c can link
-void	QDECL Com_Error( int level, const char *error, ... );
+void	QDECL Q_NORETURN Com_Error( int level, const char *error, ... );
 void	QDECL Com_Printf( const char *msg, ... );
 
 

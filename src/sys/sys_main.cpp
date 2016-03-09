@@ -196,7 +196,7 @@ void Sys_Init( void ) {
 #endif
 }
 
-static void Sys_Exit( int ex ) {
+static void Q_NORETURN Sys_Exit( int ex ) {
 	Sys_PlatformExit();
 
 	IN_Shutdown();
@@ -257,7 +257,7 @@ static void Sys_ErrorDialog( const char *error )
 }
 #endif
 
-void QDECL Sys_Error( const char *error, ... )
+void QDECL Q_NORETURN Sys_Error( const char *error, ... )
 {
 	va_list argptr;
 	char    string[1024];

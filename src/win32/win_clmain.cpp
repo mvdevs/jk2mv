@@ -119,7 +119,7 @@ Sys_Error
 Show the early console as an error dialog
 =============
 */
-void QDECL Sys_Error(const char *error, ...) {
+void QDECL Q_NORETURN Sys_Error(const char *error, ...) {
 	va_list		argptr;
 	char		text[4096];
 	MSG		msg;

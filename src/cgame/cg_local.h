@@ -1879,7 +1879,7 @@ void CG_SagaObjectiveCompleted(centity_t *ent, int won, int objectivenum);
 void		trap_Print( const char *fmt );
 
 // abort the game
-void		trap_Error( const char *fmt );
+void		Q_NORETURN trap_Error( const char *fmt );
 
 // milliseconds should only be used for performance tuning, never
 // for anything game related.  Get time from the CG_DrawActiveFrame parameter
