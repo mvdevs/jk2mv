@@ -1195,7 +1195,6 @@ void G2_Animate_Bone_List(CGhoul2Info_v &ghoul2, const int currentTime, const in
 							{
 								blist[i].startTime=currentTime;
 							}
-							assert(blist[i].startTime <= currentTime);
 							blist[i].lastTime = blist[i].startTime;
 						}
 						else

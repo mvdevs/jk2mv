@@ -2547,6 +2547,7 @@ int AAS_Reachability_Ladder(int area1num, int area2num)
 		if (ladderface1vertical)
 		{
 			//find lowest edge of the ladder face
+			lowestpoint[0] = lowestpoint[1] = 0;
 			lowestpoint[2] = 99999;
 			for (i = 0; i < ladderface1->numedges; i++)
 			{

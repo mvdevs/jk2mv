@@ -303,7 +303,8 @@ private:
 
 	image_t		*mImage;
 	vec3_t		mMinVelocity, mMaxVelocity;
-	int			mNextWindGust, mWindDuration, mWindLow;
+	// int			mNextWindGust;
+	int mWindDuration, mWindLow;
 	float		mWindMin, mWindMax;
 	vec3_t		mWindDirection, mNewWindDirection, mWindSpeed;
 	int			mWindChange;
@@ -1195,7 +1196,7 @@ private:
 	float		mWindMin, mWindMax;
 	vec3_t		mWindSize;
 
-	image_t		*mImage;
+	// image_t		*mImage;
 	vec3_t		mMins, mMaxs;
 	float		mNextWindGust, mWindLowSize;
 	CWind		*mWindGust;
@@ -1742,7 +1743,7 @@ CSnowSystem	*snowSystem = 0;
 
 CRainSystem::CRainSystem(int maxRain) :
 	mMaxRain(maxRain),
-	mNextWindGust(0),
+	// mNextWindGust(0),
 	mRainHeight(5),
 	mAlpha(0.1),
 	mWindAngle(1.0),

@@ -409,12 +409,13 @@ void CL_ConfigstringModified( void ) {
 			{
 				modelEnd = Q_stristr( model, "\\" );
 				galakPos = Q_stristr( model, "galak_mech" );
-			}
-			if ( modelEnd ) modelEnd = Q_stristr( modelEnd+1, "\\" );
 
-			if ( galakPos && !(modelEnd && galakPos > modelEnd) )
-			{
-				galakPos[5] = '-';
+				if ( modelEnd ) modelEnd = Q_stristr( modelEnd+1, "\\" );
+
+				if ( galakPos && !(modelEnd && galakPos > modelEnd) )
+				{
+					galakPos[5] = '-';
+				}
 			}
 		}
 

@@ -3383,12 +3383,12 @@ qboolean MV_IsGlowStage( shader_t *shader, shaderStage_t *stage )
 	int i;
 
 	if ( !mv_dynGlowShaders || !strlen(mv_dynGlowShaders) )	 return qfalse;
-	if ( !stage || !stage->bundle || !stage->bundle->image ) return qfalse;
-	if ( !shader || !shader->name || !strlen(shader->name) ) return qfalse;
+	if ( !stage ) return qfalse;
+	if ( !shader || !strlen(shader->name) ) return qfalse;
 
 	for ( i = 0; i < MAX_IMAGE_ANIMATIONS; i++ )
 	{
-		if ( stage->bundle->image[i] && stage->bundle->image[i]->imgName && strlen(stage->bundle->image[i]->imgName) &&
+		if ( stage->bundle->image[i] && strlen(stage->bundle->image[i]->imgName) &&
 				Q_stristr(mv_dynGlowShaders, va("\n%s:%s\n", shader->name, stage->bundle->image[i]->imgName)) )
 		{
 			return qtrue;
