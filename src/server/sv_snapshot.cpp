@@ -302,6 +302,8 @@ static void SV_AddEntitiesVisibleFromPoint( vec3_t origin, clientSnapshot_t *fra
 			ent->s.number = e;
 		}
 
+		svEnt = SV_SvEntityForGentity( ent );
+
 		if ( sv.gentitiesMV != NULL && sv.gentitySizeMV > 0 )
 		{
 			mvsharedEntity_t *mvEnt = MV_EntityNum(e);
@@ -331,8 +333,6 @@ static void SV_AddEntitiesVisibleFromPoint( vec3_t origin, clientSnapshot_t *fra
 				continue;
 			}
 		}
-
-		svEnt = SV_SvEntityForGentity( ent );
 
 		// don't double add an entity through portals
 		if ( svEnt->snapshotCounter == sv.snapshotCounter ) {
