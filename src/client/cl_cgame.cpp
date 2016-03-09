@@ -612,11 +612,9 @@ void CL_ShutdownCGame( void ) {
 }
 
 static int	FloatAsInt( float f ) {
-	int		temp;
-
-	*(float *)&temp = f;
-
-	return temp;
+	floatint_t fi;
+	fi.f = f;
+	return fi.i;
 }
 
 // wp glowing workaround.. this keeps yourself from glowing like a candle when charging the blaster pistol on high svs.time

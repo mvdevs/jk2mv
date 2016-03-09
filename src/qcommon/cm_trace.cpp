@@ -110,15 +110,15 @@ SquareRootFloat
 ================
 */
 float SquareRootFloat(float number) {
-	int i;
+	floatint_t fi;
 	float x, y;
 	const float f = 1.5F;
 
 	x = number * 0.5F;
 	y  = number;
-	i  = * ( int * ) &y;
-	i  = 0x5f3759df - ( i >> 1 );
-	y  = * ( float * ) &i;
+	fi.f = y;
+	fi.i  = 0x5f3759df - ( fi.i >> 1 );
+	y  = fi.f;
 	y  = y * ( f - ( x * y * y ) );
 	y  = y * ( f - ( x * y * y ) );
 	return number * y;

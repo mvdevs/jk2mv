@@ -49,20 +49,20 @@ void NetadrToSockadr (netadr_t *a, struct sockaddr_in *s)
 		s->sin_family = AF_INET;
 
 		s->sin_port = a->port;
-		*(int *)&s->sin_addr = -1;
+		s->sin_addr.s_addr = -1;
 	}
 	else if (a->type == NA_IP)
 	{
 		s->sin_family = AF_INET;
 
-		*(int *)&s->sin_addr = *(int *)&a->ip;
+		memcpy(&s->sin_addr, a->ip, 4);
 		s->sin_port = a->port;
 	}
 }
 
 void SockadrToNetadr (struct sockaddr_in *s, netadr_t *a)
 {
-	*(int *)&a->ip = *(int *)&s->sin_addr;
+	memcpy(a->ip, &s->sin_addr, 4);
 	a->port = s->sin_port;
 	a->type = NA_IP;
 }
@@ -87,22 +87,21 @@ idnewt
 qboolean	Sys_StringToSockaddr (const char *s, struct sockaddr *sadr)
 {
 	struct hostent	*h;
-	//char	*colon; // bk001204 - unused
+	struct sockaddr_in *sadr_in = (struct sockaddr_in *)sadr;
 
 	memset (sadr, 0, sizeof(*sadr));
-	((struct sockaddr_in *)sadr)->sin_family = AF_INET;
-
-	((struct sockaddr_in *)sadr)->sin_port = 0;
+	sadr_in->sin_family = AF_INET;
+	sadr_in->sin_port = 0;
 
 	if ( s[0] >= '0' && s[0] <= '9')
 	{
-		*(int *)&((struct sockaddr_in *)sadr)->sin_addr = inet_addr(s);
+		sadr_in->sin_addr.s_addr = inet_addr(s);
 	}
 	else
 	{
 		if (! (h = gethostbyname(s)) )
 			return qfalse;
-		*(int *)&((struct sockaddr_in *)sadr)->sin_addr = *(int *)h->h_addr_list[0];
+		memcpy(&sadr_in->sin_addr, h->h_addr_list[0], 4);
 	}
 
 	return qtrue;

@@ -757,11 +757,9 @@ FloatAsInt
 ====================
 */
 static int FloatAsInt( float f ) {
-	int		temp;
-
-	*(float *)&temp = f;
-
-	return temp;
+	floatint_t fi;
+	fi.f = f;
+	return fi.i;
 }
 
 void *VM_ArgPtr( int intValue );

@@ -339,11 +339,7 @@ intptr_t QDECL VM_Call(vm_t *vm, int callnum, ...);
 void	VM_Debug( int level );
 
 void	*VM_ArgPtr(intptr_t intValue);
-typedef union {
-	float f;
-	int i;
-	unsigned int ui;
-} floatint_t;
+
 static ID_INLINE float _vmf(intptr_t x)
 {
 	floatint_t fi;

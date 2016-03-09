@@ -252,6 +252,12 @@ typedef unsigned long		ulong;
 
 typedef enum {qfalse, qtrue}	qboolean;
 
+typedef union {
+	float f;
+	int i;
+	unsigned int ui;
+} floatint_t;
+
 typedef int		qhandle_t;
 typedef int		fxHandle_t;
 typedef int		sfxHandle_t;
