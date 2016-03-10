@@ -2997,7 +2997,8 @@ FS_Startup
 static void FS_Startup( const char *gameName ) {
 	const char *homePath;
 	const char *assetsPath;
-	char *mv_whitelist, *mv_blacklist, *mv_forcelist;
+	// Silence clang, they do get initialized
+	char *mv_whitelist = NULL, *mv_blacklist = NULL, *mv_forcelist = NULL;
 	fileHandle_t f_w, f_b, f_f;
 	int f_wl, f_bl, f_fl;
 	int s;
