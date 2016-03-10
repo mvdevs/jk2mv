@@ -555,9 +555,7 @@ static void R_Images_DeleteImageContents( image_t *pImage )
 	assert(pImage);	// should never be called with NULL
 	if (pImage)
 	{
-		if (qglDeleteTextures) {	//won't have one if we switched to dedicated.
-			qglDeleteTextures( 1, &pImage->texnum );
-		}
+		qglDeleteTextures( 1, &pImage->texnum );
 
 		Z_Free(pImage);
 	}
@@ -768,19 +766,17 @@ done:
 static void GL_ResetBinds(void)
 {
 	memset( glState.currenttextures, 0, sizeof( glState.currenttextures ) );
-	if ( qglBindTexture )
+
+	if ( qglActiveTextureARB )
 	{
-		if ( qglActiveTextureARB )
-		{
-			GL_SelectTexture( 1 );
-			qglBindTexture( GL_TEXTURE_2D, 0 );
-			GL_SelectTexture( 0 );
-			qglBindTexture( GL_TEXTURE_2D, 0 );
-		}
-		else
-		{
-			qglBindTexture( GL_TEXTURE_2D, 0 );
-		}
+		GL_SelectTexture( 1 );
+		qglBindTexture( GL_TEXTURE_2D, 0 );
+		GL_SelectTexture( 0 );
+		qglBindTexture( GL_TEXTURE_2D, 0 );
+	}
+	else
+	{
+		qglBindTexture( GL_TEXTURE_2D, 0 );
 	}
 }
 
