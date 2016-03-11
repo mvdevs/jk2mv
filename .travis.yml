@@ -11,26 +11,18 @@ env:
 matrix:
   include:
     - os: linux
-      env: HOST=linux-i386-gcc
-    - os: linux
       env: HOST=linux-x86_64-gcc
     - os: osx
       env: HOST=macosx-universal-clang
 
 before_install:
   - git fetch --unshallow
-  - if [[ "$HOST" == linux-i386-gcc ]]; then sudo dpkg --add-architecture i386; fi
-  - if [[ "$HOST" == linux-*-gcc ]]; then sudo apt-get update; fi
+  - if [[ "$HOST" == linux-x86_64-gcc ]]; then sudo apt-get update; fi
 
 install: |
   export MVDIR=`pwd`
-  if [[ "$HOST" == linux-*-gcc ]]; then
-      sudo aptitude install -y cmake curl rpm debhelper devscripts 
-  fi
   if [[ "$HOST" == linux-x86_64-gcc ]]; then
-      sudo aptitude install -y libsdl2-dev libgl1-mesa-dev libopenal-dev
-  elif [[ "$HOST" == linux-i386-gcc ]]; then
-      sudo aptitude install -y gcc-multilib g++-multilib libsdl2-dev:i386 libopenal-dev:i386
+      sudo aptitude install -y cmake curl rpm debhelper devscripts libsdl2-dev libgl1-mesa-dev libopenal-dev
   else
       cd ~
       curl -O https://www.libsdl.org/release/SDL2-2.0.4.tar.gz
@@ -47,10 +39,7 @@ script:
   - mkdir travis_build
   - cd travis_build
 
-  - if [[ "$HOST" == linux-i386-gcc ]];   then export CC="$CC -m32"; export CXX="$CXX -m32"; fi
-  - if [[ "$HOST" == linux-i386-gcc ]];   then cmake -G "Unix Makefiles" -DCMAKE_SYSTEM_PROCESSOR="i386" -DCMAKE_SYSTEM_NAME="Linux" -DUseInternalPNG=ON -DUseInternalJPEG=ON -DUseInternalZLIB=ON -DUseInternalCURL=ON -DBuildPortableVersion=OFF -DBuildPackDEB=ON -DBuildPackRPM=ON ../..; fi
   - if [[ "$HOST" == linux-x86_64-gcc ]]; then cmake -G "Unix Makefiles" -DUseInternalPNG=ON -DUseInternalJPEG=ON -DUseInternalZLIB=ON -DUseInternalCURL=ON -DBuildPortableVersion=OFF -DBuildPackDEB=ON -DBuildPackRPM=ON ../..; fi
-
   - if [[ "$HOST" == macosx-universal-clang ]]; then cmake -G "Unix Makefiles" -DUseInternalPNG=ON -DUseInternalJPEG=ON -DUseInternalZLIB=ON -DUseInternalCURL=ON -DBuildPortableVersion=OFF ../..; fi
 
   - make
