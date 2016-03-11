@@ -3625,7 +3625,6 @@ CL_GlobalServers_f
 void CL_GlobalServers_f( void ) {
 	netadr_t	to;
 	int			i;
-	char		command102[1024], command104[1024];
 
 	if ( Cmd_Argc() < 3) {
 		Com_Printf( "usage: globalservers <master# 0-1> <protocol> [keywords]\n");
@@ -3635,10 +3634,6 @@ void CL_GlobalServers_f( void ) {
 	cls.masterNum = atoi( Cmd_Argv(1) );
 	cls.numglobalservers = -1;
 	cls.pingUpdateSource = AS_GLOBAL;
-
-	// ignore argv(2) and send out requests for 1.02 and 1.04
-	sprintf(command102, "getservers 15");
-	sprintf(command104, "getservers 16");
 
 	// multimaster
 	for (i = 0; i < MAX_MASTER_SERVERS; i++) {
@@ -3654,8 +3649,8 @@ void CL_GlobalServers_f( void ) {
 		to.type = NA_IP;
 		to.port = BigShort(PORT_MASTER);
 
-		NET_OutOfBandPrint(NS_SERVER, to, command102);
-		NET_OutOfBandPrint(NS_SERVER, to, command104);
+		NET_OutOfBandPrint(NS_SERVER, to, "getservers 15");
+		NET_OutOfBandPrint(NS_SERVER, to, "getservers 16");
 	}
 
 	CL_RequestMotd();
