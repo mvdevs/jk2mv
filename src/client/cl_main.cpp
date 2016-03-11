@@ -3198,6 +3198,8 @@ void CL_ServerInfoPacket( netadr_t from, msg_t *msg ) {
 				case PROTOCOL16:
 					MV_SetCurrentGameversion(VERSION_1_04);
 					break;
+				default:
+					q_unreachable();
 			}
 		}
 

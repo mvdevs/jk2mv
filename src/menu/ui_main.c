@@ -5674,6 +5674,8 @@ static const char *UI_SelectedTeamHead(int index, int *actual) {
 			}
 		}
 	}
+
+	*actual = -1;
 	return "";
 }
 
