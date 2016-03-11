@@ -44,11 +44,18 @@
 #define RDF_HYPERSPACE		4		// teleportation effect
 
 typedef byte color4ub_t[4];
+typedef union {
+	byte		b[4];
+	uint32_t	ui;
+} color4u_t;
 
 typedef struct {
 	vec3_t		xyz;
 	float		st[2];
-	byte		modulate[4];
+	union {
+		byte		modulate[4];
+		uint32_t	modulateui;
+	};
 } polyVert_t;
 
 typedef struct poly_s {

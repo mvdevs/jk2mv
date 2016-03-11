@@ -933,10 +933,10 @@ const void *RB_StretchPic ( const void *data ) {
 	tess.indexes[ numIndexes + 4 ] = numVerts + 0;
 	tess.indexes[ numIndexes + 5 ] = numVerts + 1;
 
-	*(int *)tess.vertexColors[ numVerts ] =
-		*(int *)tess.vertexColors[ numVerts + 1 ] =
-		*(int *)tess.vertexColors[ numVerts + 2 ] =
-		*(int *)tess.vertexColors[ numVerts + 3 ] = *(int *)backEnd.color2D;
+	tess.vertexColorsui[ numVerts ] =
+		tess.vertexColorsui[ numVerts + 1 ] =
+		tess.vertexColorsui[ numVerts + 2 ] =
+		tess.vertexColorsui[ numVerts + 3 ] = backEnd.color2Dui;
 
 	tess.xyz[ numVerts ][0] = cmd->x;
 	tess.xyz[ numVerts ][1] = cmd->y;

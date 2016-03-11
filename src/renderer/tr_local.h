@@ -371,7 +371,10 @@ typedef struct {
 	waveForm_t		alphaWave;
 	alphaGen_t		alphaGen;
 
-	byte			constantColor[4];			// for CGEN_CONST and AGEN_CONST
+	union {
+		byte			constantColor[4];			// for CGEN_CONST and AGEN_CONST
+		uint32_t		constantColorui;
+	};
 
 	unsigned		stateBits;					// GLS_xxxx mask
 
@@ -1006,7 +1009,10 @@ typedef struct {
 	qboolean	skyRenderedThisView;	// flag for drawing sun
 
 	qboolean	projection2D;	// if qtrue, drawstretchpic doesn't need to change modes
-	byte		color2D[4];
+	union {
+		byte		color2D[4];
+		uint32_t	color2Dui;
+	};
 	qboolean	vertexes2D;		// shader needs to be finished
 	trRefEntity_t	entity2D;	// currentEntity will point at this when doing 2D rendering
 } backEndState_t;
@@ -1485,7 +1491,10 @@ typedef byte color4ub_t[4];
 
 typedef struct stageVars
 {
-	color4ub_t	colors[SHADER_MAX_VERTEXES];
+	union {
+		color4ub_t	colors[SHADER_MAX_VERTEXES];
+		uint32_t	colorsui[SHADER_MAX_VERTEXES];
+	};
 	vec2_t		texcoords[NUM_TEXTURE_BUNDLES][SHADER_MAX_VERTEXES];
 } stageVars_t;
 
@@ -1497,7 +1506,10 @@ struct shaderCommands_s
 	vec4_t		xyz[SHADER_MAX_VERTEXES];
 	vec4_t		normal[SHADER_MAX_VERTEXES];
 	vec2_t		texCoords[SHADER_MAX_VERTEXES][NUM_TEX_COORDS];
-	color4ub_t	vertexColors[SHADER_MAX_VERTEXES];
+	union {
+		color4ub_t	vertexColors[SHADER_MAX_VERTEXES];
+		uint32_t	vertexColorsui[SHADER_MAX_VERTEXES];
+	};
 //	byte		vertexAlphas[SHADER_MAX_VERTEXES][4];	// only used by SOF2 glass, go ahead and implement if you want
 	int			vertexDlightBits[SHADER_MAX_VERTEXES];
 

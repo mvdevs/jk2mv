@@ -624,18 +624,19 @@ COLORS
 */
 void RB_CalcColorFromEntity( unsigned char *dstColors )
 {
-	int	i;
-	int *pColors = ( int * ) dstColors;
-	int c;
+	int			i, j;
+	color4ub_t	c;
 
 	if ( !backEnd.currentEntity )
 		return;
 
-	c = * ( int * ) backEnd.currentEntity->e.shaderRGBA;
+	memcpy(c, backEnd.currentEntity->e.shaderRGBA, 4);
 
-	for ( i = 0; i < tess.numVertexes; i++, pColors++ )
+	for ( i = 0; i < tess.numVertexes; i++, dstColors += 4 )
 	{
-		*pColors = c;
+		for (j = 0; j < 4; j++) {
+			dstColors[j]= c[j];
+		}
 	}
 }
 
@@ -644,24 +645,21 @@ void RB_CalcColorFromEntity( unsigned char *dstColors )
 */
 void RB_CalcColorFromOneMinusEntity( unsigned char *dstColors )
 {
-	int	i;
-	int *pColors = ( int * ) dstColors;
-	unsigned char invModulate[4];
-	int c;
+	int			i, j;
+	color4ub_t	invModulate;
 
 	if ( !backEnd.currentEntity )
 		return;
 
-	invModulate[0] = 255 - backEnd.currentEntity->e.shaderRGBA[0];
-	invModulate[1] = 255 - backEnd.currentEntity->e.shaderRGBA[1];
-	invModulate[2] = 255 - backEnd.currentEntity->e.shaderRGBA[2];
-	invModulate[3] = 255 - backEnd.currentEntity->e.shaderRGBA[3];	// this trashes alpha, but the AGEN block fixes it
+	for (j = 0; j < 4; j++) {
+		invModulate[j] = 255 - backEnd.currentEntity->e.shaderRGBA[j];	// this trashes alpha, but the AGEN block fixes it
+	}
 
-	c = * ( int * ) invModulate;
-
-	for ( i = 0; i < tess.numVertexes; i++, pColors++ )
+	for ( i = 0; i < tess.numVertexes; i++, dstColors += 4 )
 	{
-		*pColors = * ( int * ) invModulate;
+		for (j = 0; j < 4; j++) {
+			dstColors[j] = invModulate[j];
+		}
 	}
 }
 
@@ -706,14 +704,11 @@ void RB_CalcAlphaFromOneMinusEntity( unsigned char *dstColors )
 */
 void RB_CalcWaveColor( const waveForm_t *wf, unsigned char *dstColors )
 {
-	int i;
-	int v;
-	float glow;
-	int *colors = ( int * ) dstColors;
-	byte	color[4];
+	int			i, j;
+	float		glow;
+	color4ub_t	color;
 
-
-  if ( wf->func == GF_NOISE ) {
+	if ( wf->func == GF_NOISE ) {
 		glow = wf->base + R_NoiseGet4f( 0, 0, 0, ( tess.shaderTime + wf->phase ) * wf->frequency ) * wf->amplitude;
 	} else {
 		glow = EvalWaveForm( wf ) * tr.identityLight;
@@ -726,13 +721,13 @@ void RB_CalcWaveColor( const waveForm_t *wf, unsigned char *dstColors )
 		glow = 1;
 	}
 
-	v = Q_ftol(255 * glow);
-	color[0] = color[1] = color[2] = v;
+	color[0] = color[1] = color[2] = Q_ftol(255 * glow);
 	color[3] = 255;
-	v = *(int *)color;
 
-	for ( i = 0; i < tess.numVertexes; i++, colors++ ) {
-		*colors = v;
+	for ( i = 0; i < tess.numVertexes; i++, dstColors += 4 ) {
+		for (j = 0; j < 4; j++) {
+			dstColors[j] = color[j];
+		}
 	}
 }
 

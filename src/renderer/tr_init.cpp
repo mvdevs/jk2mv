@@ -1377,7 +1377,7 @@ void RE_GetLightStyle(int style, color4ub_t color)
 		return;
 	}
 
-	*(int *)color = *(int *)styleColors[style];
+	memcpy(color, styleColors[style], 4);
 }
 
 void RE_SetLightStyle(int style, int color)
@@ -1388,10 +1388,7 @@ void RE_SetLightStyle(int style, int color)
 		return;
 	}
 
-	if (*(int*)styleColors[style] != color)
-	{
-		*(int *)styleColors[style] = color;
-	}
+	memcpy(styleColors[style], &color, 4);
 }
 
 #endif //!DEDICATED

@@ -57,6 +57,7 @@ RB_AddQuadStampExt
 void RB_AddQuadStampExt( vec3_t origin, vec3_t left, vec3_t up, byte *color, float s1, float t1, float s2, float t2 ) {
 	vec3_t		normal;
 	int			ndx;
+	uint32_t	colorui;
 
 	RB_CHECKOVERFLOW( 4, 6 );
 
@@ -110,12 +111,12 @@ void RB_AddQuadStampExt( vec3_t origin, vec3_t left, vec3_t up, byte *color, flo
 
 	// constant color all the way around
 	// should this be identity and let the shader specify from entity?
-	* ( unsigned int * ) &tess.vertexColors[ndx] =
-	* ( unsigned int * ) &tess.vertexColors[ndx+1] =
-	* ( unsigned int * ) &tess.vertexColors[ndx+2] =
-	* ( unsigned int * ) &tess.vertexColors[ndx+3] =
-		* ( unsigned int * )color;
 
+	memcpy(&colorui, color, 4);
+	tess.vertexColorsui[ndx] =
+		tess.vertexColorsui[ndx+1] =
+		tess.vertexColorsui[ndx+2] =
+		tess.vertexColorsui[ndx+3] = colorui;
 
 	tess.numVertexes += 4;
 	tess.numIndexes += 6;
@@ -231,7 +232,7 @@ void RB_SurfacePolychain( srfPoly_t *p ) {
 		VectorCopy( p->verts[i].xyz, tess.xyz[numv] );
 		tess.texCoords[numv][0][0] = p->verts[i].st[0];
 		tess.texCoords[numv][0][1] = p->verts[i].st[1];
-		*(int *)&tess.vertexColors[numv] = *(int *)p->verts[ i ].modulate;
+		tess.vertexColorsui[numv] = p->verts[ i ].modulateui;
 
 		numv++;
 	}
@@ -250,16 +251,16 @@ void RB_SurfacePolychain( srfPoly_t *p ) {
 inline uint32_t ComputeFinalVertexColor(const byte *colors)
 {
 	int			k;
-	byte		result[4];
+	color4u_t	result;
 	uint32_t		r, g, b;
 
-	*(int *)result = *(int *)colors;
+	memcpy(&result, colors, 4);
 	if (tess.shader->lightmapIndex[0] != LIGHTMAP_BY_VERTEX || r_fullbright->integer)
 	{
-		result[0] = 255;
-		result[1] = 255;
-		result[2] = 255;
-		return *(uint32_t *)result;
+		result.b[0] = 255;
+		result.b[1] = 255;
+		result.b[2] = 255;
+		return result.ui;
 	}
 	// an optimization could be added here to compute the style[0] (which is always the world normal light)
 	r = g = b = 0;
@@ -279,11 +280,11 @@ inline uint32_t ComputeFinalVertexColor(const byte *colors)
 			break;
 		}
 	}
-	result[0] = Com_Clamp(0, 255, r >> 8);
-	result[1] = Com_Clamp(0, 255, g >> 8);
-	result[2] = Com_Clamp(0, 255, b >> 8);
+	result.b[0] = Com_Clamp(0, 255, r >> 8);
+	result.b[1] = Com_Clamp(0, 255, g >> 8);
+	result.b[2] = Com_Clamp(0, 255, b >> 8);
 
-	return *(uint32_t *)result;
+	return result.ui;
 }
 
 
@@ -1331,7 +1332,7 @@ void RB_SurfaceFace( srfSurfaceFace_t *surf ) {
 				break;
 			}
 		}
-		*(unsigned *) &tess.vertexColors[ndx] = ComputeFinalVertexColor((byte *)&v[VERTEX_COLOR]);
+		tess.vertexColorsui[ndx] = ComputeFinalVertexColor((byte *)&v[VERTEX_COLOR]);
 		tess.vertexDlightBits[ndx] = dlightBits;
 	}
 
