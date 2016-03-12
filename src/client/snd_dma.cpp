@@ -2687,7 +2687,7 @@ void UpdateLoopingSounds()
 	channel_t *ch;
 	loopSound_t	*loop;
 	float pos[3];
-	float fVolume = 0.003922;	// 1.f / 255.f
+	float fVolume = 0.003922f;	// 1.f / 255.f
 
 #ifdef _DEBUG
 	// Clear AL Error State

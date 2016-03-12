@@ -1241,11 +1241,11 @@ CSnowSystem::CSnowSystem(int maxSnowflakes) :
 	mWindGust(0),
 	mWindChange(0),
 
-	mAlpha(0.09),
-	mWindDuration(2.0),
-	mWindLow(3.0),
-	mWindMin(30.0), // .6 3
-	mWindMax(70.0),
+	mAlpha(0.09f),
+	mWindDuration(2.0f),
+	mWindLow(3.0f),
+	mWindMin(30.0f), // .6 3
+	mWindMax(70.0f),
 	mUpdateCount(0),
 	mOverallContents(0),
 
@@ -1686,7 +1686,7 @@ void CSnowSystem::Render(void)
 
 	VectorAdd(backEnd.viewParms.ori.origin, mMinSpread, origin);
 
-	qglColor4f(0.8, 0.8, 0.8, mAlpha);
+	qglColor4f(0.8f, 0.8f, 0.8f, mAlpha);
 
 //	GL_State(GLS_SRCBLEND_SRC_ALPHA|GLS_DSTBLEND_ONE);
 	GL_State(GLS_ALPHA);
@@ -1745,31 +1745,31 @@ CRainSystem::CRainSystem(int maxRain) :
 	mMaxRain(maxRain),
 	// mNextWindGust(0),
 	mRainHeight(5),
-	mAlpha(0.1),
-	mWindAngle(1.0),
+	mAlpha(0.1f),
+	mWindAngle(1.0f),
 
 	mFadeAlpha(0.0f),
 	mIsRaining(false)
 
 {
-	mSpread[0] = M_PI*2.0;		// angle spread
-	mSpread[1] = 20.0;			// radius spread
-	mSpread[2] = 20.0;			// z spread
+	mSpread[0] = M_PI*2.0f;		// angle spread
+	mSpread[1] = 20.0f;			// radius spread
+	mSpread[2] = 20.0f;			// z spread
 
-	mMinVelocity[0] = 0.1;
-	mMaxVelocity[0] = -0.1;
-	mMinVelocity[1] = 0.1;
-	mMaxVelocity[1] = -0.1;
-	mMinVelocity[2] = -60.0;
-	mMaxVelocity[2] = -50.0;
+	mMinVelocity[0] = 0.1f;
+	mMaxVelocity[0] = -0.1f;
+	mMinVelocity[1] = 0.1f;
+	mMaxVelocity[1] = -0.1f;
+	mMinVelocity[2] = -60.0f;
+	mMaxVelocity[2] = -50.0f;
 
 	mWindDuration = 15;
 	mWindLow = 50;
-	mWindMin = 0.01;
-	mWindMax = 0.05;
+	mWindMin = 0.01f;
+	mWindMax = 0.05f;
 
 	mWindChange = 0;
-	mWindDirection[0] = mWindDirection[1] = mWindDirection[2] = 0.0;
+	mWindDirection[0] = mWindDirection[1] = mWindDirection[2] = 0.0f;
 
 	mRainList = new SParticle[mMaxRain];
 

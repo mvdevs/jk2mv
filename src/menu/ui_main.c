@@ -1258,15 +1258,15 @@ static void UI_DrawForceSide(rectDef_t *rect, float scale, vec4_t color, int tex
 		{
 		case TEAM_RED:
 			uiForceSide = FORCE_DARKSIDE;
-			color[0] = 0.2;
-			color[1] = 0.2;
-			color[2] = 0.2;
+			color[0] = 0.2f;
+			color[1] = 0.2f;
+			color[2] = 0.2f;
 			break;
 		case TEAM_BLUE:
 			uiForceSide = FORCE_LIGHTSIDE;
-			color[0] = 0.2;
-			color[1] = 0.2;
-			color[2] = 0.2;
+			color[0] = 0.2f;
+			color[1] = 0.2f;
+			color[2] = 0.2f;
 			break;
 		default:
 			break;
@@ -1478,9 +1478,9 @@ static void UI_DrawTeamMember(rectDef_t *rect, float scale, vec4_t color, qboole
 
 	if (numval > maxcl)
 	{
-		finalColor[0] *= 0.2;
-		finalColor[1] *= 0.2;
-		finalColor[2] *= 0.2;
+		finalColor[0] *= 0.2f;
+		finalColor[1] *= 0.2f;
+		finalColor[2] *= 0.2f;
 
 		value = -1;
 	}
@@ -7011,7 +7011,7 @@ static void UI_DisplayDownloadInfo( const char *downloadName, float centerPoint,
 	int xferRate;
 	int leftWidth;
 
-	vec4_t colorLtGreyAlpha = {0, 0, 0, .8};
+	vec4_t colorLtGreyAlpha = {0, 0, 0, .8f};
 	UI_FillRect( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, colorLtGreyAlpha );
 
 	downloadSize = trap_Cvar_VariableValue("cl_downloadSize");

@@ -499,7 +499,7 @@ void SCR_CenterPrint (char *str)//, PalIdx_t colour)
 		{
 			spaced = true;
 			last = s;
-			scr_centertime_off += 0.2;//give them an extra 0.05 second for each character
+			scr_centertime_off += 0.2f;//give them an extra 0.05 second for each character
 		}
 
 		if ((*s) == '\n' || (*s) == 0)
@@ -511,7 +511,7 @@ void SCR_CenterPrint (char *str)//, PalIdx_t colour)
 
 		if (num_chars >= width)
 		{
-			scr_centertime_off += 0.8;//give them an extra half second for each newline
+			scr_centertime_off += 0.8f;//give them an extra half second for each newline
 			if (!last)
 			{
 				last = s;
