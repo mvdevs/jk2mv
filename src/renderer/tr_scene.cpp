@@ -7,9 +7,6 @@
 #include "../ghoul2/G2_local.h"
 #include "matcomp.h"
 
-#pragma warning (disable: 4512)	//default assignment operator could not be gened
-#include "../qcommon/disablewarnings.h"
-
 static	int			r_firstSceneDrawSurf;
 
 static	int			r_numdlights;

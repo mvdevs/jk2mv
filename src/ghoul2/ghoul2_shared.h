@@ -7,11 +7,9 @@
 /*
 Ghoul2 Insert Start
 */
-#pragma warning (push, 3)	//go back down to 3 for the stl include
 #include <vector>
 #include <map>
 #include <stdint.h>
-#pragma warning (pop)
 using namespace std;
 /*
 Ghoul2 Insert End

@@ -31,7 +31,6 @@
 extern mdxaBone_t		worldMatrix;
 extern mdxaBone_t		worldMatrixInv;
 
-#pragma warning(disable : 4512)		//assignment op could not be genereated
 class CTraceSurface
 {
 public:

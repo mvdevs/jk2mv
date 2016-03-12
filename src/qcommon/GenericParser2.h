@@ -8,8 +8,6 @@
 	#pragma message("...including GenericParser2.h")
 #endif
 
-#include "disablewarnings.h"
-
 class CTextPool;
 class CGPObject;
 

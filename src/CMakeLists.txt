@@ -164,7 +164,6 @@ if (BuildMVMP OR BuildMVDED)
 		"${SRCDir}/qcommon/cm_patch.h"
 		"${SRCDir}/qcommon/cm_polylib.h"
 		"${SRCDir}/qcommon/cm_public.h"
-		"${SRCDir}/qcommon/disablewarnings.h"
 		"${SRCDir}/qcommon/hstring.h"
 		"${SRCDir}/qcommon/ioapi.h"
 		"${SRCDir}/qcommon/qcommon.h"

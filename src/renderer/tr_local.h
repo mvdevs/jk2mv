@@ -1690,7 +1690,7 @@ void RB_SurfaceAnim( md4Surface_t *surfType );
 /*
 Ghoul2 Insert Start
 */
-#pragma warning (disable: 4512)	//default assignment operator could not be gened
+
 class CRenderableSurface
 {
 public:

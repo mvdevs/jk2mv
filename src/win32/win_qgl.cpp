@@ -4271,8 +4271,3 @@ void QGL_EnableLogging( qboolean enable )
 		qglViewport				  =	dllViewport				  ;
 	}
 }
-
-#pragma warning (default : 4113 4133 4047 )
-
-
-

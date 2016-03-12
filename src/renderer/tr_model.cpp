@@ -2,14 +2,9 @@
 
 #include "tr_local.h"
 
-
-#include "../qcommon/disablewarnings.h"
-
-#pragma warning (push, 3)	//go back down to 3 for the stl include
 #include "../qcommon/sstring.h"	// #include <string>
 #include <vector>
 #include <map>
-#pragma warning (pop)
 
 using namespace std;
 

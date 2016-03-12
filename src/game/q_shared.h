@@ -8,8 +8,6 @@
 
 #define MAX_TEAMNAME 32
 
-#include "../qcommon/disablewarnings.h"
-
 /**********************************************************************
   VM Considerations
 

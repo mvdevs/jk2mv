@@ -11,12 +11,6 @@
 
 #elif defined( _WIN32 )
 
-#pragma warning (disable: 4201)
-#pragma warning (disable: 4214)
-#pragma warning (disable: 4514)
-#pragma warning (disable: 4032)
-#pragma warning (disable: 4201)
-#pragma warning (disable: 4214)
 #include <WinSock2.h>
 #include <windows.h>
 #include <gl/gl.h>

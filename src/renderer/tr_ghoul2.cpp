@@ -20,9 +20,6 @@
 #include "../ghoul2/G2_local.h"
 #include "matcomp.h"
 
-#pragma warning (disable: 4512)	//default assignment operator could not be gened
-#include "../qcommon/disablewarnings.h"
-
 #define	LL(x) x=LittleLong(x)
 
 extern cvar_t	*r_Ghoul2AnimSmooth;

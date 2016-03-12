@@ -8,13 +8,10 @@
 #include "tr_local.h"
 #include "tr_font.h"
 
-
-#pragma warning (push, 3)	//go back down to 3 for the stl include
 #include <vector>
 #include <map>
 //#include <list>
 //#include <string>
-#pragma warning (pop)
 
 using namespace std;
 
