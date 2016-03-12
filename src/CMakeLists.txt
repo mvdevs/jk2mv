@@ -540,6 +540,12 @@ if (BuildMVMP)
 		set(MVMPFiles ${MVMPFiles} ${MVMPUnixFiles})
 	endif()
 
+	if (("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU") OR ("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang"))
+		set_source_files_properties(${MVMPMP3Files} PROPERTIES COMPILE_FLAGS "-Wno-all")
+		set(LibFiles ${ZLIBFiles} ${MVMPDEDMeerkatFiles} ${JPEGFiles} ${PNGFiles} ${CURLFiles})
+		set_source_files_properties(${LibFiles} PROPERTIES COMPILE_FLAGS "-Wno-all")
+	endif()
+
 	# Project
 	if(WIN32)
 		add_executable(${MVMP} WIN32 ${MVMPFiles})
