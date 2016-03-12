@@ -257,7 +257,7 @@ static void Sys_ErrorDialog( const char *error )
 }
 #endif
 
-void QDECL Q_NORETURN Sys_Error( const char *error, ... )
+Q_NORETURN void QDECL Sys_Error( const char *error, ... )
 {
 	va_list argptr;
 	char    string[1024];

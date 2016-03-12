@@ -86,7 +86,7 @@ float	FloatSwap (const float *f);
 
 //================= COMPILER-SPECIFIC DEFINES ===========================
 #ifdef _MSC_VER
-#define Q_NORETURN __declscpec(noreturn)
+#define Q_NORETURN __declspec(noreturn)
 #define q_unreachable() abort()
 #elif defined __GNUC__
 #define Q_NORETURN __attribute__((noreturn))
@@ -1053,7 +1053,7 @@ qboolean Info_Validate( const char *s );
 void Info_NextPair( const char **s, char *key, char *value );
 
 // this is only here so the functions in q_shared.c and bg_*.c can link
-void	QDECL Q_NORETURN Com_Error( int level, const char *error, ... );
+Q_NORETURN void	QDECL  Com_Error( int level, const char *error, ... );
 void	QDECL Com_Printf( const char *msg, ... );
 
 

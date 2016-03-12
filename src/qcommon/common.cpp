@@ -237,7 +237,7 @@ Both client and server can use this, and it will
 do the apropriate things.
 =============
 */
-void QDECL Q_NORETURN Com_Error( int code, const char *fmt, ... ) {
+Q_NORETURN void QDECL Com_Error( int code, const char *fmt, ... ) {
 	va_list		argptr;
 	static int	lastErrorTime;
 	static int	errorCount;

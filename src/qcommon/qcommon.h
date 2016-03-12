@@ -723,7 +723,7 @@ void		Com_EndRedirect( void );
 void 		QDECL Com_Printf( const char *fmt, ... );
 void 		QDECL Com_DPrintf( const char *fmt, ... );
 void		QDECL Com_OPrintf( const char *fmt, ...); // Outputs to the VC / Windows Debug window (only in debug compile)
-void 		QDECL Q_NORETURN Com_Error( int code, const char *fmt, ... );
+Q_NORETURN void QDECL  Com_Error( int code, const char *fmt, ... );
 void 		Com_Quit_f( void );
 int			Com_EventLoop( void );
 int			Com_Milliseconds( void );	// will be journaled properly
@@ -997,7 +997,7 @@ void	*Sys_GetBotLibAPI( void *parms );
 
 char	*Sys_GetCurrentUser( void );
 
-void	QDECL Q_NORETURN Sys_Error( const char *error, ...);
+Q_NORETURN void	QDECL Sys_Error( const char *error, ...);
 void	Sys_Quit (void);
 char	*Sys_GetClipboardData( void );	// note that this isn't journaled...
 
