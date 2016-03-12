@@ -612,12 +612,6 @@ void CL_ShutdownCGame( void ) {
 	}
 }
 
-static int	FloatAsInt( float f ) {
-	floatint_t fi;
-	fi.f = f;
-	return fi.i;
-}
-
 // wp glowing workaround.. this keeps yourself from glowing like a candle when charging the blaster pistol on high svs.time
 void MV_AddLightToScene(const vec3_t org, float intensity, float r, float g, float b) {
 	if (!(cls.fixes & MVFIX_WPGLOWING) && cl.snap.valid) {

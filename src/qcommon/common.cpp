@@ -3305,3 +3305,15 @@ qboolean Field_WasComplete()
 {
 	return wasComplete;
 }
+
+/*
+====================
+FloatAsInt
+====================
+*/
+int FloatAsInt( float f )
+{
+	floatint_t fi;
+	fi.f = f;
+	return fi.i;
+}

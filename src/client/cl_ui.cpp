@@ -751,17 +751,6 @@ static int GetConfigString(int index, char *buf, int size)
 	return qtrue;
 }
 
-/*
-====================
-FloatAsInt
-====================
-*/
-static int FloatAsInt( float f ) {
-	floatint_t fi;
-	fi.f = f;
-	return fi.i;
-}
-
 void *VM_ArgPtr( int intValue );
 #define	VMA(x) VM_ArgPtr(args[x])
 

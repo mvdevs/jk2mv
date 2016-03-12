@@ -37,6 +37,7 @@ void Field_CompleteFilename( const char *dir, const char *ext, qboolean stripExt
 void Field_CompleteCommand( char *cmd, qboolean doCommands, qboolean doCvars, qboolean doArguments );
 int Field_GetLastMatchCount();
 qboolean Field_WasComplete();
+int FloatAsInt( float f );
 
 extern qboolean com_demoplaying;
 
