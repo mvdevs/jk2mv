@@ -622,44 +622,40 @@ COLORS
 /*
 ** RB_CalcColorFromEntity
 */
-void RB_CalcColorFromEntity( unsigned char *dstColors )
+void RB_CalcColorFromEntity( uint32_t *dstColors )
 {
-	int			i, j;
-	color4ub_t	c;
+	int			i;
+	uint32_t	c;
 
 	if ( !backEnd.currentEntity )
 		return;
 
-	memcpy(c, backEnd.currentEntity->e.shaderRGBA, 4);
+	c = backEnd.currentEntity->e.shaderRGBAui;
 
-	for ( i = 0; i < tess.numVertexes; i++, dstColors += 4 )
+	for ( i = 0; i < tess.numVertexes; i++, dstColors++ )
 	{
-		for (j = 0; j < 4; j++) {
-			dstColors[j]= c[j];
-		}
+		*dstColors = c;
 	}
 }
 
 /*
 ** RB_CalcColorFromOneMinusEntity
 */
-void RB_CalcColorFromOneMinusEntity( unsigned char *dstColors )
+void RB_CalcColorFromOneMinusEntity( uint32_t *dstColors )
 {
 	int			i, j;
-	color4ub_t	invModulate;
+	color4u_t	invModulate;
 
 	if ( !backEnd.currentEntity )
 		return;
 
 	for (j = 0; j < 4; j++) {
-		invModulate[j] = 255 - backEnd.currentEntity->e.shaderRGBA[j];	// this trashes alpha, but the AGEN block fixes it
+		invModulate.b[j] = 255 - backEnd.currentEntity->e.shaderRGBA[j];	// this trashes alpha, but the AGEN block fixes it
 	}
 
-	for ( i = 0; i < tess.numVertexes; i++, dstColors += 4 )
+	for ( i = 0; i < tess.numVertexes; i++, dstColors++ )
 	{
-		for (j = 0; j < 4; j++) {
-			dstColors[j] = invModulate[j];
-		}
+		*dstColors = invModulate.ui;
 	}
 }
 
@@ -702,11 +698,11 @@ void RB_CalcAlphaFromOneMinusEntity( unsigned char *dstColors )
 /*
 ** RB_CalcWaveColor
 */
-void RB_CalcWaveColor( const waveForm_t *wf, unsigned char *dstColors )
+void RB_CalcWaveColor( const waveForm_t *wf, uint32_t *dstColors )
 {
-	int			i, j;
+	int			i;
 	float		glow;
-	color4ub_t	color;
+	color4u_t	color;
 
 	if ( wf->func == GF_NOISE ) {
 		glow = wf->base + R_NoiseGet4f( 0, 0, 0, ( tess.shaderTime + wf->phase ) * wf->frequency ) * wf->amplitude;
@@ -721,13 +717,11 @@ void RB_CalcWaveColor( const waveForm_t *wf, unsigned char *dstColors )
 		glow = 1;
 	}
 
-	color[0] = color[1] = color[2] = Q_ftol(255 * glow);
-	color[3] = 255;
+	color.b[0] = color.b[1] = color.b[2] = Q_ftol(255 * glow);
+	color.b[3] = 255;
 
-	for ( i = 0; i < tess.numVertexes; i++, dstColors += 4 ) {
-		for (j = 0; j < 4; j++) {
-			dstColors[j] = color[j];
-		}
+	for ( i = 0; i < tess.numVertexes; i++, dstColors++ ) {
+		*dstColors = color.ui;
 	}
 }
 

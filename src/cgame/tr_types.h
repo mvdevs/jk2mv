@@ -100,7 +100,10 @@ typedef struct miniRefEntity_s
 	qhandle_t			customShader;		// use one image for the entire thing
 
 	// misc
-	byte				shaderRGBA[4];		// colors used by rgbgen entity shaders
+	union {
+		byte				shaderRGBA[4];		// colors used by rgbgen entity shaders
+		uint32_t			shaderRGBAui;
+	};
 	vec2_t				shaderTexCoord;		// texture coordinates used by tcMod entity modifiers
 
 	// extra sprite information
@@ -135,7 +138,10 @@ typedef struct {
 	qhandle_t			customShader;		// use one image for the entire thing
 
 	// misc
-	byte				shaderRGBA[4];		// colors used by rgbgen entity shaders
+	union {
+		byte				shaderRGBA[4];		// colors used by rgbgen entity shaders
+		uint32_t			shaderRGBAui;
+	};
 	vec2_t				shaderTexCoord;		// texture coordinates used by tcMod entity modifiers
 
 	// extra sprite information
