@@ -273,7 +273,7 @@ void Sys_SetDefaultInstallPath(const char *path)
 	Q_strncpyz(installPath, path, sizeof(installPath));
 }
 
-#if 0
+#if defined(MACOS_X)
 static char *last_strstr(const char *haystack, const char *needle)
 {
     if (*needle == '\0')
@@ -290,7 +290,7 @@ static char *last_strstr(const char *haystack, const char *needle)
 
     return result;
 }
-#endif // 0
+#endif // MACOS_X
 
 #if !defined(MACOS_X) && defined(INSTALLED)
 char *Sys_LinuxGetInstallPrefix() {
