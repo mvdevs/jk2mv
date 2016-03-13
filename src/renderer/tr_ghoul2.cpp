@@ -1592,12 +1592,12 @@ static void G2_Sort_Models(CGhoul2Info_v &ghoul2, int * const modelList, int * c
 	}
 }
 
-const static mdxaBone_t		identityMatrix =
+const static mdxaBone_t		identityMatrix = {
 {
-	0.0f, -1.0f, 0.0f, 0.0f,
-	1.0f, 0.0f, 0.0f, 0.0f,
-	0.0f, 0.0f, 1.0f, 0.0f
-};
+	{ 0.0f, -1.0f, 0.0f, 0.0f },
+	{ 1.0f, 0.0f, 0.0f, 0.0f },
+	{ 0.0f, 0.0f, 1.0f, 0.0f }
+}};
 
 /*
 ==============

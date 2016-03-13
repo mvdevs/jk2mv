@@ -86,9 +86,9 @@ typedef enum
 
 #define fDYNAMIC_XFADE_SECONDS (1.0f)
 
-static MusicInfo_t	tMusic_Info[eBGRNDTRACK_NUMBEROF]	= {0};
+static MusicInfo_t	tMusic_Info[eBGRNDTRACK_NUMBEROF]	= {};
 // static MusicState_e	eMusic_State						= eBGRNDTRACK_SLOW;
-static char			sMusic_BackgroundLoop[MAX_QPATH]	= {0};
+static char			sMusic_BackgroundLoop[MAX_QPATH]	= {};
 //
 //////////////////////////
 

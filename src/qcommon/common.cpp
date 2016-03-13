@@ -778,7 +778,7 @@ typedef struct zone_s
 
 cvar_t	*com_validateZone;
 
-zone_t	TheZone = {0};
+zone_t	TheZone = {};
 
 
 
@@ -845,18 +845,18 @@ typedef struct
 StaticZeroMem_t gZeroMalloc  =
 	{ {ZONE_MAGIC, TAG_STATIC,0,NULL,NULL},{ZONE_MAGIC}};
 StaticMem_t gEmptyString =
-	{ {ZONE_MAGIC, TAG_STATIC,2,NULL,NULL},'\0','\0',{ZONE_MAGIC}};
+	{ {ZONE_MAGIC, TAG_STATIC,2,NULL,NULL}, {'\0', '\0'}, {ZONE_MAGIC}};
 StaticMem_t gNumberString[] = {
-	{ {ZONE_MAGIC, TAG_STATIC,2,NULL,NULL},'0','\0',{ZONE_MAGIC}},
-	{ {ZONE_MAGIC, TAG_STATIC,2,NULL,NULL},'1','\0',{ZONE_MAGIC}},
-	{ {ZONE_MAGIC, TAG_STATIC,2,NULL,NULL},'2','\0',{ZONE_MAGIC}},
-	{ {ZONE_MAGIC, TAG_STATIC,2,NULL,NULL},'3','\0',{ZONE_MAGIC}},
-	{ {ZONE_MAGIC, TAG_STATIC,2,NULL,NULL},'4','\0',{ZONE_MAGIC}},
-	{ {ZONE_MAGIC, TAG_STATIC,2,NULL,NULL},'5','\0',{ZONE_MAGIC}},
-	{ {ZONE_MAGIC, TAG_STATIC,2,NULL,NULL},'6','\0',{ZONE_MAGIC}},
-	{ {ZONE_MAGIC, TAG_STATIC,2,NULL,NULL},'7','\0',{ZONE_MAGIC}},
-	{ {ZONE_MAGIC, TAG_STATIC,2,NULL,NULL},'8','\0',{ZONE_MAGIC}},
-	{ {ZONE_MAGIC, TAG_STATIC,2,NULL,NULL},'9','\0',{ZONE_MAGIC}},
+	{ {ZONE_MAGIC, TAG_STATIC,2,NULL,NULL}, {'0', '\0'}, {ZONE_MAGIC}},
+	{ {ZONE_MAGIC, TAG_STATIC,2,NULL,NULL}, {'1', '\0'}, {ZONE_MAGIC}},
+	{ {ZONE_MAGIC, TAG_STATIC,2,NULL,NULL}, {'2', '\0'}, {ZONE_MAGIC}},
+	{ {ZONE_MAGIC, TAG_STATIC,2,NULL,NULL}, {'3', '\0'}, {ZONE_MAGIC}},
+	{ {ZONE_MAGIC, TAG_STATIC,2,NULL,NULL}, {'4', '\0'}, {ZONE_MAGIC}},
+	{ {ZONE_MAGIC, TAG_STATIC,2,NULL,NULL}, {'5', '\0'}, {ZONE_MAGIC}},
+	{ {ZONE_MAGIC, TAG_STATIC,2,NULL,NULL}, {'6', '\0'}, {ZONE_MAGIC}},
+	{ {ZONE_MAGIC, TAG_STATIC,2,NULL,NULL}, {'7', '\0'}, {ZONE_MAGIC}},
+	{ {ZONE_MAGIC, TAG_STATIC,2,NULL,NULL}, {'8', '\0'}, {ZONE_MAGIC}},
+	{ {ZONE_MAGIC, TAG_STATIC,2,NULL,NULL}, {'9', '\0'}, {ZONE_MAGIC}},
 };
 
 qboolean gbMemFreeupOccured = qfalse;
