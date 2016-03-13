@@ -76,8 +76,8 @@ public:
 	modelIndex(initmodelIndex),
 	skin(initskin),
 	cust_shader(initcust_shader),
-	traceFlags(inittraceFlags),
 	TransformedVertsArray(initTransformedVertsArray),
+	traceFlags(inittraceFlags),
 	m_fRadius(fRadius)
 	{
 		VectorCopy(initrayStart, rayStart);

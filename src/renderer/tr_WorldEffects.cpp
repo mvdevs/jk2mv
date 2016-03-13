@@ -36,8 +36,8 @@ CWorldEffect::CWorldEffect(CWorldEffect *owner) :
 	mNext(0),
 	mSlave(0),
 	mOwner(owner),
-	mIsSlave(owner ? true : false),
-	mEnabled(true)
+	mEnabled(true),
+	mIsSlave(owner ? true : false)
 {
 }
 
@@ -388,12 +388,12 @@ public:
 CMistyFog::CMistyFog(int index, CWorldEffect *owner, bool buddy) :
 	CWorldEffect(owner),
 
-	mSize(0.05f * 2.0f),
-	mMinSize(0.05f * 3.0f),
-	mMaxSize(0.15f * 2.0f),
 	mAlpha(1.0f),
 	mAlphaFade(false),
-	mBuddy(buddy)
+	mBuddy(buddy),
+	mMinSize(0.05f * 3.0f),
+	mMaxSize(0.15f * 2.0f),
+	mSize(0.05f * 2.0f)
 {
 	char			name[MAX_QPATH];
 
@@ -1235,23 +1235,24 @@ public:
 };
 
 CSnowSystem::CSnowSystem(int maxSnowflakes) :
+	mAlpha(0.09f),
 	mMaxSnowflakes(maxSnowflakes),
+
+	mWindDuration(2.0f),
+	mWindLow(3.0f),
+	mWindMin(30.0f), // .6 3
+	mWindMax(70.0f),
 	mNextWindGust(0.0),
 	mWindLowSize(0.0),
 	mWindGust(0),
 	mWindChange(0),
 
-	mAlpha(0.09f),
-	mWindDuration(2.0f),
-	mWindLow(3.0f),
-	mWindMin(30.0f), // .6 3
-	mWindMax(70.0f),
 	mUpdateCount(0),
 	mOverallContents(0),
+	mIsSnowing(false),
 
 	mVelocityStabilize(18),
-	mUpdateMax(10),
-	mIsSnowing(false)
+	mUpdateMax(10)
 {
 	mMinSpread[0] = -600;
 	mMinSpread[1] = -600;

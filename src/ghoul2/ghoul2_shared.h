@@ -146,17 +146,17 @@ public:
 	mCustomShader(0),
 	mCustomSkin(0),
 	mModelBoltLink(0),
-	mModel(0),
 	mSurfaceRoot(0),
+	mCreationID(0),
+	mLodBias(0),
+	mNewOrigin(-1),
+	mModel(0),
 	mAnimFrameDefault(0),
 	mSkelFrameNum(-1),
 	mMeshFrameNum(-1),
-	mCreationID(0),
 	mFlags(0),
 	mTransformedVertsArray(0),
-	mLodBias(0),
-	mSkin(0),
-	mNewOrigin(-1)
+	mSkin(0)
 	{
 		mFileName[0] = 0;
 	}
@@ -186,8 +186,8 @@ public:
 	float		mBarycentricJ; // K = 1-I-J
 
 	CCollisionRecord():
-	mEntityNum(-1),
-	mDistance(100000)
+	mDistance(100000),
+	mEntityNum(-1)
 	{}
 };
 
