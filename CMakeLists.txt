@@ -221,8 +221,6 @@ elseif ((("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU") OR ("${CMAKE_C_COMPILER_ID}" 
 
 		# Link only libs actually needed
 		set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -Wl,--as-needed,-s")
-
-		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-unused-but-set-variable")
 	elseif("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang")
 	endif()
 
