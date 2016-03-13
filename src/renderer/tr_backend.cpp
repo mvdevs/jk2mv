@@ -11,9 +11,6 @@
 backEndData_t	*backEndData[SMP_FRAMES];
 backEndState_t	backEnd;
 
-static void RB_DrawGlowOverlay();
-static void RB_BlurGlowTexture();
-
 // Whether we are currently rendering only glowing objects or not.
 bool g_bRenderGlowingObjects = false;
 
@@ -21,6 +18,9 @@ bool g_bRenderGlowingObjects = false;
 bool g_bDynamicGlowSupported = false;
 
 #ifndef DEDICATED
+
+static void RB_DrawGlowOverlay();
+static void RB_BlurGlowTexture();
 
 /*
 ** GL_Bind

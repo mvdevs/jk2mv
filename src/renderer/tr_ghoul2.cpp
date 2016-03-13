@@ -176,6 +176,7 @@ frame.
 
 */
 
+#ifndef DEDICATED
 
 /*
 =============
@@ -217,7 +218,6 @@ static int R_GCullModel( trRefEntity_t *ent ) {
  	}
 	return CULL_IN;
 }
-
 
 /*
 =================
@@ -326,6 +326,7 @@ static int G2_ComputeLOD( trRefEntity_t *ent, const model_t *currentModel, int l
 
 	return lod;
 }
+#endif // !DEDICATED
 
 //======================================================================
 //

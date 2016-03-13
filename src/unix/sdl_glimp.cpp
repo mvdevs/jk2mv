@@ -944,6 +944,7 @@ static void GLimp_InitExtensions( void )
 	}
 }
 
+#if 0
 // Truncates the GL extensions string by only allowing up to 'maxExtensions' extensions in the string.
 static const char *TruncateGLExtensionsString (const char *extensionsString, int maxExtensions)
 {
@@ -972,6 +973,7 @@ static const char *TruncateGLExtensionsString (const char *extensionsString, int
 
 	return truncatedExtensions;
 }
+#endif // 0
 
 void 		GLimp_Init( void )
 {
