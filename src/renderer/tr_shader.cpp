@@ -8,6 +8,7 @@
 // This vertex shader basically passes through most values and calculates no lighting. The only
 // unusual thing it does is add the inputed texel offsets to all four texture units (this allows
 // nearest neighbor pixel peeking).
+#ifndef DEDICATED
 const unsigned char g_strGlowVShaderARB[] =
 {
 	"!!ARBvp1.0\
@@ -85,6 +86,7 @@ const unsigned char g_strGlowPShaderARB[] =
 	\
 	END"
 };
+#endif
 /***********************************************************************************************************/
 
 static char *s_shaderText;

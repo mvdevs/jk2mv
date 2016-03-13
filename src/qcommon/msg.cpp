@@ -10,7 +10,9 @@
 static huffman_t		msgHuff;
 
 static qboolean			msgInit = qfalse;
+#ifdef _NEWHUFFTABLE_
 static FILE				*fp = 0;
+#endif // _NEWHUFFTABLE_
 
 int pcount[256];
 

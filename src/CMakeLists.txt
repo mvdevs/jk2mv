@@ -541,8 +541,7 @@ if (BuildMVMP)
 	endif()
 
 	if (("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU") OR ("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang"))
-		set_source_files_properties(${MVMPMP3Files} PROPERTIES COMPILE_FLAGS "-Wno-all")
-		set(LibFiles ${ZLIBFiles} ${MVMPDEDMeerkatFiles} ${JPEGFiles} ${PNGFiles} ${CURLFiles})
+		set(LibFiles ${ZLIBFiles} ${MVMPDEDMeerkatFiles} ${MVMPMP3Files} ${JPEGFiles} ${PNGFiles} ${CURLFiles})
 		set_source_files_properties(${LibFiles} PROPERTIES COMPILE_FLAGS "-Wno-all")
 	endif()
 

@@ -1537,6 +1537,7 @@ struct shaderCommands_s
 #ifndef DEDICATED
 typedef shaderCommands_s	shaderCommands_t;
 extern	shaderCommands_t	tess;
+extern	const float			s_flipMatrix[16];
 #endif
 extern	color4ub_t	styleColors[MAX_LIGHT_STYLES];
 

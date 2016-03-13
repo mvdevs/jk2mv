@@ -163,8 +163,8 @@ static char* netnames[] = {
 	NULL
 };
 
-static int gamecodetoui[] = {4,2,3,0,5,1,6};
-static int uitogamecode[] = {4,6,2,3,1,5,7};
+// static int gamecodetoui[] = {4,2,3,0,5,1,6};
+// static int uitogamecode[] = {4,6,2,3,1,5,7};
 
 const char *UI_GetStripEdString(const char *refSection, const char *refName);
 
@@ -1783,8 +1783,8 @@ void UpdateForceStatus()
 
 
 static qboolean updateModel = qtrue;
-static qboolean q3Model = qfalse;
 /*
+static qboolean q3Model = qfalse;
 
 static void UI_DrawPlayerModel(rectDef_t *rect) {
   static playerInfo_t info;
@@ -6153,7 +6153,6 @@ qboolean UI_FeederSelection(float feederID, int index) {
 		}
 
 	} else if (feederID == FEEDER_SERVERS) {
-		const char *mapName = NULL;
 		uiInfo.serverStatus.currentServer = index;
 		trap_LAN_GetServerInfo(ui_netSource.integer, uiInfo.serverStatus.displayServers[index], info, MAX_STRING_CHARS);
 		uiInfo.serverStatus.currentServerPreview = trap_R_RegisterShaderNoMip(va("levelshots/%s", Info_ValueForKey(info, "mapname")));

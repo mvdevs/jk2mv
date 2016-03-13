@@ -714,7 +714,7 @@ CFontInfo *RE_Font_GetVariant(CFontInfo *font, float *scale) {
 
 int RE_Font_StrLenPixels(const char *psText, const int iFontHandle, float fScale)
 {			
-	int			x = 0, i = 0, r = 0;
+	int			i = 0;
 	CFontInfo	*curfont;
 	char		parseText[8192] = {0};
 	float 		fTotalWidth = 0.0f;

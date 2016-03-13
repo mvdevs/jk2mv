@@ -1666,11 +1666,6 @@ void CSnowSystem::Update(float elapseTime)
 	}
 }
 
-const float	attenuation[3] =
-{
-	1.0f, 0.0f, 0.0004f
-};
-
 void CSnowSystem::Render(void)
 {
 	int			i;
@@ -1693,6 +1688,8 @@ void CSnowSystem::Render(void)
 	qglDisable(GL_TEXTURE_2D);
 
 #ifdef WIN32
+	const float	attenuation[3] = { 1.0f, 0.0f, 0.0004f };
+
 	if (qglPointParameterfEXT)
 	{
 		qglPointSize(10.0);
