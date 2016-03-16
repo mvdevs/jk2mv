@@ -1632,7 +1632,7 @@ static qboolean ParseStage( shaderStage_t *stage, const char **text )
 		// If this stage has glow...	GLOWXXX
 		else if ( Q_stricmp( token, "glow" ) == 0 )
 		{
-			stage->glow = true;
+			stage->glow = qtrue;
 
 			continue;
 		}
@@ -2170,7 +2170,7 @@ static qboolean ParseShader( const char **text )
 
 			if ( stages[s].glow )
 			{
-				shader.hasGlow = true;
+				shader.hasGlow = qtrue;
 			}
 
 			s++;
@@ -3287,28 +3287,6 @@ static const char *FindShaderInShaderText( const char *shadername ) {
 		}
 	}
 
-	p = s_shaderText;
-
-	if ( !p ) {
-		return NULL;
-	}
-
-	// look for label
-	while ( 1 ) {
-		token = COM_ParseExt( &p, qtrue );
-		if ( token[0] == 0 ) {
-			break;
-		}
-
-		if ( !Q_stricmp( token, shadername ) ) {
-			return p;
-		}
-		else {
-			// skip the definition
-			SkipBracedSection( &p );
-		}
-	}
-
 	return NULL;
 }
 
@@ -3380,7 +3358,7 @@ inline qboolean IsShader(shader_t *sh, const char *name, const int *lightmapInde
 }
 
 // Dynamic Glow
-qboolean MV_IsGlowStage( shader_t *shader, shaderStage_t *stage )
+static qboolean MV_IsGlowStage( shader_t *shader, shaderStage_t *stage )
 {
 	int i;
 
@@ -3879,126 +3857,88 @@ a single large text block that can be scanned for shader names
 #define	MAX_SHADER_FILES	4096
 static void ScanAndLoadShaderFiles( const char *path )
 {
-	char **shaderFiles;
+	char **shaderFiles[2];
 	char *buffers[MAX_SHADER_FILES];
 	char *p;
-	int numShaders;
-	int i;
+	int numShaderFiles;
+	int numShaderFilesType[2];
+	int i, j, type;
 	char *oldp, *token, *hashMem;
 	int shaderTextHashTableSizes[MAX_SHADERTEXT_HASH], hash, size;
-	int numDynGlowShaders;
-	char *dynGlowBuffers[MAX_SHADER_FILES];
+	int sum;
 
-	int sum = 0;
 	// scan for shader files
-	shaderFiles = ri.FS_ListFiles( path, ".shader", &numShaders );
+	shaderFiles[0] = ri.FS_ListFiles( path, ".shader_mv", &numShaderFilesType[0] );
+	shaderFiles[1] = ri.FS_ListFiles( path, ".shader", &numShaderFilesType[1] );
 
-	if ( !shaderFiles || !numShaders )
+	if ( !shaderFiles[0] )
 	{
-		ri.Printf( PRINT_WARNING, "WARNING: no shader files found\n" );
-		return;
+		numShaderFilesType[0] = 0;
+	}
+	if ( !shaderFiles[1] )
+	{
+		numShaderFilesType[1] = 0;
 	}
 
-	if ( numShaders > MAX_SHADER_FILES ) {
-		numShaders = MAX_SHADER_FILES;
+	if ( numShaderFilesType[0] + numShaderFilesType[1] > MAX_SHADER_FILES ) {
+		ri.Printf( PRINT_WARNING, "WARNING: too many shader files, truncating...\n" );
+		numShaderFilesType[0] = MIN(numShaderFilesType[0], MAX_SHADER_FILES);
+		numShaderFilesType[1] = MAX_SHADER_FILES - numShaderFilesType[0];
 	}
 
+	numShaderFiles = numShaderFilesType[0] + numShaderFilesType[1];
+
+	if (numShaderFiles == 0) {
+			ri.Error( ERR_FATAL, "ERROR: no shader files found\n" );
+	}
+
+	sum = 0;
 	// load and parse shader files
-	for ( i = 0; i < numShaders; i++ )
-	{
-		char filename[MAX_QPATH];
+	for ( type = 0, j = 0; type < 2; type++ ) {
+		for ( i = 0; i < numShaderFilesType[type]; i++, j++ )
+		{
+			char filename[MAX_QPATH];
 
-		Com_sprintf( filename, sizeof( filename ), "%s/%s", path, shaderFiles[i] );
-		ri.Printf( PRINT_ALL, "...loading '%s'\n", filename );
-		sum += ri.FS_ReadFile( filename, (void **)&buffers[i] );
-		if ( !buffers[i] ) {
-			ri.Error( ERR_DROP, "Couldn't load %s", filename );
+			Com_sprintf( filename, sizeof( filename ), "%s/%s", path, shaderFiles[type][i] );
+			ri.Printf( PRINT_ALL, "...loading '%s'\n", filename );
+			ri.FS_ReadFile( filename, (void **)&buffers[j] );
+			if ( !buffers[j] ) {
+				ri.Error( ERR_DROP, "Couldn't load %s", filename );
+			}
+			sum += COM_Compress(buffers[j]);
 		}
 	}
 
 	// build single large buffer
-	s_shaderText = (char *)ri.Hunk_Alloc( sum + numShaders*2, h_low );
-
-	// free in reverse order, so the temp files are all dumped
-	for ( i = numShaders - 1; i >= 0 ; i-- ) {
-		strcat( s_shaderText, "\n" );
-		p = &s_shaderText[strlen(s_shaderText)];
-		strcat( s_shaderText, buffers[i] );
+	s_shaderText = (char *)ri.Hunk_Alloc( sum + numShaderFiles + 1, h_low );
+	p = s_shaderText;
+	for ( i = 0; i < numShaderFiles ; i++ ) {
+		strcat( p, buffers[i] );
+		strcat( p, "\n" );
+		p += strlen( p );
 		ri.FS_FreeFile( (void*) buffers[i] );
-		buffers[i] = p;
-		COM_Compress(p);
 	}
+	assert(strlen(s_shaderText) == sum + numShaderFiles);
 
 	// free up memory
-	ri.FS_FreeFileList( shaderFiles );
-
-	shaderFiles = ri.FS_ListFiles( path, ".dynGlow", &numDynGlowShaders );
-
-	if ( !shaderFiles || !numDynGlowShaders )
-	{
-		ri.Printf( PRINT_WARNING, "WARNING: no dynGlowShader files found\n" );
-	}
-	else
-	{
-		if ( numDynGlowShaders > MAX_SHADER_FILES ) {
-			numDynGlowShaders = MAX_SHADER_FILES;
-		}
-
-		// load and parse shader files
-		for ( i = 0; i < numDynGlowShaders; i++ )
-		{
-			char filename[MAX_QPATH];
-
-			Com_sprintf( filename, sizeof( filename ), "%s/%s", path, shaderFiles[i] );
-			ri.Printf( PRINT_ALL, "...loading '%s'\n", filename );
-			sum += ri.FS_ReadFile( filename, (void **)&dynGlowBuffers[i] );
-			if ( !dynGlowBuffers[i] ) {
-				ri.Error( ERR_DROP, "Couldn't load %s", filename );
-			}
-		}
-
-		// build single large buffer
-		mv_dynGlowShaders = (char *)ri.Hunk_Alloc( sum + numDynGlowShaders*2 + 2, h_low );
-
-		// free in reverse order, so the temp files are all dumped
-		for ( i = numDynGlowShaders - 1; i >= 0 ; i-- ) {
-			strcat( mv_dynGlowShaders, "\n" );
-			p = &mv_dynGlowShaders[strlen(mv_dynGlowShaders)];
-			strcat( mv_dynGlowShaders, dynGlowBuffers[i] );
-			ri.FS_FreeFile( (void*) dynGlowBuffers[i] );
-			dynGlowBuffers[i] = p;
-			COM_Compress(p);
-		}
-		strcat( mv_dynGlowShaders, "\n" );
-
-		// free up memory
-		ri.FS_FreeFileList( shaderFiles );
-	}
+	ri.FS_FreeFileList( shaderFiles[0] );
+	ri.FS_FreeFileList( shaderFiles[1] );
 
 	Com_Memset(shaderTextHashTableSizes, 0, sizeof(shaderTextHashTableSizes));
 	size = 0;
-	//
-	for ( i = 0; i < numShaders; i++ ) {
-		// pointer to the first shader file
-		p = buffers[i];
-		// look for label
-		while ( 1 ) {
-			token = COM_ParseExt( (const char **)&p, qtrue );
-			if ( token[0] == 0 ) {
-				break;
-			}
+	p = s_shaderText;
 
-			hash = generateHashValue(token, MAX_SHADERTEXT_HASH);
-			shaderTextHashTableSizes[hash]++;
-			size++;
-			SkipBracedSection((const char **)&p);
-			// if we passed the pointer to the next shader file
-			if ( i < numShaders - 1 ) {
-				if ( p > buffers[i+1] ) {
-					break;
-				}
-			}
+	while ( 1 ) {
+		// look for label
+		token = COM_ParseExt( (const char **)&p, qtrue );
+		if ( token[0] == 0 ) {
+			break;
 		}
+
+		hash = generateHashValue(token, MAX_SHADERTEXT_HASH);
+		shaderTextHashTableSizes[hash]++;
+		size++;
+		SkipBracedSection((const char **)&p);
 	}
 
 	size += MAX_SHADERTEXT_HASH;
@@ -4011,33 +3951,79 @@ static void ScanAndLoadShaderFiles( const char *path )
 	}
 
 	Com_Memset(shaderTextHashTableSizes, 0, sizeof(shaderTextHashTableSizes));
-	//
-	for ( i = 0; i < numShaders; i++ ) {
-		// pointer to the first shader file
-		p = buffers[i];
-		// look for label
-		while ( 1 ) {
-			oldp = p;
-			token = COM_ParseExt( (const char **)&p, qtrue );
-			if ( token[0] == 0 ) {
-				break;
-			}
 
-			hash = generateHashValue(token, MAX_SHADERTEXT_HASH);
-			shaderTextHashTable[hash][shaderTextHashTableSizes[hash]++] = oldp;
-
-			SkipBracedSection((const char **)&p);
-			// if we passed the pointer to the next shader file
-			if ( i < numShaders - 1 ) {
-				if ( p > buffers[i+1] ) {
-					break;
-				}
-			}
+	// look for label
+	p = s_shaderText;
+	while ( 1 ) {
+		oldp = p;
+		token = COM_ParseExt( (const char **)&p, qtrue );
+		if ( token[0] == 0 ) {
+			break;
 		}
+
+		hash = generateHashValue(token, MAX_SHADERTEXT_HASH);
+		shaderTextHashTable[hash][shaderTextHashTableSizes[hash]++] = oldp;
+
+		SkipBracedSection((const char **)&p);
+	}
+}
+
+/*
+====================
+ScanAndLoadDynGlowFiles
+====================
+*/
+static void ScanAndLoadDynGlowFiles( const char *path )
+{
+	char	**shaderFiles;
+	char	*dynGlowBuffers[MAX_SHADER_FILES];
+	char	*p;
+	int		numDynGlowShaders;
+	int		sum, i;
+
+	shaderFiles = ri.FS_ListFiles( path, ".dynGlow", &numDynGlowShaders );
+	mv_dynGlowShaders = NULL;
+
+	if ( !shaderFiles || !numDynGlowShaders )
+	{
+		ri.Printf( PRINT_WARNING, "WARNING: no dynGlow shader files found\n" );
+		return;
 	}
 
-	return;
+	if ( numDynGlowShaders > MAX_SHADER_FILES ) {
+		ri.Printf( PRINT_WARNING, "WARNING: too many dynGlow shader files, truncating...\n" );
+		numDynGlowShaders = MAX_SHADER_FILES;
+	}
 
+	sum = 0;
+	// load and parse shader files
+	for ( i = 0; i < numDynGlowShaders; i++ )
+	{
+		char filename[MAX_QPATH];
+
+		Com_sprintf( filename, sizeof( filename ), "%s/%s", path, shaderFiles[i] );
+		ri.Printf( PRINT_ALL, "...loading '%s'\n", filename );
+		ri.FS_ReadFile( filename, (void **)&dynGlowBuffers[i] );
+		if ( !dynGlowBuffers[i] ) {
+			ri.Error( ERR_DROP, "Couldn't load %s", filename );
+		}
+		sum += COM_Compress(dynGlowBuffers[i]);
+	}
+
+	// build single large buffer
+	mv_dynGlowShaders = (char *)ri.Hunk_Alloc( sum + numDynGlowShaders + 1, h_low );
+
+	p = mv_dynGlowShaders;
+	for ( i = numDynGlowShaders - 1; i >= 0 ; i-- ) {
+		strcat( p, dynGlowBuffers[i] );
+		strcat( p, "\n" );
+		p += strlen(p);
+		ri.FS_FreeFile( (void*) dynGlowBuffers[i] );
+	}
+	assert(strlen(mv_dynGlowShaders) == sum + numDynGlowShaders);
+
+	// free up memory
+	ri.FS_FreeFileList( shaderFiles );
 }
 
 /*
@@ -4235,6 +4221,7 @@ Ghoul2 Insert End
 	CreateInternalShaders();
 
 	ScanAndLoadShaderFiles("shaders");
+	ScanAndLoadDynGlowFiles("shaders");
 
 	CreateExternalShaders();
 

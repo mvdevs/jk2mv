@@ -376,7 +376,7 @@ typedef struct {
 	surfaceSprite_t	ss;
 
 	// Whether this object emits a glow or not.
-	bool			glow;
+	qboolean		glow;
 } shaderStage_t;
 
 struct shaderCommands_s;
@@ -483,7 +483,7 @@ Ghoul2 Insert End
 	int expireTime;                                  // time in milliseconds this expires
 	
 	// True if this shader has a stage with glow in it (just an optimization).
-	bool hasGlow;
+	qboolean hasGlow;
 
 	struct shader_s *remappedShader;                  // current shader this one is remapped too
 
@@ -1443,7 +1443,7 @@ qhandle_t RE_RegisterShaderFromImage(const char *name, int *lightmapIndex, byte 
 
 shader_t	*R_FindShader( const char *name, const int *lightmapIndex, const byte *styles, qboolean mipRawImage );
 shader_t	*R_GetShaderByHandle( qhandle_t hShader );
-shader_t	*R_GetShaderByState( int index, int *cycleTime );
+// shader_t	*R_GetShaderByState( int index, int *cycleTime );
 shader_t *R_FindShaderByName( const char *name );
 void		R_InitShaders( void );
 void		R_ShaderList_f( void );
