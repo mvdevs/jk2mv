@@ -644,15 +644,6 @@ int LAN_GetServerStatus( char *serverAddress, char *serverStatus, int maxLen ) {
 
 /*
 ====================
-CL_GetGlConfig
-====================
-*/
-static void CL_GetGlconfig( glconfig_t *config ) {
-	*config = cls.glconfig;
-}
-
-/*
-====================
 GetClipboardData
 ====================
 */
@@ -953,7 +944,7 @@ intptr_t CL_UISystemCalls(intptr_t *args) {
 		return 0;
 
 	case UI_GETGLCONFIG:
-		CL_GetGlconfig( (glconfig_t *)VMA(1) );
+		CL_GetVMGLConfig((vmglconfig_t *)VMA(1));
 		return 0;
 
 	case UI_GETCONFIGSTRING:

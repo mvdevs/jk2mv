@@ -2018,7 +2018,7 @@ void	trap_FX_AddLine( const vec3_t start, const vec3_t end, float size1, float s
 // The glconfig_t will not change during the life of a cgame.
 // If it needs to change, the entire cgame will be restarted, because
 // all the qhandle_t are then invalid.
-void		trap_GetGlconfig( glconfig_t *glconfig );
+void		trap_GetGlconfig( vmglconfig_t *glconfig );
 
 // the gamestate should be grabbed at startup, and whenever a
 // configstring changes

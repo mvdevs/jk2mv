@@ -965,7 +965,7 @@ int				trap_Key_GetCatcher( void );
 void			trap_Key_SetCatcher( int catcher );
 void			trap_GetClipboardData( char *buf, int bufsize );
 void			trap_GetClientState( uiClientState_t *state );
-void			trap_GetGlconfig( glconfig_t *glconfig );
+void			trap_GetGlconfig( vmglconfig_t *glconfig );
 int				trap_GetConfigString( int index, char* buff, int buffsize );
 int				trap_LAN_GetServerCount( int source );
 void			trap_LAN_GetServerAddressString( int source, int n, char *buf, int buflen );

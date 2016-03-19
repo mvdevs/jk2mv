@@ -494,6 +494,7 @@ int CL_ServerStatus( const char *serverAddress, char *serverStatusString, int ma
 
 void VM_AddRefEntityToScene(refEntity_t *r);
 
+void CL_GetVMGLConfig(vmglconfig_t *vmglconfig);
 
 //
 // cl_input

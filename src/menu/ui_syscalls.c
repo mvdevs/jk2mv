@@ -245,7 +245,7 @@ void trap_GetClientState( uiClientState_t *state ) {
 	engine_syscall( UI_GETCLIENTSTATE, state );
 }
 
-void trap_GetGlconfig( glconfig_t *glconfig ) {
+void trap_GetGlconfig( vmglconfig_t *glconfig ) {
 	engine_syscall( UI_GETGLCONFIG, glconfig );
 }
 

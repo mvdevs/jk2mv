@@ -54,16 +54,6 @@ void CL_GetGameState( gameState_t *gs ) {
 
 /*
 ====================
-CL_GetGlconfig
-====================
-*/
-void CL_GetGlconfig( glconfig_t *glconfig ) {
-	*glconfig = cls.glconfig;
-}
-
-
-/*
-====================
 CL_GetUserCmd
 ====================
 */
@@ -850,7 +840,7 @@ intptr_t CL_CgameSystemCalls(intptr_t *args) {
 		re.DrawRotatePic2( VMF(1), VMF(2), VMF(3), VMF(4), VMF(5), VMF(6), VMF(7), VMF(8), VMF(9), args[10] );
 		return 0;
 	case CG_GETGLCONFIG:
-		CL_GetGlconfig( (glconfig_t *)VMA(1) );
+		CL_GetVMGLConfig((vmglconfig_t *)VMA(1));
 		return 0;
 	case CG_GETGAMESTATE:
 		CL_GetGameState( (gameState_t *)VMA(1) );

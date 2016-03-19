@@ -4119,3 +4119,36 @@ void VM_AddRefEntityToScene(refEntity_t *r) {
 	re.AddRefEntityToScene(&tmp_r);
 }
 #endif
+
+/*
+====================
+CL_GetVMGLConfig
+====================
+*/
+void CL_GetVMGLConfig(vmglconfig_t *vmglconfig) {
+	Q_strncpyz(vmglconfig->renderer_string, cls.glconfig.renderer_string, sizeof(vmglconfig->renderer_string));
+	Q_strncpyz(vmglconfig->vendor_string, cls.glconfig.vendor_string, sizeof(vmglconfig->vendor_string));
+	Q_strncpyz(vmglconfig->version_string, cls.glconfig.version_string, sizeof(vmglconfig->version_string));
+	Q_strncpyz(vmglconfig->extensions_string, cls.glconfig.extensions_string, sizeof(vmglconfig->extensions_string));
+
+	vmglconfig->maxTextureSize = cls.glconfig.maxTextureSize;
+	vmglconfig->maxActiveTextures = cls.glconfig.maxActiveTextures;
+
+	vmglconfig->colorBits = cls.glconfig.colorBits;
+	vmglconfig->depthBits = cls.glconfig.depthBits;
+	vmglconfig->stencilBits = cls.glconfig.stencilBits;
+
+	vmglconfig->deviceSupportsGamma = cls.glconfig.deviceSupportsGamma;
+	vmglconfig->textureCompression = cls.glconfig.textureCompression;
+	vmglconfig->textureEnvAddAvailable = cls.glconfig.textureEnvAddAvailable;
+	vmglconfig->textureFilterAnisotropicAvailable = cls.glconfig.textureFilterAnisotropicAvailable;
+	vmglconfig->clampToEdgeAvailable = cls.glconfig.clampToEdgeAvailable;
+
+	vmglconfig->vidWidth = cls.glconfig.vidWidth;
+	vmglconfig->vidHeight = cls.glconfig.vidHeight;
+	vmglconfig->windowAspect = cls.glconfig.windowAspect;
+	vmglconfig->displayFrequency = cls.glconfig.displayFrequency;
+	vmglconfig->isFullscreen = cls.glconfig.isFullscreen;
+	vmglconfig->stereoEnabled = cls.glconfig.stereoEnabled;
+	vmglconfig->smpActive = cls.glconfig.smpActive;
+}
