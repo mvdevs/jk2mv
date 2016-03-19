@@ -274,7 +274,7 @@ INDEX 29
 }
 INDEX 30
 {
-   REFERENCE NAME_SHADOWS
+   REFERENCE COLORED_TEXT_SHADOWS
    TEXT_LANGUAGE1 "Colored Shadows:"
    TEXT_LANGUAGE2 "Ombres Colorées:"
    TEXT_LANGUAGE3 "Farbige Schatten:"
@@ -283,12 +283,12 @@ INDEX 30
 }
 INDEX 31
 {
-   REFERENCE NAME_SHADOWS_INFO
-   TEXT_LANGUAGE1 "Colored shadows in names."
-   TEXT_LANGUAGE2 "Ombres colorées dans les noms."
-   TEXT_LANGUAGE3 "Farbige schatten in namen."
-   TEXT_LANGUAGE6 "Colored shadows in names."
-   TEXT_LANGUAGE8 "Sombras Coloreadas en los nombres."
+   REFERENCE COLORED_TEXT_SHADOWS_INFO
+   TEXT_LANGUAGE1 "Colored shadows in texts."
+   TEXT_LANGUAGE2 "Ombres colorées dans les textes."
+   TEXT_LANGUAGE3 "Farbige Schatten in Texten."
+   TEXT_LANGUAGE6 "Colored shadows in texts."
+   TEXT_LANGUAGE8 "Sombras Coloreadas en los textos."
 }
 INDEX 32
 {
