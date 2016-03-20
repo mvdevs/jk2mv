@@ -7,9 +7,6 @@
 #include "../ghoul2/G2_local.h"
 #include "matcomp.h"
 
-#pragma warning (disable: 4512)	//default assignment operator could not be gened
-#include "../qcommon/disablewarnings.h"
-
 static	int			r_firstSceneDrawSurf;
 
 static	int			r_numdlights;
@@ -202,17 +199,17 @@ void RE_AddRefEntityToScene( const refEntity_t *ent ) {
 	backEndData[tr.smpFrame]->entities[r_numentities].e = *ent;
 	backEndData[tr.smpFrame]->entities[r_numentities].lightingCalculated = qfalse;
 
+#ifdef WIN32
 	if (ent->ghoul2)
 	{
 		CGhoul2Info_v	&ghoul2 = *((CGhoul2Info_v *)ent->ghoul2);
 
-#ifdef WIN32
 		if (!ghoul2[0].mModel)
 		{
 			DebugBreak();
 		}
-#endif
 	}
+#endif
 
 	if (ent->reType == RT_ENT_CHAIN)
 	{

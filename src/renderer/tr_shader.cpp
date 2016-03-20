@@ -8,6 +8,7 @@
 // This vertex shader basically passes through most values and calculates no lighting. The only
 // unusual thing it does is add the inputed texel offsets to all four texture units (this allows
 // nearest neighbor pixel peeking).
+#ifndef DEDICATED
 const unsigned char g_strGlowVShaderARB[] =
 {
 	"!!ARBvp1.0\
@@ -85,6 +86,7 @@ const unsigned char g_strGlowPShaderARB[] =
 	\
 	END"
 };
+#endif
 /***********************************************************************************************************/
 
 static char *s_shaderText;
@@ -3383,12 +3385,12 @@ qboolean MV_IsGlowStage( shader_t *shader, shaderStage_t *stage )
 	int i;
 
 	if ( !mv_dynGlowShaders || !strlen(mv_dynGlowShaders) )	 return qfalse;
-	if ( !stage || !stage->bundle || !stage->bundle->image ) return qfalse;
-	if ( !shader || !shader->name || !strlen(shader->name) ) return qfalse;
+	if ( !stage ) return qfalse;
+	if ( !shader || !strlen(shader->name) ) return qfalse;
 
 	for ( i = 0; i < MAX_IMAGE_ANIMATIONS; i++ )
 	{
-		if ( stage->bundle->image[i] && stage->bundle->image[i]->imgName && strlen(stage->bundle->image[i]->imgName) &&
+		if ( stage->bundle->image[i] && strlen(stage->bundle->image[i]->imgName) &&
 				Q_stristr(mv_dynGlowShaders, va("\n%s:%s\n", shader->name, stage->bundle->image[i]->imgName)) )
 		{
 			return qtrue;

@@ -723,6 +723,18 @@ qboolean MVAPI_SendConnectionlessPacket(const mvaddr_t *addr, const char *messag
 	return qfalse;
 }
 
+qboolean mvStructConversionDisabled = qfalse;
+qboolean MVAPI_DisableStructConversion(qboolean disable)
+{
+	if (VM_MVAPILevel(gvm) < 2) {
+		return qtrue;
+	}
+
+	mvStructConversionDisabled = disable;
+
+	return qfalse;
+}
+
 /*
 =================
 SV_ConnectionlessPacket
@@ -1072,6 +1084,11 @@ void SV_Frame( int msec ) {
 	SV_CalcPings();
 
 	if (com_dedicated->integer) SV_BotFrame( svs.time );
+
+	if (sv.saberBlockTime < svs.time) {
+		sv.saberBlockCounter = 0;
+		sv.saberBlockTime = svs.time + 1000;
+	}
 
 	// run the game simulation in chunks
 	while ( sv.timeResidual >= frameMsec ) {

@@ -199,6 +199,8 @@ cvar_t	*r_Ghoul2UnSqashAfterSmooth=0;
 Ghoul2 Insert End
 */
 
+cvar_t *r_fontSharpness;
+
 #ifndef DEDICATED
 #ifdef WIN32
 void ( APIENTRY * qglMultiTexCoord2fARB )( GLenum texture, GLfloat s, GLfloat t );
@@ -1137,6 +1139,8 @@ Ghoul2 Insert End
 	ri.Cmd_AddCommand( "modelcacheinfo", RE_RegisterModels_Info_f);
 
 	r_screenshotJpegQuality = ri.Cvar_Get("r_screenshotJpegQuality", "95", CVAR_ARCHIVE | CVAR_GLOBAL);
+
+	r_fontSharpness = ri.Cvar_Get("r_fontSharpness", "1.0", CVAR_ARCHIVE | CVAR_GLOBAL);
 }
 
 #ifdef G2_COLLISION_ENABLED
@@ -1373,7 +1377,7 @@ void RE_GetLightStyle(int style, color4ub_t color)
 		return;
 	}
 
-	*(int *)color = *(int *)styleColors[style];
+	memcpy(color, styleColors[style], 4);
 }
 
 void RE_SetLightStyle(int style, int color)
@@ -1384,10 +1388,7 @@ void RE_SetLightStyle(int style, int color)
 		return;
 	}
 
-	if (*(int*)styleColors[style] != color)
-	{
-		*(int *)styleColors[style] = color;
-	}
+	memcpy(styleColors[style], &color, 4);
 }
 
 #endif //!DEDICATED

@@ -36,8 +36,8 @@ CWorldEffect::CWorldEffect(CWorldEffect *owner) :
 	mNext(0),
 	mSlave(0),
 	mOwner(owner),
-	mIsSlave(owner ? true : false),
-	mEnabled(true)
+	mEnabled(true),
+	mIsSlave(owner ? true : false)
 {
 }
 
@@ -303,7 +303,8 @@ private:
 
 	image_t		*mImage;
 	vec3_t		mMinVelocity, mMaxVelocity;
-	int			mNextWindGust, mWindDuration, mWindLow;
+	// int			mNextWindGust;
+	int mWindDuration, mWindLow;
 	float		mWindMin, mWindMax;
 	vec3_t		mWindDirection, mNewWindDirection, mWindSpeed;
 	int			mWindChange;
@@ -387,12 +388,12 @@ public:
 CMistyFog::CMistyFog(int index, CWorldEffect *owner, bool buddy) :
 	CWorldEffect(owner),
 
-	mSize(0.05f * 2.0f),
-	mMinSize(0.05f * 3.0f),
-	mMaxSize(0.15f * 2.0f),
 	mAlpha(1.0f),
 	mAlphaFade(false),
-	mBuddy(buddy)
+	mBuddy(buddy),
+	mMinSize(0.05f * 3.0f),
+	mMaxSize(0.15f * 2.0f),
+	mSize(0.05f * 2.0f)
 {
 	char			name[MAX_QPATH];
 
@@ -1195,7 +1196,7 @@ private:
 	float		mWindMin, mWindMax;
 	vec3_t		mWindSize;
 
-	image_t		*mImage;
+	// image_t		*mImage;
 	vec3_t		mMins, mMaxs;
 	float		mNextWindGust, mWindLowSize;
 	CWind		*mWindGust;
@@ -1234,23 +1235,24 @@ public:
 };
 
 CSnowSystem::CSnowSystem(int maxSnowflakes) :
+	mAlpha(0.09f),
 	mMaxSnowflakes(maxSnowflakes),
+
+	mWindDuration(2.0f),
+	mWindLow(3.0f),
+	mWindMin(30.0f), // .6 3
+	mWindMax(70.0f),
 	mNextWindGust(0.0),
 	mWindLowSize(0.0),
 	mWindGust(0),
 	mWindChange(0),
 
-	mAlpha(0.09),
-	mWindDuration(2.0),
-	mWindLow(3.0),
-	mWindMin(30.0), // .6 3
-	mWindMax(70.0),
 	mUpdateCount(0),
 	mOverallContents(0),
+	mIsSnowing(false),
 
 	mVelocityStabilize(18),
-	mUpdateMax(10),
-	mIsSnowing(false)
+	mUpdateMax(10)
 {
 	mMinSpread[0] = -600;
 	mMinSpread[1] = -600;
@@ -1665,11 +1667,6 @@ void CSnowSystem::Update(float elapseTime)
 	}
 }
 
-const float	attenuation[3] =
-{
-	1.0f, 0.0f, 0.0004f
-};
-
 void CSnowSystem::Render(void)
 {
 	int			i;
@@ -1685,13 +1682,15 @@ void CSnowSystem::Render(void)
 
 	VectorAdd(backEnd.viewParms.ori.origin, mMinSpread, origin);
 
-	qglColor4f(0.8, 0.8, 0.8, mAlpha);
+	qglColor4f(0.8f, 0.8f, 0.8f, mAlpha);
 
 //	GL_State(GLS_SRCBLEND_SRC_ALPHA|GLS_DSTBLEND_ONE);
 	GL_State(GLS_ALPHA);
 	qglDisable(GL_TEXTURE_2D);
 
 #ifdef WIN32
+	const float	attenuation[3] = { 1.0f, 0.0f, 0.0004f };
+
 	if (qglPointParameterfEXT)
 	{
 		qglPointSize(10.0);
@@ -1742,33 +1741,33 @@ CSnowSystem	*snowSystem = 0;
 
 CRainSystem::CRainSystem(int maxRain) :
 	mMaxRain(maxRain),
-	mNextWindGust(0),
+	// mNextWindGust(0),
 	mRainHeight(5),
-	mAlpha(0.1),
-	mWindAngle(1.0),
+	mAlpha(0.1f),
+	mWindAngle(1.0f),
 
 	mFadeAlpha(0.0f),
 	mIsRaining(false)
 
 {
-	mSpread[0] = M_PI*2.0;		// angle spread
-	mSpread[1] = 20.0;			// radius spread
-	mSpread[2] = 20.0;			// z spread
+	mSpread[0] = M_PI*2.0f;		// angle spread
+	mSpread[1] = 20.0f;			// radius spread
+	mSpread[2] = 20.0f;			// z spread
 
-	mMinVelocity[0] = 0.1;
-	mMaxVelocity[0] = -0.1;
-	mMinVelocity[1] = 0.1;
-	mMaxVelocity[1] = -0.1;
-	mMinVelocity[2] = -60.0;
-	mMaxVelocity[2] = -50.0;
+	mMinVelocity[0] = 0.1f;
+	mMaxVelocity[0] = -0.1f;
+	mMinVelocity[1] = 0.1f;
+	mMaxVelocity[1] = -0.1f;
+	mMinVelocity[2] = -60.0f;
+	mMaxVelocity[2] = -50.0f;
 
 	mWindDuration = 15;
 	mWindLow = 50;
-	mWindMin = 0.01;
-	mWindMax = 0.05;
+	mWindMin = 0.01f;
+	mWindMax = 0.05f;
 
 	mWindChange = 0;
-	mWindDirection[0] = mWindDirection[1] = mWindDirection[2] = 0.0;
+	mWindDirection[0] = mWindDirection[1] = mWindDirection[2] = 0.0f;
 
 	mRainList = new SParticle[mMaxRain];
 

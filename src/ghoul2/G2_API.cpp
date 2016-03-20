@@ -307,8 +307,6 @@ qboolean G2API_SetShader(CGhoul2Info *ghlInfo, qhandle_t customShader)
 
 qboolean G2API_SetSurfaceOnOff(CGhoul2Info_v *ghoul2, const char *surfaceName, const int flags)
 {
-	CGhoul2Info *ghlInfo = NULL;
-
 	if (ghoul2 && ghoul2->size() > 0) {
 		CGhoul2Info &ghlInfo = ghoul2->at(0);
 

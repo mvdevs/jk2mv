@@ -628,8 +628,7 @@ weren't declared in C code.
 ============
 */
 void Cvar_Set_f( void ) {
-	int		i, c, l, len;
-	char	combined[MAX_STRING_TOKENS];
+	int		c;
 
 	c = Cmd_Argc();
 	if ( c < 3 ) {
@@ -637,20 +636,7 @@ void Cvar_Set_f( void ) {
 		return;
 	}
 
-	combined[0] = 0;
-	l = 0;
-	for ( i = 2 ; i < c ; i++ ) {
-		len = (int)strlen ( Cmd_Argv( i ) + 1 );
-		if ( l + len >= MAX_STRING_TOKENS - 2 ) {
-			break;
-		}
-		strcat( combined, Cmd_Argv( i ) );
-		if ( i != c-1 ) {
-			strcat( combined, " " );
-		}
-		l += len;
-	}
-	Cvar_Set2 (Cmd_Argv(1), combined, qfalse);
+	Cvar_Set2 (Cmd_Argv(1), Cmd_ArgsFrom(2), qfalse);
 }
 
 /*

@@ -74,8 +74,8 @@ typedef struct  itemFlagsDef_s {
 }	itemFlagsDef_t;
 
 itemFlagsDef_t itemFlags [] = {
-"WINDOW_INACTIVE",		WINDOW_INACTIVE,
-NULL,					0
+	{ "WINDOW_INACTIVE",	WINDOW_INACTIVE },
+	{ NULL,					0 },
 };
 
 char *styles [] = {
@@ -1360,10 +1360,10 @@ void Menu_TransitionItemByName(menuDef_t *menu, const char *p, rectDef_t rectFro
       item->window.offsetTime = time;
 			memcpy(&item->window.rectClient, &rectFrom, sizeof(rectDef_t));
 			memcpy(&item->window.rectEffects, &rectTo, sizeof(rectDef_t));
-			item->window.rectEffects2.x = abs(rectTo.x - rectFrom.x) / amt;
-			item->window.rectEffects2.y = abs(rectTo.y - rectFrom.y) / amt;
-			item->window.rectEffects2.w = abs(rectTo.w - rectFrom.w) / amt;
-			item->window.rectEffects2.h = abs(rectTo.h - rectFrom.h) / amt;
+			item->window.rectEffects2.x = fabsf(rectTo.x - rectFrom.x) / amt;
+			item->window.rectEffects2.y = fabsf(rectTo.y - rectFrom.y) / amt;
+			item->window.rectEffects2.w = fabsf(rectTo.w - rectFrom.w) / amt;
+			item->window.rectEffects2.h = fabsf(rectTo.h - rectFrom.h) / amt;
       Item_UpdatePosition(item);
     }
   }
@@ -1818,12 +1818,7 @@ int Item_TextScroll_ThumbDrawPosition ( itemDef_t *item )
 int Item_TextScroll_OverLB ( itemDef_t *item, float x, float y )
 {
 	rectDef_t		r;
-	textScrollDef_t *scrollPtr;
 	int				thumbstart;
-	int				count;
-
-	scrollPtr = (textScrollDef_t*)item->typeData;
-	count     = scrollPtr->iLineCount;
 
 	r.x = item->window.rect.x + item->window.rect.w - SCROLLBAR_SIZE;
 	r.y = item->window.rect.y;
@@ -2106,12 +2101,8 @@ int Item_Slider_OverSlider(itemDef_t *item, float x, float y) {
 
 int Item_ListBox_OverLB(itemDef_t *item, float x, float y) {
 	rectDef_t r;
-	listBoxDef_t *listPtr;
 	int thumbstart;
-	int count;
 
-	count = DC->feederCount(item->special);
-	listPtr = (listBoxDef_t*)item->typeData;
 	if (item->window.flags & WINDOW_HORIZONTAL) {
 		// check if on left arrow
 		r.x = item->window.rect.x;
@@ -4160,10 +4151,8 @@ void BindingFromName(const char *cvar) {
 
 void Item_Slider_Paint(itemDef_t *item) {
 	vec4_t newColor, lowLight;
-	float x, y, value;
+	float x, y;
 	menuDef_t *parent = (menuDef_t*)item->parent;
-
-	value = (item->cvar) ? DC->getCVarValue(item->cvar) : 0;
 
 	if (item->window.flags & WINDOW_HASFOCUS) {
 		lowLight[0] = 0.8 * parent->focusColor[0];
@@ -4757,12 +4746,9 @@ void Item_ListBox_Paint(itemDef_t *item) {
 
 
 void Item_OwnerDraw_Paint(itemDef_t *item) {
-  menuDef_t *parent;
-
 	if (item == NULL) {
 		return;
 	}
-  parent = (menuDef_t*)item->parent;
 
 	if (DC->ownerDrawItem) {
 		vec4_t color, lowLight;

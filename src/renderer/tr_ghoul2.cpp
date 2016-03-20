@@ -20,9 +20,6 @@
 #include "../ghoul2/G2_local.h"
 #include "matcomp.h"
 
-#pragma warning (disable: 4512)	//default assignment operator could not be gened
-#include "../qcommon/disablewarnings.h"
-
 #define	LL(x) x=LittleLong(x)
 
 extern cvar_t	*r_Ghoul2AnimSmooth;
@@ -179,6 +176,7 @@ frame.
 
 */
 
+#ifndef DEDICATED
 
 /*
 =============
@@ -220,7 +218,6 @@ static int R_GCullModel( trRefEntity_t *ent ) {
  	}
 	return CULL_IN;
 }
-
 
 /*
 =================
@@ -329,6 +326,7 @@ static int G2_ComputeLOD( trRefEntity_t *ent, const model_t *currentModel, int l
 
 	return lod;
 }
+#endif // !DEDICATED
 
 //======================================================================
 //
@@ -609,7 +607,7 @@ void G2_TransformBone (CTransformBone &TB)
 							}
 						}
 						// sanity check
-						assert ((TB.newFrame < endFrame) && (TB.newFrame >= boneList[boneListIndex].startFrame) || (animSize < 10));
+						assert ((TB.newFrame < endFrame && TB.newFrame >= boneList[boneListIndex].startFrame) || animSize < 10);
 					}
 					else
 					{
@@ -1594,12 +1592,12 @@ static void G2_Sort_Models(CGhoul2Info_v &ghoul2, int * const modelList, int * c
 	}
 }
 
-const static mdxaBone_t		identityMatrix =
+const static mdxaBone_t		identityMatrix = {
 {
-	0.0f, -1.0f, 0.0f, 0.0f,
-	1.0f, 0.0f, 0.0f, 0.0f,
-	0.0f, 0.0f, 1.0f, 0.0f
-};
+	{ 0.0f, -1.0f, 0.0f, 0.0f },
+	{ 1.0f, 0.0f, 0.0f, 0.0f },
+	{ 0.0f, 0.0f, 1.0f, 0.0f }
+}};
 
 /*
 ==============

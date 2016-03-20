@@ -47,6 +47,7 @@
 #define MC_POS_V33 ((((MC_BITS_X+MC_BITS_Y+MC_BITS_Z+MC_BITS_VECT*8))/8))
 #define MC_SHIFT_V33 ((((MC_BITS_X+MC_BITS_Y+MC_BITS_Z+MC_BITS_VECT*8)%8)))
 
+#if 0 // unused, silence strict aliasing warnings
 void MC_Compress(const float mat[3][4],unsigned char * _comp)
 {
 	char comp[MC_COMP_BYTES*2];
@@ -159,6 +160,7 @@ void MC_Compress(const float mat[3][4],unsigned char * _comp)
 	//	bad, so...
 	memcpy(_comp,comp,MC_COMP_BYTES);
 }
+#endif // 0
 
 void MC_UnCompress(float mat[3][4],const unsigned char * comp)
 {

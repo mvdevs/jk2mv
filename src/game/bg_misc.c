@@ -1460,7 +1460,7 @@ void BG_CycleForce(playerState_t *ps, int direction)
 	int presel = i;
 	int foundnext = -1;
 
-	if (!ps->fd.forcePowersKnown & (1 << x) ||
+	if (!(ps->fd.forcePowersKnown & (1 << x)) ||
 		x >= NUM_FORCE_POWERS ||
 		x == -1)
 	{ //apparently we have no valid force powers
@@ -2024,10 +2024,6 @@ BG_TouchJumpPad
 ========================
 */
 void BG_TouchJumpPad( playerState_t *ps, entityState_t *jumppad ) {
-	vec3_t	angles;
-	float p;
-	int effectNum;
-
 	// spectators don't use jump pads
 	if ( ps->pm_type != PM_NORMAL && ps->pm_type != PM_FLOAT ) {
 		return;
@@ -2035,7 +2031,11 @@ void BG_TouchJumpPad( playerState_t *ps, entityState_t *jumppad ) {
 
 	// if we didn't hit this same jumppad the previous frame
 	// then don't play the event sound again if we are in a fat trigger
+	/*
 	if ( ps->jumppad_ent != jumppad->number ) {
+		vec3_t	angles;
+		float p;
+		int effectNum;
 
 		vectoangles( jumppad->origin2, angles);
 		p = fabs( AngleNormalize180( angles[PITCH] ) );
@@ -2045,6 +2045,7 @@ void BG_TouchJumpPad( playerState_t *ps, entityState_t *jumppad ) {
 			effectNum = 1;
 		}
 	}
+	*/
 	// remember hitting this jumppad this frame
 	ps->jumppad_ent = jumppad->number;
 	ps->jumppad_frame = ps->pmove_framecount;

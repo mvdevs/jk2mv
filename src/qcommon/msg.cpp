@@ -10,7 +10,9 @@
 static huffman_t		msgHuff;
 
 static qboolean			msgInit = qfalse;
+#ifdef _NEWHUFFTABLE_
 static FILE				*fp = 0;
+#endif // _NEWHUFFTABLE_
 
 int pcount[256];
 
@@ -532,20 +534,22 @@ int	MSG_ReadDelta(msg_t *msg, int oldV, int bits) {
 }
 
 void MSG_WriteDeltaFloat(msg_t *msg, float oldV, float newV) {
+	floatint_t fi;
+	fi.f = newV;
 	if (oldV == newV) {
 		MSG_WriteBits(msg, 0, 1);
 		return;
 	}
 	MSG_WriteBits(msg, 1, 1);
-	MSG_WriteBits(msg, *(int *)&newV, 32);
+	MSG_WriteBits(msg, fi.i, 32);
 }
 
 float MSG_ReadDeltaFloat(msg_t *msg, float oldV) {
 	if (MSG_ReadBits(msg, 1)) {
-		float	newV;
+		floatint_t newV;
 
-		*(int *)&newV = MSG_ReadBits(msg, 32);
-		return newV;
+		newV.i = MSG_ReadBits(msg, 32);
+		return newV.f;
 	}
 	return oldV;
 }
@@ -588,20 +592,22 @@ int	MSG_ReadDeltaKey(msg_t *msg, int key, int oldV, int bits) {
 }
 
 void MSG_WriteDeltaKeyFloat(msg_t *msg, int key, float oldV, float newV) {
+	floatint_t fi;
+	fi.f = newV;
 	if (oldV == newV) {
 		MSG_WriteBits(msg, 0, 1);
 		return;
 	}
 	MSG_WriteBits(msg, 1, 1);
-	MSG_WriteBits(msg, (*(int *)&newV) ^ key, 32);
+	MSG_WriteBits(msg, fi.i ^ key, 32);
 }
 
 float MSG_ReadDeltaKeyFloat(msg_t *msg, int key, float oldV) {
 	if (MSG_ReadBits(msg, 1)) {
-		float	newV;
+		floatint_t newV;
 
-		*(int *)&newV = MSG_ReadBits(msg, 32) ^ key;
-		return newV;
+		newV.i = MSG_ReadBits(msg, 32) ^ key;
+		return newV.f;
 	}
 	return oldV;
 }

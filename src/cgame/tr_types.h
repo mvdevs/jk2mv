@@ -44,11 +44,18 @@
 #define RDF_HYPERSPACE		4		// teleportation effect
 
 typedef byte color4ub_t[4];
+typedef union {
+	byte		b[4];
+	uint32_t	ui;
+} color4u_t;
 
 typedef struct {
 	vec3_t		xyz;
 	float		st[2];
-	byte		modulate[4];
+	union {
+		byte		modulate[4];
+		uint32_t	modulateui;
+	};
 } polyVert_t;
 
 typedef struct poly_s {
@@ -93,7 +100,10 @@ typedef struct miniRefEntity_s
 	qhandle_t			customShader;		// use one image for the entire thing
 
 	// misc
-	byte				shaderRGBA[4];		// colors used by rgbgen entity shaders
+	union {
+		byte				shaderRGBA[4];		// colors used by rgbgen entity shaders
+		uint32_t			shaderRGBAui;
+	};
 	vec2_t				shaderTexCoord;		// texture coordinates used by tcMod entity modifiers
 
 	// extra sprite information
@@ -128,7 +138,10 @@ typedef struct {
 	qhandle_t			customShader;		// use one image for the entire thing
 
 	// misc
-	byte				shaderRGBA[4];		// colors used by rgbgen entity shaders
+	union {
+		byte				shaderRGBA[4];		// colors used by rgbgen entity shaders
+		uint32_t			shaderRGBAui;
+	};
 	vec2_t				shaderTexCoord;		// texture coordinates used by tcMod entity modifiers
 
 	// extra sprite information
@@ -275,6 +288,39 @@ typedef struct {
 	char					vendor_string[MAX_STRING_CHARS];
 	char					version_string[MAX_STRING_CHARS];
 	char					extensions_string[BIG_INFO_STRING];
+
+	int						maxTextureSize;			// queried from GL
+	int						maxActiveTextures;		// multitexture ability
+
+	int						colorBits, depthBits, stencilBits;
+
+	qboolean				deviceSupportsGamma;
+	textureCompression_t	textureCompression;
+	qboolean				textureEnvAddAvailable;
+	qboolean				textureFilterAnisotropicAvailable;
+	qboolean				clampToEdgeAvailable;
+
+	int						vidWidth, vidHeight;
+	// aspect is the screen's physical width / height, which may be different
+	// than scrWidth / scrHeight if the pixels are non-square
+	// normal screens should be 4/3, but wide aspect monitors may be 16/9
+	float					windowAspect;
+
+	int						displayFrequency;
+
+	// synonymous with "does rendering consume the entire screen?", therefore
+	// a Voodoo or Voodoo2 will have this set to TRUE, as will a Win32 ICD that
+	// used CDS.
+	qboolean				isFullscreen;
+	qboolean				stereoEnabled;
+	qboolean				smpActive;		// dual processor
+} vmglconfig_t;
+
+typedef struct {
+	char					renderer_string[MAX_STRING_CHARS];
+	char					vendor_string[MAX_STRING_CHARS];
+	char					version_string[MAX_STRING_CHARS];
+	const char				*extensions_string;
 
 	int						maxTextureSize;			// queried from GL
 	int						maxActiveTextures;		// multitexture ability

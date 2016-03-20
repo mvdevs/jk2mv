@@ -403,7 +403,7 @@ typedef struct {
 
   cachedAssets_t Assets;
 
-	glconfig_t glconfig;
+  vmglconfig_t glconfig;
 	qhandle_t	whiteShader;
   qhandle_t gradientImage;
   qhandle_t cursor;

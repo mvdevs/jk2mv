@@ -207,7 +207,7 @@ void SV_DirectConnect( netadr_t from ) {
 	version = atoi( Info_ValueForKey( userinfo, "protocol" ) );
 	if ( version != MV_GetCurrentProtocol() ) {
 		NET_OutOfBandPrint(NS_SERVER, from, "print\nServer uses protocol version %i.\n", MV_GetCurrentProtocol());
-		Com_DPrintf ("	rejected connect from version %i\n", version);
+		Com_DPrintf ("rejected connect from version %i\n", version);
 		return;
 	}
 
@@ -243,6 +243,23 @@ void SV_DirectConnect( netadr_t from ) {
 			"print\nUserinfo string length exceeded.  "
 			"Try removing setu cvars from your config.\n" );
 		return;
+	}
+
+	// q3fill protection
+	if (!Sys_IsLANAddress(from)) {
+		int connectingip = 0;
+
+		for (i = 0; i < sv_maxclients->integer; i++) {
+			if (svs.clients[i].netchan.remoteAddress.type != NA_BOT && svs.clients[i].state == CS_CONNECTED && NET_CompareBaseAdr(svs.clients[i].netchan.remoteAddress, from)) {
+				connectingip++;
+			}
+		}
+
+		if (connectingip >= 3) {
+			NET_OutOfBandPrint(NS_SERVER, from, "print\nPlease wait...\n");
+			Com_DPrintf("%s:connect rejected : too many simultaneously connecting clients\n", NET_AdrToString(from));
+			return;
+		}
 	}
 
 	// see if the challenge is valid (LAN clients don't need to challenge)
@@ -289,21 +306,6 @@ void SV_DirectConnect( netadr_t from ) {
 
 		Com_Printf("Client %i connecting with %i challenge ping\n", i, ping);
 		challengeptr->connected = qtrue;
-	}
-
-	// q3fill protection
-	if (!Sys_IsLANAddress(from)) {
-		int connectingip = 0;
-
-		for (i = 0; i < sv_maxclients->integer; i++) {
-			if (svs.clients[i].netchan.remoteAddress.type != NA_BOT && svs.clients[i].state == CS_CONNECTED && NET_CompareBaseAdr(svs.clients[i].netchan.remoteAddress, from)) {
-				connectingip++;
-			}
-		}
-
-		if (connectingip >= 3) {
-			NET_OutOfBandPrint(NS_SERVER, from, "print\nPlease wait...\n");
-		}
 	}
 
 	newcl = &temp;
@@ -1319,7 +1321,7 @@ void SV_UserinfoChanged( client_t *cl ) {
 		char model[80];
 
 		Q_strncpyz(model, Info_ValueForKey(cl->userinfo, "model"), sizeof(model));
-		if (Q_stristr(model, "galak_mech"))
+		if (!Q_stricmp(model, "galak_mech") || !Q_stricmpn(model, "galak_mech/", 11))
 		{
 			if ( !Info_SetValueForKey(cl->userinfo, "model", "galak/default") )
 			{
@@ -1329,7 +1331,7 @@ void SV_UserinfoChanged( client_t *cl ) {
 		}
 
 		Q_strncpyz(model, Info_ValueForKey(cl->userinfo, "team_model"), sizeof(model));
-		if (Q_stristr(model, "galak_mech"))
+		if (!Q_stricmp(model, "galak_mech") || !Q_stricmpn(model, "galak_mech/", 11))
 		{
 			if ( !Info_SetValueForKey(cl->userinfo, "team_model", "galak/default") )
 			{
@@ -1344,7 +1346,7 @@ void SV_UserinfoChanged( client_t *cl ) {
 		char model[80];
 
 		Q_strncpyz(model, Info_ValueForKey(cl->userinfo, "model"), sizeof(model));
-		if (Q_stristr(model, "kyle/fpls") || (Q_stristr(model, "morgan") && (stricmp(model, "morgan/default_mp") && stricmp(model, "morgan/red") && stricmp(model, "morgan/blue"))))
+		if (!Q_stricmpn(model, "kyle/fpls", 9) || !Q_stricmp(model, "morgan") || (!Q_stricmpn(model, "morgan/", 7) && (Q_stricmp(model, "morgan/default_mp") && Q_stricmp(model, "morgan/red") && Q_stricmp(model, "morgan/blue"))))
 		{
 			if ( !Info_SetValueForKey(cl->userinfo, "model", "kyle/default") )
 			{

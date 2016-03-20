@@ -68,6 +68,14 @@ ____________________________________________________________________________*/
 #endif
 
 #ifndef LITTLE_ENDIAN
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+#define LITTLE_ENDIAN 1
+#elif __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+#define LITTLE_ENDIAN 0
+#endif
+#endif
+
+#ifndef LITTLE_ENDIAN
 #error Layer III LITTLE_ENDIAN must be defined 0 or 1
 #endif
 

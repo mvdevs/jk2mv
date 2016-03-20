@@ -273,6 +273,7 @@ void Sys_SetDefaultInstallPath(const char *path)
 	Q_strncpyz(installPath, path, sizeof(installPath));
 }
 
+#if defined(MACOS_X)
 static char *last_strstr(const char *haystack, const char *needle)
 {
     if (*needle == '\0')
@@ -289,6 +290,7 @@ static char *last_strstr(const char *haystack, const char *needle)
 
     return result;
 }
+#endif // MACOS_X
 
 #if !defined(MACOS_X) && defined(INSTALLED)
 char *Sys_LinuxGetInstallPrefix() {
@@ -512,7 +514,7 @@ void MV_MSleep(unsigned int msec) {
 
 // from ioq3 requires sse
 // i do not care about processors without sse
-
+#if defined(__i386__) || defined(__amd64__)
 #if idx64
   #define EAX "%%rax"
   #define EBX "%%rbx"
@@ -573,9 +575,20 @@ void Sys_SnapVector(vec3_t vec) {
 	);
 
 }
+#else
+long Q_ftol(float f) {
+    return (long)f;
+}
+
+void Sys_SnapVector(float *v) {
+    v[0] = nearbyintf(v[0]);
+    v[1] = nearbyintf(v[1]);
+    v[2] = nearbyintf(v[2]);
+}
+#endif
 
 void Sys_SetFloatEnv(void) {
-	fesetround(FE_TONEAREST);
+    fesetround(FE_TONEAREST);
 }
 
 /*
@@ -641,6 +654,8 @@ void	* QDECL Sys_LoadDll(const char *name, intptr_t(QDECL **entryPoint)(int, ...
   snprintf (fname, sizeof(fname), "%s_mips.so", name);
 #elif defined __amd64__
   snprintf (fname, sizeof(fname), "%s_amd64.so", name);
+#elif defined __arm__
+  snprintf (fname, sizeof(fname), "%s_arm.so", name);
 #else
 #error Unknown arch
 #endif
@@ -672,7 +687,7 @@ void	* QDECL Sys_LoadDll(const char *name, intptr_t(QDECL **entryPoint)(int, ...
 	sprintf(mvmenu, "%s/lib/%s.so", Sys_LinuxGetInstallPrefix(), name);
 	fn = mvmenu;
 #else
-	sprintf(mvmenu, "%s/%s", basepath, fname);
+	sprintf(mvmenu, "%s/%s.so", basepath, name);
 	fn = mvmenu;
 #endif
   } else {

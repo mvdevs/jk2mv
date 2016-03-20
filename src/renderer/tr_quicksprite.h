@@ -21,7 +21,7 @@ private:
 			unsigned int	mFogColor;
 			qboolean		mUseFog;
 			vec4_t			mVerts[SHADER_MAX_VERTEXES];
-			unsigned int	mIndexes[SHADER_MAX_VERTEXES];			// Ideally this would be static, cause it never changes
+			// unsigned int	mIndexes[SHADER_MAX_VERTEXES];			// Ideally this would be static, cause it never changes
 			vec2_t			mTextureCoords[SHADER_MAX_VERTEXES];	// Ideally this would be static, cause it never changes
 			vec2_t			mFogTextureCoords[SHADER_MAX_VERTEXES];
 			unsigned int	mColors[SHADER_MAX_VERTEXES];

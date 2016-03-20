@@ -935,8 +935,8 @@ static rserr_t GLW_SetMode( int mode,
 
 bool GL_CheckForExtension(const char *ext)
 {
-	char	*temp;
-	char	term;
+	const char	*temp;
+	char		term;
 
 	temp = strstr(glConfig.extensions_string, ext);
 	if(!temp)
@@ -1668,7 +1668,7 @@ void GLimp_Init( void )
 	if (!glstring) {
 		glstring = "invalid driver";
 	}
-	Q_strncpyz( glConfig.extensions_string, glstring, sizeof( glConfig.extensions_string ) );
+	glConfig.extensions_string = glstring;
 
 	// OpenGL driver constants
 	qglGetIntegerv( GL_MAX_TEXTURE_SIZE, &glConfig.maxTextureSize );

@@ -268,24 +268,6 @@ void SV_LocateGameData( sharedEntity_t *gEnts, int numGEntities, int sizeofGEnti
 
 	sv.gameClients = clients;
 	sv.gameClientSize = sizeofGameClient;
-
-	if (mv_fixturretcrash->integer && !(sv.fixes & MVFIX_TURRETCRASH) && numGEntities > 1020) {
-		int remEnts = 0;
-
-		for (int i = 32; i < numGEntities; i++) {
-			// can't just use gEnts[] because the size of gentitiy_t is different in each mod.
-			sharedEntity_t *ent = SV_GentityNum(i);
-
-			if (ent->s.eType == ET_EVENTS + EV_SABER_BLOCK || (ent->s.weapon == WP_TURRET && ent->s.eType == ET_MISSILE)) {
-				// Too many tempEntitys and missiles. Remove them all.
-				SV_UnlinkEntity(ent);
-				Com_Memset(ent, 0, sizeofGEntity_t);
-				remEnts++;
-			}
-		}
-
-		sv.num_entities = numGEntities - remEnts;
-	}
 }
 
 /*
@@ -323,14 +305,6 @@ void SV_GetUsercmd( int clientNum, usercmd_t *cmd ) {
 }
 
 //==============================================
-
-static int	FloatAsInt( float f ) {
-	int		temp;
-
-	*(float *)&temp = f;
-
-	return temp;
-}
 
 /*
 ====================
@@ -1101,6 +1075,9 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 
 	case MVAPI_GET_VERSION:
 		return (int)MV_GetCurrentGameversion();
+
+	case MVAPI_DISABLE_STRUCT_CONVERSION:
+		return (int)MVAPI_DisableStructConversion((qboolean)args[1]);
 
 	default:
 		Com_Error( ERR_DROP, "Bad game system trap: %i", args[0] );

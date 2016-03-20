@@ -38,6 +38,8 @@ cvar_t	*cl_timeNudge;
 cvar_t	*cl_showTimeDelta;
 cvar_t	*cl_freezeDemo;
 
+cvar_t	*cl_drawRecording;
+
 cvar_t	*cl_shownet;
 cvar_t	*cl_showSend;
 cvar_t	*cl_timedemo;
@@ -71,7 +73,7 @@ cvar_t	*cl_framerate;
 cvar_t	*cl_autolodscale;
 
 cvar_t	*mv_slowrefresh;
-cvar_t	*mv_nameShadows;
+cvar_t	*mv_coloredTextShadows;
 cvar_t	*mv_consoleShiftRequirement;
 
 cvar_t	*cl_downloadName;
@@ -2489,6 +2491,13 @@ void CL_Frame ( int msec ) {
 		}
 	}
 
+	if (cl_autoDemo->integer && !clc.demoplaying) {
+		if (cls.state != CA_ACTIVE && clc.demorecording)
+			demoAutoComplete();
+		else if (cls.state == CA_ACTIVE && !clc.demorecording)
+			demoAutoRecord();
+	}
+
 	// save the msec before checking pause
 	cls.realFrametime = msec;
 
@@ -2648,8 +2657,12 @@ void CL_InitRenderer( void ) {
 	cls.charSetShader = re.RegisterShaderNoMip( "gfx/2d/bigchars" );
 #endif
 
+	cls.font_ocr_a = re.RegisterFont("ocr_a");
+
 	cls.whiteShader = re.RegisterShader( "white" );
 	cls.consoleShader = re.RegisterShader( "console" );
+	cls.recordingShader = re.RegisterShaderNoMip("gfx/2d/demorec");
+	cls.ratioFix = (float)(SCREEN_WIDTH * cls.glconfig.vidHeight) / (float)(SCREEN_HEIGHT * cls.glconfig.vidWidth);
 	g_console_field_width = cls.glconfig.vidWidth / SMALLCHAR_WIDTH - 2;
 	kg.g_consoleField.widthInChars = g_console_field_width;
 }
@@ -2829,6 +2842,8 @@ void CL_Init( void ) {
 	cl_freezeDemo = Cvar_Get ("cl_freezeDemo", "0", CVAR_TEMP );
 	rcon_client_password = Cvar_Get ("rconPassword", "", CVAR_TEMP );
 	cl_activeAction = Cvar_Get( "activeAction", "", CVAR_TEMP );
+	
+	cl_drawRecording = Cvar_Get ("cl_drawRecording", "1", CVAR_ARCHIVE | CVAR_GLOBAL );
 
 	cl_timedemo = Cvar_Get ("timedemo", "0", 0);
 	cl_avidemo = Cvar_Get ("cl_avidemo", "0", 0);
@@ -2905,10 +2920,16 @@ void CL_Init( void ) {
 
 	// cgame might not be initialized before menu is used
 	Cvar_Get ("cg_viewsize", "100", CVAR_ARCHIVE );
+	
+	// autorecord
+	cl_autoDemo = Cvar_Get ("cl_autoDemo", "0", CVAR_ARCHIVE | CVAR_GLOBAL );
+	cl_autoDemoFormat = Cvar_Get ("cl_autoDemoFormat", "%t_%m", CVAR_ARCHIVE | CVAR_GLOBAL );
+	Cmd_AddCommand ("saveDemo", demoAutoSave_f);
+	Cmd_AddCommand ("saveDemoLast", demoAutoSaveLast_f);
 
 	// mv cvars
 	mv_slowrefresh = Cvar_Get("mv_slowrefresh", "3", CVAR_ARCHIVE | CVAR_GLOBAL);
-	mv_nameShadows	= Cvar_Get("mv_nameShadows"	, "2", CVAR_ARCHIVE | CVAR_GLOBAL);
+	mv_coloredTextShadows	= Cvar_Get("mv_coloredTextShadows"	, "2", CVAR_ARCHIVE | CVAR_GLOBAL);
 	mv_consoleShiftRequirement = Cvar_Get("mv_consoleShiftRequirement", "1", CVAR_ARCHIVE | CVAR_GLOBAL);
 
 	cl_downloadName = Cvar_Get("cl_downloadName", "", CVAR_INTERNAL);
@@ -3177,6 +3198,8 @@ void CL_ServerInfoPacket( netadr_t from, msg_t *msg ) {
 				case PROTOCOL16:
 					MV_SetCurrentGameversion(VERSION_1_04);
 					break;
+				default:
+					q_unreachable();
 			}
 		}
 
@@ -3604,7 +3627,6 @@ CL_GlobalServers_f
 void CL_GlobalServers_f( void ) {
 	netadr_t	to;
 	int			i;
-	char		command102[1024], command104[1024];
 
 	if ( Cmd_Argc() < 3) {
 		Com_Printf( "usage: globalservers <master# 0-1> <protocol> [keywords]\n");
@@ -3614,10 +3636,6 @@ void CL_GlobalServers_f( void ) {
 	cls.masterNum = atoi( Cmd_Argv(1) );
 	cls.numglobalservers = -1;
 	cls.pingUpdateSource = AS_GLOBAL;
-
-	// ignore argv(2) and send out requests for 1.02 and 1.04
-	sprintf(command102, "getservers 15");
-	sprintf(command104, "getservers 16");
 
 	// multimaster
 	for (i = 0; i < MAX_MASTER_SERVERS; i++) {
@@ -3633,8 +3651,8 @@ void CL_GlobalServers_f( void ) {
 		to.type = NA_IP;
 		to.port = BigShort(PORT_MASTER);
 
-		NET_OutOfBandPrint(NS_SERVER, to, command102);
-		NET_OutOfBandPrint(NS_SERVER, to, command104);
+		NET_OutOfBandPrint(NS_SERVER, to, "getservers 15");
+		NET_OutOfBandPrint(NS_SERVER, to, "getservers 16");
 	}
 
 	CL_RequestMotd();
@@ -4101,3 +4119,36 @@ void VM_AddRefEntityToScene(refEntity_t *r) {
 	re.AddRefEntityToScene(&tmp_r);
 }
 #endif
+
+/*
+====================
+CL_GetVMGLConfig
+====================
+*/
+void CL_GetVMGLConfig(vmglconfig_t *vmglconfig) {
+	Q_strncpyz(vmglconfig->renderer_string, cls.glconfig.renderer_string, sizeof(vmglconfig->renderer_string));
+	Q_strncpyz(vmglconfig->vendor_string, cls.glconfig.vendor_string, sizeof(vmglconfig->vendor_string));
+	Q_strncpyz(vmglconfig->version_string, cls.glconfig.version_string, sizeof(vmglconfig->version_string));
+	Q_strncpyz(vmglconfig->extensions_string, cls.glconfig.extensions_string, sizeof(vmglconfig->extensions_string));
+
+	vmglconfig->maxTextureSize = cls.glconfig.maxTextureSize;
+	vmglconfig->maxActiveTextures = cls.glconfig.maxActiveTextures;
+
+	vmglconfig->colorBits = cls.glconfig.colorBits;
+	vmglconfig->depthBits = cls.glconfig.depthBits;
+	vmglconfig->stencilBits = cls.glconfig.stencilBits;
+
+	vmglconfig->deviceSupportsGamma = cls.glconfig.deviceSupportsGamma;
+	vmglconfig->textureCompression = cls.glconfig.textureCompression;
+	vmglconfig->textureEnvAddAvailable = cls.glconfig.textureEnvAddAvailable;
+	vmglconfig->textureFilterAnisotropicAvailable = cls.glconfig.textureFilterAnisotropicAvailable;
+	vmglconfig->clampToEdgeAvailable = cls.glconfig.clampToEdgeAvailable;
+
+	vmglconfig->vidWidth = cls.glconfig.vidWidth;
+	vmglconfig->vidHeight = cls.glconfig.vidHeight;
+	vmglconfig->windowAspect = cls.glconfig.windowAspect;
+	vmglconfig->displayFrequency = cls.glconfig.displayFrequency;
+	vmglconfig->isFullscreen = cls.glconfig.isFullscreen;
+	vmglconfig->stereoEnabled = cls.glconfig.stereoEnabled;
+	vmglconfig->smpActive = cls.glconfig.smpActive;
+}

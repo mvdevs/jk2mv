@@ -23,7 +23,6 @@ set(MVMENUFiles
 	"${SRCDir}/menu/ui_main.c"
 	"${SRCDir}/menu/ui_shared.c"
 	"${SRCDir}/menu/ui_syscalls.c"
-	"${SRCDir}/menu/ui_util.c"
 	"${SRCDir}/game/bg_misc.c"
 	"${SRCDir}/game/bg_weapons.c"
 	"${SRCDir}/game/q_shared.c"

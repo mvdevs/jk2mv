@@ -31,6 +31,10 @@ set(ProjectURL "https://jk2mv.org")
 
 include(GetGitRevisionDescription)
 git_describe(MV_VERSION --tags)
+if(NOT MV_VERSION)
+	set(MV_VERSION "UNDEFINED")
+endif()
+
 message(STATUS "${ProjectName} Version: ${MV_VERSION}")
 
 # Languages
@@ -41,7 +45,7 @@ else()
 endif()
 
 # Customizable options
-option(BuildPortableVersion "Build portable version (does not read or write files from your user/home directory" OFF)
+option(BuildPortableVersion "Build portable version (does not read or write files from your user/home directory" ON)
 option(BuildMVMP "Whether to create targets for the client (jk2mvmp & jk2mvmenu)" ON)
 option(BuildMVDED "Whether to create targets for the dedicated server (jk2mvded)" ON)
 
@@ -52,7 +56,14 @@ if(NOT APPLE AND NOT WIN32)
 	if (BuildPackRPM AND CMAKE_MAJOR_VERSION LESS 3)
 		message(WARNING "Generated RPM file will not work on newer distributions")
 	endif()
+	
+	if ((BuildPackDEB OR BuildPackRPM) AND BuildPortableVersion)
+		message(FATAL_ERROR "Packaging the portable version is not supported.")
+	endif()
 endif()
+
+option(LegacyHTTPDownloads "Activate this for legacy JK2MF http downloads. Bad code due to bad implementation in jk2mf" OFF)
+option(NTClientWorkaround "Disable loading of NT-Mod pk3 files to prevent crashing the game" ON)
 
 if(WIN32)
 	set(UseInternalPNG ON)
@@ -85,33 +96,35 @@ endif()
 # Architecture
 set(CMAKE_OSX_ARCHITECTURES "i386" "x86_64") # always building both on osx
 
-if(CMAKE_SIZEOF_VOID_P MATCHES "8")
-	set(ARCH_BITS 64)
-	if(WIN32)
+if(WIN32)
+	set(X86 ON)
+	if(CMAKE_SIZEOF_VOID_P MATCHES "8")
 		set(Architecture "x64")
 		set(WIN64 TRUE)
-	elseif(APPLE)
-		set(Architecture "universal")
-	else()
-		set(Architecture "amd64")
-	endif()
-
-	if(NOT APPLE)
 		set(GlobalDefines ${GlobalDefines} "_M_X64")
-	endif()
-else()
-	set(ARCH_BITS 32)
-	if(WIN32)
+	else()
 		set(Architecture "x86")
 		set(WIN64 FALSE)
-	elseif(APPLE)
-		set(Architecture "universal")
-	else()
-		set(Architecture "i386")
-	endif()
-
-	if(NOT APPLE)
 		set(GlobalDefines ${GlobalDefines} "_M_IX86")
+	endif()
+elseif(APPLE)
+	set(X86 ON)
+	set(Architecture "universal")
+else()
+	set(X86 OFF)
+
+	if(CMAKE_SYSTEM_PROCESSOR MATCHES "^arm")
+		set(Architecture "arm")
+		set(ARM ON)
+	elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^i.86$")
+		set(X86 ON)
+		set(Architecture "i386")
+	elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^x86.64$")
+		set(X86 ON)
+		set(Architecture "amd64")
+	else()
+		set(Architecture "${CMAKE_SYSTEM_PROCESSOR}")
+		set(GlobalDefines ${GlobalDefines} "NO_VM_COMPILED")
 	endif()
 endif()
 
@@ -144,8 +157,13 @@ set(DebugDefines ${DebugDefines} "DEBUG")
 set(ReleaseDefines "FINAL_BUILD" "NDEBUG")
 
 if(MSVC)
-	set(GlobalDefines ${GlobalDefines} "_CRT_SECURE_NO_WARNINGS")
-
+	# Warnings
+	# 4244 = conversion' conversion from 'type1' to 'type2', possible loss of data
+	# 4018 = 'expression' : signed/unsigned mismatch
+	# 4996 = 'function': was declared deprecated
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /wd4244 /wd4018 /wd4996")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4244 /wd4018 /wd4996")
+	
 	# Multithreaded
 	set(CMAKE_CXX_FLAGS_RELEASE "/MT" CACHE TYPE INTERNAL FORCE)
 	set(CMAKE_C_FLAGS_RELEASE "/MT" CACHE TYPE INTERNAL FORCE)
@@ -173,47 +191,61 @@ elseif ((("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU") OR ("${CMAKE_C_COMPILER_ID}" 
 	endif()
 
 	# Additional flags for debug configuration
-	set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -ggdb")
-	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -ggdb")
+	set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -ggdb3")
+	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -ggdb3")
 
 	# we need sse optimizations in debug configuration, too because of the inline assembler which is sse code
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -msse2")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse2")
+	if(X86)
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -msse2")
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse2")
+	endif()
 
 	# Optimization
-	set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O3 -ffast-math")
-	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -ffast-math")
+	set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O3 -ffast-math -flto")
+	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -ffast-math -flto")
+
+	# General
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -fvisibility=hidden")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fvisibility=hidden")
+
+	# Warnings
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wno-unknown-pragmas")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-unknown-pragmas -Wno-write-strings")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-sign-compare")
 
 	if("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU")
-		set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -mfpmath=sse -fexpensive-optimizations")
+		if(X86)
+			set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -mfpmath=sse")
+		endif()
 
 		# Link only libs actually needed
 		set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -Wl,--as-needed,-s")
-
-		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=hidden")
 	elseif("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang")
-		set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -flto")
-
-		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-comment -Wno-reorder -Wunused-value -Wswitch")
 	endif()
 
 	if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-		set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -mfpmath=sse -fexpensive-optimizations")
+		if(X86)
+			set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -mfpmath=sse")
+		endif()
 
 		# Link only libs actually needed
 		set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wl,--as-needed,-s")
-
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden")
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility-inlines-hidden")
 
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-write-strings")
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-but-set-variable")
 	elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-		set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -flto")
-
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-comment -Wno-deprecated-writable-strings -Wno-reorder -Wunused-value -Wswitch")
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-char-subscripts -Wno-self-assign")
 	endif()
 else()
 	message(FATAL_ERROR "Unsupported compiler")
+endif()
+
+if(LegacyHTTPDownloads)
+	set(GlobalDefines ${GlobalDefines} "MV_MFDOWNLOADS")
+endif()
+
+if(NTClientWorkaround)
+	set(GlobalDefines ${GlobalDefines} "NTCLIENT_WORKAROUND")
 endif()
 
 if(NOT CMAKE_BUILD_TYPE)

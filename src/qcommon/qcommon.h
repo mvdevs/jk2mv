@@ -37,6 +37,7 @@ void Field_CompleteFilename( const char *dir, const char *ext, qboolean stripExt
 void Field_CompleteCommand( char *cmd, qboolean doCommands, qboolean doCvars, qboolean doArguments );
 int Field_GetLastMatchCount();
 qboolean Field_WasComplete();
+int FloatAsInt( float f );
 
 extern qboolean com_demoplaying;
 
@@ -47,7 +48,6 @@ void Key_KeynameCompletion ( void(*callback)( const char *s ) );
 void FS_FilenameCompletion( const char *dir, const char *ext, qboolean stripExt, callbackFunc_t callback );
 
 // cmd.cpp
-static void Cmd_TokenizeString2( const char *text_in, qboolean ignoreQuotes );
 void Cmd_TokenizeString( const char *text_in );
 void Cmd_TokenizeStringIgnoreQuotes( const char *text_in );
 void Cmd_CompleteArgument( const char *command, char *args, int argNum );
@@ -340,11 +340,7 @@ intptr_t QDECL VM_Call(vm_t *vm, int callnum, ...);
 void	VM_Debug( int level );
 
 void	*VM_ArgPtr(intptr_t intValue);
-typedef union {
-	float f;
-	int i;
-	unsigned int ui;
-} floatint_t;
+
 static ID_INLINE float _vmf(intptr_t x)
 {
 	floatint_t fi;
@@ -560,6 +556,8 @@ issues.
 
 #define	MAX_FILE_HANDLES	256 // increased from 64 in jk2mv
 
+qboolean FS_CopyFile( char *fromOSPath, char *toOSPath, char *newOSPath = NULL, const int newSize = 0 );
+
 qboolean FS_Initialized();
 
 void	FS_InitFilesystem (void);
@@ -726,7 +724,7 @@ void		Com_EndRedirect( void );
 void 		QDECL Com_Printf( const char *fmt, ... );
 void 		QDECL Com_DPrintf( const char *fmt, ... );
 void		QDECL Com_OPrintf( const char *fmt, ...); // Outputs to the VC / Windows Debug window (only in debug compile)
-void 		QDECL Com_Error( int code, const char *fmt, ... );
+Q_NORETURN void QDECL  Com_Error( int code, const char *fmt, ... );
 void 		Com_Quit_f( void );
 int			Com_EventLoop( void );
 int			Com_Milliseconds( void );	// will be journaled properly
@@ -1000,7 +998,7 @@ void	*Sys_GetBotLibAPI( void *parms );
 
 char	*Sys_GetCurrentUser( void );
 
-void	QDECL Sys_Error( const char *error, ...);
+Q_NORETURN void	QDECL Sys_Error( const char *error, ...);
 void	Sys_Quit (void);
 char	*Sys_GetClipboardData( void );	// note that this isn't journaled...
 

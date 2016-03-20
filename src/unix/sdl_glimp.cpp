@@ -944,6 +944,7 @@ static void GLimp_InitExtensions( void )
 	}
 }
 
+#if 0
 // Truncates the GL extensions string by only allowing up to 'maxExtensions' extensions in the string.
 static const char *TruncateGLExtensionsString (const char *extensionsString, int maxExtensions)
 {
@@ -972,6 +973,7 @@ static const char *TruncateGLExtensionsString (const char *extensionsString, int
 
 	return truncatedExtensions;
 }
+#endif // 0
 
 void 		GLimp_Init( void )
 {
@@ -1022,7 +1024,7 @@ success:
     Q_strncpyz(glConfig.vendor_string, (const char *)qglGetString(GL_VENDOR), sizeof(glConfig.vendor_string));
 	Q_strncpyz(glConfig.renderer_string, (const char *)qglGetString(GL_RENDERER), sizeof(glConfig.renderer_string));
 	Q_strncpyz(glConfig.version_string, (const char *)qglGetString(GL_VERSION), sizeof(glConfig.version_string));
-	Q_strncpyz(glConfig.extensions_string, (const char *)qglGetString(GL_EXTENSIONS), sizeof(glConfig.extensions_string));
+	glConfig.extensions_string = (const char*)qglGetString(GL_EXTENSIONS);
 
 	// OpenGL driver constants
 	qglGetIntegerv( GL_MAX_TEXTURE_SIZE, &glConfig.maxTextureSize );

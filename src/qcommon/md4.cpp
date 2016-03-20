@@ -1,9 +1,6 @@
 /* GLOBAL.H - RSAREF types and constants */
 
 #include <string.h>
-#if defined(_WIN32)
-#pragma warning(disable : 4711)		// selected for automatic inline expansion
-#endif
 
 /* POINTER defines a generic pointer type */
 typedef unsigned char *POINTER;

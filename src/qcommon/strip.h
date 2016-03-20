@@ -11,11 +11,9 @@ using namespace std;
 #endif
 */
 
-#pragma warning (push, 3)	//go back down to 3 for the stl include
 #include <string>
 #include <map>
 #include <list>
-#pragma warning (pop)
 
 using namespace std;
 

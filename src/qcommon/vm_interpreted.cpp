@@ -388,6 +388,8 @@ nextInstruction:
 		r0 = opStack[opStackOfs];
 		r1 = opStack[(uint8_t) (opStackOfs - 1)];
 nextInstruction2:
+		opcode = codeImage[ programCounter++ ];
+
 #ifdef DEBUG_VM
 		if ( (unsigned)programCounter >= vm->codeLength ) {
 			Com_Error( ERR_DROP, "VM pc out of range" );
@@ -409,8 +411,6 @@ nextInstruction2:
 		}
 		profileSymbol->profileCount++;
 #endif
-		opcode = codeImage[ programCounter++ ];
-
 		switch ( opcode ) {
 #ifdef DEBUG_VM
 		default:

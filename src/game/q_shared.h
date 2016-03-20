@@ -8,8 +8,6 @@
 
 #define MAX_TEAMNAME 32
 
-#include "../qcommon/disablewarnings.h"
-
 /**********************************************************************
   VM Considerations
 
@@ -83,6 +81,21 @@
 short   ShortSwap (short l);
 int		LongSwap (int l);
 float	FloatSwap (const float *f);
+
+//================= COMPILER-SPECIFIC DEFINES ===========================
+#ifdef _MSC_VER
+#define Q_NORETURN __declspec(noreturn)
+#define q_unreachable() abort()
+#elif defined __GNUC__
+#define Q_NORETURN __attribute__((noreturn))
+#define q_unreachable() __builtin_unreachable()
+#elif defined __clang__
+#define Q_NORETURN __attribute__((noreturn))
+#define q_unreachable() __builtin_unreachable()
+#else
+#define Q_NORETURN
+#define q_unreachable() abort()
+#endif
 
 //======================= WIN32 DEFINES =================================
 
@@ -251,6 +264,12 @@ typedef unsigned short		word;
 typedef unsigned long		ulong;
 
 typedef enum {qfalse, qtrue}	qboolean;
+
+typedef union {
+	float f;
+	int i;
+	unsigned int ui;
+} floatint_t;
 
 typedef int		qhandle_t;
 typedef int		fxHandle_t;
@@ -703,6 +722,8 @@ signed short ClampShort( int i );
 
 float q3powf ( float x, int y );
 
+qboolean Q_isnan(float f);
+
 // this isn't a real cheap function to call!
 int DirToByte( vec3_t dir );
 void ByteToDir( int b, vec3_t dir );
@@ -1030,7 +1051,7 @@ qboolean Info_Validate( const char *s );
 void Info_NextPair( const char **s, char *key, char *value );
 
 // this is only here so the functions in q_shared.c and bg_*.c can link
-void	QDECL Com_Error( int level, const char *error, ... );
+Q_NORETURN void	QDECL  Com_Error( int level, const char *error, ... );
 void	QDECL Com_Printf( const char *msg, ... );
 
 

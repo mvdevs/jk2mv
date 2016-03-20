@@ -103,7 +103,7 @@ uiInfo_t uiInfo;
 static void UI_StartServerRefresh(qboolean full);
 static void UI_StopServerRefresh( void );
 static void UI_DoServerRefresh( void );
-static void UI_BuildServerDisplayList(qboolean force);
+static void UI_BuildServerDisplayList(int force);
 static void UI_BuildServerStatus(qboolean force);
 static void UI_BuildFindPlayerList(qboolean force);
 static int QDECL UI_ServersQsortCompare( const void *arg1, const void *arg2 );
@@ -163,8 +163,8 @@ static char* netnames[] = {
 	NULL
 };
 
-static int gamecodetoui[] = {4,2,3,0,5,1,6};
-static int uitogamecode[] = {4,6,2,3,1,5,7};
+// static int gamecodetoui[] = {4,2,3,0,5,1,6};
+// static int uitogamecode[] = {4,6,2,3,1,5,7};
 
 const char *UI_GetStripEdString(const char *refSection, const char *refName);
 
@@ -562,7 +562,7 @@ void _UI_Refresh( int realtime )
 
 		//if (uiMaxRank > ui_rankChange.integer)
 		{
-			uiMaxRank = ui_rankChange.integer;
+			uiMaxRank = Com_Clampi(1, MAX_FORCE_RANK, ui_rankChange.integer);
 			uiForceRank = uiMaxRank;
 
 			/*
@@ -1046,8 +1046,10 @@ static void UI_DrawGameType(rectDef_t *rect, float scale, vec4_t color, int text
 }
 
 static void UI_DrawNetGameType(rectDef_t *rect, float scale, vec4_t color, int textStyle, int iMenuFont) {
-	if (ui_netGameType.integer < 0 || ui_netGameType.integer > uiInfo.numGameTypes) {
+	if (ui_netGameType.integer < 0 || ui_netGameType.integer >= uiInfo.numGameTypes) {
+		ui_netGameType.integer = 0;
 		trap_Cvar_Set("ui_netGameType", "0");
+		ui_actualNetGameType.integer = 0;
 		trap_Cvar_Set("ui_actualNetGameType", "0");
 	}
   Text_Paint(rect->x, rect->y, scale, color, uiInfo.gameTypes[ui_netGameType.integer].gameType , 0, 0, textStyle, iMenuFont);
@@ -1082,7 +1084,8 @@ static void UI_DrawAutoSwitch(rectDef_t *rect, float scale, vec4_t color, int te
 }
 
 static void UI_DrawJoinGameType(rectDef_t *rect, float scale, vec4_t color, int textStyle, int iMenuFont) {
-	if (ui_joinGameType.integer < 0 || ui_joinGameType.integer > uiInfo.numJoinGameTypes) {
+	if (ui_joinGameType.integer < 0 || ui_joinGameType.integer >= uiInfo.numJoinGameTypes) {
+		ui_joinGameType.integer = 0;
 		trap_Cvar_Set("ui_joinGameType", "0");
 	}
   Text_Paint(rect->x, rect->y, scale, color, uiInfo.joinGameTypes[ui_joinGameType.integer].gameType , 0, 0, textStyle, iMenuFont);
@@ -1255,15 +1258,15 @@ static void UI_DrawForceSide(rectDef_t *rect, float scale, vec4_t color, int tex
 		{
 		case TEAM_RED:
 			uiForceSide = FORCE_DARKSIDE;
-			color[0] = 0.2;
-			color[1] = 0.2;
-			color[2] = 0.2;
+			color[0] = 0.2f;
+			color[1] = 0.2f;
+			color[2] = 0.2f;
 			break;
 		case TEAM_BLUE:
 			uiForceSide = FORCE_LIGHTSIDE;
-			color[0] = 0.2;
-			color[1] = 0.2;
-			color[2] = 0.2;
+			color[0] = 0.2f;
+			color[1] = 0.2f;
+			color[2] = 0.2f;
 			break;
 		default:
 			break;
@@ -1475,9 +1478,9 @@ static void UI_DrawTeamMember(rectDef_t *rect, float scale, vec4_t color, qboole
 
 	if (numval > maxcl)
 	{
-		finalColor[0] *= 0.2;
-		finalColor[1] *= 0.2;
-		finalColor[2] *= 0.2;
+		finalColor[0] *= 0.2f;
+		finalColor[1] *= 0.2f;
+		finalColor[2] *= 0.2f;
 
 		value = -1;
 	}
@@ -1519,7 +1522,7 @@ static void UI_DrawEffects(rectDef_t *rect, float scale, vec4_t color)
 
 static void UI_DrawMapPreview(rectDef_t *rect, float scale, vec4_t color, qboolean net) {
 	int map = (net) ? ui_currentNetMap.integer : ui_currentMap.integer;
-	if (map < 0 || map > uiInfo.mapCount) {
+	if (map < 0 || map >= uiInfo.mapCount) {
 		if (net) {
 			ui_currentNetMap.integer = 0;
 			trap_Cvar_Set("ui_currentNetMap", "0");
@@ -1544,7 +1547,7 @@ static void UI_DrawMapPreview(rectDef_t *rect, float scale, vec4_t color, qboole
 
 static void UI_DrawMapTimeToBeat(rectDef_t *rect, float scale, vec4_t color, int textStyle, int iMenuFont) {
 	int minutes, seconds, time;
-	if (ui_currentMap.integer < 0 || ui_currentMap.integer > uiInfo.mapCount) {
+	if (ui_currentMap.integer < 0 || ui_currentMap.integer >= uiInfo.mapCount) {
 		ui_currentMap.integer = 0;
 		trap_Cvar_Set("ui_currentMap", "0");
 	}
@@ -1562,7 +1565,7 @@ static void UI_DrawMapTimeToBeat(rectDef_t *rect, float scale, vec4_t color, int
 static void UI_DrawMapCinematic(rectDef_t *rect, float scale, vec4_t color, qboolean net) {
 
 	int map = (net) ? ui_currentNetMap.integer : ui_currentMap.integer;
-	if (map < 0 || map > uiInfo.mapCount) {
+	if (map < 0 || map >= uiInfo.mapCount) {
 		if (net) {
 			ui_currentNetMap.integer = 0;
 			trap_Cvar_Set("ui_currentNetMap", "0");
@@ -1780,8 +1783,8 @@ void UpdateForceStatus()
 
 
 static qboolean updateModel = qtrue;
-static qboolean q3Model = qfalse;
 /*
+static qboolean q3Model = qfalse;
 
 static void UI_DrawPlayerModel(rectDef_t *rect) {
   static playerInfo_t info;
@@ -1827,7 +1830,7 @@ static void UI_DrawPlayerModel(rectDef_t *rect) {
 */
 static void UI_DrawNetSource(rectDef_t *rect, float scale, vec4_t color, int textStyle, int iMenuFont)
 {
-	if (ui_netSource.integer < 0 || ui_netSource.integer > uiInfo.numGameTypes)
+	if (ui_netSource.integer < 0 || ui_netSource.integer >= numNetSources)
 	{
 		ui_netSource.integer = 0;
 	}
@@ -1847,7 +1850,7 @@ static void UI_DrawNetMapPreview(rectDef_t *rect, float scale, vec4_t color) {
 }
 
 static void UI_DrawNetMapCinematic(rectDef_t *rect, float scale, vec4_t color) {
-	if (ui_currentNetMap.integer < 0 || ui_currentNetMap.integer > uiInfo.mapCount) {
+	if (ui_currentNetMap.integer < 0 || ui_currentNetMap.integer >= uiInfo.mapCount) {
 		ui_currentNetMap.integer = 0;
 		trap_Cvar_Set("ui_currentNetMap", "0");
 	}
@@ -2284,7 +2287,7 @@ static int UI_OwnerDrawWidth(int ownerDraw, float scale) {
 			s = va("%i. %s", iUse, text);
       break;
 		case UI_NETSOURCE:
-			if (ui_netSource.integer < 0 || ui_netSource.integer > uiInfo.numJoinGameTypes) {
+			if (ui_netSource.integer < 0 || ui_netSource.integer >= uiInfo.numJoinGameTypes) {
 				ui_netSource.integer = 0;
 			}
 			trap_SP_GetStringTextString("MENUS3_SOURCE", holdSPString, sizeof(holdSPString));
@@ -2449,6 +2452,7 @@ static void UI_DrawSelectedPlayer(rectDef_t *rect, float scale, vec4_t color, in
 
 static void UI_DrawServerRefreshDate(rectDef_t *rect, float scale, vec4_t color, int textStyle, int iMenuFont)
 {
+	
 	if (uiInfo.serverStatus.refreshActive)
 	{
 		vec4_t lowLight, newColor;
@@ -2459,15 +2463,20 @@ static void UI_DrawServerRefreshDate(rectDef_t *rect, float scale, vec4_t color,
 		LerpColor(color,lowLight,newColor,0.5+0.5*sin(uiInfo.uiDC.realTime / PULSE_DIVISOR));
 
 		trap_SP_GetStringTextString("INGAMETEXT_GETTINGINFOFORSERVERS", holdSPString, sizeof(holdSPString));
-		Text_Paint(rect->x, rect->y, scale, newColor, va((char *) holdSPString, trap_LAN_GetServerCount(ui_netSource.integer)), 0, 0, textStyle, iMenuFont);
+		Text_Paint(rect->x - 8, rect->y, scale, newColor, va((char *) holdSPString, trap_LAN_GetServerCount(ui_netSource.integer)), 0, 0, textStyle, iMenuFont);
 	}
 	else
 	{
 		char buff[64];
+		char sServers[256];
+		char sPlayers[256];
+
 		Q_strncpyz(buff, UI_Cvar_VariableString(va("ui_lastServerRefresh_%i", ui_netSource.integer)), 64);
 		trap_SP_GetStringTextString("INGAMETEXT_SERVER_REFRESHTIME", holdSPString, sizeof(holdSPString));
-
-		Text_Paint(rect->x, rect->y, scale, color, va("%s: %s", holdSPString, buff), 0, 0, textStyle, iMenuFont);
+		trap_SP_GetStringTextString("MV_REFRESHDATA_SERVERS", sServers, sizeof(sServers));
+		trap_SP_GetStringTextString("MV_REFRESHDATA_PLAYERS", sPlayers, sizeof(sPlayers));
+		
+		Text_Paint(rect->x - 8, rect->y, scale, color, va("%s: %s | %s %d, %s %d", holdSPString, buff, sServers, uiInfo.serverStatus.numDisplayServers, sPlayers, uiInfo.serverStatus.numPlayersOnServers), 0, 0, textStyle, iMenuFont); //new data
 	}
 }
 
@@ -3125,7 +3134,7 @@ static qboolean UI_NetGameType_HandleKey(int flags, float *special, int key) {
       ui_netGameType.integer = 0;
     }
 
-  	trap_Cvar_Set( "ui_netGameType", va("%d", ui_netGameType.integer));
+	trap_Cvar_Set( "ui_netGameType", va("%d", ui_netGameType.integer));
   	trap_Cvar_Set( "ui_actualnetGameType", va("%d", uiInfo.gameTypes[ui_netGameType.integer].gtEnum));
   	trap_Cvar_Set( "ui_currentNetMap", "0");
 		UI_MapCountByGameType(qfalse);
@@ -3176,7 +3185,7 @@ static qboolean UI_JoinGameType_HandleKey(int flags, float *special, int key) {
 		}
 
 		trap_Cvar_Set( "ui_joinGameType", va("%d", ui_joinGameType.integer));
-		UI_BuildServerDisplayList(qtrue);
+		UI_BuildServerDisplayList(1);
 		return qtrue;
 	}
 	return qfalse;
@@ -3299,11 +3308,11 @@ static qboolean UI_NetSource_HandleKey(int flags, float *special, int key) {
       ui_netSource.integer = numNetSources - 1;
 		}
 
-		UI_BuildServerDisplayList(qtrue);
+		UI_BuildServerDisplayList(1);
 		if (ui_netSource.integer != AS_GLOBAL) {
 			UI_StartServerRefresh(qtrue);
 		}
-  	trap_Cvar_Set( "ui_netSource", va("%d", ui_netSource.integer));
+	trap_Cvar_Set( "ui_netSource", va("%d", ui_netSource.integer));
     return qtrue;
   }
   return qfalse;
@@ -3324,7 +3333,7 @@ static qboolean UI_NetFilter_HandleKey(int flags, float *special, int key) {
 		}
 
 		trap_Cvar_Set("ui_serverFilterType", va("%i", ui_serverFilterType.integer));
-		UI_BuildServerDisplayList(qtrue);
+		UI_BuildServerDisplayList(1);
 		return qtrue;
 	}
 
@@ -4236,7 +4245,7 @@ static void UI_RunMenuScript(char **args)
 			trap_Cvar_Set("cg_cameraOrbit", "0");
 			trap_Cvar_Set("ui_singlePlayerActive", "0");
 			trap_Cvar_SetValue( "dedicated", Com_Clamp( 0, 2, ui_dedicated.integer ) );
-			trap_Cvar_SetValue( "g_gametype", Com_Clamp( 0, 8, uiInfo.gameTypes[ui_netGameType.integer].gtEnum ) );
+			trap_Cvar_SetValue( "g_gametype", Com_Clamp( 0, GT_MAX_GAME_TYPE, uiInfo.gameTypes[ui_netGameType.integer].gtEnum ) );
 			trap_Cvar_Set("g_redTeam", UI_Cvar_VariableString("ui_teamName"));
 			trap_Cvar_Set("g_blueTeam", UI_Cvar_VariableString("ui_opponentName"));
 			trap_Cmd_ExecuteText( EXEC_APPEND, va( "wait ; wait ; map %s\n", uiInfo.mapList[ui_currentNetMap.integer].mapLoadName ) );
@@ -4361,7 +4370,7 @@ static void UI_RunMenuScript(char **args)
 			UI_LoadArenas();
 			UI_MapCountByGameType(qfalse);
 			Menu_SetFeederSelection(NULL, FEEDER_ALLMAPS, gUISelectedMap, "createserver");
-			uiForceRank = trap_Cvar_VariableValue("g_maxForceRank");
+			uiForceRank = Com_Clampi(0, MAX_FORCE_RANK, trap_Cvar_VariableValue("g_maxForceRank"));
 		} else if (Q_stricmp(name, "saveControls") == 0) {
 			Controls_SetConfig(qtrue);
 		} else if (Q_stricmp(name, "loadControls") == 0) {
@@ -4379,10 +4388,10 @@ static void UI_RunMenuScript(char **args)
 			UI_ClearScores();
 		} else if (Q_stricmp(name, "RefreshServers") == 0) {
 			UI_StartServerRefresh(qtrue);
-			UI_BuildServerDisplayList(qtrue);
+			UI_BuildServerDisplayList(1);
 		} else if (Q_stricmp(name, "RefreshFilter") == 0) {
 			UI_StartServerRefresh(qfalse);
-			UI_BuildServerDisplayList(qtrue);
+			UI_BuildServerDisplayList(1);
 		} else if (Q_stricmp(name, "RunSPDemo") == 0) {
 			if (uiInfo.demoAvailable) {
 			  trap_Cmd_ExecuteText( EXEC_APPEND, va("demo %s_%i\n", uiInfo.mapList[ui_currentMap.integer].mapLoadName, uiInfo.gameTypes[ui_gameType.integer].gtEnum));
@@ -4414,7 +4423,7 @@ static void UI_RunMenuScript(char **args)
 				uiInfo.serverStatus.nextDisplayRefresh = 0;
 				uiInfo.nextServerStatusRefresh = 0;
 				uiInfo.nextFindPlayerRefresh = 0;
-				UI_BuildServerDisplayList(qtrue);
+				UI_BuildServerDisplayList(1);
 			} else {
 				Menus_CloseByName("joinserver");
 				Menus_OpenByName("main");
@@ -4428,7 +4437,7 @@ static void UI_RunMenuScript(char **args)
 			if (ui_netSource.integer == AS_LOCAL) {
 				UI_StartServerRefresh(qtrue);
 			}
-			UI_BuildServerDisplayList(qtrue);
+			UI_BuildServerDisplayList(1);
 			UI_FeederSelection(FEEDER_SERVERS, 0);
 		} else if (Q_stricmp(name, "ServerStatus") == 0) {
 			trap_LAN_GetServerAddressString(ui_netSource.integer, uiInfo.serverStatus.displayServers[uiInfo.serverStatus.currentServer], uiInfo.serverStatusAddress, sizeof(uiInfo.serverStatusAddress));
@@ -5037,7 +5046,7 @@ static void UI_BinaryServerInsertion(int num) {
 UI_BuildServerDisplayList
 ==================
 */
-static void UI_BuildServerDisplayList(qboolean force) {
+static void UI_BuildServerDisplayList(int force) {
 	int i, count, maxClients, ping, game, visible;
 	size_t len;
 	char info[MAX_STRING_CHARS];
@@ -5665,6 +5674,8 @@ static const char *UI_SelectedTeamHead(int index, int *actual) {
 			}
 		}
 	}
+
+	*actual = -1;
 	return "";
 }
 
@@ -6142,7 +6153,6 @@ qboolean UI_FeederSelection(float feederID, int index) {
 		}
 
 	} else if (feederID == FEEDER_SERVERS) {
-		const char *mapName = NULL;
 		uiInfo.serverStatus.currentServer = index;
 		trap_LAN_GetServerInfo(ui_netSource.integer, uiInfo.serverStatus.displayServers[index], info, MAX_STRING_CHARS);
 		uiInfo.serverStatus.currentServerPreview = trap_R_RegisterShaderNoMip(va("levelshots/%s", Info_ValueForKey(info, "mapname")));
@@ -6600,7 +6610,6 @@ UI_Init
 void _UI_Init( qboolean inGameLoad ) {
 	int i;
 	const char *menuSet;
-	int start;
 
 	uiInfo.inGameLoad = inGameLoad;
 
@@ -6701,8 +6710,6 @@ void _UI_Init( qboolean inGameLoad ) {
 	uiInfo.uiDC.whiteShader = trap_R_RegisterShaderNoMip( "white" );
 
 	AssetCache();
-
-	start = trap_Milliseconds();
 
   uiInfo.teamCount = 0;
   uiInfo.characterCount = 0;
@@ -7000,7 +7007,7 @@ static void UI_DisplayDownloadInfo( const char *downloadName, float centerPoint,
 	int xferRate;
 	int leftWidth;
 
-	vec4_t colorLtGreyAlpha = {0, 0, 0, .8};
+	vec4_t colorLtGreyAlpha = {0, 0, 0, .8f};
 	UI_FillRect( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, colorLtGreyAlpha );
 
 	downloadSize = trap_Cvar_VariableValue("cl_downloadSize");

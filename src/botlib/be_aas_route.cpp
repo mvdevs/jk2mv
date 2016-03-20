@@ -1576,6 +1576,8 @@ int AAS_AreaRouteToGoalArea(int areanum, vec3_t origin, int goalareanum, int tra
 
 	if (!aasworld.initialized) return qfalse;
 
+	assert(origin);
+
 	if (areanum == goalareanum)
 	{
 		*traveltime = 1;
@@ -1658,10 +1660,12 @@ int AAS_AreaRouteToGoalArea(int areanum, vec3_t origin, int goalareanum, int tra
 		{
 			*reachnum = aasworld.areasettings[areanum].firstreachablearea +
 							areacache->reachabilities[clusterareanum];
+			/*
 			if (!origin) {
 				*traveltime = areacache->traveltimes[clusterareanum];
 				return qtrue;
 			}
+			*/
 			reach = &aasworld.reachability[*reachnum];
 			*traveltime = areacache->traveltimes[clusterareanum] +
 							AAS_AreaTravelTime(areanum, origin, reach->start);
@@ -1720,13 +1724,13 @@ int AAS_AreaRouteToGoalArea(int areanum, vec3_t origin, int goalareanum, int tra
 		//		into the portal area
 		t += aasworld.portalmaxtraveltimes[portalnum];
 		//
-		if (origin)
-		{
+		// if (origin)
+		// {
 			*reachnum = aasworld.areasettings[areanum].firstreachablearea +
 							areacache->reachabilities[clusterareanum];
 			reach = aasworld.reachability + *reachnum;
 			t += AAS_AreaTravelTime(areanum, origin, reach->start);
-		} //end if
+		// } //end if
 		//if the time is better than the one already found
 		if (!besttime || t < besttime)
 		{

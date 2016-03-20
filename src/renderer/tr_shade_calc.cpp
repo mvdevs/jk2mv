@@ -622,46 +622,40 @@ COLORS
 /*
 ** RB_CalcColorFromEntity
 */
-void RB_CalcColorFromEntity( unsigned char *dstColors )
+void RB_CalcColorFromEntity( uint32_t *dstColors )
 {
-	int	i;
-	int *pColors = ( int * ) dstColors;
-	int c;
+	int			i;
+	uint32_t	c;
 
 	if ( !backEnd.currentEntity )
 		return;
 
-	c = * ( int * ) backEnd.currentEntity->e.shaderRGBA;
+	c = backEnd.currentEntity->e.shaderRGBAui;
 
-	for ( i = 0; i < tess.numVertexes; i++, pColors++ )
+	for ( i = 0; i < tess.numVertexes; i++, dstColors++ )
 	{
-		*pColors = c;
+		*dstColors = c;
 	}
 }
 
 /*
 ** RB_CalcColorFromOneMinusEntity
 */
-void RB_CalcColorFromOneMinusEntity( unsigned char *dstColors )
+void RB_CalcColorFromOneMinusEntity( uint32_t *dstColors )
 {
-	int	i;
-	int *pColors = ( int * ) dstColors;
-	unsigned char invModulate[4];
-	int c;
+	int			i, j;
+	color4u_t	invModulate;
 
 	if ( !backEnd.currentEntity )
 		return;
 
-	invModulate[0] = 255 - backEnd.currentEntity->e.shaderRGBA[0];
-	invModulate[1] = 255 - backEnd.currentEntity->e.shaderRGBA[1];
-	invModulate[2] = 255 - backEnd.currentEntity->e.shaderRGBA[2];
-	invModulate[3] = 255 - backEnd.currentEntity->e.shaderRGBA[3];	// this trashes alpha, but the AGEN block fixes it
+	for (j = 0; j < 4; j++) {
+		invModulate.b[j] = 255 - backEnd.currentEntity->e.shaderRGBA[j];	// this trashes alpha, but the AGEN block fixes it
+	}
 
-	c = * ( int * ) invModulate;
-
-	for ( i = 0; i < tess.numVertexes; i++, pColors++ )
+	for ( i = 0; i < tess.numVertexes; i++, dstColors++ )
 	{
-		*pColors = * ( int * ) invModulate;
+		*dstColors = invModulate.ui;
 	}
 }
 
@@ -704,16 +698,13 @@ void RB_CalcAlphaFromOneMinusEntity( unsigned char *dstColors )
 /*
 ** RB_CalcWaveColor
 */
-void RB_CalcWaveColor( const waveForm_t *wf, unsigned char *dstColors )
+void RB_CalcWaveColor( const waveForm_t *wf, uint32_t *dstColors )
 {
-	int i;
-	int v;
-	float glow;
-	int *colors = ( int * ) dstColors;
-	byte	color[4];
+	int			i;
+	float		glow;
+	color4u_t	color;
 
-
-  if ( wf->func == GF_NOISE ) {
+	if ( wf->func == GF_NOISE ) {
 		glow = wf->base + R_NoiseGet4f( 0, 0, 0, ( tess.shaderTime + wf->phase ) * wf->frequency ) * wf->amplitude;
 	} else {
 		glow = EvalWaveForm( wf ) * tr.identityLight;
@@ -726,13 +717,11 @@ void RB_CalcWaveColor( const waveForm_t *wf, unsigned char *dstColors )
 		glow = 1;
 	}
 
-	v = Q_ftol(255 * glow);
-	color[0] = color[1] = color[2] = v;
-	color[3] = 255;
-	v = *(int *)color;
+	color.b[0] = color.b[1] = color.b[2] = Q_ftol(255 * glow);
+	color.b[3] = 255;
 
-	for ( i = 0; i < tess.numVertexes; i++, colors++ ) {
-		*colors = v;
+	for ( i = 0; i < tess.numVertexes; i++, dstColors++ ) {
+		*dstColors = color.ui;
 	}
 }
 
@@ -904,8 +893,8 @@ void RB_CalcFogTexCoords( float *st ) {
 			}
 		}
 
-		st[0] = s;
-		st[1] = t;
+		st[0] = Q_isnan(s) ? 0.0f : s;
+		st[1] = Q_isnan(s) ? 0.0f : t;
 		st += 2;
 	}
 }

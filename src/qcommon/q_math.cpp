@@ -2,6 +2,7 @@
 //
 // q_math.c -- stateless support routines that are included in each code module
 #include "../game/q_shared.h"
+#include <float.h>
 
 
 vec3_t	vec3_origin = {0,0,0};
@@ -534,30 +535,27 @@ void VectorRotate( vec3_t in, vec3_t matrix[3], vec3_t out )
 */
 float Q_rsqrt( float number )
 {
-	int i;
+	floatint_t fi;
 	float x2, y;
 	const float threehalfs = 1.5F;
 
 	x2 = number * 0.5F;
 	y  = number;
-	i  = * ( int * ) &y;						// evil floating point bit level hacking
-	i  = 0x5f3759df - ( i >> 1 );               // what the fuck?
-	y  = * ( float * ) &i;
+	fi.f  = y;									// evil floating point bit level hacking
+	fi.i  = 0x5f3759df - ( fi.i >> 1 );			// what the fuck?
+	y  = fi.f;
 	y  = y * ( threehalfs - ( x2 * y * y ) );   // 1st iteration
 //	y  = y * ( threehalfs - ( x2 * y * y ) );   // 2nd iteration, this can be removed
 
-#ifndef Q3_VM
-#ifdef __linux__
-	assert( !isnan(y) ); // bk010122 - FPE?
-#endif
-#endif
+	assert(!Q_isnan(y));
 	return y;
 }
 
 float Q_fabs( float f ) {
-	int tmp = * ( int * ) &f;
-	tmp &= 0x7FFFFFFF;
-	return * ( float * ) &tmp;
+	floatint_t fi;
+	fi.f = f;
+	fi.i &= 0x7FFFFFFF;
+	return fi.f;
 }
 #endif
 
@@ -1035,4 +1033,12 @@ float q3powf ( float x, int y )
 	for ( y--; y>0; y-- )
 		r = r * r;
 	return r;
+}
+
+qboolean Q_isnan(float f) {
+#ifdef _WIN32
+	return (qboolean)(_isnan(f) != 0);
+#else
+	return (qboolean)(isnan(f) != 0);
+#endif
 }

@@ -18,7 +18,6 @@
 	#include "G2.h"
 #endif
 	#include "G2_local.h"
-#pragma warning(disable : 4512)		//assignment op could not be genereated
 
 class CConstructBoneList
 {

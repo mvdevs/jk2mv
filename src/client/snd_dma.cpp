@@ -86,9 +86,9 @@ typedef enum
 
 #define fDYNAMIC_XFADE_SECONDS (1.0f)
 
-static MusicInfo_t	tMusic_Info[eBGRNDTRACK_NUMBEROF]	= {0};
-static MusicState_e	eMusic_State						= eBGRNDTRACK_SLOW;
-static char			sMusic_BackgroundLoop[MAX_QPATH]	= {0};
+static MusicInfo_t	tMusic_Info[eBGRNDTRACK_NUMBEROF]	= {};
+// static MusicState_e	eMusic_State						= eBGRNDTRACK_SLOW;
+static char			sMusic_BackgroundLoop[MAX_QPATH]	= {};
 //
 //////////////////////////
 
@@ -2687,7 +2687,7 @@ void UpdateLoopingSounds()
 	channel_t *ch;
 	loopSound_t	*loop;
 	float pos[3];
-	float fVolume = 0.003922;	// 1.f / 255.f
+	float fVolume = 0.003922f;	// 1.f / 255.f
 
 #ifdef _DEBUG
 	// Clear AL Error State

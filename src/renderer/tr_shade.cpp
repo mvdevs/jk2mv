@@ -694,7 +694,7 @@ static void RB_FogPass( void ) {
 	fog = tr.world->fogs + tess.fogNum;
 
 	for ( i = 0; i < tess.numVertexes; i++ ) {
-		* ( int * )&tess.svars.colors[i] = fog->colorInt;
+		tess.svars.colorsui[i] = fog->colorInt;
 	}
 
 	RB_CalcFogTexCoords( ( float * ) tess.svars.texcoords[0] );
@@ -718,7 +718,6 @@ ComputeColors
 static void ComputeColors( shaderStage_t *pStage, int forceRGBGen )
 {
 	int			i;
-	color4ub_t	*colors = tess.svars.colors;
 	qboolean killGen = qfalse;
 
 	if ( tess.shader != tr.projectionShadowShader && tess.shader != tr.shadowShader &&
@@ -794,7 +793,7 @@ static void ComputeColors( shaderStage_t *pStage, int forceRGBGen )
 			break;
 		case CGEN_CONST:
 			for ( i = 0; i < tess.numVertexes; i++ ) {
-				*(int *)tess.svars.colors[i] = *(int *)pStage->constantColor;
+				tess.svars.colorsui[i] = pStage->constantColorui;
 			}
 			break;
 		case CGEN_VERTEX:
@@ -840,41 +839,34 @@ static void ComputeColors( shaderStage_t *pStage, int forceRGBGen )
 				fog = tr.world->fogs + tess.fogNum;
 
 				for ( i = 0; i < tess.numVertexes; i++ ) {
-					* ( int * )&tess.svars.colors[i] = fog->colorInt;
+					tess.svars.colorsui[i] = fog->colorInt;
 				}
 			}
 			break;
 		case CGEN_WAVEFORM:
-			RB_CalcWaveColor( &pStage->rgbWave, ( unsigned char * ) tess.svars.colors );
+			RB_CalcWaveColor( &pStage->rgbWave, tess.svars.colorsui );
 			break;
 		case CGEN_ENTITY:
-			RB_CalcColorFromEntity( ( unsigned char * ) tess.svars.colors );
+			RB_CalcColorFromEntity( tess.svars.colorsui );
 			break;
 		case CGEN_ONE_MINUS_ENTITY:
-			RB_CalcColorFromOneMinusEntity( ( unsigned char * ) tess.svars.colors );
+			RB_CalcColorFromOneMinusEntity( tess.svars.colorsui );
 			break;
 		case CGEN_LIGHTMAP0:
-			memset( colors, 0xff, tess.numVertexes * 4 );
+			memset( tess.svars.colors, 0xff, tess.numVertexes * 4 );
 			break;
 		case CGEN_LIGHTMAP1:
-			for ( i = 0; i < tess.numVertexes; i++ )
-			{
-				*(unsigned *)&colors[i] = *(unsigned *)styleColors[pStage->lightmapStyle];
-			}
-			break;
 		case CGEN_LIGHTMAP2:
-			for ( i = 0; i < tess.numVertexes; i++ )
-			{
-				*(unsigned *)&colors[i] = *(unsigned *)styleColors[pStage->lightmapStyle];
-			}
-			break;
 		case CGEN_LIGHTMAP3:
+			uint32_t tempColor;
+
+			memcpy(&tempColor, styleColors[pStage->lightmapStyle], 4);
+
 			for ( i = 0; i < tess.numVertexes; i++ )
 			{
-				*(unsigned *)&colors[i] = *(unsigned *)styleColors[pStage->lightmapStyle];
+				tess.svars.colorsui[i] = tempColor;
 			}
 			break;
-
 	}
 
 	//

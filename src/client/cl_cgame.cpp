@@ -54,16 +54,6 @@ void CL_GetGameState( gameState_t *gs ) {
 
 /*
 ====================
-CL_GetGlconfig
-====================
-*/
-void CL_GetGlconfig( glconfig_t *glconfig ) {
-	*glconfig = cls.glconfig;
-}
-
-
-/*
-====================
 CL_GetUserCmd
 ====================
 */
@@ -409,12 +399,13 @@ void CL_ConfigstringModified( void ) {
 			{
 				modelEnd = Q_stristr( model, "\\" );
 				galakPos = Q_stristr( model, "galak_mech" );
-			}
-			if ( modelEnd ) modelEnd = Q_stristr( modelEnd+1, "\\" );
 
-			if ( galakPos && !(modelEnd && galakPos > modelEnd) )
-			{
-				galakPos[5] = '-';
+				if ( modelEnd ) modelEnd = Q_stristr( modelEnd+1, "\\" );
+
+				if ( galakPos && !(modelEnd && galakPos > modelEnd) )
+				{
+					galakPos[5] = '-';
+				}
 			}
 		}
 
@@ -539,6 +530,11 @@ rescan:
 		// the restart to the cgame
 		Con_ClearNotify();
 		Com_Memset( cl.cmds, 0, sizeof( cl.cmds ) );
+	
+		if (cl_autoDemo->integer && !clc.demoplaying ) {
+			demoAutoComplete();
+			demoAutoRecord();
+		}
 		return qtrue;
 	}
 
@@ -600,14 +596,10 @@ void CL_ShutdownCGame( void ) {
 #ifdef _DONETPROFILE_
 	ClReadProf().ShowTotals();
 #endif
-}
 
-static int	FloatAsInt( float f ) {
-	int		temp;
-
-	*(float *)&temp = f;
-
-	return temp;
+	if (cl_autoDemo->integer && !clc.demoplaying) {
+		demoAutoComplete();
+	}
 }
 
 // wp glowing workaround.. this keeps yourself from glowing like a candle when charging the blaster pistol on high svs.time
@@ -848,7 +840,7 @@ intptr_t CL_CgameSystemCalls(intptr_t *args) {
 		re.DrawRotatePic2( VMF(1), VMF(2), VMF(3), VMF(4), VMF(5), VMF(6), VMF(7), VMF(8), VMF(9), args[10] );
 		return 0;
 	case CG_GETGLCONFIG:
-		CL_GetGlconfig( (glconfig_t *)VMA(1) );
+		CL_GetVMGLConfig((vmglconfig_t *)VMA(1));
 		return 0;
 	case CG_GETGAMESTATE:
 		CL_GetGameState( (gameState_t *)VMA(1) );
@@ -1386,6 +1378,8 @@ void CL_InitCGame( void ) {
 	if (apireq >= 1) {
 		VM_Call(cgvm, MVAPI_AFTER_INIT);
 	}
+	
+	demoAutoInit();
 
 	// we will send a usercmd this frame, which
 	// will cause the server to send us the first snapshot

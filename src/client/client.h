@@ -343,8 +343,12 @@ typedef struct {
 	// rendering info
 	glconfig_t	glconfig;
 	qhandle_t	charSetShader;
+	qhandle_t	font_ocr_a;
 	qhandle_t	whiteShader;
 	qhandle_t	consoleShader;
+
+	qhandle_t	recordingShader;
+	float		ratioFix;
 
 	blacklistentry_t *downloadBlacklist;
 	size_t downloadBlacklistLen;
@@ -409,6 +413,8 @@ extern	cvar_t	*cl_timeNudge;
 extern	cvar_t	*cl_showTimeDelta;
 extern	cvar_t	*cl_freezeDemo;
 
+extern	cvar_t	*cl_drawRecording;
+
 extern	cvar_t	*cl_yawspeed;
 extern	cvar_t	*cl_pitchspeed;
 extern	cvar_t	*cl_run;
@@ -434,6 +440,9 @@ extern	cvar_t	*mv_allowDownload;
 extern	cvar_t	*cl_conXOffset;
 extern	cvar_t	*cl_inGameVideo;
 extern	cvar_t	*mv_consoleShiftRequirement;
+
+extern	cvar_t	*cl_autoDemo;
+extern	cvar_t	*cl_autoDemoFormat;
 
 //=================================================
 
@@ -485,6 +494,7 @@ int CL_ServerStatus( const char *serverAddress, char *serverStatusString, int ma
 
 void VM_AddRefEntityToScene(refEntity_t *r);
 
+void CL_GetVMGLConfig(vmglconfig_t *vmglconfig);
 
 //
 // cl_input
@@ -630,3 +640,11 @@ void UI_SetCurrentGameversion(mvversion_t protocol);
 void CL_Netchan_Transmit( netchan_t *chan, msg_t* msg);	//int length, const byte *data );
 void CL_Netchan_TransmitNextFragment( netchan_t *chan );
 qboolean CL_Netchan_Process( netchan_t *chan, msg_t *msg );
+
+// cg_demos_auto.c
+
+extern void demoAutoSave_f(void);
+extern void demoAutoSaveLast_f(void);
+extern void demoAutoComplete(void);
+extern void demoAutoRecord(void);
+extern void demoAutoInit(void);

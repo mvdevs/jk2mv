@@ -1,9 +1,5 @@
 #ifdef _DONETPROFILE_
 
-#pragma warning( disable : 4786)
-#pragma warning( disable : 4100)
-#pragma warning( disable : 4663)
-
 #include <windows.h>
 #include <stdio.h>
 #include <assert.h>

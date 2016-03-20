@@ -17,7 +17,7 @@ build_script:
       if ($env:TYPE -eq "win-x86-installer") {
         choco install -y nsis
 
-        cmake -G "Visual Studio 12" ../..
+        cmake -G "Visual Studio 12" -DBuildPortableVersion=OFF ../..
         msbuild /m /p:Configuration=Release PACKAGE.vcxproj
       } elseif ($env:TYPE -eq "win-x86-portable") {
         cmake -G "Visual Studio 12" -DBuildPortableVersion=ON ../..

@@ -151,6 +151,7 @@ if (BuildMVMP OR BuildMVDED)
 		"${LIBDir}/meerkat/meerkat.c"
 	)
 	source_group("meerkat" FILES ${MVMPDEDMeerkatFiles})
+	set(MVMPDEDIncludeDirs ${MVMPDEDIncludeDirs} "${LIBDir}/meerkat")
 	set(MVMPDEDFiles ${MVMPDEDFiles} ${MVMPDEDMeerkatFiles})
 
 	set(MVMPDEDCommonFiles
@@ -163,7 +164,6 @@ if (BuildMVMP OR BuildMVDED)
 		"${SRCDir}/qcommon/cm_patch.h"
 		"${SRCDir}/qcommon/cm_polylib.h"
 		"${SRCDir}/qcommon/cm_public.h"
-		"${SRCDir}/qcommon/disablewarnings.h"
 		"${SRCDir}/qcommon/hstring.h"
 		"${SRCDir}/qcommon/ioapi.h"
 		"${SRCDir}/qcommon/qcommon.h"
@@ -199,8 +199,17 @@ if (BuildMVMP OR BuildMVDED)
 		"${SRCDir}/qcommon/unzip.cpp"
 		"${SRCDir}/qcommon/vm.cpp"
 		"${SRCDir}/qcommon/vm_interpreted.cpp"
-		"${SRCDir}/qcommon/vm_x86.cpp"
 	)
+
+	if(X86)
+		set(MVMPDEDCommonFiles ${MVMPDEDCommonFiles}
+			"${SRCDir}/qcommon/vm_x86.cpp"
+		)
+	elseif(ARM)
+		set(MVMPDEDCommonFiles ${MVMPDEDCommonFiles}
+			"${SRCDir}/qcommon/vm_arm.cpp"
+		)
+	endif()
 	source_group("qcommon" FILES ${MVMPDEDCommonFiles})
 	set(MVMPDEDFiles ${MVMPDEDFiles} ${MVMPDEDCommonFiles})
 
@@ -420,6 +429,7 @@ if (BuildMVMP)
 		"${SRCDir}/client/cl_cgame.cpp"
 		"${SRCDir}/client/cl_cin.cpp"
 		"${SRCDir}/client/cl_console.cpp"
+		"${SRCDir}/client/cl_demos_auto.cpp"
 		"${SRCDir}/client/cl_input.cpp"
 		"${SRCDir}/client/cl_keys.cpp"
 		"${SRCDir}/client/cl_main.cpp"
@@ -528,6 +538,11 @@ if (BuildMVMP)
 		)
 		source_group("unix" FILES ${MVMPUnixFiles})
 		set(MVMPFiles ${MVMPFiles} ${MVMPUnixFiles})
+	endif()
+
+	if (("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU") OR ("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang"))
+		set(LibFiles ${ZLIBFiles} ${MVMPDEDMeerkatFiles} ${MVMPMP3Files} ${JPEGFiles} ${PNGFiles} ${CURLFiles})
+		set_source_files_properties(${LibFiles} PROPERTIES COMPILE_FLAGS "-Wno-all")
 	endif()
 
 	# Project

@@ -13,17 +13,18 @@ LIBEXPORT void QDECL dllEntry(intptr_t (QDECL *syscallptr)(intptr_t arg, ...)) {
 }
 
 int PASSFLOAT( float x ) {
-	float	floatTemp;
-	floatTemp = x;
-	return *(int *)&floatTemp;
+	floatint_t fi;
+	fi.f = x;
+	return fi.i;
 }
 
 void trap_Print( const char *string ) {
 	engine_syscall( UI_PRINT, string );
 }
 
-void trap_Error( const char *string ) {
+void Q_NORETURN trap_Error( const char *string ) {
 	engine_syscall( UI_ERROR, string );
+	q_unreachable();
 }
 
 int trap_Milliseconds( void ) {
@@ -43,9 +44,9 @@ void trap_Cvar_Set( const char *var_name, const char *value ) {
 }
 
 float trap_Cvar_VariableValue( const char *var_name ) {
-	int temp;
-	temp = engine_syscall( UI_CVAR_VARIABLEVALUE, var_name );
-	return (*(float*)&temp);
+	floatint_t fi;
+	fi.i = engine_syscall( UI_CVAR_VARIABLEVALUE, var_name );
+	return fi.f;
 }
 
 void trap_Cvar_VariableStringBuffer( const char *var_name, char *buffer, int bufsize ) {
@@ -244,7 +245,7 @@ void trap_GetClientState( uiClientState_t *state ) {
 	engine_syscall( UI_GETCLIENTSTATE, state );
 }
 
-void trap_GetGlconfig( glconfig_t *glconfig ) {
+void trap_GetGlconfig( vmglconfig_t *glconfig ) {
 	engine_syscall( UI_GETGLCONFIG, glconfig );
 }
 

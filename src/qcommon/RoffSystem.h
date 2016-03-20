@@ -13,10 +13,8 @@
 	#include "../server/server.h"
 #endif
 
-#pragma warning (push, 3)	//go back down to 3 for the stl include
 #include <vector>
 #include <map>
-#pragma warning (pop)
 using namespace std;
 
 // ROFF Defines

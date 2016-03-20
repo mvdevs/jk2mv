@@ -19,7 +19,7 @@ extern "C"
 // currently 24 (.875)
 #define MC_COMP_BYTES (((MC_BITS_X+MC_BITS_Y+MC_BITS_Z+MC_BITS_VECT*9)+7)/8)
 
-void MC_Compress(const float mat[3][4],unsigned char * comp);
+// void MC_Compress(const float mat[3][4],unsigned char * comp);
 void MC_UnCompress(float mat[3][4],const unsigned char * comp);
 void MC_UnCompressQuat(float mat[3][4],const unsigned char * comp);
 

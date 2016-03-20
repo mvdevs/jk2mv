@@ -11,26 +11,16 @@
 backEndData_t	*backEndData[SMP_FRAMES];
 backEndState_t	backEnd;
 
-static void RB_DrawGlowOverlay();
-static void RB_BlurGlowTexture();
-
 // Whether we are currently rendering only glowing objects or not.
 bool g_bRenderGlowingObjects = false;
 
 // Whether the current hardware supports dynamic glows/flares.
 bool g_bDynamicGlowSupported = false;
 
-
-static float	s_flipMatrix[16] = {
-	// convert from our coordinate system (looking down X)
-	// to OpenGL's coordinate system (looking down -Z)
-	0, 0, -1, 0,
-	-1, 0, 0, 0,
-	0, 1, 0, 0,
-	0, 0, 0, 1
-};
-
 #ifndef DEDICATED
+
+static void RB_DrawGlowOverlay();
+static void RB_BlurGlowTexture();
 
 /*
 ** GL_Bind
@@ -933,10 +923,10 @@ const void *RB_StretchPic ( const void *data ) {
 	tess.indexes[ numIndexes + 4 ] = numVerts + 0;
 	tess.indexes[ numIndexes + 5 ] = numVerts + 1;
 
-	*(int *)tess.vertexColors[ numVerts ] =
-		*(int *)tess.vertexColors[ numVerts + 1 ] =
-		*(int *)tess.vertexColors[ numVerts + 2 ] =
-		*(int *)tess.vertexColors[ numVerts + 3 ] = *(int *)backEnd.color2D;
+	tess.vertexColorsui[ numVerts ] =
+		tess.vertexColorsui[ numVerts + 1 ] =
+		tess.vertexColorsui[ numVerts + 2 ] =
+		tess.vertexColorsui[ numVerts + 3 ] = backEnd.color2Dui;
 
 	tess.xyz[ numVerts ][0] = cmd->x;
 	tess.xyz[ numVerts ][1] = cmd->y;
@@ -1480,7 +1470,7 @@ void EndPixelShader()
 // reason it acts different on radeon! It's against the spec!).
 extern bool g_bTextureRectangleHack;
 
-static inline void RB_BlurGlowTexture()
+static void RB_BlurGlowTexture()
 {
 	qglDisable (GL_CLIP_PLANE0);
 	GL_Cull( CT_TWO_SIDED );
@@ -1657,7 +1647,7 @@ static inline void RB_BlurGlowTexture()
 }
 
 // Draw the glow blur over the screen additively.
-static inline void RB_DrawGlowOverlay()
+static void RB_DrawGlowOverlay()
 {
 	qglDisable (GL_CLIP_PLANE0);
 	GL_Cull( CT_TWO_SIDED );

@@ -11,35 +11,25 @@ env:
 matrix:
   include:
     - os: linux
-      env: HOST=linux-i386-gcc
-    - os: linux
       env: HOST=linux-x86_64-gcc
     - os: osx
       env: HOST=macosx-universal-clang
 
 before_install:
   - git fetch --unshallow
-  - if [[ "$HOST" == linux-i386-gcc ]]; then sudo dpkg --add-architecture i386; fi
-  - if [[ "$HOST" == linux-*-gcc ]]; then sudo apt-get update; fi
+  - if [[ "$HOST" == linux-x86_64-gcc ]]; then sudo apt-get update; fi
 
 install: |
   export MVDIR=`pwd`
-
-  if [[ "$HOST" == linux-*-gcc ]]; then
-      sudo apt-get install -y cmake curl rpm debhelper devscripts
-  fi
-
   if [[ "$HOST" == linux-x86_64-gcc ]]; then
-      sudo apt-get install -y libsdl2-dev libopenal-dev
-  elif [[ "$HOST" == linux-i386-gcc ]]; then
-      sudo apt-get install -y gcc-multilib gcc-4.8-multilib g++-multilib g++-4.8-multilib libsdl2-dev:i386 libopenal-dev:i386
+      sudo aptitude install -y cmake curl rpm debhelper devscripts libsdl2-dev libgl1-mesa-dev libopenal-dev
   else
       cd ~
-      curl -O https://www.libsdl.org/release/SDL2-2.0.3.tar.gz
-      tar xzf SDL2-2.0.3.tar.gz
-      cd SDL2-2.0.3/Xcode/SDL
+      curl -O https://www.libsdl.org/release/SDL2-2.0.4.tar.gz
+      tar xzf SDL2-2.0.4.tar.gz
+      cd SDL2-2.0.4/Xcode/SDL
       sed -i -e 's/@rpath//g' SDL.xcodeproj/project.pbxproj
-      xcodebuild -configuration Release
+      xcodebuild ARCHS="i386 x86_64" ONLY_ACTIVE_ARCH=NO -configuration Release
       mkdir -p ~/Library/Frameworks/
       ln -s `pwd`/build/Release/SDL2.framework ~/Library/Frameworks/
   fi
@@ -49,10 +39,8 @@ script:
   - mkdir travis_build
   - cd travis_build
 
-  - if [[ "$HOST" == linux-i386-gcc ]]; then export CC="$CC -m32"; export CXX="$CXX -m32"; fi
-  - if [[ "$HOST" == linux-*-gcc ]]; then cmake -G "Unix Makefiles" -DUseInternalPNG=ON -DUseInternalJPEG=ON -DUseInternalZLIB=ON -DUseInternalCURL=ON -DBuildPackDEB=ON -DBuildPackRPM=ON ../..; fi
-
-  - if [[ "$HOST" == macosx-universal-clang ]]; then cmake -G "Unix Makefiles" -DUseInternalPNG=ON -DUseInternalJPEG=ON -DUseInternalZLIB=ON -DUseInternalCURL=ON ../..; fi
+  - if [[ "$HOST" == linux-x86_64-gcc ]]; then cmake -G "Unix Makefiles" -DUseInternalPNG=ON -DUseInternalJPEG=ON -DUseInternalZLIB=ON -DUseInternalCURL=ON -DBuildPortableVersion=OFF -DBuildPackDEB=ON -DBuildPackRPM=ON ../..; fi
+  - if [[ "$HOST" == macosx-universal-clang ]]; then cmake -G "Unix Makefiles" -DUseInternalPNG=ON -DUseInternalJPEG=ON -DUseInternalZLIB=ON -DUseInternalCURL=ON -DBuildPortableVersion=OFF ../..; fi
 
   - make
   - make package
