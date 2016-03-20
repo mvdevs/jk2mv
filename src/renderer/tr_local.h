@@ -1288,6 +1288,7 @@ Ghoul2 Insert End
 */
 
 extern	cvar_t *r_fontSharpness;
+extern	cvar_t *mv_saberGlow;
 //====================================================================
 
 float R_NoiseGet4f( float x, float y, float z, float t );

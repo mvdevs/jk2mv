@@ -188,6 +188,7 @@ Ghoul2 Insert End
 */
 
 cvar_t *r_fontSharpness;
+cvar_t *mv_saberGlow;
 
 #ifndef DEDICATED
 PFNGLACTIVETEXTUREARBPROC qglActiveTextureARB;
@@ -1444,6 +1445,7 @@ Ghoul2 Insert End
 	r_screenshotJpegQuality = ri.Cvar_Get("r_screenshotJpegQuality", "95", CVAR_ARCHIVE | CVAR_GLOBAL);
 
 	r_fontSharpness = ri.Cvar_Get("r_fontSharpness", "1.0", CVAR_ARCHIVE | CVAR_GLOBAL);
+	mv_saberGlow = ri.Cvar_Get("mv_saberGlow", "1", CVAR_ARCHIVE | CVAR_LATCH);
 }
 
 #ifdef G2_COLLISION_ENABLED

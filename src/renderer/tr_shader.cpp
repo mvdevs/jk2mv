@@ -4015,12 +4015,16 @@ static void ScanAndLoadDynGlowFiles( const char *path )
 
 	p = mv_dynGlowShaders;
 	for ( i = numDynGlowShaders - 1; i >= 0 ; i-- ) {
+		if (!mv_saberGlow->integer && !Q_stricmp(shaderFiles[i], "sabers.dynglow")) {
+			ri.FS_FreeFile( (void*) dynGlowBuffers[i] );
+			continue;
+		}
+
 		strcat( p, dynGlowBuffers[i] );
 		strcat( p, "\n" );
 		p += strlen(p);
 		ri.FS_FreeFile( (void*) dynGlowBuffers[i] );
 	}
-	assert(strlen(mv_dynGlowShaders) == sum + numDynGlowShaders);
 
 	// free up memory
 	ri.FS_FreeFileList( shaderFiles );
