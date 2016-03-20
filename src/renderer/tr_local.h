@@ -100,6 +100,24 @@ typedef struct {
 	float		modelMatrix[16];
 } orientationr_t;
 
+typedef struct {
+	char *name;
+	int	minimize, maximize;
+} textureMode_t;
+
+extern	int				gl_filter_min, gl_filter_max;
+extern	textureMode_t	modes[];
+
+textureMode_t *GetTextureMode( const char *name );
+
+typedef struct {
+	qboolean		noMipMaps;			// don't load or generate mipmaps
+	qboolean		noPicMip;			// for images that must always be full resolution
+	qboolean		noLightScale;		// don't scale gamma/intensity. Included in noMipMaps
+	qboolean		noTC;				// for images that don't want to be texture compressed (eg skies)
+	textureMode_t	*textureMode;		// NULL = follow r_texturemode
+} upload_t;
+
 typedef struct image_s {
 	char		imgName[MAX_QPATH];		// game path, including extension
 	int			width, height;				// source image
@@ -111,8 +129,7 @@ typedef struct image_s {
 	int			internalFormat;
 	int			TMU;				// only needed for voodoo2
 
-	qboolean	mipmap;
-	qboolean	allowPicmip;
+	upload_t	upload;
 	int			wrapClampMode;		// GL_CLAMP or GL_REPEAT
 
 	int			iLastLevelUsedOn;
@@ -409,7 +426,6 @@ typedef struct {
 	float	depthForOpaque;
 } fogParms_t;
 
-
 typedef struct shader_s {
 	char		name[MAX_QPATH];		// game path, including extension
 	int			lightmapIndex[MAXLIGHTMAPS];			// for a shader to match, both name and lightmapIndex must match
@@ -446,9 +462,8 @@ typedef struct shader_s {
 
 	cullType_t	cullType;				// CT_FRONT_SIDED, CT_BACK_SIDED, or CT_TWO_SIDED
 	qboolean	polygonOffset;			// set for decals and other items that must be offset
-	qboolean	noMipMaps;				// for console fonts, 2D elements, etc.
-	qboolean	noPicMip;				// for images that must always be full resolution
-	qboolean	noTC;					// for images that don't wnt to be texture compressed (eg skies)
+
+	upload_t	upload;
 
 	fogPass_t	fogPass;				// draw a blended pass, possibly with depth test equals
 
@@ -941,8 +956,6 @@ the bits are allocated as follows:
 #define	QSORT_ENTITYNUM_SHIFT	11
 #define	QSORT_FOGNUM_SHIFT		2
 
-extern	int			gl_filter_min, gl_filter_max;
-
 /*
 ** performanceCounters_t
 */
@@ -1407,9 +1420,12 @@ model_t		*R_AllocModel( void );
 void		R_Init( void );
 void R_LoadImage( const char *name, byte **pic, int *width, int *height );
 image_t		*R_FindImageFile( const char *name, qboolean mipmap, qboolean allowPicmip, qboolean allowTC, int glWrapClampMode );
+image_t		*R_FindImageFileNew( const char *name, upload_t *upload, int glWrapClampMode );
 
 image_t		*R_CreateImage( const char *name, byte *data, int width, int height, qboolean mipmap
 					, qboolean allowPicmip, qboolean allowTC, int wrapClampMode );
+image_t *R_CreateImageNew( const char *name, byte **mipmaps, qboolean customMip, int width, int height,
+	upload_t *upload, int glWrapClampMode );
 qboolean	R_GetModeInfo( int *width, int *height, float *windowAspect, int mode );
 
 void		R_SetColorMappings( void );

@@ -1245,7 +1245,7 @@ static qboolean ParseStage( shaderStage_t *stage, const char **text )
 				stage->bundle[0].image[0] = NULL;
 				return qfalse;
 #else
-				stage->bundle[0].image[0] = R_FindImageFile( token, (qboolean)!shader.noMipMaps, (qboolean)!shader.noPicMip, (qboolean)!shader.noTC, GL_REPEAT );
+				stage->bundle[0].image[0] = R_FindImageFileNew( token, &shader.upload, GL_REPEAT );
 				if ( !stage->bundle[0].image[0] )
 				{
 					ri.Printf( PRINT_WARNING, "WARNING: R_FindImageFile could not find '%s' in shader '%s'\n", token, shader.name );
@@ -1269,7 +1269,7 @@ static qboolean ParseStage( shaderStage_t *stage, const char **text )
 			stage->bundle[0].image[0] = NULL;
 			return qfalse;
 #else
-			stage->bundle[0].image[0] = R_FindImageFile( token, (qboolean)!shader.noMipMaps, (qboolean)!shader.noPicMip, (qboolean)!shader.noTC, GL_CLAMP );
+			stage->bundle[0].image[0] = R_FindImageFileNew( token, &shader.upload, GL_CLAMP );
 			if ( !stage->bundle[0].image[0] )
 			{
 				ri.Printf( PRINT_WARNING, "WARNING: R_FindImageFile could not find '%s' in shader '%s'\n", token, shader.name );
@@ -1308,7 +1308,7 @@ static qboolean ParseStage( shaderStage_t *stage, const char **text )
 					stage->bundle[0].image[num] = NULL;
 					return qfalse;
 #else
-					stage->bundle[0].image[num] = R_FindImageFile( token, (qboolean)!shader.noMipMaps, (qboolean)!shader.noPicMip, (qboolean)!shader.noTC, bClamp?GL_CLAMP:GL_REPEAT );
+					stage->bundle[0].image[num] = R_FindImageFileNew( token, &shader.upload, bClamp?GL_CLAMP:GL_REPEAT );
 					if ( !stage->bundle[0].image[num] )
 					{
 						ri.Printf( PRINT_WARNING, "WARNING: R_FindImageFile could not find '%s' in shader '%s'\n", token, shader.name );
@@ -1919,7 +1919,7 @@ static void ParseSkyParms( const char **text ) {
 #ifdef DEDICATED
 			shader.sky.outerbox[i] = NULL;
 #else
-			shader.sky.outerbox[i] = R_FindImageFile( ( char * ) pathname, qtrue, qtrue, (qboolean)!shader.noTC, GL_CLAMP );
+			shader.sky.outerbox[i] = R_FindImageFile( ( char * ) pathname, qtrue, qtrue, (qboolean)!shader.upload.noTC, GL_CLAMP );
 			if ( !shader.sky.outerbox[i] ) {
 				if (i) {
 					shader.sky.outerbox[i] = shader.sky.outerbox[i-1];//not found, so let's use the previous image
@@ -1957,7 +1957,7 @@ static void ParseSkyParms( const char **text ) {
 #ifdef DEDICATED
 			shader.sky.innerbox[i] = NULL;
 #else
-			shader.sky.innerbox[i] = R_FindImageFile( ( char * ) pathname, qtrue, qtrue, (qboolean)!shader.noTC, GL_CLAMP );
+			shader.sky.innerbox[i] = R_FindImageFile( ( char * ) pathname, qtrue, qtrue, (qboolean)!shader.upload.noTC, GL_CLAMP );
 			if ( !shader.sky.innerbox[i] ) {
 				if (i) {
 					shader.sky.innerbox[i] = shader.sky.innerbox[i];//not found, so let's use the previous
@@ -2252,17 +2252,46 @@ static qboolean ParseShader( const char **text )
 			ParseSurfaceParm( text );
 			continue;
 		}
-		// no mip maps
-		else if ( !Q_stricmp( token, "nomipmaps" ) )
+		// for low-res UI elements
+		else if ( !Q_stricmp( token, "uielement" ) || !Q_stricmp( token, "nomipmaps" ) )
 		{
-			shader.noMipMaps = qtrue;
-			shader.noPicMip = qtrue;
+			shader.upload.noMipMaps = qtrue;
+			shader.upload.noPicMip = qtrue;
+			shader.upload.noLightScale = qtrue;
+			shader.upload.textureMode = GetTextureMode("GL_LINEAR");
+			continue;
+		}
+		// for high resolution UI elements
+		else if ( !Q_stricmp( token, "uielementhd" ) )
+		{
+			shader.upload.noPicMip = qtrue;
+			shader.upload.noLightScale = qtrue;
+			shader.upload.textureMode = GetTextureMode("GL_LINEAR_MIPMAP_NEAREST");
+			continue;
+		}
+		// no gamma / intensity correction
+		else if ( !Q_stricmp( token, "nolightscale" ) )
+		{
+			shader.upload.noLightScale = qtrue;
 			continue;
 		}
 		// no picmip adjustment
 		else if ( !Q_stricmp( token, "nopicmip" ) )
 		{
-			shader.noPicMip = qtrue;
+			shader.upload.noPicMip = qtrue;
+			continue;
+		}
+		// no texture compression
+		else if ( !Q_stricmp( token, "noTC" ) )
+		{
+			shader.upload.noTC = qtrue;
+			continue;
+		}
+		// force texturemode, regardless of r_texturemode cvar value
+		else if ( !Q_stricmp( token, "texturemode" ) )
+		{
+			token = COM_ParseExt( text, qfalse );
+			shader.upload.textureMode = GetTextureMode(token);
 			continue;
 		}
 		else if ( !Q_stricmp( token, "noglfog" ) )
@@ -2274,11 +2303,6 @@ static qboolean ParseShader( const char **text )
 		else if ( !Q_stricmp( token, "polygonOffset" ) )
 		{
 			shader.polygonOffset = qtrue;
-			continue;
-		}
-		else if ( !Q_stricmp( token, "noTC" ) )
-		{
-			shader.noTC = qtrue;
 			continue;
 		}
 		// entityMergable, allowing sprite surfaces from multiple entities
