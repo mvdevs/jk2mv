@@ -288,7 +288,7 @@ INDEX 31
    TEXT_LANGUAGE2 "Ombres colorées dans les textes."
    TEXT_LANGUAGE3 "Farbige Schatten in Texten."
    TEXT_LANGUAGE6 "Colored shadows in texts."
-   TEXT_LANGUAGE8 "Sombras Coloreadas en los textos."
+   TEXT_LANGUAGE8 "Sombras coloreadas en los textos."
 }
 INDEX 32
 {
@@ -330,17 +330,17 @@ INDEX 36
 {
    REFERENCE CONSOLE_SHIFT_OPEN
    TEXT_LANGUAGE1 "Open"
-   TEXT_LANGUAGE2 "Open"
+   TEXT_LANGUAGE2 "Ouvrir"
    TEXT_LANGUAGE3 "Öffnen"
    TEXT_LANGUAGE6 "Open"
-   TEXT_LANGUAGE8 "Open"
+   TEXT_LANGUAGE8 "Abrir"
 }
 INDEX 37
 {
    REFERENCE CONSOLE_SHIFT_BOTH
    TEXT_LANGUAGE1 "Open & Close"
-   TEXT_LANGUAGE2 "Open & Close"
+   TEXT_LANGUAGE2 "Ouvrir & Fermer"
    TEXT_LANGUAGE3 "Öffnen & Schließen"
    TEXT_LANGUAGE6 "Open & Close"
-   TEXT_LANGUAGE8 "Open & Close"
+   TEXT_LANGUAGE8 "Abrir y Cerrar"
 }
