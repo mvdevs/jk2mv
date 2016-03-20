@@ -603,10 +603,16 @@ LINES_INSERT 2255 [
 		{
 			name				consoleshift
 			group				mvoptions
-			type				ITEM_TYPE_YESNO
+			type				ITEM_TYPE_MULTI
 			text				@MV_CONSOLE_SHIFT
 			descText			@MV_CONSOLE_SHIFT_INFO
 			cvar				"mv_consoleShiftRequirement"
+			cvarFloatList
+			{
+				@MENUS0_OFF		0
+				@MV_CONSOLE_SHIFT_OPEN	1
+				@MV_CONSOLE_SHIFT_BOTH	2
+			}
 
 			rect				220 121 300 20
 			textalign			ITEM_ALIGN_RIGHT

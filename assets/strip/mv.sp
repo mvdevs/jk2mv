@@ -1,7 +1,7 @@
 VERSION 1
 ID 128
 REFERENCE MV
-COUNT 36
+COUNT 38
 INDEX 0
 {
    REFERENCE GAME_VERSION
@@ -304,7 +304,7 @@ INDEX 33
    REFERENCE CONSOLE_SHIFT_INFO
    TEXT_LANGUAGE1 "Shift key required to open the console."
    TEXT_LANGUAGE2 "Maj clé nécessaire pour ouvrir la console."
-   TEXT_LANGUAGE3 "Shift-Taste erforderlich, um die konsole zu öffnen."
+   TEXT_LANGUAGE3 "Shift-Taste erforderlich, um die Konsole zu öffnen."
    TEXT_LANGUAGE6 "Shift key required to open the console."
    TEXT_LANGUAGE8 "Tecla Shift necesaria para abrir la consola."
 }
@@ -325,4 +325,22 @@ INDEX 35
    TEXT_LANGUAGE3 "Spieler:"
    TEXT_LANGUAGE6 "Players:"
    TEXT_LANGUAGE8 "Jugads:"
+}
+INDEX 36
+{
+   REFERENCE CONSOLE_SHIFT_OPEN
+   TEXT_LANGUAGE1 "Open"
+   TEXT_LANGUAGE2 "Open"
+   TEXT_LANGUAGE3 "Öffnen"
+   TEXT_LANGUAGE6 "Open"
+   TEXT_LANGUAGE8 "Open"
+}
+INDEX 37
+{
+   REFERENCE CONSOLE_SHIFT_BOTH
+   TEXT_LANGUAGE1 "Open & Close"
+   TEXT_LANGUAGE2 "Open & Close"
+   TEXT_LANGUAGE3 "Öffnen & Schließen"
+   TEXT_LANGUAGE6 "Open & Close"
+   TEXT_LANGUAGE8 "Open & Close"
 }
