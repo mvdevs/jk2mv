@@ -64,6 +64,11 @@
 #define GL_TEXTURE2_ARB					 0x84C2
 #define GL_TEXTURE3_ARB					 0x84C3
 
+/*
+** texture filter anisotropic definitions
+*/
+#define GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT 0x84FF
+
 // TTimo: FIXME
 // linux needs those prototypes
 // GL_VERSION_1_2 is defined after #include <gl.h>

@@ -1102,13 +1102,13 @@ static void GLW_InitExtensions( void )
 	}
 
 	// GL_EXT_texture_filter_anisotropic
-	glConfig.textureFilterAnisotropicAvailable = qfalse;
+	glConfig.textureFilterAnisotropicMax = 1.0f;
 	if ( strstr( glConfig.extensions_string, "EXT_texture_filter_anisotropic" ) )
 	{
-		glConfig.textureFilterAnisotropicAvailable = qtrue;
+		qglGetFloatv( GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &glConfig.textureFilterAnisotropicMax );
 		ri.Printf( PRINT_ALL, "...GL_EXT_texture_filter_anisotropic available\n" );
 
-		if ( r_ext_texture_filter_anisotropic->integer )
+		if ( r_ext_texture_filter_anisotropic->value > 0.0f )
 		{
 			ri.Printf( PRINT_ALL, "...using GL_EXT_texture_filter_anisotropic\n" );
 		}
@@ -1116,7 +1116,7 @@ static void GLW_InitExtensions( void )
 		{
 			ri.Printf( PRINT_ALL, "...ignoring GL_EXT_texture_filter_anisotropic\n" );
 		}
-		ri.Cvar_Set( "r_ext_texture_filter_anisotropic_avail", "1" );
+		ri.Cvar_SetValue( "r_ext_texture_filter_anisotropic_avail", glConfig.textureFilterAnisotropicMax );
 	}
 	else
 	{

@@ -421,6 +421,18 @@ LINES_REPLACE 975 [
 				hide			highlight12
 ]
 
+LINES_DELETE 1377 1377
+LINES_INSERT 1376 [
+			cvarFloatList
+			{
+				@MENUS0_OFF			0
+				"2x"				2
+				"4x"				4
+				"8x"				8
+				"16x"				16
+			}
+]
+
 LINES_INSERT 2255 [
 		//----------------------------------------------------------------------------------------------
 		//

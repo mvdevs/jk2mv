@@ -461,6 +461,18 @@ LINES_REPLACE 1529 [
 			rect				120 413 170 30
 ]
 
+LINES_DELETE 1922 1922
+LINES_INSERT 1921 [
+			cvarFloatList
+			{
+				@MENUS0_OFF			0
+				"2x"				2
+				"4x"				4
+				"8x"				8
+				"16x"				16
+			}
+]
+
 LINES_DELETE 1948 1978
 
 LINES_INSERT 1947 [

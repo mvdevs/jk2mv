@@ -330,7 +330,7 @@ typedef struct {
 	qboolean				deviceSupportsGamma;
 	textureCompression_t	textureCompression;
 	qboolean				textureEnvAddAvailable;
-	qboolean				textureFilterAnisotropicAvailable;
+	float					textureFilterAnisotropicMax;
 	qboolean				clampToEdgeAvailable;
 
 	int						vidWidth, vidHeight;

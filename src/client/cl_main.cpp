@@ -2757,6 +2757,7 @@ void CL_InitRef( void ) {
 	ri.FS_FileExists = FS_FileExists;
 	ri.Cvar_Get = Cvar_Get;
 	ri.Cvar_Set = Cvar_Set;
+	ri.Cvar_SetValue = Cvar_SetValue;
 
 	// cinematic stuff
 
@@ -4141,7 +4142,7 @@ void CL_GetVMGLConfig(vmglconfig_t *vmglconfig) {
 	vmglconfig->deviceSupportsGamma = cls.glconfig.deviceSupportsGamma;
 	vmglconfig->textureCompression = cls.glconfig.textureCompression;
 	vmglconfig->textureEnvAddAvailable = cls.glconfig.textureEnvAddAvailable;
-	vmglconfig->textureFilterAnisotropicAvailable = cls.glconfig.textureFilterAnisotropicAvailable;
+	vmglconfig->textureFilterAnisotropicAvailable = cls.glconfig.textureFilterAnisotropicMax == 0.0f ? qfalse : qtrue;
 	vmglconfig->clampToEdgeAvailable = cls.glconfig.clampToEdgeAvailable;
 
 	vmglconfig->vidWidth = cls.glconfig.vidWidth;

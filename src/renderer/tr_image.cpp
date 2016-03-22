@@ -121,12 +121,10 @@ void GL_TextureMode( const char *string ) {
 			qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_min);
 			qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_max);
 
-			if(glConfig.textureFilterAnisotropicAvailable) {
-				if(r_ext_texture_filter_anisotropic->integer) {
-					qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 2.0f);
-				} else {
-					qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 1.0f);
-				}
+			if(glConfig.textureFilterAnisotropicMax >= 2.0f) {
+				float aniso = r_ext_texture_filter_anisotropic->value;
+				aniso = Com_Clamp(2.0f, glConfig.textureFilterAnisotropicMax, aniso);
+				qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, aniso);
 			}
 		}
 	}
@@ -747,8 +745,10 @@ done:
 	{
 		qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_min);
 		qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_max);
-		if(r_ext_texture_filter_anisotropic->integer && glConfig.textureFilterAnisotropicAvailable) {
-			qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 2.0f);
+		if(glConfig.textureFilterAnisotropicMax >= 2.0f) {
+			float aniso = r_ext_texture_filter_anisotropic->value;
+			aniso = Com_Clamp(2.0f, glConfig.textureFilterAnisotropicMax, aniso);
+			qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, aniso);
 		}
 	}
 	else
