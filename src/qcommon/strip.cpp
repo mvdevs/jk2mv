@@ -1,6 +1,6 @@
 // this include must remain at the top of every CPP file
 #include "../server/server.h"
-#include "../game/q_shared.h"
+#include "../qcommon/q_shared.h"
 #include "qcommon.h"
 
 //#ifdef _DEBUG

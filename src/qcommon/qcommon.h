@@ -4,9 +4,10 @@
 
 #include <stdint.h>
 #include "../qcommon/cm_public.h"
-#include "../game/q_shared.h"
+#include "../qcommon/q_shared.h"
 #include "../api/mvapi.h"
 #include "../menu/ui_public.h"
+#include "../sys/sys_public.h"
 
 //============================================================================
 
@@ -141,6 +142,8 @@ NET
 ==============================================================
 */
 
+#define NET_ENABLEV4		0x01
+
 #define	PACKET_BACKUP	32	// number of old messages that must be kept on client and
 							// server for delta comrpession and ping estimation
 #define	PACKET_MASK		(PACKET_BACKUP-1)
@@ -152,36 +155,15 @@ NET
 #define	MAX_RELIABLE_COMMANDS	128			// max string commands buffered for restransmit
 
 typedef enum {
-	NA_BAD = 0,					// an address lookup failed
-	NA_BOT,
-	NA_LOOPBACK,
-	NA_BROADCAST,
-	NA_IP,
-	NA_IPX,
-	NA_IP6,
-	NA_MULTICAST6,
-	NA_BROADCAST_IPX,
-	NA_UNSPEC
-} netadrtype_t;
-
-typedef enum {
 	NS_CLIENT,
 	NS_SERVER
 } netsrc_t;
-
-typedef struct {
-	netadrtype_t	type;
-
-	byte	ip[4];
-	byte	ipx[10];
-
-	unsigned short	port;
-} netadr_t;
 
 void		NET_Init( void );
 void		NET_Shutdown( void );
 void		NET_Restart( void );
 void		NET_Config( qboolean enableNetworking );
+void		NET_Restart_f(void);
 
 void		NET_SendPacket (netsrc_t sock, int length, const void *data, netadr_t to);
 void		QDECL NET_OutOfBandPrint( netsrc_t net_socket, netadr_t adr, const char *format, ...);
@@ -194,7 +176,6 @@ const char	*NET_AdrToString (netadr_t a);
 qboolean	NET_StringToAdr ( const char *s, netadr_t *a);
 qboolean	NET_GetLoopPacket (netsrc_t sock, netadr_t *net_from, msg_t *net_message);
 void		NET_Sleep(int msec);
-
 
 #define	MAX_MSGLEN				16384		// max length of a message, which may
 											// be fragmented into multiple packets
@@ -735,6 +716,7 @@ int			Com_Filter(char *filter, char *name, int casesensitive);
 int			Com_FilterPath(char *filter, char *name, int casesensitive);
 int			Com_RealTime(qtime_t *qtime);
 qboolean	Com_SafeMode( void );
+void Com_RunAndTimeServerPacket(netadr_t *evFrom, msg_t *buf);
 
 void		Com_StartupVariable( const char *match );
 // checks for and removes command line "+set var arg" constructs
@@ -754,6 +736,7 @@ extern	cvar_t	*com_blood;
 extern	cvar_t	*com_buildScript;		// for building release pak files
 extern	cvar_t	*com_journal;
 extern	cvar_t	*com_cameraMode;
+extern	cvar_t	*com_busyWait;
 
 // both client and server must agree to pause
 extern	cvar_t	*cl_paused;
@@ -927,6 +910,7 @@ void SCR_DebugGraph (float value, int color);	// FIXME: move logging to common?
 //
 void SV_Init( void );
 void SV_Shutdown( char *finalmsg );
+int SV_FrameMsec();
 void SV_Frame( int msec );
 void SV_PacketEvent( netadr_t from, msg_t *msg );
 qboolean SV_GameCommand( void );
@@ -937,120 +921,6 @@ qboolean SV_GameCommand( void );
 //
 qboolean UI_GameCommand( void );
 qboolean UI_usesUniqueCDKey();
-
-/*
-==============================================================
-
-NON-PORTABLE SYSTEM SERVICES
-
-==============================================================
-*/
-
-typedef enum {
-	AXIS_SIDE,
-	AXIS_FORWARD,
-	AXIS_UP,
-	AXIS_ROLL,
-	AXIS_YAW,
-	AXIS_PITCH,
-	MAX_JOYSTICK_AXIS
-} joystickAxis_t;
-
-typedef enum {
-  // bk001129 - make sure SE_NONE is zero
-	SE_NONE = 0,	// evTime is still valid
-	SE_KEY,		// evValue is a key code, evValue2 is the down flag
-	SE_CHAR,	// evValue is an ascii char
-	SE_MOUSE,	// evValue and evValue2 are reletive signed x / y moves
-	SE_JOYSTICK_AXIS,	// evValue is an axis number and evValue2 is the current state (-127 to 127)
-	SE_CONSOLE,	// evPtr is a char*
-	SE_PACKET	// evPtr is a netadr_t followed by data bytes to evPtrLength
-} sysEventType_t;
-
-typedef struct {
-	int				evTime;
-	sysEventType_t	evType;
-	int				evValue, evValue2;
-	int				evPtrLength;	// bytes of data pointed to by evPtr, for journaling
-	void			*evPtr;			// this must be manually freed if not NULL
-} sysEvent_t;
-
-sysEvent_t	Sys_GetEvent( void );
-
-void	Sys_Init (void);
-
-// general development dll loading for virtual machine testing
-void * QDECL Sys_LoadDll(const char *name, intptr_t(QDECL **entryPoint)(int, ...), intptr_t(QDECL *systemcalls)(intptr_t, ...));
-void	Sys_UnloadDll( void *dllHandle );
-
-void	Sys_UnloadGame( void );
-void	*Sys_GetGameAPI( void *parms );
-
-void	Sys_UnloadCGame( void );
-void	*Sys_GetCGameAPI( void );
-
-void	Sys_UnloadUI( void );
-void	*Sys_GetUIAPI( void );
-
-//bot libraries
-void	Sys_UnloadBotLib( void );
-void	*Sys_GetBotLibAPI( void *parms );
-
-char	*Sys_GetCurrentUser( void );
-
-Q_NORETURN void	QDECL Sys_Error( const char *error, ...);
-void	Sys_Quit (void);
-char	*Sys_GetClipboardData( void );	// note that this isn't journaled...
-
-void	Sys_Print( const char *msg );
-
-// Sys_Milliseconds should only be used for profiling purposes,
-// any game related timing information should come from event timestamps
-int		Sys_Milliseconds (void);
-
-extern "C" void QDECL Sys_SnapVector(vec3_t vec);
-
-// the system console is shown when a dedicated server is running
-void	Sys_DisplaySystemConsole( qboolean show );
-
-int		Sys_GetProcessorId( void );
-int		Sys_GetCPUSpeed( void );
-int		Sys_GetPhysicalMemory(void);
-void Sys_SetFloatEnv(void);
-
-void	Sys_BeginStreamedFile( fileHandle_t f, int readahead );
-void	Sys_EndStreamedFile( fileHandle_t f );
-int		Sys_StreamedRead( void *buffer, int size, int count, fileHandle_t f );
-void	Sys_StreamSeek( fileHandle_t f, int offset, int origin );
-
-void	Sys_ShowConsole( int level, qboolean quitOnClose );
-void	Sys_SetErrorText( const char *text );
-
-void	Sys_SendPacket( int length, const void *data, netadr_t to );
-
-qboolean	Sys_StringToAdr( const char *s, netadr_t *a );
-//Does NOT parse port numbers, only base addresses.
-
-qboolean	Sys_IsLANAddress (netadr_t adr);
-void		Sys_ShowIP(void);
-
-qboolean	Sys_CheckCD( void );
-
-void	Sys_Mkdir( const char *path );
-char	*Sys_Cwd( void );
-void	Sys_SetDefaultCDPath(const char *path);
-char	*Sys_DefaultCDPath(void);
-void	Sys_SetDefaultInstallPath(const char *path);
-char	*Sys_DefaultInstallPath(void);
-char	*Sys_DefaultAssetsPath();
-void     Sys_SetDefaultHomePath(const char *path);
-char	*Sys_DefaultHomePath(void);
-
-char **Sys_ListFiles( const char *directory, const char *extension, char *filter, int *numfiles, qboolean wantsubs );
-void	Sys_FreeFileList( char **list );
-
-void Sys_PlatformInit(void);
-void Sys_PlatformExit(void);
 
 /* This is based on the Adaptive Huffman algorithm described in Sayood's Data
  * Compression book.  The ranks are not actually stored, but implicitly defined

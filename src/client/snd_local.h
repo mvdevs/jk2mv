@@ -3,7 +3,7 @@
 #ifndef SND_LOCAL_H
 #define SND_LOCAL_H
 
-#include "../game/q_shared.h"
+#include "../qcommon/q_shared.h"
 #include "../qcommon/qcommon.h"
 #include "snd_public.h"
 #include "mp3struct.h"
@@ -22,9 +22,6 @@
 #	include <eax.h>
 #	include <EaxMan.h>
 #endif
-
-// Added for Open AL to know when to mute all sounds (e.g when app. loses focus)
-void S_MuteAllSounds(bool bMute);
 
 #define	PAINTBUFFER_SIZE		4096					// this is in samples
 

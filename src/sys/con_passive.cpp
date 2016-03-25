@@ -21,7 +21,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
 #include "../qcommon/q_shared.h"
-#include "sys_public.h"
 #include <cstdio>
 
 /*
@@ -59,8 +58,5 @@ CON_Print
 */
 void CON_Print( const char *msg )
 {
-	char cmsg[MAXPRINTMSG] = { 0 };
-	Q_strncpyz( cmsg, msg, sizeof( cmsg ) );
-	Q_StripColor( cmsg );
-	printf( "%s", cmsg );
+	printf( "%s", msg );
 }

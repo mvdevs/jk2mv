@@ -169,6 +169,7 @@ if (BuildMVMP OR BuildMVDED)
 		"${SRCDir}/qcommon/qcommon.h"
 		"${SRCDir}/qcommon/qfiles.h"
 		"${SRCDir}/qcommon/sstring.h"
+		"${SRCDir}/qcommon/q_shared.h"
 		"${SRCDir}/qcommon/strip.h"
 		"${SRCDir}/qcommon/tags.h"
 		"${SRCDir}/qcommon/unzip.h"
@@ -193,6 +194,7 @@ if (BuildMVMP OR BuildMVDED)
 		"${SRCDir}/qcommon/md4.cpp"
 		"${SRCDir}/qcommon/msg.cpp"
 		"${SRCDir}/qcommon/net_chan.cpp"
+		"${SRCDir}/qcommon/net_ip.cpp"
 		"${SRCDir}/qcommon/q_math.cpp"
 		"${SRCDir}/qcommon/q_shared.cpp"
 		"${SRCDir}/qcommon/strip.cpp"
@@ -237,25 +239,21 @@ if (BuildMVMP OR BuildMVDED)
 
 	if(WIN32)
 		set(MVMPDEDWIN32Files
-			"${SRCDir}/win32/win_local.h"
-
-			"${SRCDir}/win32/win_net.cpp"
-			"${SRCDir}/win32/win_shared.cpp"
-
 			"${SRCDir}/win32/q3asm.asm"
 		)
 		source_group("win32" FILES ${MVMPDEDWIN32Files})
 		set(MVMPDEDFiles ${MVMPDEDFiles} ${MVMPDEDWIN32Files})
-	else()
-		set(MVMPDEDUnixFiles
-			"${SRCDir}/unix/unix_local.h"
+		
+		set(MVMPDEDSysFiles
+			"${SRCDir}/sys/sys_public.h"
+			"${SRCDir}/sys/sys_local.h"
 
-			"${SRCDir}/unix/unix_net.cpp"
-			"${SRCDir}/unix/unix_shared.cpp"
+			"${SRCDir}/sys/con_log.cpp"
+			"${SRCDir}/sys/sys_main.cpp"
+			"${SRCDir}/sys/sys_event.cpp"
+			"${SRCDir}/sys/sys_win32.cpp"
 		)
-		source_group("unix" FILES ${MVMPDEDUnixFiles})
-		set(MVMPDEDFiles ${MVMPDEDFiles} ${MVMPDEDUnixFiles})
-
+	else()
 		set(MVMPDEDSysFiles
 			"${SRCDir}/sys/con_local.h"
 			"${SRCDir}/sys/sys_local.h"
@@ -263,11 +261,13 @@ if (BuildMVMP OR BuildMVDED)
 			"${SRCDir}/sys/con_log.cpp"
 			"${SRCDir}/sys/con_tty.cpp"
 			"${SRCDir}/sys/sys_main.cpp"
+			"${SRCDir}/sys/sys_event.cpp"
+			"${SRCDir}/sys/sys_unix.cpp"
 		)
-
-		source_group("sys" FILES ${MVMPDEDSysFiles})
-		set(MVMPDEDFiles ${MVMPDEDFiles} ${MVMPDEDSysFiles})
 	endif()
+	
+	source_group("sys" FILES ${MVMPDEDSysFiles})
+	set(MVMPDEDFiles ${MVMPDEDFiles} ${MVMPDEDSysFiles})
 	
 	set(MVMPDEDApiFiles
 		"${SRCDir}/api/mvapi.h"
@@ -300,6 +300,14 @@ if (BuildMVMP)
 	set(MVMPIncludeDirs ${MVGLOBALIncludeDirs} ${MVMPDEDIncludeDirs})
 	set(MVMPLibraries ${MVMPDEDLibraries})
 
+	# OpenGL
+	find_package(OpenGL)
+	if(NOT OPENGL_FOUND)
+		message(FATAL_ERROR "OpenGL dev files not found!")
+	endif()
+	set(MVMPIncludeDirs ${MVMPIncludeDirs} ${OPENGL_INCLUDE_DIR})
+	set(MVMPLibraries ${MVMPLibraries} ${OPENGL_LIBRARIES})
+
 	# Libraries
 	if(WIN32)
 		# OpenAL
@@ -309,15 +317,16 @@ if (BuildMVMP)
 		endif()
 		set(MVMPLibraries ${MVMPLibraries} ${OpenALLib})
 		set(MVMPIncludeDirs ${MVMPIncludeDirs} "${LIBDir}/OpenAL")
-	else()
-		# OpenGL
-		find_package(OpenGL)
-		if(NOT OPENGL_FOUND)
-			message(FATAL_ERROR "OpenGL dev files not found!")
+		
+		# SDL2
+		find_library(SDL2Lib NAMES "SDL2_${Architecture}" PATHS "${LIBDir}/SDL2")
+		if(NOT SDL2Lib)
+			message(FATAL_ERROR "SDL2 library not found!")
 		endif()
-		set(MVMPIncludeDirs ${MVMPIncludeDirs} ${OPENGL_INCLUDE_DIR})
-		set(MVMPLibraries ${MVMPLibraries} ${OPENGL_LIBRARIES})
-
+		
+		set(MVMPLibraries ${MVMPLibraries} ${SDL2Lib})
+		set(MVMPIncludeDirs ${MVMPIncludeDirs} "${LIBDir}/SDL2/include")
+	else()
 		# OpenAL
 		find_package(OpenAL)
 		if(NOT OPENAL_FOUND)
@@ -512,32 +521,27 @@ if (BuildMVMP)
 
 	if(WIN32)
 		set(MVMPWIN32Files
-			"${SRCDir}/win32/glw_win.h"
 			"${SRCDir}/win32/resource.h"
-
-			"${SRCDir}/win32/win_gamma.cpp"
-			"${SRCDir}/win32/win_glimp.cpp"
-			"${SRCDir}/win32/win_input.cpp"
-			"${SRCDir}/win32/win_clmain.cpp"
-			"${SRCDir}/win32/win_qgl.cpp"
-			"${SRCDir}/win32/win_snd.cpp"
-			"${SRCDir}/win32/win_syscon.cpp"
-			"${SRCDir}/win32/win_wndproc.cpp"
-
 			"${SRCDir}/win32/mv.rc"
 		)
 		source_group("win32" FILES ${MVMPWIN32Files})
 		set(MVMPFiles ${MVMPFiles} ${MVMPWIN32Files})
-	else()
-		set(MVMPUnixFiles
-			"${SRCDir}/unix/sdl_qgl.h"
+	endif()
 
-			"${SRCDir}/unix/sdl_glimp.cpp"
-			"${SRCDir}/unix/sdl_input.cpp"
-			"${SRCDir}/unix/sdl_snd.cpp"
+	set(MVMPSDLFiles
+		"${SRCDir}/sdl/sdl_input.cpp"
+		"${SRCDir}/sdl/sdl_sound.cpp"
+		"${SRCDir}/sdl/sdl_window.cpp"
+	)
+	source_group("sdl" FILES ${MVMPSDLFiles})
+	set(MVMPFiles ${MVMPFiles} ${MVMPSDLFiles})
+	
+	if(WIN32)
+		set(MVMPSysFiles
+			"${SRCDir}/sys/con_passive.cpp"
 		)
-		source_group("unix" FILES ${MVMPUnixFiles})
-		set(MVMPFiles ${MVMPFiles} ${MVMPUnixFiles})
+		source_group("sys" FILES ${MVMPSysFiles})
+		set(MVMPFiles ${MVMPFiles} ${MVMPSysFiles})
 	endif()
 
 	if (("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU") OR ("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang"))
@@ -562,10 +566,16 @@ if (BuildMVMP)
 	endif()
 
 	if(WIN32)
-		# copy over openal dll
+		# copy over openal & sdl dll
 		add_custom_command(TARGET ${MVMP} POST_BUILD
 			COMMAND ${CMAKE_COMMAND} -E copy_if_different
 			"${LIBDir}/softoal_${Architecture}.dll"
+			$<TARGET_FILE_DIR:${MVMP}>
+		)
+		
+		add_custom_command(TARGET ${MVMP} POST_BUILD
+			COMMAND ${CMAKE_COMMAND} -E copy_if_different
+			"${LIBDir}/SDL2/SDL2_${Architecture}.dll"
 			$<TARGET_FILE_DIR:${MVMP}>
 		)
 	endif()
@@ -621,7 +631,6 @@ if (BuildMVDED)
 	# Source
 	set(MVDEDNullFiles
 		"${SRCDir}/null/null_client.cpp"
-		"${SRCDir}/null/null_glimp.cpp"
 		"${SRCDir}/null/null_input.cpp"
 		"${SRCDir}/null/null_renderer.cpp"
 		"${SRCDir}/null/null_snddma.cpp"

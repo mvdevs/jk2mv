@@ -21,7 +21,7 @@
 #endif
 
 #if !defined(__Q_SHARED_H)
-	#include "../game/q_shared.h"
+	#include "../qcommon/q_shared.h"
 #endif
 
 #ifndef WIN32

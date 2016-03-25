@@ -1,6 +1,6 @@
 // cmd.c -- Quake script command processing module
 
-#include "../game/q_shared.h"
+#include "../qcommon/q_shared.h"
 #include "qcommon.h"
 
 #define	MAX_CMD_BUFFER	16384

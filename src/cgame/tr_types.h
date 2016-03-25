@@ -317,10 +317,10 @@ typedef struct {
 } vmglconfig_t;
 
 typedef struct {
-	char					renderer_string[MAX_STRING_CHARS];
-	char					vendor_string[MAX_STRING_CHARS];
-	char					version_string[MAX_STRING_CHARS];
-	const char				*extensions_string;
+	char					*renderer_string;
+	char					*vendor_string;
+	char					*version_string;
+	char					*extensions_string;
 
 	int						maxTextureSize;			// queried from GL
 	int						maxActiveTextures;		// multitexture ability

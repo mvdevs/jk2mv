@@ -2,8 +2,6 @@
 
 #include <cstdio>
 
-#define MAXPRINTMSG	8192
-
 /* con_passive.cpp | con_win32.cpp | con_tty.cpp */
 void CON_Shutdown( void );
 void CON_Init( void );

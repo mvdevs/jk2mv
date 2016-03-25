@@ -12,7 +12,7 @@
  *****************************************************************************/
 
 
-#include "../game/q_shared.h"
+#include "../qcommon/q_shared.h"
 #include "../client/client.h"
 #include "qcommon.h"
 #include "unzip.h"
@@ -237,7 +237,6 @@ static	cvar_t		*fs_homepath;
 static	cvar_t		*fs_basepath;
 static	cvar_t		*fs_assetspath;
 static	cvar_t		*fs_basegame;
-static	cvar_t		*fs_cdpath;
 static	cvar_t		*fs_copyfiles;
 static	cvar_t		*fs_gamedirvar;
 static	cvar_t		*fs_restrict;
@@ -268,7 +267,6 @@ typedef struct {
 	int			zipFilePos;
 	int			zipFileLen;
 	qboolean	zipFile;
-	qboolean	streamed;
 	char		name[MAX_ZPATH];
 } fileHandleData_t;
 
@@ -791,7 +789,7 @@ int FS_SV_FOpenFileRead( const char *filename, fileHandle_t *fp ) {
 	// don't let sound stutter
 	S_ClearSoundBuffer();
 
-  // search homepath
+	// search homepath
 	ospath = FS_BuildOSPath( fs_homepath->string, filename, "" );
 	// remove trailing slash
 	ospath[strlen(ospath)-1] = '\0';
@@ -802,47 +800,28 @@ int FS_SV_FOpenFileRead( const char *filename, fileHandle_t *fp ) {
 
 	fsh[f].handleFiles.file.o = fopen( ospath, "rb" );
 	fsh[f].handleSync = qfalse;
-  if (!fsh[f].handleFiles.file.o)
-  {
-    // NOTE TTimo on non *nix systems, fs_homepath == fs_basepath, might want to avoid
-    if (Q_stricmp(fs_homepath->string,fs_basepath->string))
-    {
-      // search basepath
-      ospath = FS_BuildOSPath( fs_basepath->string, filename, "" );
-      ospath[strlen(ospath)-1] = '\0';
+	if (!fsh[f].handleFiles.file.o)
+	{
+		// NOTE TTimo on non *nix systems, fs_homepath == fs_basepath, might want to avoid
+		if (Q_stricmp(fs_homepath->string, fs_basepath->string))
+		{
+			// search basepath
+			ospath = FS_BuildOSPath( fs_basepath->string, filename, "" );
+			ospath[strlen(ospath)-1] = '\0';
 
-      if ( fs_debug->integer )
-      {
-        Com_Printf( "FS_SV_FOpenFileRead (fs_basepath): %s\n", ospath );
-      }
+			if ( fs_debug->integer )
+			{
+				Com_Printf( "FS_SV_FOpenFileRead (fs_basepath): %s\n", ospath );
+			}
 
-      fsh[f].handleFiles.file.o = fopen( ospath, "rb" );
-      fsh[f].handleSync = qfalse;
+			fsh[f].handleFiles.file.o = fopen( ospath, "rb" );
+			fsh[f].handleSync = qfalse;
+		}
 
-      if ( !fsh[f].handleFiles.file.o )
-      {
-        f = 0;
-      }
-    }
-  }
-
-	if (!fsh[f].handleFiles.file.o) {
-    // search cd path
-    ospath = FS_BuildOSPath( fs_cdpath->string, filename, "" );
-    ospath[strlen(ospath)-1] = '\0';
-
-    if (fs_debug->integer)
-    {
-      Com_Printf( "FS_SV_FOpenFileRead (fs_cdpath) : %s\n", ospath );
-    }
-
-	  fsh[f].handleFiles.file.o = fopen( ospath, "rb" );
-	  fsh[f].handleSync = qfalse;
-
-	  if( !fsh[f].handleFiles.file.o ) {
-	    f = 0;
-	  }
-  }
+		if (!fsh[f].handleFiles.file.o) {
+			f = 0;
+		}
+	}
 
 	*fp = f;
 	if (f) {
@@ -931,9 +910,6 @@ void FS_FCloseFile( fileHandle_t f ) {
 		Com_Error( ERR_FATAL, "Filesystem call made without initialization\n" );
 	}
 
-	if (fsh[f].streamed) {
-		Sys_EndStreamedFile(f);
-	}
 	if (fsh[f].zipFile == qtrue) {
 		unzCloseCurrentFile( fsh[f].handleFiles.file.z );
 		if ( fsh[f].handleFiles.unique ) {
@@ -1391,14 +1367,6 @@ int FS_FOpenFileReadHash(const char *filename, fileHandle_t *file, qboolean uniq
 					dir->path, dir->gamedir );
 			}
 
-			// if we are getting it from the cdpath, optionally copy it
-			//  to the basepath
-			if ( fs_copyfiles->integer && !Q_stricmp( dir->path, fs_cdpath->string ) ) {
-				char	*copypath;
-
-				copypath = FS_BuildOSPath( fs_basepath->string, dir->gamedir, filename );
-				FS_CopyFile( netpath, copypath );
-			}
 #ifndef DEDICATED
 #ifndef FINAL_BUILD
 			// Check for unprecached files when in game but not in the menus
@@ -1432,15 +1400,8 @@ int FS_Read2( void *buffer, int len, fileHandle_t f ) {
 	if ( !f ) {
 		return 0;
 	}
-	if (fsh[f].streamed) {
-		int r;
-		fsh[f].streamed = qfalse;
-		r = Sys_StreamedRead( buffer, len, 1, f);
-		fsh[f].streamed = qtrue;
-		return r;
-	} else {
-		return FS_Read( buffer, len, f);
-	}
+
+	return FS_Read( buffer, len, f);
 }
 
 int FS_Read( void *buffer, int len, fileHandle_t f ) {
@@ -1562,12 +1523,6 @@ int FS_Seek( fileHandle_t f, int offset, int origin ) {
 	if ( !fs_searchpaths ) {
 		Com_Error( ERR_FATAL, "Filesystem call made without initialization\n" );
 		return -1;
-	}
-
-	if (fsh[f].streamed) {
-		fsh[f].streamed = qfalse;
-		Sys_StreamSeek( f, offset, origin );
-		fsh[f].streamed = qtrue;
 	}
 
 	if (fsh[f].zipFile == qtrue) {
@@ -2348,7 +2303,6 @@ int	FS_GetModList( char *listbuf, int bufsize ) {
 
   pFiles0 = Sys_ListFiles( fs_homepath->string, NULL, NULL, &dummy, qtrue );
   pFiles1 = Sys_ListFiles( fs_basepath->string, NULL, NULL, &dummy, qtrue );
-  pFiles2 = Sys_ListFiles( fs_cdpath->string, NULL, NULL, &dummy, qtrue );
   // we searched for mods in the three paths
   // it is likely that we have duplicate names now, which we will cleanup below
   pFiles = Sys_ConcatenateFileLists( pFiles0, pFiles1, pFiles2 );
@@ -2384,15 +2338,7 @@ int	FS_GetModList( char *listbuf, int bufsize ) {
       pPaks = Sys_ListFiles(path, ".pk3", NULL, &nPaks, qfalse);
       Sys_FreeFileList( pPaks ); // we only use Sys_ListFiles to check wether .pk3 files are present
 
-      /* Try on cd path */
-      if( nPaks <= 0 ) {
-        path = FS_BuildOSPath( fs_cdpath->string, name, "" );
-        nPaks = 0;
-        pPaks = Sys_ListFiles( path, ".pk3", NULL, &nPaks, qfalse );
-        Sys_FreeFileList( pPaks );
-      }
-
-      /* try on home path */
+	  /* try on home path */
       if ( nPaks <= 0 )
       {
         path = FS_BuildOSPath( fs_homepath->string, name, "" );
@@ -2995,7 +2941,6 @@ FS_Startup
 ================
 */
 static void FS_Startup( const char *gameName ) {
-	const char *homePath;
 	const char *assetsPath;
 	// Silence clang, they do get initialized
 	char *mv_whitelist = NULL, *mv_blacklist = NULL, *mv_forcelist = NULL;
@@ -3008,14 +2953,9 @@ static void FS_Startup( const char *gameName ) {
 
 	fs_debug = Cvar_Get( "fs_debug", "0", 0 );
 	fs_copyfiles = Cvar_Get( "fs_copyfiles", "0", CVAR_INIT );
-	fs_cdpath = Cvar_Get ("fs_cdpath", Sys_DefaultCDPath(), CVAR_INIT );
 	fs_basepath = Cvar_Get ("fs_basepath", Sys_DefaultInstallPath(), CVAR_INIT );
 	fs_basegame = Cvar_Get ("fs_basegame", "", CVAR_INIT );
-	homePath = Sys_DefaultHomePath();
-	if (!homePath || !homePath[0]) {
-		homePath = fs_basepath->string;
-	}
-	fs_homepath = Cvar_Get ("fs_homepath", homePath, CVAR_INIT );
+	fs_homepath = Cvar_Get ("fs_homepath", Sys_DefaultHomePath(), CVAR_INIT );
 	fs_gamedirvar = Cvar_Get ("fs_game", "", CVAR_INIT|CVAR_SYSTEMINFO );
 	fs_restrict = Cvar_Get ("fs_restrict", "", CVAR_INIT );
 
@@ -3044,9 +2984,6 @@ static void FS_Startup( const char *gameName ) {
 	}
 
 	// add search path elements in reverse priority order
-	if (fs_cdpath->string[0]) {
-		FS_AddGameDirectory( fs_cdpath->string, gameName, qfalse );
-	}
 	if (fs_basepath->string[0]) {
 		FS_AddGameDirectory(fs_basepath->string, gameName, qfalse);
 	}
@@ -3058,9 +2995,6 @@ static void FS_Startup( const char *gameName ) {
 
 	// check for additional base game so mods can be based upon other mods
 	if ( fs_basegame->string[0] && !Q_stricmp( gameName, BASEGAME ) && Q_stricmp( fs_basegame->string, gameName ) ) {
-		if (fs_cdpath->string[0]) {
-			FS_AddGameDirectory(fs_cdpath->string, fs_basegame->string, qfalse);
-		}
 		if (fs_basepath->string[0]) {
 			FS_AddGameDirectory(fs_basepath->string, fs_basegame->string, qfalse);
 		}
@@ -3071,9 +3005,6 @@ static void FS_Startup( const char *gameName ) {
 
 	// check for additional game folder for mods
 	if ( fs_gamedirvar->string[0] && !Q_stricmp( gameName, BASEGAME ) && Q_stricmp( fs_gamedirvar->string, gameName ) ) {
-		if (fs_cdpath->string[0]) {
-			FS_AddGameDirectory(fs_cdpath->string, fs_gamedirvar->string, qfalse);
-		}
 		if (fs_basepath->string[0]) {
 			FS_AddGameDirectory(fs_basepath->string, fs_gamedirvar->string, qfalse);
 		}
@@ -3548,7 +3479,6 @@ void FS_InitFilesystem( void ) {
 	// we have to specially handle this, because normal command
 	// line variable sets don't happen until after the filesystem
 	// has already been initialized
-	Com_StartupVariable( "fs_cdpath" );
 	Com_StartupVariable( "fs_basepath" );
 	Com_StartupVariable( "fs_homepath" );
 #if !defined(PORTABLE)
@@ -3708,25 +3638,14 @@ int FS_FOpenFileByModeHash( const char *qpath, fileHandle_t *f, fsMode_t mode, u
 	}
 
 	if ( *f ) {
-		if (fsh[*f].zipFile == qtrue) {
-			fsh[*f].baseOffset = unztell(fsh[*f].handleFiles.file.z);
-		} else {
-			fsh[*f].baseOffset = ftell(fsh[*f].handleFiles.file.o);
-		}
 		fsh[*f].fileSize = r;
-		fsh[*f].streamed = qfalse;
-
-		if (mode == FS_READ) {
-			Sys_BeginStreamedFile( *f, 0x4000 );
-			fsh[*f].streamed = qtrue;
-		}
 	}
 	fsh[*f].handleSync = sync;
 
 	return r;
 }
 
-int		FS_FTell( fileHandle_t f ) {
+int	FS_FTell( fileHandle_t f ) {
 	int pos;
 	if (fsh[f].zipFile == qtrue) {
 		pos = unztell(fsh[f].handleFiles.file.z);
@@ -3736,7 +3655,7 @@ int		FS_FTell( fileHandle_t f ) {
 	return pos;
 }
 
-void	FS_Flush( fileHandle_t f ) {
+void FS_Flush( fileHandle_t f ) {
 	fflush(fsh[f].handleFiles.file.o);
 }
 

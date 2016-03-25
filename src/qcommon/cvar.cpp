@@ -1,6 +1,6 @@
 // cvar.c -- dynamic variable tracking
 
-#include "../game/q_shared.h"
+#include "../qcommon/q_shared.h"
 #include "qcommon.h"
 
 cvar_t		*cvar_vars;
@@ -542,7 +542,6 @@ static const intString_t cvarflags[] = {
 	{CVAR_GLOBAL, "GLOBAL"},
 };
 
-#define ARRAY_LEN(x) (sizeof (x) / sizeof( *(x) ))
 static const size_t numCvarFlags = ARRAY_LEN( cvarflags );
 
 static void Cvar_PrintFlags (cvar_t* cv) {

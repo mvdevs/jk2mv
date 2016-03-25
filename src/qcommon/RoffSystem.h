@@ -6,7 +6,7 @@
 #define CROFFSYSTEM_H_INC
 
 #ifndef __Q_SHARED_H
-	#include "../game/q_shared.h"	//needs to be in here for entityState_t
+	#include "../qcommon/q_shared.h"	//needs to be in here for entityState_t
 #endif
 
 #if !defined(SERVER_H_INC)

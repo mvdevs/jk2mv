@@ -1,25 +1,17 @@
-
-
 #ifndef TR_LOCAL_H
 #define TR_LOCAL_H
 
-#ifndef WIN32
-typedef const char * LPCSTR;
-#endif
-
-#include "../game/q_shared.h"
+#include "../qcommon/q_shared.h"
 #include "../qcommon/qfiles.h"
 #include "../qcommon/qcommon.h"
 #include "tr_public.h"
-#ifdef _WIN32
-	#include "qgl.h"
-#else
+
 #ifndef DEDICATED
-	#include "../unix/sdl_qgl.h"
+#include "qgl.h"
+#include "glext.h"
 #else
 typedef unsigned int GLuint;
 typedef int GLenum;
-#endif
 #endif
 
 #define GL_INDEX_TYPE		GL_UNSIGNED_INT
@@ -1143,7 +1135,7 @@ extern backEndState_t	backEnd;
 extern trGlobals_t	tr;
 extern glconfig_t	glConfig;		// outside of TR since it shouldn't be cleared during ref re-init
 extern glstate_t	glState;		// outside of TR since it shouldn't be cleared during ref re-init
-
+extern window_t		window;
 
 //
 // cvars
@@ -1267,8 +1259,6 @@ extern	cvar_t	*r_portalOnly;
 
 extern	cvar_t	*r_subdivisions;
 extern	cvar_t	*r_lodCurveError;
-extern	cvar_t	*r_smp;
-extern	cvar_t	*r_showSmp;
 extern	cvar_t	*r_skipBackEnd;
 
 extern	cvar_t	*r_ignoreGLErrors;
@@ -1285,6 +1275,9 @@ extern	cvar_t	*r_printShaders;
 
 extern	cvar_t	*r_convertModelBones;
 extern	cvar_t	*r_loadSkinsJKA;
+
+extern cvar_t	*r_customwidth;
+extern cvar_t	*r_customheight;
 
 /*
 Ghoul2 Insert Start
@@ -1464,21 +1457,7 @@ IMPLEMENTATION SPECIFIC FUNCTIONS
 ====================================================================
 */
 
-void		GLimp_Init( void );
-void		GLimp_Shutdown( void );
-void		GLimp_EndFrame( void );
-
-qboolean	GLimp_SpawnRenderThread( void (*function)( void ) );
-void		*GLimp_RendererSleep( void );
-void		GLimp_FrontEndSleep( void );
-void		GLimp_WakeRenderer( void *data );
-
-void		GLimp_LogComment( char *comment );
-
-void		GLimp_SetGamma( unsigned char red[256],
-							unsigned char green[256],
-							unsigned char blue[256] );
-
+static void GLimp_LogComment(char *comment) {}
 
 /*
 ====================================================================
@@ -1667,8 +1646,7 @@ SCENE GENERATION
 ============================================================
 */
 
-void R_ToggleSmpFrame( void );
-
+void R_InitNextFrame(void);
 void RE_ClearScene( void );
 void RE_AddRefEntityToScene( const refEntity_t *ent );
 void RE_AddMiniRefEntityToScene( const miniRefEntity_t *ent );
@@ -1858,7 +1836,7 @@ typedef struct {
 extern	int		max_polys;
 extern	int		max_polyverts;
 
-extern	backEndData_t	*backEndData[SMP_FRAMES];	// the second one may not be allocated
+extern	backEndData_t	*backEndData;
 
 extern	volatile renderCommandList_t	*renderCommandList;
 
@@ -1866,12 +1844,8 @@ extern	volatile qboolean	renderThreadActive;
 
 
 void *R_GetCommandBuffer( int bytes );
+void R_SyncRenderThread(void);
 void RB_ExecuteRenderCommands( const void *data );
-
-void R_InitCommandBuffers( void );
-void R_ShutdownCommandBuffers( void );
-
-void R_SyncRenderThread( void );
 
 void R_AddDrawSurfCmd( drawSurf_t *drawSurfs, int numDrawSurfs );
 

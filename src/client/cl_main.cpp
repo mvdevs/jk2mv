@@ -2608,7 +2608,7 @@ CL_RefPrintf
 DLL glue
 ================
 */
-#define	MAXPRINTMSG	4096*2*2
+
 void QDECL CL_RefPrintf( int print_level, const char *fmt, ...) {
 	va_list		argptr;
 	char		msg[MAXPRINTMSG];
@@ -2894,7 +2894,6 @@ void CL_Init( void ) {
 	cl_motdString = Cvar_Get( "cl_motdString", "", CVAR_ROM );
 
 	Cvar_Get("cl_maxPing", "800", CVAR_ARCHIVE | CVAR_GLOBAL);
-
 
 	// userinfo
 	Cvar_Get("name", "Padawan", CVAR_USERINFO | CVAR_ARCHIVE | CVAR_GLOBAL);
@@ -3247,12 +3246,6 @@ void CL_ServerInfoPacket( netadr_t from, msg_t *msg ) {
 				case NA_IP:
 					str = "udp";
 					type = 1;
-					break;
-
-				case NA_IPX:
-				case NA_BROADCAST_IPX:
-					str = "ipx";
-					type = 2;
 					break;
 
 				default:
@@ -3612,9 +3605,6 @@ void CL_LocalServers_f( void ) {
 			to.port = BigShort( (short)(PORT_SERVER + j) );
 
 			to.type = NA_BROADCAST;
-			NET_SendPacket( NS_CLIENT, (int)strlen( message ), message, to );
-
-			to.type = NA_BROADCAST_IPX;
 			NET_SendPacket( NS_CLIENT, (int)strlen( message ), message, to );
 		}
 	}

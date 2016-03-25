@@ -3,7 +3,7 @@
 
 #include "mv_setup.h"
 
-#include "../game/q_shared.h"
+#include "../qcommon/q_shared.h"
 /*
 Ghoul2 Insert Start
 */

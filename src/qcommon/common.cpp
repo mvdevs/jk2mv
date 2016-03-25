@@ -6,7 +6,7 @@
 # include <fenv.h>
 #endif
 
-#include "../game/q_shared.h"
+#include "../qcommon/q_shared.h"
 #include "qcommon.h"
 #include "strip.h"
 #include "mv_setup.h"
@@ -14,8 +14,6 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #endif
-
-#define	MAXPRINTMSG	16384 // increased in jk2mv
 
 #define MAX_NUM_ARGVS	50
 
@@ -57,7 +55,6 @@ cvar_t	*com_timescale;
 cvar_t	*com_fixedtime;
 cvar_t	*com_dropsim;		// 0.0 to 1.0, simulated packet drops
 cvar_t	*com_journal;
-cvar_t	*com_maxfps;
 cvar_t	*com_timedemo;
 cvar_t	*com_sv_running;
 cvar_t	*com_cl_running;
@@ -70,9 +67,7 @@ cvar_t	*com_introPlayed;
 cvar_t	*cl_paused;
 cvar_t	*sv_paused;
 cvar_t	*com_cameraMode;
-#if defined(_WIN32) && defined(_DEBUG)
-cvar_t	*com_noErrorInterrupt;
-#endif
+cvar_t	*com_busyWait;
 
 cvar_t	*mv_apienabled;
 
@@ -242,16 +237,6 @@ Q_NORETURN void QDECL Com_Error( int code, const char *fmt, ... ) {
 	static int	lastErrorTime;
 	static int	errorCount;
 	int			currentTime;
-
-#if defined(_WIN32) && !defined(_WIN64) && defined(_DEBUG)
-	if ( code != ERR_DISCONNECT && code != ERR_NEED_CD ) {
-		if (com_noErrorInterrupt && !com_noErrorInterrupt->integer) {
-			__asm {
-				int 0x03
-			}
-		}
-	}
-#endif
 
 	// when we are running automated scripts, make sure we
 	// know if anything failed
@@ -2242,36 +2227,6 @@ int Com_EventLoop( void ) {
 			}
 			Cbuf_AddText( "\n" );
 			break;
-		case SE_PACKET:
-			// this cvar allows simulation of connections that
-			// drop a lot of packets.  Note that loopback connections
-			// don't go through here at all.
-			if ( com_dropsim->value > 0 ) {
-				static int seed;
-
-				if ( Q_random( &seed ) < com_dropsim->value ) {
-					break;		// drop this packet
-				}
-			}
-
-			evFrom = *(netadr_t *)ev.evPtr;
-			buf.cursize = ev.evPtrLength - sizeof( evFrom );
-
-			// we must copy the contents of the message out, because
-			// the event buffers are only large enough to hold the
-			// exact payload, but channel messages need to be large
-			// enough to hold fragment reassembly
-			if ( (unsigned)buf.cursize > buf.maxsize ) {
-				Com_Printf("Com_EventLoop: oversize packet\n");
-				continue;
-			}
-			Com_Memcpy( buf.data, (byte *)((netadr_t *)ev.evPtr + 1), buf.cursize );
-			if ( com_sv_running->integer ) {
-				Com_RunAndTimeServerPacket( &evFrom, &buf );
-			} else {
-				CL_PacketEvent( evFrom, &buf );
-			}
-			break;
 		}
 
 		// free any block data
@@ -2371,8 +2326,6 @@ void Com_Init( char *commandLine ) {
 		Sys_Error("Error during initialization");
 	}
 
-	Sys_SetFloatEnv();
-
 	// multiprotocol support
 	// startup will be UNDEFINED
 	MV_SetCurrentGameversion(VERSION_UNDEF);
@@ -2442,7 +2395,6 @@ void Com_Init( char *commandLine ) {
 	//
 	Cvar_Get("protocol", "16", CVAR_SERVERINFO | CVAR_ROM);
 
-	com_maxfps = Cvar_Get("com_maxfps", "120", CVAR_ARCHIVE | CVAR_GLOBAL);
 	com_blood = Cvar_Get("com_blood", "1", CVAR_ARCHIVE | CVAR_GLOBAL);
 
 	com_developer = Cvar_Get ("developer", "0", CVAR_TEMP );
@@ -2462,15 +2414,12 @@ void Com_Init( char *commandLine ) {
 	com_sv_running = Cvar_Get ("sv_running", "0", CVAR_ROM);
 	com_cl_running = Cvar_Get ("cl_running", "0", CVAR_ROM);
 	com_buildScript = Cvar_Get( "com_buildScript", "0", 0 );
+	com_busyWait = Cvar_Get("com_busyWait", "0", CVAR_ARCHIVE);
 
 	com_introPlayed = Cvar_Get("com_introplayed", "0", CVAR_ARCHIVE | CVAR_GLOBAL);
 
 	Cvar_Get ("com_othertasks", "0", CVAR_ROM );
 	Cvar_Get("com_ignoreothertasks", "0", CVAR_ARCHIVE | CVAR_GLOBAL);
-
-#if defined(_WIN32) && defined(_DEBUG)
-	com_noErrorInterrupt = Cvar_Get( "com_noErrorInterrupt", "0", 0 );
-#endif
 
 	mv_apienabled = Cvar_Get("mv_apienabled", "1", CVAR_ROM);
 
@@ -2501,7 +2450,6 @@ void Com_Init( char *commandLine ) {
 	com_dedicated->modified = qfalse;
 	if ( !com_dedicated->integer ) {
 		CL_Init();
-		Sys_ShowConsole( com_viewlog->integer, qfalse );
 	}
 
 	// set com_frameTime so that if a map is started on the
@@ -2668,46 +2616,44 @@ int Com_ModifyMsec( int msec ) {
 
 /*
 =================
+Com_TimeVal
+=================
+*/
+int Com_TimeVal(int minMsec) {
+	int timeVal;
+
+	timeVal = Sys_Milliseconds() - com_frameTime;
+
+	if (timeVal >= minMsec)
+		timeVal = 0;
+	else
+		timeVal = minMsec - timeVal;
+
+	return timeVal;
+}
+
+/*
+=================
 Com_Frame
 =================
 */
 void Com_Frame( void ) {
 	int		msec, minMsec;
-	static int	lastTime;
-	int key;
+	int		timeVal;
+	static int	lastTime = 0, bias = 0;
 
-	int		timeBeforeFirstEvents;
-	int           timeBeforeServer;
-	int           timeBeforeEvents;
-	int           timeBeforeClient;
-	int           timeAfter;
+	int timeBeforeFirstEvents = 0;
+	int timeBeforeServer = 0;
+	int timeBeforeEvents = 0;
+	int timeBeforeClient = 0;
+	int timeAfter = 0;
 
 	if (setjmp(abortframe)) {
 		return;			// an ERR_DROP was thrown
 	}
 
-	// bk001204 - init to zero.
-	//  also:  might be clobbered by `longjmp' or `vfork'
-	timeBeforeFirstEvents =0;
-	timeBeforeServer =0;
-	timeBeforeEvents =0;
-	timeBeforeClient = 0;
-	timeAfter = 0;
-
-
-	// old net chan encryption key
-	key = 0x87243987;
-
 	// write config file if anything changed
 	Com_WriteConfiguration();
-
-	// if "viewlog" has been modified, show or hide the log console
-	if ( com_viewlog->modified ) {
-		if ( !com_dedicated->value ) {
-			Sys_ShowConsole( com_viewlog->integer, qfalse );
-		}
-		com_viewlog->modified = qfalse;
-	}
 
 	//
 	// main event loop
@@ -2716,22 +2662,48 @@ void Com_Frame( void ) {
 		timeBeforeFirstEvents = Sys_Milliseconds ();
 	}
 
-	// we may want to spin here if things are going too fast
-	if ( !com_dedicated->integer && com_maxfps->integer > 0 && !com_timedemo->integer ) {
-		minMsec = 1000 / com_maxfps->integer;
-	} else {
-		minMsec = 1;
-	}
-	do {
-		com_frameTime = Com_EventLoop();
-		if ( lastTime > com_frameTime ) {
-			lastTime = com_frameTime;		// possible on first frame
+	// Figure out how much time we have
+	if (!com_timedemo->integer) {
+		if (com_dedicated->integer)
+			minMsec = SV_FrameMsec();
+		else {
+			if (com_minimized->integer && com_maxfpsMinimized->integer > 0)
+				minMsec = 1000 / com_maxfpsMinimized->integer;
+			else if (com_unfocused->integer && com_maxfpsUnfocused->integer > 0)
+				minMsec = 1000 / com_maxfpsUnfocused->integer;
+			else if (com_maxfps->integer > 0)
+				minMsec = 1000 / com_maxfps->integer;
+			else
+				minMsec = 1;
+
+			timeVal = com_frameTime - lastTime;
+			bias += timeVal - minMsec;
+
+			if (bias > minMsec)
+				bias = minMsec;
+
+			// Adjust minMsec if previous frame took too long to render so
+			// that framerate is stable at the requested value.
+			minMsec -= bias;
 		}
-		msec = com_frameTime - lastTime;
-	} while ( msec < minMsec );
-	Cbuf_Execute ();
+	} else
+		minMsec = 1;
+
+	timeVal = Com_TimeVal(minMsec);
+	do {
+		// Busy sleep the last millisecond for better timeout precision
+		if (com_busyWait->integer || timeVal < 1)
+			NET_Sleep(0);
+		else
+			NET_Sleep(timeVal - 1);
+	} while ((timeVal = Com_TimeVal(minMsec)) != 0);
 
 	lastTime = com_frameTime;
+	com_frameTime = Com_EventLoop();
+
+	msec = com_frameTime - lastTime;
+
+	Cbuf_Execute();
 
 	// mess with msec if needed
 	com_frameMsec = msec;
@@ -2756,11 +2728,9 @@ void Com_Frame( void ) {
 		com_dedicated->modified = qfalse;
 		if ( !com_dedicated->integer ) {
 			CL_Init();
-			Sys_ShowConsole( com_viewlog->integer, qfalse );
 			CL_StartHunkUsers();	//fire up the UI!
 		} else {
 			CL_Shutdown();
-			Sys_ShowConsole( 1, qtrue );
 		}
 	}
 
@@ -2825,9 +2795,6 @@ void Com_Frame( void ) {
 		c_patch_traces = 0;
 		c_pointcontents = 0;
 	}
-
-	// old net chan encryption key
-	key = lastTime * 0x87243987;
 
 	com_frameNumber++;
 }

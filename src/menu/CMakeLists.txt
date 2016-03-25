@@ -14,9 +14,10 @@ set(MVMENUFiles
 	"${SRCDir}/menu/ui_public.h"
 	"${SRCDir}/menu/ui_shared.h"
 	"${SRCDir}/game/bg_weapons.h"
-	"${SRCDir}/game/q_shared.h"
+	"${SRCDir}/qcommon/q_shared.h"
 
 	"${SRCDir}/menu/q_math.c"
+	"${SRCDir}/menu/q_shared.c"
 	"${SRCDir}/menu/ui_atoms.c"
 	"${SRCDir}/menu/ui_force.c"
 	"${SRCDir}/menu/ui_gameinfo.c"
@@ -25,7 +26,6 @@ set(MVMENUFiles
 	"${SRCDir}/menu/ui_syscalls.c"
 	"${SRCDir}/game/bg_misc.c"
 	"${SRCDir}/game/bg_weapons.c"
-	"${SRCDir}/game/q_shared.c"
 )
 
 add_library(${MVMENU} SHARED ${MVMENUFiles})

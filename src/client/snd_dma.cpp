@@ -3069,7 +3069,6 @@ static void S_StopBackgroundTrack_Actual( MusicInfo_t *pMusicInfo )
 	{
 		if ( pMusicInfo->s_backgroundFile != -1)
 		{
-			Sys_EndStreamedFile( pMusicInfo->s_backgroundFile );
 			FS_FCloseFile( pMusicInfo->s_backgroundFile );
 		}
 		pMusicInfo->s_backgroundFile = 0;
@@ -3257,10 +3256,6 @@ static void S_StartBackgroundTrack_Actual( MusicInfo_t *pMusicInfo, const char *
 
 		pMusicInfo->s_backgroundSamples = pMusicInfo->s_backgroundInfo.samples;
 
-		//
-		// start the background streaming
-		//
-		Sys_BeginStreamedFile( pMusicInfo->s_backgroundFile, 0x10000 );
 	}
 }
 
@@ -3419,8 +3414,8 @@ static qboolean S_UpdateBackgroundTrack_Actual( MusicInfo_t *pMusicInfo )
 		{
 			// streaming a WAV off disk...
 			//
-			r = Sys_StreamedRead( raw, 1, fileBytes, pMusicInfo->s_backgroundFile );
-			if ( r != fileBytes ) {
+			r = FS_Read(raw, fileBytes, pMusicInfo->s_backgroundFile);
+			if (r != fileBytes) {
 				Com_Printf(S_COLOR_RED"StreamedRead failure on music track\n");
 				S_StopBackgroundTrack();
 				return qfalse;
@@ -3428,7 +3423,7 @@ static qboolean S_UpdateBackgroundTrack_Actual( MusicInfo_t *pMusicInfo )
 
 			// byte swap if needed (do NOT do for MP3 decoder, that has an internal big/little endian handler)
 			//
-			S_ByteSwapRawSamples( fileSamples, pMusicInfo->s_backgroundInfo.width, pMusicInfo->s_backgroundInfo.channels, raw );
+			S_ByteSwapRawSamples(fileSamples, pMusicInfo->s_backgroundInfo.width, pMusicInfo->s_backgroundInfo.channels, raw);
 		}
 
 		// add to raw buffer

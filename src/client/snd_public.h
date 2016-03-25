@@ -47,5 +47,7 @@ void S_DisplayFreeMemory(void);
 
 void S_ClearSoundBuffer( void );
 
-void SNDDMA_Activate( qboolean bAppActive );
+// Added for Open AL to know when to mute all sounds (e.g when app. loses focus)
+void S_MuteAllSounds(bool bMute);
 
+void SNDDMA_Activate(qboolean activate);

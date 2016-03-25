@@ -1,6 +1,6 @@
 // this include must remain at the top of every CPP file
 
-#include "../game/q_shared.h"
+#include "../qcommon/q_shared.h"
 #include "qcommon.h"
 
 #if !defined(GENERICPARSER2_H_INC)

@@ -24,8 +24,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "vm_local.h"
 #include <stdint.h>
 
-#define ARRAY_LEN(x)			(sizeof(x) / sizeof(*(x)))
-
 #ifdef _WIN32
   #define WIN32_LEAN_AND_MEAN
   #include <windows.h>

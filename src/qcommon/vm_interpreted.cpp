@@ -26,7 +26,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define PADLEN(base, alignment)	(PAD((base), (alignment)) - (base))
 
 #define PADP(base, alignment)	((void *) PAD((intptr_t) (base), (alignment)))
-#define ARRAY_LEN(x)			(sizeof(x) / sizeof(*(x)))
 
 //#define	DEBUG_VM
 #ifdef DEBUG_VM

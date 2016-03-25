@@ -4,7 +4,7 @@
 #define __UI_PUBLIC_H__
 
 #include <time.h>
-#include "../game/q_shared.h"
+#include "../qcommon/q_shared.h"
 
 #define UI_API_15_VERSION	6
 #define UI_API_16_VERSION	7

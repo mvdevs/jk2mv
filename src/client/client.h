@@ -1,6 +1,6 @@
 // client.h -- primary header for client
 
-#include "../game/q_shared.h"
+#include "../qcommon/q_shared.h"
 #include "../qcommon/qcommon.h"
 #include "../renderer/tr_public.h"
 #include "../menu/ui_public.h"
