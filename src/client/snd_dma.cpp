@@ -1306,7 +1306,7 @@ void S_StartSound(vec3_t origin, int entityNum, int entchannel, sfxHandle_t sfxH
 			ch = s_channels + 1;
 			for (i = 1; i < s_numChannels; i++, ch++)
 			{
-				if ((ch->entnum == entityNum) && (ch->entchannel == CHAN_WEAPON) && (ch->thesfx) && (strstr(strlwr(ch->thesfx->sSoundName), "altcharge") != NULL))
+                if ((ch->entnum == entityNum) && (ch->entchannel == CHAN_WEAPON) && (ch->thesfx) && (strstr(Q_strlwr(ch->thesfx->sSoundName), "altcharge") != NULL))
 				{
 					// Stop this sound
 					alSourceStop(ch->alSource);
@@ -1322,7 +1322,7 @@ void S_StartSound(vec3_t origin, int entityNum, int entchannel, sfxHandle_t sfxH
 			ch = s_channels + 1;
 			for (i = 1; i < s_numChannels; i++, ch++)
 			{
-				if ((ch->entnum == entityNum) && (ch->thesfx) && (strstr(strlwr(ch->thesfx->sSoundName), "falling") != NULL))
+                if ((ch->entnum == entityNum) && (ch->thesfx) && (strstr(Q_strlwr(ch->thesfx->sSoundName), "falling") != NULL))
 				{
 					// Stop this sound
 					alSourceStop(ch->alSource);

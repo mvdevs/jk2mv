@@ -1135,7 +1135,7 @@ extern backEndState_t	backEnd;
 extern trGlobals_t	tr;
 extern glconfig_t	glConfig;		// outside of TR since it shouldn't be cleared during ref re-init
 extern glstate_t	glState;		// outside of TR since it shouldn't be cleared during ref re-init
-extern window_t		window;
+extern window_t		glWindow;
 
 //
 // cvars
@@ -1457,7 +1457,7 @@ IMPLEMENTATION SPECIFIC FUNCTIONS
 ====================================================================
 */
 
-static void GLimp_LogComment(char *comment) {}
+#define GLimp_LogComment(x)
 
 /*
 ====================================================================

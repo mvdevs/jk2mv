@@ -8,10 +8,6 @@
 #include "snd_public.h"
 #include "mp3struct.h"
 
-#ifndef WIN32
-#include "../unix/unix_local.h"
-#endif
-
 #define USE_OPENAL
 
 

@@ -1310,7 +1310,7 @@ const void	*RB_SwapBuffers( const void *data ) {
 
 	GLimp_LogComment( "***************** RB_SwapBuffers *****************\n\n\n" );
 
-	WIN_Present(&window);
+    WIN_Present(&glWindow);
 
 	return (const void *)(cmd + 1);
 }
@@ -1329,8 +1329,6 @@ void RB_ExecuteRenderCommands( const void *data ) {
 	t1 = ri.Milliseconds()*Cvar_VariableValue("timescale");
 
 	while (1) {
-		data = PADP(data, sizeof(void *));
-
 		switch ( *(const int *)data ) {
 		case RC_SET_COLOR:
 			data = RB_SetColor( data );

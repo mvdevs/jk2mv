@@ -24,10 +24,6 @@
 	#include "../qcommon/q_shared.h"
 #endif
 
-#ifndef WIN32
-#   include "../unix/unix_local.h"
-#endif
-
 #include <set>
 extern set<CCloud *> OutstandClouds;
 
@@ -209,7 +205,7 @@ int CFxScheduler::RegisterEffect( const char *file, bool bHasCorrectPath /*= fal
 	*/
 	{
 		COM_StripExtension( file, sfile, sizeof(sfile) );
-		strlwr(sfile);
+        Q_strlwr(sfile);
 	}
 
 	// see if the specified file is already registered.  If it is, just return the id of that file

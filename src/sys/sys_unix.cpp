@@ -18,7 +18,7 @@
 #include <mach-o/dyld.h>
 #endif
 
-#include "../game/q_shared.h"
+#include "../qcommon/q_shared.h"
 #include "../qcommon/qcommon.h"
 
 #include "mv_setup.h"
@@ -39,41 +39,52 @@ static char homePath[MAX_OSPATH];
 Sys_Milliseconds
 ================
 */
+/* base time in seconds, that's our origin
+   timeval:tv_sec is an int:
+   assuming this wraps every 0x7fffffff - ~68 years since the Epoch (1970) - we're safe till 2038 */
+unsigned long sys_timeBase = 0;
+/* current time in ms, using sys_timeBase as origin
+   NOTE: sys_timeBase*1000 + curtime -> ms since the Epoch
+     0x7fffffff ms - ~24 days
+   although timeval:tv_usec is an int, I'm not sure wether it is actually used as an unsigned int
+     (which would affect the wrap period) */
 int curtime;
-int	sys_timeBase;
-int Sys_Milliseconds (void)
+int Sys_Milliseconds (bool baseTime)
 {
-	struct timeval tp;
-	struct timezone tzp;
+    struct timeval tp;
 
-	gettimeofday(&tp, &tzp);
+    gettimeofday(&tp, NULL);
 
-	if (!sys_timeBase)
-	{
-		sys_timeBase = tp.tv_sec;
-		return tp.tv_usec/1000;
-	}
+    if (!sys_timeBase)
+    {
+        sys_timeBase = tp.tv_sec;
+        return tp.tv_usec/1000;
+    }
 
-	curtime = (tp.tv_sec - sys_timeBase)*1000 + tp.tv_usec/1000;
+    curtime = (tp.tv_sec - sys_timeBase)*1000 + tp.tv_usec/1000;
 
-	return curtime;
+    static int sys_timeBase = curtime;
+    if (!baseTime)
+    {
+        curtime -= sys_timeBase;
+    }
+
+    return curtime;
 }
 
-void	Sys_Mkdir( const char *path )
+int Sys_Milliseconds2( void )
 {
-	mkdir (path, 0777);
+    return Sys_Milliseconds(false);
 }
 
-char *strlwr (char *s) {
-  if ( s==NULL ) { // bk001204 - paranoia
-	assert(0);
-	return s;
-  }
-  while (*s) {
-	*s = tolower(*s);
-	s++;
-  }
-  return s; // bk001204 - duh
+qboolean Sys_Mkdir( const char *path )
+{
+    int result = mkdir( path, 0750 );
+
+    if( result != 0 )
+        return (qboolean)(errno == EEXIST);
+
+    return qtrue;
 }
 
 //============================================
@@ -377,7 +388,7 @@ char *Sys_DefaultHomePath(void)
 	}
 	return ""; // assume current dir
 #else
-	return NULL;
+    return Sys_Cwd();
 #endif
 }
 

@@ -31,7 +31,7 @@ CMiniHeap *G2VertSpaceServer = NULL;
 #ifndef DEDICATED
 glconfig_t	glConfig;
 glstate_t	glState;
-window_t	window;
+window_t	glWindow;
 static void GfxInfo_f( void );
 #endif
 
@@ -190,8 +190,6 @@ Ghoul2 Insert End
 cvar_t *r_fontSharpness;
 
 #ifndef DEDICATED
-#ifdef WIN32
-
 PFNGLACTIVETEXTUREARBPROC qglActiveTextureARB;
 PFNGLCLIENTACTIVETEXTUREARBPROC qglClientActiveTextureARB;
 PFNGLMULTITEXCOORD2FARBPROC qglMultiTexCoord2fARB;
@@ -237,8 +235,6 @@ PFNGLISPROGRAMARBPROC qglIsProgramARB;
 
 PFNGLLOCKARRAYSEXTPROC qglLockArraysEXT;
 PFNGLUNLOCKARRAYSEXTPROC qglUnlockArraysEXT;
-
-#endif
 
 void RE_SetLightStyle(int style, int color);
 
@@ -601,8 +597,10 @@ static void GLimp_InitExtensions(void) {
 
 	// gamma correction
 	if (qglActiveTextureARB && bTexRectSupported && bARBVertexProgram && bARBFragmentProgram) {
+#ifndef __APPLE__
 		qglTexImage3D = (PFNGLTEXIMAGE3DPROC)WIN_GL_GetProcAddress("glTexImage3D");
 		qglTexSubImage3D = (PFNGLTEXSUBIMAGE3DPROC)WIN_GL_GetProcAddress("glTexSubImage3D");
+#endif
 		glConfig.deviceSupportsPostprocessingGamma = qtrue;
 	} else {
 		glConfig.deviceSupportsPostprocessingGamma = qfalse;
@@ -622,7 +620,7 @@ static void InitOpenGL(void) {
 		windowDesc_t windowDesc = { GRAPHICS_API_OPENGL };
 		memset(&glConfig, 0, sizeof(glConfig));
 
-		window = WIN_Init(&windowDesc, &glConfig);
+        glWindow = WIN_Init(&windowDesc, &glConfig);
 
 		Com_Printf("GL_RENDERER: %s\n", (char *)qglGetString(GL_RENDERER));
 

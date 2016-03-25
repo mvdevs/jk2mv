@@ -6,7 +6,9 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 #ifndef DEDICATED
+#ifdef WIN32
 #define SDL_MAIN_HANDLED
+#endif
 #include "SDL.h"
 #endif
 #include "../qcommon/qcommon.h"
@@ -217,7 +219,7 @@ int main(int argc, char* argv[]) {
 	int		i;
 	char	commandLine[MAX_STRING_CHARS] = { 0 };
 
-#ifndef DEDICATED
+#if !defined(DEDICATED) && defined(WIN32)
 	SDL_SetMainReady();
 #endif
 
