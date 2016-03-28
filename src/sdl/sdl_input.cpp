@@ -1028,7 +1028,7 @@ void IN_Frame (void) {
 	IN_JoyMove( );
 
 	// If not DISCONNECTED (main menu) or ACTIVE (in game), we're loading
-	loading = (qboolean)( cls.state != CA_DISCONNECTED && cls.state != CA_ACTIVE );
+	loading = (qboolean)( cls.state != CA_DISCONNECTED && cls.state != CA_ACTIVE && !(Key_GetCatcher() & KEYCATCH_UI));
 
 	if( !cls.glconfig.isFullscreen && ( Key_GetCatcher( ) & KEYCATCH_CONSOLE ) )
 	{
