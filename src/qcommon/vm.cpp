@@ -481,13 +481,14 @@ vm_t *VM_Restart(vm_t *vm)
 	if ( vm->dllHandle ) {
 		char	name[MAX_QPATH];
 		intptr_t	(*systemCall)( intptr_t *parms );
+		qboolean mvOverride = vm->mvOverride;
 
 		systemCall = vm->systemCall;
 		Q_strncpyz( name, vm->name, sizeof( name ) );
 
 		VM_Free( vm );
 
-		vm = VM_Create( name, systemCall, VMI_NATIVE );
+		vm = VM_Create( name, mvOverride, systemCall, VMI_NATIVE );
 		return vm;
 	}
 
@@ -514,8 +515,7 @@ If image ends in .qvm it will be interpreted, otherwise
 it will attempt to load as a system dll
 ================
 */
-vm_t *VM_Create( const char *module, intptr_t (*systemCalls)(intptr_t *),
-				vmInterpret_t interpret ) {
+vm_t *VM_Create( const char *module, qboolean mvOverride, intptr_t (*systemCalls)(intptr_t *), vmInterpret_t interpret ) {
 	vm_t		*vm;
 	vmHeader_t	*header;
 	int			i, remaining;
@@ -552,14 +552,18 @@ vm_t *VM_Create( const char *module, intptr_t (*systemCalls)(intptr_t *),
 
 	if (interpret == VMI_NATIVE) {
 		// try to load as a system dll
-		Com_Printf("Loading dll file %s.\n", vm->name);
-		vm->dllHandle = Sys_LoadDll(module, &vm->entryPoint, VM_DllSyscall);
+		Com_Printf("Loading library file %s.\n", vm->name);
+		vm->dllHandle = Sys_LoadModuleLibrary(module, mvOverride, &vm->entryPoint, VM_DllSyscall);
 		if (vm->dllHandle) {
 			vm->systemCall = systemCalls;
 			return vm;
 		}
 
-		Com_Printf("Failed to load dll, looking for qvm.\n");
+		if (mvOverride) {
+			Com_Error(ERR_FATAL, "Failed loading library file: %s", vm->name);
+		}
+
+		Com_Printf("Failed to load library, looking for qvm.\n");
 		interpret = VMI_COMPILED;
 	}
 
@@ -636,7 +640,7 @@ void VM_Free( vm_t *vm ) {
 		vm->destroy(vm);
 
 	if ( vm->dllHandle ) {
-		Sys_UnloadDll( vm->dllHandle );
+		Sys_UnloadModuleLibrary( vm->dllHandle );
 		Com_Memset( vm, 0, sizeof( *vm ) );
 	}
 #if 0	// now automatically freed by hunk

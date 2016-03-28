@@ -131,6 +131,8 @@ float	FloatSwap (const float *f);
 #	define ARCH_STRING "x64"
 #endif
 
+#define LIBRARY_EXTENSION "dll"
+
 #define ID_INLINE __inline
 
 static ID_INLINE short BigShort( short l) { return ShortSwap(l); }
@@ -177,6 +179,8 @@ static ID_INLINE float BigFloat(const float *l) { FloatSwap(l); }
 #else
 #	define ARCH_STRING "x86_64"
 #endif
+
+#define LIBRARY_EXTENSION "dylib"
 
 #define	PATH_SEP	'/'
 
@@ -226,6 +230,8 @@ inline static float LittleFloat (const float *l) { return FloatSwap(l); }
 #else
 #	define ARCH_STRING "amd64"
 #endif
+
+#define LIBRARY_EXTENSION "so"
 
 #define	PATH_SEP '/'
 

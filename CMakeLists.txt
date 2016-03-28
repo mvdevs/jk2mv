@@ -132,7 +132,7 @@ message(STATUS "Architecture is ${Architecture}")
 
 # Binary names
 set(MVMP "jk2mvmp")
-set(MVMENU "jk2mvmenu")
+set(MVMENU "jk2mvmenu_${Architecture}")
 set(MVDED "jk2mvded")
 
 # OSX install target is more like a finalization step

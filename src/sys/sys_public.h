@@ -68,8 +68,8 @@ sysEvent_t	Sys_GetEvent( void );
 
 void	Sys_Init (void);
 
-void * QDECL Sys_LoadDll(const char *name, intptr_t(QDECL **entryPoint)(int, ...), intptr_t(QDECL *systemcalls)(intptr_t, ...));
-void	Sys_UnloadDll( void *dllHandle );
+void	*Sys_LoadModuleLibrary(const char *name, qboolean mvOverride, intptr_t(QDECL **entryPoint)(int, ...), intptr_t(QDECL *systemcalls)(intptr_t, ...));
+void	Sys_UnloadModuleLibrary(void *dllHandle);
 
 char	*Sys_GetCurrentUser( void );
 

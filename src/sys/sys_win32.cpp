@@ -329,95 +329,85 @@ char *Sys_Cwd(void) {
 
 /*
 =================
-Sys_UnloadDll
-
+Sys_UnloadModuleLibrary
 =================
 */
-void Sys_UnloadDll(void *dllHandle) {
+void Sys_UnloadModuleLibrary(void *dllHandle) {
 	if (!dllHandle) {
 		return;
 	}
-	if (!FreeLibrary((struct HINSTANCE__ *)dllHandle)) {
+
+	if (!FreeLibrary((HMODULE)dllHandle)) {
 		Com_Error(ERR_FATAL, "Sys_UnloadDll FreeLibrary failed");
 	}
 }
 
 /*
 =================
-Sys_LoadDll
+Sys_LoadModuleLibrary
 
-Used to load a development dll instead of a virtual machine
+Used to load a module (jk2mpgame, cgame, ui) dll
 =================
 */
-extern char		*FS_BuildOSPath(const char *base, const char *game, const char *qpath);
-
-void * QDECL Sys_LoadDll(const char *name, intptr_t(QDECL **entryPoint)(int, ...), intptr_t(QDECL *systemcalls)(intptr_t, ...)) {
-	static int	lastWarning = 0;
-	HINSTANCE	libHandle;
+void *Sys_LoadModuleLibrary(const char *name, qboolean mvOverride, intptr_t(QDECL **entryPoint)(int, ...), intptr_t(QDECL *systemcalls)(intptr_t, ...)) {
+	HMODULE	libHandle;
 	void	(QDECL *dllEntry)(intptr_t(QDECL *syscallptr)(intptr_t, ...));
-	char	*basepath;
-	char	*gamedir;
-	char	*fn;
-#ifdef NDEBUG
-	int		timestamp;
-	int   ret;
-#endif
+	char	*path, *filePath;
 	char	filename[MAX_QPATH];
 
-#ifndef _WIN64
-	Com_sprintf(filename, sizeof(filename), "%s_x86.dll", name);
-#else
-	Com_sprintf(filename, sizeof(filename), "%s_x64.dll", name);
-#endif
+	Com_sprintf(filename, sizeof(filename), "%s_" ARCH_STRING "." LIBRARY_EXTENSION, name);
 
-	if (!strcmp(name, "jk2mvmenu")) {
-		Com_sprintf(filename, sizeof(filename), "%s.dll", name);
-	}
+	if (!mvOverride) {
+		path = Cvar_VariableString("fs_basepath");
+		filePath = FS_BuildOSPath(path, NULL, filename);
 
-#ifdef NDEBUG
-	timestamp = Sys_Milliseconds();
-	if (((timestamp - lastWarning) > (5 * 60000)) && !Cvar_VariableIntegerValue("dedicated")
-		&& !Cvar_VariableIntegerValue("com_blindlyLoadDLLs")) {
-		if (FS_FileExists(filename)) {
-			lastWarning = timestamp;
-			ret = MessageBoxExA(NULL, "You are about to load a .DLL executable that\n"
-				"has not been verified for use with Quake III Arena.\n"
-				"This type of file can compromise the security of\n"
-				"your computer.\n\n"
-				"Select 'OK' if you choose to load it anyway.",
-				"Security Warning", MB_OKCANCEL | MB_ICONEXCLAMATION | MB_DEFBUTTON2 | MB_TOPMOST | MB_SETFOREGROUND,
-				MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT));
-			if (ret != IDOK) {
-				return NULL;
-			}
-		}
-	}
-#endif
-
-
-	// rjr disable for final release #ifndef NDEBUG
-	libHandle = LoadLibraryA(filename);
-	if (!libHandle) {
-		//#endif
-		basepath = Cvar_VariableString("fs_basepath");
-		gamedir = Cvar_VariableString("fs_game");
-
-		fn = FS_BuildOSPath(basepath, gamedir, filename);
-		libHandle = LoadLibraryA(fn);
-
+		Com_DPrintf("Loading module: %s...", filePath);
+		libHandle = LoadLibraryA(filePath);
 		if (!libHandle) {
-			return NULL;
+			Com_DPrintf(" failed!\n");
+			path = Cvar_VariableString("fs_homepath");
+			filePath = FS_BuildOSPath(path, NULL, filename);
+
+			Com_DPrintf("Loading module: %s...", filePath);
+			libHandle = LoadLibraryA(filePath);
+			if (!libHandle) {
+				Com_DPrintf(" failed!\n");
+				return NULL;
+			} else {
+				Com_DPrintf(" success!\n");
+			}
+		} else {
+			Com_DPrintf(" success!\n");
 		}
-		//#ifndef NDEBUG
+	} else {
+		char dllPath[MAX_PATH];
+		path = Cvar_VariableString("fs_basepath");
+		Com_sprintf(dllPath, sizeof(dllPath), "%s\\%s", path, filename);
+
+		Com_DPrintf("Loading module: %s...", dllPath);
+		libHandle = LoadLibraryA(dllPath);
+		if (!libHandle) {
+			Com_DPrintf(" failed!\n");
+			return NULL;
+		} else {
+			Com_DPrintf(" success!\n");
+		}
 	}
-	//#endif
 
 	dllEntry = (void (QDECL *)(intptr_t(QDECL *)(intptr_t, ...)))GetProcAddress(libHandle, "dllEntry");
 	*entryPoint = (intptr_t(QDECL *)(int, ...))GetProcAddress(libHandle, "vmMain");
-	if (!*entryPoint || !dllEntry) {
+	if (!*entryPoint) {
+		Com_DPrintf("Could not find vmMain in %s\n", filename);
 		FreeLibrary(libHandle);
 		return NULL;
 	}
+
+	if (!dllEntry) {
+		Com_DPrintf("Could not find dllEntry in %s\n", filename);
+		FreeLibrary(libHandle);
+		return NULL;
+	}
+
 	dllEntry(systemcalls);
 
 	return libHandle;

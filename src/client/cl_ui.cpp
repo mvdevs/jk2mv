@@ -1220,7 +1220,7 @@ void CL_InitUI(qboolean mainMenu) {
 	if (mainMenu) {
 		uigameversion = VERSION_UNDEF;
 
-		uivm = VM_Create("jk2mvmenu", CL_UISystemCalls, VMI_NATIVE);
+		uivm = VM_Create("jk2mvmenu", qtrue, CL_UISystemCalls, VMI_NATIVE);
 	} else {
 		uigameversion = MV_GetCurrentGameversion();
 
@@ -1230,7 +1230,7 @@ void CL_InitUI(qboolean mainMenu) {
 		} else {
 			interpret = (vmInterpret_t)(int)Cvar_VariableValue("vm_ui");
 		}
-		uivm = VM_Create("ui", CL_UISystemCalls, interpret);
+		uivm = VM_Create("ui", qfalse, CL_UISystemCalls, interpret);
 	}
 	if ( !uivm ) {
 		Com_Error( ERR_FATAL, "VM_Create on UI failed" );

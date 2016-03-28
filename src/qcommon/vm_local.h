@@ -147,17 +147,18 @@ struct vm_s {
 	// DO NOT MOVE OR CHANGE THESE WITHOUT CHANGING THE VM_OFFSET_* DEFINES
 	// USED BY THE ASM CODE
 	int			programStack;		// the vm may be recursively entered
-	intptr_t			(*systemCall)( intptr_t *parms );
+	intptr_t	(*systemCall)( intptr_t *parms );
 
 	//------------------------------------
 
 	char		name[MAX_QPATH];
-	void	*searchPath;				// hint for FS_ReadFileDir()
+	void		*searchPath;				// hint for FS_ReadFileDir()
 
 	// for dynamic linked modules
 	void		*dllHandle;
-	intptr_t			(QDECL *entryPoint)( int callNum, ... );
-	void (*destroy)(vm_t* self);
+	intptr_t	(QDECL *entryPoint)( int callNum, ... );
+	void		(*destroy)(vm_t* self);
+	qboolean	mvOverride;
 
 	// for interpreted modules
 	qboolean	currentlyInterpreting;

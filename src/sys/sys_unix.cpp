@@ -598,184 +598,6 @@ void Sys_SnapVector(float *v) {
 }
 #endif
 
-void Sys_SetFloatEnv(void) {
-    fesetround(FE_TONEAREST);
-}
-
-/*
-=================
-Sys_UnloadDll
-
-=================
-*/
-void Sys_UnloadDll( void *dllHandle ) {
-  // bk001206 - verbose error reporting
-  const char* err; // rb010123 - now const
-  if ( !dllHandle ) {
-    Com_Printf("Sys_UnloadDll(NULL)\n");
-    return;
-  }
-  dlclose( dllHandle );
-  err = dlerror();
-  if ( err != NULL )
-    Com_Printf ( "Sys_UnloadGame failed on dlclose: \"%s\"!\n", err );
-}
-
-
-/*
-=================
-Sys_LoadDll
-
-Used to load a development dll instead of a virtual machine
-=================
-*/
-extern char		*FS_BuildOSPath( const char *base, const char *game, const char *qpath );
-
-void	* QDECL Sys_LoadDll(const char *name, intptr_t(QDECL **entryPoint)(int, ...), intptr_t(QDECL *systemcalls)(intptr_t, ...))
-{
-  void *libHandle;
-  void	(*dllEntry)( intptr_t(*syscallptr)(intptr_t, ...) );
-  char	curpath[MAX_OSPATH];
-  char	fname[MAX_OSPATH];
-  //char	loadname[MAX_OSPATH];
-  char	*basepath;
-  char	*cdpath;
-  char	*gamedir;
-  char	*fn;
-  const char*  err = NULL; // bk001206 // rb0101023 - now const
-  char mvmenu[MAX_OSPATH];
-
-  // bk001206 - let's have some paranoia
-  assert( name );
-
-  if ( !getcwd(curpath, sizeof(curpath)) ) {
-	return NULL;
-  }
-
-#ifdef MACOS_X
-	snprintf (fname, sizeof(fname), "%s.dylib", name);
-#else
-#if defined __i386__
-  snprintf (fname, sizeof(fname), "%s_i386.so", name);
-#elif defined __powerpc__   //rcg010207 - PPC support.
-  snprintf (fname, sizeof(fname), "%s_ppc.so", name);
-#elif defined __axp__
-  snprintf (fname, sizeof(fname), "%s_axp.so", name);
-#elif defined __mips__
-  snprintf (fname, sizeof(fname), "%s_mips.so", name);
-#elif defined __amd64__
-  snprintf (fname, sizeof(fname), "%s_amd64.so", name);
-#elif defined __arm__
-  snprintf (fname, sizeof(fname), "%s_arm.so", name);
-#else
-#error Unknown arch
-#endif
-#endif
-
-// bk001129 - was RTLD_LAZY
-#define Q_RTLD	RTLD_NOW
-
-#if 0 // bk010205 - was NDEBUG // bk001129 - FIXME: what is this good for?
-  // bk001206 - do not have different behavior in builds
-  Q_strncpyz(loadname, curpath, sizeof(loadname));
-  // bk001129 - from cvs1.17 (mkv)
-  Q_strcat(loadname, sizeof(loadname), "/");
-
-  Q_strcat(loadname, sizeof(loadname), fname);
-  Com_Printf( "Sys_LoadDll(%s)... \n", loadname );
-  libHandle = dlopen( loadname, Q_RTLD );
-  //if ( !libHandle ) {
-  // bk001206 - report any problem
-  //Com_Printf( "Sys_LoadDll(%s) failed: \"%s\"\n", loadname, dlerror() );
-#endif // bk010205 - do not load from installdir
-
-  basepath = Cvar_VariableString( "fs_basepath" );
-  cdpath = Cvar_VariableString( "fs_cdpath" );
-  gamedir = Cvar_VariableString( "fs_game" );
-
-  if (!strcmp(name, "jk2mvmenu")) {
-#if !defined(MACOS_X) && defined(INSTALLED)
-	sprintf(mvmenu, "%s/lib/%s.so", Sys_LinuxGetInstallPrefix(), name);
-	fn = mvmenu;
-#else
-	sprintf(mvmenu, "%s/%s.so", basepath, name);
-	fn = mvmenu;
-#endif
-  } else {
-	fn = FS_BuildOSPath( basepath, gamedir, fname );
-  }
-  // bk001206 - verbose
-  Com_Printf( "Sys_LoadDll(%s)... \n", fn );
-
-  // bk001129 - from cvs1.17 (mkv), was fname not fn
-  libHandle = dlopen( fn, Q_RTLD );
-
-  if ( !libHandle )
-  {
-	// bk001206 - report any problem
-	Com_Printf( "Sys_LoadDll(%s) failed: \"%s\"\n", fn, dlerror() );
-
-	if( cdpath[0] )
-	{
-	  fn = FS_BuildOSPath( cdpath, gamedir, fname );
-	  libHandle = dlopen( fn, Q_RTLD );
-
-	  if ( !libHandle )
-	  {
-		// bk001206 - report any problem
-		Com_Printf( "Sys_LoadDll(%s) failed: \"%s\"\n", fn, dlerror() );
-	  }
-	  else
-	  {
-		Com_Printf ( "Sys_LoadDll(%s): succeeded from cdpath ...\n", fn );
-	  }
-	}
-	else
-	{
-	  Com_Printf ( "Sys_LoadDll(%s): no cdpath, giving up ...\n", fn );
-	}
-  }
-  else
-  {
-    Com_Printf( "Sys_LoadDll(%s): suceeded ..\n", fn );
-  }
-
-  if ( !libHandle )
-  {
-#ifdef NDEBUG // bk001206 - in debug abort on failure
-    Com_Error ( ERR_FATAL, "Sys_LoadDll(%s) failed dlopen() completely!\n", name  );
-#else
-    Com_Printf ( "Sys_LoadDll(%s) failed dlopen() completely!\n", name );
-#endif
-    return NULL;
-  }
-
-  // bk001206 - no different behavior
-  //#ifndef NDEBUG }
-  //else Com_Printf ( "Sys_LoadDll(%s): succeeded ...\n", loadname );
-  //#endif
-
-  dllEntry = (void (*)(intptr_t (*)(intptr_t,...))) dlsym( libHandle, "dllEntry" );
-  *entryPoint = (intptr_t(*)(int,...))dlsym( libHandle, "vmMain" );
-  if ( !*entryPoint || !dllEntry ) {
-	err = dlerror();
-#ifdef NDEBUG // bk001206 - in debug abort on failure
-	Com_Error ( ERR_FATAL, "Sys_LoadDll(%s) failed dlsym(vmMain): \"%s\" !\n", name, err );
-#else
-	Com_Printf ( "Sys_LoadDll(%s) failed dlsym(vmMain): \"%s\" !\n", name, err );
-#endif
-	dlclose( libHandle );
-	err = dlerror();
-	if ( err != NULL )
-	  Com_Printf ( "Sys_LoadDll(%s) failed dlcose: \"%s\"\n", name, err );
-	return NULL;
-  }
-  Com_Printf ( "Sys_LoadDll(%s) found **vmMain** at  %p  \n", name, *entryPoint ); // bk001212
-  dllEntry( systemcalls );
-  Com_Printf ( "Sys_LoadDll(%s) succeeded!\n", name );
-  return libHandle;
-}
-
 /*
 ==================
 Sys_Sleep
@@ -817,22 +639,90 @@ void Sys_Sleep( int msec )
 	}
 }
 
-void Sys_InitStreamThread(void) {
+/*
+=================
+Sys_UnloadModuleLibrary
+=================
+*/
+void Sys_UnloadModuleLibrary(void *dllHandle) {
+	if (!dllHandle) {
+		return;
+	}
+
+	dlclose(dllHandle);
 }
 
-void Sys_ShutdownStreamThread(void) {
-}
+/*
+=================
+Sys_LoadModuleLibrary
 
-void Sys_BeginStreamedFile(fileHandle_t f, int readAhead) {
-}
+Used to load a module (jk2mpgame, cgame, ui) so/dylib
+=================
+*/
+void *Sys_LoadModuleLibrary(const char *name, qboolean mvOverride, intptr_t(QDECL **entryPoint)(int, ...), intptr_t(QDECL *systemcalls)(intptr_t, ...)) {
+	void (*dllEntry)(intptr_t(*syscallptr)(intptr_t, ...));
+	char filename[MAX_QPATH];
+	char *path, *filePath;
+	void *libHandle;
 
-void Sys_EndStreamedFile(fileHandle_t f) {
-}
+	Com_sprintf(filename, sizeof(filename), "%s_" ARCH_STRING "." LIBRARY_EXTENSION, name);
 
-int Sys_StreamedRead(void *buffer, int size, int count, fileHandle_t f) {
-	return FS_Read(buffer, size * count, f);
-}
+	if (!mvOverride) {
+		path = Cvar_VariableString("fs_basepath");
+		filePath = FS_BuildOSPath(path, NULL, filename);
 
-void Sys_StreamSeek(fileHandle_t f, int offset, int origin) {
-	FS_Seek(f, offset, origin);
+		Com_DPrintf("Loading module: %s...", filePath);
+		libHandle = dlopen(filePath, RTLD_NOW);
+		if (!libHandle) {
+			Com_DPrintf(" failed: %s\n", dlerror());
+			path = Cvar_VariableString("fs_homepath");
+			filePath = FS_BuildOSPath(path, NULL, filename);
+
+			Com_DPrintf("Loading module: %s...", filePath);
+			libHandle = dlopen(filePath, RTLD_NOW);
+			if (!libHandle) {
+				Com_DPrintf(" failed: %s\n", dlerror());
+				return NULL;
+			} else {
+				Com_DPrintf(" success!\n");
+			}
+		} else {
+			Com_DPrintf(" success!\n");
+		}
+	} else {
+		char lpath[1024];
+
+#if !defined(MACOS_X) && defined(INSTALLED)
+		Com_sprintf(lpath, sizeof(lpath), "%s/lib/%s", Sys_LinuxGetInstallPrefix(), filename);
+#else
+		path = Cvar_VariableString("fs_basepath");
+		Com_sprintf(lpath, sizeof(lpath), "%s/%s", path, filename);
+#endif
+
+		Com_DPrintf("Loading module: %s...", filePath);
+		libHandle = dlopen(lpath, RTLD_NOW);
+		if (!libHandle) {
+			Com_DPrintf(" failed: %s\n", dlerror());
+			return NULL;
+		} else {
+			Com_DPrintf(" success!\n");
+		}
+	}
+
+	dllEntry = (void (*)(intptr_t (*)(intptr_t,...))) dlsym(libHandle, "dllEntry");
+	*entryPoint = (intptr_t(*)(int,...))dlsym(libHandle, "vmMain");
+	if ( !*entryPoint ) {
+		Com_DPrintf("Could not find vmMain in %s\n", filename);
+		dlclose(libHandle);
+		return NULL;
+	}
+
+	if (!dllEntry) {
+		Com_DPrintf("Could not find dllEntry in %s\n", filename);
+		dlclose(libHandle);
+		return NULL;
+	}
+
+	dllEntry(systemcalls);
+	return libHandle;
 }

@@ -309,7 +309,7 @@ typedef enum {
 } sharedTraps_t;
 
 void	VM_Init( void );
-vm_t *VM_Create(const char *module, intptr_t(*systemCalls)(intptr_t *), vmInterpret_t interpret);
+vm_t	*VM_Create(const char *module, qboolean mvOverride, intptr_t(*systemCalls)(intptr_t *), vmInterpret_t interpret);
 // module should be bare: "cgame", not "cgame.dll" or "vm/cgame.qvm"
 
 void	VM_Free( vm_t *vm );
@@ -611,6 +611,8 @@ void	FS_WriteFile( const char *qpath, const void *buffer, int size );
 
 int		FS_filelength( fileHandle_t f );
 // doesn't work for files that are opened from a pack file
+
+char	*FS_BuildOSPath(const char *base, const char *game, const char *qpath);
 
 int		FS_FTell( fileHandle_t f );
 // where are we?

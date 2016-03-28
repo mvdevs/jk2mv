@@ -256,6 +256,7 @@ if (BuildMVMP OR BuildMVDED)
 	else()
 		set(MVMPDEDSysFiles
 			"${SRCDir}/sys/con_local.h"
+			"${SRCDir}/sys/sys_public.h"
 			"${SRCDir}/sys/sys_local.h"
 
 			"${SRCDir}/sys/con_log.cpp"
