@@ -2727,10 +2727,12 @@ void Com_Frame( void ) {
 		Cvar_Get( "dedicated", "0", 0 );
 		com_dedicated->modified = qfalse;
 		if ( !com_dedicated->integer ) {
+			CON_DeleteConsoleWindow();
 			CL_Init();
 			CL_StartHunkUsers();	//fire up the UI!
 		} else {
 			CL_Shutdown();
+			CON_CreateConsoleWindow();
 		}
 	}
 

@@ -334,6 +334,9 @@ void CON_Init( void )
 	CON_Show();
 }
 
+void CON_CreateConsoleWindow() {}
+void CON_DeleteConsoleWindow() {}
+
 /*
 ==================
 CON_Input

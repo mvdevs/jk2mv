@@ -7,6 +7,7 @@
 #include <inttypes.h>
 #ifndef DEDICATED
 #ifdef WIN32
+#include <windows.h>
 #define SDL_MAIN_HANDLED
 #endif
 #include "SDL.h"
@@ -224,6 +225,10 @@ int main(int argc, char* argv[]) {
 #endif
 
 	Sys_PlatformInit();
+
+#if defined(_DEBUG) && !defined(DEDICATED)
+	CON_CreateConsoleWindow();
+#endif
 	CON_Init();
 
 	// get the initial time base

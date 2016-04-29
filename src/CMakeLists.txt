@@ -248,6 +248,7 @@ if (BuildMVMP OR BuildMVDED)
 			"${SRCDir}/sys/sys_public.h"
 			"${SRCDir}/sys/sys_local.h"
 
+			"${SRCDir}/sys/con_win32.cpp"
 			"${SRCDir}/sys/con_log.cpp"
 			"${SRCDir}/sys/sys_main.cpp"
 			"${SRCDir}/sys/sys_event.cpp"
@@ -536,14 +537,6 @@ if (BuildMVMP)
 	)
 	source_group("sdl" FILES ${MVMPSDLFiles})
 	set(MVMPFiles ${MVMPFiles} ${MVMPSDLFiles})
-	
-	if(WIN32)
-		set(MVMPSysFiles
-			"${SRCDir}/sys/con_passive.cpp"
-		)
-		source_group("sys" FILES ${MVMPSysFiles})
-		set(MVMPFiles ${MVMPFiles} ${MVMPSysFiles})
-	endif()
 
 	if (("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU") OR ("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang"))
 		set(LibFiles ${ZLIBFiles} ${MVMPDEDMeerkatFiles} ${MVMPMP3Files} ${JPEGFiles} ${PNGFiles} ${CURLFiles})
@@ -639,19 +632,6 @@ if (BuildMVDED)
 	)
 	source_group("null" FILES ${MVDEDNullFiles})
 	set(MVDEDFiles ${MVDEDFiles} ${MVDEDNullFiles})
-
-	if(WIN32)
-		set(MVDEDSysFiles
-			"${SRCDir}/sys/con_local.h"
-			"${SRCDir}/sys/sys_local.h"
-
-			"${SRCDir}/sys/con_log.cpp"
-			"${SRCDir}/sys/con_win32.cpp"
-			"${SRCDir}/sys/sys_main.cpp"
-		)
-		source_group("sys" FILES ${MVDEDSysFiles})
-		set(MVDEDFiles ${MVDEDFiles} ${MVDEDSysFiles})
-	endif()
 
 	# Defines
 	set(MVDEDDefines "DEDICATED")

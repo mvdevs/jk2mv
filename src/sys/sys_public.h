@@ -79,6 +79,9 @@ char	*Sys_GetClipboardData( void );	// note that this isn't journaled...
 
 void	Sys_Print( const char *msg );
 
+void CON_CreateConsoleWindow(void);
+void CON_DeleteConsoleWindow(void);
+
 // Sys_Milliseconds should only be used for profiling purposes,
 // any game related timing information should come from event timestamps
 int		Sys_Milliseconds (bool baseTime = false);
