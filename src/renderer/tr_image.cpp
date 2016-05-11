@@ -557,7 +557,6 @@ static void R_Images_DeleteImageContents( image_t *pImage )
 
 
 
-
 /*
 ===============
 Upload32
@@ -581,7 +580,7 @@ static void Upload32( byte **mipmaps, qboolean customMip, image_t *image, qboole
 	//
 	if ( !upload->noPicMip ) {
 		while( level <= r_picmip->integer && width + height > 2) {
-			if (customMip && mipmaps[level]) {
+			if (customMip && level < MAX_MIP_LEVELS && mipmaps[level]) {
 				data = mipmaps[level];
 			} else {
 				R_MipMap( data, width, height );
@@ -599,7 +598,7 @@ static void Upload32( byte **mipmaps, qboolean customMip, image_t *image, qboole
 	// deal with a half mip resampling
 	//
 	while ( width > glConfig.maxTextureSize	|| height > glConfig.maxTextureSize ) {
-		if (customMip && mipmaps[level]) {
+		if (customMip && level < MAX_MIP_LEVELS && mipmaps[level]) {
 			data = mipmaps[level];
 		} else {
 			R_MipMap( data, width, height );
@@ -712,7 +711,7 @@ static void Upload32( byte **mipmaps, qboolean customMip, image_t *image, qboole
 				break;
 			}
 
-			if ( customMip && mipmaps[level] )
+			if ( customMip && level < MAX_MIP_LEVELS && mipmaps[level] )
 			{
 				data = mipmaps[level];
 				doLightScale = (qboolean)!upload->noLightScale;
@@ -2185,6 +2184,52 @@ image_t *R_FindImageFile( const char *name, qboolean mipmap, qboolean allowPicmi
 	return R_FindImageFileNew(name, &upload, glWrapClampMode);
 }
 
+/*
+==============
+R_MipMapLevel
+
+All arguments must be powers of two.
+
+Returns mipmap level (possibly negative) of a picture (w,h) relative
+to a picture of dimensions (ref_w,ref_h). Returns MAX_MIP_LEVELS
+if passed dimensions don't occur in any valid mipmap chain.
+==============
+*/
+static int R_MipMapLevel(int ref_w, int ref_h, int w, int h)
+{
+	int level = 0;
+	int	mult = -1;
+
+	if (w < ref_w) {
+		int temp;
+
+		temp = w;
+		w = ref_w;
+		ref_w = temp;
+		temp = h;
+		h = ref_h;
+		ref_h = temp;
+
+		mult = 1;
+	}
+
+	ref_w >>= 1;
+	ref_h >>= 1;
+
+	while (w != 0 || h != 0) {
+		w >>= 1;
+		h >>= 1;
+
+		if (w == ref_w && h == ref_h) {
+			return mult * level;
+		}
+
+		level++;
+	}
+
+	return MAX_MIP_LEVELS;
+}
+
 image_t	*R_FindImageFileNew( const char *name, upload_t *upload, int glWrapClampMode ) {
 	image_t		*image;
 	int			width, height;
@@ -2192,7 +2237,7 @@ image_t	*R_FindImageFileNew( const char *name, upload_t *upload, int glWrapClamp
 	byte		*pic;
 	char		*pName;
 	byte		**mipmaps;
-	int			miplevels;
+	byte		*mipdata[2 * MAX_MIP_LEVELS - 1] = { NULL };
 	qboolean	customMip;
 
 	if (!name || com_dedicated->integer) {	// stop ghoul2 horribleness as regards image loading from server
@@ -2229,21 +2274,15 @@ image_t	*R_FindImageFileNew( const char *name, upload_t *upload, int glWrapClamp
 		return NULL;
 	}
 
-	miplevels = 0;
-	n = max(width, height);
-	while (n >= 1) {
-		miplevels++;
-		n >>= 1;
-	}
-
 	customMip = qfalse;
 
 	if (!upload->noMipMaps) {
-		mipmaps = (byte **) ri.Malloc(miplevels * sizeof(byte *), TAG_TEMP_WORKSPACE, qtrue);
-		mipmaps[0] = pic;
+		int		minLevel = MAX_MIP_LEVELS - 1;
+
+		mipdata[MAX_MIP_LEVELS - 1] = pic;
 		pName = GenerateImageMappingName(name);
 
-		for (n = 1; n < miplevels; n++) {
+		for (n = 1; n < MAX_MIP_LEVELS; n++) {
 			char	mipName[MAX_QPATH];
 			int		w, h;
 			int		level;
@@ -2255,38 +2294,50 @@ image_t	*R_FindImageFileNew( const char *name, upload_t *upload, int glWrapClamp
 				break;
 			}
 
-			for (level = 1; level < miplevels; level++) {
-				if (w == max(width >> level, 1) && h == max(height >> level, 1)) {
-					break;
-				}
-			}
-
-			if (level == miplevels) {
-				ri.Printf (PRINT_WARNING, "Refusing to load \"%s\". Wrong dimensions\n", mipName);
-				ri.Free(pic);
+			if ( (w&(w-1)) || (h&(h-1)) )
+			{
+				ri.Printf( PRINT_ALL, "Refusing to load non-power-2-dims(%d,%d) pic \"%s\"...\n", w, h, mipName );
+				ri.Free( pic );
 				continue;
 			}
-			if (mipmaps[level]) {
-				ri.Printf (PRINT_WARNING, "Multiple images for mipmap level %d. Using \"%s\"\n", level, mipName);
-				ri.Free(mipmaps[level]);
+
+			level = minLevel;
+			level += R_MipMapLevel(width, height, w, h);
+			if (level < 0 || minLevel + MAX_MIP_LEVELS <= level ) {
+				ri.Printf( PRINT_ALL, "Wrong mipmap dimensions (%d,%d) \"%s\"\n", w, h, mipName);
+				ri.Free( pic );
+				continue;
+			}
+			if (level < minLevel) {
+				minLevel = level;
+				width = w;
+				height = h;
 			}
 
-			mipmaps[level] = pic;
+			if (mipdata[level]) {
+				ri.Printf (PRINT_WARNING, "Multiple images for mipmap (%d,%d). Using \"%s\"\n", w, h, mipName);
+				ri.Free(mipdata[level]);
+			}
+
+			mipdata[level] = pic;
 			customMip = qtrue;
 		}
-	} else { // !mipmap
+
+		mipmaps = &mipdata[minLevel];
+	} else { // noMipMaps
 		mipmaps = &pic;
 	}
 
 	image = R_CreateImageNew( name, mipmaps, customMip, width, height, upload, glWrapClampMode );
 
-	if (!upload->noMipMaps) {
-		for (n = 0; n < miplevels; n++) {
-			if (mipmaps[n]) {
-				ri.Free( mipmaps[n] );
+	if (customMip) {
+		for (n = 0; n < ARRAY_LEN(mipdata); n++) {
+			if (mipdata[n]) {
+				ri.Free( mipdata[n] );
 			}
 		}
-		ri.Free( mipmaps );
+	} else {
+	  ri.Free( pic );
 	}
 
 	return image;

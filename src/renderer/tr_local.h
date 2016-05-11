@@ -110,6 +110,8 @@ extern	textureMode_t	modes[];
 
 textureMode_t *GetTextureMode( const char *name );
 
+#define MAX_MIP_LEVELS 10
+
 typedef struct {
 	qboolean		noMipMaps;			// don't load or generate mipmaps
 	qboolean		noPicMip;			// for images that must always be full resolution
