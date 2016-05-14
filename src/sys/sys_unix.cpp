@@ -699,7 +699,7 @@ void *Sys_LoadModuleLibrary(const char *name, qboolean mvOverride, intptr_t(QDEC
 		Com_sprintf(lpath, sizeof(lpath), "%s/%s", path, filename);
 #endif
 
-		Com_DPrintf("Loading module: %s...", filePath);
+		Com_DPrintf("Loading module: %s...", lpath);
 		libHandle = dlopen(lpath, RTLD_NOW);
 		if (!libHandle) {
 			Com_DPrintf(" failed: %s\n", dlerror());
