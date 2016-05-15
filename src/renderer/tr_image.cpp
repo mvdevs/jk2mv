@@ -990,11 +990,11 @@ image_t *R_CreateImage( const char *name, byte *data, int width, int height,
 	qboolean	customMip = qfalse;
 	byte		**mipmaps = &data;
 	upload_t	upload = {
-		.noMipMaps = (qboolean)!mipmap,
-		.noPicMip = (qboolean)!allowPicmip,
-		.noLightScale = mipmap,
-		.noTC = (qboolean)!allowTC,
-		.textureMode = mipmap ? NULL : GetTextureMode("GL_LINEAR")
+		(qboolean)!mipmap,
+		(qboolean)!allowPicmip,
+		mipmap,
+		(qboolean)!allowTC,
+		(mipmap ? NULL : GetTextureMode("GL_LINEAR"))
 	};
 
 	return R_CreateImageNew( name, mipmaps, customMip, width, height, &upload, glWrapClampMode);
@@ -2174,11 +2174,11 @@ Returns NULL if it fails, not a default image.
 */
 image_t *R_FindImageFile( const char *name, qboolean mipmap, qboolean allowPicmip, qboolean allowTC, int glWrapClampMode ) {
 	upload_t upload = {
-		.noMipMaps = (qboolean)!mipmap,
-		.noPicMip = (qboolean)!allowPicmip,
-		.noLightScale = (qboolean)!mipmap,
-		.noTC = (qboolean)!allowTC,
-		.textureMode = mipmap ? NULL : GetTextureMode("GL_LINEAR")
+		(qboolean)!mipmap,
+		(qboolean)!allowPicmip,
+		(qboolean)!mipmap,
+		(qboolean)!allowTC,
+		(mipmap ? NULL : GetTextureMode("GL_LINEAR"))
 	};
 
 	return R_FindImageFileNew(name, &upload, glWrapClampMode);
