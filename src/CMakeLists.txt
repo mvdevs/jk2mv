@@ -279,6 +279,10 @@ if (BuildMVMP OR BuildMVDED)
 	
 	# generate assetsmv.pk3
 	include(InstallZIP)
+	if(NOT ZIP_EXECUTABLE)
+		message(FATAL_ERROR "No ZIP executable found! Install 7zip, WinZIP or WinRAR.")
+	endif()
+	
 	add_zip_command("${CMAKE_CURRENT_BINARY_DIR}/assetsmv.pk3"
 		DIR "${CMAKE_SOURCE_DIR}/assets"
 		FILES "*"
