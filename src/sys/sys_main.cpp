@@ -214,9 +214,12 @@ void Sys_SigHandler(int signal) {
 }
 
 #if defined(_MSC_VER) && !defined(DEDICATED)
-#    pragma comment(linker, "/subsystem:windows /ENTRY:mainCRTStartup")
-#endif
+#define argv __argv
+#define argc __argc
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd) {
+#else
 int main(int argc, char* argv[]) {
+#endif
 	int		i;
 	char	commandLine[MAX_STRING_CHARS] = { 0 };
 
