@@ -1289,7 +1289,7 @@ void R_MovePatchSurfacesToHunk(void) {
 		Com_Memcpy( hunkgrid->widthLodError, grid->widthLodError, grid->width * 4 );
 
 		hunkgrid->heightLodError = (float *)ri.Hunk_Alloc( grid->height * 4, h_low );
-		Com_Memcpy( grid->heightLodError, grid->heightLodError, grid->height * 4 );
+		Com_Memcpy( hunkgrid->heightLodError, grid->heightLodError, grid->height * 4 );
 
 		R_FreeSurfaceGridMesh( grid );
 
