@@ -402,8 +402,9 @@ int COM_Compress(char *data_p) {
 				}
 			}
 		}
+
+		*out = 0;
 	}
-	*out = 0;
 	return out - data_p;
 }
 
