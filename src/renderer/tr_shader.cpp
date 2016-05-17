@@ -3916,6 +3916,7 @@ static void ScanAndLoadShaderFiles( const char *path )
 			ri.Error( ERR_FATAL, "ERROR: no shader files found\n" );
 	}
 
+	assert(numShaderFilesType[0] > 0 || numShaderFilesType[1] > 0);
 	sum = 0;
 	// load and parse shader files
 	for ( type = 0, j = 0; type < 2; type++ ) {
@@ -4006,6 +4007,7 @@ static void ScanAndLoadDynGlowFiles( const char *path )
 	int		sum, i;
 
 	shaderFiles = ri.FS_ListFiles( path, ".dynGlow", &numDynGlowShaders );
+	assert(numDynGlowShaders >= 0);
 	mv_dynGlowShaders = NULL;
 
 	if ( !shaderFiles || !numDynGlowShaders )
@@ -4078,6 +4080,7 @@ const char *g_GammaPixelShaderARB = {
 
 qboolean MV_GammaGenerateProgram() {
 	int err = 0;
+	assert(qglGenProgramsARB);
 
 	// vertex shader
 	qglGenProgramsARB(1, &tr.gammaVertexShader);

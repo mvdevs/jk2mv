@@ -22,10 +22,10 @@
 #include <set>
 #include <algorithm>
 
-#ifdef assert
-#	undef assert
-#	define assert(x) ((void)0)
-#endif
+// #ifdef assert
+// #	undef assert
+// #	define assert(x) ((void)0)
+// #endif
 
 extern mdxaBone_t		worldMatrix;
 extern mdxaBone_t		worldMatrixInv;
@@ -401,6 +401,7 @@ qboolean G2API_VM_RemoveGhoul2Model(qhandle_t *ghlRemove, const int modelIndex) 
 
 qboolean G2API_RemoveGhoul2Model(CGhoul2Info_v **ghlRemove, const int modelIndex)
 {
+	assert(ghlRemove && *ghlRemove);
 	CGhoul2Info_v &ghlInfo = **ghlRemove;
 
 	// sanity check
@@ -777,8 +778,6 @@ qboolean G2API_RemoveBolt(CGhoul2Info *ghlInfo, const int index)
 
 int G2API_AddBolt(CGhoul2Info_v *ghoul2, const int modelIndex, const char *boneName)
 {
-	assert(ghoul2.size()>modelIndex);
-
 	if (ghoul2 && ghoul2->size() > modelIndex)
 	{
 		CGhoul2Info *ghlInfo = &ghoul2->at(modelIndex);
@@ -926,8 +925,6 @@ qboolean G2API_GetBoltMatrix_SPMethod(CGhoul2Info_v *ghoul2, const int modelInde
 
 qboolean G2API_GetBoltMatrix(CGhoul2Info_v *ghoul2, const int modelIndex, const int boltIndex, mdxaBone_t *matrix, const vec3_t angles, const vec3_t position, const int frameNum, qhandle_t *modelList, vec3_t scale )
 {
-	assert(ghoul2.size() > modelIndex);
-
 	if (gG2_GBMUseSPMethod)
 	{
 		gG2_GBMUseSPMethod = qfalse;

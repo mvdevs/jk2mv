@@ -192,7 +192,7 @@ protected:
 
 public:
 					cStringPackage(const char *in, unsigned char initID = 0, char *initDescription = NULL, char *initReference = NULL);
-					~cStringPackage(void);
+					virtual ~cStringPackage(void);
 
 	void			Register(unsigned char newRegistration) { Registration |= newRegistration; }
 	bool			UnRegister(unsigned char oldRegistration) { Registration &= ~oldRegistration; return (Registration == 0); }

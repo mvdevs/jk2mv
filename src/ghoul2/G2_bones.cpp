@@ -21,10 +21,10 @@
 #endif
 	#include "G2_local.h"
 
-#ifdef assert
-#	undef assert
-#	define assert(x)
-#endif
+// #ifdef assert
+// #	undef assert
+// #	define assert(x)
+// #endif
 
 //=====================================================================================================================
 // Bone List handling routines - so entities can override bone info on a bone by bone level, and also interrogate this info
@@ -897,6 +897,7 @@ qboolean G2_Get_Bone_Anim(const char *fileName, boneInfo_v &blist, const char *b
   	model_t		*mod_m;
 	if (!fileName[0])
 	{
+		assert(modelList);
 		mod_m = R_GetModelByHandle(modelList[modelIndex]);
 	}
 	else

@@ -3788,7 +3788,7 @@ void Item_TextField_Paint(itemDef_t *item) {
 	char buff[1024];
 	vec4_t newColor, lowLight;
 	int offset;
-	menuDef_t *parent = (menuDef_t*)item->parent;
+	menuDef_t *parent;
 	editFieldDef_t *editPtr = (editFieldDef_t*)item->typeData;
 
 	Item_Text_Paint(item);
@@ -6492,6 +6492,7 @@ qboolean Item_Parse(int handle, itemDef_t *item) {
 static void Item_TextScroll_BuildLines ( itemDef_t* item )
 {
 #if 1
+	assert(item->typeData);
 	// new asian-aware line breaker...  (pasted from elsewhere late @ night, hence aliasing-vars ;-)
 	//
 	textScrollDef_t* scrollPtr = (textScrollDef_t*) item->typeData;
