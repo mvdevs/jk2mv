@@ -460,7 +460,7 @@ void cStrings::Clear(void)
 
 	if (Reference)
 	{
-		delete Reference;
+		delete[] Reference;
 		Reference = NULL;
 	}
 }
@@ -483,7 +483,7 @@ void cStrings::SetReference(char *newReference)
 {
 	if (Reference)
 	{
-		delete Reference;
+		delete[] Reference;
 		Reference = NULL;
 	}
 
@@ -637,14 +637,14 @@ void cStringsED::Clear(void)
 	{
 		if (Text[i])
 		{
-			delete Text[i];
+			delete[] Text[i];
 			Text[i] = NULL;
 		}
 	}
 
 	if (Notes)
 	{
-		delete Notes;
+		delete[] Notes;
 		Notes = NULL;
 	}
 }
@@ -653,7 +653,7 @@ void cStringsED::SetText(int index, char *newText)
 {
 	if (Text[index])
 	{
-		delete Text[index];
+		delete[] Text[index];
 		Text[index] = NULL;
 	}
 
@@ -670,7 +670,7 @@ void cStringsED::SetNotes(char *newNotes)
 {
 	if (Notes)
 	{
-		delete Notes;
+		delete[] Notes;
 		Notes = NULL;
 	}
 
@@ -949,7 +949,7 @@ cStringPackage::~cStringPackage(void)
 {
 	if (Reference)
 	{
-		delete Reference;
+		delete[] Reference;
 		Reference = NULL;
 	}
 }
@@ -958,7 +958,7 @@ void cStringPackage::SetReference(char *newReference)
 {
 	if (Reference)
 	{
-		delete Reference;
+		delete[] Reference;
 		Reference = NULL;
 	}
 
@@ -1070,7 +1070,7 @@ bool cStringPackage::Load(char *FileName)
 
 	Load(buffer, Size);
 
-	delete buffer;
+	delete[] buffer;
 
 	return true;
 }
@@ -1112,7 +1112,7 @@ cStringPackageED::~cStringPackageED(void)
 {
 	if (Description)
 	{
-		delete Description;
+		delete[] Description;
 		Description = NULL;
 	}
 }
@@ -1121,7 +1121,7 @@ void cStringPackageED::SetDescription(char *newDescription)
 {
 	if (Description)
 	{
-		delete Description;
+		delete[] Description;
 		Description = NULL;
 	}
 

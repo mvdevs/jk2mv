@@ -160,6 +160,7 @@ static void NetadrToSockadr( netadr_t *a, struct sockaddr *s ) {
 }
 
 static void SockadrToNetadr( struct sockaddr *s, netadr_t *a ) {
+	assert(s->sa_family == AF_INET);
 	if (s->sa_family == AF_INET) {
 		a->type = NA_IP;
 		*(int *)&a->ip = ((struct sockaddr_in *)s)->sin_addr.s_addr;

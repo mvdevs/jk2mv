@@ -867,6 +867,7 @@ bool G2_TracePolys( const mdxmSurface_t *surface, const vec3_t rayStart, const v
 		// did we hit it?
 		if (G2_SegmentTriangleTest(rayStart, rayEnd, point1, point2, point3, qtrue, qtrue, hitPoint, normal, &face))
 		{
+			assert(collRecMap);
 			// find space in the collision records for this record
 			for (int i=0; i<MAX_G2_COLLISIONS;i++)
 			{

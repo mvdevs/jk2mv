@@ -1186,7 +1186,10 @@ void G2_ProcessSurfaceBolt(mdxaBone_v &bonePtr, mdxmSurface_t *surface, int bolt
 	// no, we are looking at a normal model tag
 	else
 	{
-		int *piBoneRefs = (int*) ((byte*)surface + surface->ofsBoneReferences);
+		int *piBoneRefs;
+
+		assert(surface);
+		piBoneRefs = (int*) ((byte*)surface + surface->ofsBoneReferences);
 
 		// whip through and actually transform each vertex
 		v = (mdxmVertex_t *) ((byte *)surface + surface->ofsVerts);

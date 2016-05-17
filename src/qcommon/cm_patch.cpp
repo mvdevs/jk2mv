@@ -1466,7 +1466,7 @@ void CM_TraceThroughPatchCollide( traceWork_t *tw, const struct patchCollide_s *
 	float offset, enterFrac, leaveFrac, t;
 	patchPlane_t *planes;
 	facet_t	*facet;
-	float plane[4], bestplane[4];
+	float plane[4], bestplane[4] = { 0 };
 	vec3_t startp, endp;
 #ifndef BSPC
 	static cvar_t *cv;
@@ -1581,6 +1581,8 @@ void CM_TraceThroughPatchCollide( traceWork_t *tw, const struct patchCollide_s *
 				}
 #endif // BSPC
 
+				assert(bestplane[0] != 0.0f || bestplane[1] != 0.0f ||
+					   bestplane[2] != 0.0f || bestplane[3] != 0.0f);
 				tw->trace.fraction = enterFrac;
 				VectorCopy( bestplane, tw->trace.plane.normal );
 				tw->trace.plane.dist = bestplane[3];

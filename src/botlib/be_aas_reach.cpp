@@ -3168,6 +3168,7 @@ aas_lreachability_t *AAS_FindFaceReachabilities(vec3_t *facepoints, int numpoint
 		// get the shortest distance between one of the func_bob start edges and
 		// one of the face edges of area1
 		bestdist = 999999;
+		assert(area->numfaces);
 		for (j = 0; j < area->numfaces; j++)
 		{
 			facenum = aasworld.faceindex[area->firstface + j];
@@ -3236,6 +3237,7 @@ aas_lreachability_t *AAS_FindFaceReachabilities(vec3_t *facepoints, int numpoint
 		if (towardsface) VectorCopy(bestend, testpoint);
 		else VectorCopy(beststart, testpoint);
 		testpoint[2] = 0;
+		assert(bestfaceplane);
 		testpoint[2] = (bestfaceplane->dist - DotProduct(bestfaceplane->normal, testpoint)) / bestfaceplane->normal[2];
 		//
 		if (!AAS_PointInsideFace(bestfacenum, testpoint, 0.1f))

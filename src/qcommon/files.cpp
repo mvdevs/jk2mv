@@ -533,6 +533,7 @@ qboolean FS_CopyFile( char *fromOSPath, char *toOSPath, char *newOSPath, const i
 	if( FS_CreatePath( toOSPath ) ) {
 		char *testpath = FS_BuildOSPath( fs_homepath->string, fs_gamedir, toOSPath );
 		if( FS_CreatePath( testpath ) ) {
+			free(buf);
 			return qfalse;
 		}
 	}
@@ -589,6 +590,7 @@ qboolean FS_CopyFile( char *fromOSPath, char *toOSPath, char *newOSPath, const i
 		}
 	}
 	if ( !f ) {
+		free(buf);
 		return qfalse;
 	}
 	if (fwrite( buf, 1, len, f ) != len)

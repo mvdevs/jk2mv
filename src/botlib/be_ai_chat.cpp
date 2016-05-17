@@ -646,6 +646,7 @@ bot_synonymlist_t *BotLoadSynonyms(char *filename)
 					size += sizeof(bot_synonymlist_t);
 					if (pass)
 					{
+						assert(ptr);
 						syn = (bot_synonymlist_t *) ptr;
 						ptr += sizeof(bot_synonymlist_t);
 						syn->context = context;
@@ -972,6 +973,7 @@ bot_randomlist_t *BotLoadRandomStrings(char *filename)
 			size += sizeof(bot_randomlist_t) + strlen(token.string) + 1;
 			if (pass)
 			{
+				assert(ptr);
 				random = (bot_randomlist_t *) ptr;
 				ptr += sizeof(bot_randomlist_t);
 				random->string = ptr;
