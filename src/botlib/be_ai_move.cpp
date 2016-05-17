@@ -896,9 +896,9 @@ int BotPredictVisiblePosition(vec3_t origin, int areanum, bot_goal_t *goal, int 
 {
 	aas_reachability_t reach;
 	int reachnum, lastgoalareanum, lastareanum, i;
-	int avoidreach[MAX_AVOIDREACH];
-	float avoidreachtimes[MAX_AVOIDREACH];
-	int avoidreachtries[MAX_AVOIDREACH];
+	int avoidreach[MAX_AVOIDREACH] = { 0 };
+	float avoidreachtimes[MAX_AVOIDREACH] = { 0 };
+	int avoidreachtries[MAX_AVOIDREACH] = { 0 };
 	vec3_t end;
 
 	//if the bot has no goal or no last reachability
@@ -908,7 +908,6 @@ int BotPredictVisiblePosition(vec3_t origin, int areanum, bot_goal_t *goal, int 
 	//if the goal areanum is not valid
 	if (!goal->areanum) return qfalse;
 
-	Com_Memset(avoidreach, 0, MAX_AVOIDREACH * sizeof(int));
 	lastgoalareanum = goal->areanum;
 	lastareanum = areanum;
 	VectorCopy(origin, end);
