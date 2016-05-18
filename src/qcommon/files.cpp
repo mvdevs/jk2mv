@@ -525,7 +525,7 @@ qboolean FS_CopyFile( char *fromOSPath, char *toOSPath, char *newOSPath, const i
 
 	// we are using direct malloc instead of Z_Malloc here, so it
 	// probably won't work on a mac... Its only for developers anyway...
-	buf = (unsigned char *)malloc( len );
+	buf = (byte *)Z_Malloc( len, TAG_FILESYS, qfalse );
 	if (fread( buf, 1, len, f ) != len)
 		Com_Error( ERR_FATAL, "Short read in FS_Copyfiles()\n" );
 	fclose( f );
@@ -533,7 +533,7 @@ qboolean FS_CopyFile( char *fromOSPath, char *toOSPath, char *newOSPath, const i
 	if( FS_CreatePath( toOSPath ) ) {
 		char *testpath = FS_BuildOSPath( fs_homepath->string, fs_gamedir, toOSPath );
 		if( FS_CreatePath( testpath ) ) {
-			free(buf);
+			Z_Free(buf);
 			return qfalse;
 		}
 	}
@@ -590,13 +590,13 @@ qboolean FS_CopyFile( char *fromOSPath, char *toOSPath, char *newOSPath, const i
 		}
 	}
 	if ( !f ) {
-		free(buf);
+		Z_Free(buf);
 		return qfalse;
 	}
 	if (fwrite( buf, 1, len, f ) != len)
 		Com_Error( ERR_FATAL, "Short write in FS_Copyfiles()\n" );
 	fclose( f );
-	free( buf );
+	Z_Free( buf );
 	return qtrue;
 }
 
