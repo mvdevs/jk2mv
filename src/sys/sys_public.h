@@ -18,8 +18,8 @@ typedef struct netadr_s
 {
 	netadrtype_t	type;
 
-	byte	ip[4];
-	unsigned short	port;
+	byte			ip[4];
+	uint16_t		port;
 } netadr_t;
 
 /*
