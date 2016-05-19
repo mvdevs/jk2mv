@@ -1457,7 +1457,7 @@ void BG_CycleForce(playerState_t *ps, int direction)
 {
 	int i = ps->fd.forcePowerSelected;
 	int x = i;
-	int presel = i;
+	int presel;
 	int foundnext = -1;
 
 	if (!(ps->fd.forcePowersKnown & (1 << x)) ||

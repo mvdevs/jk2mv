@@ -1329,6 +1329,8 @@ qboolean UI_HasSetSaberOnly( void )
 	int wDisable = 0;
 	int	gametype = 0;
 
+	trap_GetConfigString(CS_SERVERINFO, info, sizeof(info));
+
 	gametype = atoi(Info_ValueForKey(info, "g_gametype"));
 
 	if ( gametype == GT_JEDIMASTER )
