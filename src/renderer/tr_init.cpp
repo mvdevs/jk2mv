@@ -691,104 +691,6 @@ void GL_CheckErrors( void ) {
 	ri.Error( ERR_FATAL, "GL_CheckErrors: %s", s );
 }
 
-/*
-** R_GetModeInfo
-*/
-typedef struct vidmode_s
-{
-	const char *description;
-	int		 width, height;
-	float		pixelAspect;		// pixel width / height
-} vidmode_t;
-
-// screen resolutions
-vidmode_t r_vidModes[] = {
-	// 4:3
-	{ "Mode  0:  320x240",	320,  240,  1 },
-	{ "Mode  1:  400x300",	400,  300,  1 },
-	{ "Mode  2:  512x384",	512,  384,  1 },
-	{ "Mode  3:  640x480",	640,  480,  1 },
-	{ "Mode  4:  800x600",	800,  600,  1 },
-	{ "Mode  5:  960x720",	960,  720,  1 },
-	{ "Mode  6:  1024x768",   1024, 768,  1 },
-	{ "Mode  7:  1152x864",   1152, 864,  1 },
-	{ "Mode  8:  1280x1024",  1280, 1024, 1 },
-	{ "Mode  9:  1600x1200",  1600, 1200, 1 },
-	{ "Mode  10: 2048x1536",  2048, 1536, 1 },
-
-	// 16:9
-	{ "Mode  11: 960x540",	960,  540,  1 },
-	{ "Mode  12: 960x544",	960,  544,  1 },
-	{ "Mode  13: 1024x576",   1024, 576,  1 },
-	{ "Mode  14: 1024x600",   1024, 600,  1 },
-	{ "Mode  15: 1136x640",   1136, 640,  1 },
-	{ "Mode  16: 1280x720",   1280, 720,  1 },
-	{ "Mode  17: 1366x768",   1366, 768,  1 },
-	{ "Mode  18: 1600x900",   1600, 900,  1 },
-	{ "Mode  19: 1920x1080",  1920, 1080, 1 },
-	{ "Mode  20: 2048x1152",  2048, 1152, 1 },
-	{ "Mode  21: 2560x1440",  2560, 1440, 1 },
-	{ "Mode  22: 2880x1620",  2880, 1620, 1 },
-	{ "Mode  23: 3200x1800",  3200, 1800, 1 },
-	{ "Mode  24: 3840x2160",  3840, 2160, 1 },
-	{ "Mode  25: 4096x2304",  4096, 2304, 1 },
-	{ "Mode  26: 5120x2880",  5120, 2880, 1 },
-
-	// 16:10
-	{ "Mode  27: 1280x800",   1280, 800,  1 },
-	{ "Mode  28: 1440x900",   1440, 900,  1 },
-	{ "Mode  29: 1680x1050",  1680, 1050, 1 },
-	{ "Mode  30: 1920x1200",  1920, 1200, 1 },
-	{ "Mode  31: 2560x1600",  2560, 1600, 1 },
-};
-static int	s_numVidModes = ( sizeof( r_vidModes ) / sizeof( r_vidModes[0] ) );
-
-qboolean R_GetModeInfo( int *width, int *height, float *windowAspect, int mode ) {
-	vidmode_t	*vm;
-
-	if ( mode < -2 ) {
-		return qfalse;
-	}
-	if ( mode >= s_numVidModes ) {
-		return qfalse;
-	}
-
-	if ( mode == -1 ) {
-		*width = r_customwidth->integer;
-		*height = r_customheight->integer;
-		*windowAspect = r_customaspect->value;
-		return qtrue;
-	}
-
-	// native resolution
-	if (mode == -2) {
-		return qtrue;
-	}
-
-	vm = &r_vidModes[mode];
-
-	*width  = vm->width;
-	*height = vm->height;
-	*windowAspect = (float)vm->width / ( vm->height * vm->pixelAspect );
-
-	return qtrue;
-}
-
-/*
-** R_ModeList_f
-*/
-static void R_ModeList_f( void )
-{
-	int i;
-
-	ri.Printf( PRINT_ALL, "\n" );
-	for ( i = 0; i < s_numVidModes; i++ )
-	{
-		ri.Printf( PRINT_ALL, "%s\n", r_vidModes[i].description );
-	}
-	ri.Printf( PRINT_ALL, "\n" );
-}
-
 #endif //!DEDICATED
 
 /*
@@ -1437,7 +1339,6 @@ Ghoul2 Insert End
 	ri.Cmd_AddCommand( "gfxinfo", GfxInfo_f );
 	ri.Cmd_AddCommand("r_we", R_WorldEffect_f);
 	ri.Cmd_AddCommand( "imagecacheinfo", RE_RegisterImages_Info_f);
-	ri.Cmd_AddCommand( "modelist", R_ModeList_f );
 #endif
 	ri.Cmd_AddCommand("modellist", R_Modellist_f);
 	ri.Cmd_AddCommand( "modelcacheinfo", RE_RegisterModels_Info_f);
