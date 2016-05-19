@@ -85,15 +85,19 @@ float	FloatSwap (const float *f);
 //================= COMPILER-SPECIFIC DEFINES ===========================
 #ifdef _MSC_VER
 #define Q_NORETURN __declspec(noreturn)
+#define Q_PTR_NORETURN // MSVC doesn't support noreturn function pointers
 #define q_unreachable() abort()
 #elif defined __GNUC__
 #define Q_NORETURN __attribute__((noreturn))
+#define Q_PTR_NORETURN Q_NORETURN
 #define q_unreachable() __builtin_unreachable()
 #elif defined __clang__
 #define Q_NORETURN __attribute__((noreturn))
+#define Q_PTR_NORETURN Q_NORETURN
 #define q_unreachable() __builtin_unreachable()
 #else
 #define Q_NORETURN
+#define Q_PTR_NORETURN
 #define q_unreachable() abort()
 #endif
 

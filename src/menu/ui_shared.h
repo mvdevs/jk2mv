@@ -380,7 +380,7 @@ typedef struct {
 	void (*getBindingBuf)( int keynum, char *buf, int buflen );
 	void (*setBinding)( int keynum, const char *binding );
 	void (*executeText)(int exec_when, const char *text );
-	Q_NORETURN void (*Error)(int level, const char *error, ...);
+	Q_PTR_NORETURN void (*Error)(int level, const char *error, ...);
 	void (*Print)(const char *msg, ...);
 	void (*Pause)(qboolean b);
 	int (*ownerDrawWidth)(int ownerDraw, float scale);
