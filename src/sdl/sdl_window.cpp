@@ -2,6 +2,7 @@
 #include <SDL_syswm.h>
 #include "../qcommon/qcommon.h"
 #include "../sys/sys_local.h"
+#include "../renderer/tr_public.h"
 #include "sdl_icon.h"
 
 #define CLIENT_WINDOW_TITLE "JK2MV"
@@ -37,9 +38,9 @@ cvar_t	*r_displayRefresh;
 cvar_t	*r_stencilbits;
 cvar_t	*r_depthbits;
 cvar_t	*r_colorbits;
-cvar_t	*r_ignorehwgamma;
 cvar_t  *r_ext_multisample;
 cvar_t	*r_allowsoftwaregl;
+cvar_t	*r_gammamethod;
 
 /*
 ** R_GetModeInfo
@@ -746,9 +747,9 @@ window_t WIN_Init( const windowDesc_t *windowDesc, glconfig_t *glConfig )
 	r_stencilbits		= Cvar_Get( "r_stencilbits",		"8",		CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH );
 	r_depthbits			= Cvar_Get( "r_depthbits",			"0",		CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH );
 	r_colorbits			= Cvar_Get( "r_colorbits",			"0",		CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH );
-	r_ignorehwgamma		= Cvar_Get( "r_ignorehwgamma",		"0",		CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH );
 	r_ext_multisample	= Cvar_Get( "r_ext_multisample",	"0",		CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH );
 	r_allowsoftwaregl	= Cvar_Get( "r_allowsoftwaregl",	"0",		CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH );
+	r_gammamethod		= Cvar_Get( "r_gammamethod",		"2",		CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH );
 	Cvar_Get( "r_availableModes", "", CVAR_ROM );
 
 	// Create the window and set up the context
@@ -768,7 +769,7 @@ window_t WIN_Init( const windowDesc_t *windowDesc, glconfig_t *glConfig )
 	}
 
 	glConfig->deviceSupportsGamma =
-		(qboolean)(!r_ignorehwgamma->integer && SDL_SetWindowBrightness( screen, 1.0f ) >= 0);
+		(qboolean)(r_gammamethod->integer == GAMMA_HARDWARE && SDL_SetWindowBrightness( screen, 1.0f ) >= 0);
 
 	// This depends on SDL_INIT_VIDEO, hence having it here
 	IN_Init( screen );
@@ -827,7 +828,7 @@ void WIN_SetGamma( glconfig_t *glConfig, byte red[256], byte green[256], byte bl
 	Uint16 table[3][256];
 	int i, j;
 
-	if( !glConfig->deviceSupportsGamma || r_ignorehwgamma->integer > 0 )
+	if( !glConfig->deviceSupportsGamma || r_gammamethod->integer != GAMMA_HARDWARE )
 		return;
 
 	for (i = 0; i < 256; i++)

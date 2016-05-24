@@ -166,4 +166,10 @@ typedef struct {
 // returned.
 refexport_t*GetRefAPI( int apiVersion, refimport_t *rimp );
 
+typedef enum {
+	GAMMA_NONE,
+	GAMMA_HARDWARE,
+	GAMMA_POSTPROCESSING
+} gammamethod_t;
+
 #endif	// __TR_PUBLIC_H

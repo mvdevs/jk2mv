@@ -165,8 +165,6 @@ int		max_polyverts;
 cvar_t	*r_modelpoolmegs;
 cvar_t *r_screenshotJpegQuality;
 
-// gamma correction
-cvar_t *r_gammamethod;
 cvar_t *r_convertModelBones;
 cvar_t *r_loadSkinsJKA;
 
@@ -1245,7 +1243,6 @@ void R_Register( void )
 
 	// gamma correction
 	r_gamma = ri.Cvar_Get("r_gamma", "1", CVAR_ARCHIVE | CVAR_GLOBAL);
-	r_gammamethod = ri.Cvar_Get("r_gammamethod", GAMMA_DEFAULT, CVAR_ARCHIVE | CVAR_LATCH | CVAR_GLOBAL);
 
 	r_facePlaneCull = ri.Cvar_Get("r_facePlaneCull", "1", CVAR_ARCHIVE | CVAR_GLOBAL);
 

@@ -28,15 +28,6 @@ typedef unsigned int glIndex_t;
 #define MAX_STATES_PER_SHADER 32
 #define MAX_STATE_NAME 32
 
-// gamma correction
-#define GAMMA_DEFAULT "2" /* GAMMA_POSTPROCESSING */
-
-typedef enum {
-	GAMMA_NONE,
-	GAMMA_HARDWARE,
-	GAMMA_POSTPROCESSING
-} gammamethod_t;
-
 // can't be increased without changing bit packing for drawsurfs
 typedef enum
 {
