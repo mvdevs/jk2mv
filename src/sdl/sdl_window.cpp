@@ -733,7 +733,7 @@ window_t WIN_Init( const windowDesc_t *windowDesc, glconfig_t *glConfig )
 	r_sdlDriver			= Cvar_Get( "r_sdlDriver",			"",			CVAR_ROM );
 
 	// Window cvars
-	r_fullscreen		= Cvar_Get( "r_fullscreen",			"1",		CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH );
+	r_fullscreen		= Cvar_Get( "r_fullscreen",			"1",		CVAR_ARCHIVE | CVAR_GLOBAL );
 	r_noborder			= Cvar_Get( "r_noborder",			"0",		CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH );
 	r_centerWindow		= Cvar_Get( "r_centerWindow",		"0",		CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH );
 	r_customwidth		= Cvar_Get( "r_customwidth",		"1600",		CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH );
