@@ -695,18 +695,24 @@ CFontInfo *GetFont(int index)
 
 CFontInfo *RE_Font_GetVariant(CFontInfo *font, float *scale) {
 	int variants = font->GetNumVariants();
-	if (variants && r_fontSharpness->integer) {
-		int fontPointSize = font->GetPointSize();
-		int requestedHeight = fontPointSize * r_fontSharpness->value * *scale * (glConfig.vidHeight / 480.0f) + 0.001f;
 
-		for (int i = font->GetNumVariants() - 1; i >= 0; i--) {
-			CFontInfo *variant = font->GetVariant(i);
+	if (variants > 0) {
+		CFontInfo *variant;
+		int requestedSize = font->GetPointSize() * *scale *
+		  r_fontSharpness->value * glConfig.vidHeight / 480.0f;
 
-			if (requestedHeight >= variant->GetPointSize()) {
-				*scale *= (float)font->GetPointSize() / variant->GetPointSize();
-				return variant;
-			}
+		if (requestedSize <= font->GetPointSize())
+			return font;
+
+		for (int i = 0; i < variants; i++) {
+			variant = font->GetVariant(i);
+
+			if (requestedSize <= variant->GetPointSize())
+				break;
 		}
+
+		*scale *= (float)font->GetPointSize() / variant->GetPointSize();
+		return variant;
 	}
 
 	return font;
