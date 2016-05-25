@@ -2614,7 +2614,7 @@ void QDECL CL_RefPrintf( int print_level, const char *fmt, ...) {
 	char		msg[MAXPRINTMSG];
 
 	va_start (argptr,fmt);
-	vsprintf (msg,fmt,argptr);
+	vsnprintf (msg, sizeof(msg), fmt, argptr);
 	va_end (argptr);
 
 	if ( print_level == PRINT_ALL ) {
@@ -4132,7 +4132,7 @@ void CL_GetVMGLConfig(vmglconfig_t *vmglconfig) {
 	vmglconfig->depthBits = cls.glconfig.depthBits;
 	vmglconfig->stencilBits = cls.glconfig.stencilBits;
 
-	vmglconfig->deviceSupportsGamma = cls.glconfig.deviceSupportsGamma;
+	vmglconfig->deviceSupportsGamma = (qboolean)(cls.glconfig.deviceSupportsGamma || cls.glconfig.deviceSupportsPostprocessingGamma);
 	vmglconfig->textureCompression = cls.glconfig.textureCompression;
 	vmglconfig->textureEnvAddAvailable = cls.glconfig.textureEnvAddAvailable;
 	vmglconfig->textureFilterAnisotropicAvailable = cls.glconfig.textureFilterAnisotropicMax == 0.0f ? qfalse : qtrue;

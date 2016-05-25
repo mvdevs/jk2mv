@@ -4213,7 +4213,7 @@ static void CreateInternalShaders( void ) {
 
 #ifndef DEDICATED
 	// gamma correction
-	if (glConfig.deviceSupportsPostprocessingGamma && r_gammamethod->integer == GAMMA_POSTPROCESSING) {
+	if (r_gammamethod->integer == GAMMA_POSTPROCESSING) {
 		if (MV_GammaGenerateProgram()) {
 			ri.Printf(PRINT_WARNING, "WARNING: failed initializing gamma program... falling back to hardware gamma correction\n");
 			glConfig.deviceSupportsPostprocessingGamma = qfalse;

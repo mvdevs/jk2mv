@@ -1233,7 +1233,7 @@ const void	*RB_SwapBuffers( const void *data ) {
 	}
 
 	// gamma correction
-	if (glConfig.deviceSupportsPostprocessingGamma && r_gammamethod->integer == GAMMA_POSTPROCESSING) {
+	if (r_gammamethod->integer == GAMMA_POSTPROCESSING) {
 		RB_SetGL2D();
 
 		qglEnable(GL_VERTEX_PROGRAM_ARB);

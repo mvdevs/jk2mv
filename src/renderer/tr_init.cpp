@@ -638,6 +638,8 @@ static void InitOpenGL(void) {
 		// initialize extensions
 		GLimp_InitExtensions();
 
+		WIN_InitGammaMethod(&glConfig);
+
 		// set default state
 		GL_SetDefaultState();
 	} else {
@@ -1104,11 +1106,12 @@ void GfxInfo_f( void )
 	}
 
 	// gamma correction
-	if (glConfig.deviceSupportsPostprocessingGamma) {
-		ri.Printf(PRINT_ALL, "GAMMA_METHOD: postprocessing\n");
-	}
-	if (glConfig.deviceSupportsGamma) {
-		ri.Printf(PRINT_ALL, "GAMMA_METHOD: hardware\n");
+	if (r_gammamethod->integer == GAMMA_POSTPROCESSING) {
+		ri.Printf(PRINT_ALL, "gamma method: postprocessing\n");
+	} else if (r_gammamethod->integer == GAMMA_HARDWARE) {
+		ri.Printf(PRINT_ALL, "gamma method: hardware\n");
+	} else {
+		ri.Printf(PRINT_ALL, "gamma method: none\n");
 	}
 
 	// rendering primitives
@@ -1427,11 +1430,6 @@ void R_Init( void ) {
 		RE_SetLightStyle(i, -1);
 	}
 	InitOpenGL();
-
-	// gamma correction
-	if (r_gammamethod->integer == GAMMA_POSTPROCESSING && !glConfig.deviceSupportsPostprocessingGamma) {
-		r_gammamethod->integer = GAMMA_HARDWARE; // temporary fallback to hardware gamma
-	}
 
 	R_InitImages();
 	R_InitShaders();

@@ -311,7 +311,7 @@ void R_LightScaleTexture (byte *in, int inwidth, int inheight, qboolean only_gam
 {
 	if ( only_gamma )
 	{
-		if ( !glConfig.deviceSupportsGamma )
+		if ( r_gammamethod->integer == GAMMA_NONE )
 		{
 			int		i, c;
 			byte	*p;
@@ -336,7 +336,7 @@ void R_LightScaleTexture (byte *in, int inwidth, int inheight, qboolean only_gam
 
 		c = inwidth*inheight;
 
-		if ( glConfig.deviceSupportsGamma )
+		if ( r_gammamethod->integer )
 		{
 			for (i=0 ; i<c ; i++, p+=4)
 			{
@@ -2611,8 +2611,13 @@ void R_SetColorMappings( void ) {
 	// setup the overbright lighting
 	tr.overbrightBits = r_overBrightBits->integer;
 
-	if (!glConfig.isFullscreen && r_gammamethod->integer != GAMMA_POSTPROCESSING)
+	if (r_gammamethod->integer == GAMMA_NONE)
 	{
+		tr.overbrightBits = 0;
+	}
+
+	// never overbright in windowed mode
+	if (r_gammamethod->integer == GAMMA_HARDWARE && !glConfig.isFullscreen) {
 		tr.overbrightBits = 0;
 	}
 
@@ -2698,7 +2703,7 @@ void R_SetColorMappings( void ) {
 	}
 
 	// gamma correction
-	if (glConfig.deviceSupportsGamma && r_gammamethod->integer == GAMMA_HARDWARE) {
+	if (r_gammamethod->integer == GAMMA_HARDWARE) {
 		WIN_SetGamma( &glConfig, s_gammatable, s_gammatable, s_gammatable );
 	}
 }
@@ -2710,7 +2715,7 @@ R_InitImages
 */
 void	R_InitImages( void ) {
 	// gamma render target
-	if (glConfig.deviceSupportsPostprocessingGamma && r_gammamethod->integer == GAMMA_POSTPROCESSING) {
+	if (r_gammamethod->integer == GAMMA_POSTPROCESSING) {
 		qglEnable(GL_TEXTURE_3D);
 		tr.gammaLUTImage = 1024 + giTextureBindNum++;
 		qglBindTexture(GL_TEXTURE_3D, tr.gammaLUTImage);

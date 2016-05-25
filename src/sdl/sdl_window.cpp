@@ -768,9 +768,6 @@ window_t WIN_Init( const windowDesc_t *windowDesc, glconfig_t *glConfig )
 		}
 	}
 
-	glConfig->deviceSupportsGamma =
-		(qboolean)(r_gammamethod->integer == GAMMA_HARDWARE && SDL_SetWindowBrightness( screen, 1.0f ) >= 0);
-
 	// This depends on SDL_INIT_VIDEO, hence having it here
 	IN_Init( screen );
 
@@ -797,6 +794,21 @@ window_t WIN_Init( const windowDesc_t *windowDesc, glconfig_t *glConfig )
 #endif
 
 	return window;
+}
+
+void WIN_InitGammaMethod(glconfig_t *glConfig) {
+	if (r_gammamethod->integer == GAMMA_POSTPROCESSING && !glConfig->deviceSupportsPostprocessingGamma) {
+		Com_Printf("postprocessing gamma correction not supported, falling back to hardware gamma...\n");
+		r_gammamethod->integer = GAMMA_HARDWARE;
+	}
+
+	if (r_gammamethod->integer == GAMMA_HARDWARE) {
+		glConfig->deviceSupportsGamma = (qboolean)(SDL_SetWindowBrightness(screen, 1.0f) >= 0);
+		if (!glConfig->deviceSupportsGamma) {
+			Com_Printf("hardware gamma correction not supported, proceeding without gamma correction...\n");
+			r_gammamethod->integer = GAMMA_NONE;
+		}
+	}
 }
 
 /*
@@ -828,7 +840,7 @@ void WIN_SetGamma( glconfig_t *glConfig, byte red[256], byte green[256], byte bl
 	Uint16 table[3][256];
 	int i, j;
 
-	if( !glConfig->deviceSupportsGamma || r_gammamethod->integer != GAMMA_HARDWARE )
+	if( r_gammamethod->integer != GAMMA_HARDWARE )
 		return;
 
 	for (i = 0; i < 256; i++)
