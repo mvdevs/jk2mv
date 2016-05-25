@@ -42,6 +42,7 @@ cvar_t	*mv_fixbrokenmodels;
 cvar_t	*mv_fixturretcrash;
 cvar_t	*mv_blockchargejump;
 cvar_t	*mv_blockspeedhack;
+cvar_t	*mv_fixsaberstealing;
 
 /*
 =============================================================================
@@ -1017,6 +1018,22 @@ int SV_FrameMsec() {
 		return 1;
 }
 
+static void MV_FixSaberStealing( void )
+{
+	if ( mv_fixsaberstealing->integer && !(sv.fixes & MVFIX_SABERSTEALING) ) {
+		playerState_t	*ps;
+		int				i;
+
+		for ( i = 0; i < sv_maxclients->integer; i++ ) {
+			ps = SV_GameClientNum( i );
+
+			if ( ps->persistant[PERS_TEAM] == TEAM_SPECTATOR ) {
+				ps->saberEntityNum = ENTITYNUM_NONE;
+			}
+		}
+	}
+}
+
 /*
 ==================
 SV_Frame
@@ -1110,6 +1127,7 @@ void SV_Frame( int msec ) {
 
 		// let everything in the world think and move
 		VM_Call( gvm, GAME_RUN_FRAME, svs.time );
+		MV_FixSaberStealing();
 	}
 
 	if ( com_speeds->integer ) {

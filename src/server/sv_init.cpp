@@ -858,6 +858,7 @@ void SV_Init (void) {
 	mv_fixturretcrash = Cvar_Get("mv_fixturretcrash", "1", CVAR_ARCHIVE);
 	mv_blockchargejump = Cvar_Get("mv_blockchargejump", "1", CVAR_ARCHIVE);
 	mv_blockspeedhack = Cvar_Get("mv_blockspeedhack", "1", CVAR_ARCHIVE);
+	mv_fixsaberstealing = Cvar_Get("mv_fixsaberstealing", "1", CVAR_ARCHIVE);
 
 	// serverinfo vars
 	Cvar_Get ("dmflags", "0", CVAR_SERVERINFO);

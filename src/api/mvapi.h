@@ -30,6 +30,7 @@ typedef enum {
 	MVFIX_TURRETCRASH         = (1 << 4),
 	MVFIX_CHARGEJUMP          = (1 << 5),
 	MVFIX_SPEEDHACK           = (1 << 6),
+	MVFIX_SABERSTEALING	      = (1 << 7),
 
 	/* CGAME */
 	MVFIX_WPGLOWING           = (1 << 16),
