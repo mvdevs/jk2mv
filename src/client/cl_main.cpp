@@ -2922,8 +2922,6 @@ void CL_Init( void ) {
 	// autorecord
 	cl_autoDemo = Cvar_Get ("cl_autoDemo", "0", CVAR_ARCHIVE | CVAR_GLOBAL );
 	cl_autoDemoFormat = Cvar_Get ("cl_autoDemoFormat", "%t_%m", CVAR_ARCHIVE | CVAR_GLOBAL );
-	Cmd_AddCommand ("saveDemo", demoAutoSave_f);
-	Cmd_AddCommand ("saveDemoLast", demoAutoSaveLast_f);
 
 	// mv cvars
 	mv_slowrefresh = Cvar_Get("mv_slowrefresh", "3", CVAR_ARCHIVE | CVAR_GLOBAL);
@@ -2965,6 +2963,8 @@ void CL_Init( void ) {
 	Cmd_AddCommand ("fs_referencedList", CL_ReferencedPK3List_f );
 	Cmd_AddCommand ("model", CL_SetModel_f );
 	Cmd_AddCommand ("forcepowers", CL_SetForcePowers_f );
+	Cmd_AddCommand ("saveDemo", demoAutoSave_f);
+	Cmd_AddCommand ("saveDemoLast", demoAutoSaveLast_f);
 
 	CL_InitRef();
 
@@ -3022,7 +3022,7 @@ void CL_Shutdown( void ) {
 
 	Cmd_RemoveCommand ("cmd");
 	Cmd_RemoveCommand ("configstrings");
-	Cmd_RemoveCommand ("userinfo");
+	Cmd_RemoveCommand ("clientinfo");
 	Cmd_RemoveCommand ("snd_restart");
 	Cmd_RemoveCommand ("vid_restart");
 	Cmd_RemoveCommand ("disconnect");
@@ -3031,6 +3031,7 @@ void CL_Shutdown( void ) {
 	Cmd_RemoveCommand ("cinematic");
 	Cmd_RemoveCommand ("stoprecord");
 	Cmd_RemoveCommand ("connect");
+	Cmd_RemoveCommand ("reconnect");
 	Cmd_RemoveCommand ("localservers");
 	Cmd_RemoveCommand ("globalservers");
 	Cmd_RemoveCommand ("rcon");
@@ -3038,8 +3039,12 @@ void CL_Shutdown( void ) {
 	Cmd_RemoveCommand ("ping");
 	Cmd_RemoveCommand ("serverstatus");
 	Cmd_RemoveCommand ("showip");
+	Cmd_RemoveCommand ("fs_openedList");
+	Cmd_RemoveCommand ("fs_referencedList");
 	Cmd_RemoveCommand ("model");
 	Cmd_RemoveCommand ("forcepowers");
+	Cmd_RemoveCommand ("saveDemo");
+	Cmd_RemoveCommand ("saveDemoLast");
 
 	Cvar_Set( "cl_running", "0" );
 
