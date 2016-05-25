@@ -1557,6 +1557,15 @@ void CL_KeyEvent (int key, qboolean down, unsigned time) {
 		}
 	}
 
+	if ( key == A_ENTER && kg.keys[A_ALT].down ) {
+		if (!down) {
+			return;
+		}
+
+		Cvar_SetValue( "r_fullscreen", !Cvar_VariableIntegerValue( "r_fullscreen" ) );
+		return;
+	}
+
 	// console key is hardcoded, so the user can never unbind it
 	if (key == A_CONSOLE) {
 		if (!down) {
