@@ -15,6 +15,8 @@ int			chat_playerNum;
 
 keyGlobals_t	kg;
 
+extern console_t con;
+
 // do NOT blithely change any of the key names (3rd field) here, since they have to match the key binds
 //	in the CFG files, they're also prepended with "KEYNAME_" when looking up StripEd references
 //
@@ -371,7 +373,7 @@ Handles horizontal scrolling and cursor blinking
 x, y, amd width are in pixels
 ===================
 */
-void Field_VariableSizeDraw( field_t *edit, int x, int y, int width, int size, qboolean showCursor ) {
+void Field_VariableSizeDraw( field_t *edit, int x, int y, int width, qboolean smallSize, qboolean showCursor ) {
 	int		len;
 	int		drawLen;
 	int		prestep;
@@ -416,7 +418,7 @@ void Field_VariableSizeDraw( field_t *edit, int x, int y, int width, int size, q
 	str[ drawLen ] = 0;
 
 	// draw it
-	if ( size == SMALLCHAR_WIDTH ) {
+	if ( smallSize ) {
 		float	color[4];
 
 		color[0] = color[1] = color[2] = color[3] = 1.0;
@@ -443,24 +445,24 @@ void Field_VariableSizeDraw( field_t *edit, int x, int y, int width, int size, q
 
 	i = drawLen - ( Q_PrintStrlen( str, (qboolean)MV_USE102COLOR ) + 1 );
 
-	if ( size == SMALLCHAR_WIDTH ) {
-		SCR_DrawSmallChar( x + ( edit->cursor - prestep - i ) * size, y, cursorChar );
+	if ( smallSize ) {
+		SCR_DrawSmallChar( x + ( edit->cursor - prestep - i ) * con.charWidth, y, cursorChar );
 	} else {
 		str[0] = cursorChar;
 		str[1] = 0;
-		SCR_DrawBigString( x + ( edit->cursor - prestep - i ) * size, y, str, 1.0 );
+		SCR_DrawBigString( x + ( edit->cursor - prestep - i ) * BIGCHAR_WIDTH, y, str, 1.0 );
 
 	}
 }
 
 void Field_Draw( field_t *edit, int x, int y, int width, qboolean showCursor )
 {
-	Field_VariableSizeDraw( edit, x, y, width, SMALLCHAR_WIDTH, showCursor );
+	Field_VariableSizeDraw( edit, x, y, width, qtrue, showCursor );
 }
 
 void Field_BigDraw( field_t *edit, int x, int y, int width, qboolean showCursor )
 {
-	Field_VariableSizeDraw( edit, x, y, width, BIGCHAR_WIDTH, showCursor );
+	Field_VariableSizeDraw( edit, x, y, width, qfalse, showCursor );
 }
 
 /*
@@ -875,8 +877,6 @@ void Console_Key (int key) {
 		kg.historyLine = kg.nextHistoryLine;
 
 		Field_Clear( &kg.g_consoleField );
-
-		kg.g_consoleField.widthInChars = g_console_field_width;
 
 		if ( cls.state == CA_DISCONNECTED ) {
 			SCR_UpdateScreen ();	// force an update, because the command

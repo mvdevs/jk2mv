@@ -89,8 +89,6 @@ typedef struct {
 // it can be un-deltad from the original
 #define	MAX_PARSE_ENTITIES	2048
 
-extern int g_console_field_width;
-
 typedef struct {
 	int			timeoutcount;		// it requres several frames in a timeout condition
 									// to disconnect, preventing debugging breaks from
@@ -375,6 +373,9 @@ typedef struct {
 	int 	linewidth;		// characters across screen
 	int		totallines;		// total lines in console scrollback
 
+	int		charWidth;		// Scaled console character width
+	int		charHeight;		// Scaled console character height
+
 	float	xadjust;		// for wide aspect screens
 	float	yadjust;		// for wide aspect screens
 
@@ -552,8 +553,6 @@ qboolean CL_UpdateVisiblePings_f( int source );
 //
 // console
 //
-void Con_DrawCharacter (int cx, int line, int num);
-
 void Con_CheckResize (void);
 void Con_Init (void);
 void Con_Clear_f (void);
