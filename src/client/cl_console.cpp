@@ -230,9 +230,9 @@ void Con_CheckResize (void)
 		con.charWidth = scale * SMALLCHAR_WIDTH;
 		con.charHeight = scale * SMALLCHAR_HEIGHT;
 
-		kg.g_consoleField.widthInChars = width;
+		kg.g_consoleField.widthInChars = width - 1; // Command prompt
 		for ( i = 0 ; i < COMMAND_HISTORY ; i++ ) {
-			kg.historyEditLines[i].widthInChars = width;
+			kg.historyEditLines[i].widthInChars = width - 1;
 		}
 
 		oldwidth = con.linewidth;
@@ -287,10 +287,10 @@ void Con_Init (void) {
 	con_scale = Cvar_Get ("con_scale", "1", CVAR_GLOBAL | CVAR_ARCHIVE);
 
 	Field_Clear( &kg.g_consoleField );
-	kg.g_consoleField.widthInChars = DEFAULT_CONSOLE_WIDTH;
+	kg.g_consoleField.widthInChars = DEFAULT_CONSOLE_WIDTH - 1; // Command prompt
 	for ( i = 0 ; i < COMMAND_HISTORY ; i++ ) {
 		Field_Clear( &kg.historyEditLines[i] );
-		kg.historyEditLines[i].widthInChars = DEFAULT_CONSOLE_WIDTH;
+		kg.historyEditLines[i].widthInChars = DEFAULT_CONSOLE_WIDTH - 1;
 	}
 
 	Cmd_AddCommand ("toggleconsole", Con_ToggleConsole_f);
@@ -443,8 +443,7 @@ void Con_DrawInput (void) {
 
 	SCR_DrawSmallChar( con.charWidth, y, CONSOLE_PROMPT_CHAR );
 
-	Field_Draw( &kg.g_consoleField, 2 * con.charWidth, y,
-		SCREEN_WIDTH - 3 * con.charWidth, qtrue );
+	Field_Draw( &kg.g_consoleField, 2 * con.charWidth, y, qtrue );
 }
 
 
@@ -561,8 +560,7 @@ void Con_DrawNotify (void)
 			skip = 5;
 		}
 
-		Field_BigDraw( &chatField, skip * BIGCHAR_WIDTH, v,
-			SCREEN_WIDTH - ( skip + 1 ) * BIGCHAR_WIDTH, qtrue );
+		Field_BigDraw( &chatField, skip * BIGCHAR_WIDTH, v, qtrue );
 
 		v += BIGCHAR_HEIGHT;
 	}

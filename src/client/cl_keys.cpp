@@ -373,7 +373,7 @@ Handles horizontal scrolling and cursor blinking
 x, y, amd width are in pixels
 ===================
 */
-void Field_VariableSizeDraw( field_t *edit, int x, int y, int width, qboolean smallSize, qboolean showCursor ) {
+void Field_VariableSizeDraw( field_t *edit, int x, int y, qboolean smallSize, qboolean showCursor ) {
 	int		len;
 	int		drawLen;
 	int		prestep;
@@ -382,7 +382,7 @@ void Field_VariableSizeDraw( field_t *edit, int x, int y, int width, qboolean sm
 	int		i;
 
 	drawLen = edit->widthInChars;
-	len = (int)strlen(edit->buffer) + 1;
+	len = strlen(edit->buffer);
 
 	// guarantee that cursor will be visible
 	if ( len <= drawLen ) {
@@ -443,7 +443,7 @@ void Field_VariableSizeDraw( field_t *edit, int x, int y, int width, qboolean sm
 		cursorChar = 10;
 	}
 
-	i = drawLen - ( Q_PrintStrlen( str, (qboolean)MV_USE102COLOR ) + 1 );
+	i = drawLen - ( Q_PrintStrlen( str, (qboolean)MV_USE102COLOR ) );
 
 	if ( smallSize ) {
 		SCR_DrawSmallChar( x + ( edit->cursor - prestep - i ) * con.charWidth, y, cursorChar );
@@ -455,14 +455,14 @@ void Field_VariableSizeDraw( field_t *edit, int x, int y, int width, qboolean sm
 	}
 }
 
-void Field_Draw( field_t *edit, int x, int y, int width, qboolean showCursor )
+void Field_Draw( field_t *edit, int x, int y, qboolean showCursor )
 {
-	Field_VariableSizeDraw( edit, x, y, width, qtrue, showCursor );
+	Field_VariableSizeDraw( edit, x, y, qtrue, showCursor );
 }
 
-void Field_BigDraw( field_t *edit, int x, int y, int width, qboolean showCursor )
+void Field_BigDraw( field_t *edit, int x, int y, qboolean showCursor )
 {
-	Field_VariableSizeDraw( edit, x, y, width, qfalse, showCursor );
+	Field_VariableSizeDraw( edit, x, y, qfalse, showCursor );
 }
 
 /*
