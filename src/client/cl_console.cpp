@@ -218,6 +218,10 @@ void Con_CheckResize (void)
 	{
 		float scale = (con_scale && con_scale->value > 0.0f) ? con_scale->value : 1.0f;
 
+		// on wide screens, we will center the text
+		con.xadjust = 640.0f / cls.glconfig.vidWidth;
+		con.yadjust = 480.0f / cls.glconfig.vidHeight;
+
 		width = (cls.glconfig.vidWidth / (scale * SMALLCHAR_WIDTH)) - 2;
 
 		if (width == con.linewidth)
@@ -230,10 +234,6 @@ void Con_CheckResize (void)
 		for ( i = 0 ; i < COMMAND_HISTORY ; i++ ) {
 			kg.historyEditLines[i].widthInChars = width;
 		}
-
-		// on wide screens, we will center the text
-		con.xadjust = 640.0f / cls.glconfig.vidWidth;
-		con.yadjust = 480.0f / cls.glconfig.vidHeight;
 
 		oldwidth = con.linewidth;
 		con.linewidth = width;
