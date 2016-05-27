@@ -441,9 +441,9 @@ void Con_DrawInput (void) {
 
 	re.SetColor( con.color );
 
-	SCR_DrawSmallChar( (int)(con.xadjust + con.charWidth), y, ']' );
+	SCR_DrawSmallChar( con.charWidth, y, CONSOLE_PROMPT_CHAR );
 
-	Field_Draw( &kg.g_consoleField, (int)(con.xadjust + 2 * con.charWidth), y,
+	Field_Draw( &kg.g_consoleField, 2 * con.charWidth, y,
 		SCREEN_WIDTH - 3 * con.charWidth, qtrue );
 }
 
@@ -516,7 +516,7 @@ void Con_DrawNotify (void)
 			//
 			// and print...
 			//
-			re.Font_DrawString(cl_conXOffset->integer + con.xadjust*(con.xadjust + (1*con.charWidth/*aesthetics*/)), con.yadjust*(v), sTemp, g_color_table[currentColor], iFontIndex, -1, fFontScale);
+			re.Font_DrawString(cl_conXOffset->integer + con.xadjust*con.charWidth/*aesthetics*/, con.yadjust*(v), sTemp, g_color_table[currentColor], iFontIndex, -1, fFontScale);
 
 			v +=  iPixelHeightToAdvance;
 		}
@@ -534,7 +534,7 @@ void Con_DrawNotify (void)
 				{
 					cl_conXOffset = Cvar_Get ("cl_conXOffset", "0", 0);
 				}
-				SCR_DrawSmallChar( (int)(cl_conXOffset->integer + con.xadjust + (x+1)*con.charWidth), v, text[x] & 0xff );
+				SCR_DrawSmallChar( (int)(cl_conXOffset->integer + (x+1)*con.charWidth), v, text[x] & 0xff );
 			}
 
 			v += con.charHeight;
@@ -624,7 +624,7 @@ void Con_DrawSolidConsole( float frac ) {
 
 	// draw the text
 	con.vislines = lines;
-	rows = (lines-con.charWidth)/con.charWidth;		// rows of text to draw
+	rows = (lines-con.charHeight)/con.charHeight;		// rows of text to draw
 
 	y = lines - (con.charHeight*3);
 
@@ -634,7 +634,7 @@ void Con_DrawSolidConsole( float frac ) {
 	// draw arrows to show the buffer is backscrolled
 		re.SetColor( g_color_table[ColorIndex(COLOR_RED)] );
 		for (x=0 ; x<con.linewidth ; x+=4)
-			SCR_DrawSmallChar( (int) (con.xadjust + (x+1)*con.charWidth), y, '^' );
+			SCR_DrawSmallChar( (x+1)*con.charWidth, y, '^' );
 		y -= con.charHeight;
 		rows--;
 	}
@@ -691,7 +691,7 @@ void Con_DrawSolidConsole( float frac ) {
 			//
 			// and print...
 			//
-			re.Font_DrawString(con.xadjust*(con.xadjust + (1*con.charWidth/*(aesthetics)*/)), con.yadjust*(y), sTemp, g_color_table[currentColor], iFontIndexForAsian, -1, fFontScaleForAsian);
+			re.Font_DrawString(con.xadjust*con.charWidth/*(aesthetics)*/, con.yadjust*(y), sTemp, g_color_table[currentColor], iFontIndexForAsian, -1, fFontScaleForAsian);
 		}
 		else
 		{
@@ -704,7 +704,7 @@ void Con_DrawSolidConsole( float frac ) {
 					currentColor = (text[x]>>8)&7;
 					re.SetColor( g_color_table[currentColor] );
 				}
-				SCR_DrawSmallChar(  (int) (con.xadjust + (x+1)*con.charWidth), y, text[x] & 0xff );
+				SCR_DrawSmallChar( (x+1)*con.charWidth, y, text[x] & 0xff );
 			}
 		}
 	}
