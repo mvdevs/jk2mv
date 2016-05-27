@@ -10,7 +10,7 @@ int g_console_field_width = 78;
 
 console_t	con;
 
-cvar_t		*con_conspeed;
+cvar_t		*con_speed;
 cvar_t		*con_notifytime;
 cvar_t		*con_height;
 
@@ -275,8 +275,8 @@ Con_Init
 void Con_Init (void) {
 	int		i;
 
-	con_notifytime = Cvar_Get ("con_notifytime", "3", CVAR_GLOBAL);
-	con_conspeed = Cvar_Get ("scr_conspeed", "3", CVAR_GLOBAL);
+	con_notifytime = Cvar_Get ("con_notifytime", "3", CVAR_GLOBAL | CVAR_ARCHIVE);
+	con_speed = Cvar_Get ("con_speed", "3", CVAR_GLOBAL | CVAR_ARCHIVE);
 	con_height = Cvar_Get ("con_height", "0.5", CVAR_GLOBAL | CVAR_ARCHIVE);
 
 	Field_Clear( &kg.g_consoleField );
@@ -759,14 +759,14 @@ void Con_RunConsole (void) {
 		// scroll towards the destination height
 		if (con.finalFrac < con.displayFrac)
 		{
-			con.displayFrac -= con_conspeed->value*(float)(cls.realFrametime*0.001);
+			con.displayFrac -= con_speed->value*(float)(cls.realFrametime*0.001);
 			if (con.finalFrac > con.displayFrac)
 				con.displayFrac = con.finalFrac;
 
 		}
 		else if (con.finalFrac > con.displayFrac)
 		{
-			con.displayFrac += con_conspeed->value*(float)(cls.realFrametime*0.001);
+			con.displayFrac += con_speed->value*(float)(cls.realFrametime*0.001);
 			if (con.finalFrac < con.displayFrac)
 				con.displayFrac = con.finalFrac;
 		}
