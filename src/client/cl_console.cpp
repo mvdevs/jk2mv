@@ -12,6 +12,7 @@ console_t	con;
 
 cvar_t		*con_conspeed;
 cvar_t		*con_notifytime;
+cvar_t		*con_height;
 
 #define	DEFAULT_CONSOLE_WIDTH	78
 
@@ -276,6 +277,7 @@ void Con_Init (void) {
 
 	con_notifytime = Cvar_Get ("con_notifytime", "3", CVAR_GLOBAL);
 	con_conspeed = Cvar_Get ("scr_conspeed", "3", CVAR_GLOBAL);
+	con_height = Cvar_Get ("con_height", "0.5", CVAR_GLOBAL | CVAR_ARCHIVE);
 
 	Field_Clear( &kg.g_consoleField );
 	kg.g_consoleField.widthInChars = g_console_field_width;
@@ -747,7 +749,7 @@ Scroll it up or down
 void Con_RunConsole (void) {
 	// decide on the destination height of the console
 	if ( cls.keyCatchers & KEYCATCH_CONSOLE )
-		con.finalFrac = 0.5;		// half screen
+		con.finalFrac = con_height->value;
 	else
 		con.finalFrac = 0;				// none visible
 
