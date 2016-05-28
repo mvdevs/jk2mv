@@ -339,7 +339,7 @@ If no console is visible, the text will appear at the top of the game window
 */
 void CL_ConsolePrint( char *txt ) {
 	int		y;
-	int		c, l;
+	int		c;
 	int		color;
 
 	// for some demos we don't want to ever show anything on the console
@@ -367,20 +367,6 @@ void CL_ConsolePrint( char *txt ) {
 			color = ColorIndex( *(txt+1) );
 			txt += 2;
 			continue;
-		}
-
-		// count word length
-		for (l=0 ; l< con.linewidth ; l++) {
-			if ( txt[l] <= ' ') {
-				break;
-			}
-
-		}
-
-		// word wrap
-		if (l != con.linewidth && (con.x + l >= con.linewidth) ) {
-			Con_Linefeed();
-
 		}
 
 		txt++;
