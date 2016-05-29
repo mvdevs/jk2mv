@@ -999,6 +999,9 @@ int Q_isprint( int c );
 int Q_islower( int c );
 int Q_isupper( int c );
 int Q_isalpha( int c );
+int Q_isdigit( int c );
+int Q_isalnum( int c );
+
 
 // portable case insensitive compare
 int		Q_stricmp (const char *s1, const char *s2);

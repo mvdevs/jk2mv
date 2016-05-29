@@ -157,7 +157,7 @@ keyname_t keynames[MAX_KEYS] =
     { 0x80, 0x80, "EURO", A_EURO, false  								},
     { 0x81, 0x81, "SHIFT", A_SHIFT2, false								},
     { 0x82, 0x82, "CTRL", A_CTRL2, false								},
-    { 0x83, 0x83, "ALT", A_ALT2, false									},
+    { 0x83, 0x83, "ALTGR", A_ALT2, false								},
     { 0x84, 0x84, "F5", A_F5, true										},
     { 0x85, 0x85, "F6", A_F6, true										},
     { 0x86, 0x86, "F7", A_F7, true										},
@@ -489,6 +489,40 @@ void Field_Paste( field_t *edit ) {
 	Z_Free( cbd );
 }
 
+static void Field_ForwardWord( field_t *edit ) {
+	char	*c;
+
+	c = edit->buffer + edit->cursor;
+
+	while ( *c != '\0' && !Q_isalnum( *c ) )
+		c++;
+
+	while ( Q_isalnum( *c ) )
+		c++;
+
+	edit->cursor = c - edit->buffer;
+
+	if ( edit->cursor >= edit->scroll + edit->widthInChars )
+		edit->scroll = edit->cursor - edit->widthInChars;
+}
+
+static void Field_BackwardWord( field_t *edit ) {
+	int		cursor;
+
+	cursor = edit->cursor;
+
+	while (cursor > 0 && !Q_isalnum( edit->buffer[cursor - 1] ) )
+		cursor--;
+
+	while (cursor > 0 && Q_isalnum( edit->buffer[cursor - 1] ) )
+		cursor--;
+
+	edit->cursor = cursor;
+
+	if ( cursor < edit->scroll )
+		edit->scroll = cursor;
+}
+
 /*
 =================
 Field_KeyDownEvent
@@ -510,7 +544,7 @@ void Field_KeyDownEvent( field_t *edit, int key ) {
 
 	len = (int)strlen(edit->buffer);
 
-	if ( key == A_DELETE ) {
+	if ( key == A_DELETE || ( keynames[key].lower == 'd' && kg.keys[A_CTRL].down ) ) {
 		if ( edit->cursor < len ) {
 			memmove( edit->buffer + edit->cursor,
 				edit->buffer + edit->cursor + 1, len - edit->cursor );
@@ -518,7 +552,7 @@ void Field_KeyDownEvent( field_t *edit, int key ) {
 		return;
 	}
 
-	if ( key == A_CURSOR_RIGHT )
+	if ( key == A_CURSOR_RIGHT || ( keynames[key].lower == 'f' && kg.keys[A_CTRL].down ) )
 	{
 		if ( edit->cursor < len ) {
 			edit->cursor++;
@@ -531,7 +565,7 @@ void Field_KeyDownEvent( field_t *edit, int key ) {
 		return;
 	}
 
-	if ( key == A_CURSOR_LEFT )
+	if ( key == A_CURSOR_LEFT || ( keynames[key].lower == 'b' && kg.keys[A_CTRL].down ) )
 	{
 		if ( edit->cursor > 0 ) {
 			edit->cursor--;
@@ -552,6 +586,18 @@ void Field_KeyDownEvent( field_t *edit, int key ) {
 	if ( key == A_END || ( keynames[key].lower == 'e' && kg.keys[A_CTRL].down ) )
 	{
 		edit->cursor = len;
+		return;
+	}
+
+	if ( keynames[key].lower == 'f' && kg.keys[A_ALT].down )
+	{
+		Field_ForwardWord( edit );
+		return;
+	}
+
+	if ( keynames[key].lower == 'b' && kg.keys[A_ALT].down )
+	{
+		Field_BackwardWord( edit );
 		return;
 	}
 
@@ -1806,6 +1852,8 @@ int Key_GetProtocolKey(mvversion_t protocol, int key16) {
 		return K_RIGHTARROW;
 
 	case A_ALT:
+		return K_ALT;
+	case A_ALT2:
 		return K_ALT;
 	case A_CTRL:
 		return K_CTRL;
