@@ -13,6 +13,12 @@ typedef struct keyGlobals_s
 	int			nextHistoryLine;		// the last line in the history buffer, not masked
 	int			historyLine;			// the line being displayed from history buffer
 										// will be <= nextHistoryLine
+
+	char		killRing[KILL_RING_SIZE][MAX_EDIT_LINE];
+	int			killTail;
+	int			killHead;
+	int			yankIndex;
+
 	field_t		g_consoleField;
 
 	qboolean	anykeydown;

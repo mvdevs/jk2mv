@@ -17,6 +17,7 @@ keyGlobals_t	kg;
 
 extern console_t con;
 
+
 // do NOT blithely change any of the key names (3rd field) here, since they have to match the key binds
 //	in the CFG files, they're also prepended with "KEYNAME_" when looking up StripEd references
 //
@@ -549,6 +550,96 @@ static void Field_Undo( field_t *edit ) {
 	}
 }
 
+static char *Key_KillRingAdvance( void ) {
+	kg.killTail = (kg.killTail + 1) % KILL_RING_SIZE;
+	if ( kg.killTail == kg.killHead )
+		kg.killHead = (kg.killHead + 1) % KILL_RING_SIZE;
+
+	return kg.killRing[kg.killTail];
+}
+
+static void Field_KillLine( field_t *edit ) {
+	char *killBuf = Key_KillRingAdvance();
+
+	Q_strncpyz( killBuf, edit->buffer + edit->cursor, MAX_EDIT_LINE );
+	edit->buffer[edit->cursor] = '\0';
+}
+
+static void Field_LineDiscard( field_t *edit ) {
+	char	*killBuf = Key_KillRingAdvance();
+	int		len = strlen( edit->buffer + edit->cursor );
+
+	memcpy( killBuf, edit->buffer, edit->cursor );
+	killBuf[edit->cursor] = '\0';
+	memmove( edit->buffer, edit->buffer + edit->cursor, len + 1 );
+
+	edit->cursor = 0;
+	edit->scroll = 0;
+}
+
+static void Field_KillWord( field_t *edit ) {
+	char	*killBuf = Key_KillRingAdvance();
+	int		start = edit->cursor;
+	int		end;
+	int		scroll = edit->scroll;
+	int		len;
+
+	Field_ForwardWord( edit );
+	end = edit->cursor;
+	len = end - start;
+	assert( len > 0 );
+
+	memcpy( killBuf, edit->buffer + start, len );
+	killBuf[len] = '\0';
+	len = strlen(edit->buffer + end);
+	memmove( edit->buffer + start, edit->buffer + end, len + 1 );
+
+	edit->cursor = start;
+	edit->scroll = scroll;
+}
+
+static void Field_BackwardKillWord( field_t *edit ) {
+	char	*killBuf = Key_KillRingAdvance();
+	int		end = edit->cursor;
+	int		start;
+	int		len;
+
+	Field_BackwardWord( edit );
+	start = edit->cursor;
+	len = end - start;
+	assert( len > 0 );
+
+	memcpy( killBuf, edit->buffer + start, len );
+	killBuf[len] = '\0';
+	len = strlen(edit->buffer + end);
+	memmove( edit->buffer + start, edit->buffer + end, len + 1 );
+}
+
+static void Field_Yank( field_t *edit ) {
+	char	buf[MAX_EDIT_LINE];
+
+	assert( kg.yankIndex >= 0 && kg.yankIndex < KILL_RING_SIZE );
+	assert( kg.killHead != kg.killTail );
+
+	Q_strncpyz( buf, edit->buffer + edit->cursor, sizeof(buf) );
+	Q_strncpyz( edit->buffer + edit->cursor, kg.killRing[kg.yankIndex], MAX_EDIT_LINE - edit->cursor );
+	edit->cursor = strlen( edit->buffer );
+	Q_strcat( edit->buffer, MAX_EDIT_LINE, buf );
+
+	if ( edit->cursor >= edit->scroll + edit->widthInChars )
+		edit->scroll = edit->cursor - edit->widthInChars;
+
+	kg.yankIndex--;
+
+	if ( kg.yankIndex == 0 )
+		kg.yankIndex = kg.killTail;
+	if ( kg.yankIndex == kg.killHead )
+		kg.yankIndex = kg.killTail;
+
+	assert( !(kg.killTail > kg.killHead) || (kg.killHead < kg.yankIndex && kg.yankIndex <= kg.killTail) );
+	assert( !(kg.killTail < kg.killHead) || (kg.killHead < kg.yankIndex || kg.yankIndex <= kg.killTail) );
+}
+
 /*
 =================
 Field_KeyDownEvent
@@ -562,12 +653,75 @@ Key events are used for non-printable characters, others are gotten from char ev
 void Field_KeyDownEvent( field_t *edit, int key ) {
 	int		len;
 
+	if ( key == A_CTRL || key == A_ALT ) {
+		return;
+	}
+
 	if ( edit->mod ) {
 		if ( keynames[key].lower == 'u' && kg.keys[A_CTRL].down )
 			Field_Undo( edit );
 
-		if ( key != A_CTRL )
-			edit->mod = qfalse;
+		edit->mod = qfalse;
+		return;
+	}
+
+	if ( keynames[key].lower == 'y' && kg.keys[A_ALT].down )
+	{
+		if ( kg.yankIndex >= 0 ) {
+			Field_Undo( edit );
+			Field_SaveHistory( edit );
+			Field_Yank( edit );
+		}
+		return;
+	}
+
+	kg.yankIndex = -1;
+
+	if ( keynames[key].lower == 'k' && kg.keys[A_CTRL].down )
+	{
+		if ( edit->buffer[edit->cursor] != '\0' ) {
+			Field_SaveHistory( edit );
+			Field_KillLine( edit );
+		}
+		return;
+	}
+
+	if ( keynames[key].lower == 'u' && kg.keys[A_CTRL].down )
+	{
+		if ( edit->cursor != 0 ) {
+			Field_SaveHistory( edit );
+			Field_LineDiscard( edit );
+		}
+		return;
+	}
+
+	len = (int)strlen(edit->buffer);
+
+	if ( keynames[key].lower == 'd' && kg.keys[A_ALT].down )
+	{
+		if ( edit->cursor < len ) {
+			Field_SaveHistory( edit );
+			Field_KillWord( edit );
+		}
+		return;
+	}
+
+	if ( key == A_BACKSPACE && kg.keys[A_ALT].down))
+	{
+		if ( edit->cursor > 0 ) {
+			Field_SaveHistory( edit );
+			Field_BackwardKillWord( edit );
+		}
+		return;
+	}
+
+	if ( keynames[key].lower == 'y' && kg.keys[A_CTRL].down )
+	{
+		if ( kg.killHead != kg.killTail ) {
+			kg.yankIndex = kg.killTail;
+			Field_SaveHistory( edit );
+			Field_Yank( edit );
+		}
 		return;
 	}
 
@@ -577,8 +731,6 @@ void Field_KeyDownEvent( field_t *edit, int key ) {
 		Field_Paste( edit );
 		return;
 	}
-
-	len = (int)strlen(edit->buffer);
 
 	if ( key == A_DELETE || ( keynames[key].lower == 'd' && kg.keys[A_CTRL].down ) ) {
 		if ( edit->cursor < len ) {
@@ -671,6 +823,11 @@ void Field_CharEvent( field_t *edit, int ch ) {
 			edit->mod = qfalse;
 		return;
 	}
+
+	if ( ch == 'y' - 'a' + 1 )
+		return;
+
+	kg.yankIndex = -1;
 
 	if ( ch == 'v' - 'a' + 1 ) {	// ctrl-v is paste
 		Field_SaveHistory( edit );
