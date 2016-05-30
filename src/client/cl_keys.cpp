@@ -991,7 +991,9 @@ void Console_Key (int key) {
 		}
 
 		// copy line to history buffer
-		kg.historyEditLines[kg.nextHistoryLine % COMMAND_HISTORY] = kg.g_consoleField;
+		memcpy( kg.historyEditLines[kg.nextHistoryLine % COMMAND_HISTORY],
+			kg.g_consoleField.buffer,
+			MAX_EDIT_LINE );
 		kg.nextHistoryLine++;
 		kg.historyLine = kg.nextHistoryLine;
 
@@ -1015,20 +1017,38 @@ void Console_Key (int key) {
 
 	if ( ( key == A_CURSOR_UP ) || ( ( keynames[ key ].lower == 'p' ) && kg.keys[A_CTRL].down ) )
 	{
+		int len;
+
 		if ( kg.nextHistoryLine - kg.historyLine < COMMAND_HISTORY && kg.historyLine > 0 )
 		{
 			kg.historyLine--;
 		}
-		kg.g_consoleField = kg.historyEditLines[ kg.historyLine % COMMAND_HISTORY ];
+
+		Field_Clear( &kg.g_consoleField );
+		memcpy( kg.g_consoleField.buffer,
+				kg.historyEditLines[ kg.historyLine % COMMAND_HISTORY ],
+				MAX_EDIT_LINE );
+		len = strlen( kg.g_consoleField.buffer );
+		kg.g_consoleField.cursor = len;
+		kg.g_consoleField.scroll = MAX(0, len - kg.g_consoleField.widthInChars);
 		return;
 	}
 
 	if ( ( key == A_CURSOR_DOWN ) || ( ( keynames[ key ].lower == 'n' ) && kg.keys[A_CTRL].down ) )
 	{
+		int len;
+
 		if (kg.historyLine == kg.nextHistoryLine)
 			return;
 		kg.historyLine++;
-		kg.g_consoleField = kg.historyEditLines[ kg.historyLine % COMMAND_HISTORY ];
+
+		Field_Clear( &kg.g_consoleField );
+		memcpy( kg.g_consoleField.buffer,
+				kg.historyEditLines[ kg.historyLine % COMMAND_HISTORY ],
+				MAX_EDIT_LINE );
+		len = strlen( kg.g_consoleField.buffer );
+		kg.g_consoleField.cursor = len;
+		kg.g_consoleField.scroll = MAX(0, len - kg.g_consoleField.widthInChars);
 		return;
 	}
 

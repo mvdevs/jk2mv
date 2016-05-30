@@ -231,9 +231,6 @@ void Con_CheckResize (void)
 		con.charHeight = scale * SMALLCHAR_HEIGHT;
 
 		kg.g_consoleField.widthInChars = width - 1; // Command prompt
-		for ( i = 0 ; i < COMMAND_HISTORY ; i++ ) {
-			kg.historyEditLines[i].widthInChars = width - 1;
-		}
 
 		oldwidth = con.linewidth;
 		con.linewidth = width;
@@ -279,8 +276,6 @@ Con_Init
 ================
 */
 void Con_Init (void) {
-	int		i;
-
 	con_height = Cvar_Get ("con_height", "0.5", CVAR_GLOBAL | CVAR_ARCHIVE);
 	con_notifytime = Cvar_Get ("con_notifytime", "3", CVAR_GLOBAL | CVAR_ARCHIVE);
 	con_speed = Cvar_Get ("con_speed", "3", CVAR_GLOBAL | CVAR_ARCHIVE);
@@ -288,10 +283,6 @@ void Con_Init (void) {
 
 	Field_Clear( &kg.g_consoleField );
 	kg.g_consoleField.widthInChars = DEFAULT_CONSOLE_WIDTH - 1; // Command prompt
-	for ( i = 0 ; i < COMMAND_HISTORY ; i++ ) {
-		Field_Clear( &kg.historyEditLines[i] );
-		kg.historyEditLines[i].widthInChars = DEFAULT_CONSOLE_WIDTH - 1;
-	}
 
 	Cmd_AddCommand ("toggleconsole", Con_ToggleConsole_f);
 	Cmd_AddCommand ("messagemode", Con_MessageMode_f);

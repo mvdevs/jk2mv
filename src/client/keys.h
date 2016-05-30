@@ -8,7 +8,7 @@ typedef struct {
 
 typedef struct keyGlobals_s
 {
-	field_t		historyEditLines[COMMAND_HISTORY];
+	char		*historyEditLines[COMMAND_HISTORY][MAX_EDIT_LINE];
 
 	int			nextHistoryLine;		// the last line in the history buffer, not masked
 	int			historyLine;			// the line being displayed from history buffer
