@@ -375,8 +375,6 @@ static void Field_CheckRep( field_t *edit ) {
 	assert( edit->cursor <= len );
 	assert( edit->scroll >= 0 );
 	assert( edit->scroll <= len );
-	assert( edit->cursor >= edit->scroll );
-	assert( edit->cursor <= edit->scroll + edit->widthInChars );
 
 	assert( edit->historyTail >= 0 && edit->historyTail < FIELD_HISTORY_SIZE );
 	assert( edit->historyHead >= 0 && edit->historyHead < FIELD_HISTORY_SIZE );
@@ -419,29 +417,19 @@ void Field_VariableSizeDraw( field_t *edit, int x, int y, qboolean smallSize, qb
 	char	str[MAX_STRING_CHARS];
 	int		i;
 
-	drawLen = edit->widthInChars;
 	len = strlen(edit->buffer);
 
-	// guarantee that cursor will be visible
-	if ( len <= drawLen ) {
-		prestep = 0;
-	} else {
-		if ( edit->scroll + drawLen > len ) {
-			edit->scroll = len - drawLen;
-			if ( edit->scroll < 0 ) {
-				edit->scroll = 0;
-			}
-		}
-		prestep = edit->scroll;
+	if ( edit->scroll > edit->cursor - 1 )
+		edit->scroll = MAX(0, edit->cursor - 1);
 
-/*
-		if ( edit->cursor < len - drawLen ) {
-			prestep = edit->cursor;	// cursor at start
-		} else {
-			prestep = len - drawLen;
-		}
-*/
-	}
+	if ( edit->scroll > len - edit->widthInChars + 1 )
+		edit->scroll = MAX(0, len - edit->widthInChars + 1);
+
+	if ( edit->scroll < edit->cursor - edit->widthInChars + 1 )
+		edit->scroll = MAX(0, edit->cursor - edit->widthInChars + 1);
+
+	drawLen = edit->widthInChars;
+	prestep = edit->scroll;
 
 	if ( prestep + drawLen > len ) {
 		drawLen = len - prestep;
@@ -553,9 +541,6 @@ static void Field_ForwardWord( field_t *edit ) {
 		c++;
 
 	edit->cursor = c - edit->buffer;
-
-	if ( edit->cursor >= edit->scroll + edit->widthInChars )
-		edit->scroll = edit->cursor - edit->widthInChars;
 }
 
 static void Field_BackwardWord( field_t *edit ) {
@@ -570,9 +555,6 @@ static void Field_BackwardWord( field_t *edit ) {
 		cursor--;
 
 	edit->cursor = cursor;
-
-	if ( cursor < edit->scroll )
-		edit->scroll = cursor;
 }
 
 static void Field_Undo( field_t *edit ) {
@@ -626,14 +608,12 @@ static void Field_LineDiscard( field_t *edit ) {
 	memmove( edit->buffer, edit->buffer + edit->cursor, len + 1 );
 
 	edit->cursor = 0;
-	edit->scroll = 0;
 }
 
 static void Field_KillWord( field_t *edit ) {
 	char	*killBuf;
 	int		start;
 	int		end;
-	int		scroll;
 	int		len;
 
 	if ( edit->cursor == strlen(edit->buffer) )
@@ -643,7 +623,6 @@ static void Field_KillWord( field_t *edit ) {
 
 	killBuf = Key_KillRingAdvance();
 	start = edit->cursor;
-	scroll = edit->scroll;
 
 	Field_ForwardWord( edit );
 	end = edit->cursor;
@@ -656,7 +635,6 @@ static void Field_KillWord( field_t *edit ) {
 	memmove( edit->buffer + start, edit->buffer + end, len + 1 );
 
 	edit->cursor = start;
-	edit->scroll = scroll;
 }
 
 static void Field_BackwardKillWord( field_t *edit ) {
@@ -699,9 +677,6 @@ static void Field_YankIndex( field_t *edit ) {
 	Q_strncpyz( edit->buffer + edit->cursor, kg.killRing[kg.yankIndex], MAX_EDIT_LINE - edit->cursor );
 	edit->cursor = strlen( edit->buffer );
 	Q_strcat( edit->buffer, MAX_EDIT_LINE, buf );
-
-	if ( edit->cursor >= edit->scroll + edit->widthInChars )
-		edit->scroll = edit->cursor - edit->widthInChars;
 
 	kg.yankIndex--;
 
@@ -819,11 +794,6 @@ void Field_KeyDownEvent( field_t *edit, int key ) {
 		if ( edit->cursor < len ) {
 			edit->cursor++;
 		}
-
-		if ( edit->cursor >= edit->scroll + edit->widthInChars && edit->cursor <= len )
-		{
-			edit->scroll++;
-		}
 		return;
 	}
 
@@ -832,25 +802,18 @@ void Field_KeyDownEvent( field_t *edit, int key ) {
 		if ( edit->cursor > 0 ) {
 			edit->cursor--;
 		}
-		if ( edit->cursor < edit->scroll )
-		{
-			edit->scroll--;
-		}
 		return;
 	}
 
 	if ( key == A_HOME || ( keynames[key].lower == 'a' && kg.keys[A_CTRL].down ) )
 	{
 		edit->cursor = 0;
-		edit->scroll = 0;
 		return;
 	}
 
 	if ( key == A_END || ( keynames[key].lower == 'e' && kg.keys[A_CTRL].down ) )
 	{
 		edit->cursor = len;
-		if ( edit->cursor >= edit->scroll + edit->widthInChars )
-			edit->scroll = edit->cursor - edit->widthInChars;
 		return;
 	}
 
@@ -915,7 +878,6 @@ void Field_CharEvent( field_t *edit, int ch ) {
 			Field_SaveHistory( edit );
 
 			memset(edit->buffer, 0, MAX_EDIT_LINE);
-			edit->scroll = 0;
 			edit->cursor = 0;
 		}
 		return;
@@ -929,10 +891,6 @@ void Field_CharEvent( field_t *edit, int ch ) {
 			memmove( edit->buffer + edit->cursor - 1,
 				edit->buffer + edit->cursor, len + 1 - edit->cursor );
 			edit->cursor--;
-			if ( edit->cursor < edit->scroll )
-			{
-				edit->scroll--;
-			}
 		}
 		return;
 	}
@@ -965,11 +923,6 @@ void Field_CharEvent( field_t *edit, int ch ) {
 			edit->buffer + edit->cursor, len + 1 - edit->cursor );
 		edit->buffer[edit->cursor] = ch;
 		edit->cursor++;
-	}
-
-
-	if ( edit->cursor >= edit->widthInChars ) {
-		edit->scroll++;
 	}
 
 	if ( edit->cursor == len + 1) {
