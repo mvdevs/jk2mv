@@ -365,6 +365,43 @@ EDIT FIELDS
 =============================================================================
 */
 
+static void Field_CheckRep( field_t *edit ) {
+#ifndef NDEBUG
+	int len = strlen(edit->buffer);
+
+	assert( len < MAX_EDIT_LINE );
+	assert( edit->widthInChars > 0 );
+	assert( edit->cursor >= 0 );
+	assert( edit->cursor <= len );
+	assert( edit->scroll >= 0 );
+	assert( edit->scroll <= len );
+	assert( edit->cursor >= edit->scroll );
+	assert( edit->cursor <= edit->scroll + edit->widthInChars );
+
+	assert( edit->historyTail >= 0 && edit->historyTail < FIELD_HISTORY_SIZE );
+	assert( edit->historyHead >= 0 && edit->historyHead < FIELD_HISTORY_SIZE );
+#endif // NDEBUG
+}
+
+static void Key_CheckRep( void ) {
+#ifndef NDEBUG
+	assert( kg.killTail >= 0 && kg.killTail < KILL_RING_SIZE );
+	assert( kg.killHead >= 0 && kg.killHead < KILL_RING_SIZE );
+
+	if ( kg.yankIndex != -1 ) {
+		assert( kg.killTail != kg.killHead );
+
+		if ( kg.killTail > kg.killHead ) {
+			assert( kg.killHead < kg.yankIndex && kg.yankIndex <= kg.killTail );
+		} else {
+			assert( 0 <= kg.yankIndex && kg.yankIndex < KILL_RING_SIZE );
+			assert( kg.yankIndex <= kg.killTail || kg.killHead < kg.yankIndex );
+		}
+	}
+
+	Field_CheckRep( &kg.g_consoleField );
+#endif // NDEBUG
+}
 
 /*
 ===================
@@ -468,6 +505,9 @@ void Field_BigDraw( field_t *edit, int x, int y, qboolean showCursor )
 
 
 static void Field_SaveHistory( field_t *edit ) {
+	if ( edit->historyTail != edit->historyHead )
+		assert( strcmp( edit->buffer, edit->bufferHistory[edit->historyTail] ) );
+
 	edit->historyTail = (edit->historyTail + 1) % FIELD_HISTORY_SIZE;
 	if ( edit->historyHead == edit->historyTail )
 		edit->historyHead = (edit->historyHead + 1) % FIELD_HISTORY_SIZE;
@@ -677,6 +717,8 @@ static void Field_YankIndex( field_t *edit ) {
 static void Field_Yank( field_t *edit ) {
 	if ( kg.killHead == kg.killTail )
 		return;
+	if ( edit->cursor == MAX_EDIT_LINE - 1 )
+		return;
 
 	kg.yankIndex = kg.killTail;
 	Field_SaveHistory( edit );
@@ -800,12 +842,15 @@ void Field_KeyDownEvent( field_t *edit, int key ) {
 	if ( key == A_HOME || ( keynames[key].lower == 'a' && kg.keys[A_CTRL].down ) )
 	{
 		edit->cursor = 0;
+		edit->scroll = 0;
 		return;
 	}
 
 	if ( key == A_END || ( keynames[key].lower == 'e' && kg.keys[A_CTRL].down ) )
 	{
 		edit->cursor = len;
+		if ( edit->cursor >= edit->scroll + edit->widthInChars )
+			edit->scroll = edit->cursor - edit->widthInChars;
 		return;
 	}
 
@@ -889,18 +934,6 @@ void Field_CharEvent( field_t *edit, int ch ) {
 				edit->scroll--;
 			}
 		}
-		return;
-	}
-
-	if ( ch == 'a' - 'a' + 1 ) {	// ctrl-a is home
-		edit->cursor = 0;
-		edit->scroll = 0;
-		return;
-	}
-
-	if ( ch == 'e' - 'a' + 1 ) {	// ctrl-e is end
-		edit->cursor = len;
-		edit->scroll = edit->cursor - edit->widthInChars;
 		return;
 	}
 
@@ -1275,6 +1308,7 @@ void Console_Key (int key) {
 
 	// pass to the normal editline routine
 	Field_KeyDownEvent( &kg.g_consoleField, key );
+	Key_CheckRep();
 }
 
 //============================================================================
@@ -1321,6 +1355,7 @@ void Message_Key( int key ) {
 	}
 
 	Field_KeyDownEvent( &chatField, key );
+	Field_CheckRep( &chatField );
 }
 
 //============================================================================
@@ -2051,6 +2086,7 @@ void CL_CharEvent( int key ) {
 	if ( cls.keyCatchers & KEYCATCH_CONSOLE )
 	{
 		Field_CharEvent( &kg.g_consoleField, key );
+		Key_CheckRep();
 	}
 	else if ( cls.keyCatchers & KEYCATCH_UI )
 	{
@@ -2059,10 +2095,12 @@ void CL_CharEvent( int key ) {
 	else if ( cls.keyCatchers & KEYCATCH_MESSAGE )
 	{
 		Field_CharEvent( &chatField, key );
+		Field_CheckRep( &chatField );
 	}
 	else if ( cls.state == CA_DISCONNECTED )
 	{
 		Field_CharEvent( &kg.g_consoleField, key );
+		Key_CheckRep();
 	}
 }
 
