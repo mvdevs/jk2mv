@@ -466,11 +466,18 @@ void Field_BigDraw( field_t *edit, int x, int y, qboolean showCursor )
 	Field_VariableSizeDraw( edit, x, y, qfalse, showCursor );
 }
 
-/*
-================
-Field_Paste
-================
-*/
+
+static void Field_SaveHistory( field_t *edit ) {
+	edit->historyTail = (edit->historyTail + 1) % FIELD_HISTORY_SIZE;
+	if ( edit->historyHead == edit->historyTail )
+		edit->historyHead = (edit->historyHead + 1) % FIELD_HISTORY_SIZE;
+
+	memcpy( edit->bufferHistory[edit->historyTail], edit->buffer, sizeof(edit->buffer) );
+	edit->cursorHistory[edit->historyTail] = edit->cursor;
+	edit->scrollHistory[edit->historyTail] = edit->scroll;
+	edit->typing = qfalse;
+}
+
 void Field_Paste( field_t *edit ) {
 	char	*cbd;
 	int		pasteLen, i;
@@ -528,26 +535,16 @@ static void Field_BackwardWord( field_t *edit ) {
 		edit->scroll = cursor;
 }
 
-static void Field_SaveHistory( field_t *edit ) {
-	edit->historyTail = (edit->historyTail + 1) % FIELD_HISTORY_SIZE;
-	if ( edit->historyHead == edit->historyTail )
-		edit->historyHead = (edit->historyHead + 1) % FIELD_HISTORY_SIZE;
-
-	memcpy( edit->bufferHistory[edit->historyTail], edit->buffer, sizeof(edit->buffer) );
-	edit->cursorHistory[edit->historyTail] = edit->cursor;
-	edit->scrollHistory[edit->historyTail] = edit->scroll;
-	edit->typing = qfalse;
-}
-
 static void Field_Undo( field_t *edit ) {
-	if ( edit->historyTail != edit->historyHead ) {
-		memcpy( edit->buffer, edit->bufferHistory[edit->historyTail], sizeof(edit->buffer) );
-		edit->cursor = edit->cursorHistory[edit->historyTail];
-		edit->scroll = edit->scrollHistory[edit->historyTail];
-		edit->typing = qfalse;
+	if ( edit->historyTail == edit->historyHead )
+		return;
 
-		edit->historyTail = (edit->historyTail + FIELD_HISTORY_SIZE - 1) % FIELD_HISTORY_SIZE;
-	}
+	memcpy( edit->buffer, edit->bufferHistory[edit->historyTail], sizeof(edit->buffer) );
+	edit->cursor = edit->cursorHistory[edit->historyTail];
+	edit->scroll = edit->scrollHistory[edit->historyTail];
+	edit->typing = qfalse;
+
+	edit->historyTail = (edit->historyTail + FIELD_HISTORY_SIZE - 1) % FIELD_HISTORY_SIZE;
 }
 
 static char *Key_KillRingAdvance( void ) {
@@ -559,15 +556,30 @@ static char *Key_KillRingAdvance( void ) {
 }
 
 static void Field_KillLine( field_t *edit ) {
-	char *killBuf = Key_KillRingAdvance();
+	char *killBuf;
+
+	if ( edit->buffer[edit->cursor] == '\0' )
+		return;
+
+	Field_SaveHistory( edit );
+
+	killBuf = Key_KillRingAdvance();
 
 	Q_strncpyz( killBuf, edit->buffer + edit->cursor, MAX_EDIT_LINE );
 	edit->buffer[edit->cursor] = '\0';
 }
 
 static void Field_LineDiscard( field_t *edit ) {
-	char	*killBuf = Key_KillRingAdvance();
-	int		len = strlen( edit->buffer + edit->cursor );
+	char	*killBuf;
+	int		len;
+
+	if ( edit->cursor == 0 )
+		return;
+
+	Field_SaveHistory( edit );
+
+	killBuf = Key_KillRingAdvance();
+	len = strlen( edit->buffer + edit->cursor );
 
 	memcpy( killBuf, edit->buffer, edit->cursor );
 	killBuf[edit->cursor] = '\0';
@@ -578,11 +590,20 @@ static void Field_LineDiscard( field_t *edit ) {
 }
 
 static void Field_KillWord( field_t *edit ) {
-	char	*killBuf = Key_KillRingAdvance();
-	int		start = edit->cursor;
+	char	*killBuf;
+	int		start;
 	int		end;
-	int		scroll = edit->scroll;
+	int		scroll;
 	int		len;
+
+	if ( edit->cursor == strlen(edit->buffer) )
+		return;
+
+	Field_SaveHistory( edit );
+
+	killBuf = Key_KillRingAdvance();
+	start = edit->cursor;
+	scroll = edit->scroll;
 
 	Field_ForwardWord( edit );
 	end = edit->cursor;
@@ -599,10 +620,18 @@ static void Field_KillWord( field_t *edit ) {
 }
 
 static void Field_BackwardKillWord( field_t *edit ) {
-	char	*killBuf = Key_KillRingAdvance();
-	int		end = edit->cursor;
+	char	*killBuf;
+	int		end;
 	int		start;
 	int		len;
+
+	if ( edit->cursor == 0 )
+		return;
+
+	Field_SaveHistory( edit );
+
+	killBuf = Key_KillRingAdvance();
+	end = edit->cursor;
 
 	Field_BackwardWord( edit );
 	start = edit->cursor;
@@ -615,7 +644,12 @@ static void Field_BackwardKillWord( field_t *edit ) {
 	memmove( edit->buffer + start, edit->buffer + end, len + 1 );
 }
 
-static void Field_Yank( field_t *edit ) {
+
+static void Key_YankReset( void ) {
+	kg.yankIndex = -1;
+}
+
+static void Field_YankIndex( field_t *edit ) {
 	char	buf[MAX_EDIT_LINE];
 
 	assert( kg.yankIndex >= 0 && kg.yankIndex < KILL_RING_SIZE );
@@ -638,6 +672,24 @@ static void Field_Yank( field_t *edit ) {
 
 	assert( !(kg.killTail > kg.killHead) || (kg.killHead < kg.yankIndex && kg.yankIndex <= kg.killTail) );
 	assert( !(kg.killTail < kg.killHead) || (kg.killHead < kg.yankIndex || kg.yankIndex <= kg.killTail) );
+}
+
+static void Field_Yank( field_t *edit ) {
+	if ( kg.killHead == kg.killTail )
+		return;
+
+	kg.yankIndex = kg.killTail;
+	Field_SaveHistory( edit );
+	Field_YankIndex( edit );
+}
+
+static void Field_YankPop( field_t *edit ) {
+	if ( kg.yankIndex == -1 )
+		return;
+
+	Field_Undo( edit );
+	Field_SaveHistory( edit );
+	Field_YankIndex( edit );
 }
 
 /*
@@ -667,31 +719,21 @@ void Field_KeyDownEvent( field_t *edit, int key ) {
 
 	if ( keynames[key].lower == 'y' && kg.keys[A_ALT].down )
 	{
-		if ( kg.yankIndex >= 0 ) {
-			Field_Undo( edit );
-			Field_SaveHistory( edit );
-			Field_Yank( edit );
-		}
+		Field_YankPop( edit );
 		return;
 	}
 
-	kg.yankIndex = -1;
+	Key_YankReset();
 
 	if ( keynames[key].lower == 'k' && kg.keys[A_CTRL].down )
 	{
-		if ( edit->buffer[edit->cursor] != '\0' ) {
-			Field_SaveHistory( edit );
-			Field_KillLine( edit );
-		}
+		Field_KillLine( edit );
 		return;
 	}
 
 	if ( keynames[key].lower == 'u' && kg.keys[A_CTRL].down )
 	{
-		if ( edit->cursor != 0 ) {
-			Field_SaveHistory( edit );
-			Field_LineDiscard( edit );
-		}
+		Field_LineDiscard( edit );
 		return;
 	}
 
@@ -699,35 +741,24 @@ void Field_KeyDownEvent( field_t *edit, int key ) {
 
 	if ( keynames[key].lower == 'd' && kg.keys[A_ALT].down )
 	{
-		if ( edit->cursor < len ) {
-			Field_SaveHistory( edit );
-			Field_KillWord( edit );
-		}
+		Field_KillWord( edit );
 		return;
 	}
 
-	if ( key == A_BACKSPACE && kg.keys[A_ALT].down))
+	if ( key == A_BACKSPACE && kg.keys[A_ALT].down )
 	{
-		if ( edit->cursor > 0 ) {
-			Field_SaveHistory( edit );
-			Field_BackwardKillWord( edit );
-		}
+		Field_BackwardKillWord( edit );
 		return;
 	}
 
 	if ( keynames[key].lower == 'y' && kg.keys[A_CTRL].down )
 	{
-		if ( kg.killHead != kg.killTail ) {
-			kg.yankIndex = kg.killTail;
-			Field_SaveHistory( edit );
-			Field_Yank( edit );
-		}
+		Field_Yank( edit );
 		return;
 	}
 
 	// shift-insert is paste
 	if ( ( ( key == A_INSERT ) || ( key == A_KP_0 ) ) && kg.keys[A_SHIFT].down ) {
-		Field_SaveHistory( edit );
 		Field_Paste( edit );
 		return;
 	}
@@ -824,13 +855,12 @@ void Field_CharEvent( field_t *edit, int ch ) {
 		return;
 	}
 
-	if ( ch == 'y' - 'a' + 1 )
+	if ( ch == 'y' - 'a' + 1 ) // ctr-y is handled in Field_KeyEvent
 		return;
 
-	kg.yankIndex = -1;
+	Key_YankReset();
 
 	if ( ch == 'v' - 'a' + 1 ) {	// ctrl-v is paste
-		Field_SaveHistory( edit );
 		Field_Paste( edit );
 		return;
 	}
