@@ -3086,6 +3086,10 @@ void Field_Clear( field_t *edit ) {
 	memset(edit->buffer, 0, MAX_EDIT_LINE);
 	edit->cursor = 0;
 	edit->scroll = 0;
+	edit->historyTail = 0;
+	edit->historyHead = 0;
+	edit->typing = qfalse;
+	edit->mod = qfalse;
 }
 
 /*

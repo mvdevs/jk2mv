@@ -480,11 +480,15 @@ void Field_Paste( field_t *edit ) {
 		return;
 	}
 
+	edit->typing = qfalse;
+
 	// send as if typed, so insert / overstrike works properly
 	pasteLen = (int)strlen(cbd);
 	for ( i = 0 ; i < pasteLen ; i++ ) {
 		Field_CharEvent( edit, cbd[i] );
 	}
+
+	edit->typing = qfalse;
 
 	Z_Free( cbd );
 }
@@ -523,6 +527,28 @@ static void Field_BackwardWord( field_t *edit ) {
 		edit->scroll = cursor;
 }
 
+static void Field_SaveHistory( field_t *edit ) {
+	edit->historyTail = (edit->historyTail + 1) % FIELD_HISTORY_SIZE;
+	if ( edit->historyHead == edit->historyTail )
+		edit->historyHead = (edit->historyHead + 1) % FIELD_HISTORY_SIZE;
+
+	memcpy( edit->bufferHistory[edit->historyTail], edit->buffer, sizeof(edit->buffer) );
+	edit->cursorHistory[edit->historyTail] = edit->cursor;
+	edit->scrollHistory[edit->historyTail] = edit->scroll;
+	edit->typing = qfalse;
+}
+
+static void Field_Undo( field_t *edit ) {
+	if ( edit->historyTail != edit->historyHead ) {
+		memcpy( edit->buffer, edit->bufferHistory[edit->historyTail], sizeof(edit->buffer) );
+		edit->cursor = edit->cursorHistory[edit->historyTail];
+		edit->scroll = edit->scrollHistory[edit->historyTail];
+		edit->typing = qfalse;
+
+		edit->historyTail = (edit->historyTail + FIELD_HISTORY_SIZE - 1) % FIELD_HISTORY_SIZE;
+	}
+}
+
 /*
 =================
 Field_KeyDownEvent
@@ -536,8 +562,18 @@ Key events are used for non-printable characters, others are gotten from char ev
 void Field_KeyDownEvent( field_t *edit, int key ) {
 	int		len;
 
+	if ( edit->mod ) {
+		if ( keynames[key].lower == 'u' && kg.keys[A_CTRL].down )
+			Field_Undo( edit );
+
+		if ( key != A_CTRL )
+			edit->mod = qfalse;
+		return;
+	}
+
 	// shift-insert is paste
 	if ( ( ( key == A_INSERT ) || ( key == A_KP_0 ) ) && kg.keys[A_SHIFT].down ) {
+		Field_SaveHistory( edit );
 		Field_Paste( edit );
 		return;
 	}
@@ -546,6 +582,7 @@ void Field_KeyDownEvent( field_t *edit, int key ) {
 
 	if ( key == A_DELETE || ( keynames[key].lower == 'd' && kg.keys[A_CTRL].down ) ) {
 		if ( edit->cursor < len ) {
+			Field_SaveHistory( edit );
 			memmove( edit->buffer + edit->cursor,
 				edit->buffer + edit->cursor + 1, len - edit->cursor );
 		}
@@ -589,6 +626,20 @@ void Field_KeyDownEvent( field_t *edit, int key ) {
 		return;
 	}
 
+	if (( keynames[key].lower == '/' && kg.keys[A_CTRL].down ) ||
+		( keynames[key].lower == 'z' && kg.keys[A_CTRL].down ) ||
+		( key == A_UNDERSCORE && kg.keys[A_CTRL].down ))
+	{
+		Field_Undo( edit );
+		return;
+	}
+
+	if ( keynames[key].lower == 'x' && kg.keys[A_CTRL].down )
+	{
+		edit->mod = qtrue;
+		return;
+	}
+
 	if ( keynames[key].lower == 'f' && kg.keys[A_ALT].down )
 	{
 		Field_ForwardWord( edit );
@@ -615,13 +666,26 @@ Field_CharEvent
 void Field_CharEvent( field_t *edit, int ch ) {
 	int		len;
 
+	if ( edit->mod ) {
+		if ( ch >= 32 )
+			edit->mod = qfalse;
+		return;
+	}
+
 	if ( ch == 'v' - 'a' + 1 ) {	// ctrl-v is paste
+		Field_SaveHistory( edit );
 		Field_Paste( edit );
 		return;
 	}
 
 	if ( ch == 'c' - 'a' + 1 ) {	// ctrl-c clears the field
-		Field_Clear( edit );
+		if ( edit->buffer[0] != '\0' ) {
+			Field_SaveHistory( edit );
+
+			memset(edit->buffer, 0, MAX_EDIT_LINE);
+			edit->scroll = 0;
+			edit->cursor = 0;
+		}
 		return;
 	}
 
@@ -629,6 +693,7 @@ void Field_CharEvent( field_t *edit, int ch ) {
 
 	if ( ch == 'h' - 'a' + 1 )	{	// ctrl-h is backspace
 		if ( edit->cursor > 0 ) {
+			Field_SaveHistory( edit );
 			memmove( edit->buffer + edit->cursor - 1,
 				edit->buffer + edit->cursor, len + 1 - edit->cursor );
 			edit->cursor--;
@@ -662,11 +727,19 @@ void Field_CharEvent( field_t *edit, int ch ) {
 	if ( kg.key_overstrikeMode ) {
 		if ( edit->cursor == MAX_EDIT_LINE - 1 )
 			return;
+		if ( !edit->typing ) {
+			Field_SaveHistory( edit );
+			edit->typing = qtrue;
+		}
 		edit->buffer[edit->cursor] = ch;
 		edit->cursor++;
 	} else {	// insert mode
 		if ( len == MAX_EDIT_LINE - 1 ) {
 			return; // all full
+		}
+		if ( !edit->typing ) {
+			Field_SaveHistory( edit );
+			edit->typing = qtrue;
 		}
 		memmove( edit->buffer + edit->cursor + 1,
 			edit->buffer + edit->cursor, len + 1 - edit->cursor );

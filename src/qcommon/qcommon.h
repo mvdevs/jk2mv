@@ -15,6 +15,7 @@
 #define CONSOLE_PROMPT_CHAR ']'
 #define	MAX_EDIT_LINE		256
 #define COMMAND_HISTORY		128 // increased in jk2mv
+#define FIELD_HISTORY_SIZE	16
 
 //For determining whether to allow 1.02 color codes:
 #define MV_USE102COLOR (MV_GetCurrentGameversion() == VERSION_1_02 || MV_GetCurrentGameversion() == VERSION_1_03)
@@ -24,6 +25,15 @@ typedef struct {
 	int		scroll;
 	int		widthInChars;
 	char	buffer[MAX_EDIT_LINE];
+
+	char	bufferHistory[FIELD_HISTORY_SIZE][MAX_EDIT_LINE];
+	int		cursorHistory[FIELD_HISTORY_SIZE];
+	int		scrollHistory[FIELD_HISTORY_SIZE];
+	int		historyTail;
+	int		historyHead;
+
+	qboolean	typing;
+	qboolean	mod;
 } field_t;
 
 typedef void ( *callbackFunc_t )( const char *s );
