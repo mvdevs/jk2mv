@@ -365,7 +365,11 @@ typedef struct {
 typedef struct {
 	qboolean	initialized;
 
-	short	text[CON_TEXTSIZE];
+	short	text[CON_TEXTSIZE];	// text buffer is divided into
+							// `totallines' lines of `linewidth'
+							// length. Last character in a line
+							// is blank or contains CON_WRAP_CHAR
+
 	int		current;		// line where next message will be printed
 	int		x;				// offset in current line for next print
 	int		display;		// bottom of console displays this line

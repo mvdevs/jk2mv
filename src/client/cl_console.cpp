@@ -14,6 +14,8 @@ cvar_t		*con_scale;
 cvar_t		*con_speed;
 
 #define	DEFAULT_CONSOLE_WIDTH	78
+#define CON_WRAP_CHAR			((ColorIndex(COLOR_WHITE)<<8) | '\\')
+#define CON_BLANK_CHAR			((ColorIndex(COLOR_WHITE)<<8) | ' ')
 
 vec4_t	console_color = {1.0, 1.0, 1.0, 1.0};
 
@@ -105,7 +107,7 @@ void Con_Clear_f (void) {
 	int		i;
 
 	for ( i = 0 ; i < CON_TEXTSIZE ; i++ ) {
-		con.text[i] = (ColorIndex(COLOR_WHITE)<<8) | ' ';
+		con.text[i] = CON_BLANK_CHAR;
 	}
 
 	Con_Bottom();		// go to end
@@ -121,10 +123,11 @@ Save the console contents out to a file
 */
 void Con_Dump_f (void)
 {
-	int				l, x, i;
-	short			*line;
+	int				l, i, j;
+	int				line;
+	int				lineLen;
 	fileHandle_t	f;
-	char			buffer[1024];
+	char			buffer[MAXPRINTMSG];
 
 	if (Cmd_Argc() != 2)
 	{
@@ -132,45 +135,56 @@ void Con_Dump_f (void)
 		return;
 	}
 
-	Com_Printf ("Dumped console text to %s.\n", Cmd_Argv(1) );
-
 	f = FS_FOpenFileWrite( Cmd_Argv( 1 ) );
 	if (!f)
 	{
-		Com_Printf (S_COLOR_RED"ERROR: couldn't open.\n");
+		Com_Printf (S_COLOR_RED"ERROR: couldn't open %s.\n", Cmd_Argv(1));
 		return;
 	}
 
 	// skip empty lines
-	for (l = con.current - con.totallines + 1 ; l <= con.current ; l++)
+	for (l = 0 ; l < con.totallines - 1 ; l++)
 	{
-		line = con.text + (l%con.totallines)*con.linewidth;
-		for (x=0 ; x<con.linewidth ; x++)
-			if ((line[x] & 0xff) != ' ')
+		line = ((con.current + 1 + l) % con.totallines) * con.linewidth;
+
+		for (j = 0 ; j < con.linewidth ; j++)
+			if (con.text[line + j] != CON_BLANK_CHAR)
 				break;
-		if (x != con.linewidth)
+
+		if (j != con.linewidth)
 			break;
 	}
 
-	// write the remaining lines
-	buffer[con.linewidth] = 0;
-	for ( ; l <= con.current ; l++)
+	while (l < con.totallines - 1)
 	{
-		line = con.text + (l%con.totallines)*con.linewidth;
-		for(i=0; i<con.linewidth; i++)
-			buffer[i] = (char) (line[i] & 0xff);
-		for (x=con.linewidth-1 ; x>=0 ; x--)
+		// Concatenate wrapped lines
+		for (i = 0, lineLen = 0; l < con.totallines - 1; l++)
 		{
-			if (buffer[x] == ' ')
-				buffer[x] = 0;
-			else
+			line = ((con.current + 1 + l) % con.totallines) * con.linewidth;
+
+			for (j = 0; j < con.linewidth - 1 && i < MAXPRINTMSG - 1; j++, i++) {
+				buffer[i] = con.text[line + j] & 0xff;
+
+				if (con.text[line + j] != CON_BLANK_CHAR)
+					lineLen = i + 1;
+			}
+
+			if (i == MAXPRINTMSG - 1)
 				break;
+
+			if (con.text[line + j] != CON_WRAP_CHAR) {
+				l++;
+				break;
+			}
 		}
-		strcat( buffer, "\n" );
-		FS_Write(buffer, (int)strlen(buffer), f);
+
+		buffer[lineLen] = '\n';
+		FS_Write(buffer, lineLen + 1, f);
 	}
 
 	FS_FCloseFile( f );
+
+	Com_Printf ("Dumped console text to %s.\n", Cmd_Argv(1) );
 }
 
 
@@ -207,11 +221,12 @@ void Con_CheckResize (void)
 		con.yadjust = 1;
 		con.charWidth = SMALLCHAR_WIDTH;
 		con.charHeight = SMALLCHAR_HEIGHT;
-		con.linewidth = DEFAULT_CONSOLE_WIDTH;
+		con.linewidth = DEFAULT_CONSOLE_WIDTH + 1;
 		con.totallines = CON_TEXTSIZE / con.linewidth;
+		con.current = con.totallines - 1;
 		for(i=0; i<CON_TEXTSIZE; i++)
 		{
-			con.text[i] = (ColorIndex(COLOR_WHITE)<<8) | ' ';
+			con.text[i] = CON_BLANK_CHAR;
 		}
 	}
 	else
@@ -222,7 +237,7 @@ void Con_CheckResize (void)
 		con.xadjust = 640.0f / cls.glconfig.vidWidth;
 		con.yadjust = 480.0f / cls.glconfig.vidHeight;
 
-		width = (cls.glconfig.vidWidth / (scale * SMALLCHAR_WIDTH)) - 2;
+		width = (cls.glconfig.vidWidth / (scale * SMALLCHAR_WIDTH)) - 1;
 
 		if (width == con.linewidth)
 			return;
@@ -230,7 +245,7 @@ void Con_CheckResize (void)
 		con.charWidth = scale * SMALLCHAR_WIDTH;
 		con.charHeight = scale * SMALLCHAR_HEIGHT;
 
-		kg.g_consoleField.widthInChars = width - 1; // Command prompt
+		kg.g_consoleField.widthInChars = width - 2; // Command prompt
 
 		oldwidth = con.linewidth;
 		con.linewidth = width;
@@ -243,29 +258,62 @@ void Con_CheckResize (void)
 
 		numchars = oldwidth;
 
-		if (con.linewidth < numchars)
-			numchars = con.linewidth;
-
 		Com_Memcpy (tbuf, con.text, CON_TEXTSIZE * sizeof(short));
 		for(i=0; i<CON_TEXTSIZE; i++)
+			con.text[i] = CON_BLANK_CHAR;
 
-			con.text[i] = (ColorIndex(COLOR_WHITE)<<8) | ' ';
+		int oi = 0;
+		int ni = 0;
 
-
-		for (i=0 ; i<numlines ; i++)
+		while (oi < oldtotallines)
 		{
-			for (j=0 ; j<numchars ; j++)
+			short	line[MAXPRINTMSG];
+			int		lineLen = 0;
+			int		oldline;
+			int		newline;
+
+			// Store whole line concatenating on CON_WRAP_CHAR
+			for (i = 0; oi < oldtotallines; oi++)
 			{
-				con.text[(con.totallines - 1 - i) * con.linewidth + j] =
-						tbuf[((con.current - i + oldtotallines) %
-							  oldtotallines) * oldwidth + j];
+				oldline = ((con.current + oi) % oldtotallines) * oldwidth;
+
+				for (j = 0; j < numchars - 1 && i < MAXPRINTMSG; j++, i++) {
+					line[i] = tbuf[oldline + j];
+
+					if (line[i] != CON_BLANK_CHAR)
+						lineLen = i + 1;
+				}
+
+				if (i == MAXPRINTMSG)
+					break;
+
+				if (tbuf[oldline + j] != CON_WRAP_CHAR) {
+					oi++;
+					break;
+				}
+			}
+
+			// Print stored line to a new text buffer
+			for (i = 0; ; ni++) {
+				newline = (ni % con.totallines) * con.linewidth;
+
+				for (j = 0; j < con.linewidth - 1 && i < lineLen; j++, i++)
+					con.text[newline + j] = line[i];
+
+				if (i == lineLen) {
+					ni++;
+					break;
+				}
+
+				con.text[newline + j] = CON_WRAP_CHAR;
 			}
 		}
+
+		con.current = ni;
 
 		Con_ClearNotify ();
 	}
 
-	con.current = con.totallines - 1;
 	con.display = con.current;
 }
 
@@ -316,7 +364,7 @@ void Con_Linefeed (void)
 		con.display++;
 	con.current++;
 	for(i=0; i<con.linewidth; i++)
-		con.text[(con.current%con.totallines)*con.linewidth+i] = (ColorIndex(COLOR_WHITE)<<8) | ' ';
+		con.text[(con.current%con.totallines)*con.linewidth+i] = CON_BLANK_CHAR;
 }
 
 /*
@@ -372,13 +420,15 @@ void CL_ConsolePrint( char *txt ) {
 			break;
 		default:	// display character and advance
 			y = con.current % con.totallines;
+
+			if (con.x == con.linewidth - 1) {
+				con.text[y*con.linewidth+con.x] = CON_WRAP_CHAR;
+				Con_Linefeed();
+				y = con.current % con.totallines;
+			}
+
 			con.text[y*con.linewidth+con.x] = (short) ((color << 8) | c);
 			con.x++;
-			if (con.x >= con.linewidth) {
-
-				Con_Linefeed();
-				con.x = 0;
-			}
 			break;
 		}
 	}
@@ -499,7 +549,7 @@ void Con_DrawNotify (void)
 		else
 		{
 			for (x = 0 ; x < con.linewidth ; x++) {
-				if ( ( text[x] & 0xff ) == ' ' ) {
+				if ( text[x] == CON_BLANK_CHAR ) {
 					continue;
 				}
 				if ( ( (text[x]>>8)&7 ) != currentColor ) {
@@ -671,7 +721,7 @@ void Con_DrawSolidConsole( float frac ) {
 		else
 		{
 			for (x=0 ; x<con.linewidth ; x++) {
-				if ( ( text[x] & 0xff ) == ' ' ) {
+				if ( text[x] == CON_BLANK_CHAR ) {
 					continue;
 				}
 
