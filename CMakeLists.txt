@@ -25,6 +25,7 @@ list(INSERT CMAKE_MODULE_PATH 0 "${RESDir}")
 
 # Project name & version
 set(CMAKE_CONFIGURATION_TYPES Debug Release CACHE TYPE INTERNAL FORCE)
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set(ProjectName "JK2MV" CACHE STRING "Project Name")
 project(${ProjectName})
 set(ProjectURL "https://jk2mv.org")
