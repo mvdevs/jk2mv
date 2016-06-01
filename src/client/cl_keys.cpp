@@ -1131,7 +1131,10 @@ void Console_Key (int key) {
 	}
 
 	// enter finishes the line
-	if ( key == A_ENTER || key == A_KP_ENTER ) {
+	if ( key == A_ENTER || key == A_KP_ENTER ||
+		(keynames[ key ].lower == 'm' && kg.keys[A_CTRL].down) ||
+		(keynames[ key ].lower == 'j' && kg.keys[A_CTRL].down) )
+	{
 		// if not in the game explicitly prepent a slash if needed
 		if ( cls.state != CA_ACTIVE && kg.g_consoleField.buffer[0] != '\\'
 			&& kg.g_consoleField.buffer[0] != '/' ) {
@@ -1285,7 +1288,9 @@ void Message_Key( int key ) {
 		return;
 	}
 
-	if ( key == A_ENTER || key == A_KP_ENTER )
+	if ( key == A_ENTER || key == A_KP_ENTER  ||
+		(keynames[ key ].lower == 'm' && kg.keys[A_CTRL].down) ||
+		(keynames[ key ].lower == 'j' && kg.keys[A_CTRL].down) )
 	{
 		if ( chatField.buffer[0] && cls.state == CA_ACTIVE ) {
 			if (chat_playerNum != -1 )
