@@ -16,6 +16,8 @@ cvar_t		*con_speed;
 #define	DEFAULT_CONSOLE_WIDTH	78
 #define CON_WRAP_CHAR			((ColorIndex(COLOR_WHITE)<<8) | '\\')
 #define CON_BLANK_CHAR			((ColorIndex(COLOR_WHITE)<<8) | ' ')
+#define CON_SCROLL_L_CHAR		'$'
+#define CON_SCROLL_R_CHAR		'$'
 
 vec4_t	console_color = {1.0, 1.0, 1.0, 1.0};
 
@@ -468,9 +470,19 @@ void Con_DrawInput (void) {
 
 	re.SetColor( con.color );
 
+	Field_Draw( &kg.g_consoleField, 2 * con.charWidth, y, qtrue );
+
 	SCR_DrawSmallChar( con.charWidth, y, CONSOLE_PROMPT_CHAR );
 
-	Field_Draw( &kg.g_consoleField, 2 * con.charWidth, y, qtrue );
+	const vec4_t color = { .70f, 0, 0, 1.0f };
+	re.SetColor( color );
+
+	if ( kg.g_consoleField.scroll > 0 )
+		SCR_DrawSmallChar( 0, y, CON_SCROLL_L_CHAR );
+
+	int len = strlen( kg.g_consoleField.buffer );
+	if ( kg.g_consoleField.scroll + kg.g_consoleField.widthInChars < len )
+		SCR_DrawSmallChar( cls.glconfig.vidWidth - con.charWidth, y, CON_SCROLL_R_CHAR );
 }
 
 
