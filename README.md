@@ -29,9 +29,9 @@ Main Features:
   * Windows: Requires at least Visual Studio 2010, required libraries are shipped with JK2MV in the `libs` directory.
     * If you plan to build the installer package get NSIS from http://nsis.sourceforge.net
   * Linux: OpenGL, OpenAL, SDL2 and depending on your configuration libjpeg, libpng, libcurl.
-    * Ubuntu/Debian: apt-get install debhelper devscripts libsdl2-dev libgl1-mesa-dev libopenal-dev libjpeg8-dev libpng12-dev
+    * Ubuntu/Debian: `apt-get install debhelper devscripts libsdl2-dev libgl1-mesa-dev libopenal-dev libjpeg8-dev libpng12-dev`
   * MacOSX: XCode on MacOSX >= 10.6
-    * Configure / Build SDL2
+    * Configure / Build SDL2:
       1. `curl -O https://www.libsdl.org/release/SDL2-2.0.4.tar.gz`
       2. `tar xzf SDL2-2.0.4.tar.gz`
       3. `cd SDL2-2.0.4/Xcode/SDL`
