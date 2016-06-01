@@ -15,7 +15,7 @@ cvar_t		*con_speed;
 cvar_t		*con_timestamps;
 
 #define	DEFAULT_CONSOLE_WIDTH	78
-#define CON_WRAP_CHAR			((ColorIndex(COLOR_WHITE)<<8) | '\\')
+#define CON_WRAP_CHAR			((CT_LT_GREY << 8) | '\\')
 #define CON_BLANK_CHAR			((ColorIndex(COLOR_WHITE)<<8) | ' ')
 #define CON_SCROLL_L_CHAR		'$'
 #define CON_SCROLL_R_CHAR		'$'
@@ -394,6 +394,8 @@ void Con_Init (void) {
 Con_Linefeed
 ===============
 */
+#define MW 		  (ColorIndex(COLOR_WHITE) << 8)
+#define MR		  (ColorIndex(COLOR_BLUE) << 8)
 void Con_Linefeed (void)
 {
 	int		i;
@@ -403,7 +405,7 @@ void Con_Linefeed (void)
 	{
 		qtime_t	time;
 		char	timestamp[CON_TIMESTAMP_LEN + 1];
-		short	colorMask = ColorIndex(COLOR_WHITE) << 8;
+		short	colorMask = CT_LT_GREY << 8;
 
 		Com_RealTime(&time);
 		Com_sprintf(timestamp, sizeof(timestamp), "[%02d:%02d:%02d] ",
@@ -536,8 +538,7 @@ void Con_DrawInput (void) {
 
 	SCR_DrawSmallChar( con.charWidth, y, CONSOLE_PROMPT_CHAR );
 
-	const vec4_t color = { .70f, 0, 0, 1.0f };
-	re.SetColor( color );
+	re.SetColor( g_color_table[CT_LT_GREY] );
 
 	if ( kg.g_consoleField.scroll > 0 )
 		SCR_DrawSmallChar( 0, y, CON_SCROLL_L_CHAR );
@@ -609,9 +610,9 @@ void Con_DrawNotify (void)
 			char sTemp[4096]={0};	// ott
 			for (x = 0 ; x < con.linewidth ; x++)
 			{
-				if ( ( (text[x]>>8)&7 ) != currentColor ) {
-					currentColor = (text[x]>>8)&7;
-					strcat(sTemp,va("^%i", (text[x]>>8)&7) );
+				if ( ( (text[x]>>8) ) != currentColor ) {
+					currentColor = (text[x]>>8);
+					strcat(sTemp,va("^%i", (text[x]>>8)) );
 				}
 				strcat(sTemp,va("%c",text[x] & 0xFF));
 			}
@@ -628,8 +629,8 @@ void Con_DrawNotify (void)
 				if ( text[x] == CON_BLANK_CHAR ) {
 					continue;
 				}
-				if ( ( (text[x]>>8)&7 ) != currentColor ) {
-					currentColor = (text[x]>>8)&7;
+				if ( ( (text[x]>>8) ) != currentColor ) {
+					currentColor = (text[x]>>8);
 					re.SetColor( g_color_table[currentColor] );
 				}
 				if (!cl_conXOffset)
@@ -785,9 +786,9 @@ void Con_DrawSolidConsole( float frac ) {
 			char sTemp[4096]={0};	// ott
 			for (x = 0 ; x < con.linewidth + 1 ; x++)
 			{
-				if ( ( (text[x]>>8)&7 ) != currentColor ) {
-					currentColor = (text[x]>>8)&7;
-					strcat(sTemp,va("^%i", (text[x]>>8)&7) );
+				if ( ( (text[x]>>8) ) != currentColor ) {
+					currentColor = (text[x]>>8);
+					strcat(sTemp,va("^%i", (text[x]>>8)) );
 				}
 				strcat(sTemp,va("%c",text[x] & 0xFF));
 			}
@@ -803,8 +804,8 @@ void Con_DrawSolidConsole( float frac ) {
 					continue;
 				}
 
-				if ( ( (text[x]>>8)&7 ) != currentColor ) {
-					currentColor = (text[x]>>8)&7;
+				if ( ( (text[x]>>8) ) != currentColor ) {
+					currentColor = (text[x]>>8);
 					re.SetColor( g_color_table[currentColor] );
 				}
 				SCR_DrawSmallChar( (x+1)*con.charWidth, y, text[x] & 0xff );
