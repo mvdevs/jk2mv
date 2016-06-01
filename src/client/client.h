@@ -365,16 +365,18 @@ typedef struct {
 typedef struct {
 	qboolean	initialized;
 
-	short	text[CON_TEXTSIZE];	// text buffer is divided into
-							// `totallines' lines of `linewidth'
-							// length. Last character in a line
-							// is blank or contains CON_WRAP_CHAR
+	// Text buffer is divided into `totallines' lines of `rowwidth'
+	// length. Line's first `CON_TIMESTAMP_LEN' characters are
+	// reserved for timestamp and last character is either blank
+	// or contains `CON_WRAP_CHAR' indicating a line wrap.
+	short	text[CON_TEXTSIZE];
 
 	int		current;		// line where next message will be printed
 	int		x;				// offset in current line for next print
 	int		display;		// bottom of console displays this line
 
 	int 	linewidth;		// characters across screen
+	int		rowwidth;		// timestamp, text and line wrap character
 	int		totallines;		// total lines in console scrollback
 
 	int		charWidth;		// Scaled console character width
