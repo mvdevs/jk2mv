@@ -128,7 +128,20 @@ to the apropriate place.
 A raw string should NEVER be passed as fmt, because of "%f" type crashers.
 =============
 */
-void QDECL Com_Printf( const char *fmt, ... ) {
+void QDECL Com_Printf( const char *fmt, ... )
+{
+	va_list		argptr;
+	char		msg[MAXPRINTMSG];
+
+	va_start (argptr,fmt);
+	vsprintf (msg,fmt,argptr);
+	va_end (argptr);
+
+	Com_Printf_Ext( qfalse, msg );
+}
+
+void QDECL Com_Printf_Ext( qboolean extendedColors, const char *fmt, ... )
+{
 	va_list		argptr;
 	char		msg[MAXPRINTMSG];
 
@@ -149,7 +162,7 @@ void QDECL Com_Printf( const char *fmt, ... ) {
 
 	// echo to console if we're not a dedicated server
 	if ( com_dedicated && !com_dedicated->integer ) {
-		CL_ConsolePrint( msg );
+		CL_ConsolePrint( msg, extendedColors );
 	}
 
 	// echo to dedicated console and early console
@@ -2979,7 +2992,7 @@ static int	matchCount;
 static field_t *completionField;
 static qboolean wasComplete;
 
-#define S_COMPLETION_COLOR S_COLOR_GREEN
+#define S_COMPLETION_COLOR S_COLOR_GREY
 
 
 
@@ -3022,7 +3035,7 @@ PrintMatches
 */
 static void PrintMatches( const char *s ) {
 	if (!Q_stricmpn(s, shortestMatch, (int)strlen(shortestMatch))) {
-		Com_Printf(S_COMPLETION_COLOR "Cmd  " S_COLOR_WHITE "%s\n", s);
+		Com_Printf_Ext(qtrue, S_COMPLETION_COLOR "Cmd  " S_COLOR_WHITE "%s\n", s);
 	}
 }
 
@@ -3050,7 +3063,7 @@ PrintKeyMatches
 */
 static void PrintKeyMatches( const char *s ) {
 	if ( !Q_stricmpn( s, shortestMatch, (int)strlen( shortestMatch ) ) ) {
-		Com_Printf( S_COMPLETION_COLOR "Key  " S_COLOR_WHITE "%s\n", s );
+		Com_Printf_Ext(qtrue, S_COMPLETION_COLOR "Key  " S_COLOR_WHITE "%s\n", s );
 	}
 }
 #endif
@@ -3063,7 +3076,7 @@ PrintFileMatches
 */
 static void PrintFileMatches( const char *s ) {
 	if (!Q_stricmpn(s, shortestMatch, (int)strlen(shortestMatch))) {
-		Com_Printf(S_COMPLETION_COLOR "File " S_COLOR_WHITE "%s\n", s);
+		Com_Printf_Ext(qtrue, S_COMPLETION_COLOR "File " S_COLOR_WHITE "%s\n", s);
 	}
 }
 
@@ -3078,7 +3091,9 @@ static void PrintCvarMatches( const char *s ) {
 
 	if ( !Q_stricmpn( s, shortestMatch, (int)strlen( shortestMatch ) ) ) {
 		Com_TruncateLongString( value, Cvar_VariableString( s ) );
-		Com_Printf(S_COMPLETION_COLOR "Cvar " S_COLOR_WHITE "%s = " S_COMPLETION_COLOR "\"" S_COLOR_WHITE "%s" S_COMPLETION_COLOR "\"" S_COLOR_WHITE "\n", s, value);
+		Com_Printf_Ext(qtrue, S_COMPLETION_COLOR "Cvar " S_COLOR_WHITE "%s = " S_COMPLETION_COLOR "\"", s);
+		Com_Printf_Ext(qfalse, S_COLOR_WHITE "%s", value);
+		Com_Printf_Ext(qtrue, S_COMPLETION_COLOR "\"" S_COLOR_WHITE "\n");
 	}
 }
 /*

@@ -330,7 +330,7 @@ All console printing must go through this in order to be logged to disk
 If no console is visible, the text will appear at the top of the game window
 ================
 */
-void CL_ConsolePrint( char *txt ) {
+void CL_ConsolePrint( char *txt, qboolean extendedColors ) {
 	int		y;
 	int		c, l;
 	int		color;
@@ -356,8 +356,10 @@ void CL_ConsolePrint( char *txt ) {
 
 	while ( (c = (unsigned char) *txt) != 0 ) {
 		if ( Q_IsColorString( (unsigned char*) txt ) ||
+			(extendedColors && Q_IsColorString_Extended( (unsigned char*)txt )) ||
 			  	( use102color && Q_IsColorString_1_02( (unsigned char*) txt ) ) ) {
-			color = ColorIndex( *(txt+1) );
+			if (extendedColors) color = ColorIndex_Extended( *(txt+1) );
+			else color = ColorIndex( *(txt+1) );
 			txt += 2;
 			continue;
 		}
@@ -500,9 +502,9 @@ void Con_DrawNotify (void)
 			char sTemp[4096]={0};	// ott
 			for (x = 0 ; x < con.linewidth ; x++)
 			{
-				if ( ( (text[x]>>8)&7 ) != currentColor ) {
-					currentColor = (text[x]>>8)&7;
-					strcat(sTemp,va("^%i", (text[x]>>8)&7) );
+				if ( ( (text[x]>>8) ) != currentColor ) {
+					currentColor = (text[x]>>8);
+					strcat(sTemp,va("^%i", (text[x]>>8)) );
 				}
 				strcat(sTemp,va("%c",text[x] & 0xFF));
 			}
@@ -519,8 +521,8 @@ void Con_DrawNotify (void)
 				if ( ( text[x] & 0xff ) == ' ' ) {
 					continue;
 				}
-				if ( ( (text[x]>>8)&7 ) != currentColor ) {
-					currentColor = (text[x]>>8)&7;
+				if ( ( (text[x]>>8) ) != currentColor ) {
+					currentColor = (text[x]>>8);
 					re.SetColor( g_color_table[currentColor] );
 				}
 				if (!cl_conXOffset)
@@ -675,9 +677,9 @@ void Con_DrawSolidConsole( float frac ) {
 			char sTemp[4096]={0};	// ott
 			for (x = 0 ; x < con.linewidth ; x++)
 			{
-				if ( ( (text[x]>>8)&7 ) != currentColor ) {
-					currentColor = (text[x]>>8)&7;
-					strcat(sTemp,va("^%i", (text[x]>>8)&7) );
+				if ( ( (text[x]>>8) ) != currentColor ) {
+					currentColor = (text[x]>>8);
+					strcat(sTemp,va("^%i", (text[x]>>8)) );
 				}
 				strcat(sTemp,va("%c",text[x] & 0xFF));
 			}
@@ -693,8 +695,8 @@ void Con_DrawSolidConsole( float frac ) {
 					continue;
 				}
 
-				if ( ( (text[x]>>8)&7 ) != currentColor ) {
-					currentColor = (text[x]>>8)&7;
+				if ( ( (text[x]>>8) ) != currentColor ) {
+					currentColor = (text[x]>>8);
 					re.SetColor( g_color_table[currentColor] );
 				}
 				SCR_DrawSmallChar(  (int) (con.xadjust + (x+1)*SMALLCHAR_WIDTH), y, text[x] & 0xff );
