@@ -2992,7 +2992,7 @@ static int	matchCount;
 static field_t *completionField;
 static qboolean wasComplete;
 
-#define S_COMPLETION_COLOR S_COLOR_GREY
+#define S_COMPLETION_COLOR S_COLOR_LT_GREY
 
 
 
