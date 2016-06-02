@@ -578,7 +578,7 @@ void Sys_AnsiColorPrint( const char *msg, bool extendedColors )
 			{
 				// Print the color code
 				int colIndex = (extendedColors ? ColorIndex_Extended(*(msg+1)) : ColorIndex(*(msg+1)));
-				if ( colIndex >= (sizeof(q3ToAnsi)/sizeof(q3ToAnsi[0])) ) colIndex = 2;
+				if ( colIndex >= (sizeof(q3ToAnsi)/sizeof(q3ToAnsi[0])) ) colIndex = COLOR_JK2MV_FALLBACK;
 				Com_sprintf( buffer, sizeof( buffer ), "\033[%dm",
 					q3ToAnsi[colIndex] );
 				fputs( buffer, stderr );

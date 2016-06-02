@@ -72,7 +72,7 @@ static WORD CON_ColorCharToAttrib( char color, bool extendedColors ) {
 	{
 		float *rgba;
 		int colIndex = (extendedColors ? ColorIndex_Extended(color) : ColorIndex(color));
-		if ( colIndex > 7 ) colIndex = 2;
+		if ( colIndex > 7 ) colIndex = COLOR_JK2MV_FALLBACK;
 		rgba = g_color_table[ colIndex ];
 
 		// set foreground color
