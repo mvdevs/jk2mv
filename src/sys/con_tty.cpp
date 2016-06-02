@@ -499,14 +499,14 @@ char *CON_Input( void )
 CON_Print
 ==================
 */
-void CON_Print( const char *msg )
+void CON_Print( const char *msg, bool extendedColors )
 {
 	if (!msg[0])
 		return;
 
 	CON_Hide( );
 
-	Sys_AnsiColorPrint( msg );
+	Sys_AnsiColorPrint( msg, extendedColors );
 
 	if (!ttycon_on) {
 		// CON_Hide didn't do anything.
@@ -538,7 +538,7 @@ Sys_AnsiColorPrint
 Transform Q3 colour codes to ANSI escape sequences
 =================
 */
-void Sys_AnsiColorPrint( const char *msg )
+void Sys_AnsiColorPrint( const char *msg, bool extendedColors )
 {
 	static char buffer[MAXPRINTMSG];
 	int         length = 0;
@@ -558,7 +558,7 @@ void Sys_AnsiColorPrint( const char *msg )
 
 	while ( *msg )
 	{
-		if ( Q_IsColorString( msg ) || (use102col && Q_IsColorString_1_02(msg)) || *msg == '\n' )
+		if ( Q_IsColorString( msg ) || (use102col && Q_IsColorString_1_02(msg)) || (extendedColors && Q_IsColorString_Extended(msg)) || *msg == '\n' )
 		{
 			// First empty the buffer
 			if ( length > 0 )
@@ -577,8 +577,10 @@ void Sys_AnsiColorPrint( const char *msg )
 			else
 			{
 				// Print the color code
+				int colIndex = (extendedColors ? ColorIndex_Extended(*(msg+1)) : ColorIndex(*(msg+1)));
+				if ( colIndex >= (sizeof(q3ToAnsi)/sizeof(q3ToAnsi[0])) ) colIndex = 2;
 				Com_sprintf( buffer, sizeof( buffer ), "\033[%dm",
-					q3ToAnsi[ColorIndex( *(msg + 1) )] );
+					q3ToAnsi[colIndex] );
 				fputs( buffer, stderr );
 				msg += 2;
 			}

@@ -166,7 +166,7 @@ void QDECL Com_Printf_Ext( qboolean extendedColors, const char *fmt, ... )
 	}
 
 	// echo to dedicated console and early console
-	Sys_Print( msg );
+	Sys_Print( msg, extendedColors );
 
 	// logfile
 	if ( com_logfile && com_logfile->integer ) {

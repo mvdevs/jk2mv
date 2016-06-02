@@ -77,7 +77,7 @@ Q_NORETURN void Sys_Error( const char *error, ... );
 Q_NORETURN void Sys_Quit (void);
 char	*Sys_GetClipboardData( void );	// note that this isn't journaled...
 
-void	Sys_Print( const char *msg );
+void	Sys_Print( const char *msg, qboolean extendedColors );
 
 void CON_CreateConsoleWindow(void);
 void CON_DeleteConsoleWindow(void);

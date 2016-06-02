@@ -60,7 +60,7 @@ CON_ColorCharToAttrib
 Convert Quake color character to Windows text attrib
 ==================
 */
-static WORD CON_ColorCharToAttrib( char color ) {
+static WORD CON_ColorCharToAttrib( char color, bool extendedColors ) {
 	WORD attrib;
 
 	if ( color == COLOR_WHITE )
@@ -70,7 +70,10 @@ static WORD CON_ColorCharToAttrib( char color ) {
 	}
 	else
 	{
-		float *rgba = g_color_table[ ColorIndex( color ) ];
+		float *rgba;
+		int colIndex = (extendedColors ? ColorIndex_Extended(color) : ColorIndex(color));
+		if ( colIndex > 7 ) colIndex = 2;
+		rgba = g_color_table[ colIndex ];
 
 		// set foreground color
 		attrib = ( rgba[0] >= 0.5 ? FOREGROUND_RED		: 0 ) |
@@ -208,7 +211,7 @@ static void CON_Show( void )
 	writeArea.Right = MAX_EDIT_LINE;
 
 	// set color to white
-	attrib = CON_ColorCharToAttrib( COLOR_WHITE );
+	attrib = CON_ColorCharToAttrib( COLOR_WHITE, qfalse );
 
 	const bool use102color = MV_USE102COLOR;
 
@@ -219,7 +222,7 @@ static void CON_Show( void )
 		{
 			if( i + 1 < qconsole_linelen &&
 					(Q_IsColorString( qconsole_line + i ) || (use102color && Q_IsColorString_1_02( qconsole_line + i ))) )
-				attrib = CON_ColorCharToAttrib( *( qconsole_line + i + 1 ) );
+				attrib = CON_ColorCharToAttrib( *( qconsole_line + i + 1 ), qfalse );
 
 			line[ i ].Char.AsciiChar = qconsole_line[ i ];
 		}
@@ -340,7 +343,7 @@ void CON_Init( void )
 		qconsole_history[ i ][ 0 ] = '\0';
 
 	// set text color to white
-	SetConsoleTextAttribute( qconsole_hout, CON_ColorCharToAttrib( COLOR_WHITE ) );
+	SetConsoleTextAttribute( qconsole_hout, CON_ColorCharToAttrib( COLOR_WHITE, qfalse ) );
 }
 
 /*
@@ -559,7 +562,7 @@ CON_WindowsColorPrint
 Set text colors based on Q3 color codes
 =================
 */
-void CON_WindowsColorPrint( const char *msg )
+void CON_WindowsColorPrint( const char *msg, bool extendedColors )
 {
 	static char buffer[ MAXPRINTMSG ];
 	int		 length = 0;
@@ -570,7 +573,7 @@ void CON_WindowsColorPrint( const char *msg )
 	{
 		qconsole_drawinput = ( *msg == '\n' );
 
-		if( Q_IsColorString( msg ) || (use102color && Q_IsColorString_1_02(msg)) || *msg == '\n' )
+		if( Q_IsColorString( msg ) || (use102color && Q_IsColorString_1_02(msg)) || (extendedColors && Q_IsColorString_Extended(msg)) || *msg == '\n' )
 		{
 			// First empty the buffer
 			if( length > 0 )
@@ -583,14 +586,14 @@ void CON_WindowsColorPrint( const char *msg )
 			if( *msg == '\n' )
 			{
 				// Reset color and then add the newline
-				SetConsoleTextAttribute( qconsole_hout, CON_ColorCharToAttrib( COLOR_WHITE ) );
+				SetConsoleTextAttribute( qconsole_hout, CON_ColorCharToAttrib( COLOR_WHITE, qfalse ) );
 				fputs( "\n", stderr );
 				msg++;
 			}
 			else
 			{
 				// Set the color
-				SetConsoleTextAttribute( qconsole_hout, CON_ColorCharToAttrib( *( msg + 1 ) ) );
+				SetConsoleTextAttribute( qconsole_hout, CON_ColorCharToAttrib( *( msg + 1 ), extendedColors ) );
 				msg += 2;
 			}
 		}
@@ -618,14 +621,14 @@ void CON_WindowsColorPrint( const char *msg )
 CON_Print
 ==================
 */
-void CON_Print( const char *msg )
+void CON_Print( const char *msg, bool extendedColors )
 {
 	if (!GetConsoleWindow())
 		return;
 
 	CON_Hide( );
 
-	CON_WindowsColorPrint( msg );
+	CON_WindowsColorPrint( msg, extendedColors );
 
 	CON_Show( );
 }

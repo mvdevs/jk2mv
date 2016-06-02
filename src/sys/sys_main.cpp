@@ -61,7 +61,7 @@ char *Sys_ConsoleInput(void) {
 	return CON_Input();
 }
 
-void Sys_Print(const char *msg) {
+void Sys_Print(const char *msg, qboolean extendedColors) {
 	// TTimo - prefix for text that shows up in console but not in notify
 	// backported from RTCW
 	if (!Q_strncmp(msg, "[skipnotify]", 12)) {
@@ -71,7 +71,7 @@ void Sys_Print(const char *msg) {
 		msg += 1;
 	}
 	ConsoleLogAppend(msg);
-	CON_Print(msg);
+	CON_Print(msg, (extendedColors ? true : false));
 }
 
 /*
@@ -157,7 +157,7 @@ void Q_NORETURN QDECL Sys_Error(const char *error, ...) {
 	vsnprintf(string, sizeof(string), error, argptr);
 	va_end(argptr);
 
-	Sys_Print(string);
+	Sys_Print(string,qfalse);
 
 	// Only print Sys_ErrorDialog for client binary. The dedicated
 	// server binary is meant to be a command line program so you would

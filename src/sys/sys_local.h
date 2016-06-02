@@ -13,5 +13,5 @@ char		*Sys_ConsoleInput(void);
 void 		Sys_QueEvent(int time, sysEventType_t type, int value, int value2, int ptrLength, void *ptr);
 void		Sys_SigHandler(int signal);
 #ifndef _WIN32
-void		Sys_AnsiColorPrint(const char *msg);
+void		Sys_AnsiColorPrint(const char *msg, bool extendedColors);
 #endif
