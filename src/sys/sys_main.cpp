@@ -4,7 +4,11 @@
 #include <cstdio>
 #include <sys/stat.h>
 #define __STDC_FORMAT_MACROS
+#if (defined(_MSC_VER) && _MSC_VER < 1800)
+#include <stdint.h>
+#else
 #include <inttypes.h>
+#endif
 #ifndef DEDICATED
 #ifdef WIN32
 #include <windows.h>

@@ -6492,7 +6492,9 @@ qboolean Item_Parse(int handle, itemDef_t *item) {
 static void Item_TextScroll_BuildLines ( itemDef_t* item )
 {
 #if 1
+#if !defined(_MSC_VER) || (defined(_MSC_VER) && _MSC_VER >= 1800)
 	assert(item->typeData);
+#endif
 	// new asian-aware line breaker...  (pasted from elsewhere late @ night, hence aliasing-vars ;-)
 	//
 	textScrollDef_t* scrollPtr = (textScrollDef_t*) item->typeData;
