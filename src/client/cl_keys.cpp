@@ -805,14 +805,12 @@ void Field_KeyDownEvent( field_t *edit, int key ) {
 		return;
 	}
 
-	if ( key == A_HOME || ( keynames[key].lower == 'a' && kg.keys[A_CTRL].down ) )
-	{
+	if ( key == A_HOME ) {
 		edit->cursor = 0;
 		return;
 	}
 
-	if ( key == A_END || ( keynames[key].lower == 'e' && kg.keys[A_CTRL].down ) )
-	{
+	if ( key == A_END ) {
 		edit->cursor = len;
 		return;
 	}
@@ -893,6 +891,14 @@ void Field_CharEvent( field_t *edit, int ch ) {
 			edit->cursor--;
 		}
 		return;
+	}
+
+	if ( ch == 'a' - 'a' + 1 ) {    // ctrl-a is home
+		edit->cursor = 0;
+	}
+
+	if ( ch == 'e' - 'a' + 1 ) {    // ctrl-e is end
+		edit->cursor = len;
 	}
 
 	//
