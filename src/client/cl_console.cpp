@@ -504,7 +504,7 @@ void Con_DrawNotify (void)
 			{
 				if ( ( (text[x]>>8) ) != currentColor ) {
 					currentColor = (text[x]>>8);
-					strcat(sTemp,va("^%i", (text[x]>>8)) );
+					strcat(sTemp,va("^%i", (currentColor > 7 ? COLOR_JK2MV_FALLBACK : currentColor) ));
 				}
 				strcat(sTemp,va("%c",text[x] & 0xFF));
 			}
@@ -679,7 +679,7 @@ void Con_DrawSolidConsole( float frac ) {
 			{
 				if ( ( (text[x]>>8) ) != currentColor ) {
 					currentColor = (text[x]>>8);
-					strcat(sTemp,va("^%i", (text[x]>>8)) );
+					strcat(sTemp,va("^%i", (currentColor > 7 ? COLOR_JK2MV_FALLBACK : currentColor) ));
 				}
 				strcat(sTemp,va("%c",text[x] & 0xFF));
 			}
