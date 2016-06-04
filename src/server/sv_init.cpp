@@ -743,9 +743,23 @@ Ghoul2 Insert End
 	}
 	*/
 
+	// shutdown webserver
+	if (sv.http_port && ((mv_httpdownloads->latchedString && !atoi(mv_httpdownloads->latchedString)) || mv_httpserverport->latchedString)) {
+		NET_HTTP_StopServer();
+		sv.http_port = 0;
+	}
+
 	// here because latched
 	mv_httpdownloads = Cvar_Get("mv_httpdownloads", "0", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_LATCH);
 	mv_httpserverport = Cvar_Get("mv_httpserverport", "0", CVAR_ARCHIVE | CVAR_LATCH);
+
+	if (mv_httpdownloads->integer) {
+		if (Q_stristr(mv_httpserverport->string, "http://")) {
+			Com_Printf("HTTP Downloads: redirecting to %s\n", mv_httpserverport->string);
+		} else {
+			sv.http_port = NET_HTTP_StartServer(mv_httpserverport->integer);
+		}
+	}
 }
 
 
@@ -942,5 +956,8 @@ Ghoul2 Insert Start
 
 	// disconnect any local clients
 	CL_Disconnect( qfalse );
+
+	NET_HTTP_StopServer();
+	sv.http_port = 0;
 }
 

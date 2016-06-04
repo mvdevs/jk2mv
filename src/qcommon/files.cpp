@@ -213,7 +213,7 @@ typedef struct {
 	int				pure_checksum;				// checksum for pure
 	int				numfiles;					// number of files in pk3
 	int				referenced;					// referenced file flags
-	qboolean		noref;						// ouend: reference lists
+	qboolean		noref;						// file is blacklisted for referencing
 	int				hashSize;					// hash table size (power of 2)
 	fileInPack_t*	*hashTable;					// hash table
 	fileInPack_t*	buildBuffer;				// buffer with the filenames etc.
@@ -3663,31 +3663,39 @@ void FS_Flush( fileHandle_t f ) {
 
 // only referenced pk3 files can be downloaded
 // this automatically fixes q3dirtrav
-qboolean FS_MV_VerifyDownloadPath(const char *pk3file) {
+// returns the path to the GameData directory of the requested file.
+const char *FS_MV_VerifyDownloadPath(const char *pk3file) {
 	searchpath_t	*search;
-	char ospath[MAX_OSPATH];
-
-	Com_sprintf(ospath, sizeof(ospath), "%s/%s", fs_basepath->string, pk3file);
-	FS_ReplaceSeparators(ospath);
 
 	for (search = fs_searchpaths; search; search = search->next) {
-		char tmp[MAX_QPATH];
+		char tmp[MAX_PATH];
 
 		if (!search->pack)
 			continue;
 		
-		Com_sprintf(tmp, sizeof(tmp), "%s/%s", search->pack->pakGamename, search->pack->pakBasename);
+		Com_sprintf(tmp, sizeof(tmp), "%s/%s.pk3", search->pack->pakGamename, search->pack->pakBasename);
 		if (FS_idPak(tmp, BASEGAME))
 			continue;
 
-		if (!Q_stricmp(search->pack->pakFilename, ospath) && search->pack->noref)
-			return qfalse;
+		if (!Q_stricmp(tmp, pk3file)) {
+			if (search->pack->noref)
+				return NULL;
 
-		if (!Q_stricmp(search->pack->pakFilename, ospath) && search->pack->referenced)
-			return qtrue;
+			if (search->pack->referenced) {
+				static char gameDataPath[MAX_PATH];
+				Q_strncpyz(gameDataPath, search->pack->pakFilename, sizeof(gameDataPath));
+
+				char *sp = strrchr(gameDataPath, PATH_SEP);
+				*sp = '\0';
+				sp = strrchr(gameDataPath, PATH_SEP);
+				*sp = '\0';
+
+				return gameDataPath;
+			}
+		}
 	}
 
-	return qfalse;
+	return NULL;
 }
 
 void FS_FilenameCompletion( const char *dir, const char *ext, qboolean stripExt, callbackFunc_t callback ) { // for auto-complete (copied from OpenJK)

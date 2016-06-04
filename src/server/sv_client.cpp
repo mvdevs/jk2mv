@@ -809,7 +809,7 @@ void SV_WriteDownloadToClient( client_t *cl , msg_t *msg )
 
 		Com_Printf( "clientDownload: %d : begining \"%s\"\n", cl - svs.clients, cl->downloadName );
 
-		legalPacket = FS_MV_VerifyDownloadPath(va("%s", cl->downloadName));
+		legalPacket = FS_MV_VerifyDownloadPath(va("%s", cl->downloadName)) ? qtrue : qfalse;
 
 		if (!sv_allowDownload->integer || !legalPacket ||
 			( cl->downloadSize = FS_SV_FOpenFileRead( cl->downloadName, &cl->download ) ) <= 0 ) {

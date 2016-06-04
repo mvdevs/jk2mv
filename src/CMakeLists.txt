@@ -195,6 +195,7 @@ if (BuildMVMP OR BuildMVDED)
 		"${SRCDir}/qcommon/msg.cpp"
 		"${SRCDir}/qcommon/net_chan.cpp"
 		"${SRCDir}/qcommon/net_ip.cpp"
+		"${SRCDir}/qcommon/net_http.cpp"
 		"${SRCDir}/qcommon/q_math.cpp"
 		"${SRCDir}/qcommon/q_shared.cpp"
 		"${SRCDir}/qcommon/strip.cpp"

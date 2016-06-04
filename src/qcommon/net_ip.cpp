@@ -1,7 +1,7 @@
 #include "../qcommon/qcommon.h"
 
 #ifdef _WIN32
-	#include <winsock.h>
+	#include <winsock2.h>
 
 	typedef int socklen_t;
 
@@ -822,6 +822,8 @@ void NET_OpenIP( void )
 		}
 		if ( ip_socket == INVALID_SOCKET )
 			Com_Printf( "WARNING: Couldn't bind to a v4 ip address.\n");
+
+		NET_HTTP_Init();
 	}
 }
 
@@ -928,6 +930,8 @@ void NET_Config( qboolean enableNetworking ) {
 			closesocket( socks_socket );
 			socks_socket = INVALID_SOCKET;
 		}
+
+		NET_HTTP_Shutdown();
 	}
 
 	if ( start ) {
@@ -1034,25 +1038,20 @@ void NET_Sleep( int msec ) {
 		highestfd = ip_socket;
 	}
 
-#ifdef _WIN32
-	if(highestfd == INVALID_SOCKET)
-	{
-		// windows ain't happy when select is called without valid FDs
+	// windows ain't happy when select is called without valid FDs
+	if (highestfd != INVALID_SOCKET) {
+		// nonblocking mode, the timeout is handled by the http socket 
+		timeout.tv_sec = 0;
+		timeout.tv_usec = 0;
+		retval = select(highestfd + 1, &fdset, NULL, NULL, &timeout);
 
-		SleepEx(msec, 0);
-		return;
+		if (retval == SOCKET_ERROR)
+			Com_Printf("Warning: select() syscall failed: %s\n", NET_ErrorString());
+		else if (retval > 0)
+			NET_Event(&fdset);
 	}
-#endif
 
-	timeout.tv_sec = msec/1000;
-	timeout.tv_usec = (msec%1000)*1000;
-
-	retval = select(highestfd + 1, &fdset, NULL, NULL, &timeout);
-
-	if(retval == SOCKET_ERROR)
-		Com_Printf("Warning: select() syscall failed: %s\n", NET_ErrorString());
-	else if(retval > 0)
-		NET_Event(&fdset);
+	NET_HTTP_Poll(msec);
 }
 
 /*

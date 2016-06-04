@@ -161,9 +161,14 @@ typedef enum {
 
 void		NET_Init( void );
 void		NET_Shutdown( void );
-void		NET_Restart( void );
 void		NET_Config( qboolean enableNetworking );
 void		NET_Restart_f(void);
+
+void		NET_HTTP_Init();
+void		NET_HTTP_Shutdown();
+void		NET_HTTP_Poll(int msec);
+int			NET_HTTP_StartServer(int port);
+void		NET_HTTP_StopServer();
 
 void		NET_SendPacket (netsrc_t sock, int length, const void *data, netadr_t to);
 void		QDECL NET_OutOfBandPrint( netsrc_t net_socket, netadr_t adr, const char *format, ...);
@@ -662,7 +667,7 @@ qboolean FS_CheckDirTraversal(const char *checkdir);
 qboolean FS_ComparePaks(char *neededpaks, int len, int *chksums, size_t maxchksums, qboolean dlstring);
 void FS_Rename( const char *from, const char *to );
 
-qboolean FS_MV_VerifyDownloadPath(const char *pk3file);
+const char *FS_MV_VerifyDownloadPath(const char *pk3file);
 
 int FS_GetDLList(dlfile_t *files, int maxfiles);
 qboolean FS_RMDLPrefix(const char *qpath);
