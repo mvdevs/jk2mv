@@ -2,14 +2,8 @@
 
 #include "server.h"
 #include "../qcommon/strip.h"
-#include "../meerkat/meerkat.h"
 
 #include "mv_setup.h"
-
-mvmutex_t m_webreq;
-qboolean m_reqpending;
-char m_reqpath[MAX_QPATH];
-int m_reqreturn = -1;
 
 static void SV_CloseDownload( client_t *cl );
 
@@ -780,70 +774,6 @@ void SV_NextDownload_f( client_t *cl )
 SV_BeginDownload_f
 ==================
 */
-
-void SV_MV_Websrv_Request_MainThread() {
-	MV_LockMutex(m_webreq);
-
-	if (m_reqpending) {
-		m_reqreturn = (int)FS_MV_VerifyDownloadPath(m_reqpath);
-	}
-
-	MV_ReleaseMutex(m_webreq);
-}
-
-// this is ugly but it syncs everything correctly
-// THIS FUNCTION IS NOT CALLED ON THE MAIN THREAD
-int SV_MV_Websrv_Request_ExtThread(struct mg_connection *conn, enum mg_event ev) {
-	if (ev == MG_REQUEST) {
-		qboolean res;
-
-		// wait till the main thread is ready to take the request
-		while (1) {
-			MV_LockMutex(m_webreq);
-
-			if (!m_reqpending)
-				break;
-
-			MV_ReleaseMutex(m_webreq);
-			MV_MSleep(20);
-		}
-
-		// copy over request path
-		m_reqpending = qtrue;
-		Q_strncpyz(m_reqpath, &conn->uri[1], sizeof(m_reqpath));
-
-		MV_ReleaseMutex(m_webreq);
-
-		// wait for the result
-		while (1) {
-			MV_LockMutex(m_webreq);
-
-			if (m_reqreturn != -1)
-				break;
-
-			MV_ReleaseMutex(m_webreq);
-			MV_MSleep(20);
-		}
-
-		res = (qboolean)m_reqreturn;
-		m_reqreturn = -1;
-		m_reqpending = qfalse;
-		MV_ReleaseMutex(m_webreq);
-
-		if (res) {
-			return MG_FALSE;
-		} else {
-			mg_send_status(conn, 403);
-			mg_send_header(conn, "Content-Type", "text/plain");
-			mg_printf_data(conn, "403 forbidden");
-			return MG_TRUE;
-		}
-	} else if (ev == MG_AUTH) {
-		return MG_TRUE;
-	} else {
-		return MG_FALSE;
-	}
-}
 
 void SV_BeginDownload_f( client_t *cl ) {
 

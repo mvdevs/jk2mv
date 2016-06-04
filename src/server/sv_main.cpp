@@ -1142,8 +1142,6 @@ void SV_Frame( int msec ) {
 
 	// send a heartbeat to the master if needed
 	SV_MasterHeartbeat();
-
-	SV_MV_Websrv_Request_MainThread();
 }
 
 //============================================================================
