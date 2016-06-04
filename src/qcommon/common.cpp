@@ -7,6 +7,7 @@
 #endif
 
 #include "../qcommon/q_shared.h"
+#include "../sys/sys_local.h"
 #include "qcommon.h"
 #include "strip.h"
 #include "mv_setup.h"
@@ -2697,6 +2698,9 @@ void Com_Frame( void ) {
 		else
 			NET_Sleep(timeVal - 1);
 	} while ((timeVal = Com_TimeVal(minMsec)) != 0);
+
+	// make sure mouse and joystick are only called once a frame
+	IN_Frame();
 
 	lastTime = com_frameTime;
 	com_frameTime = Com_EventLoop();
