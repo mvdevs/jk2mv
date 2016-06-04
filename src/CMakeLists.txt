@@ -145,6 +145,15 @@ if (BuildMVMP OR BuildMVDED)
 	source_group("ghoul2" FILES ${MVMPDEDGhoulFiles})
 	set(MVMPDEDFiles ${MVMPDEDFiles} ${MVMPDEDGhoulFiles})
 
+	set(MVMPDEDMongooseFiles
+		"${LIBDir}/mongoose/mongoose.h"
+
+		"${LIBDir}/mongoose/mongoose.c"
+	)
+	source_group("mongoose" FILES ${MVMPDEDMongooseFiles})
+	set(MVMPDEDIncludeDirs ${MVMPDEDIncludeDirs} "${LIBDir}/mongoose")
+	set(MVMPDEDFiles ${MVMPDEDFiles} ${MVMPDEDMongooseFiles})
+
 	set(MVMPDEDCommonFiles
 		"${SRCDir}/qcommon/GenericParser2.h"
 		"${SRCDir}/qcommon/INetProfile.h"
