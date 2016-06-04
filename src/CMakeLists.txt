@@ -145,15 +145,6 @@ if (BuildMVMP OR BuildMVDED)
 	source_group("ghoul2" FILES ${MVMPDEDGhoulFiles})
 	set(MVMPDEDFiles ${MVMPDEDFiles} ${MVMPDEDGhoulFiles})
 
-	set(MVMPDEDMeerkatFiles
-		"${LIBDir}/meerkat/meerkat.h"
-
-		"${LIBDir}/meerkat/meerkat.c"
-	)
-	source_group("meerkat" FILES ${MVMPDEDMeerkatFiles})
-	set(MVMPDEDIncludeDirs ${MVMPDEDIncludeDirs} "${LIBDir}/meerkat")
-	set(MVMPDEDFiles ${MVMPDEDFiles} ${MVMPDEDMeerkatFiles})
-
 	set(MVMPDEDCommonFiles
 		"${SRCDir}/qcommon/GenericParser2.h"
 		"${SRCDir}/qcommon/INetProfile.h"
