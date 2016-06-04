@@ -24,6 +24,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "../qcommon/qcommon.h"
 #include "con_local.h"
 #include "sys_local.h"
+#define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 
 #define QCONSOLE_HISTORY 32
