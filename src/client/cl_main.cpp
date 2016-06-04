@@ -161,7 +161,7 @@ CL_ChangeReliableCommand
 void CL_ChangeReliableCommand( void ) {
 	int r, index, l;
 
-	r = clc.reliableSequence - ((int)(random()) * 5);
+	r = clc.reliableSequence - ((int)(qrandom()) * 5);
 	index = clc.reliableSequence & ( MAX_RELIABLE_COMMANDS - 1 );
 	l = (int)strlen(clc.reliableCommands[index]);
 	if ( l >= MAX_STRING_CHARS - 1 ) {

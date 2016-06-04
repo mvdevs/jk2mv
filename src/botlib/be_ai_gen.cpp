@@ -47,7 +47,7 @@ int GeneticSelection(int numranks, float *rankings)
 	{
 		//select a bot where the ones with the higest rankings have
 		//the highest chance of being selected
-		select = random() * sum;
+		select = qrandom() * sum;
 		for (i = 0; i < numranks; i++)
 		{
 			if (rankings[i] < 0) continue;
@@ -56,7 +56,7 @@ int GeneticSelection(int numranks, float *rankings)
 		} //end for
 	} //end if
 	//select a bot randomly
-	index = random() * numranks;
+	index = qrandom() * numranks;
 	for (i = 0; i < numranks; i++)
 	{
 		if (rankings[index] >= 0) return index;

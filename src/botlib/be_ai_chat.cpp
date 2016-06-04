@@ -773,7 +773,7 @@ void BotReplaceWeightedSynonyms(char *string, unsigned long int context)
 	{
 		if (!(syn->context & context)) continue;
 		//choose a weighted random replacement synonym
-		weight = random() * syn->totalweight;
+		weight = qrandom() * syn->totalweight;
 		if (!weight) continue;
 		curweight = 0;
 		for (replacement = syn->firstsynonym; replacement; replacement = replacement->next)
@@ -1042,7 +1042,7 @@ char *RandomString(char *name)
 	{
 		if (!strcmp(random->string, name))
 		{
-			i = random() * random->numstrings;
+			i = qrandom() * random->numstrings;
 			for (rs = random->firstrandomstring; rs; rs = rs->next)
 			{
 				if (--i < 0) break;
@@ -2429,7 +2429,7 @@ char *BotChooseInitialChatMessage(bot_chatstate_t *cs, char *type)
 			} //end if
 			else //choose a chat message randomly
 			{
-				n = random() * numchatmessages;
+				n = qrandom() * numchatmessages;
 				for (m = t->firstchatmessage; m; m = m->next)
 				{
 					if (m->time > AAS_Time()) continue;
@@ -2666,7 +2666,7 @@ int BotReplyChat(int chatstate, char *message, int mcontext, int vcontext, char 
 					if (m->time > AAS_Time()) continue;
 					numchatmessages++;
 				} //end if
-				num = random() * numchatmessages;
+				num = qrandom() * numchatmessages;
 				for (m = rchat->firstchatmessage; m; m = m->next)
 				{
 					if (--num < 0) break;

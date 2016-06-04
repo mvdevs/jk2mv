@@ -597,7 +597,7 @@ float FuzzyWeightUndecided_r(int *inventory, fuzzyseperator_t *fs)
 	if (inventory[fs->index] < fs->value)
 	{
 		if (fs->child) return FuzzyWeightUndecided_r(inventory, fs->child);
-		else return fs->minweight + random() * (fs->maxweight - fs->minweight);
+		else return fs->minweight + qrandom() * (fs->maxweight - fs->minweight);
 	} //end if
 	else if (fs->next)
 	{
@@ -605,10 +605,10 @@ float FuzzyWeightUndecided_r(int *inventory, fuzzyseperator_t *fs)
 		{
 			//first weight
 			if (fs->child) w1 = FuzzyWeightUndecided_r(inventory, fs->child);
-			else w1 = fs->minweight + random() * (fs->maxweight - fs->minweight);
+			else w1 = fs->minweight + qrandom() * (fs->maxweight - fs->minweight);
 			//second weight
 			if (fs->next->child) w2 = FuzzyWeight_r(inventory, fs->next->child);
-			else w2 = fs->next->minweight + random() * (fs->next->maxweight - fs->next->minweight);
+			else w2 = fs->next->minweight + qrandom() * (fs->next->maxweight - fs->next->minweight);
 			//the scale factor
 			scale = (inventory[fs->index] - fs->value) / (fs->next->value - fs->value);
 			//scale between the two weights
@@ -695,8 +695,8 @@ void EvolveFuzzySeperator_r(fuzzyseperator_t *fs)
 	else if (fs->type == WT_BALANCE)
 	{
 		//every once in a while an evolution leap occurs, mutation
-		if (random() < 0.01) fs->weight += crandom() * (fs->maxweight - fs->minweight);
-		else fs->weight += crandom() * (fs->maxweight - fs->minweight) * 0.5;
+		if (qrandom() < 0.01) fs->weight += qcrandom() * (fs->maxweight - fs->minweight);
+		else fs->weight += qcrandom() * (fs->maxweight - fs->minweight) * 0.5;
 		//modify bounds if necesary because of mutation
 		if (fs->weight < fs->minweight) fs->minweight = fs->weight;
 		else if (fs->weight > fs->maxweight) fs->maxweight = fs->weight;
