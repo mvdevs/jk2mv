@@ -3668,7 +3668,7 @@ const char *FS_MV_VerifyDownloadPath(const char *pk3file) {
 	searchpath_t	*search;
 
 	for (search = fs_searchpaths; search; search = search->next) {
-		char tmp[MAX_PATH];
+		char tmp[MAX_OSPATH];
 
 		if (!search->pack)
 			continue;
@@ -3682,7 +3682,7 @@ const char *FS_MV_VerifyDownloadPath(const char *pk3file) {
 				return NULL;
 
 			if (search->pack->referenced) {
-				static char gameDataPath[MAX_PATH];
+				static char gameDataPath[MAX_OSPATH];
 				Q_strncpyz(gameDataPath, search->pack->pakFilename, sizeof(gameDataPath));
 
 				char *sp = strrchr(gameDataPath, PATH_SEP);
