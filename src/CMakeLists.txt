@@ -408,21 +408,6 @@ if (BuildMVMP)
 		set(MVMPLibraries ${MVMPLibraries} ${PNG_LIBRARIES})
 	endif()
 
-	# CURL
-	if(UseInternalCURL)
-		file(GLOB_RECURSE CURLFiles "${LIBDir}/curl/*.c" "${LIBDir}/curl/*.h")
-		source_group("curl" FILES ${CURLFiles})
-		set(MVMPIncludeDirs ${MVMPIncludeDirs} "${LIBDir}/curl")
-		set(MVMPFiles ${MVMPFiles} ${CURLFiles})
-	else()
-		find_package(CURL)
-		if(NOT CURL_FOUND)
-			message(FATAL_ERROR "libcurl dev files not found! Install it or set UseInternalCURL ON")
-		endif()
-		set(MVMPIncludeDirs ${MVMPIncludeDirs} ${CURL_INCLUDE_DIR})
-		set(MVMPLibraries ${MVMPLibraries} ${CURL_LIBRARIES})
-	endif()
-
 	# Source
 	set(MVMPClientFiles
 		"${SRCDir}/client/FXExport.h"
@@ -544,7 +529,7 @@ if (BuildMVMP)
 	set(MVMPFiles ${MVMPFiles} ${MVMPSDLFiles})
 
 	if (("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU") OR ("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang"))
-		set(LibFiles ${ZLIBFiles} ${MVMPDEDMeerkatFiles} ${MVMPMP3Files} ${JPEGFiles} ${PNGFiles} ${CURLFiles})
+		set(LibFiles ${ZLIBFiles} ${MVMPDEDMongooseFiles} ${MVMPMP3Files} ${JPEGFiles} ${PNGFiles})
 		set_source_files_properties(${LibFiles} PROPERTIES COMPILE_FLAGS "-w")
 	endif()
 

@@ -88,12 +88,6 @@ else()
 	option(UseInternalZLIB "Whether to use the included zlib instead of a locally installed one" OFF)
 endif()
 
-if(WIN32)
-	set(UseInternalCURL ON)
-else()
-	option(UseInternalCURL "Whether to use the included libcurl instead of a locally installed one" OFF)
-endif()
-
 # Architecture
 set(CMAKE_OSX_ARCHITECTURES "i386" "x86_64") # always building both on osx
 
@@ -264,10 +258,6 @@ endif()
 
 if(UseInternalZLIB)
 	set(GlobalDefines ${GlobalDefines} "INTERNAL_ZLIB")
-endif()
-
-if(UseInternalCURL)
-	set(GlobalDefines ${GlobalDefines} "INTERNAL_CURL")
 endif()
 
 if(BuildPortableVersion)
