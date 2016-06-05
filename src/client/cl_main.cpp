@@ -637,6 +637,8 @@ CL_ShutdownAll
 =====================
 */
 void CL_ShutdownAll(void) {
+	NET_HTTP_StopDownload();
+
 	// clear sounds
 	S_DisableSounds();
 	// shutdown CGame
@@ -783,6 +785,8 @@ void CL_Disconnect( qboolean showMainMenu ) {
 	}
 	*clc.downloadTempName = *clc.downloadName = 0;
 	Cvar_Set("cl_downloadName", "");
+
+	NET_HTTP_StopDownload();
 
 	if ( clc.demofile ) {
 		FS_FCloseFile( clc.demofile );
@@ -1661,6 +1665,8 @@ void CL_ContinueCurrentDownload(dldecision_t decision) {
 
 			Q_strncpyz(remotepath, va("%s/%s", clc.httpdl, cl_downloadName->string), sizeof(remotepath));
 			Com_DPrintf("HTTP URL: %s\n", remotepath);
+
+			NET_HTTP_StartDownload(remotepath, Q3_VERSION, va("jk2://%s", NET_AdrToString(clc.serverAddress)));
 		} else {
 			clc.downloadBlock = 0; // Starting new file
 			clc.downloadCount = 0;
@@ -2428,8 +2434,6 @@ static unsigned int frameCount;
 static float avgFrametime=0.0;
 extern void SP_CheckForLanguageUpdates(void);
 void CL_Frame ( int msec ) {
-	int runningcurls;
-
 	if ( !com_cl_running->integer ) {
 		return;
 	}

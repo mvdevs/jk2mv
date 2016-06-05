@@ -61,6 +61,5 @@ JK2MV is licensed under GPLv2 as free software. You are free to use, modify and 
 - openjk (https://github.com/JACoders/OpenJK) (SDL port, engine fixes, improvements etc.)
 - ioq3 (https://github.com/ioquake/ioq3/) (SDL port, x64 qvm, engine fixes, improvements etc.)
 - xLAva (https://github.com/xLAva/JediOutcastLinux) (openal fixes)
-- mongoose (https://github.com/cesanta/mongoose) (http downloads serverside)
-- libcurl (http://curl.haxx.se/libcurl/) (http downloads clientside)
+- mongoose (https://github.com/cesanta/mongoose) (http downloads)
 - Thoroughbred-Of-Sin (http://thoroughbred-of-sin.deviantart.com/) (icon)

@@ -522,9 +522,9 @@ void CL_SystemInfoChanged( void );
 void CL_ParseServerMessage( msg_t *msg );
 void CL_SP_Print(const word ID, byte *Data);
 
-size_t CL_ParseHTTPDownload(char *ptr, size_t size, size_t nmemb, void *dummy);
+size_t CL_ParseHTTPDownload(const char *ptr, size_t len);
 void CL_EndHTTPDownload(qboolean abort);
-int CL_ProgressHTTPDownload(void *clientp, double dltotal, double dlnow, double ultotal, double ulnow);
+int CL_ProgressHTTPDownload(size_t dltotal, size_t dlnow);
 
 //====================================================================
 

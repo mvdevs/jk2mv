@@ -169,6 +169,8 @@ void		NET_HTTP_Shutdown();
 void		NET_HTTP_Poll(int msec);
 int			NET_HTTP_StartServer(int port);
 void		NET_HTTP_StopServer();
+void		NET_HTTP_StartDownload(const char *url, const char *userAgent, const char *referer);
+void		NET_HTTP_StopDownload();
 
 void		NET_SendPacket (netsrc_t sock, int length, const void *data, netadr_t to);
 void		QDECL NET_OutOfBandPrint( netsrc_t net_socket, netadr_t adr, const char *format, ...);
