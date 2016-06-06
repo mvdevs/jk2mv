@@ -50,6 +50,7 @@ void NET_HTTP_Poll(int msec) {
 NET_HTTP_RecvData
 ====================
 */
+#ifndef DEDICATED
 void NET_HTTP_RecvData(struct mbuf *io, struct mg_connection *nc) {
 	if (dl_abortFlag) {
 		nc->flags |= MG_F_CLOSE_IMMEDIATELY;
@@ -70,6 +71,7 @@ void NET_HTTP_RecvData(struct mbuf *io, struct mg_connection *nc) {
 		nc->flags |= MG_F_CLOSE_IMMEDIATELY;
 	}
 }
+#endif
 
 /*
 ====================
@@ -80,7 +82,7 @@ static void NET_HTTP_Event(struct mg_connection *nc, int ev, void *ev_data) {
 	if (http_srv && nc->listener == http_srv) {
 		if (ev == MG_EV_HTTP_REQUEST) {
 			struct http_message *hm = (struct http_message *)ev_data;
-			
+
 			char reqPath[MAX_OSPATH];
 			mgstr2str(reqPath, sizeof(reqPath), &hm->uri);
 
@@ -97,7 +99,9 @@ static void NET_HTTP_Event(struct mg_connection *nc, int ev, void *ev_data) {
 				nc->flags |= MG_F_SEND_AND_CLOSE;
 			}
 		}
-	} else if (http_dl && nc == http_dl) {
+	}
+#ifndef DEDICATED
+	else if (http_dl && nc == http_dl) {
 		switch (ev) {
 		case MG_EV_CONNECT: {
 			if (*(int *)ev_data != 0) {
@@ -145,6 +149,7 @@ static void NET_HTTP_Event(struct mg_connection *nc, int ev, void *ev_data) {
 			break;
 		}
 	}
+#endif
 }
 
 size_t mgstr2str(char *out, size_t outlen, const struct mg_str *in) {
@@ -204,6 +209,7 @@ void NET_HTTP_StopServer() {
 	http_srv = NULL;
 }
 
+#ifndef DEDICATED
 /*
 ====================
 NET_HTTP_StartDownload
@@ -227,3 +233,4 @@ NET_HTTP_StopDownload
 void NET_HTTP_StopDownload() {
 	dl_abortFlag = qtrue;
 }
+#endif

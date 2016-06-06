@@ -999,17 +999,6 @@ mvprotocol_t MV_GetCurrentProtocol();
 void MV_CopyStringWithColors( const char *src, char *dst, int dstSize, int nonColors );
 int MV_StrlenSkipColors( const char *str );
 
-typedef void* mvmutex_t;
-
-mvmutex_t MV_CreateMutex();
-void MV_DestroyMutex(mvmutex_t mutex);
-void MV_LockMutex(mvmutex_t mutex);
-void MV_ReleaseMutex(mvmutex_t mutex);
-
-void MV_StartThread(void *addr);
-
-void MV_MSleep(unsigned int msec);
-
 extern "C" long QDECL Q_ftol(float f);
 extern "C" int QDECL Q_VMftol();
 

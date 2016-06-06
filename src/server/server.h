@@ -313,9 +313,6 @@ void SV_SpawnServer( char *server, qboolean killBots, ForceReload_e eForceReload
 //
 // sv_client.c
 //
-
-extern mvmutex_t m_webreq;
-
 void SV_GetChallenge( netadr_t from );
 
 void SV_DirectConnect( netadr_t from );
