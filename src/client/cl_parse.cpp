@@ -657,6 +657,15 @@ int CL_ProgressHTTPDownload(size_t dltotal, size_t dlnow) {
 
 /*
 =====================
+CL_DownloadRunning
+=====================
+*/
+qboolean CL_DownloadRunning() {
+	return (qboolean)(clc.download > 0);
+}
+
+/*
+=====================
 CL_ParseCommandString
 
 Command strings are just saved off until cgame asks for them

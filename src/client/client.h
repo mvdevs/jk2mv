@@ -526,6 +526,8 @@ size_t CL_ParseHTTPDownload(const char *ptr, size_t len);
 void CL_EndHTTPDownload(qboolean abort);
 int CL_ProgressHTTPDownload(size_t dltotal, size_t dlnow);
 
+qboolean CL_DownloadRunning();
+
 //====================================================================
 
 void	CL_ServerInfoPacket( netadr_t from, msg_t *msg );

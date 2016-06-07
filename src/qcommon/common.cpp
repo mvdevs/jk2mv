@@ -8,6 +8,7 @@
 
 #include "../qcommon/q_shared.h"
 #include "qcommon.h"
+#include "../client/client.h"
 #include "strip.h"
 #include "mv_setup.h"
 #ifdef WIN32
@@ -2675,6 +2676,12 @@ void Com_Frame( void ) {
 				minMsec = 1000 / com_maxfps->integer;
 			else
 				minMsec = 1;
+
+#ifndef DEDICATED
+			// limit FPS while downloading so slow systems still reach full-speed
+			if (CL_DownloadRunning())
+				minMsec = 1000 / 20;
+#endif
 
 			timeVal = com_frameTime - lastTime;
 			bias += timeVal - minMsec;
