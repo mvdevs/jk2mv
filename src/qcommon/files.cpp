@@ -1209,7 +1209,6 @@ int FS_FOpenFileReadHash(const char *filename, fileHandle_t *file, qboolean uniq
 			}
 #endif
 
-#ifndef DEDICATED
 			// Only load qvms from "o10#_" or "dl_" when found in base
 			if ( !Q_stricmp(search->pack->pakGamename, BASEGAME)
 				 && !(!Q_stricmp(search->pack->pakBasename, "assets0") || !Q_stricmp(search->pack->pakBasename, "assets1") || !Q_stricmp(search->pack->pakBasename, "assets2") || !Q_stricmp(search->pack->pakBasename, "assets5"))
@@ -1221,7 +1220,6 @@ int FS_FOpenFileReadHash(const char *filename, fileHandle_t *file, qboolean uniq
 			{
 				continue;
 			}
-#endif
 
 			// patchfiles are only allowed from within assetsmv.pk3
 			if (!Q_stricmp(get_filename_ext(filename), "menu_patch") && Q_stricmp(search->pack->pakBasename, "assetsmv")) {
@@ -2707,6 +2705,7 @@ static void FS_AddGameDirectory( const char *path, const char *dir, qboolean ass
 		if ( ( pak = FS_LoadZipFile( pakfile, sorted[i] ) ) == 0 )
 			continue;
 
+#ifndef DEDICATED
 		// files beginning with "dl_" are only loaded when referenced by the server
 		if (!Q_stricmpn(filename, "dl_", 3)) {
 			int j;
@@ -2728,6 +2727,7 @@ static void FS_AddGameDirectory( const char *path, const char *dir, qboolean ass
 				continue;
 			}
 		}
+#endif
 
 		// store the game name for downloading
 		strcpy(pak->pakGamename, dir);
