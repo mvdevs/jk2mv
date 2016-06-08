@@ -603,20 +603,20 @@ CL_ParseHTTPDownload
 A HTTP download chunk has been received from the server
 =====================
 */
-size_t CL_ParseHTTPDownload(char *ptr, size_t size, size_t nmemb, void *dummy) {
+size_t CL_ParseHTTPDownload(const char *ptr, size_t len) {
 	// open the file if not opened yet
 	if (!clc.download) {
 		clc.download = FS_SV_FOpenFileWrite(clc.downloadTempName);
 	}
 
-	return (size_t)FS_Write(ptr, (int)(size * nmemb), clc.download);
+	return (size_t)FS_Write(ptr, (int)len, clc.download);
 }
 
 /*
 =====================
 CL_EndHTTPDownload
 
-A HTTP download chunk has been received from the server
+HTTP download ended
 =====================
 */
 void CL_EndHTTPDownload(qboolean abort) {
@@ -627,10 +627,16 @@ void CL_EndHTTPDownload(qboolean abort) {
 
 	if (!abort) {
 		FS_SV_Rename(clc.downloadTempName, clc.downloadName);
+	} else {
+		Com_DPrintf("HTTP Download aborted by user\n");
 	}
 
 	*clc.downloadTempName = *clc.downloadName = 0;
 	Cvar_Set("cl_downloadName", "");
+
+	if (cls.state > CA_DISCONNECTED && !abort) {
+		CL_NextDownload();
+	}
 }
 
 /*
@@ -640,13 +646,22 @@ CL_ProgressHTTPDownload
 Current status of the HTTP download has changed
 =====================
 */
-int CL_ProgressHTTPDownload(void *clientp, double dltotal, double dlnow, double ultotal, double ulnow) {
+int CL_ProgressHTTPDownload(size_t dltotal, size_t dlnow) {
 	if (dltotal && dlnow) {
 		Cvar_SetValue("cl_downloadSize", (int)dltotal);
 		Cvar_SetValue("cl_downloadCount", (int)dlnow);
 	}
 
 	return 0;
+}
+
+/*
+=====================
+CL_DownloadRunning
+=====================
+*/
+qboolean CL_DownloadRunning() {
+	return (qboolean)(clc.download > 0);
 }
 
 /*

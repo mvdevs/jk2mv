@@ -11,8 +11,6 @@
 #include "../game/g_public.h"
 #include "../game/bg_public.h"
 
-#include "../meerkat/meerkat.h"
-
 #include "../api/mvapi.h"
 
 //=============================================================================
@@ -315,9 +313,6 @@ void SV_SpawnServer( char *server, qboolean killBots, ForceReload_e eForceReload
 //
 // sv_client.c
 //
-
-extern mvmutex_t m_webreq;
-
 void SV_GetChallenge( netadr_t from );
 
 void SV_DirectConnect( netadr_t from );
@@ -335,9 +330,6 @@ void SV_ExecuteClientCommand( client_t *cl, const char *s, qboolean clientOK );
 void SV_ClientThink (client_t *cl, usercmd_t *cmd);
 
 void SV_WriteDownloadToClient( client_t *cl , msg_t *msg );
-
-int SV_MV_Websrv_Request_ExtThread(struct mg_connection *conn, enum mg_event ev);
-void SV_MV_Websrv_Request_MainThread();
 
 //
 // sv_ccmds.c

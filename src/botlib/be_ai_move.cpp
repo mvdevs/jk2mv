@@ -1548,7 +1548,7 @@ bot_moveresult_t BotTravel_WaterJump(bot_movestate_t *ms, aas_reachability_t *re
 	VectorSubtract(reach->end, ms->origin, dir);
 	VectorCopy(dir, hordir);
 	hordir[2] = 0;
-	dir[2] += 15 + crandom() * 40;
+	dir[2] += 15 + qcrandom() * 40;
 	//botimport.Print(PRT_MESSAGE, "BotTravel_WaterJump: dir[2] = %f\n", dir[2]);
 	VectorNormalize(dir);
 	dist = VectorNormalize(hordir);
@@ -1588,9 +1588,9 @@ bot_moveresult_t BotFinishTravel_WaterJump(bot_movestate_t *ms, aas_reachability
 	if (!(AAS_PointContents(pnt) & (CONTENTS_LAVA|CONTENTS_SLIME|CONTENTS_WATER))) return result;
 	//swim straight to reachability end
 	VectorSubtract(reach->end, ms->origin, dir);
-	dir[0] += crandom() * 10;
-	dir[1] += crandom() * 10;
-	dir[2] += 70 + crandom() * 10;
+	dir[0] += qcrandom() * 10;
+	dir[1] += qcrandom() * 10;
+	dir[2] += 70 + qcrandom() * 10;
 	dist = VectorNormalize(dir);
 	//elemantary actions
 	EA_Move(ms->client, dir, 400);

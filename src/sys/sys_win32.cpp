@@ -1,3 +1,4 @@
+#include <winsock2.h>
 #include <windows.h>
 #include <float.h>
 #include <io.h>
@@ -72,42 +73,6 @@ char *Sys_DefaultAssetsPath() {
 char *Sys_DefaultInstallPath(void)
 {
 	return Sys_Cwd();
-}
-
-mvmutex_t MV_CreateMutex() {
-	return (mvmutex_t)CreateMutex(NULL, FALSE, NULL);
-}
-
-void MV_DestroyMutex(mvmutex_t mutex) {
-	if (!mutex) {
-		return;
-	}
-
-	CloseHandle((HANDLE)mutex);
-}
-
-void MV_LockMutex(mvmutex_t mutex) {
-	if (!mutex) {
-		return;
-	}
-
-	WaitForSingleObject((HANDLE)mutex, INFINITE);
-}
-
-void MV_ReleaseMutex(mvmutex_t mutex) {
-	if (!mutex) {
-		return;
-	}
-
-	ReleaseMutex((HANDLE)mutex);
-}
-
-void MV_StartThread(void *addr) {
-	CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)addr, NULL, 0, NULL);
-}
-
-void MV_MSleep(unsigned int msec) {
-	Sleep((DWORD)msec);
 }
 
 void Sys_Sleep(int msec) {

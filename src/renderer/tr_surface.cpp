@@ -471,7 +471,7 @@ static void RB_SurfaceSaberGlow()
 	// Big hilt sprite
 	// Please don't kill me Pat...I liked the hilt glow blob, but wanted a subtle pulse.:)  Feel free to ditch it if you don't like it.  --Jeff
 	// Please don't kill me Jeff...  The pulse is good, but now I want the halo bigger if the saber is shorter...  --Pat
-	DoSprite( e->origin, 5.5f + random() * 0.25f, 0.0f );//random() * 360.0f );
+	DoSprite( e->origin, 5.5f + qrandom() * 0.25f, 0.0f );//random() * 360.0f );
 }
 
 /*
@@ -871,14 +871,14 @@ static float Q_crandom( int *seed ) {
 static void CreateShape()
 //----------------------------------------------------------------------------
 {
-	VectorSet( sh1, 0.66f + crandom() * 0.1f,	// fwd
-				0.07f + crandom() * 0.025f,
-				0.07f + crandom() * 0.025f );
+	VectorSet( sh1, 0.66f + qcrandom() * 0.1f,	// fwd
+				0.07f + qcrandom() * 0.025f,
+				0.07f + qcrandom() * 0.025f );
 
 	// it seems to look best to have a point on one side of the ideal line, then the other point on the other side.
-	VectorSet( sh2, 0.33f + crandom() * 0.1f,	// fwd
-					-sh1[1] + crandom() * 0.02f,	// forcing point to be on the opposite side of the line -- right
-					-sh1[2] + crandom() * 0.02f );// up
+	VectorSet( sh2, 0.33f + qcrandom() * 0.1f,	// fwd
+					-sh1[1] + qcrandom() * 0.02f,	// forcing point to be on the opposite side of the line -- right
+					-sh1[2] + qcrandom() * 0.02f );// up
 }
 
 //----------------------------------------------------------------------------

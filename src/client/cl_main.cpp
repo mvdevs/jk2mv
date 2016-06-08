@@ -161,7 +161,7 @@ CL_ChangeReliableCommand
 void CL_ChangeReliableCommand( void ) {
 	int r, index, l;
 
-	r = clc.reliableSequence - ((int)(random()) * 5);
+	r = clc.reliableSequence - ((int)(qrandom()) * 5);
 	index = clc.reliableSequence & ( MAX_RELIABLE_COMMANDS - 1 );
 	l = (int)strlen(clc.reliableCommands[index]);
 	if ( l >= MAX_STRING_CHARS - 1 ) {
@@ -637,10 +637,7 @@ CL_ShutdownAll
 =====================
 */
 void CL_ShutdownAll(void) {
-	// so the download aborts when the server changes map while downloading something
-	if (cls.curl) {
-		curl_multi_remove_handle(cls.curlm, cls.curl);
-	}
+	NET_HTTP_StopDownload();
 
 	// clear sounds
 	S_DisableSounds();
@@ -789,10 +786,7 @@ void CL_Disconnect( qboolean showMainMenu ) {
 	*clc.downloadTempName = *clc.downloadName = 0;
 	Cvar_Set("cl_downloadName", "");
 
-	// if a HTTP download is running, kill it
-	if (cls.curl) {
-		curl_multi_remove_handle(cls.curlm, cls.curl);
-	}
+	NET_HTTP_StopDownload();
 
 	if ( clc.demofile ) {
 		FS_FCloseFile( clc.demofile );
@@ -1672,25 +1666,7 @@ void CL_ContinueCurrentDownload(dldecision_t decision) {
 			Q_strncpyz(remotepath, va("%s/%s", clc.httpdl, cl_downloadName->string), sizeof(remotepath));
 			Com_DPrintf("HTTP URL: %s\n", remotepath);
 
-			cls.curl = curl_easy_init();
-			if (cls.curl) {
-				curl_easy_setopt(cls.curl, CURLOPT_URL, remotepath);
-				curl_easy_setopt(cls.curl, CURLOPT_WRITEFUNCTION, CL_ParseHTTPDownload);
-				curl_easy_setopt(cls.curl, CURLOPT_PROGRESSFUNCTION, CL_ProgressHTTPDownload);
-				curl_easy_setopt(cls.curl, CURLOPT_NOPROGRESS, 0);
-				curl_easy_setopt(cls.curl, CURLOPT_CONNECTTIMEOUT, 5);
-				curl_easy_setopt(cls.curl, CURLOPT_BUFFERSIZE, 16384);
-				curl_easy_setopt(cls.curl, CURLOPT_FAILONERROR, 1);
-				curl_easy_setopt(cls.curl, CURLOPT_USERAGENT, Q3_VERSION);
-				curl_easy_setopt(cls.curl, CURLOPT_REFERER, va("jk2://%s", NET_AdrToString(clc.serverAddress)));
-#ifdef _DEBUG
-				curl_easy_setopt(cls.curl, CURLOPT_MAX_RECV_SPEED_LARGE, (curl_off_t)(2.5 * 1024 * 1024)); // my eyes aren't fast enough for this (limit to max. 2.5MB/s)
-#endif
-				curl_multi_add_handle(cls.curlm, cls.curl);
-			} else {
-				Com_DPrintf("failed initializing curl handle\n");
-				CL_NextDownload();
-			}
+			NET_HTTP_StartDownload(remotepath, Q3_VERSION, va("jk2://%s", NET_AdrToString(clc.serverAddress)));
 		} else {
 			clc.downloadBlock = 0; // Starting new file
 			clc.downloadCount = 0;
@@ -2458,8 +2434,6 @@ static unsigned int frameCount;
 static float avgFrametime=0.0;
 extern void SP_CheckForLanguageUpdates(void);
 void CL_Frame ( int msec ) {
-	int runningcurls;
-
 	if ( !com_cl_running->integer ) {
 		return;
 	}
@@ -2515,37 +2489,6 @@ void CL_Frame ( int msec ) {
 			avgFrametime=0.0f;
 		}
 		frameCount++;
-	}
-
-	// progress http downloads
-	for (int i = 0; i < 10; i++) {
-		curl_multi_perform(cls.curlm, &runningcurls);
-		if (runningcurls == 0 && cls.curl) {
-			int msgs;
-			CURLMsg *msg;
-
-			msg = curl_multi_info_read(cls.curlm, &msgs);
-			if (msg) {
-				if (msg->data.result == CURLE_OK) {
-					CL_EndHTTPDownload(qfalse);
-				} else {
-					CL_EndHTTPDownload(qtrue);
-					Com_Error(ERR_DROP, "^3JK2MV: HTTP Download of %s failed with error %s\n", cl_downloadLocalName->string, curl_easy_strerror(msg->data.result));
-				}
-			} else {
-				// this case means it has been aborted by the user
-				Com_DPrintf("HTTP Download aborted by user\n");
-				CL_EndHTTPDownload(qtrue);
-			}
-
-			curl_easy_cleanup(cls.curl);
-			cls.curl = NULL;
-
-			if (cls.state > CA_DISCONNECTED) {
-				CL_NextDownload();
-				break;
-			}
-		}
 	}
 
 	cls.realtime += cls.frametime;
@@ -2978,9 +2921,6 @@ void CL_Init( void ) {
 	G2VertSpaceClient = new CMiniHeap(G2_VERT_SPACE_CLIENT_SIZE * 1024);
 #endif
 
-	curl_global_init(CURL_GLOBAL_ALL);
-	cls.curlm = curl_multi_init();
-
 	Com_Printf( "----- Client Initialization Complete -----\n" );
 }
 
@@ -3051,9 +2991,6 @@ void CL_Shutdown( void ) {
 	recursive = qfalse;
 
 	Com_Memset( &cls, 0, sizeof( cls ) );
-
-	curl_multi_cleanup(cls.curlm);
-	curl_global_cleanup();
 
 	Com_Printf( "-----------------------\n" );
 

@@ -161,9 +161,16 @@ typedef enum {
 
 void		NET_Init( void );
 void		NET_Shutdown( void );
-void		NET_Restart( void );
 void		NET_Config( qboolean enableNetworking );
 void		NET_Restart_f(void);
+
+void		NET_HTTP_Init();
+void		NET_HTTP_Shutdown();
+void		NET_HTTP_Poll(int msec);
+int			NET_HTTP_StartServer(int port);
+void		NET_HTTP_StopServer();
+void		NET_HTTP_StartDownload(const char *url, const char *userAgent, const char *referer);
+void		NET_HTTP_StopDownload();
 
 void		NET_SendPacket (netsrc_t sock, int length, const void *data, netadr_t to);
 void		QDECL NET_OutOfBandPrint( netsrc_t net_socket, netadr_t adr, const char *format, ...);
@@ -662,7 +669,7 @@ qboolean FS_CheckDirTraversal(const char *checkdir);
 qboolean FS_ComparePaks(char *neededpaks, int len, int *chksums, size_t maxchksums, qboolean dlstring);
 void FS_Rename( const char *from, const char *to );
 
-qboolean FS_MV_VerifyDownloadPath(const char *pk3file);
+const char *FS_MV_VerifyDownloadPath(const char *pk3file);
 
 int FS_GetDLList(dlfile_t *files, int maxfiles);
 qboolean FS_RMDLPrefix(const char *qpath);
@@ -992,17 +999,6 @@ mvprotocol_t MV_GetCurrentProtocol();
 
 void MV_CopyStringWithColors( const char *src, char *dst, int dstSize, int nonColors );
 int MV_StrlenSkipColors( const char *str );
-
-typedef void* mvmutex_t;
-
-mvmutex_t MV_CreateMutex();
-void MV_DestroyMutex(mvmutex_t mutex);
-void MV_LockMutex(mvmutex_t mutex);
-void MV_ReleaseMutex(mvmutex_t mutex);
-
-void MV_StartThread(void *addr);
-
-void MV_MSleep(unsigned int msec);
 
 extern "C" long QDECL Q_ftol(float f);
 extern "C" int QDECL Q_VMftol();

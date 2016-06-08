@@ -478,51 +478,6 @@ char *Sys_GetCurrentUser( void )
 	return p->pw_name;
 }
 
-typedef struct {
-    pthread_mutex_t mutex;
-} mv_unix_mutex;
-
-mvmutex_t MV_CreateMutex() {
-    mv_unix_mutex *mut = (mv_unix_mutex *)malloc(sizeof(mv_unix_mutex));
-    pthread_mutex_init(&mut->mutex, NULL);
-
-    return (mvmutex_t)mut;
-}
-
-void MV_DestroyMutex(mvmutex_t mutex) {
-    if (!mutex) {
-        return;
-    }
-
-    pthread_mutex_destroy(&((mv_unix_mutex *)mutex)->mutex);
-	free(mutex);
-}
-
-void MV_LockMutex(mvmutex_t mutex) {
-    if (!mutex) {
-        return;
-    }
-
-	pthread_mutex_lock(&((mv_unix_mutex *)mutex)->mutex);
-}
-
-void MV_ReleaseMutex(mvmutex_t mutex) {
-    if (!mutex) {
-        return;
-    }
-
-	pthread_mutex_unlock(&((mv_unix_mutex *)mutex)->mutex);
-}
-
-void MV_StartThread(void *addr) {
-    pthread_t th;
-    pthread_create(&th, NULL, (void*(*)(void*))addr, NULL);
-}
-
-void MV_MSleep(unsigned int msec) {
-	usleep(msec);
-}
-
 // from ioq3 requires sse
 // i do not care about processors without sse
 #if defined(__i386__) || defined(__amd64__)
