@@ -204,6 +204,13 @@ typedef struct fileInPack_s {
 	struct	fileInPack_s*	next;		// next file in the hash
 } fileInPack_t;
 
+enum {
+	PACKGVC_UNKNOWN = 0,
+	PACKGVC_1_02 = 1,
+	PACKGVC_1_03 = 2,
+	PACKGVC_1_04 = 4,
+};
+
 typedef struct {
 	char			pakFilename[MAX_OSPATH];	// c:\quake3\base\pak0.pk3
 	char			pakBasename[MAX_OSPATH];	// pak0
@@ -217,6 +224,7 @@ typedef struct {
 	int				hashSize;					// hash table size (power of 2)
 	fileInPack_t*	*hashTable;					// hash table
 	fileInPack_t*	buildBuffer;				// buffer with the filenames etc.
+	int				gvc;						// game-version compatibility
 } pack_t;
 
 typedef struct {
@@ -1103,6 +1111,39 @@ const char *get_filename_ext(const char *filename) {
 
 /*
 ===========
+FS_PakReadFile
+
+Reads a file from specified pak_t and saves it's data in buffer
+===========
+*/
+int FS_PakReadFile(pack_t *pak, const char *filename, char *buffer, int bufferlen) {
+	int hash, len;
+	fileInPack_t *pakFile;
+
+	hash = FS_HashFileName(filename, pak->hashSize);
+	pakFile = pak->hashTable[hash];
+	if (pakFile) {
+		do {
+			// case and separator insensitive comparisons
+			if (!FS_FilenameCompare(pakFile->name, filename)) {
+				unzSetOffset(pak->handle, pakFile->pos);
+				unzOpenCurrentFile(pak->handle);
+				len = unzReadCurrentFile(pak->handle, buffer, bufferlen);
+				unzCloseCurrentFile(pak->handle);
+
+				return len;
+			}
+
+			pakFile = pakFile->next;
+		} while (pakFile != NULL);
+	}
+
+	return 0;
+}
+
+
+/*
+===========
 FS_FOpenFileRead
 
 Finds the file in the search path.
@@ -1181,22 +1222,19 @@ int FS_FOpenFileReadHash(const char *filename, fileHandle_t *file, qboolean uniq
 				continue;
 			}
 
-			// if scanning for cgame, ui or jk2mpgame and we are in 1.02 mode ignore assets5.pk3 and assets2.pk3
-			if (MV_GetCurrentGameversion() == VERSION_1_02 &&
-				(!Q_stricmp(filename, "vm/cgame.qvm") || !Q_stricmp(filename, "vm/ui.qvm") || !Q_stricmp(filename, "vm/jk2mpgame.qvm")) &&
-				(!Q_stricmp(search->pack->pakBasename, "assets2") || !Q_stricmp(search->pack->pakBasename, "assets5"))) {
+			// version specific pk3's: prevent loading unsupported qvm's
+			// downloaded files are always okey because they are only loaded on servers currently using them
+			if (Q_stricmpn(search->pack->pakBasename, "dl_", 3) &&
+				!((search->pack->gvc & PACKGVC_1_02 && MV_GetCurrentGameversion() == VERSION_1_02) ||
+				  (search->pack->gvc & PACKGVC_1_03 && MV_GetCurrentGameversion() == VERSION_1_03) ||
+				  (search->pack->gvc & PACKGVC_1_04 && MV_GetCurrentGameversion() == VERSION_1_04) ||
+				  (MV_GetCurrentGameversion() == VERSION_UNDEF)) &&
+				(!Q_stricmp(filename, "vm/cgame.qvm") || !Q_stricmp(filename, "vm/ui.qvm") || !Q_stricmp(filename, "vm/jk2mpgame.qvm"))) {
 				continue;
 			}
 
-			// if scanning for cgame, ui or jk2mpgame and we are in 1.03 mode ignore assets5.pk3
-			if (MV_GetCurrentGameversion() == VERSION_1_03 &&
-				(!Q_stricmp(filename, "vm/cgame.qvm") || !Q_stricmp(filename, "vm/ui.qvm") || !Q_stricmp(filename, "vm/jk2mpgame.qvm")) &&
-				!Q_stricmp(search->pack->pakBasename, "assets5")) {
-				continue;
-			}
-
-			// ignore the jk2ffa.dm_15 from 1.03 because it can't be played
-			if (!Q_stricmp(filename, "demos/jk2ffa.dm_15") && !Q_stricmp(search->pack->pakBasename, "assets2")) {
+			// patchfiles are only allowed from within assetsmv.pk3
+			if (!Q_stricmp(get_filename_ext(filename), "menu_patch") && Q_stricmp(search->pack->pakBasename, "assetsmv")) {
 				continue;
 			}
 
@@ -1207,23 +1245,6 @@ int FS_FOpenFileReadHash(const char *filename, fileHandle_t *file, qboolean uniq
 				continue;
 			}
 #endif
-
-			// Only load qvms from "o10#_" or "dl_" when found in base
-			if ( !Q_stricmp(search->pack->pakGamename, BASEGAME)
-				 && !(!Q_stricmp(search->pack->pakBasename, "assets0") || !Q_stricmp(search->pack->pakBasename, "assets1") || !Q_stricmp(search->pack->pakBasename, "assets2") || !Q_stricmp(search->pack->pakBasename, "assets5"))
-				 && !( (!Q_stricmpn(search->pack->pakBasename, "o102_", 5) && MV_GetCurrentGameversion() == VERSION_1_02)
-				 || (!Q_stricmpn(search->pack->pakBasename, "o103_", 5) && MV_GetCurrentGameversion() == VERSION_1_03)
-				 || (!Q_stricmpn(search->pack->pakBasename, "o104_", 5) && MV_GetCurrentGameversion() == VERSION_1_04)
-				 || (!Q_stricmpn(search->pack->pakBasename, "dl_", 3)) )
-				 && (!Q_stricmp(filename, "vm/cgame.qvm") || !Q_stricmp(filename, "vm/ui.qvm") || !Q_stricmp(filename, "vm/jk2mpgame.qvm")) )
-			{
-				continue;
-			}
-
-			// patchfiles are only allowed from within assetsmv.pk3
-			if (!Q_stricmp(get_filename_ext(filename), "menu_patch") && Q_stricmp(search->pack->pakBasename, "assetsmv")) {
-				continue;
-			}
 
 			// look through all the pak file elements
 			pak = search->pack;
@@ -1939,6 +1960,53 @@ static pack_t *FS_LoadZipFile( char *zipfile, const char *basename )
 	Z_Free(fs_headerLongs);
 
 	pack->buildBuffer = buildBuffer;
+
+	// which versions does this pk3 support?
+
+	// filename prefixes
+	if (!Q_stricmpn(basename, "o102_", 5)) {
+		pack->gvc = PACKGVC_1_02;
+	} else if (!Q_stricmpn(basename, "o103_", 5)) {
+		pack->gvc = PACKGVC_1_03;
+	} else if (!Q_stricmpn(basename, "o104_", 5)) {
+		pack->gvc = PACKGVC_1_04;
+	}
+
+	// mv.info file in root directory of pk3 file
+	char cversion[32];
+	int cversionlen = FS_PakReadFile(pack, "mv.info", cversion, sizeof(cversion) - 1);
+	if (cversionlen) {
+		cversion[cversionlen] = '\0';
+		pack->gvc = PACKGVC_UNKNOWN; // mv.info file overwrites version prefixes
+
+		if (Q_stristr(cversion, "compatible 1.02")) {
+			pack->gvc |= PACKGVC_1_02;
+		}
+
+		if (Q_stristr(cversion, "compatible 1.03")) {
+			pack->gvc |= PACKGVC_1_03;
+		}
+
+		if (Q_stristr(cversion, "compatible 1.04")) {
+			pack->gvc |= PACKGVC_1_04;
+		}
+
+		if (Q_stristr(cversion, "compatible all")) {
+			pack->gvc = PACKGVC_1_02 | PACKGVC_1_03 | PACKGVC_1_04;
+		}
+	}
+
+	// assets are hardcoded
+	if (!Q_stricmp(pack->pakBasename, "assets0")) {
+		pack->gvc = PACKGVC_1_02 | PACKGVC_1_03 | PACKGVC_1_04;
+	} else if (!Q_stricmp(pack->pakBasename, "assets1")) {
+		pack->gvc = PACKGVC_1_02 | PACKGVC_1_03 | PACKGVC_1_04;
+	} else if (!Q_stricmp(pack->pakBasename, "assets2")) {
+		pack->gvc = PACKGVC_1_03 | PACKGVC_1_04;
+	} else if (!Q_stricmp(pack->pakBasename, "assets5")) {
+		pack->gvc = PACKGVC_1_04;
+	}
+
 	return pack;
 }
 
@@ -2686,19 +2754,6 @@ static void FS_AddGameDirectory( const char *path, const char *dir, qboolean ass
 				strcmp(filename, "assets2.pk3") && strcmp(filename, "assets5.pk3")) {
 				continue;
 			}
-		}
-
-		// version prefixes: load a file called e.g. 102_mod.pk3 only when joining a 1.02 server
-		if (!Q_stricmpn(filename, "o102_", 5) && MV_GetCurrentGameversion() != VERSION_1_02) {
-			continue;
-		}
-
-		if (!Q_stricmpn(filename, "o103_", 5) && MV_GetCurrentGameversion() != VERSION_1_03) {
-			continue;
-		}
-
-		if (!Q_stricmpn(filename, "o104_", 5) && MV_GetCurrentGameversion() != VERSION_1_04) {
-			continue;
 		}
 
 		if ( ( pak = FS_LoadZipFile( pakfile, sorted[i] ) ) == 0 )
