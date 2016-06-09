@@ -181,18 +181,6 @@ or configs will never get loaded from disk!
 
 */
 
-// every time a new demo pk3 file is built, this checksum must be updated.
-// the easiest way to get it is to just run the game and see what it spits out
-#define	DEMO_PAK_CHECKSUM	437558517u
-
-// if this is defined, the executable positively won't work with any paks other
-// than the demo pak, even if productid is present.  This is only used for our
-// last demo release to prevent the mac and linux users from using the demo
-// executable with the production windows pak before the mac/linux products
-// hit the shelves a little later
-// NOW defined in build files
-//#define PRE_RELEASE_TADEMO
-
 #define MAX_ZPATH			256
 #define	MAX_SEARCH_PATHS	4096
 #define MAX_FILEHASH_SIZE	1024
@@ -1087,22 +1075,6 @@ qboolean FS_FilenameCompare( const char *s1, const char *s2 ) {
 	return (qboolean)0;		// strings are equal
 }
 
-/*
-===========
-FS_ShiftedStrStr
-===========
-*/
-const char *FS_ShiftedStrStr(const char *string, const char *substring, int shift) {
-	char buf[MAX_STRING_TOKENS];
-	int i;
-
-	for (i = 0; substring[i]; i++) {
-		buf[i] = substring[i] + shift;
-	}
-	buf[i] = '\0';
-	return strstr(string, buf);
-}
-
 const char *get_filename_ext(const char *filename) {
 	const char *dot = strrchr(filename, '.');
 	if (!dot || dot == filename) return "";
@@ -1196,13 +1168,6 @@ int FS_FOpenFileReadHash(const char *filename, fileHandle_t *file, qboolean uniq
 		return -1;
 	}
 
-	// make sure the q3key file is only readable by the quake3.exe at initialization
-	// any other time the key should only be accessed in memory using the provided functions
-	if( com_fullyInitialized && strstr( filename, "q3key" ) ) {
-		*file = 0;
-		return -1;
-	}
-
 	//
 	// search through the path, one element at a time
 	//
@@ -1255,39 +1220,22 @@ int FS_FOpenFileReadHash(const char *filename, fileHandle_t *file, qboolean uniq
 					// found it!
 
 					// reference lists
-					if (Q_stricmp(pak->pakBasename, "assetsmv") && !pak->noref ) {
-						// mark the pak as having been referenced and mark specifics on cgame and ui
-						// shaders, txt, arena files  by themselves do not count as a reference as
-						// these are loaded from all pk3s
-						// from every pk3 file..
-						l = (int)strlen(filename);
-						if (!(pak->referenced & FS_GENERAL_REF)) {
-							if (Q_stricmp(filename + l - 7, ".shader") != 0 &&
-								Q_stricmp(filename + l - 4, ".txt") != 0 &&
-								Q_stricmp(filename + l - 4, ".cfg") != 0 &&
-								Q_stricmp(filename + l - 4, ".fcf") != 0 &&
-								Q_stricmp(filename + l - 7, ".config") != 0 &&
-								strstr(filename, "levelshots") == NULL &&
-								Q_stricmp(filename + l - 4, ".bot") != 0 &&
-								Q_stricmp(filename + l - 6, ".arena") != 0 &&
-								Q_stricmp(filename + l - 5, ".menu") != 0) {
-								pak->referenced |= FS_GENERAL_REF;
-							}
+					if ( !pak->noref ) {
+						// JK2MV automatically references pk3's in three cases:
+						// 1. A .bsp file is loaded from it (and thus it is expected to be a map)
+						// 2. cgame.qvm or ui.qvm is loaded from it (expected to be a clientside)
+						// 3. pk3 is located in fs_game != base (standard jk2 behavior)
+						// All others need to be referenced manually by the use of reflists.
+						
+						if (!Q_stricmp(get_filename_ext(filename), "bsp")) {
+							pak->referenced |= FS_GENERAL_REF;
 						}
 
-						// jk2mpgame.qvm	- 13
-						// ]^%`cZT`X!di`
-						if (!(pak->referenced & FS_QAGAME_REF) && FS_ShiftedStrStr(filename, "]^%`cZT`X!di`", 13)) {
-							pak->referenced |= FS_QAGAME_REF;
-						}
-						// cgame.qvm	- 7
-						// \`Zf^'jof
-						if (!(pak->referenced & FS_CGAME_REF) && FS_ShiftedStrStr(filename, "\\`Zf^'jof", 7)) {
+						if (!Q_stricmp(filename, "vm/cgame.qvm")) {
 							pak->referenced |= FS_CGAME_REF;
 						}
-						// ui.qvm		- 5
-						// pd)lqh
-						if (!(pak->referenced & FS_UI_REF) && FS_ShiftedStrStr(filename, "pd)lqh", 5)) {
+
+						if (!Q_stricmp(filename, "vm/ui.qvm")) {
 							pak->referenced |= FS_UI_REF;
 						}
 					}
@@ -3147,37 +3095,6 @@ static void FS_Startup( const char *gameName ) {
 
 /*
 =====================
-FS_GamePureChecksum
-
-Returns the checksum of the pk3 from which the server loaded the qagame.qvm
-=====================
-*/
-const char *FS_GamePureChecksum( void ) {
-	static char	info[MAX_STRING_TOKENS];
-	searchpath_t *search;
-
-	info[0] = 0;
-
-	for ( search = fs_searchpaths ; search ; search = search->next ) {
-		// is the element a pak file?
-		if ( search->pack ) {
-			if (MV_GetCurrentGameversion() == VERSION_1_02 && (!Q_stricmp(search->pack->pakBasename, "assets2") || !Q_stricmp(search->pack->pakBasename, "assets5")))
-				continue;
-
-			if (MV_GetCurrentGameversion() == VERSION_1_03 && (!Q_stricmp(search->pack->pakBasename, "assets5")))
-				continue;
-
-			if (search->pack->referenced & FS_QAGAME_REF) {
-				Com_sprintf(info, sizeof(info), "%d", search->pack->checksum);
-			}
-		}
-	}
-
-	return info;
-}
-
-/*
-=====================
 FS_LoadedPakChecksums
 
 Returns a space separated string containing the checksums of all loaded pk3 files.
@@ -3592,7 +3509,6 @@ void FS_Restart( int checksumFeed ) {
 			Cvar_Set("fs_gamedirvar", lastValidGame);
 			lastValidBase[0] = '\0';
 			lastValidGame[0] = '\0';
-			Cvar_Set( "fs_restrict", "0" );
 			FS_Restart(checksumFeed);
 			Com_Error( ERR_DROP, "Invalid game folder\n" );
 			return;

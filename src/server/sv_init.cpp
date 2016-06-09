@@ -396,7 +396,7 @@ Ghoul2 Insert End
 ================
 SV_TouchCGame
 
-  touch the cgame.vm so that a pure client can load it if it's in a seperate pk3
+Touch the cgame.vm and ui.qvm so that a client can load it if it's in a seperate pk3
 ================
 */
 void SV_TouchCGame(void) {
@@ -407,6 +407,12 @@ void SV_TouchCGame(void) {
 	FS_FOpenFileRead( filename, &f, qfalse );
 	if ( f ) {
 		FS_FCloseFile( f );
+	}
+
+	Com_sprintf(filename, sizeof(filename), "vm/%s.qvm", "ui");
+	FS_FOpenFileRead(filename, &f, qfalse);
+	if (f) {
+		FS_FCloseFile(f);
 	}
 }
 
@@ -687,6 +693,12 @@ Ghoul2 Insert End
 	SV_BotFrame( svs.time );
 	svs.time += 100;
 
+	// if a dedicated server we need to touch the cgame and ui because it could be in a
+	// seperate pk3 file and the client will need to load the latest cgame.qvm
+	if (com_dedicated->integer) {
+		SV_TouchCGame();
+	}
+
 	if ( sv_pure->integer ) {
 		// the server sends these to the clients so they will only
 		// load pk3s also loaded at the server
@@ -697,12 +709,6 @@ Ghoul2 Insert End
 		}
 		p = FS_LoadedPakNames();
 		Cvar_Set( "sv_pakNames", p );
-
-		// if a dedicated pure server we need to touch the cgame because it could be in a
-		// seperate pk3 file and the client will need to load the latest cgame.qvm
-		if ( com_dedicated->integer ) {
-			SV_TouchCGame();
-		}
 	}
 	else {
 		Cvar_Set( "sv_paks", "" );
