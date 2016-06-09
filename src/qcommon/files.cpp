@@ -2624,7 +2624,15 @@ static int QDECL paksort( const void *a, const void *b ) {
 	aa = *(char **)a;
 	bb = *(char **)b;
 
-	return FS_PathCmp( aa, bb );
+	// downloaded files have priority
+	// this is needed because otherwise even if a clientside was downloaded, there is no gurantee it is actually used.
+	if (!Q_stricmpn(aa, "dl_", 3) && Q_stricmpn(bb, "dl_", 3)) {
+		return 1;
+	} else if (Q_stricmpn(aa, "dl_", 3) && !Q_stricmpn(bb, "dl_", 3)) {
+		return -1;
+	} else {
+		return FS_PathCmp(aa, bb);
+	}
 }
 
 /*
