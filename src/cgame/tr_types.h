@@ -331,6 +331,7 @@ typedef struct {
 	textureCompression_t	textureCompression;
 	qboolean				textureEnvAddAvailable;
 	float					textureFilterAnisotropicMax;
+	qboolean				textureLODBiasAvailable;
 	qboolean				clampToEdgeAvailable;
 
 	int						vidWidth, vidHeight;

@@ -1294,6 +1294,7 @@ Ghoul2 Insert End
 */
 
 extern	cvar_t *r_fontSharpness;
+extern	cvar_t *r_textureLODBias;
 extern	cvar_t *mv_saberGlow;
 //====================================================================
 

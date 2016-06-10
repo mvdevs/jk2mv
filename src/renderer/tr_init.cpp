@@ -186,6 +186,7 @@ Ghoul2 Insert End
 */
 
 cvar_t *r_fontSharpness;
+cvar_t *r_textureLODBias;
 cvar_t *mv_saberGlow;
 
 #ifndef DEDICATED
@@ -603,6 +604,15 @@ static void GLimp_InitExtensions(void) {
 		glConfig.deviceSupportsPostprocessingGamma = qtrue;
 	} else {
 		glConfig.deviceSupportsPostprocessingGamma = qfalse;
+	}
+
+	// GL_EXT_texture_lod_bias
+	glConfig.textureLODBiasAvailable = qfalse;
+	if (GL_CheckForExtension("EXT_texture_lod_bias")) {
+		glConfig.textureLODBiasAvailable = qtrue;
+		Com_Printf ("...GL_EXT_texture_lod_bias available\n" );
+	} else {
+		Com_Printf("...GL_EXT_texture_lod_bias not found\n");
 	}
 }
 
@@ -1346,6 +1356,7 @@ Ghoul2 Insert End
 	r_screenshotJpegQuality = ri.Cvar_Get("r_screenshotJpegQuality", "95", CVAR_ARCHIVE | CVAR_GLOBAL);
 
 	r_fontSharpness = ri.Cvar_Get("r_fontSharpness", "1.0", CVAR_ARCHIVE | CVAR_GLOBAL);
+	r_textureLODBias = ri.Cvar_Get("r_textureLODBias", "0", CVAR_ARCHIVE | CVAR_GLOBAL);
 	mv_saberGlow = ri.Cvar_Get("mv_saberGlow", "1", CVAR_ARCHIVE | CVAR_LATCH);
 }
 

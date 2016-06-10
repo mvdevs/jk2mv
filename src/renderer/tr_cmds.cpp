@@ -334,6 +334,11 @@ void RE_BeginFrame( stereoFrame_t stereoFrame ) {
 		r_ext_texture_filter_anisotropic->modified = qfalse;
 	}
 
+	if ( glConfig.textureLODBiasAvailable && r_textureLODBias->modified ) {
+		qglTexEnvf(GL_TEXTURE_FILTER_CONTROL_EXT, GL_TEXTURE_LOD_BIAS_EXT, r_textureLODBias->value );
+		r_textureLODBias->modified = qfalse;
+	}
+
 	//
 	// gamma stuff
 	//
