@@ -705,6 +705,9 @@ static void IN_ProcessEvents( void )
 				else
 					textInput = qtrue;
 
+				if ((e.key.keysym.mod & KMOD_CTRL) && (e.key.keysym.mod & KMOD_ALT))
+					break;
+
 				if (e.key.keysym.scancode == SDL_SCANCODE_GRAVE) {
 					Sys_QueEvent(0, SE_KEY, A_CONSOLE, qtrue, 0, NULL);
 				} else {
