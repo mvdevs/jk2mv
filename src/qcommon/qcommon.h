@@ -15,7 +15,7 @@
 #define CONSOLE_PROMPT_CHAR ']'
 #define	MAX_EDIT_LINE		256
 #define COMMAND_HISTORY		128 // increased in jk2mv
-#define FIELD_HISTORY_SIZE	64
+#define FIELD_HISTORY_SIZE	32
 #define KILL_RING_SIZE		16
 
 //For determining whether to allow 1.02 color codes:
@@ -25,13 +25,14 @@ typedef struct {
 	int		cursor;
 	int		scroll;
 	int		widthInChars;
-	char	buffer[MAX_EDIT_LINE];
+	char	*buffer;
 
 	char	bufferHistory[FIELD_HISTORY_SIZE][MAX_EDIT_LINE];
 	int		cursorHistory[FIELD_HISTORY_SIZE];
 	int		scrollHistory[FIELD_HISTORY_SIZE];
 	int		historyTail;
 	int		historyHead;
+	int		currentTail;
 
 	qboolean	typing;
 	qboolean	mod;

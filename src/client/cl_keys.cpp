@@ -376,8 +376,16 @@ static void Field_CheckRep( field_t *edit ) {
 	assert( edit->scroll >= 0 );
 	assert( edit->scroll <= len );
 
-	assert( edit->historyTail >= 0 && edit->historyTail < FIELD_HISTORY_SIZE );
-	assert( edit->historyHead >= 0 && edit->historyHead < FIELD_HISTORY_SIZE );
+	assert( 0 <= edit->historyTail && edit->historyTail < FIELD_HISTORY_SIZE );
+	assert( 0 <= edit->historyHead && edit->historyHead < FIELD_HISTORY_SIZE );
+	assert( 0 <= edit->currentTail && edit->currentTail < FIELD_HISTORY_SIZE );
+
+	if ( edit->historyHead <= edit->historyTail )
+		assert( edit->historyHead <= edit->currentTail && edit->currentTail <= edit->historyTail );
+	else
+		assert( edit->currentTail <= edit->historyTail || edit->historyHead <= edit->currentTail );
+
+	assert( edit->buffer = edit->bufferHistory[edit->currentTail] );
 #endif // NDEBUG
 }
 
@@ -493,17 +501,49 @@ void Field_BigDraw( field_t *edit, int x, int y, qboolean showCursor )
 
 
 static void Field_SaveHistory( field_t *edit ) {
-	if ( edit->historyTail != edit->historyHead )
-		assert( strcmp( edit->buffer, edit->bufferHistory[edit->historyTail] ) );
-
-	edit->historyTail = (edit->historyTail + 1) % FIELD_HISTORY_SIZE;
-	if ( edit->historyHead == edit->historyTail )
-		edit->historyHead = (edit->historyHead + 1) % FIELD_HISTORY_SIZE;
-
-	memcpy( edit->bufferHistory[edit->historyTail], edit->buffer, sizeof(edit->buffer) );
-	edit->cursorHistory[edit->historyTail] = edit->cursor;
-	edit->scrollHistory[edit->historyTail] = edit->scroll;
+#ifndef NDEBUG
+	if ( edit->currentTail != edit->historyHead ) {
+		int prev = (edit->currentTail + FIELD_HISTORY_SIZE - 1) % FIELD_HISTORY_SIZE;
+		assert( strcmp( edit->buffer, edit->bufferHistory[prev] ) );
+	}
+#endif
+	edit->cursorHistory[edit->currentTail] = edit->cursor;
+	edit->scrollHistory[edit->currentTail] = edit->scroll;
 	edit->typing = qfalse;
+
+	edit->currentTail = (edit->currentTail + 1) % FIELD_HISTORY_SIZE;
+	edit->historyTail = edit->currentTail;
+	memcpy( edit->bufferHistory[edit->currentTail], edit->buffer, MAX_EDIT_LINE );
+	edit->buffer = edit->bufferHistory[edit->currentTail];
+
+	if ( edit->historyTail == edit->historyHead )
+		edit->historyHead = (edit->historyHead + 1) % FIELD_HISTORY_SIZE;
+}
+
+static void Field_Undo( field_t *edit ) {
+	if ( edit->currentTail == edit->historyHead )
+		return;
+
+	if ( edit->currentTail == edit->historyTail ) {
+		edit->cursorHistory[edit->currentTail] = edit->cursor;
+		edit->scrollHistory[edit->currentTail] = edit->scroll;
+	}
+
+	edit->currentTail = (FIELD_HISTORY_SIZE + edit->currentTail - 1) % FIELD_HISTORY_SIZE;
+	edit->buffer = edit->bufferHistory[edit->currentTail];
+	edit->cursor = edit->cursorHistory[edit->currentTail];
+	edit->scroll = edit->scrollHistory[edit->currentTail];
+	edit->typing = qfalse;
+}
+
+static void Field_Redo( field_t *edit ) {
+	if ( edit->currentTail == edit->historyTail )
+		return;
+
+	edit->currentTail = (edit->currentTail + 1) % FIELD_HISTORY_SIZE;
+	edit->buffer = edit->bufferHistory[edit->currentTail];
+	edit->cursor = edit->cursorHistory[edit->currentTail];
+	edit->scroll = edit->scrollHistory[edit->currentTail];
 }
 
 void Field_Paste( field_t *edit ) {
@@ -555,18 +595,6 @@ static void Field_BackwardWord( field_t *edit ) {
 		cursor--;
 
 	edit->cursor = cursor;
-}
-
-static void Field_Undo( field_t *edit ) {
-	if ( edit->historyTail == edit->historyHead )
-		return;
-
-	memcpy( edit->buffer, edit->bufferHistory[edit->historyTail], sizeof(edit->buffer) );
-	edit->cursor = edit->cursorHistory[edit->historyTail];
-	edit->scroll = edit->scrollHistory[edit->historyTail];
-	edit->typing = qfalse;
-
-	edit->historyTail = (edit->historyTail + FIELD_HISTORY_SIZE - 1) % FIELD_HISTORY_SIZE;
 }
 
 static char *Key_KillRingAdvance( void ) {
@@ -815,6 +843,12 @@ void Field_KeyDownEvent( field_t *edit, int key ) {
 		return;
 	}
 
+	if ( keynames[key].lower == 'z' && kg.keys[A_CTRL].down && kg.keys[A_SHIFT].down )
+	{
+		Field_Redo( edit );
+		return;
+	}
+
 	if (( keynames[key].lower == '/' && kg.keys[A_CTRL].down ) ||
 		( keynames[key].lower == 'z' && kg.keys[A_CTRL].down ) ||
 		( key == A_UNDERSCORE && kg.keys[A_CTRL].down ))
@@ -941,18 +975,18 @@ static void keyConcatArgs( void ) {
 	char	*arg;
 
 	for ( i = 1 ; i < Cmd_Argc() ; i++ ) {
-		Q_strcat( kg.g_consoleField.buffer, sizeof( kg.g_consoleField.buffer ), " " );
+		Q_strcat( kg.g_consoleField.buffer, MAX_EDIT_LINE, " " );
 		arg = Cmd_Argv( i );
 		while (*arg) {
 			if (*arg == ' ') {
-				Q_strcat( kg.g_consoleField.buffer, sizeof( kg.g_consoleField.buffer ),  "\"");
+				Q_strcat( kg.g_consoleField.buffer, MAX_EDIT_LINE,  "\"");
 				break;
 			}
 			arg++;
 		}
-		Q_strcat( kg.g_consoleField.buffer, sizeof( kg.g_consoleField.buffer ),  Cmd_Argv( i ) );
+		Q_strcat( kg.g_consoleField.buffer, MAX_EDIT_LINE,  Cmd_Argv( i ) );
 		if (*arg == ' ') {
-			Q_strcat( kg.g_consoleField.buffer, sizeof( kg.g_consoleField.buffer ),  "\"");
+			Q_strcat( kg.g_consoleField.buffer, MAX_EDIT_LINE,  "\"");
 		}
 	}
 }
@@ -967,7 +1001,7 @@ static void ConcatRemaining( const char *src, const char *start ) {
 	}
 
 	str += strlen(start);
-	Q_strcat( kg.g_consoleField.buffer, sizeof( kg.g_consoleField.buffer ), str);
+	Q_strcat( kg.g_consoleField.buffer, MAX_EDIT_LINE, str);
 }
 
 /*
@@ -1054,7 +1088,7 @@ void CompleteCommand( void )
 	if ( matchCount == 1 ) {
 		Com_sprintf( edit->buffer, sizeof( edit->buffer ), "\\%s", shortestMatch );
 		if ( Cmd_Argc() == 1 ) {
-			Q_strcat( kg.g_consoleField.buffer, sizeof( kg.g_consoleField.buffer ), " " );
+			Q_strcat( kg.g_consoleField.buffer, MAX_EDIT_LINE, " " );
 		} else {
 			ConcatRemaining( temp.buffer, completionString );
 		}
@@ -1077,7 +1111,7 @@ void CompleteCommand( void )
 void CompleteCommand( void )
 { // This is now calling Field_AutoComplete2 and adds a '\' if we found a match... (Hybrid between the old and the new Completion)
 	field_t		*edit;
-	field_t		temp;
+	char		temp[MAX_EDIT_LINE];
 
 	// Field_AutoComplete( &kg.g_consoleField );
 	Field_AutoComplete2( &kg.g_consoleField, qtrue, qtrue, qfalse );
@@ -1105,20 +1139,20 @@ void CompleteCommand( void )
 		return;	// no matches
 	}
 
-	Com_Memcpy(&temp, edit, sizeof(field_t));
+	Com_Memcpy(temp, edit->buffer, MAX_EDIT_LINE);
 
-	Com_sprintf(edit->buffer, sizeof(edit->buffer), "\\%s", shortestMatch);
+	Com_sprintf(edit->buffer, MAX_EDIT_LINE, "\\%s", shortestMatch);
 	if (matchCount == 1) {
 		if (Cmd_Argc() == 1) {
-			Q_strcat(edit->buffer, sizeof(edit->buffer), " ");
+			Q_strcat(edit->buffer, MAX_EDIT_LINE, " ");
 		} else {
-			ConcatRemaining(temp.buffer, completionString);
+			ConcatRemaining(temp, completionString);
 		}
 		edit->cursor = (int)strlen(edit->buffer);
 	} else {
 		// multiple matches, complete to shortest
 		edit->cursor = (int)strlen(edit->buffer);
-		ConcatRemaining(temp.buffer, completionString);
+		ConcatRemaining(temp, completionString);
 	}
 }
 
@@ -1147,7 +1181,7 @@ void Console_Key (int key) {
 			char	temp[MAX_STRING_CHARS];
 
 			Q_strncpyz( temp, kg.g_consoleField.buffer, sizeof( temp ) );
-			Com_sprintf( kg.g_consoleField.buffer, sizeof( kg.g_consoleField.buffer ), "\\%s", temp );
+			Com_sprintf( kg.g_consoleField.buffer, MAX_EDIT_LINE, "\\%s", temp );
 			kg.g_consoleField.cursor++;
 		}
 		else
