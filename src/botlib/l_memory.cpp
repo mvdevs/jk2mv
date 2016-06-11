@@ -16,6 +16,7 @@
 #include "../game/botlib.h"
 #include "l_log.h"
 #include "be_interface.h"
+#include <cstddef>
 
 //#define MEMDEBUG
 //#define MEMORYMANEGER
@@ -328,11 +329,11 @@ void *GetMemory(unsigned long size)
 	void *ptr;
 	unsigned long int *memid;
 
-	ptr = botimport.GetMemory(size + sizeof(unsigned long int));
+	ptr = botimport.GetMemory(size + alignof(std::max_align_t));
 	if (!ptr) return NULL;
 	memid = (unsigned long int *) ptr;
 	*memid = MEM_ID;
-	return (unsigned long int *) ((char *) ptr + sizeof(unsigned long int));
+	return (unsigned long int *) ((char *) ptr + alignof(std::max_align_t));
 } //end of the function GetMemory
 //===========================================================================
 //
@@ -370,11 +371,11 @@ void *GetHunkMemory(unsigned long size)
 	void *ptr;
 	unsigned long int *memid;
 
-	ptr = botimport.HunkAlloc(size + sizeof(unsigned long int));
+	ptr = botimport.HunkAlloc(size + alignof(std::max_align_t));
 	if (!ptr) return NULL;
 	memid = (unsigned long int *) ptr;
 	*memid = HUNK_ID;
-	return (unsigned long int *) ((char *) ptr + sizeof(unsigned long int));
+	return (unsigned long int *) ((char *) ptr + alignof(std::max_align_t));
 } //end of the function GetHunkMemory
 //===========================================================================
 //
@@ -407,7 +408,7 @@ void FreeMemory(void *ptr)
 {
 	unsigned long int *memid;
 
-	memid = (unsigned long int *) ((char *) ptr - sizeof(unsigned long int));
+	memid = (unsigned long int *) ((char *) ptr - alignof(std::max_align_t));
 
 	if (*memid == MEM_ID)
 	{
