@@ -93,7 +93,7 @@ float	FloatSwap (const float *f);
 #define q_unreachable() abort()
 #define Q_ALIGNOF(x) __alignof(x)
 #define Q_MAX_ALIGN std::max_align_t
-#elif defined __GNUC__
+#elif defined __GNUC__ && !defined __clang__
 #define GCC_VERSION (__GNUC__ * 10000 \
     + __GNUC_MINOR__ * 100 \
     + __GNUC_PATCHLEVEL__)

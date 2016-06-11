@@ -9,7 +9,7 @@ environment:
     - TYPE: "win-x64-portable"
 
 build_script:
-  - ps: >-
+  - ps: |
       cd build
       mkdir appveyor
       cd appveyor
