@@ -88,9 +88,6 @@ else()
 	option(UseInternalZLIB "Whether to use the included zlib instead of a locally installed one" OFF)
 endif()
 
-# Architecture
-set(CMAKE_OSX_ARCHITECTURES "i386" "x86_64") # always building both on osx
-
 if(WIN32)
 	set(X86 ON)
 	if(CMAKE_SIZEOF_VOID_P MATCHES "8")
@@ -104,7 +101,13 @@ if(WIN32)
 	endif()
 elseif(APPLE)
 	set(X86 ON)
-	set(Architecture "universal")
+	if(CMAKE_SYSTEM_PROCESSOR MATCHES "^i.86$")
+		set(X86 ON)
+		set(Architecture "i386")
+	elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^x86.64$")
+		set(X86 ON)
+		set(Architecture "x86_64")
+	endif()
 else()
 	set(X86 OFF)
 

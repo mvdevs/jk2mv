@@ -36,7 +36,7 @@ Main Features:
       2. `tar xzf SDL2-2.0.4.tar.gz`
       3. `cd SDL2-2.0.4/Xcode/SDL`
       4. `sed -i -e 's/@rpath//g' SDL.xcodeproj/project.pbxproj`
-      5. `xcodebuild ARCHS="i386 x86_64" ONLY_ACTIVE_ARCH=NO -configuration Release`
+      5. `xcodebuild -configuration Release`
       6. `mkdir -p ~/Library/Frameworks/`
       7. ``ln -s `pwd`/build/Release/SDL2.framework ~/Library/Frameworks``
 3. Configuration
