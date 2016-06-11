@@ -47,6 +47,10 @@
 #include <limits.h>
 #include <stdint.h>
 
+#ifdef __cplusplus
+#	include <cstddef>
+#endif
+
 #endif
 
 #ifdef _WIN32
@@ -87,18 +91,35 @@ float	FloatSwap (const float *f);
 #define Q_NORETURN __declspec(noreturn)
 #define Q_PTR_NORETURN // MSVC doesn't support noreturn function pointers
 #define q_unreachable() abort()
+#define Q_ALIGNOF(x) __alignof(x)
+#define Q_MAX_ALIGN std::max_align_t
 #elif defined __GNUC__
+#define GCC_VERSION (__GNUC__ * 10000 \
+    + __GNUC_MINOR__ * 100 \
+    + __GNUC_PATCHLEVEL__)
+
 #define Q_NORETURN __attribute__((noreturn))
 #define Q_PTR_NORETURN Q_NORETURN
 #define q_unreachable() __builtin_unreachable()
+
+#define Q_ALIGNOF(x) alignof(x)
+#if GCC_VERSION >= 40900 /* >= 4.9.0 */
+#	define Q_MAX_ALIGN std::max_align_t
+#else
+#	define Q_MAX_ALIGN max_align_t
+#endif
 #elif defined __clang__
 #define Q_NORETURN __attribute__((noreturn))
 #define Q_PTR_NORETURN Q_NORETURN
 #define q_unreachable() __builtin_unreachable()
+#define Q_ALIGNOF(x) alignof(x)
+#define Q_MAX_ALIGN std::max_align_t
 #else
 #define Q_NORETURN
 #define Q_PTR_NORETURN
 #define q_unreachable() abort()
+#define Q_ALIGNOF(x) alignof(x)
+#define Q_MAX_ALIGN std::max_align_t
 #endif
 
 //======================= WIN32 DEFINES =================================
