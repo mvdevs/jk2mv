@@ -3077,6 +3077,37 @@ static void PrintCvarMatches( const char *s ) {
 		Com_Printf(S_COMPLETION_COLOR "Cvar " S_COLOR_WHITE "%s = " S_COMPLETION_COLOR "\"" S_COLOR_WHITE "%s" S_COMPLETION_COLOR "\"" S_COLOR_WHITE "\n", s, value);
 	}
 }
+
+
+/*
+==================
+Field_CheckRep
+==================
+*/
+void Field_CheckRep( field_t *edit ) {
+#ifndef NDEBUG
+	int len = strlen(edit->buffer);
+
+	assert( len < MAX_EDIT_LINE );
+	assert( edit->widthInChars >= 0 );
+	assert( edit->cursor >= 0 );
+	assert( edit->cursor <= len );
+	assert( edit->scroll >= 0 );
+	assert( edit->scroll <= len );
+
+	assert( 0 <= edit->historyTail && edit->historyTail < FIELD_HISTORY_SIZE );
+	assert( 0 <= edit->historyHead && edit->historyHead < FIELD_HISTORY_SIZE );
+	assert( 0 <= edit->currentTail && edit->currentTail < FIELD_HISTORY_SIZE );
+
+	if ( edit->historyHead <= edit->historyTail )
+		assert( edit->historyHead <= edit->currentTail && edit->currentTail <= edit->historyTail );
+	else
+		assert( edit->currentTail <= edit->historyTail || edit->historyHead <= edit->currentTail );
+
+	assert( edit->buffer = edit->bufferHistory[edit->currentTail] );
+#endif // NDEBUG
+}
+
 /*
 ==================
 Field_Clear

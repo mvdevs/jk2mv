@@ -42,6 +42,7 @@ typedef void ( *callbackFunc_t )( const char *s );
 typedef void (*completionFunc_t)( char *args, int argNum );
 
 // common.cpp
+void Field_CheckRep( field_t *edit );
 void Field_Clear( field_t *edit );
 void Field_AutoComplete( field_t *edit );
 void Field_AutoComplete2( field_t *field, qboolean doCommands, qboolean doCvars, qboolean doArguments );
