@@ -560,14 +560,24 @@ static void Field_ForwardWord( field_t *edit ) {
 }
 
 static void Field_BackwardWord( field_t *edit ) {
-	int		cursor;
-
-	cursor = edit->cursor;
+	int	cursor = edit->cursor;
 
 	while (cursor > 0 && !Q_isalnum( edit->buffer[cursor - 1] ) )
 		cursor--;
 
 	while (cursor > 0 && Q_isalnum( edit->buffer[cursor - 1] ) )
+		cursor--;
+
+	edit->cursor = cursor;
+}
+
+static void Field_BackwardUnixWord( field_t *edit ) {
+	int	cursor = edit->cursor;
+
+	while (cursor > 0 && edit->buffer[cursor - 1] == ' ' )
+		cursor--;
+
+	while (cursor > 0 && edit->buffer[cursor - 1] != ' ' )
 		cursor--;
 
 	edit->cursor = cursor;
@@ -641,7 +651,7 @@ static void Field_KillWord( field_t *edit ) {
 	edit->cursor = start;
 }
 
-static void Field_BackwardKillWord( field_t *edit ) {
+static void Field_BackwardKillWord( field_t *edit, qboolean unix ) {
 	char	*killBuf;
 	int		end;
 	int		start;
@@ -655,7 +665,11 @@ static void Field_BackwardKillWord( field_t *edit ) {
 	killBuf = Key_KillRingAdvance();
 	end = edit->cursor;
 
-	Field_BackwardWord( edit );
+	if ( unix )
+		Field_BackwardUnixWord( edit );
+	else
+		Field_BackwardWord( edit );
+
 	start = edit->cursor;
 	len = end - start;
 	assert( len > 0 );
@@ -768,7 +782,13 @@ void Field_KeyDownEvent( field_t *edit, int key ) {
 
 	if ( key == A_BACKSPACE && kg.keys[A_ALT].down )
 	{
-		Field_BackwardKillWord( edit );
+		Field_BackwardKillWord( edit, qfalse );
+		return;
+	}
+
+	if ( keynames[key].lower == 'w' && kg.keys[A_CTRL].down )
+	{
+		Field_BackwardKillWord( edit, qtrue );
 		return;
 	}
 
@@ -872,6 +892,8 @@ void Field_CharEvent( field_t *edit, int ch ) {
 	}
 
 	if ( ch == 'y' - 'a' + 1 ) // ctr-y is handled in Field_KeyEvent
+		return;
+	if ( ch == 'w' - 'a' + 1 )
 		return;
 
 	Key_YankReset();
