@@ -196,7 +196,7 @@ static fakeAscii_t IN_TranslateSDLToJKKey( SDL_Keysym *keysym, qboolean down ) {
 			case SDLK_LCTRL:
 			case SDLK_RCTRL:        key = A_CTRL;          break;
 
-			case SDLK_RALT:
+			case SDLK_RALT:			key = A_ALT2;          break;
 			case SDLK_LALT:         key = A_ALT;           break;
 
 			case SDLK_KP_5:         key = A_KP_5;          break;
@@ -688,7 +688,9 @@ static void IN_ProcessEvents( void )
 {
 	SDL_Event e;
 	fakeAscii_t key = A_NULL;
-	static fakeAscii_t lastKeyDown = A_NULL;
+	 // not using SDL_StopTextInput for screen kbd and other
+	 // considerations
+	static qboolean textInput = qtrue;
 
 	if( !SDL_WasInit( SDL_INIT_VIDEO ) )
 			return;
@@ -698,6 +700,14 @@ static void IN_ProcessEvents( void )
 		switch( e.type )
 		{
 			case SDL_KEYDOWN:
+				if ((e.key.keysym.mod & KMOD_ALT) && !(e.key.keysym.mod & KMOD_CTRL))
+					textInput = qfalse;
+				else
+					textInput = qtrue;
+
+				if ((e.key.keysym.mod & KMOD_CTRL) && (e.key.keysym.mod & KMOD_ALT))
+					break;
+
 				if (e.key.keysym.scancode == SDL_SCANCODE_GRAVE) {
 					Sys_QueEvent(0, SE_KEY, A_CONSOLE, qtrue, 0, NULL);
 				} else {
@@ -707,14 +717,17 @@ static void IN_ProcessEvents( void )
 
 					if (key == A_BACKSPACE)
 						Sys_QueEvent(0, SE_CHAR, CTRL('h'), qfalse, 0, NULL);
-					else if (kg.keys[A_CTRL].down && key >= A_CAP_A && key <= A_CAP_Z)
+					else if ((e.key.keysym.mod & KMOD_CTRL) && key >= A_CAP_A && key <= A_CAP_Z)
 						Sys_QueEvent(0, SE_CHAR, CTRL(tolower(key)), qfalse, 0, NULL);
-
-					lastKeyDown = key;
 				}
 				break;
 
 			case SDL_KEYUP:
+				if ((e.key.keysym.mod & KMOD_ALT) && !(e.key.keysym.mod & KMOD_CTRL))
+					textInput = qfalse;
+				else
+					textInput = qtrue;
+
 				key = IN_TranslateSDLToJKKey( &e.key.keysym, qfalse );
 				if( key != A_NULL )
 					Sys_QueEvent( 0, SE_KEY, key, qfalse, 0, NULL );
@@ -723,12 +736,11 @@ static void IN_ProcessEvents( void )
 					Cvar_VariableIntegerValue("r_fullscreen")) {
 					GLimp_Minimize();
 				}
-
-				lastKeyDown = A_NULL;
 				break;
 
 			case SDL_TEXTINPUT:
-				if( lastKeyDown != A_CONSOLE )
+				// relies on receiving no more than 1 character
+				if( textInput )
 				{
 					char *c = e.text.text;
 

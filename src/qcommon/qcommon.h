@@ -15,6 +15,8 @@
 #define CONSOLE_PROMPT_CHAR ']'
 #define	MAX_EDIT_LINE		256
 #define COMMAND_HISTORY		128 // increased in jk2mv
+#define FIELD_HISTORY_SIZE	32
+#define KILL_RING_SIZE		16
 
 //For determining whether to allow 1.02 color codes:
 #define MV_USE102COLOR (MV_GetCurrentGameversion() == VERSION_1_02 || MV_GetCurrentGameversion() == VERSION_1_03)
@@ -23,13 +25,24 @@ typedef struct {
 	int		cursor;
 	int		scroll;
 	int		widthInChars;
-	char	buffer[MAX_EDIT_LINE];
+	char	*buffer;
+
+	char	bufferHistory[FIELD_HISTORY_SIZE][MAX_EDIT_LINE];
+	int		cursorHistory[FIELD_HISTORY_SIZE];
+	int		scrollHistory[FIELD_HISTORY_SIZE];
+	int		historyTail;
+	int		historyHead;
+	int		currentTail;
+
+	qboolean	typing;
+	qboolean	mod;
 } field_t;
 
 typedef void ( *callbackFunc_t )( const char *s );
 typedef void (*completionFunc_t)( char *args, int argNum );
 
 // common.cpp
+void Field_CheckRep( field_t *edit );
 void Field_Clear( field_t *edit );
 void Field_AutoComplete( field_t *edit );
 void Field_AutoComplete2( field_t *field, qboolean doCommands, qboolean doCvars, qboolean doArguments );

@@ -754,6 +754,14 @@ int Q_isalpha(int c) {
 	return (0);
 }
 
+int Q_isdigit(int c) {
+	return (c >= '0' && c <= '9');
+}
+
+int Q_isalnum(int c) {
+	return Q_isdigit(c) | Q_isalpha(c);
+}
+
 char* Q_strrchr(const char* string, int c) {
 	char cc = c;
 	char *s;

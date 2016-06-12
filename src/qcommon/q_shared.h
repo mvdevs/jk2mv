@@ -702,6 +702,7 @@ extern	vec4_t		colorDkBlue;
 #define COLOR_LT_BLUE   'l'
 #define COLOR_DK_BLUE   'm'
 #define COLOR_JK2MV     'n' // Different in Debug/Release
+#define COLOR_LT_TRANSPARENT 'o'
 
 #if _DEBUG
 	#define COLOR_JK2MV_FALLBACK 1 // If the extended colors are not supported use this as fallback
@@ -709,7 +710,7 @@ extern	vec4_t		colorDkBlue;
 	#define COLOR_JK2MV_FALLBACK 5 // If the extended colors are not supported use this as fallback
 #endif
 
-#define COLOR_EXT_AMOUNT 15
+#define COLOR_EXT_AMOUNT 16
 #define ColorIndex(c)	( ( (c) - '0' ) & 7 )
 #define ColorIndex_Extended(c) ( ((c >= '0' && c <= '9') ? ((c) - '0') : ((c) - 'a' + 1)) % COLOR_EXT_AMOUNT )
 
@@ -731,6 +732,7 @@ extern	vec4_t		colorDkBlue;
 #define S_COLOR_LT_BLUE "^l"
 #define S_COLOR_DK_BLUE "^m"
 #define S_COLOR_JK2MV   "^n" // Different in Debug/Release
+#define S_COLOR_LT_TRANSPARENT "^o"
 
 extern vec4_t	g_color_table[];
 
@@ -1050,6 +1052,9 @@ int Q_isprint( int c );
 int Q_islower( int c );
 int Q_isupper( int c );
 int Q_isalpha( int c );
+int Q_isdigit( int c );
+int Q_isalnum( int c );
+
 
 // portable case insensitive compare
 int		Q_stricmp (const char *s1, const char *s2);

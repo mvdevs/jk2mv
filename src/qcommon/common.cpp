@@ -3103,15 +3103,52 @@ static void PrintCvarMatches( const char *s ) {
 		Com_Printf_Ext(qtrue, S_COMPLETION_COLOR "\"" S_COLOR_WHITE "\n");
 	}
 }
+
+
+/*
+==================
+Field_CheckRep
+==================
+*/
+void Field_CheckRep( field_t *edit ) {
+#ifndef NDEBUG
+	int len = strlen(edit->buffer);
+
+	assert( len < MAX_EDIT_LINE );
+	assert( edit->widthInChars >= 0 );
+	assert( edit->cursor >= 0 );
+	assert( edit->cursor <= len );
+	assert( edit->scroll >= 0 );
+	assert( edit->scroll <= len );
+
+	assert( 0 <= edit->historyTail && edit->historyTail < FIELD_HISTORY_SIZE );
+	assert( 0 <= edit->historyHead && edit->historyHead < FIELD_HISTORY_SIZE );
+	assert( 0 <= edit->currentTail && edit->currentTail < FIELD_HISTORY_SIZE );
+
+	if ( edit->historyHead <= edit->historyTail )
+		assert( edit->historyHead <= edit->currentTail && edit->currentTail <= edit->historyTail );
+	else
+		assert( edit->currentTail <= edit->historyTail || edit->historyHead <= edit->currentTail );
+
+	assert( edit->buffer = edit->bufferHistory[edit->currentTail] );
+#endif // NDEBUG
+}
+
 /*
 ==================
 Field_Clear
 ==================
 */
 void Field_Clear( field_t *edit ) {
-	memset(edit->buffer, 0, MAX_EDIT_LINE);
+	edit->buffer = edit->bufferHistory[0];
+	Com_Memset( edit->buffer, 0, MAX_EDIT_LINE );
 	edit->cursor = 0;
 	edit->scroll = 0;
+	edit->historyTail = 0;
+	edit->historyHead = 0;
+	edit->currentTail = 0;
+	edit->typing = qfalse;
+	edit->mod = qfalse;
 }
 
 /*
@@ -3144,12 +3181,12 @@ static qboolean Field_Complete( void ) {
 
 	completionOffset = (int)strlen(completionField->buffer) - (int)strlen(completionString);
 
-	Q_strncpyz( &completionField->buffer[completionOffset], shortestMatch, sizeof( completionField->buffer ) - completionOffset );
+	Q_strncpyz( &completionField->buffer[completionOffset], shortestMatch, MAX_EDIT_LINE - completionOffset );
 
 	completionField->cursor = (int)strlen(completionField->buffer);
 
 	if ( matchCount == 1 ) {
-		Q_strcat( completionField->buffer, sizeof( completionField->buffer ), " " );
+		Q_strcat( completionField->buffer, MAX_EDIT_LINE, " " );
 		completionField->cursor++;
 		wasComplete = qtrue;
 		return qtrue;

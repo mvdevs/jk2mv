@@ -2604,8 +2604,8 @@ void CL_InitRenderer( void ) {
 	cls.consoleShader = re.RegisterShader( "console" );
 	cls.recordingShader = re.RegisterShaderNoMip("gfx/2d/demorec");
 	cls.ratioFix = (float)(SCREEN_WIDTH * cls.glconfig.vidHeight) / (float)(SCREEN_HEIGHT * cls.glconfig.vidWidth);
-	g_console_field_width = cls.glconfig.vidWidth / SMALLCHAR_WIDTH - 2;
-	kg.g_consoleField.widthInChars = g_console_field_width;
+
+	kg.yankIndex = -1;
 }
 
 /*

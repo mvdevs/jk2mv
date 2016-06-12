@@ -15,6 +15,9 @@ int			chat_playerNum;
 
 keyGlobals_t	kg;
 
+extern console_t con;
+
+
 // do NOT blithely change any of the key names (3rd field) here, since they have to match the key binds
 //	in the CFG files, they're also prepended with "KEYNAME_" when looking up StripEd references
 //
@@ -155,7 +158,7 @@ keyname_t keynames[MAX_KEYS] =
     { 0x80, 0x80, "EURO", A_EURO, false  								},
     { 0x81, 0x81, "SHIFT", A_SHIFT2, false								},
     { 0x82, 0x82, "CTRL", A_CTRL2, false								},
-    { 0x83, 0x83, "ALT", A_ALT2, false									},
+    { 0x83, 0x83, "ALTGR", A_ALT2, false								},
     { 0x84, 0x84, "F5", A_F5, true										},
     { 0x85, 0x85, "F6", A_F6, true										},
     { 0x86, 0x86, "F7", A_F7, true										},
@@ -362,6 +365,25 @@ EDIT FIELDS
 =============================================================================
 */
 
+static void Key_CheckRep( void ) {
+#ifndef NDEBUG
+	assert( kg.killTail >= 0 && kg.killTail < KILL_RING_SIZE );
+	assert( kg.killHead >= 0 && kg.killHead < KILL_RING_SIZE );
+
+	if ( kg.yankIndex != -1 ) {
+		assert( kg.killTail != kg.killHead );
+
+		if ( kg.killTail > kg.killHead ) {
+			assert( kg.killHead < kg.yankIndex && kg.yankIndex <= kg.killTail );
+		} else {
+			assert( 0 <= kg.yankIndex && kg.yankIndex < KILL_RING_SIZE );
+			assert( kg.yankIndex <= kg.killTail || kg.killHead < kg.yankIndex );
+		}
+	}
+
+	Field_CheckRep( &kg.g_consoleField );
+#endif // NDEBUG
+}
 
 /*
 ===================
@@ -371,7 +393,7 @@ Handles horizontal scrolling and cursor blinking
 x, y, amd width are in pixels
 ===================
 */
-void Field_VariableSizeDraw( field_t *edit, int x, int y, int width, int size, qboolean showCursor ) {
+void Field_VariableSizeDraw( field_t *edit, int x, int y, qboolean smallSize, qboolean showCursor ) {
 	int		len;
 	int		drawLen;
 	int		prestep;
@@ -379,29 +401,19 @@ void Field_VariableSizeDraw( field_t *edit, int x, int y, int width, int size, q
 	char	str[MAX_STRING_CHARS];
 	int		i;
 
+	len = strlen(edit->buffer);
+
+	if ( edit->scroll > edit->cursor - 1 )
+		edit->scroll = MAX(0, edit->cursor - 1);
+
+	if ( edit->scroll > len - edit->widthInChars + 1 )
+		edit->scroll = MAX(0, len - edit->widthInChars + 1);
+
+	if ( edit->scroll < edit->cursor - edit->widthInChars + 1 )
+		edit->scroll = MAX(0, edit->cursor - edit->widthInChars + 1);
+
 	drawLen = edit->widthInChars;
-	len = (int)strlen(edit->buffer) + 1;
-
-	// guarantee that cursor will be visible
-	if ( len <= drawLen ) {
-		prestep = 0;
-	} else {
-		if ( edit->scroll + drawLen > len ) {
-			edit->scroll = len - drawLen;
-			if ( edit->scroll < 0 ) {
-				edit->scroll = 0;
-			}
-		}
-		prestep = edit->scroll;
-
-/*
-		if ( edit->cursor < len - drawLen ) {
-			prestep = edit->cursor;	// cursor at start
-		} else {
-			prestep = len - drawLen;
-		}
-*/
-	}
+	prestep = edit->scroll;
 
 	if ( prestep + drawLen > len ) {
 		drawLen = len - prestep;
@@ -416,7 +428,7 @@ void Field_VariableSizeDraw( field_t *edit, int x, int y, int width, int size, q
 	str[ drawLen ] = 0;
 
 	// draw it
-	if ( size == SMALLCHAR_WIDTH ) {
+	if ( smallSize ) {
 		float	color[4];
 
 		color[0] = color[1] = color[2] = color[3] = 1.0;
@@ -441,33 +453,75 @@ void Field_VariableSizeDraw( field_t *edit, int x, int y, int width, int size, q
 		cursorChar = 10;
 	}
 
-	i = drawLen - ( Q_PrintStrlen( str, (qboolean)MV_USE102COLOR ) + 1 );
+	i = drawLen - ( Q_PrintStrlen( str, (qboolean)MV_USE102COLOR ) );
 
-	if ( size == SMALLCHAR_WIDTH ) {
-		SCR_DrawSmallChar( x + ( edit->cursor - prestep - i ) * size, y, cursorChar );
+	if ( smallSize ) {
+		SCR_DrawSmallChar( x + ( edit->cursor - prestep - i ) * con.charWidth, y, cursorChar );
 	} else {
 		str[0] = cursorChar;
 		str[1] = 0;
-		SCR_DrawBigString( x + ( edit->cursor - prestep - i ) * size, y, str, 1.0 );
+		SCR_DrawBigString( x + ( edit->cursor - prestep - i ) * BIGCHAR_WIDTH, y, str, 1.0 );
 
 	}
 }
 
-void Field_Draw( field_t *edit, int x, int y, int width, qboolean showCursor )
+void Field_Draw( field_t *edit, int x, int y, qboolean showCursor )
 {
-	Field_VariableSizeDraw( edit, x, y, width, SMALLCHAR_WIDTH, showCursor );
+	Field_VariableSizeDraw( edit, x, y, qtrue, showCursor );
 }
 
-void Field_BigDraw( field_t *edit, int x, int y, int width, qboolean showCursor )
+void Field_BigDraw( field_t *edit, int x, int y, qboolean showCursor )
 {
-	Field_VariableSizeDraw( edit, x, y, width, BIGCHAR_WIDTH, showCursor );
+	Field_VariableSizeDraw( edit, x, y, qfalse, showCursor );
 }
 
-/*
-================
-Field_Paste
-================
-*/
+
+static void Field_SaveHistory( field_t *edit ) {
+#ifndef NDEBUG
+	if ( edit->currentTail != edit->historyHead ) {
+		int prev = (edit->currentTail + FIELD_HISTORY_SIZE - 1) % FIELD_HISTORY_SIZE;
+		assert( strcmp( edit->buffer, edit->bufferHistory[prev] ) );
+	}
+#endif
+	edit->cursorHistory[edit->currentTail] = edit->cursor;
+	edit->scrollHistory[edit->currentTail] = edit->scroll;
+	edit->typing = qfalse;
+
+	edit->currentTail = (edit->currentTail + 1) % FIELD_HISTORY_SIZE;
+	edit->historyTail = edit->currentTail;
+	memcpy( edit->bufferHistory[edit->currentTail], edit->buffer, MAX_EDIT_LINE );
+	edit->buffer = edit->bufferHistory[edit->currentTail];
+
+	if ( edit->historyTail == edit->historyHead )
+		edit->historyHead = (edit->historyHead + 1) % FIELD_HISTORY_SIZE;
+}
+
+static void Field_Undo( field_t *edit ) {
+	if ( edit->currentTail == edit->historyHead )
+		return;
+
+	if ( edit->currentTail == edit->historyTail ) {
+		edit->cursorHistory[edit->currentTail] = edit->cursor;
+		edit->scrollHistory[edit->currentTail] = edit->scroll;
+	}
+
+	edit->currentTail = (FIELD_HISTORY_SIZE + edit->currentTail - 1) % FIELD_HISTORY_SIZE;
+	edit->buffer = edit->bufferHistory[edit->currentTail];
+	edit->cursor = edit->cursorHistory[edit->currentTail];
+	edit->scroll = edit->scrollHistory[edit->currentTail];
+	edit->typing = qfalse;
+}
+
+static void Field_Redo( field_t *edit ) {
+	if ( edit->currentTail == edit->historyTail )
+		return;
+
+	edit->currentTail = (edit->currentTail + 1) % FIELD_HISTORY_SIZE;
+	edit->buffer = edit->bufferHistory[edit->currentTail];
+	edit->cursor = edit->cursorHistory[edit->currentTail];
+	edit->scroll = edit->scrollHistory[edit->currentTail];
+}
+
 void Field_Paste( field_t *edit ) {
 	char	*cbd;
 	int		pasteLen, i;
@@ -478,13 +532,199 @@ void Field_Paste( field_t *edit ) {
 		return;
 	}
 
+	edit->typing = qfalse;
+
 	// send as if typed, so insert / overstrike works properly
 	pasteLen = (int)strlen(cbd);
 	for ( i = 0 ; i < pasteLen ; i++ ) {
 		Field_CharEvent( edit, cbd[i] );
 	}
 
+	edit->typing = qfalse;
+
 	Z_Free( cbd );
+}
+
+static void Field_ForwardWord( field_t *edit ) {
+	char	*c;
+
+	c = edit->buffer + edit->cursor;
+
+	while ( *c != '\0' && !Q_isalnum( *c ) )
+		c++;
+
+	while ( Q_isalnum( *c ) )
+		c++;
+
+	edit->cursor = c - edit->buffer;
+}
+
+static void Field_BackwardWord( field_t *edit ) {
+	int	cursor = edit->cursor;
+
+	while (cursor > 0 && !Q_isalnum( edit->buffer[cursor - 1] ) )
+		cursor--;
+
+	while (cursor > 0 && Q_isalnum( edit->buffer[cursor - 1] ) )
+		cursor--;
+
+	edit->cursor = cursor;
+}
+
+static void Field_BackwardUnixWord( field_t *edit ) {
+	int	cursor = edit->cursor;
+
+	while (cursor > 0 && edit->buffer[cursor - 1] == ' ' )
+		cursor--;
+
+	while (cursor > 0 && edit->buffer[cursor - 1] != ' ' )
+		cursor--;
+
+	edit->cursor = cursor;
+}
+
+static char *Key_KillRingAdvance( void ) {
+	kg.killTail = (kg.killTail + 1) % KILL_RING_SIZE;
+	if ( kg.killTail == kg.killHead )
+		kg.killHead = (kg.killHead + 1) % KILL_RING_SIZE;
+
+	return kg.killRing[kg.killTail];
+}
+
+static void Field_KillLine( field_t *edit ) {
+	char *killBuf;
+
+	if ( edit->buffer[edit->cursor] == '\0' )
+		return;
+
+	Field_SaveHistory( edit );
+
+	killBuf = Key_KillRingAdvance();
+
+	Q_strncpyz( killBuf, edit->buffer + edit->cursor, MAX_EDIT_LINE );
+	edit->buffer[edit->cursor] = '\0';
+}
+
+static void Field_LineDiscard( field_t *edit ) {
+	char	*killBuf;
+	int		len;
+
+	if ( edit->cursor == 0 )
+		return;
+
+	Field_SaveHistory( edit );
+
+	killBuf = Key_KillRingAdvance();
+	len = strlen( edit->buffer + edit->cursor );
+
+	memcpy( killBuf, edit->buffer, edit->cursor );
+	killBuf[edit->cursor] = '\0';
+	memmove( edit->buffer, edit->buffer + edit->cursor, len + 1 );
+
+	edit->cursor = 0;
+}
+
+static void Field_KillWord( field_t *edit ) {
+	char	*killBuf;
+	int		start;
+	int		end;
+	int		len;
+
+	if ( edit->cursor == strlen(edit->buffer) )
+		return;
+
+	Field_SaveHistory( edit );
+
+	killBuf = Key_KillRingAdvance();
+	start = edit->cursor;
+
+	Field_ForwardWord( edit );
+	end = edit->cursor;
+	len = end - start;
+	assert( len > 0 );
+
+	memcpy( killBuf, edit->buffer + start, len );
+	killBuf[len] = '\0';
+	len = strlen(edit->buffer + end);
+	memmove( edit->buffer + start, edit->buffer + end, len + 1 );
+
+	edit->cursor = start;
+}
+
+static void Field_BackwardKillWord( field_t *edit, qboolean unix ) {
+	char	*killBuf;
+	int		end;
+	int		start;
+	int		len;
+
+	if ( edit->cursor == 0 )
+		return;
+
+	Field_SaveHistory( edit );
+
+	killBuf = Key_KillRingAdvance();
+	end = edit->cursor;
+
+	if ( unix )
+		Field_BackwardUnixWord( edit );
+	else
+		Field_BackwardWord( edit );
+
+	start = edit->cursor;
+	len = end - start;
+	assert( len > 0 );
+
+	memcpy( killBuf, edit->buffer + start, len );
+	killBuf[len] = '\0';
+	len = strlen(edit->buffer + end);
+	memmove( edit->buffer + start, edit->buffer + end, len + 1 );
+}
+
+
+static void Key_YankReset( void ) {
+	kg.yankIndex = -1;
+}
+
+static void Field_YankIndex( field_t *edit ) {
+	char	buf[MAX_EDIT_LINE];
+
+	assert( kg.yankIndex >= 0 && kg.yankIndex < KILL_RING_SIZE );
+	assert( kg.killHead != kg.killTail );
+
+	Q_strncpyz( buf, edit->buffer + edit->cursor, sizeof(buf) );
+	Q_strncpyz( edit->buffer + edit->cursor, kg.killRing[kg.yankIndex], MAX_EDIT_LINE - edit->cursor );
+	edit->cursor = strlen( edit->buffer );
+	Q_strcat( edit->buffer, MAX_EDIT_LINE, buf );
+
+	kg.yankIndex--;
+
+	if ( kg.yankIndex == 0 )
+		kg.yankIndex = kg.killTail;
+	if ( kg.yankIndex == kg.killHead )
+		kg.yankIndex = kg.killTail;
+
+	assert( !(kg.killTail > kg.killHead) || (kg.killHead < kg.yankIndex && kg.yankIndex <= kg.killTail) );
+	assert( !(kg.killTail < kg.killHead) || (kg.killHead < kg.yankIndex || kg.yankIndex <= kg.killTail) );
+}
+
+static void Field_Yank( field_t *edit ) {
+	if ( kg.killHead == kg.killTail )
+		return;
+	if ( edit->cursor == MAX_EDIT_LINE - 1 )
+		return;
+
+	kg.yankIndex = kg.killTail;
+	Field_SaveHistory( edit );
+	Field_YankIndex( edit );
+}
+
+static void Field_YankPop( field_t *edit ) {
+	if ( kg.yankIndex == -1 )
+		return;
+
+	Field_Undo( edit );
+	Field_SaveHistory( edit );
+	Field_YankIndex( edit );
 }
 
 /*
@@ -500,56 +740,134 @@ Key events are used for non-printable characters, others are gotten from char ev
 void Field_KeyDownEvent( field_t *edit, int key ) {
 	int		len;
 
+	if ( key == A_CTRL || key == A_ALT ) {
+		return;
+	}
+
+	if ( edit->mod ) {
+		if ( keynames[key].lower == 'u' && kg.keys[A_CTRL].down )
+			Field_Undo( edit );
+
+		edit->mod = qfalse;
+		return;
+	}
+
+	if ( keynames[key].lower == 'y' && kg.keys[A_ALT].down )
+	{
+		Field_YankPop( edit );
+		return;
+	}
+
+	Key_YankReset();
+
+	if ( keynames[key].lower == 'k' && kg.keys[A_CTRL].down )
+	{
+		Field_KillLine( edit );
+		return;
+	}
+
+	if ( keynames[key].lower == 'u' && kg.keys[A_CTRL].down )
+	{
+		Field_LineDiscard( edit );
+		return;
+	}
+
+	len = (int)strlen(edit->buffer);
+
+	if ( keynames[key].lower == 'd' && kg.keys[A_ALT].down )
+	{
+		Field_KillWord( edit );
+		return;
+	}
+
+	if ( key == A_BACKSPACE && kg.keys[A_ALT].down )
+	{
+		Field_BackwardKillWord( edit, qfalse );
+		return;
+	}
+
+	if ( keynames[key].lower == 'w' && kg.keys[A_CTRL].down )
+	{
+		Field_BackwardKillWord( edit, qtrue );
+		return;
+	}
+
+	if ( keynames[key].lower == 'y' && kg.keys[A_CTRL].down )
+	{
+		Field_Yank( edit );
+		return;
+	}
+
 	// shift-insert is paste
 	if ( ( ( key == A_INSERT ) || ( key == A_KP_0 ) ) && kg.keys[A_SHIFT].down ) {
 		Field_Paste( edit );
 		return;
 	}
 
-	len = (int)strlen(edit->buffer);
-
-	if ( key == A_DELETE ) {
+	if ( key == A_DELETE || ( keynames[key].lower == 'd' && kg.keys[A_CTRL].down ) ) {
 		if ( edit->cursor < len ) {
+			Field_SaveHistory( edit );
 			memmove( edit->buffer + edit->cursor,
 				edit->buffer + edit->cursor + 1, len - edit->cursor );
 		}
 		return;
 	}
 
-	if ( key == A_CURSOR_RIGHT )
+	if ( key == A_CURSOR_RIGHT || ( keynames[key].lower == 'f' && kg.keys[A_CTRL].down ) )
 	{
 		if ( edit->cursor < len ) {
 			edit->cursor++;
 		}
-
-		if ( edit->cursor >= edit->scroll + edit->widthInChars && edit->cursor <= len )
-		{
-			edit->scroll++;
-		}
 		return;
 	}
 
-	if ( key == A_CURSOR_LEFT )
+	if ( key == A_CURSOR_LEFT || ( keynames[key].lower == 'b' && kg.keys[A_CTRL].down ) )
 	{
 		if ( edit->cursor > 0 ) {
 			edit->cursor--;
 		}
-		if ( edit->cursor < edit->scroll )
-		{
-			edit->scroll--;
-		}
 		return;
 	}
 
-	if ( key == A_HOME || ( keynames[key].lower == 'a' && kg.keys[A_CTRL].down ) )
-	{
+	if ( key == A_HOME ) {
 		edit->cursor = 0;
 		return;
 	}
 
-	if ( key == A_END || ( keynames[key].lower == 'e' && kg.keys[A_CTRL].down ) )
-	{
+	if ( key == A_END ) {
 		edit->cursor = len;
+		return;
+	}
+
+	if ( keynames[key].lower == 'z' && kg.keys[A_CTRL].down && kg.keys[A_SHIFT].down )
+	{
+		Field_Redo( edit );
+		return;
+	}
+
+	if (( keynames[key].lower == '/' && kg.keys[A_CTRL].down ) ||
+		( keynames[key].lower == 'z' && kg.keys[A_CTRL].down ) ||
+		( key == A_UNDERSCORE && kg.keys[A_CTRL].down ))
+	{
+		Field_Undo( edit );
+		return;
+	}
+
+	if ( keynames[key].lower == 'x' && kg.keys[A_CTRL].down )
+	{
+		edit->mod = qtrue;
+		return;
+	}
+
+	if ( keynames[key].lower == 'f' && kg.keys[A_ALT].down )
+	{
+		Field_ForwardWord( edit );
+		return;
+	}
+
+	if ( keynames[key].lower == 'b' && kg.keys[A_ALT].down )
+	{
+		Field_BackwardWord( edit );
 		return;
 	}
 
@@ -567,13 +885,31 @@ Field_CharEvent
 void Field_CharEvent( field_t *edit, int ch ) {
 	int		len;
 
+	if ( edit->mod ) {
+		if ( ch >= 32 )
+			edit->mod = qfalse;
+		return;
+	}
+
+	if ( ch == 'y' - 'a' + 1 ) // ctr-y is handled in Field_KeyEvent
+		return;
+	if ( ch == 'w' - 'a' + 1 )
+		return;
+
+	Key_YankReset();
+
 	if ( ch == 'v' - 'a' + 1 ) {	// ctrl-v is paste
 		Field_Paste( edit );
 		return;
 	}
 
 	if ( ch == 'c' - 'a' + 1 ) {	// ctrl-c clears the field
-		Field_Clear( edit );
+		if ( edit->buffer[0] != '\0' ) {
+			Field_SaveHistory( edit );
+
+			memset(edit->buffer, 0, MAX_EDIT_LINE);
+			edit->cursor = 0;
+		}
 		return;
 	}
 
@@ -581,27 +917,20 @@ void Field_CharEvent( field_t *edit, int ch ) {
 
 	if ( ch == 'h' - 'a' + 1 )	{	// ctrl-h is backspace
 		if ( edit->cursor > 0 ) {
+			Field_SaveHistory( edit );
 			memmove( edit->buffer + edit->cursor - 1,
 				edit->buffer + edit->cursor, len + 1 - edit->cursor );
 			edit->cursor--;
-			if ( edit->cursor < edit->scroll )
-			{
-				edit->scroll--;
-			}
 		}
 		return;
 	}
 
-	if ( ch == 'a' - 'a' + 1 ) {	// ctrl-a is home
+	if ( ch == 'a' - 'a' + 1 ) {    // ctrl-a is home
 		edit->cursor = 0;
-		edit->scroll = 0;
-		return;
 	}
 
-	if ( ch == 'e' - 'a' + 1 ) {	// ctrl-e is end
+	if ( ch == 'e' - 'a' + 1 ) {    // ctrl-e is end
 		edit->cursor = len;
-		edit->scroll = edit->cursor - edit->widthInChars;
-		return;
 	}
 
 	//
@@ -614,21 +943,24 @@ void Field_CharEvent( field_t *edit, int ch ) {
 	if ( kg.key_overstrikeMode ) {
 		if ( edit->cursor == MAX_EDIT_LINE - 1 )
 			return;
+		if ( !edit->typing ) {
+			Field_SaveHistory( edit );
+			edit->typing = qtrue;
+		}
 		edit->buffer[edit->cursor] = ch;
 		edit->cursor++;
 	} else {	// insert mode
 		if ( len == MAX_EDIT_LINE - 1 ) {
 			return; // all full
 		}
+		if ( !edit->typing ) {
+			Field_SaveHistory( edit );
+			edit->typing = qtrue;
+		}
 		memmove( edit->buffer + edit->cursor + 1,
 			edit->buffer + edit->cursor, len + 1 - edit->cursor );
 		edit->buffer[edit->cursor] = ch;
 		edit->cursor++;
-	}
-
-
-	if ( edit->cursor >= edit->widthInChars ) {
-		edit->scroll++;
 	}
 
 	if ( edit->cursor == len + 1) {
@@ -641,18 +973,18 @@ static void keyConcatArgs( void ) {
 	char	*arg;
 
 	for ( i = 1 ; i < Cmd_Argc() ; i++ ) {
-		Q_strcat( kg.g_consoleField.buffer, sizeof( kg.g_consoleField.buffer ), " " );
+		Q_strcat( kg.g_consoleField.buffer, MAX_EDIT_LINE, " " );
 		arg = Cmd_Argv( i );
 		while (*arg) {
 			if (*arg == ' ') {
-				Q_strcat( kg.g_consoleField.buffer, sizeof( kg.g_consoleField.buffer ),  "\"");
+				Q_strcat( kg.g_consoleField.buffer, MAX_EDIT_LINE,  "\"");
 				break;
 			}
 			arg++;
 		}
-		Q_strcat( kg.g_consoleField.buffer, sizeof( kg.g_consoleField.buffer ),  Cmd_Argv( i ) );
+		Q_strcat( kg.g_consoleField.buffer, MAX_EDIT_LINE,  Cmd_Argv( i ) );
 		if (*arg == ' ') {
-			Q_strcat( kg.g_consoleField.buffer, sizeof( kg.g_consoleField.buffer ),  "\"");
+			Q_strcat( kg.g_consoleField.buffer, MAX_EDIT_LINE,  "\"");
 		}
 	}
 }
@@ -667,7 +999,7 @@ static void ConcatRemaining( const char *src, const char *start ) {
 	}
 
 	str += strlen(start);
-	Q_strcat( kg.g_consoleField.buffer, sizeof( kg.g_consoleField.buffer ), str);
+	Q_strcat( kg.g_consoleField.buffer, MAX_EDIT_LINE, str);
 }
 
 /*
@@ -754,7 +1086,7 @@ void CompleteCommand( void )
 	if ( matchCount == 1 ) {
 		Com_sprintf( edit->buffer, sizeof( edit->buffer ), "\\%s", shortestMatch );
 		if ( Cmd_Argc() == 1 ) {
-			Q_strcat( kg.g_consoleField.buffer, sizeof( kg.g_consoleField.buffer ), " " );
+			Q_strcat( kg.g_consoleField.buffer, MAX_EDIT_LINE, " " );
 		} else {
 			ConcatRemaining( temp.buffer, completionString );
 		}
@@ -777,7 +1109,7 @@ void CompleteCommand( void )
 void CompleteCommand( void )
 { // This is now calling Field_AutoComplete2 and adds a '\' if we found a match... (Hybrid between the old and the new Completion)
 	field_t		*edit;
-	field_t		temp;
+	char		temp[MAX_EDIT_LINE];
 
 	// Field_AutoComplete( &kg.g_consoleField );
 	Field_AutoComplete2( &kg.g_consoleField, qtrue, qtrue, qfalse );
@@ -805,20 +1137,20 @@ void CompleteCommand( void )
 		return;	// no matches
 	}
 
-	Com_Memcpy(&temp, edit, sizeof(field_t));
+	Com_Memcpy(temp, edit->buffer, MAX_EDIT_LINE);
 
-	Com_sprintf(edit->buffer, sizeof(edit->buffer), "\\%s", shortestMatch);
+	Com_sprintf(edit->buffer, MAX_EDIT_LINE, "\\%s", shortestMatch);
 	if (matchCount == 1) {
 		if (Cmd_Argc() == 1) {
-			Q_strcat(edit->buffer, sizeof(edit->buffer), " ");
+			Q_strcat(edit->buffer, MAX_EDIT_LINE, " ");
 		} else {
-			ConcatRemaining(temp.buffer, completionString);
+			ConcatRemaining(temp, completionString);
 		}
 		edit->cursor = (int)strlen(edit->buffer);
 	} else {
 		// multiple matches, complete to shortest
 		edit->cursor = (int)strlen(edit->buffer);
-		ConcatRemaining(temp.buffer, completionString);
+		ConcatRemaining(temp, completionString);
 	}
 }
 
@@ -837,14 +1169,17 @@ void Console_Key (int key) {
 	}
 
 	// enter finishes the line
-	if ( key == A_ENTER || key == A_KP_ENTER ) {
+	if ( key == A_ENTER || key == A_KP_ENTER ||
+		(keynames[ key ].lower == 'm' && kg.keys[A_CTRL].down) ||
+		(keynames[ key ].lower == 'j' && kg.keys[A_CTRL].down) )
+	{
 		// if not in the game explicitly prepent a slash if needed
 		if ( cls.state != CA_ACTIVE && kg.g_consoleField.buffer[0] != '\\'
 			&& kg.g_consoleField.buffer[0] != '/' ) {
 			char	temp[MAX_STRING_CHARS];
 
 			Q_strncpyz( temp, kg.g_consoleField.buffer, sizeof( temp ) );
-			Com_sprintf( kg.g_consoleField.buffer, sizeof( kg.g_consoleField.buffer ), "\\%s", temp );
+			Com_sprintf( kg.g_consoleField.buffer, MAX_EDIT_LINE, "\\%s", temp );
 			kg.g_consoleField.cursor++;
 		}
 		else
@@ -870,13 +1205,13 @@ void Console_Key (int key) {
 		}
 
 		// copy line to history buffer
-		kg.historyEditLines[kg.nextHistoryLine % COMMAND_HISTORY] = kg.g_consoleField;
+		memcpy( kg.historyEditLines[kg.nextHistoryLine % COMMAND_HISTORY],
+			kg.g_consoleField.buffer,
+			MAX_EDIT_LINE );
 		kg.nextHistoryLine++;
 		kg.historyLine = kg.nextHistoryLine;
 
 		Field_Clear( &kg.g_consoleField );
-
-		kg.g_consoleField.widthInChars = g_console_field_width;
 
 		if ( cls.state == CA_DISCONNECTED ) {
 			SCR_UpdateScreen ();	// force an update, because the command
@@ -896,20 +1231,38 @@ void Console_Key (int key) {
 
 	if ( ( key == A_CURSOR_UP ) || ( ( keynames[ key ].lower == 'p' ) && kg.keys[A_CTRL].down ) )
 	{
+		int len;
+
 		if ( kg.nextHistoryLine - kg.historyLine < COMMAND_HISTORY && kg.historyLine > 0 )
 		{
 			kg.historyLine--;
 		}
-		kg.g_consoleField = kg.historyEditLines[ kg.historyLine % COMMAND_HISTORY ];
+
+		Field_Clear( &kg.g_consoleField );
+		memcpy( kg.g_consoleField.buffer,
+				kg.historyEditLines[ kg.historyLine % COMMAND_HISTORY ],
+				MAX_EDIT_LINE );
+		len = strlen( kg.g_consoleField.buffer );
+		kg.g_consoleField.cursor = len;
+		kg.g_consoleField.scroll = MAX(0, len - kg.g_consoleField.widthInChars);
 		return;
 	}
 
 	if ( ( key == A_CURSOR_DOWN ) || ( ( keynames[ key ].lower == 'n' ) && kg.keys[A_CTRL].down ) )
 	{
+		int len;
+
 		if (kg.historyLine == kg.nextHistoryLine)
 			return;
 		kg.historyLine++;
-		kg.g_consoleField = kg.historyEditLines[ kg.historyLine % COMMAND_HISTORY ];
+
+		Field_Clear( &kg.g_consoleField );
+		memcpy( kg.g_consoleField.buffer,
+				kg.historyEditLines[ kg.historyLine % COMMAND_HISTORY ],
+				MAX_EDIT_LINE );
+		len = strlen( kg.g_consoleField.buffer );
+		kg.g_consoleField.cursor = len;
+		kg.g_consoleField.scroll = MAX(0, len - kg.g_consoleField.widthInChars);
 		return;
 	}
 
@@ -949,6 +1302,7 @@ void Console_Key (int key) {
 
 	// pass to the normal editline routine
 	Field_KeyDownEvent( &kg.g_consoleField, key );
+	Key_CheckRep();
 }
 
 //============================================================================
@@ -972,7 +1326,9 @@ void Message_Key( int key ) {
 		return;
 	}
 
-	if ( key == A_ENTER || key == A_KP_ENTER )
+	if ( key == A_ENTER || key == A_KP_ENTER  ||
+		(keynames[ key ].lower == 'm' && kg.keys[A_CTRL].down) ||
+		(keynames[ key ].lower == 'j' && kg.keys[A_CTRL].down) )
 	{
 		if ( chatField.buffer[0] && cls.state == CA_ACTIVE ) {
 			if (chat_playerNum != -1 )
@@ -995,6 +1351,7 @@ void Message_Key( int key ) {
 	}
 
 	Field_KeyDownEvent( &chatField, key );
+	Field_CheckRep( &chatField );
 }
 
 //============================================================================
@@ -1725,6 +2082,7 @@ void CL_CharEvent( int key ) {
 	if ( cls.keyCatchers & KEYCATCH_CONSOLE )
 	{
 		Field_CharEvent( &kg.g_consoleField, key );
+		Key_CheckRep();
 	}
 	else if ( cls.keyCatchers & KEYCATCH_UI )
 	{
@@ -1733,10 +2091,12 @@ void CL_CharEvent( int key ) {
 	else if ( cls.keyCatchers & KEYCATCH_MESSAGE )
 	{
 		Field_CharEvent( &chatField, key );
+		Field_CheckRep( &chatField );
 	}
 	else if ( cls.state == CA_DISCONNECTED )
 	{
 		Field_CharEvent( &kg.g_consoleField, key );
+		Key_CheckRep();
 	}
 }
 
@@ -1806,6 +2166,8 @@ int Key_GetProtocolKey(mvversion_t protocol, int key16) {
 		return K_RIGHTARROW;
 
 	case A_ALT:
+		return K_ALT;
+	case A_ALT2:
 		return K_ALT;
 	case A_CTRL:
 		return K_CTRL;

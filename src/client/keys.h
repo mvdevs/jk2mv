@@ -8,11 +8,17 @@ typedef struct {
 
 typedef struct keyGlobals_s
 {
-	field_t		historyEditLines[COMMAND_HISTORY];
+	char		*historyEditLines[COMMAND_HISTORY][MAX_EDIT_LINE];
 
 	int			nextHistoryLine;		// the last line in the history buffer, not masked
 	int			historyLine;			// the line being displayed from history buffer
 										// will be <= nextHistoryLine
+
+	char		killRing[KILL_RING_SIZE][MAX_EDIT_LINE];
+	int			killTail;
+	int			killHead;
+	int			yankIndex;
+
 	field_t		g_consoleField;
 
 	qboolean	anykeydown;
@@ -39,8 +45,8 @@ extern keyname_t	keynames[MAX_KEYS];
 void Field_Clear( field_t *edit );
 void Field_KeyDownEvent( field_t *edit, int key );
 void Field_CharEvent( field_t *edit, int ch );
-void Field_Draw( field_t *edit, int x, int y, int width, qboolean showCursor );
-void Field_BigDraw( field_t *edit, int x, int y, int width, qboolean showCursor );
+void Field_Draw( field_t *edit, int x, int y, qboolean showCursor );
+void Field_BigDraw( field_t *edit, int x, int y, qboolean showCursor );
 
 extern	field_t	chatField;
 extern	qboolean	chat_team;

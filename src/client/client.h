@@ -81,8 +81,6 @@ typedef struct {
 // it can be un-deltad from the original
 #define	MAX_PARSE_ENTITIES	2048
 
-extern int g_console_field_width;
-
 typedef struct {
 	int			timeoutcount;		// it requres several frames in a timeout condition
 									// to disconnect, preventing debugging breaks from
@@ -354,13 +352,22 @@ typedef struct {
 typedef struct {
 	qboolean	initialized;
 
+	// Text buffer is divided into `totallines' lines of `rowwidth'
+	// length. Line's first `CON_TIMESTAMP_LEN' characters are
+	// reserved for timestamp and last character is either blank
+	// or contains `CON_WRAP_CHAR' indicating a line wrap.
 	short	text[CON_TEXTSIZE];
+
 	int		current;		// line where next message will be printed
 	int		x;				// offset in current line for next print
 	int		display;		// bottom of console displays this line
 
 	int 	linewidth;		// characters across screen
+	int		rowwidth;		// timestamp, text and line wrap character
 	int		totallines;		// total lines in console scrollback
+
+	int		charWidth;		// Scaled console character width
+	int		charHeight;		// Scaled console character height
 
 	float	xadjust;		// for wide aspect screens
 	float	yadjust;		// for wide aspect screens
@@ -541,8 +548,6 @@ qboolean CL_UpdateVisiblePings_f( int source );
 //
 // console
 //
-void Con_DrawCharacter (int cx, int line, int num);
-
 void Con_CheckResize (void);
 void Con_Init (void);
 void Con_Clear_f (void);
