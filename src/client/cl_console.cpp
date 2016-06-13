@@ -570,6 +570,16 @@ void Con_DrawNotify (void)
 	currentColor = 7;
 	re.SetColor( g_color_table[currentColor] );
 
+	static int iFontIndex = re.RegisterFont("ocr_a");
+	float fFontScale;
+	int iPixelHeightToAdvance;
+	if (re.Language_IsAsian())
+	{
+		fFontScale = con.xadjust * con.charWidth *
+			10.0f / re.Font_StrLenPixels("aaaaaaaaaa", iFontIndex, 1.0f);
+		iPixelHeightToAdvance = 1.3 * re.Font_HeightPixels(iFontIndex, fFontScale);
+	}
+
 	v = 0;
 	for (i= con.current-NUM_CON_TIMES+1 ; i<=con.current ; i++)
 	{
@@ -601,10 +611,6 @@ void Con_DrawNotify (void)
 		//
 		if (re.Language_IsAsian())
 		{
-			static int iFontIndex = re.RegisterFont("ocr_a");	// this seems naughty
-			const float fFontScale = 0.75f*con.yadjust;
-			const int iPixelHeightToAdvance =   2+(1.3/con.yadjust) * re.Font_HeightPixels(iFontIndex, fFontScale);	// for asian spacing, since we don't want glyphs to touch.
-
 			// concat the text to be printed...
 			//
 			char sTemp[4096]={0};	// ott
@@ -619,7 +625,8 @@ void Con_DrawNotify (void)
 			//
 			// and print...
 			//
-			re.Font_DrawString(cl_conXOffset->integer + con.xadjust*con.charWidth/*aesthetics*/, con.yadjust*(v), sTemp, g_color_table[currentColor], iFontIndex, -1, fFontScale);
+			re.Font_DrawString(cl_conXOffset->integer + con.xadjust*con.charWidth,
+				v, sTemp, g_color_table[currentColor], iFontIndex, -1, fFontScale);
 
 			v +=  iPixelHeightToAdvance;
 		}
@@ -743,16 +750,15 @@ void Con_DrawSolidConsole( float frac ) {
 	currentColor = 7;
 	re.SetColor( g_color_table[currentColor] );
 
-	static int iFontIndexForAsian = 0;
-	const float fFontScaleForAsian = 0.75f*con.yadjust;
+	static int iFontIndex = re.RegisterFont("ocr_a");
+	float fFontScale;
 	int iPixelHeightToAdvance = con.charHeight;
 	if (re.Language_IsAsian())
 	{
-		if (!iFontIndexForAsian)
-		{
-			iFontIndexForAsian = re.RegisterFont("ocr_a");
-		}
-		iPixelHeightToAdvance = (1.3/con.yadjust) * re.Font_HeightPixels(iFontIndexForAsian, fFontScaleForAsian);	// for asian spacing, since we don't want glyphs to touch.
+		fFontScale = con.xadjust * con.charWidth *
+			10.0f / re.Font_StrLenPixels("aaaaaaaaaa", iFontIndex, 1.0f);
+		y *= con.yadjust;
+		iPixelHeightToAdvance = 1.3 * re.Font_HeightPixels(iFontIndex, fFontScale);
 	}
 
 	for (i=0 ; i<rows ; i++, y -= iPixelHeightToAdvance, row--)
@@ -788,7 +794,8 @@ void Con_DrawSolidConsole( float frac ) {
 			//
 			// and print...
 			//
-			re.Font_DrawString(con.xadjust*con.charWidth/*(aesthetics)*/, con.yadjust*(y), sTemp, g_color_table[currentColor], iFontIndexForAsian, -1, fFontScaleForAsian);
+			re.Font_DrawString(con.xadjust * con.charWidth, y, sTemp,
+				g_color_table[currentColor], iFontIndex, -1, fFontScale);
 		}
 		else
 		{
