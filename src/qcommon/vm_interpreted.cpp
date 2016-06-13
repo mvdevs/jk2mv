@@ -22,11 +22,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "vm_local.h"
 #include <stdint.h>
 
-#define PAD(base, alignment)	(((base)+(alignment)-1) & ~((alignment)-1))
-#define PADLEN(base, alignment)	(PAD((base), (alignment)) - (base))
-
-#define PADP(base, alignment)	((void *) PAD((intptr_t) (base), (alignment)))
-
 //#define	DEBUG_VM
 #ifdef DEBUG_VM
 static char	*opnames[256] = {

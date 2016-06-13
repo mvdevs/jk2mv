@@ -748,7 +748,7 @@ typedef struct
 
 static inline zoneTail_t *ZoneTailFromHeader(zoneHeader_t *pHeader)
 {
-	return (zoneTail_t*) ( (char*)pHeader + sizeof(*pHeader) + pHeader->iSize );
+  return (zoneTail_t*) ((char*)(pHeader + 1) + PAD(pHeader->iSize, Q_ALIGNOF(zoneTail_t)));
 }
 
 #ifdef DETAILED_ZONE_DEBUG_CODE
@@ -825,8 +825,6 @@ void Z_Validate(void)
 
 // static mem blocks to reduce a lot of small zone overhead
 //
-#pragma pack(push)
-#pragma pack(1)
 typedef struct
 {
 	zoneHeader_t	Header;
@@ -840,7 +838,6 @@ typedef struct
 	byte mem[2];
 	zoneTail_t		Tail;
 } StaticMem_t;
-#pragma pack(pop)
 
 StaticZeroMem_t gZeroMalloc  =
 	{ {ZONE_MAGIC, TAG_STATIC,0,NULL,NULL},{ZONE_MAGIC}};
@@ -870,10 +867,7 @@ void *Z_Malloc(int iSize, memtag_t eTag, qboolean bZeroit /* = qfalse */)
 		return &pMemory[1];
 	}
 
-	// Add in tracking info and round to a longword...  (ignore longword aligning now we're not using contiguous blocks)
-	//
-//	int iRealSize = (iSize + sizeof(zoneHeader_t) + sizeof(zoneTail_t) + 3) & 0xfffffffc;
-	int iRealSize = (iSize + sizeof(zoneHeader_t) + sizeof(zoneTail_t));
+	int iRealSize = sizeof(zoneHeader_t) + PAD(iSize, Q_ALIGNOF(zoneTail_t)) + sizeof(zoneTail_t);
 
 	// Allocate a chunk...
 	//
