@@ -4,6 +4,12 @@
 #include "INetProfile.h"
 #endif
 
+typedef struct {
+	char	*name;
+	size_t	offset;
+	int		bits;		// 0 = float
+} netField_t;
+
 //#define _NEWHUFFTABLE_		// Build "c:\\netchan.bin"
 //#define _USINGNEWHUFFTABLE_		// Build a new frequency table to cut and paste.
 
@@ -25,9 +31,8 @@ Handles byte ordering and avoids alignment errors
 ==============================================================================
 */
 
-#ifndef FINAL_BUILD
-int gLastBitIndex = 0;
-#endif
+netField_t noField = { "<none>" };
+netField_t *gLastField = &noField;
 
 int oldsize = 0;
 
@@ -107,20 +112,18 @@ void MSG_WriteBits(msg_t *msg, int value, int bits) {
 		if (bits > 0) {
 			if (value > ((1 << bits) - 1) || value < 0) {
 				overflows++;
-#ifndef FINAL_BUILD
-				//				Com_Printf ("MSG_WriteBits: overflow writing %d in %d bits [index %i]\n", value, bits, gLastBitIndex);
-#endif
+				Com_DPrintf ("MSG_WriteBits: overflow writing %d in %d bits [field %s]\n", value, bits, gLastField->name);
+				assert (gLastField != &noField); // this means engine bug
 			}
 		} else {
 			int	r;
 
-			r = 1 << (bits - 1);
+			r = 1 << (- bits - 1);
 
 			if (value >  r - 1 || value < -r) {
 				overflows++;
-#ifndef FINAL_BUILD
-				//				Com_Printf ("MSG_WriteBits: overflow writing %d in %d bits [index %i]\n", value, bits, gLastBitIndex);
-#endif
+				Com_DPrintf ("MSG_WriteBits: overflow writing %d in %d bits [field %s]\n", value, bits, gLastField->name);
+				assert (gLastField != &noField);  // this means engine bug
 			}
 		}
 	}
@@ -803,12 +806,6 @@ void MSG_ReportChangeVectors_f(void) {
 	}
 }
 
-typedef struct {
-	char	*name;
-	size_t	offset;
-	int		bits;		// 0 = float
-} netField_t;
-
 // using the stringizing operator to save typing...
 #define	NETF(x) #x,(size_t)&((entityState_t*)0)->x
 
@@ -1058,6 +1055,7 @@ void MSG_WriteDeltaEntity(msg_t *msg, struct entityState_s *from, struct entityS
 		field = entityStateFields16;
 
 	for (i = 0; i < lc; i++, field++) {
+		gLastField = field;
 		fromF = (int *)((byte *)from + field->offset);
 		toF = (int *)((byte *)to + field->offset);
 
@@ -1099,6 +1097,8 @@ void MSG_WriteDeltaEntity(msg_t *msg, struct entityState_s *from, struct entityS
 			}
 		}
 	}
+
+	gLastField = &noField;
 }
 
 /*
@@ -1553,10 +1553,6 @@ void MSG_WriteDeltaPlayerstate(msg_t *msg, struct playerState_s *from, struct pl
 
 	MSG_WriteByte(msg, lc);	// # of changes
 
-#ifndef FINAL_BUILD
-	gLastBitIndex = lc;
-#endif
-
 	oldsize += numFields - lc;
 
 	if (MV_GetCurrentGameversion() == VERSION_1_02)
@@ -1565,6 +1561,7 @@ void MSG_WriteDeltaPlayerstate(msg_t *msg, struct playerState_s *from, struct pl
 		field = playerStateFields16;
 
 	for (i = 0; i < lc; i++, field++) {
+		gLastField = field;
 		fromF = (int *)((byte *)from + field->offset);
 		toF = (int *)((byte *)to + field->offset);
 
@@ -1597,7 +1594,7 @@ void MSG_WriteDeltaPlayerstate(msg_t *msg, struct playerState_s *from, struct pl
 		}
 	}
 	c = msg->cursize - c;
-
+	gLastField = &noField;
 
 	//
 	// send the arrays
