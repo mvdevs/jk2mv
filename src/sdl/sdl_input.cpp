@@ -715,7 +715,7 @@ static void IN_ProcessEvents( void )
 					if (key != A_NULL)
 						Sys_QueEvent(0, SE_KEY, key, qtrue, 0, NULL);
 
-					if (key == A_BACKSPACE)
+					if (key == A_BACKSPACE && !(e.key.keysym.mod & KMOD_ALT))
 						Sys_QueEvent(0, SE_CHAR, CTRL('h'), qfalse, 0, NULL);
 					else if ((e.key.keysym.mod & KMOD_CTRL) && key >= A_CAP_A && key <= A_CAP_Z)
 						Sys_QueEvent(0, SE_CHAR, CTRL(tolower(key)), qfalse, 0, NULL);
