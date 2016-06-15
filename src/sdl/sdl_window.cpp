@@ -571,9 +571,20 @@ static rserr_t GLimp_SetMode(glconfig_t *glConfig, const windowDesc_t *windowDes
 			if( ( screen = SDL_CreateWindow( windowTitle, x, y,
 					glConfig->vidWidth, glConfig->vidHeight, flags ) ) == NULL )
 			{
+				if ( samples > 0 ) {
+					SDL_GL_SetAttribute( SDL_GL_MULTISAMPLEBUFFERS, 0 );
+					SDL_GL_SetAttribute( SDL_GL_MULTISAMPLESAMPLES, 0 );
+
+					screen = SDL_CreateWindow( windowTitle, x, y,
+						glConfig->vidWidth, glConfig->vidHeight, flags );
+				}
+			}
+
+			if ( screen == NULL ) {
 				Com_DPrintf( "SDL_CreateWindow failed: %s\n", SDL_GetError( ) );
 				continue;
 			}
+
 
 #ifndef MACOS_X
 			SDL_SetWindowIcon(screen, icon);
