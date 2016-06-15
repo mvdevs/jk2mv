@@ -3338,7 +3338,7 @@ static qboolean S_UpdateBackgroundTrack_Actual( MusicInfo_t *pMusicInfo )
 
 	float fMasterVol = (s_musicVolume->value*s_musicMult->value);
 
-	static	float	musicVolume = 0.25f;
+	static	float	musicVolume = fMasterVol;
 
 // this is to work around an obscure issue to do with sliding decoder windows and amounts being requested, since the
 //	original MP3 stream-decoder wrapper was designed to work with audio-paintbuffer sized pieces... Basically 30000
@@ -3352,7 +3352,13 @@ static qboolean S_UpdateBackgroundTrack_Actual( MusicInfo_t *pMusicInfo )
 		return qfalse;
 	}
 
-	musicVolume = (musicVolume + fMasterVol)/2.0f;
+	// note: I think amplitude is directly proportional to "perceived
+	// loudness" and our volume simply scales amplitude
+	float volumeDelta = fMasterVol - musicVolume;
+	if ( volumeDelta > 0 )
+		musicVolume += MIN(0.0008f * com_frameMsec, volumeDelta);
+	else if ( volumeDelta < 0 )
+		musicVolume -= MIN(0.0008f * com_frameMsec, -volumeDelta);
 
 	// don't bother playing anything if musicvolume is 0
 	if ( musicVolume <= 0 ) {
