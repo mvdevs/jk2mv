@@ -875,6 +875,7 @@ void RB_CalcFogTexCoords( float *st ) {
 	// calculate density for each point
 	for (i = 0, v = tess.xyz[0] ; i < tess.numVertexes ; i++, v += 4) {
 		// calculate the length in fog
+		assert( fog->hasSurface );
 		s = DotProduct( v, fogDistanceVector ) + fogDistanceVector[3];
 		t = DotProduct( v, fogDepthVector ) + fogDepthVector[3];
 
@@ -894,7 +895,7 @@ void RB_CalcFogTexCoords( float *st ) {
 		}
 
 		st[0] = Q_isnan(s) ? 0.0f : s;
-		st[1] = Q_isnan(s) ? 0.0f : t;
+		st[1] = Q_isnan(t) ? 0.0f : t;
 		st += 2;
 	}
 }
