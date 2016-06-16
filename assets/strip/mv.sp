@@ -1,7 +1,7 @@
 VERSION 1
 ID 128
 REFERENCE MV
-COUNT 38
+COUNT 58
 INDEX 0
 {
    REFERENCE GAME_VERSION
@@ -343,4 +343,184 @@ INDEX 37
    TEXT_LANGUAGE3 "÷ffnen & Schlieﬂen"
    TEXT_LANGUAGE6 "Open & Close"
    TEXT_LANGUAGE8 "Abrir y Cerrar"
+}
+INDEX 38
+{
+   REFERENCE ANTIALIASING
+   TEXT_LANGUAGE1 "Anti-Aliasing:"
+   TEXT_LANGUAGE2 "Anti-Aliasing:"
+   TEXT_LANGUAGE3 "Anti-Aliasing:"
+   TEXT_LANGUAGE6 "Anti-Aliasing:"
+   TEXT_LANGUAGE8 "Anti-Aliasing:"
+}
+INDEX 39
+{
+   REFERENCE MULTISAMPLE_ANTIALIASING
+   TEXT_LANGUAGE1 "Adjust multisample anti-aliasing level."
+   TEXT_LANGUAGE2 "Adjust multisample anti-aliasing level."
+   TEXT_LANGUAGE3 "Adjust multisample anti-aliasing level."
+   TEXT_LANGUAGE6 "Adjust multisample anti-aliasing level."
+   TEXT_LANGUAGE8 "Adjust multisample anti-aliasing level."
+}
+INDEX 40
+{
+   REFERENCE CONSOLE_FONT
+   TEXT_LANGUAGE1 "Console Font:"
+   TEXT_LANGUAGE2 "Console Font:"
+   TEXT_LANGUAGE3 "Console Font:"
+   TEXT_LANGUAGE6 "Console Font:"
+   TEXT_LANGUAGE8 "Console Font:"
+}
+INDEX 41
+{
+   REFERENCE SELECT_CONSOLE_FONT
+   TEXT_LANGUAGE1 "Select console font."
+   TEXT_LANGUAGE2 "Select console font."
+   TEXT_LANGUAGE3 "Select console font."
+   TEXT_LANGUAGE6 "Select console font."
+   TEXT_LANGUAGE8 "Select console font."
+}
+INDEX 42
+{
+   REFERENCE FONT_SIZE
+   TEXT_LANGUAGE1 "Console Font Size:"
+   TEXT_LANGUAGE2 "Console Font Size:"
+   TEXT_LANGUAGE3 "Console Font Size:"
+   TEXT_LANGUAGE6 "Console Font Size:"
+   TEXT_LANGUAGE8 "Console Font Size:"
+}
+INDEX 43
+{
+   REFERENCE ADJUST_CONSOLE_FONT_SIZE
+   TEXT_LANGUAGE1 "Adjust console font size."
+   TEXT_LANGUAGE2 "Adjust console font size."
+   TEXT_LANGUAGE3 "Adjust console font size."
+   TEXT_LANGUAGE6 "Adjust console font size."
+   TEXT_LANGUAGE8 "Adjust console font size."
+}
+INDEX 44
+{
+   REFERENCE CONSOLE_TIMESTAMPS
+   TEXT_LANGUAGE1 "Console Timestamps:"
+   TEXT_LANGUAGE2 "Console Timestamps:"
+   TEXT_LANGUAGE3 "Console Timestamps:"
+   TEXT_LANGUAGE6 "Console Timestamps:"
+   TEXT_LANGUAGE8 "Console Timestamps:"
+}
+INDEX 45
+{
+   REFERENCE PRINT_TIMESTAMPS
+   TEXT_LANGUAGE1 "Print timestamps next to console messages."
+   TEXT_LANGUAGE2 "Print timestamps next to console messages."
+   TEXT_LANGUAGE3 "Print timestamps next to console messages."
+   TEXT_LANGUAGE6 "Print timestamps next to console messages."
+   TEXT_LANGUAGE8 "Print timestamps next to console messages."
+}
+INDEX 46
+{
+   REFERENCE AUTO_DEMO
+   TEXT_LANGUAGE1 "Auto Demo:"
+   TEXT_LANGUAGE2 "Auto Demo:"
+   TEXT_LANGUAGE3 "Auto Demo:"
+   TEXT_LANGUAGE6 "Auto Demo:"
+   TEXT_LANGUAGE8 "Auto Demo:"
+}
+INDEX 47
+{
+   REFERENCE AUTO_DEMO_INFO
+   TEXT_LANGUAGE1 "Automatically start recording demo."
+   TEXT_LANGUAGE2 "Automatically start recording demo."
+   TEXT_LANGUAGE3 "Automatically start recording demo."
+   TEXT_LANGUAGE6 "Automatically start recording demo."
+   TEXT_LANGUAGE8 "Automatically start recording demo."
+}
+INDEX 48
+{
+   REFERENCE DEMO_INDICATOR
+   TEXT_LANGUAGE1 "Demo Indicator:"
+   TEXT_LANGUAGE2 "Demo Indicator:"
+   TEXT_LANGUAGE3 "Demo Indicator:"
+   TEXT_LANGUAGE6 "Demo Indicator:"
+   TEXT_LANGUAGE8 "Demo Indicator:"
+}
+INDEX 49
+{
+   REFERENCE DEMO_INDICATOR_INFO
+   TEXT_LANGUAGE1 "Select demo recording indicator style."
+   TEXT_LANGUAGE2 "Select demo recording indicator style."
+   TEXT_LANGUAGE3 "Select demo recording indicator style."
+   TEXT_LANGUAGE6 "Select demo recording indicator style."
+   TEXT_LANGUAGE8 "Select demo recording indicator style."
+}
+INDEX 50
+{
+   REFERENCE DETAILED
+   TEXT_LANGUAGE1 "Detailed"
+   TEXT_LANGUAGE2 "Detailed"
+   TEXT_LANGUAGE3 "Detailed"
+   TEXT_LANGUAGE6 "Detailed"
+   TEXT_LANGUAGE8 "Detailed"
+}
+INDEX 51
+{
+   REFERENCE RED_DOT
+   TEXT_LANGUAGE1 "Red Dot"
+   TEXT_LANGUAGE2 "Red Dot"
+   TEXT_LANGUAGE3 "Red Dot"
+   TEXT_LANGUAGE6 "Red Dot"
+   TEXT_LANGUAGE8 "Red Dot"
+}
+INDEX 52
+{
+   REFERENCE ORIGINAL
+   TEXT_LANGUAGE1 "Original"
+   TEXT_LANGUAGE2 "Original"
+   TEXT_LANGUAGE3 "Original"
+   TEXT_LANGUAGE6 "Original"
+   TEXT_LANGUAGE8 "Original"
+}
+INDEX 53
+{
+   REFERENCE SAVE_DEMO_KEY
+   TEXT_LANGUAGE1 "Save Demo Key:"
+   TEXT_LANGUAGE2 "Save Demo Key:"
+   TEXT_LANGUAGE3 "Save Demo Key:"
+   TEXT_LANGUAGE6 "Save Demo Key:"
+   TEXT_LANGUAGE8 "Save Demo Key:"
+}
+INDEX 54
+{
+   REFERENCE SAVE_DEMO_KEY_INFO
+   TEXT_LANGUAGE1 "Bind a key to save automatic demo."
+   TEXT_LANGUAGE2 "Bind a key to save automatic demo."
+   TEXT_LANGUAGE3 "Bind a key to save automatic demo."
+   TEXT_LANGUAGE6 "Bind a key to save automatic demo."
+   TEXT_LANGUAGE8 "Bind a key to save automatic demo."
+}
+INDEX 55
+{
+   REFERENCE JK2MV_OPTIONS_INFO
+   TEXT_LANGUAGE1 "Configure other JK2MV options."
+   TEXT_LANGUAGE2 "Configure other JK2MV options."
+   TEXT_LANGUAGE3 "Configure other JK2MV options."
+   TEXT_LANGUAGE6 "Configure other JK2MV options."
+   TEXT_LANGUAGE8 "Configure other JK2MV options."
+}
+INDEX 56
+{
+   REFERENCE SAVE_LAST_DEMO_KEY
+   TEXT_LANGUAGE1 "Save Last Demo Key:"
+   TEXT_LANGUAGE2 "Save Last Demo Key:"
+   TEXT_LANGUAGE3 "Save Last Demo Key:"
+   TEXT_LANGUAGE6 "Save Last Demo Key:"
+   TEXT_LANGUAGE8 "Save Last Demo Key:"
+}
+INDEX 57
+{
+   REFERENCE SAVE_LAST_DEMO_KEY_INFO
+   TEXT_LANGUAGE1 "Bind a key to save previous automatic demo."
+   TEXT_LANGUAGE2 "Bind a key to save previous automatic demo."
+   TEXT_LANGUAGE3 "Bind a key to save previous automatic demo."
+   TEXT_LANGUAGE6 "Bind a key to save previous automatic demo."
+   TEXT_LANGUAGE8 "Bind a key to save previous automatic demo."
 }

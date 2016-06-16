@@ -3993,7 +3993,8 @@ static bind_t g_bindings[] =
 	{"use_electrobinoculars",	-1,			-1,		-1,	-1},
 	{"use_sentry",		-1,					-1,		-1,	-1},
 	{"cg_thirdperson !",-1,					-1,		-1,	-1},
-
+	{"saveDemo",		-1,					-1,		-1,	-1},
+	{"saveDemoLast",	-1,					-1,		-1,	-1},
 };
 
 
