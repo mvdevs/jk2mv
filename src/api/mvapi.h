@@ -6,6 +6,7 @@
 #else
 	typedef unsigned char uint8_t;
 	typedef unsigned short uint16_t;
+	typedef unsigned int uint32_t;
 #endif
 
 // -------------------------------------- API Version -------------------------------------- //
@@ -74,9 +75,13 @@ typedef struct {
 	uint16_t port;
 } mvaddr_t;
 
+#define MVF_NOSPEC		0x01
+#define MVF_SPECONLY	0x02
+
 typedef struct {
-	uint8_t snapshotIgnore[32];
-	uint8_t snapshotEnforce[32];
+	uint8_t 	snapshotIgnore[32];
+	uint8_t 	snapshotEnforce[32];
+	uint32_t	mvFlags;
 } mvsharedEntity_t;
 
 // ******** SYSCALLS ******** //
