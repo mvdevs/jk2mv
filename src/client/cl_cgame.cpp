@@ -662,10 +662,10 @@ intptr_t CL_CgameSystemCalls(intptr_t *args) {
 		Cvar_Update( (vmCvar_t *)VMA(1) );
 		return 0;
 	case CG_CVAR_SET:
-		Cvar_Set( (const char *)VMA(1), (const char *)VMA(2) );
+		Cvar_Set2( (const char *)VMA(1), (const char *)VMA(2), qtrue, qtrue );
 		return 0;
 	case CG_CVAR_VARIABLESTRINGBUFFER:
-		Cvar_VariableStringBuffer( (const char *)VMA(1), (char *)VMA(2), args[3] );
+		Cvar_VariableStringBuffer( (const char *)VMA(1), (char *)VMA(2), args[3], qtrue );
 		return 0;
 	case CG_ARGC:
 		return Cmd_Argc();

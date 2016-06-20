@@ -469,7 +469,8 @@ modules of the program.
 
 */
 
-cvar_t *Cvar_Get( const char *var_name, const char *value, int flags );
+cvar_t *Cvar_Get( const char *var_name, const char *var_value, int flags );
+cvar_t *Cvar_Get( const char *var_name, const char *var_value, int flags, qboolean isVmCall );
 // creates the variable if it doesn't exist, or returns the existing one
 // if it exists, the value will not be changed, but flags will be ORed in
 // that allows variables to be unarchived without needing bitflags
@@ -482,28 +483,35 @@ void	Cvar_Update( vmCvar_t *vmCvar );
 // updates an interpreted modules' version of a cvar
 
 void 	Cvar_Set( const char *var_name, const char *value );
+cvar_t *Cvar_Set2( const char *var_name, const char *value, qboolean force );
+cvar_t *Cvar_Set2( const char *var_name, const char *value, qboolean force, qboolean isVmCall );
 // will create the variable with no flags if it doesn't exist
 
 void Cvar_SetLatched( const char *var_name, const char *value);
 // don't set the cvar immediately
 
 void	Cvar_SetValue( const char *var_name, float value );
+void	Cvar_SetValue( const char *var_name, float value, qboolean isVmCall );
 // expands value to a string and calls Cvar_Set
 
 cvar_t *Cvar_FindVar(const char *var_name);
 
 float	Cvar_VariableValue( const char *var_name );
+float	Cvar_VariableValue( const char *var_name, qboolean isVmCall );
 int		Cvar_VariableIntegerValue( const char *var_name );
+int		Cvar_VariableIntegerValue( const char *var_name, qboolean isVmCall );
 // returns 0 if not defined or non numeric
 
 char	*Cvar_VariableString( const char *var_name );
 void	Cvar_VariableStringBuffer( const char *var_name, char *buffer, int bufsize );
+void	Cvar_VariableStringBuffer( const char *var_name, char *buffer, int bufsize, qboolean isVmCall );
 // returns an empty string if not defined
 
 void	Cvar_CommandCompletion( void(*callback)(const char *s) );
 // callback with each valid string
 
 void 	Cvar_Reset( const char *var_name );
+void	Cvar_Reset( const char *var_name, qboolean isVmCall );
 
 void	Cvar_SetCheatState( void );
 // reset all testing vars to a safe value
@@ -520,10 +528,12 @@ void Cvar_WriteVariables(fileHandle_t f, qboolean locals);
 void	Cvar_Init( void );
 
 char	*Cvar_InfoString( int bit );
+char	*Cvar_InfoString( int bit, qboolean isVmCall );
 char	*Cvar_InfoString_Big( int bit );
 // returns an info string containing all the cvars that have the given bit set
 // in their flags ( CVAR_USERINFO, CVAR_SERVERINFO, CVAR_SYSTEMINFO, etc )
 void	Cvar_InfoStringBuffer( int bit, char *buff, int buffsize );
+void	Cvar_InfoStringBuffer( int bit, char* buff, int buffsize, qboolean isVmCall );
 
 void	Cvar_Restart_f( void );
 

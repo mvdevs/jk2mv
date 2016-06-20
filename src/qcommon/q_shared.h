@@ -1156,6 +1156,8 @@ default values.
 #define CVAR_INTERNAL		0x00000800		// cvar won't be displayed, ever (for passwords and such)
 #define	CVAR_PARENTAL		0x00001000		// lets cvar system know that parental stuff needs to be updated
 #define	CVAR_GLOBAL			0x00002000		// the cvar is going to be written into jk2mvglobal.cfg rather then jk2mvconfig.cfg
+#define CVAR_VM_NOREAD		0x00004000		// the cvar can NOT be read-accessed by the vm modules
+#define CVAR_VM_NOWRITE		0x00008000		// the cvar can NOT be write-accessed by the vm modules
 
 // nothing outside the Cvar_*() functions should modify these fields!
 typedef struct cvar_s {

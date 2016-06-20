@@ -787,30 +787,30 @@ intptr_t CL_UISystemCalls(intptr_t *args) {
 		return 0;
 
 	case UI_CVAR_SET:
-		Cvar_Set( (const char *)VMA(1), (const char *)VMA(2) );
+		Cvar_Set2( (const char *)VMA(1), (const char *)VMA(2), qtrue, qtrue );
 		return 0;
 
 	case UI_CVAR_VARIABLEVALUE:
-		return FloatAsInt( Cvar_VariableValue( (const char *)VMA(1) ) );
+		return FloatAsInt( Cvar_VariableValue( (const char *)VMA(1), qtrue ) );
 
 	case UI_CVAR_VARIABLESTRINGBUFFER:
-		Cvar_VariableStringBuffer( (const char *)VMA(1), (char *)VMA(2), args[3] );
+		Cvar_VariableStringBuffer( (const char *)VMA(1), (char *)VMA(2), args[3], qtrue );
 		return 0;
 
 	case UI_CVAR_SETVALUE:
-		Cvar_SetValue( (const char *)VMA(1), VMF(2) );
+		Cvar_SetValue( (const char *)VMA(1), VMF(2), qtrue );
 		return 0;
 
 	case UI_CVAR_RESET:
-		Cvar_Reset( (const char *)VMA(1) );
+		Cvar_Reset( (const char *)VMA(1), qtrue );
 		return 0;
 
 	case UI_CVAR_CREATE:
-		Cvar_Get( (const char *)VMA(1), (const char *)VMA(2), args[3] );
+		Cvar_Get( (const char *)VMA(1), (const char *)VMA(2), args[3], qtrue );
 		return 0;
 
 	case UI_CVAR_INFOSTRINGBUFFER:
-		Cvar_InfoStringBuffer( args[1], (char *)VMA(2), args[3] );
+		Cvar_InfoStringBuffer( args[1], (char *)VMA(2), args[3], qtrue );
 		return 0;
 
 	case UI_ARGC:
