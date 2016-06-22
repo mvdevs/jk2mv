@@ -8,6 +8,15 @@ env:
     - "FTP_USER=ounedcideploy"
     - secure: "XZBwOWePycNX1Ce4/e8ZKveZYwoWjZYYdYLCN5yk3hDTRvMKTI1n2xBWbsyNjZ35Ep3MYyq9KKA7YqQ9whvV7k3IcK66jUfViWaqvKuu3gm7+pdpyEWHbx5m8uQGqL4irlB2Zo1eNw9QMPwRpaM2hQDCDV8AIzBR4axPIralCOE="
 
+notifications:
+  irc:
+    channels:
+      - "irc.quakenet.org#jk2mv"
+    template:
+      - "%{repository} (%{commit}): %{commit_subject}"
+      - "(%{result}): %{message}"
+      - "Build details: %{build_url}"
+
 matrix:
   include:
     - os: linux
