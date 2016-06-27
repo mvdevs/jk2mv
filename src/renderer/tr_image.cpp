@@ -563,7 +563,7 @@ Upload32
 
 ===============
 */
-static void Upload32( byte **mipmaps, qboolean customMip, image_t *image, qboolean isLightmap )
+static void Upload32( byte * const *mipmaps, qboolean customMip, image_t *image, qboolean isLightmap )
 {
 	byte 		*data;
 	int			samples;
@@ -1000,7 +1000,7 @@ image_t *R_CreateImage( const char *name, byte *data, int width, int height,
 	return R_CreateImageNew( name, mipmaps, customMip, width, height, &upload, glWrapClampMode);
 }
 
-image_t *R_CreateImageNew( const char *name, byte **mipmaps, qboolean customMip, int width, int height,
+image_t *R_CreateImageNew( const char *name, byte * const *mipmaps, qboolean customMip, int width, int height,
 	upload_t *upload, int glWrapClampMode ) {
 	image_t		*image;
 	qboolean	isLightmap = qfalse;
@@ -2279,7 +2279,7 @@ image_t	*R_FindImageFileNew( const char *name, upload_t *upload, int glWrapClamp
 	if (!upload->noMipMaps) {
 		int		minLevel = MAX_MIP_LEVELS - 1;
 
-		mipdata[MAX_MIP_LEVELS - 1] = pic;
+		mipdata[minLevel] = pic;
 		pName = GenerateImageMappingName(name);
 
 		for (n = 1; n < MAX_MIP_LEVELS; n++) {
@@ -2334,10 +2334,12 @@ image_t	*R_FindImageFileNew( const char *name, upload_t *upload, int glWrapClamp
 		for (n = 0; n < ARRAY_LEN(mipdata); n++) {
 			if (mipdata[n]) {
 				ri.Free( mipdata[n] );
+				mipdata[n] = NULL;
 			}
 		}
 	} else {
-	  ri.Free( pic );
+	  ri.Free( *mipmaps );
+	  *mipmaps = NULL;
 	}
 
 	return image;

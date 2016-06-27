@@ -1419,7 +1419,7 @@ image_t		*R_FindImageFileNew( const char *name, upload_t *upload, int glWrapClam
 
 image_t		*R_CreateImage( const char *name, byte *data, int width, int height, qboolean mipmap
 					, qboolean allowPicmip, qboolean allowTC, int wrapClampMode );
-image_t *R_CreateImageNew( const char *name, byte **mipmaps, qboolean customMip, int width, int height,
+image_t *R_CreateImageNew( const char *name, byte * const *mipmaps, qboolean customMip, int width, int height,
 	upload_t *upload, int glWrapClampMode );
 qboolean	R_GetModeInfo( int *width, int *height, float *windowAspect, int mode );
 
