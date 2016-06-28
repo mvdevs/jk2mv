@@ -1118,6 +1118,9 @@ static void SV_InitGameVM( qboolean restart ) {
 
 	// use the current msec count for a random seed
 	// init for this gamestate
+
+	mvStructConversionDisabled = qfalse;
+
 	apireq = VM_Call(gvm, GAME_INIT, svs.time, Com_Milliseconds(), restart, 0, 0, 0, 0, 0, 0, 0, 0, MV_APILEVEL);
 	VM_SetMVAPILevel(gvm, apireq);
 	Com_DPrintf("GameVM uses MVAPI level %i.\n", apireq);
