@@ -2266,7 +2266,6 @@ static qboolean ParseShader( const char **text )
 		{
 			shader.upload.noPicMip = qtrue;
 			shader.upload.noLightScale = qtrue;
-			shader.upload.textureMode = GetTextureMode("GL_LINEAR_MIPMAP_NEAREST");
 			continue;
 		}
 		// no gamma / intensity correction
