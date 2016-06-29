@@ -1,0 +1,25 @@
+gfx/2d/code_new_roman
+{
+    uiElementHD
+    textureMode GL_LINEAR_MIPMAP_NEAREST
+    {
+        map gfx/2d/code_new_roman
+        blendFunc blend
+        rgbGen vertex
+        alphaGen vertex
+        depthFunc disable
+    }
+}
+
+gfx/2d/mplus_1m_bold
+{
+    uiElementHD
+    textureMode GL_LINEAR_MIPMAP_NEAREST
+    {
+        map gfx/2d/mplus_1m_bold
+        blendFunc blend
+        rgbGen vertex
+        alphaGen vertex
+        depthFunc disable
+    }
+}
