@@ -1,7 +1,7 @@
 VERSION 1
 ID 128
 REFERENCE MV
-COUNT 58
+COUNT 60
 INDEX 0
 {
    REFERENCE GAME_VERSION
@@ -523,4 +523,22 @@ INDEX 57
    TEXT_LANGUAGE3 "Bind a key to save previous automatic demo."
    TEXT_LANGUAGE6 "Bind a key to save previous automatic demo."
    TEXT_LANGUAGE8 "Bind a key to save previous automatic demo."
+}
+INDEX 58
+{
+   REFERENCE MOD_OPTIONS
+   TEXT_LANGUAGE1 "Mod Options"
+   TEXT_LANGUAGE2 "Mod Options"
+   TEXT_LANGUAGE3 "Mod Options"
+   TEXT_LANGUAGE6 "Mod Options"
+   TEXT_LANGUAGE8 "Mod Options"
+}
+INDEX 59
+{
+   REFERENCE MOD_OPTIONS_INFO
+   TEXT_LANGUAGE1 "Configure mod options."
+   TEXT_LANGUAGE2 "Configure mod options."
+   TEXT_LANGUAGE3 "Configure mod options."
+   TEXT_LANGUAGE6 "Configure mod options."
+   TEXT_LANGUAGE8 "Configure mod options."
 }

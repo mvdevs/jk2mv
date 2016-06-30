@@ -5,23 +5,32 @@ LINES_INSERT 14 [
 ]
 
 LINES_INSERT 35 [
-            hide			mvoptions ;
+			hide			mvoptions ;
+			close                   ingame_setup_modoptions ;
+]
+
+LINES_INSERT 48 [
+			close				ingame_setup_modoptions ;
 ]
 
 LINES_INSERT 140 [
-                hide			mvoptions ;
+				hide			mvoptions ;
+				close                   ingame_setup_modoptions ;
 ]
 
 LINES_INSERT 200 [
-                hide			mvoptions ;
+				hide			mvoptions ;
+				close                   ingame_setup_modoptions ;
 ]
 
 LINES_INSERT 260 [
-                hide			mvoptions ;
+				hide			mvoptions ;
+				close                   ingame_setup_modoptions ;
 ]
 
 LINES_INSERT 321 [
-                hide			mvoptions ;
+				hide			mvoptions ;
+				close                   ingame_setup_modoptions ;
 ]
 
 LINES_INSERT 340 [
@@ -80,23 +89,87 @@ LINES_INSERT 340 [
 				hide                    mods ;
 				hide                    defaults ;
 				show                    mvoptions ;
+				close                   ingame_setup_modoptions ;
 
 				setitemcolor            setup_submenu forecolor 0.65 0.65 1 1 ;
 				setitemcolor            mvoptionsbutton forecolor 1 1 1 1 ;
 			}
 		}
+
+		// JK2MV button
+		itemDef
+		{
+			name				modoptionsbutton_glow
+			style				WINDOW_STYLE_SHADER
+			rect				20 193 170 30
+			background			"gfx/menus/menu_blendbox2"			// Frame around button
+			forecolor			1 1 1 1
+			visible			0
+			// appearance_slot		1
+			decoration
+		}
+
+		itemDef
+		{
+			name                    modoptionsbutton
+			group                   setup_submenu
+			text                    @MV_MOD_OPTIONS
+			type                    ITEM_TYPE_BUTTON
+			style                   WINDOW_STYLE_EMPTY
+			rect                    20 193 170 30
+			font                    3
+			textscale               0.9
+			textalignx              170
+			textaligny              5
+			textalign               ITEM_ALIGN_RIGHT
+			textstyle               3
+			forecolor               0.65 0.65 1 1
+			visible                 1
+			descText                @MV_MOD_OPTIONS_INFO
+
+			mouseEnter
+			{
+				show                    modoptionsbutton_glow
+			}
+			mouseExit
+			{
+				hide                    modoptionsbutton_glow
+			}
+			action
+			{
+				play                    "sound/interface/button1.wav"
+
+				defer                   VideoSetup videowarningMenu ;
+				show                    setup_background ;
+				hide                    video ;
+				hide                    applyChanges ;
+				hide                    video2 ;
+				hide                    vidrestart ;
+				hide                    sound ;
+				hide                    options ;
+				hide                    langapply
+				hide                    mods ;
+				hide                    defaults ;
+				hide                    mvoptions ;
+				open			ingame_setup_modoptions ;
+
+				setitemcolor            setup_submenu forecolor 0.65 0.65 1 1 ;
+				setitemcolor            modoptionsbutton forecolor 1 1 1 1 ;
+			}
+		}
 ]
 
 LINES_REPLACE 347 [
-			rect				20 193 170 30
+			rect				20 223 170 30
 ]
 
 LINES_REPLACE 362 [
-			rect				20 193 170 30
+			rect				20 223 170 30
 ]
 
 LINES_INSERT 395 [
-                hide			mvoptions ;
+				hide			mvoptions ;
+				close                   ingame_setup_modoptions ;
 ]
 
 LINES_INSERT 400 [
@@ -498,6 +571,14 @@ LINES_REPLACE 971 [
 				hide			highlight12
 ]
 
+LINES_REPLACE 991 [
+			rect				20 253 170 30
+]
+
+LINES_REPLACE 1005 [
+			rect				20 253 170 30
+]
+
 LINES_DELETE 1377 1377
 LINES_INSERT 1376 [
 			cvarFloatList
@@ -548,6 +629,10 @@ LINES_INSERT 1400 [
 			mouseexit
 			{
 				hide			highlight12
+]
+
+LINES_REPLACE 2082 [
+				play		"sound/interface/button1.wav"
 ]
 
 LINES_INSERT 2255 [
