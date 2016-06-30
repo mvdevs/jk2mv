@@ -4040,7 +4040,7 @@ static void ScanAndLoadDynGlowFiles( const char *path )
 
 	p = mv_dynGlowShaders;
 	for ( i = numDynGlowShaders - 1; i >= 0 ; i-- ) {
-		if (!mv_saberGlow->integer && !Q_stricmp(shaderFiles[i], "sabers.dynglow")) {
+		if (!r_saberGlow->integer && !Q_stricmp(shaderFiles[i], "sabers.dynglow")) {
 			ri.FS_FreeFile( (void*) dynGlowBuffers[i] );
 			continue;
 		}

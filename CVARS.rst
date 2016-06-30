@@ -14,6 +14,42 @@ New and Modified Cvars
 Client-Side
 -----------
 
+:Name: cl_autoDemo
+:Values: "0", "1"
+:Default: "0"
+:Description:
+   When enabled, starts recording a demo automatically on joining a
+   server. Current and single last demo are stored
+   in ``demos/LastDemo`` directory.
+
+..
+
+:Name: cl_autoDemoFormat
+:Values: Format String
+:Default: "%t_%m"
+:Description:
+   Filename format for demos saved with ``saveDemo`` command. Valid
+   format tokens are:
+
+   | %d: local date
+   | %m: map
+   | %n: custom name supplied as argument to ``saveDemo`` command
+   | %p: player name
+   | %t: in-game time
+   | %%: % character
+
+..
+
+:Name: cl_drawRecording
+:Values: "0", "1", "2"
+:Default: "1"
+:Description:
+   | 0: don't draw any demo recording indicator
+   | 1: draw filename and demo size near the top of the screen
+   | 2: draw red dot in the bottom left corner
+
+..
+
 :Name: con_height
 :Values: Decimal > 0
 :Default: "0.5"
@@ -65,15 +101,6 @@ Client-Side
    | 0: no name shadows at all.
    | 1: name shadows enabled on every version.
    | 2: name shadows enabled in 1.02 mode.
-
-..
-
-:Name: mv_saberGlow
-:Values: "0", "1"
-:Default: "1"
-:Description:
-   Enable / Disable dynamic glow on saber shaders. Turn off
-   if it breaks your custom saber model.
 
 ..
 
@@ -148,6 +175,15 @@ Client-Side
    | 0: Pre-processing. Causes washed out colors. Use as last resort.
    | 1: Hardware gamma. Works only in fullscreen.
    | 2: Post-processing. Works in both fullscreen and windowed.
+
+..
+
+:Name: r_saberGlow
+:Values: "0", "1"
+:Default: "1"
+:Description:
+   Enable / Disable dynamic glow on saber shaders. Turn off
+   if it breaks your custom saber model.
 
 ..
 
@@ -274,9 +310,6 @@ Server-Side
 Undocumented Cvars
 ==================
 
-* cl_autoDemo
-* cl_autoDemoFormat
-* cl_drawRecording
 * com_maxfpsMinimized
 * com_maxfpsUnfocused
 * in_nograb
