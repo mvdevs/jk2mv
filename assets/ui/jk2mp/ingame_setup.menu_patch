@@ -24,9 +24,13 @@ LINES_INSERT 321 [
                 hide			mvoptions ;
 ]
 
-LINES_INSERT 345 [
+LINES_INSERT 340 [
+		// JK2MV button
+		itemDef
+		{
+			name				mvoptionsbutton_glow
 			style				WINDOW_STYLE_SHADER
-			rect				20 193 170 30
+			rect				20 163 170 30
 			background			"gfx/menus/menu_blendbox2"			// Frame around button
 			forecolor			1 1 1 1
 			visible			0
@@ -34,10 +38,57 @@ LINES_INSERT 345 [
 			decoration
 		}
 
-		// JK2MV button
 		itemDef
 		{
-			name				mvoptionsbutton_glow
+			name                    mvoptionsbutton
+			group                   setup_submenu
+			text                    @MV_JK2MV
+			type                    ITEM_TYPE_BUTTON
+			style                   WINDOW_STYLE_EMPTY
+			rect                    20 163 170 30
+			font                    3
+			textscale               0.9
+			textalignx              170
+			textaligny              5
+			textalign               ITEM_ALIGN_RIGHT
+			textstyle               3
+			forecolor               0.65 0.65 1 1
+			visible                 1
+			descText                @MV_JK2MV_CONFIGURE_OPTIONS
+
+			mouseEnter
+			{
+				show                    mvoptionsbutton_glow
+			}
+			mouseExit
+			{
+				hide                    mvoptionsbutton_glow
+			}
+			action
+			{
+				play                    "sound/interface/button1.wav"
+
+				defer                   VideoSetup videowarningMenu ;
+				show                    setup_background ;
+				hide                    video ;
+				hide                    applyChanges ;
+				hide                    video2 ;
+				hide                    vidrestart ;
+				hide                    sound ;
+				hide                    options ;
+				hide                    langapply
+				hide                    mods ;
+				hide                    defaults ;
+				show                    mvoptions ;
+
+				setitemcolor            setup_submenu forecolor 0.65 0.65 1 1 ;
+				setitemcolor            mvoptionsbutton forecolor 1 1 1 1 ;
+			}
+		}
+]
+
+LINES_REPLACE 347 [
+			rect				20 193 170 30
 ]
 
 LINES_REPLACE 362 [
@@ -46,6 +97,10 @@ LINES_REPLACE 362 [
 
 LINES_INSERT 395 [
                 hide			mvoptions ;
+]
+
+LINES_INSERT 400 [
+
 ]
 
 LINES_INSERT 656 [
@@ -496,54 +551,6 @@ LINES_INSERT 1400 [
 ]
 
 LINES_INSERT 2255 [
-
-        itemDef
-    	{
-    		name				mvoptionsbutton
-    		group				setup_submenu
-    		text				@MV_JK2MV
-    		type				ITEM_TYPE_BUTTON
-    		style				WINDOW_STYLE_EMPTY
-    		rect				20 163 170 30
-    		font				3
-    		textscale			0.9
-    		textalignx			170
-    		textaligny			5
-    		textalign			ITEM_ALIGN_RIGHT
-    		textstyle			3
-    		forecolor			0.65 0.65 1 1
-    		visible			1
-    		descText			@MV_JK2MV_CONFIGURE_OPTIONS
-
-    		mouseEnter
-    		{
-    			show			mvoptionsbutton_glow
-    		}
-    		mouseExit
-    		{
-    			hide			mvoptionsbutton_glow
-    		}
-    		action
-    		{
-    			play			"sound/interface/button1.wav"
-
-    			defer			VideoSetup	videowarningMenu ;
-    			show			setup_background ;
-    			hide 			video ;
-    			hide			applyChanges ;
-    			hide			video2 ;
-    			hide			vidrestart	;
-    			hide			sound	;
-    			hide			options ;
-    			hide			langapply
-    			hide			mods	;
-    			hide			defaults ;
-    			show			mvoptions ;
-
-    			setitemcolor	setup_submenu	forecolor	0.65 0.65 1 1 ;
-    			setitemcolor	mvoptionsbutton	forecolor	1 1 1 1 ;
-    		}
-    	}
 
     	//----------------------------------------------------------------------------------------------
     	//
