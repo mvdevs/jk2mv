@@ -1217,6 +1217,9 @@ void CL_InitUI(qboolean mainMenu) {
 	vmInterpret_t		interpret;
 	int v;
 
+	Cvar_Get("ui_menulevel", "0", CVAR_ROM | CVAR_INTERNAL, qfalse);
+	Cvar_Set("ui_menulevel", "0");
+
 	if (mainMenu) {
 		uigameversion = VERSION_UNDEF;
 

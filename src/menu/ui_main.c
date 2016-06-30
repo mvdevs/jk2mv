@@ -6777,6 +6777,8 @@ void _UI_Init( qboolean inGameLoad ) {
 
 	// botfilter
 	trap_Cvar_Register(&ui_botfilter, "ui_botfilter", "0", CVAR_ARCHIVE | CVAR_GLOBAL);
+
+	trap_Cvar_Set("ui_menulevel", "1");
 }
 
 

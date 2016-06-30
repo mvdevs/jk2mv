@@ -1,5 +1,9 @@
 ORI_HASH 3892412289
 
+LINES_INSERT 14 [
+		disableColor					.75 .75 .75 1
+]
+
 LINES_INSERT 35 [
             hide			mvoptions ;
 ]
@@ -409,6 +413,8 @@ LINES_INSERT 944 [
 			}
 			descText			@MV_MULTISAMPLE_ANTIALIASING
 			cvar				"ui_r_ext_multisample"
+			cvarTest			"ui_menulevel"
+			disableCvar			{ "0" }
 
 			visible				0
 
@@ -714,6 +720,8 @@ LINES_INSERT 2255 [
 			textscale			0.8
 			forecolor			1 1 1 1
 			visible				0
+			cvarTest			"ui_menulevel"
+			disableCvar			{ "0" }
 
 			action
 			{
@@ -749,6 +757,8 @@ LINES_INSERT 2255 [
 			textscale			0.8
 			forecolor			1 1 1 1
 			visible				0
+			cvarTest			"ui_menulevel"
+			disableCvar			{ "0" }
 
 			action
 			{
