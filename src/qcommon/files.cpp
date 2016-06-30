@@ -2669,6 +2669,12 @@ static void FS_AddGameDirectory( const char *path, const char *dir, qboolean ass
 		}
 	}
 
+	if ( FS_CheckDirTraversal(dir) )
+	{
+		Com_Printf("FS_AddGameDirectory: dir %s contains invalid patterns\n", dir);
+		return;
+	}
+
 	Q_strncpyz( fs_gamedir, dir, sizeof( fs_gamedir ) );
 
 	//
@@ -2791,9 +2797,7 @@ and return qtrue if it does.
 */
 
 qboolean FS_CheckDirTraversal(const char *checkdir) {
-	if (strstr(checkdir, "../") || strstr(checkdir, "..\\"))
-		return qtrue;
-
+	if (strstr(checkdir, "..")) return qtrue;
 	return qfalse;
 }
 
@@ -2965,13 +2969,13 @@ static void FS_Startup( const char *gameName ) {
 
 	fs_debug = Cvar_Get( "fs_debug", "0", 0 );
 	fs_copyfiles = Cvar_Get( "fs_copyfiles", "0", CVAR_INIT );
-	fs_basepath = Cvar_Get ("fs_basepath", Sys_DefaultInstallPath(), CVAR_INIT );
+	fs_basepath = Cvar_Get ("fs_basepath", Sys_DefaultInstallPath(), CVAR_INIT | CVAR_VM_NOWRITE );
 	fs_basegame = Cvar_Get ("fs_basegame", "", CVAR_INIT );
-	fs_homepath = Cvar_Get ("fs_homepath", Sys_DefaultHomePath(), CVAR_INIT );
+	fs_homepath = Cvar_Get ("fs_homepath", Sys_DefaultHomePath(), CVAR_INIT | CVAR_VM_NOWRITE );
 	fs_gamedirvar = Cvar_Get ("fs_game", "", CVAR_INIT|CVAR_SYSTEMINFO );
 
 	assetsPath = Sys_DefaultAssetsPath();
-	fs_assetspath = Cvar_Get("fs_assetspath", assetsPath ? assetsPath : "", CVAR_INIT);
+	fs_assetspath = Cvar_Get("fs_assetspath", assetsPath ? assetsPath : "", CVAR_INIT | CVAR_VM_NOWRITE);
 
 	if (!FS_AllPath_Base_FileExists("assets5.pk3")) {
 		// assets files found in none of the paths
