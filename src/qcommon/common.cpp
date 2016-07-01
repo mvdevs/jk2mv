@@ -119,37 +119,8 @@ void Com_EndRedirect (void)
 	rd_flush = NULL;
 }
 
-/*
-=============
-Com_Printf
-
-Both client and server can use this, and it will output
-to the apropriate place.
-
-A raw string should NEVER be passed as fmt, because of "%f" type crashers.
-=============
-*/
-void QDECL Com_Printf( const char *fmt, ... )
+static void Com_Puts_Ext( qboolean extendedColors, const char *s )
 {
-	va_list		argptr;
-	char		msg[MAXPRINTMSG];
-
-	va_start (argptr,fmt);
-	vsprintf (msg,fmt,argptr);
-	va_end (argptr);
-
-	Com_Printf_Ext( qfalse, msg );
-}
-
-void QDECL Com_Printf_Ext( qboolean extendedColors, const char *fmt, ... )
-{
-	va_list		argptr;
-	char		msg[MAXPRINTMSG];
-
-	va_start (argptr,fmt);
-	vsprintf (msg,fmt,argptr);
-	va_end (argptr);
-
 	if ( rd_buffer ) {
 		if ((strlen (msg) + strlen(rd_buffer)) > (rd_buffersize - 1)) {
 			rd_flush(rd_buffer);
@@ -198,6 +169,40 @@ void QDECL Com_Printf_Ext( qboolean extendedColors, const char *fmt, ... )
 		OutputDebugStringA ("\n");
 	}
 #endif
+}
+
+/*
+=============
+Com_Printf
+
+Both client and server can use this, and it will output
+to the apropriate place.
+
+A raw string should NEVER be passed as fmt, because of "%f" type crashers.
+=============
+*/
+void QDECL Com_Printf( const char *fmt, ... )
+{
+	va_list		argptr;
+	char		msg[MAXPRINTMSG];
+
+	va_start (argptr,fmt);
+	vsprintf (msg,fmt,argptr);
+	va_end (argptr);
+
+	Com_Puts_Ext( qfalse, msg );
+}
+
+void QDECL Com_Printf_Ext( qboolean extendedColors, const char *fmt, ... )
+{
+	va_list		argptr;
+	char		msg[MAXPRINTMSG];
+
+	va_start (argptr,fmt);
+	vsprintf (msg,fmt,argptr);
+	va_end (argptr);
+
+	Com_Puts_Ext( extendedColors, msg);
 }
 
 
