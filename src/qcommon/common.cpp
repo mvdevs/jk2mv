@@ -119,7 +119,7 @@ void Com_EndRedirect (void)
 	rd_flush = NULL;
 }
 
-static void Com_Puts_Ext( qboolean extendedColors, const char *msg )
+static void Com_Puts_Ext( qboolean extendedColors, char *msg )
 {
 	if ( rd_buffer ) {
 		if ((strlen (msg) + strlen(rd_buffer)) > (rd_buffersize - 1)) {
