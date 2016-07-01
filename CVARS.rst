@@ -33,9 +33,9 @@ Client-Side
 
    | %d: local date
    | %m: map
-   | %n: custom name supplied as argument to ``saveDemo`` command
+   | %n: custom name supplied as an argument to ``saveDemo`` command
    | %p: player name
-   | %t: in-game time
+   | %t: sequence of server timestamps when ``saveDemo`` was executed
    | %%: % character
 
 ..
