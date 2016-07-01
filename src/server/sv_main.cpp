@@ -720,7 +720,7 @@ qboolean MVAPI_SendConnectionlessPacket(const mvaddr_t *addr, const char *messag
 	nativeAdr.ip[3] = addr->ip.v4[3];
 	nativeAdr.port = addr->port;
 
-	NET_OutOfBandPrint(NS_SERVER, nativeAdr, message);
+	NET_OutOfBandPrint(NS_SERVER, nativeAdr, "%s", message);
 	return qfalse;
 }
 

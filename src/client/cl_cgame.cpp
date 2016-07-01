@@ -490,7 +490,7 @@ rescan:
 	cmd = Cmd_Argv(0);
 
 	if ( !strcmp( cmd, "disconnect" ) ) {
-		Com_Error (ERR_SERVERDISCONNECT, SP_GetStringTextString("SVINGAME_SERVER_DISCONNECTED"));//"Server disconnected\n");
+		Com_Error (ERR_SERVERDISCONNECT, "%s", SP_GetStringTextString("SVINGAME_SERVER_DISCONNECTED"));//"Server disconnected\n");
 	}
 
 	if ( !strcmp( cmd, "bcs0" ) ) {

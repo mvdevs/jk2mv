@@ -530,7 +530,7 @@ void CL_PlayDemo_f( void ) {
 		{
 			if (!Q_stricmp(arg, "(null)"))
 			{
-				Com_Error( ERR_DROP, SP_GetStringTextString("CON_TEXT_NO_DEMO_SELECTED") );
+				Com_Error( ERR_DROP, "%s", SP_GetStringTextString("CON_TEXT_NO_DEMO_SELECTED") );
 			}
 			else
 			{
@@ -552,7 +552,7 @@ void CL_PlayDemo_f( void ) {
 			{
 				if (!Q_stricmp(arg, "(null)"))
 				{
-					Com_Error( ERR_DROP, SP_GetStringTextString("CON_TEXT_NO_DEMO_SELECTED") );
+					Com_Error( ERR_DROP, "%s", SP_GetStringTextString("CON_TEXT_NO_DEMO_SELECTED") );
 				}
 				else
 				{
@@ -991,7 +991,7 @@ void CL_RequestAuthorization( void ) {
 	}
 
 	fs = Cvar_Get ("cl_anonymous", "0", CVAR_INIT|CVAR_SYSTEMINFO );
-	NET_OutOfBandPrint(NS_CLIENT, cls.authorizeServer, va("getKeyAuthorize %i %s", fs->integer, nums) );
+	NET_OutOfBandPrint(NS_CLIENT, cls.authorizeServer, "getKeyAuthorize %i %s", fs->integer, nums);
 }
 
 #endif // USE_CD_KEY
@@ -1268,7 +1268,7 @@ CL_ResetPureClientAtServer
 =================
 */
 void CL_ResetPureClientAtServer( void ) {
-	CL_AddReliableCommand( va("vdr") );
+	CL_AddReliableCommand( "vdr" );
 }
 
 /*
@@ -1663,7 +1663,7 @@ void CL_ContinueCurrentDownload(dldecision_t decision) {
 		if (!Q_stricmp(cl_downloadProtocol->string, "HTTP")) {
 			char remotepath[MAX_STRING_CHARS];
 
-			Q_strncpyz(remotepath, va("%s/%s", clc.httpdl, cl_downloadName->string), sizeof(remotepath));
+			Com_sprintf(remotepath, sizeof(remotepath), "%s/%s", clc.httpdl, cl_downloadName->string);
 			Com_DPrintf("HTTP URL: %s\n", remotepath);
 
 			NET_HTTP_StartDownload(remotepath, Q3_VERSION, va("jk2://%s", NET_AdrToString(clc.serverAddress)));
@@ -2299,7 +2299,9 @@ void CL_ConnectionlessPacket( netadr_t from, msg_t *msg ) {
 
 #ifdef MV_MFDOWNLOADS
 	if (strtol(c, NULL, 10) && cls.state == CA_CONNECTING && NET_CompareAdr(from, clc.serverAddress)) {
-		Q_strncpyz(clc.httpdl, va("http://%i.%i.%i.%i:%s", clc.serverAddress.ip[0], clc.serverAddress.ip[1], clc.serverAddress.ip[2], clc.serverAddress.ip[3], c), sizeof(clc.httpdl));
+		Com_sprintf(clc.httpdl, sizeof(clc.httpdl), "http://%i.%i.%i.%i:%s",
+			clc.serverAddress.ip[0], clc.serverAddress.ip[1],
+			clc.serverAddress.ip[2], clc.serverAddress.ip[3], c);
 
 		return;
 	}
@@ -2385,7 +2387,7 @@ void CL_CheckTimeout( void ) {
 		if (++cl.timeoutcount > 5) {	// timeoutcount saves debugger
 			const char *psTimedOut = SP_GetStringTextString("SVINGAME_SERVER_CONNECTION_TIMED_OUT");
 			Com_Printf ("\n%s\n",psTimedOut);
-			Com_Error(ERR_DROP, psTimedOut);
+			Com_Error(ERR_DROP, "%s", psTimedOut);
 			//CL_Disconnect( qtrue );
 			return;
 		}
@@ -2485,7 +2487,7 @@ void CL_Frame ( int msec ) {
 		{
 			sprintf(mess,"Frame rate=%f\n\n",1000.0f*(1.0/(avgFrametime/32.0f)));
 	//		OutputDebugString(mess);
-			Com_Printf(mess);
+			Com_Printf("%s", mess);
 			avgFrametime=0.0f;
 		}
 		frameCount++;
@@ -3148,7 +3150,9 @@ void CL_ServerInfoPacket( netadr_t from, msg_t *msg ) {
 			
 			val = Info_ValueForKey(infoString, "mvhttp");
 			if (strtol(val, NULL, 10)) {
-				Q_strncpyz(clc.httpdl, va("http://%i.%i.%i.%i:%s", clc.serverAddress.ip[0], clc.serverAddress.ip[1], clc.serverAddress.ip[2], clc.serverAddress.ip[3], val), sizeof(clc.httpdl));
+				Com_sprintf(clc.httpdl, sizeof(clc.httpdl), "http://%i.%i.%i.%i:%s",
+					clc.serverAddress.ip[0], clc.serverAddress.ip[1],
+					clc.serverAddress.ip[2], clc.serverAddress.ip[3], val);
 			} else if ((val = Info_ValueForKey(infoString, "mvhttpurl")) && Q_stristr(val, "http://")) {
 				Q_strncpyz(clc.httpdl, val, sizeof(clc.httpdl));
 

@@ -136,7 +136,7 @@ void Con_Dump_f (void)
 
 	if (Cmd_Argc() != 2)
 	{
-		Com_Printf (SP_GetStringText(CON_TEXT_DUMP_USAGE));
+		Com_Printf ("%s", SP_GetStringText(CON_TEXT_DUMP_USAGE));
 		return;
 	}
 
@@ -439,7 +439,7 @@ All console printing must go through this in order to be logged to disk
 If no console is visible, the text will appear at the top of the game window
 ================
 */
-void CL_ConsolePrint( char *txt, qboolean extendedColors ) {
+void CL_ConsolePrint( const char *txt, qboolean extendedColors ) {
 	int		y;
 	int		c;
 	int		color;

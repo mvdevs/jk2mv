@@ -2696,7 +2696,7 @@ qboolean R_LoadMDXM( model_t *mod, void *buffer, const char *mod_name, qboolean 
 	}
 
 #if _DEBUG
-	ri.Printf(0, "For Ghoul2 mesh file %s\n", mod_name);
+	ri.Printf(PRINT_ALL, "For Ghoul2 mesh file %s\n", mod_name);
 #endif
 	// swap all the LOD's	(we need to do the middle part of this even for intel, because of shader reg and err-check)
 	lod = (mdxmLOD_t *) ( (byte *)mdxm + mdxm->ofsLODs );
@@ -2766,7 +2766,7 @@ qboolean R_LoadMDXM( model_t *mod, void *buffer, const char *mod_name, qboolean 
 			surf = (mdxmSurface_t *)( (byte *)surf + surf->ofsEnd );
 		}
 #if _DEBUG
-		ri.Printf(0, "Lod %d has %d tris in %d surfaces with %d bones\n", l, triCount, mdxm->numSurfaces, mdxm->numBones);
+		ri.Printf(PRINT_ALL, "Lod %d has %d tris in %d surfaces with %d bones\n", l, triCount, mdxm->numSurfaces, mdxm->numBones);
 #endif
 		// find the next LOD
 		lod = (mdxmLOD_t *)( (byte *)lod + lod->ofsEnd );

@@ -61,15 +61,15 @@ char *demoAutoFormat(const char* name) {
 				outIndex += strlen( outBuf + outIndex );
 				break;
 			case 'm':		//map
-				Com_sprintf( outBuf + outIndex, outLeft, mapName);
+				Com_sprintf( outBuf + outIndex, outLeft, "%s", mapName);
 				outIndex += strlen( outBuf + outIndex );
 				break;
 			case 'n':		//custom demo name
-				Com_sprintf( outBuf + outIndex, outLeft, name);
+				Com_sprintf( outBuf + outIndex, outLeft, "%s", name);
 				outIndex += strlen( outBuf + outIndex );
 				break;
 			case 'p':		//current player name
-				Com_sprintf( outBuf + outIndex, outLeft, playerName);
+				Com_sprintf( outBuf + outIndex, outLeft, "%s", playerName);
 				outIndex += strlen( outBuf + outIndex );
 				break;
 			case 't':		//timestamp
@@ -83,7 +83,7 @@ char *demoAutoFormat(const char* name) {
 					}
 					t++;
 				}
-				Com_sprintf( outBuf + outIndex, outLeft, timeStamps);
+				Com_sprintf( outBuf + outIndex, outLeft, "%s", timeStamps);
 				outIndex += strlen( outBuf + outIndex );
 				break;
 			case '%':
@@ -135,7 +135,7 @@ void demoAutoSave_f(void) {
 	if (!(Cmd_Argc() < 2)) {
 		Q_strncpyz(demoAuto.customName, Cmd_Argv( 1 ), sizeof(demoAuto.customName));
 	}
-	Com_sprintf(demoAuto.demoName, sizeof(demoAuto.demoName), demoAutoFormat(demoAuto.customName));
+	Com_sprintf(demoAuto.demoName, sizeof(demoAuto.demoName), "%s", demoAutoFormat(demoAuto.customName));
 	Com_Printf(S_COLOR_WHITE "Demo will be saved into " S_COLOR_GREEN "%s%s\n", demoAuto.demoName, demoAuto.ext);
 }
 
@@ -195,5 +195,5 @@ void demoAutoInit(void) {
 	} else {
 		Q_strncpyz(demoAuto.mod, "base", sizeof(demoAuto.mod));
 	}
-	Q_strncpyz(demoAuto.ext, va(".dm_%d", MV_GetCurrentProtocol()), sizeof(demoAuto.ext));
+	Com_sprintf(demoAuto.ext, sizeof(demoAuto.ext), ".dm_%d", MV_GetCurrentProtocol());
 }

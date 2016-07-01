@@ -41,7 +41,7 @@ void SFxHelper::Print( const char *msg, ... )
 	vsprintf( text, msg, argptr );
 	va_end( argptr );
 
-	Com_DPrintf( text );
+	Com_DPrintf( "%s", text );
 }
 
 //------------------------------------------------------

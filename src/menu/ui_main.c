@@ -727,7 +727,7 @@ qboolean Asset_Parse(int handle) {
 		{
 			if (!PC_String_Parse(handle, &tempStr))
 			{
-				Com_Printf(S_COLOR_YELLOW,"Bad 1st parameter for keyword 'stripedFile'");
+				Com_Printf(S_COLOR_YELLOW "Bad 1st parameter for keyword 'stripedFile'");
 				return qfalse;
 			}
 			Q_strncpyz( stripedFile, tempStr,  sizeof(stripedFile) );
@@ -739,7 +739,7 @@ qboolean Asset_Parse(int handle) {
 		{
 			if (!PC_String_Parse(handle, &uiInfo.uiDC.Assets.cursorStr))
 			{
-				Com_Printf(S_COLOR_YELLOW,"Bad 1st parameter for keyword 'cursor'");
+				Com_Printf(S_COLOR_YELLOW "Bad 1st parameter for keyword 'cursor'");
 				return qfalse;
 			}
 			uiInfo.uiDC.Assets.cursor = trap_R_RegisterShaderNoMip( uiInfo.uiDC.Assets.cursorStr);
@@ -3809,7 +3809,7 @@ static void UI_LoadDLFiles() {
 		if (uiInfo.downloadsList[i].blacklisted) {
 			char tmp[256];
 
-			Com_sprintf(tmp, sizeof(tmp), "^1%s", uiInfo.downloadsList[i].name);
+			Com_sprintf(tmp, sizeof(tmp), S_COLOR_RED "%s", uiInfo.downloadsList[i].name);
 			Q_strncpyz(uiInfo.downloadsList[i].name, tmp, sizeof(uiInfo.downloadsList[i].name));
 		}
 	}
@@ -6478,7 +6478,7 @@ nextSearch:
 			uiInfo.forceConfigSide[uiInfo.forceConfigCount] = qfalse; //dark side config
 		}
 
-		Com_sprintf( uiInfo.forceConfigNames[uiInfo.forceConfigCount], sizeof(uiInfo.forceConfigNames[uiInfo.forceConfigCount]), configname);
+		Com_sprintf( uiInfo.forceConfigNames[uiInfo.forceConfigCount], sizeof(uiInfo.forceConfigNames[uiInfo.forceConfigCount]), "%s", configname);
 		uiInfo.forceConfigCount++;
 	}
 

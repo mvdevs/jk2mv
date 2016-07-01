@@ -401,16 +401,13 @@ Touch the cgame.vm and ui.qvm so that a client can load it if it's in a seperate
 */
 void SV_TouchCGame(void) {
 	fileHandle_t	f;
-	char filename[MAX_QPATH];
 
-	Com_sprintf( filename, sizeof(filename), "vm/%s.qvm", "cgame" );
-	FS_FOpenFileRead( filename, &f, qfalse );
+	FS_FOpenFileRead( "vm/cgame.qvm", &f, qfalse );
 	if ( f ) {
 		FS_FCloseFile( f );
 	}
 
-	Com_sprintf(filename, sizeof(filename), "vm/%s.qvm", "ui");
-	FS_FOpenFileRead(filename, &f, qfalse);
+	FS_FOpenFileRead( "vm/ui.qvm", &f, qfalse);
 	if (f) {
 		FS_FCloseFile(f);
 	}

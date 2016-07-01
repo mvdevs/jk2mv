@@ -119,7 +119,7 @@ void Com_EndRedirect (void)
 	rd_flush = NULL;
 }
 
-static void Com_Puts_Ext( qboolean extendedColors, const char *s )
+static void Com_Puts_Ext( qboolean extendedColors, const char *msg )
 {
 	if ( rd_buffer ) {
 		if ((strlen (msg) + strlen(rd_buffer)) > (rd_buffersize - 1)) {
@@ -225,7 +225,7 @@ void QDECL Com_DPrintf( const char *fmt, ...) {
 	vsprintf (msg,fmt,argptr);
 	va_end (argptr);
 
-	Com_Printf ("%s", msg);
+	Com_Puts_Ext (qfalse, msg);
 }
 
 // Outputs to the VC / Windows Debug window (only in debug compile)

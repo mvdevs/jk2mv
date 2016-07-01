@@ -244,7 +244,7 @@ void RE_AddMiniRefEntityToScene( const miniRefEntity_t *ent )
 
 	if ( r_numminientities >= MAX_MINI_ENTITIES)
 	{
-		ri.Printf( PRINT_WARNING, S_COLOR_YELLOW "WARNING: Attempting to add too many miniRefEntity_t\n");
+		ri.Printf( PRINT_WARNING, "WARNING: Attempting to add too many miniRefEntity_t\n");
 		return;
 	}
 	if ( ent->reType < 0 || ent->reType >= RT_MAX_REF_ENTITY_TYPE )
