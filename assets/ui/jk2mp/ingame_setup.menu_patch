@@ -642,41 +642,6 @@ LINES_INSERT 2255 [
     	//	JK2MV FIELDS
     	//
     	//----------------------------------------------------------------------------------------------
-    	itemDef
-    	{
-    		name				allowdownload
-    		group				mvoptions
-         		type				ITEM_TYPE_MULTI
-    		text				@MV_DOWNLOADS_BLOCKALL
-    		descText			@MV_DOWNLOADS_BLOCKALL_INFO
-    		cvar				"mv_allowDownload"
-    		cvarFloatList
-    		{
-    			@MENUS0_OFF	 	1
-    			@MENUS0_ON 		0
-    		}
-    		rect				220 41 300 20
-       		textalign			ITEM_ALIGN_RIGHT
-    		textalignx			165
-    		textaligny			-2
-    		font 				2
-    		textscale 			0.8
-    		forecolor			1 1 1 1
-    		visible			0
-    		action
-    		{
-    			play			"sound/interface/button1.wav" ;
-    		}
-    		mouseenter
-    		{
-    			show			highlight1
-    		}
-    		mouseexit
-    		{
-    			hide			highlight1
-    		}
-    	}
-
 		itemDef
 		{
 			name				nameshadows
@@ -692,7 +657,7 @@ LINES_INSERT 2255 [
 				@MENUS0_DEFAULT		2
 			}
 
-			rect				220 61 300 20
+			rect				220 41 300 20
 			textalign			ITEM_ALIGN_RIGHT
 			textalignx			165
 			textaligny			-2
@@ -708,12 +673,12 @@ LINES_INSERT 2255 [
 
 			mouseenter
 			{
-				show			highlight2
+				show			highlight1
 			}
 
 			mouseexit
 			{
-				hide			highlight2
+				hide			highlight1
 			}
 		}
 
@@ -729,6 +694,46 @@ LINES_INSERT 2255 [
 			{
 				@MENUS0_OFF		0
 				@MENUS0_ON		1
+			}
+
+			rect				220 81 300 20
+			textalign			ITEM_ALIGN_RIGHT
+			textalignx			165
+			textaligny			-2
+			font				2
+			textscale			0.8
+			forecolor			1 1 1 1
+			visible				0
+
+			action
+			{
+				play			"sound/interface/button1.wav"
+			}
+
+			mouseenter
+			{
+				show			highlight3
+			}
+
+			mouseexit
+			{
+				hide			highlight3
+			}
+		}
+
+		itemDef
+		{
+			name				drawrecording
+			group				mvoptions
+			type				ITEM_TYPE_MULTI
+			text				@MV_DEMO_INDICATOR
+			descText			@MV_DEMO_INDICATOR_INFO
+			cvar				"cl_drawRecording"
+			cvarFloatList
+			{
+				@MENUS0_OFF		0
+				@MV_DETAILED		1
+				@MV_RED_DOT		2
 			}
 
 			rect				220 101 300 20
@@ -758,19 +763,12 @@ LINES_INSERT 2255 [
 
 		itemDef
 		{
-			name				drawrecording
+			name				savedemobind
 			group				mvoptions
-			type				ITEM_TYPE_MULTI
-			text				@MV_DEMO_INDICATOR
-			descText			@MV_DEMO_INDICATOR_INFO
-			cvar				"cl_drawRecording"
-			cvarFloatList
-			{
-				@MENUS0_OFF		0
-				@MV_DETAILED		1
-				@MV_RED_DOT		2
-			}
-
+			type				ITEM_TYPE_BIND
+			text				@MV_SAVE_DEMO_KEY
+			descText			@MV_SAVE_DEMO_KEY_INFO
+			cvar				"saveDemo"
 			rect				220 121 300 20
 			textalign			ITEM_ALIGN_RIGHT
 			textalignx			165
@@ -779,6 +777,8 @@ LINES_INSERT 2255 [
 			textscale			0.8
 			forecolor			1 1 1 1
 			visible				0
+			cvarTest			"ui_menulevel"
+			disableCvar			{ "0" }
 
 			action
 			{
@@ -788,22 +788,24 @@ LINES_INSERT 2255 [
 			mouseenter
 			{
 				show			highlight5
+				show			keybindstatus
 			}
 
 			mouseexit
 			{
 				hide			highlight5
+				show			keybindstatus
 			}
 		}
 
 		itemDef
 		{
-			name				savedemobind
+			name				savelastdemobind
 			group				mvoptions
 			type				ITEM_TYPE_BIND
-			text				@MV_SAVE_DEMO_KEY
-			descText			@MV_SAVE_DEMO_KEY_INFO
-			cvar				"saveDemo"
+			text				@MV_SAVE_LAST_DEMO_KEY
+			descText			@MV_SAVE_LAST_DEMO_KEY_INFO
+			cvar				"saveDemoLast"
 			rect				220 141 300 20
 			textalign			ITEM_ALIGN_RIGHT
 			textalignx			165
@@ -835,43 +837,6 @@ LINES_INSERT 2255 [
 
 		itemDef
 		{
-			name				savelastdemobind
-			group				mvoptions
-			type				ITEM_TYPE_BIND
-			text				@MV_SAVE_LAST_DEMO_KEY
-			descText			@MV_SAVE_LAST_DEMO_KEY_INFO
-			cvar				"saveDemoLast"
-			rect				220 161 300 20
-			textalign			ITEM_ALIGN_RIGHT
-			textalignx			165
-			textaligny			-2
-			font				2
-			textscale			0.8
-			forecolor			1 1 1 1
-			visible				0
-			cvarTest			"ui_menulevel"
-			disableCvar			{ "0" }
-
-			action
-			{
-				play			"sound/interface/button1.wav"
-			}
-
-			mouseenter
-			{
-				show			highlight7
-				show			keybindstatus
-			}
-
-			mouseexit
-			{
-				hide			highlight7
-				show			keybindstatus
-			}
-		}
-
-		itemDef
-		{
 			name				consolefont
 			group				mvoptions
 			type				ITEM_TYPE_MULTI
@@ -885,6 +850,39 @@ LINES_INSERT 2255 [
 				"M+ 1M Bold"			2
 			}
 
+			rect				220 181 300 20
+			textalign			ITEM_ALIGN_RIGHT
+			textalignx			165
+			textaligny			-2
+			font				2
+			textscale			0.8
+			forecolor			1 1 1 1
+			visible				1
+
+			action
+			{
+				play			"sound/interface/button1.wav"
+			}
+
+			mouseenter
+			{
+				show			highlight8
+			}
+
+			mouseexit
+			{
+				hide			highlight8
+			}
+		}
+
+		itemDef
+		{
+			name				consolescale
+			group				mvoptions
+			type				ITEM_TYPE_SLIDER
+			text				@MV_FONT_SIZE
+			descText			@MV_ADJUST_CONSOLE_FONT_SIZE
+			cvarFloat			"con_scale" 1 1 3
 			rect				220 201 300 20
 			textalign			ITEM_ALIGN_RIGHT
 			textalignx			165
@@ -912,12 +910,18 @@ LINES_INSERT 2255 [
 
 		itemDef
 		{
-			name				consolescale
+			name				consoletimestamps
 			group				mvoptions
-			type				ITEM_TYPE_SLIDER
-			text				@MV_FONT_SIZE
-			descText			@MV_ADJUST_CONSOLE_FONT_SIZE
-			cvarFloat			"con_scale" 1 1 3
+			type				ITEM_TYPE_MULTI
+			text				@MV_CONSOLE_TIMESTAMPS
+			descText			@MV_PRINT_TIMESTAMPS
+			cvar				"con_timestamps"
+			cvarFloatList
+			{
+				@MENUS0_ON		1
+				@MENUS0_OFF		0
+			}
+
 			rect				220 221 300 20
 			textalign			ITEM_ALIGN_RIGHT
 			textalignx			165
@@ -945,16 +949,17 @@ LINES_INSERT 2255 [
 
 		itemDef
 		{
-			name				consoletimestamps
+			name				consoleshift
 			group				mvoptions
 			type				ITEM_TYPE_MULTI
-			text				@MV_CONSOLE_TIMESTAMPS
-			descText			@MV_PRINT_TIMESTAMPS
-			cvar				"con_timestamps"
+			text				@MV_CONSOLE_SHIFT
+			descText			@MV_CONSOLE_SHIFT_INFO
+			cvar				"mv_consoleShiftRequirement"
 			cvarFloatList
 			{
-				@MENUS0_ON		1
 				@MENUS0_OFF		0
+				@MV_CONSOLE_SHIFT_OPEN	1
+				@MV_CONSOLE_SHIFT_BOTH	2
 			}
 
 			rect				220 241 300 20
@@ -979,46 +984,6 @@ LINES_INSERT 2255 [
 			mouseexit
 			{
 				hide			highlight11
-			}
-		}
-
-		itemDef
-		{
-			name				consoleshift
-			group				mvoptions
-			type				ITEM_TYPE_MULTI
-			text				@MV_CONSOLE_SHIFT
-			descText			@MV_CONSOLE_SHIFT_INFO
-			cvar				"mv_consoleShiftRequirement"
-			cvarFloatList
-			{
-				@MENUS0_OFF		0
-				@MV_CONSOLE_SHIFT_OPEN	1
-				@MV_CONSOLE_SHIFT_BOTH	2
-			}
-
-			rect				220 261 300 20
-			textalign			ITEM_ALIGN_RIGHT
-			textalignx			165
-			textaligny			-2
-			font				2
-			textscale			0.8
-			forecolor			1 1 1 1
-			visible				1
-
-			action
-			{
-				play			"sound/interface/button1.wav"
-			}
-
-			mouseenter
-			{
-				show			highlight12
-			}
-
-			mouseexit
-			{
-				hide			highlight12
 			}
 		}
 
