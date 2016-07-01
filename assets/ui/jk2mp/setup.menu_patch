@@ -1388,7 +1388,7 @@ LINES_INSERT 3053 [
 			decoration
 		}
 
-		itemDef
+		/*itemDef
 		{
 			name				dlinfo_button
 			group				downloads
@@ -1417,7 +1417,7 @@ LINES_INSERT 3053 [
 			{
 				hide			dlinfo_button_glow
 			}
-		}
+		}*/
 
 		itemDef
 		{
