@@ -1929,7 +1929,7 @@ static pack_t *FS_LoadZipFile( char *zipfile, const char *basename )
 	}
 
 	// mv.info file in root directory of pk3 file
-	char cversion[32];
+	char cversion[128];
 	int cversionlen = FS_PakReadFile(pack, "mv.info", cversion, sizeof(cversion) - 1);
 	if (cversionlen) {
 		cversion[cversionlen] = '\0';
