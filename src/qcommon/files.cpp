@@ -1195,6 +1195,7 @@ int FS_FOpenFileReadHash(const char *filename, fileHandle_t *file, qboolean uniq
 				!((search->pack->gvc & PACKGVC_1_02 && MV_GetCurrentGameversion() == VERSION_1_02) ||
 				  (search->pack->gvc & PACKGVC_1_03 && MV_GetCurrentGameversion() == VERSION_1_03) ||
 				  (search->pack->gvc & PACKGVC_1_04 && MV_GetCurrentGameversion() == VERSION_1_04) ||
+				  (Q_stricmp(search->pack->pakGamename, BASEGAME) && search->pack->gvc == PACKGVC_UNKNOWN) ||
 				  (MV_GetCurrentGameversion() == VERSION_UNDEF))) {
 
 				// prevent loading unsupported qvm's
@@ -2081,6 +2082,7 @@ char **FS_ListFilteredFiles( const char *path, const char *extension, char *filt
 				!((search->pack->gvc & PACKGVC_1_02 && MV_GetCurrentGameversion() == VERSION_1_02) ||
 				 (search->pack->gvc & PACKGVC_1_03 && MV_GetCurrentGameversion() == VERSION_1_03) ||
 				 (search->pack->gvc & PACKGVC_1_04 && MV_GetCurrentGameversion() == VERSION_1_04) ||
+				 (Q_stricmp(search->pack->pakGamename, BASEGAME) && search->pack->gvc == PACKGVC_UNKNOWN) ||
 				 (MV_GetCurrentGameversion() == VERSION_UNDEF))) {
 
 				// incompatible pk3
