@@ -1084,7 +1084,7 @@ void CompleteCommand( void )
 	Com_Memcpy(&temp, edit, sizeof(field_t));
 
 	if ( matchCount == 1 ) {
-		Com_sprintf( edit->buffer, sizeof( edit->buffer ), "\\%s", shortestMatch );
+		Com_sprintf( edit->buffer, MAX_EDIT_LINE, "\\%s", shortestMatch );
 		if ( Cmd_Argc() == 1 ) {
 			Q_strcat( kg.g_consoleField.buffer, MAX_EDIT_LINE, " " );
 		} else {
@@ -1095,7 +1095,7 @@ void CompleteCommand( void )
 	}
 
 	// multiple matches, complete to shortest
-	Com_sprintf( edit->buffer, sizeof( edit->buffer ), "\\%s", shortestMatch );
+	Com_sprintf( edit->buffer, MAX_EDIT_LINE, "\\%s", shortestMatch );
 	edit->cursor = (int)strlen(edit->buffer);
 	ConcatRemaining( temp.buffer, completionString );
 

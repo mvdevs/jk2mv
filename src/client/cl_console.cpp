@@ -291,7 +291,7 @@ void Con_CheckResize (void)
 		oldtotallines = con.totallines;
 		con.totallines = CON_TEXTSIZE / con.rowwidth;
 
-		Com_Memcpy (tbuf, con.text, CON_TEXTSIZE * sizeof(short));
+		Com_Memcpy (tbuf, con.text, sizeof(tbuf));
 		for(i=0; i<CON_TEXTSIZE; i++)
 			con.text[i] = CON_BLANK_CHAR;
 
@@ -315,14 +315,14 @@ void Con_CheckResize (void)
 			{
 				oldline = ((con.current + oi) % oldtotallines) * oldrowwidth;
 
-				for (j = CON_TIMESTAMP_LEN; j < oldrowwidth - 1 && i < sizeof(line); j++, i++) {
+				for (j = CON_TIMESTAMP_LEN; j < oldrowwidth - 1 && i < ARRAY_LEN(line); j++, i++) {
 					line[i] = tbuf[oldline + j];
 
 					if (line[i] != CON_BLANK_CHAR)
 						lineLen = i + 1;
 				}
 
-				if (i == sizeof(line))
+				if (i == ARRAY_LEN(line))
 					break;
 
 				if (tbuf[oldline + j] != CON_WRAP_CHAR) {
