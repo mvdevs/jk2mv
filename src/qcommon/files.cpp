@@ -3686,13 +3686,14 @@ const char *FS_MV_VerifyDownloadPath(const char *pk3file) {
 	searchpath_t	*search;
 
 	for (search = fs_searchpaths; search; search = search->next) {
-		char tmp[MAX_OSPATH];
-
 		if (!search->pack)
 			continue;
 		
 		if (FS_idPak(search->pack))
 			continue;
+
+		char tmp[MAX_OSPATH];
+		Com_sprintf(tmp, sizeof(tmp), "%s/%s.pk3", search->pack->pakGamename, search->pack->pakBasename);
 
 		if (!Q_stricmp(tmp, pk3file)) {
 			if (search->pack->noref)
