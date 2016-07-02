@@ -282,6 +282,8 @@ static char		*fs_serverReferencedPakNames[MAX_SEARCH_PATHS];		// pk3 names
 char lastValidBase[MAX_OSPATH];
 char lastValidGame[MAX_OSPATH];
 
+qboolean FS_idPak(pack_t *pack);
+
 /*
 ==============
 FS_Initialized
@@ -1187,15 +1189,21 @@ int FS_FOpenFileReadHash(const char *filename, fileHandle_t *file, qboolean uniq
 				continue;
 			}
 
-			// version specific pk3's: prevent loading unsupported qvm's
+			// version specific pk3's
 			// downloaded files are always okey because they are only loaded on servers currently using them
 			if (Q_stricmpn(search->pack->pakBasename, "dl_", 3) &&
 				!((search->pack->gvc & PACKGVC_1_02 && MV_GetCurrentGameversion() == VERSION_1_02) ||
 				  (search->pack->gvc & PACKGVC_1_03 && MV_GetCurrentGameversion() == VERSION_1_03) ||
 				  (search->pack->gvc & PACKGVC_1_04 && MV_GetCurrentGameversion() == VERSION_1_04) ||
-				  (MV_GetCurrentGameversion() == VERSION_UNDEF)) &&
-				(!Q_stricmp(filename, "vm/cgame.qvm") || !Q_stricmp(filename, "vm/ui.qvm") || !Q_stricmp(filename, "vm/jk2mpgame.qvm"))) {
-				continue;
+				  (MV_GetCurrentGameversion() == VERSION_UNDEF))) {
+
+				// prevent loading unsupported qvm's
+				if (!Q_stricmp(filename, "vm/cgame.qvm") || !Q_stricmp(filename, "vm/ui.qvm") || !Q_stricmp(filename, "vm/jk2mpgame.qvm"))
+					continue;
+
+				// incompatible pk3
+				if (search->pack->gvc != PACKGVC_UNKNOWN && !FS_idPak(search->pack))
+					continue;
 			}
 
 			// patchfiles are only allowed from within assetsmv.pk3
@@ -2067,6 +2075,19 @@ char **FS_ListFilteredFiles( const char *path, const char *extension, char *filt
 				continue;
 			}
 
+			// version specific pk3's
+			// downloaded files are always okey because they are only loaded on servers currently using them
+			if (Q_stricmpn(search->pack->pakBasename, "dl_", 3) &&
+				!((search->pack->gvc & PACKGVC_1_02 && MV_GetCurrentGameversion() == VERSION_1_02) ||
+				 (search->pack->gvc & PACKGVC_1_03 && MV_GetCurrentGameversion() == VERSION_1_03) ||
+				 (search->pack->gvc & PACKGVC_1_04 && MV_GetCurrentGameversion() == VERSION_1_04) ||
+				 (MV_GetCurrentGameversion() == VERSION_UNDEF))) {
+
+				// incompatible pk3
+				if (search->pack->gvc != PACKGVC_UNKNOWN && !FS_idPak(search->pack))
+					continue;
+			}
+
 			// look through all the pak file elements
 			pak = search->pack;
 			buildBuffer = pak->buildBuffer;
@@ -2571,7 +2592,12 @@ void FS_Path_f( void ) {
 	Com_Printf ("Current search path:\n");
 	for (s = fs_searchpaths; s; s = s->next) {
 		if (s->pack) {
-			Com_Printf ("%s (%i files)\n", s->pack->pakFilename, s->pack->numfiles);
+			Com_Printf ("%s (%i files) [ %s%s%s%s]\n", s->pack->pakFilename, s->pack->numfiles,
+				s->pack->gvc == PACKGVC_UNKNOWN ? "unknown " : "",
+				s->pack->gvc & PACKGVC_1_02 ? "1.02 " : "",
+				s->pack->gvc & PACKGVC_1_03 ? "1.03 " : "",
+				s->pack->gvc & PACKGVC_1_04 ? "1.04 " : "");
+
 			if ( fs_numServerPaks ) {
 				if ( !FS_PakIsPure(s->pack) ) {
 					Com_Printf( "	not on the pure list\n" );
@@ -2768,11 +2794,14 @@ static void FS_AddGameDirectory( const char *path, const char *dir, qboolean ass
 FS_idPak
 ================
 */
-qboolean FS_idPak(const char *pak, const char *base) {
+qboolean FS_idPakPath(const char *pak, const char *base) {
 	int i;
+	char path[MAX_OSPATH];
 
 	for (i = 0; i < NUM_ID_PAKS; i++) {
-		if ( !FS_FilenameCompare(pak, va("%s/assets%d", base, i)) ) {
+		Com_sprintf(path, sizeof(path), "%s/assets%d", base, i);
+
+		if (!FS_FilenameCompare(pak, path)) {
 			break;
 		}
 	}
@@ -2780,11 +2809,19 @@ qboolean FS_idPak(const char *pak, const char *base) {
 		return qtrue;
 	}
 
-	if (!FS_FilenameCompare(pak, va("%s/assetsmv", base))) {
+	Com_sprintf(path, sizeof(path), "%s/assetsmv", base);
+	if (!FS_FilenameCompare(pak, path)) {
 		return qtrue;
 	}
 
 	return qfalse;
+}
+
+qboolean FS_idPak(pack_t *pak) {
+	char path[MAX_OSPATH];
+	Com_sprintf(path, sizeof(path), "%s/%s", pak->pakGamename, pak->pakBasename);
+	
+	return FS_idPakPath(path, BASEGAME);
 }
 
 /*
@@ -2842,7 +2879,7 @@ qboolean FS_ComparePaks( char *neededpaks, int len, int *chksums, size_t maxchks
 		havepak = qfalse;
 
 		// never autodownload any of the id paks
-		if ( FS_idPak(fs_serverReferencedPakNames[i], BASEGAME) ) {
+		if ( FS_idPakPath(fs_serverReferencedPakNames[i], BASEGAME) ) {
 			continue;
 		}
 
@@ -3654,8 +3691,7 @@ const char *FS_MV_VerifyDownloadPath(const char *pk3file) {
 		if (!search->pack)
 			continue;
 		
-		Com_sprintf(tmp, sizeof(tmp), "%s/%s.pk3", search->pack->pakGamename, search->pack->pakBasename);
-		if (FS_idPak(tmp, BASEGAME))
+		if (FS_idPak(search->pack))
 			continue;
 
 		if (!Q_stricmp(tmp, pk3file)) {
