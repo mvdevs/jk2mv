@@ -8,9 +8,12 @@
 size_t mgstr2str(char *out, size_t outlen, const struct mg_str *in);
 
 static struct mg_mgr http_mgr;
-static struct mg_connection *http_srv, *http_dl;
+static struct mg_connection *http_srv;
+#ifndef DEDICATED
+static struct mg_connection *http_dl;
 static size_t dl_bytesWritten, dl_fileSize;
 static qboolean dl_abortFlag;
+#endif
 
 /*
 ====================
