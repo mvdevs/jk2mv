@@ -239,8 +239,8 @@ void Con_CheckResize (void)
 
 	if (cls.glconfig.vidWidth <= 0.0f)			// video hasn't been initialized yet
 	{
-		con.xadjust = 1;
-		con.yadjust = 1;
+		cls.xadjust = 1;
+		cls.yadjust = 1;
 		con.charWidth = SMALLCHAR_WIDTH;
 		con.charHeight = SMALLCHAR_HEIGHT;
 		con.linewidth = DEFAULT_CONSOLE_WIDTH;
@@ -254,21 +254,20 @@ void Con_CheckResize (void)
 	}
 	else
 	{
-		float scale = (con_scale && con_scale->value > 0.0f) ? con_scale->value : 1.0f;
+		float	scale = (con_scale && con_scale->value > 0.0f) ? con_scale->value : 1.0f;
+		int		charWidth = scale * SMALLCHAR_WIDTH;
 
-		// on wide screens, we will center the text
-		con.xadjust = 640.0f / cls.glconfig.vidWidth;
-		con.yadjust = 480.0f / cls.glconfig.vidHeight;
-
-		width = (cls.glconfig.vidWidth / (scale * SMALLCHAR_WIDTH)) - 2;
+		width = (cls.glconfig.vidWidth / charWidth) - 2;
 
 		if (width < 20) {
-			scale = cls.glconfig.vidWidth / (SMALLCHAR_WIDTH * (CON_MIN_WIDTH + 2));
-			width = (cls.glconfig.vidWidth / (scale * SMALLCHAR_WIDTH)) - 2;
+			width = 20;
+			charWidth = cls.glconfig.vidWidth / 22;
+			scale = charWidth / SMALLCHAR_WIDTH;
 		}
-		if ((int) (scale * SMALLCHAR_WIDTH) == 0) {
-			scale = 1.0f / SMALLCHAR_WIDTH + 0.01f;
-			width = (cls.glconfig.vidWidth / (scale * SMALLCHAR_WIDTH)) - 2;
+		if (charWidth == 0) {
+			charWidth = 1;
+			width = cls.glconfig.vidWidth - 2;
+			scale = 1.0f / SMALLCHAR_WIDTH;
 		}
 
 		if (con_timestamps->integer) {
@@ -279,7 +278,7 @@ void Con_CheckResize (void)
 				return;
 		}
 
-		con.charWidth = scale * SMALLCHAR_WIDTH;
+		con.charWidth = charWidth;
 		con.charHeight = scale * SMALLCHAR_HEIGHT;
 
 		kg.g_consoleField.widthInChars = width - 1; // Command prompt
@@ -585,7 +584,7 @@ void Con_DrawNotify (void)
 	int iPixelHeightToAdvance;
 	if (re.Language_IsAsian())
 	{
-		fFontScale = con.xadjust * con.charWidth *
+		fFontScale = cls.xadjust * con.charWidth *
 			10.0f / re.Font_StrLenPixels("aaaaaaaaaa", iFontIndex, 1.0f);
 		iPixelHeightToAdvance = 1.3 * re.Font_HeightPixels(iFontIndex, fFontScale);
 	}
@@ -635,7 +634,7 @@ void Con_DrawNotify (void)
 			//
 			// and print...
 			//
-			re.Font_DrawString(cl_conXOffset->integer + con.xadjust*con.charWidth,
+			re.Font_DrawString(cl_conXOffset->integer + cls.xadjust*con.charWidth,
 				v, sTemp, g_color_table[currentColor], iFontIndex, -1, fFontScale);
 
 			v +=  iPixelHeightToAdvance;
@@ -765,9 +764,9 @@ void Con_DrawSolidConsole( float frac ) {
 	int iPixelHeightToAdvance = con.charHeight;
 	if (re.Language_IsAsian())
 	{
-		fFontScale = con.xadjust * con.charWidth *
+		fFontScale = cls.xadjust * con.charWidth *
 			10.0f / re.Font_StrLenPixels("aaaaaaaaaa", iFontIndex, 1.0f);
-		y *= con.yadjust;
+		y *= cls.yadjust;
 		iPixelHeightToAdvance = 1.3 * re.Font_HeightPixels(iFontIndex, fFontScale);
 	}
 
@@ -804,7 +803,7 @@ void Con_DrawSolidConsole( float frac ) {
 			//
 			// and print...
 			//
-			re.Font_DrawString(con.xadjust * con.charWidth, y, sTemp,
+			re.Font_DrawString(cls.xadjust * con.charWidth, y, sTemp,
 				g_color_table[currentColor], iFontIndex, -1, fFontScale);
 		}
 		else
