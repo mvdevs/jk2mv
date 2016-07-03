@@ -15,8 +15,9 @@ cvar_t		*con_speed;
 cvar_t		*con_timestamps;
 
 #define	DEFAULT_CONSOLE_WIDTH	78
-#define CON_WRAP_CHAR			((ColorIndex_Extended(COLOR_LT_TRANSPARENT) << 8) | '\\')
-#define CON_BLANK_CHAR			((ColorIndex(COLOR_WHITE)<<8) | ' ')
+#define CON_WRAP				((ColorIndex_Extended(COLOR_LT_TRANSPARENT) << 8) | '\\')
+#define CON_BLANK_CHAR			' '
+#define CON_BLANK				((ColorIndex(COLOR_WHITE)<<8) | CON_BLANK_CHAR)
 #define CON_SCROLL_L_CHAR		'$'
 #define CON_SCROLL_R_CHAR		'$'
 #define CON_TIMESTAMP_LEN		11 // "[13:37:00] "
@@ -112,7 +113,7 @@ void Con_Clear_f (void) {
 	int		i;
 
 	for ( i = 0 ; i < CON_TEXTSIZE ; i++ ) {
-		con.text[i] = CON_BLANK_CHAR;
+		con.text[i] = CON_BLANK;
 	}
 
 	Con_Bottom();		// go to end
@@ -132,11 +133,11 @@ void Con_Dump_f (void)
 	int				line;
 	int				lineLen;
 	fileHandle_t	f;
-	char			buffer[CON_TIMESTAMP_LEN + MAXPRINTMSG];
+	char			buffer[CON_TIMESTAMP_LEN + MAXPRINTMSG + 1];
 
 	if (Cmd_Argc() != 2)
 	{
-		Com_Printf ("%s", SP_GetStringText(CON_TEXT_DUMP_USAGE));
+		Com_Printf ("%s\n", SP_GetStringText(CON_TEXT_DUMP_USAGE));
 		return;
 	}
 
@@ -153,7 +154,7 @@ void Con_Dump_f (void)
 		line = ((con.current + 1 + l) % con.totallines) * con.rowwidth;
 
 		for (j = CON_TIMESTAMP_LEN ; j < con.rowwidth - 1 ; j++)
-			if (con.text[line + j] != CON_BLANK_CHAR)
+			if ((con.text[line + j] & 0xff) != CON_BLANK_CHAR)
 				break;
 
 		if (j != con.rowwidth - 1)
@@ -183,18 +184,18 @@ void Con_Dump_f (void)
 			for (j = CON_TIMESTAMP_LEN; j < con.rowwidth - 1 && i < sizeof(buffer) - 1; j++, i++) {
 				buffer[i] = con.text[line + j] & 0xff;
 
-				if (con.text[line + j] != CON_BLANK_CHAR)
+				if ((con.text[line + j] & 0xff) != CON_BLANK_CHAR)
 					lineLen = i + 1;
 			}
 
 			if (i == sizeof(buffer) - 1)
 				break;
 
-			if (con.text[line + j] != CON_WRAP_CHAR) {
-				l++;
+			if (con.text[line + j] != CON_WRAP)
 				break;
-			}
 		}
+
+		l++;
 
 		buffer[lineLen] = '\n';
 		FS_Write(buffer, lineLen + 1, f);
@@ -248,7 +249,7 @@ void Con_CheckResize (void)
 		con.current = con.totallines - 1;
 		for(i=0; i<CON_TEXTSIZE; i++)
 		{
-			con.text[i] = CON_BLANK_CHAR;
+			con.text[i] = CON_BLANK;
 		}
 	}
 	else
@@ -293,7 +294,7 @@ void Con_CheckResize (void)
 
 		Com_Memcpy (tbuf, con.text, sizeof(tbuf));
 		for(i=0; i<CON_TEXTSIZE; i++)
-			con.text[i] = CON_BLANK_CHAR;
+			con.text[i] = CON_BLANK;
 
 		int oi = 0;
 		int ni = 0;
@@ -310,7 +311,7 @@ void Con_CheckResize (void)
 			for (i = 0; i < CON_TIMESTAMP_LEN; i++)
 				timestamp[i] = tbuf[oldline + i];
 
-			// Store whole line concatenating on CON_WRAP_CHAR
+			// Store whole line concatenating on CON_WRAP
 			for (i = 0; oi < oldtotallines; oi++)
 			{
 				oldline = ((con.current + oi) % oldtotallines) * oldrowwidth;
@@ -318,18 +319,18 @@ void Con_CheckResize (void)
 				for (j = CON_TIMESTAMP_LEN; j < oldrowwidth - 1 && i < ARRAY_LEN(line); j++, i++) {
 					line[i] = tbuf[oldline + j];
 
-					if (line[i] != CON_BLANK_CHAR)
+					if ((line[i] & 0xff) != CON_BLANK_CHAR)
 						lineLen = i + 1;
 				}
 
 				if (i == ARRAY_LEN(line))
 					break;
 
-				if (tbuf[oldline + j] != CON_WRAP_CHAR) {
-					oi++;
+				if (tbuf[oldline + j] != CON_WRAP)
 					break;
-				}
 			}
+
+			oi++;
 
 			// Print stored line to a new text buffer
 			for (i = 0; ; ni++) {
@@ -343,15 +344,24 @@ void Con_CheckResize (void)
 					con.text[newline + j] = line[i];
 
 				if (i == lineLen) {
+					// Erase remaining chars in case newline wrapped
+					for (; j < con.rowwidth - 1; j++)
+						con.text[newline + j] = CON_BLANK;
+
 					ni++;
 					break;
 				}
 
-				con.text[newline + j] = CON_WRAP_CHAR;
+				con.text[newline + j] = CON_WRAP;
 			}
 		}
 
 		con.current = ni;
+
+		// Erase con.current line for next CL_ConsolePrint
+		int newline = (con.current % con.totallines) * con.rowwidth;
+		for (j = 0; j < con.rowwidth; j++)
+			con.text[newline + j] = CON_BLANK;
 
 		Con_ClearNotify ();
 	}
@@ -427,7 +437,7 @@ void Con_Linefeed (void)
 	line = (con.current % con.totallines) * con.rowwidth;
 
 	for ( i = 0; i < con.rowwidth; i++ )
-		con.text[line + i] = CON_BLANK_CHAR;
+		con.text[line + i] = CON_BLANK;
 }
 
 /*
@@ -488,7 +498,7 @@ void CL_ConsolePrint( const char *txt, qboolean extendedColors ) {
 			y = con.current % con.totallines;
 
 			if (con.x == con.rowwidth - CON_TIMESTAMP_LEN - 1) {
-				con.text[y * con.rowwidth + CON_TIMESTAMP_LEN + con.x] = CON_WRAP_CHAR;
+				con.text[y * con.rowwidth + CON_TIMESTAMP_LEN + con.x] = CON_WRAP;
 				Con_Linefeed();
 				y = con.current % con.totallines;
 			}
@@ -633,7 +643,7 @@ void Con_DrawNotify (void)
 		else
 		{
 			for (x = 0 ; x < con.linewidth ; x++) {
-				if ( text[x] == CON_BLANK_CHAR ) {
+				if ( (text[x] & 0xff) == ' ' ) {
 					continue;
 				}
 				if ( ( (text[x]>>8) ) != currentColor ) {
@@ -800,7 +810,7 @@ void Con_DrawSolidConsole( float frac ) {
 		else
 		{
 			for (x = 0; x < con.linewidth + 1 ; x++) {
-				if ( text[x] == CON_BLANK_CHAR ) {
+				if ( (text[x] & 0xff) == ' ' ) {
 					continue;
 				}
 
