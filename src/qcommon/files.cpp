@@ -457,6 +457,19 @@ char *FS_BuildOSPath( const char *base, const char *game, const char *qpath ) {
 	return ospath[toggle];
 }
 
+char *FS_BuildOSPath(const char *base, const char *path) {
+	char	temp[MAX_OSPATH];
+	static char ospath[2][MAX_OSPATH];
+	static int toggle;
+
+	toggle ^= 1;		// flip-flop to allow two returns without clash
+
+	Com_sprintf(temp, sizeof(temp), "/%s", path);
+	FS_ReplaceSeparators(temp);
+	Com_sprintf(ospath[toggle], sizeof(ospath[0]), "%s%s", base, temp);
+
+	return ospath[toggle];
+}
 
 /*
 ============

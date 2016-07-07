@@ -760,7 +760,9 @@ Ghoul2 Insert End
 		if (Q_stristr(mv_httpserverport->string, "http://")) {
 			Com_Printf("HTTP Downloads: redirecting to %s\n", mv_httpserverport->string);
 		} else {
-			sv.http_port = NET_HTTP_StartServer(mv_httpserverport->integer);
+			if (!sv.http_port) {
+				sv.http_port = NET_HTTP_StartServer(mv_httpserverport->integer);
+			}
 		}
 	}
 }

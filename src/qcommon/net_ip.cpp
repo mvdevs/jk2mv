@@ -822,8 +822,6 @@ void NET_OpenIP( void )
 		}
 		if ( ip_socket == INVALID_SOCKET )
 			Com_Printf( "WARNING: Couldn't bind to a v4 ip address.\n");
-
-		NET_HTTP_Init();
 	}
 }
 
@@ -1023,7 +1021,7 @@ NET_Sleep
 sleeps msec or until net socket is ready
 ====================
 */
-void NET_Sleep( int msec ) {
+void NET_Sleep(int msec) {
 	struct timeval timeout;
 	fd_set	fdset;
 	int retval;
@@ -1038,20 +1036,24 @@ void NET_Sleep( int msec ) {
 		highestfd = ip_socket;
 	}
 
-	// windows ain't happy when select is called without valid FDs
-	if (highestfd != INVALID_SOCKET) {
-		// nonblocking mode, the timeout is handled by the http socket 
-		timeout.tv_sec = 0;
-		timeout.tv_usec = 0;
-		retval = select(highestfd + 1, &fdset, NULL, NULL, &timeout);
+#ifdef _WIN32
+	if (highestfd == INVALID_SOCKET) {
+		// windows ain't happy when select is called without valid FDs
 
-		if (retval == SOCKET_ERROR)
-			Com_Printf("Warning: select() syscall failed: %s\n", NET_ErrorString());
-		else if (retval > 0)
-			NET_Event(&fdset);
+		SleepEx(msec, 0);
+		return;
 	}
+#endif
 
-	NET_HTTP_Poll(msec);
+	timeout.tv_sec = msec / 1000;
+	timeout.tv_usec = (msec % 1000) * 1000;
+
+	retval = select(highestfd + 1, &fdset, NULL, NULL, &timeout);
+
+	if (retval == SOCKET_ERROR)
+		Com_Printf("Warning: select() syscall failed: %s\n", NET_ErrorString());
+	else if (retval > 0)
+		NET_Event(&fdset);
 }
 
 /*

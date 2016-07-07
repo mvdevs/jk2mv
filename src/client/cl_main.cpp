@@ -637,7 +637,7 @@ CL_ShutdownAll
 =====================
 */
 void CL_ShutdownAll(void) {
-	NET_HTTP_StopDownload();
+	NET_HTTP_StopDownload(clc.httpHandle);
 
 	// clear sounds
 	S_DisableSounds();
@@ -786,7 +786,7 @@ void CL_Disconnect( qboolean showMainMenu ) {
 	*clc.downloadTempName = *clc.downloadName = 0;
 	Cvar_Set("cl_downloadName", "");
 
-	NET_HTTP_StopDownload();
+	NET_HTTP_StopDownload(clc.httpHandle);
 
 	if ( clc.demofile ) {
 		FS_FCloseFile( clc.demofile );
@@ -1666,7 +1666,9 @@ void CL_ContinueCurrentDownload(dldecision_t decision) {
 			Com_sprintf(remotepath, sizeof(remotepath), "%s/%s", clc.httpdl, cl_downloadName->string);
 			Com_DPrintf("HTTP URL: %s\n", remotepath);
 
-			NET_HTTP_StartDownload(remotepath, Q3_VERSION, va("jk2://%s", NET_AdrToString(clc.serverAddress)));
+			char *tmp_os_path = FS_BuildOSPath(Cvar_VariableString("fs_homepath"), clc.downloadTempName);
+			
+			clc.httpHandle = NET_HTTP_StartDownload(remotepath, tmp_os_path, CL_EndHTTPDownload, CL_ProcessHTTPDownload, Q3_VERSION, va("jk2://%s", NET_AdrToString(clc.serverAddress)));
 		} else {
 			clc.downloadBlock = 0; // Starting new file
 			clc.downloadCount = 0;
