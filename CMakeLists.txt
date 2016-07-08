@@ -328,6 +328,7 @@ else()
 		set(CPACK_RPM_PACKAGE_LICENSE "GPLv2")
 		set(CPACK_RPM_PACKAGE_GROUP "Amusements/Games")
 		set(CPACK_RPM_PACKAGE_REQUIRES "glibc, libgcc, libstdc++, SDL2, openal-soft")
+		set(CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION /usr/share/applications /usr/share/pixmaps)
 	endif()
 	
 	if(BuildPackDEB OR BuildPackRPM)
