@@ -7059,11 +7059,24 @@ static void UI_DisplayDownloadInfo( const char *downloadName, float centerPoint,
 			Text_PaintCenter(leftWidth, yStart + 205, scale, colorWhite, "estimating", 0, iMenuFont);
 			Text_PaintCenter(leftWidth, yStart + 180, scale, colorWhite, va("(%s %s %s %s)", dlSizeBuf, sOf, totalSizeBuf, sCopied), 0, iMenuFont);
 		} else {
-			if ((uiInfo.uiDC.realTime - downloadTime) / 1000) {
-				xferRate = downloadCount / ((uiInfo.uiDC.realTime - downloadTime) / 1000);
+			static int last_sec = 0;
+			static int last_xferRate = 0;
+			static int last_downloadCount = 0;
+			int dlSec = (uiInfo.uiDC.realTime - downloadTime) / 1000;
+
+#define XFER_RATE_SECS 1
+			if (dlSec >= XFER_RATE_SECS && dlSec % XFER_RATE_SECS == 0 && last_sec < dlSec) {
+				xferRate = (downloadCount - last_downloadCount) / XFER_RATE_SECS;
+				last_xferRate = xferRate;
+				last_downloadCount = downloadCount;
+				last_sec = dlSec;
+			} else if (dlSec < XFER_RATE_SECS) {
+				xferRate = last_sec = last_xferRate = 0;
+				last_downloadCount = 0;
 			} else {
-				xferRate = 0;
+				xferRate = last_xferRate;
 			}
+
 			UI_ReadableSize(xferRateBuf, sizeof xferRateBuf, xferRate);
 
 			// Extrapolate estimated completion time
