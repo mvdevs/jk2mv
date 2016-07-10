@@ -369,12 +369,12 @@ void NET_HTTP_StopDownload(dlHandle_t handle) {
 	if (cldl->thread.joinable())
 		cldl->thread.join();
 
+	mg_mgr_free(&cldl->mgr);
+
 	cldl->downloading = false;
 
 	fclose(cldl->file);
 	cldl->file = NULL;
-
-	mg_mgr_free(&cldl->mgr);
 }
 
 #endif
