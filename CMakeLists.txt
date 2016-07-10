@@ -228,7 +228,10 @@ elseif ((("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU") OR ("${CMAKE_C_COMPILER_ID}" 
 		endif()
 
 		# Link only libs actually needed
-		set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wl,--as-needed")
+		# workaround for older gcc versions and c++11 std::thread: explicitly link lpthread
+		# https://bugs.launchpad.net/ubuntu/+source/gcc-defaults/+bug/1228201
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,--no-as-needed -pthread -lpthread -Wl,--as-needed")
+
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility-inlines-hidden")
 
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-but-set-variable")
