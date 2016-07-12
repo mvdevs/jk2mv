@@ -39,6 +39,7 @@ and one exported function: Perform
 vm_t	*currentVM = NULL;
 vm_t	*lastVM	= NULL;
 int		vm_debugLevel;
+qboolean vm_profileInclusive;
 
 // used by Com_Error to get rid of running vm's before longjmp
 static int forced_unload;
@@ -829,7 +830,9 @@ void VM_VmProfile_f( void ) {
 	vm_t		*vm;
 	vmSymbol_t	**sorted, *sym;
 	int			i;
-	double		total;
+	long		total;
+	qboolean	printHelp = qfalse;
+	qboolean	resetCounts = qfalse;
 
 	if ( !lastVM ) {
 		return;
@@ -841,6 +844,37 @@ void VM_VmProfile_f( void ) {
 		return;
 	}
 
+	if ( Cmd_Argc() == 2 ) {
+		const char *arg = Cmd_Argv(1);
+
+		if ( !Q_stricmp(arg, "exclusive") ) {
+			vm_profileInclusive = qfalse;
+			resetCounts = qtrue;
+		} else if ( !Q_stricmp(arg, "inclusive") ) {
+			vm_profileInclusive = qtrue;
+			resetCounts = qtrue;
+		} else if ( Q_stricmp(arg, "print") ) {
+			printHelp = qtrue;
+		}
+	} else {
+		printHelp = qtrue;
+	}
+
+	if ( resetCounts ) {
+		for ( sym = vm->symbols ; sym ; sym = sym->next ) {
+			sym->profileCount = 0;
+			sym->caller = NULL;
+		}
+		return;
+	}
+
+	if ( printHelp ) {
+		Com_Printf("Usage: vmprofile exclusive    start collecting exclusive counts\n");
+		Com_Printf("       vmprofile inclusive    start collecting inclusive counts\n");
+		Com_Printf("       vmprofile print        print collected data\n");
+		return;
+	}
+
 	sorted = (vmSymbol_t **)Z_Malloc( vm->numSymbols * sizeof( *sorted ), TAG_VM, qtrue);
 	sorted[0] = vm->symbols;
 	total = sorted[0]->profileCount;
@@ -849,6 +883,10 @@ void VM_VmProfile_f( void ) {
 		total += sorted[i]->profileCount;
 	}
 
+	// assume everything is called from vmMain
+	if ( vm_profileInclusive )
+		total = VM_ValueToFunctionSymbol( vm, 0 )->profileCount;
+
 	qsort( sorted, vm->numSymbols, sizeof( *sorted ), VM_ProfileSort );
 
 	for ( i = 0 ; i < vm->numSymbols ; i++ ) {
@@ -856,12 +894,11 @@ void VM_VmProfile_f( void ) {
 
 		sym = sorted[i];
 
-		perc = 100 * (float) sym->profileCount / total;
-		Com_Printf( "%2i%% %9i %s\n", perc, sym->profileCount, sym->symName );
-		sym->profileCount = 0;
+		perc = 100 * sym->profileCount / total;
+		Com_Printf( "%3i%% %12li %s\n", perc, sym->profileCount, sym->symName );
 	}
 
-	Com_Printf("	%9.0f total\n", total );
+	Com_Printf("     %12li total\n", total );
 
 	Z_Free( sorted );
 }
