@@ -556,6 +556,8 @@ nextInstruction2:
 				vmSymbol_t	*newSym = VM_ValueToFunctionSymbol( vm, programCounter );
 				qboolean	link = qtrue;
 
+				newSym->callCount++;
+
 				// deal with recursion
 				for ( vmSymbol_t *sym = profileSymbol; sym; sym = sym->caller )
 					if (sym == newSym)
@@ -567,6 +569,7 @@ nextInstruction2:
 				}
 			} else {
 				profileSymbol = VM_ValueToFunctionSymbol( vm, programCounter );
+				profileSymbol->callCount++;
 			}
 #endif
 			// get size of stack frame

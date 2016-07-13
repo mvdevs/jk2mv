@@ -833,6 +833,7 @@ static int QDECL VM_ProfileSort( const void *a, const void *b ) {
 	if ( sa->profileCount > sb->profileCount ) {
 		return 1;
 	}
+
 	return 0;
 }
 
@@ -847,6 +848,7 @@ void VM_VmProfile_f( void ) {
 	vmSymbol_t	**sorted, *sym;
 	int			i;
 	long		total;
+	int			totalCalls;
 	qboolean	printHelp = qfalse;
 	qboolean	resetCounts = qfalse;
 	qboolean	printAll = qfalse;
@@ -888,6 +890,7 @@ void VM_VmProfile_f( void ) {
 	if ( resetCounts ) {
 		for ( sym = vm->symbols ; sym ; sym = sym->next ) {
 			sym->profileCount = 0;
+			sym->callCount = 0;
 			sym->caller = NULL;
 		}
 		return;
@@ -903,9 +906,11 @@ void VM_VmProfile_f( void ) {
 	sorted = (vmSymbol_t **)Z_Malloc( vm->numSymbols * sizeof( *sorted ), TAG_VM, qtrue);
 	sorted[0] = vm->symbols;
 	total = sorted[0]->profileCount;
+	totalCalls = sorted[0]->callCount;
 	for ( i = 1 ; i < vm->numSymbols ; i++ ) {
 		sorted[i] = sorted[i-1]->next;
 		total += sorted[i]->profileCount;
+		totalCalls += sorted[i]->callCount;
 	}
 
 	// assume everything is called from vmMain
@@ -914,7 +919,9 @@ void VM_VmProfile_f( void ) {
 
 	qsort( sorted, vm->numSymbols, sizeof( *sorted ), VM_ProfileSort );
 
-	Com_Printf( "%4s %12s Function Name\n", vm_profileInclusive ? "Incl" : "Excl", "Instructions" );
+	Com_Printf( "%4s %12s %9s Function Name\n",
+				vm_profileInclusive ? "Incl" : "Excl",
+				"Instructions", "Calls" );
 
 	// todo: collect associations for generating callgraphs
 	fileHandle_t callgrind = FS_FOpenFileWrite( va("callgrind.out.%s", vm->name) );
@@ -928,9 +935,9 @@ void VM_VmProfile_f( void ) {
 
 		sym = sorted[i];
 
-		if (printAll || sym->profileCount != 0) {
+		if (printAll || sym->profileCount != 0 || sym->callCount != 0) {
 			perc = 100 * sym->profileCount / total;
-			Com_Printf( "%3i%% %12li %s\n", perc, sym->profileCount, sym->symName );
+			Com_Printf( "%3i%% %12li %9i %s\n", perc, sym->profileCount, sym->callCount, sym->symName );
 		}
 
 		FS_Printf(callgrind,
@@ -941,7 +948,7 @@ void VM_VmProfile_f( void ) {
 
 	FS_FCloseFile( callgrind );
 
-	Com_Printf("     %12li total\n", total );
+	Com_Printf("     %12li %9i total\n", total, totalCalls );
 
 	Z_Free( sorted );
 }
