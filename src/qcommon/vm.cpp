@@ -889,6 +889,13 @@ void VM_VmProfile_f( void ) {
 
 	qsort( sorted, vm->numSymbols, sizeof( *sorted ), VM_ProfileSort );
 
+	// todo: collect associations for generating callgraphs
+	fileHandle_t callgrind = FS_FOpenFileWrite( va("callgrind.out.%s", vm->name) );
+	// callgrind header
+	FS_Printf( callgrind,
+		"events: VM_Instructions\n"
+		"fl=vm/%s.qvm\n\n", vm->name );
+
 	for ( i = 0 ; i < vm->numSymbols ; i++ ) {
 		int		perc;
 
@@ -896,7 +903,14 @@ void VM_VmProfile_f( void ) {
 
 		perc = 100 * sym->profileCount / total;
 		Com_Printf( "%3i%% %12li %s\n", perc, sym->profileCount, sym->symName );
+
+		FS_Printf(callgrind,
+			"fn=%s\n"
+			"0 %li\n\n",
+			sym->symName, sym->profileCount);
 	}
+
+	FS_FCloseFile( callgrind );
 
 	Com_Printf("     %12li total\n", total );
 
