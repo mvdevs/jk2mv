@@ -914,6 +914,8 @@ void VM_VmProfile_f( void ) {
 
 	qsort( sorted, vm->numSymbols, sizeof( *sorted ), VM_ProfileSort );
 
+	Com_Printf( "%4s %12s Function Name\n", vm_profileInclusive ? "Incl" : "Excl", "Instructions" );
+
 	// todo: collect associations for generating callgraphs
 	fileHandle_t callgrind = FS_FOpenFileWrite( va("callgrind.out.%s", vm->name) );
 	// callgrind header
