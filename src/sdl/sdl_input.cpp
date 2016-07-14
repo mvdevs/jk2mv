@@ -700,12 +700,12 @@ static void IN_ProcessEvents( void )
 		switch( e.type )
 		{
 			case SDL_KEYDOWN:
-				if ((e.key.keysym.mod & KMOD_ALT) && !(e.key.keysym.mod & KMOD_CTRL))
+				if ((e.key.keysym.mod & KMOD_LALT) && !(e.key.keysym.mod & KMOD_CTRL))
 					textInput = qfalse;
 				else
 					textInput = qtrue;
 
-				if ((e.key.keysym.mod & KMOD_CTRL) && (e.key.keysym.mod & KMOD_ALT))
+				if ((e.key.keysym.mod & KMOD_CTRL) && (e.key.keysym.mod & KMOD_LALT))
 					break;
 
 				if (e.key.keysym.scancode == SDL_SCANCODE_GRAVE) {
@@ -723,7 +723,7 @@ static void IN_ProcessEvents( void )
 				break;
 
 			case SDL_KEYUP:
-				if ((e.key.keysym.mod & KMOD_ALT) && !(e.key.keysym.mod & KMOD_CTRL))
+				if ((e.key.keysym.mod & KMOD_LALT) && !(e.key.keysym.mod & KMOD_CTRL))
 					textInput = qfalse;
 				else
 					textInput = qtrue;
