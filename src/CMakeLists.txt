@@ -313,7 +313,7 @@ if (BuildMVMP)
 		message(FATAL_ERROR "OpenGL dev files not found!")
 	endif()
 	set(MVMPIncludeDirs ${MVMPIncludeDirs} ${OPENGL_INCLUDE_DIR})
-	set(MVMPLibraries ${MVMPLibraries} ${OPENGL_LIBRARIES})
+	set(MVMPLibraries ${MVMPLibraries} ${OPENGL_gl_LIBRARY})
 
 	# Libraries
 	if(WIN32)
