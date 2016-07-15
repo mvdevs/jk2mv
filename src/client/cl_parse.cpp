@@ -641,6 +641,22 @@ qboolean CL_DownloadRunning() {
 
 /*
 =====================
+CL_KillDownload
+=====================
+*/
+void CL_KillDownload() {
+	NET_HTTP_StopDownload(clc.httpHandle);
+
+	if (clc.download) {
+		FS_FCloseFile(clc.download);
+		clc.download = 0;
+	}
+	*clc.downloadTempName = *clc.downloadName = 0;
+	Cvar_Set("cl_downloadName", "");
+}
+
+/*
+=====================
 CL_ParseCommandString
 
 Command strings are just saved off until cgame asks for them
@@ -740,6 +756,8 @@ void CL_ParseServerMessage( msg_t *msg ) {
 			CL_ParseUDPDownload( msg );
 			break;
 		case svc_mapchange:
+			CL_KillDownload();
+
 			if (cgvm)
 			{
 				VM_Call( cgvm, CG_MAP_CHANGE );

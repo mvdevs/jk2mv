@@ -637,7 +637,7 @@ CL_ShutdownAll
 =====================
 */
 void CL_ShutdownAll(void) {
-	NET_HTTP_StopDownload(clc.httpHandle);
+	CL_KillDownload();
 
 	// clear sounds
 	S_DisableSounds();
@@ -779,14 +779,7 @@ void CL_Disconnect( qboolean showMainMenu ) {
 
 	com_demoplaying = qfalse;
 
-	if (clc.download) {
-		FS_FCloseFile( clc.download );
-		clc.download = 0;
-	}
-	*clc.downloadTempName = *clc.downloadName = 0;
-	Cvar_Set("cl_downloadName", "");
-
-	NET_HTTP_StopDownload(clc.httpHandle);
+	CL_KillDownload();
 
 	if ( clc.demofile ) {
 		FS_FCloseFile( clc.demofile );

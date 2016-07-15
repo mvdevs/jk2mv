@@ -536,6 +536,7 @@ void CL_EndHTTPDownload(dlHandle_t handle, qboolean success, const char *err_msg
 void CL_ProcessHTTPDownload(size_t dltotal, size_t dlnow);
 
 qboolean CL_DownloadRunning();
+void CL_KillDownload();
 
 //====================================================================
 
