@@ -403,7 +403,9 @@ nextInstruction2:
 		if ( vm_debugLevel > 1 ) {
 			Com_Printf( "%s %s\n", DEBUGSTR, opnames[opcode] );
 		}
-		profileSymbol->profileCount++;
+
+		for (vmSymbol_t *sym = profileSymbol; sym != NULL; sym = sym->caller)
+			sym->profileCount++;
 #endif
 		switch ( opcode ) {
 #ifdef DEBUG_VM
@@ -550,7 +552,25 @@ nextInstruction2:
 
 		case OP_ENTER:
 #ifdef DEBUG_VM
-			profileSymbol = VM_ValueToFunctionSymbol( vm, programCounter );
+			if ( vm_profileInclusive ) {
+				vmSymbol_t	*newSym = VM_ValueToFunctionSymbol( vm, programCounter );
+				qboolean	link = qtrue;
+
+				newSym->callCount++;
+
+				// deal with recursion
+				for ( vmSymbol_t *sym = profileSymbol; sym; sym = sym->caller )
+					if (sym == newSym)
+						link = qfalse;
+
+				if (link) {
+					newSym->caller = profileSymbol;
+					profileSymbol = newSym;
+				}
+			} else {
+				profileSymbol = VM_ValueToFunctionSymbol( vm, programCounter );
+				profileSymbol->callCount++;
+			}
 #endif
 			// get size of stack frame
 			v1 = r2;
@@ -581,6 +601,7 @@ nextInstruction2:
 			// grab the saved program counter
 			programCounter = *(int *)&image[ programStack ];
 #ifdef DEBUG_VM
+			profileSymbol->caller = NULL;
 			profileSymbol = VM_ValueToFunctionSymbol( vm, programCounter );
 			if ( vm_debugLevel ) {
 //				vm->callLevel--;

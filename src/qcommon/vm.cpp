@@ -40,6 +40,9 @@ vm_t	*currentVM = NULL;
 vm_t	*lastVM	= NULL;
 int		vm_debugLevel;
 
+#define MAX_APINUM	1000
+qboolean vm_profileInclusive;
+
 // used by Com_Error to get rid of running vm's before longjmp
 static int forced_unload;
 
@@ -92,15 +95,11 @@ const char *VM_ValueToSymbol( vm_t *vm, int value ) {
 	vmSymbol_t	*sym;
 	static char		text[MAX_TOKEN_CHARS];
 
-	sym = vm->symbols;
-	if ( !sym ) {
+	if ( !vm->symbolTable ) {
 		return "NO SYMBOLS";
 	}
 
-	// find the symbol
-	while ( sym->next && sym->next->symValue <= value ) {
-		sym = sym->next;
-	}
+	sym = vm->symbolTable[value];
 
 	if ( value == sym->symValue ) {
 		return sym->symName;
@@ -119,19 +118,13 @@ For profiling, find the symbol behind this value
 ===============
 */
 vmSymbol_t *VM_ValueToFunctionSymbol( vm_t *vm, int value ) {
-	vmSymbol_t	*sym;
 	static vmSymbol_t	nullSym;
 
-	sym = vm->symbols;
-	if ( !sym ) {
+	if ( !vm->symbolTable ) {
 		return &nullSym;
 	}
 
-	while ( sym->next && sym->next->symValue <= value ) {
-		sym = sym->next;
-	}
-
-	return sym;
+	return vm->symbolTable[value];
 }
 
 
@@ -157,7 +150,7 @@ int VM_SymbolToValue( vm_t *vm, const char *symbol ) {
 VM_SymbolForCompiledPointer
 =====================
 */
-#if 0 // 64bit!
+#if 0 // VM_ValueToSymbol takes compiled pointer as an argument now
 const char *VM_SymbolForCompiledPointer( vm_t *vm, void *code ) {
 	int			i;
 
@@ -231,6 +224,7 @@ void VM_LoadSymbols( vm_t *vm ) {
 	int		chars;
 	int		segment;
 	int		numInstructions;
+	int		i;
 
 	// don't load symbols if not developer
 	if ( !com_developer->integer ) {
@@ -246,6 +240,9 @@ void VM_LoadSymbols( vm_t *vm ) {
 	}
 
 	numInstructions = vm->instructionCount;
+
+	// 1000 for negative system calls
+	vm->symbolTable = (vmSymbol_t **)Hunk_Alloc( (MAX_APINUM + vm->codeLength) * sizeof(*vm->symbolTable), h_high ) + MAX_APINUM;
 
 	// parse the symbols
 	text_p = mapfile.c;
@@ -290,7 +287,27 @@ void VM_LoadSymbols( vm_t *vm ) {
 		sym->symValue = value;
 		Q_strncpyz( sym->symName, token, chars + 1 );
 
+		// _stackStart and _stackEnd are marked as functions for some reason
+		if (value < vm->codeLength) {
+			vm->symbolTable[value] = sym;
+		}
+
 		count++;
+	}
+
+	// direct code to function who owns it
+	static vmSymbol_t invalidSym;
+	sym = &invalidSym;
+	for ( i = -MAX_APINUM; i < 0; i++ ) {
+		if ( vm->symbolTable[i] == NULL ) {
+			vm->symbolTable[i] = sym;
+		}
+	}
+	for ( i = 0; i < vm->codeLength; i++ ) {
+		if ( vm->symbolTable[i] ) {
+			sym = vm->symbolTable[i];
+		}
+		vm->symbolTable[i] = sym;
 	}
 
 	vm->numSymbols = count;
@@ -816,6 +833,7 @@ static int QDECL VM_ProfileSort( const void *a, const void *b ) {
 	if ( sa->profileCount > sb->profileCount ) {
 		return 1;
 	}
+
 	return 0;
 }
 
@@ -829,39 +847,108 @@ void VM_VmProfile_f( void ) {
 	vm_t		*vm;
 	vmSymbol_t	**sorted, *sym;
 	int			i;
-	double		total;
+	long		total;
+	int			totalCalls;
+	qboolean	printHelp = qfalse;
+	qboolean	resetCounts = qfalse;
+	qboolean	printAll = qfalse;
 
 	if ( !lastVM ) {
+		Com_Printf("No VM\n");
 		return;
 	}
 
 	vm = lastVM;
 
 	if ( !vm->numSymbols ) {
+		Com_Printf("No symbols\n");
+		return;
+	}
+
+	if ( Cmd_Argc() >= 2 ) {
+		const char *arg = Cmd_Argv(1);
+
+		if ( !Q_stricmp(arg, "exclusive") ) {
+			vm_profileInclusive = qfalse;
+			resetCounts = qtrue;
+			Com_Printf("Collecting exclusive function instruction counts...\n");
+		} else if ( !Q_stricmp(arg, "inclusive") ) {
+			vm_profileInclusive = qtrue;
+			resetCounts = qtrue;
+			Com_Printf("Collecting inclusive function instruction counts...\n");
+		} else if ( !Q_stricmp(arg, "print") ) {
+			if ( !Q_stricmp(Cmd_Argv(2), "all") ) {
+				printAll = qtrue;
+			}
+		} else {
+			printHelp = qtrue;
+		}
+	} else {
+		printHelp = qtrue;
+	}
+
+	if ( resetCounts ) {
+		for ( sym = vm->symbols ; sym ; sym = sym->next ) {
+			sym->profileCount = 0;
+			sym->callCount = 0;
+			sym->caller = NULL;
+		}
+		return;
+	}
+
+	if ( printHelp ) {
+		Com_Printf("Usage: vmprofile exclusive        start collecting exclusive counts\n");
+		Com_Printf("       vmprofile inclusive        start collecting inclusive counts\n");
+		Com_Printf("       vmprofile print [all]      print collected data\n");
 		return;
 	}
 
 	sorted = (vmSymbol_t **)Z_Malloc( vm->numSymbols * sizeof( *sorted ), TAG_VM, qtrue);
 	sorted[0] = vm->symbols;
 	total = sorted[0]->profileCount;
+	totalCalls = sorted[0]->callCount;
 	for ( i = 1 ; i < vm->numSymbols ; i++ ) {
 		sorted[i] = sorted[i-1]->next;
 		total += sorted[i]->profileCount;
+		totalCalls += sorted[i]->callCount;
 	}
 
+	// assume everything is called from vmMain
+	if ( vm_profileInclusive )
+		total = VM_ValueToFunctionSymbol( vm, 0 )->profileCount;
+
 	qsort( sorted, vm->numSymbols, sizeof( *sorted ), VM_ProfileSort );
+
+	Com_Printf( "%4s %12s %9s Function Name\n",
+				vm_profileInclusive ? "Incl" : "Excl",
+				"Instructions", "Calls" );
+
+	// todo: collect associations for generating callgraphs
+	fileHandle_t callgrind = FS_FOpenFileWrite( va("callgrind.out.%s", vm->name) );
+	// callgrind header
+	FS_Printf( callgrind,
+		"events: VM_Instructions\n"
+		"fl=vm/%s.qvm\n\n", vm->name );
 
 	for ( i = 0 ; i < vm->numSymbols ; i++ ) {
 		int		perc;
 
 		sym = sorted[i];
 
-		perc = 100 * (float) sym->profileCount / total;
-		Com_Printf( "%2i%% %9i %s\n", perc, sym->profileCount, sym->symName );
-		sym->profileCount = 0;
+		if (printAll || sym->profileCount != 0 || sym->callCount != 0) {
+			perc = 100 * sym->profileCount / total;
+			Com_Printf( "%3i%% %12li %9i %s\n", perc, sym->profileCount, sym->callCount, sym->symName );
+		}
+
+		FS_Printf(callgrind,
+			"fn=%s\n"
+			"0 %li\n\n",
+			sym->symName, sym->profileCount);
 	}
 
-	Com_Printf("	%9.0f total\n", total );
+	FS_FCloseFile( callgrind );
+
+	Com_Printf("     %12li %9i total\n", total, totalCalls );
 
 	Z_Free( sorted );
 }
