@@ -226,6 +226,10 @@ void VM_LoadSymbols( vm_t *vm ) {
 	int		numInstructions;
 	int		i;
 
+	if ( vm->compiled ) {
+		return;
+	}
+
 	// don't load symbols if not developer
 	if ( !com_developer->integer ) {
 		return;
