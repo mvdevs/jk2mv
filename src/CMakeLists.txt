@@ -355,19 +355,14 @@ if (BuildMVMP)
 	set(MVMPIncludeDirs ${MVMPIncludeDirs} "${LIBDir}/eax")
 
 	# JPEG
-	if(UseInternalJPEG)
-		file(GLOB_RECURSE JPEGFiles "${LIBDir}/jpeg-8c/*.c" "${LIBDir}/jpeg-8c/*.h")
-		source_group("jpeg-8c" FILES ${JPEGFiles})
-		set(MVMPIncludeDirs ${MVMPIncludeDirs} "${LIBDir}/jpeg-8c")
-		set(MVMPFiles ${MVMPFiles} ${JPEGFiles})
-	else()
+	if(NOT UseInternalJPEG)
 		find_package(JPEG)
 		if(NOT JPEG_FOUND)
 			message(FATAL_ERROR "libjpeg dev files not found! Install it or set UseInternalJPEG ON")
 		endif()
-		set(MVMPIncludeDirs ${MVMPIncludeDirs} ${JPEG_INCLUDE_DIR})
-		set(MVMPLibraries ${MVMPLibraries} ${JPEG_LIBRARIES})
 	endif()
+	set(MVMPIncludeDirs ${MVMPIncludeDirs} ${JPEG_INCLUDE_DIR})
+	set(MVMPLibraries ${MVMPLibraries} ${JPEG_LIBRARIES})
 
 	# PNG
 	if(UseInternalPNG)

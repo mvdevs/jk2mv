@@ -144,6 +144,11 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/out)
 set(CPACK_PACKAGE_DIRECTORY ${CMAKE_BINARY_DIR}/out)
 
 # Compiler defines / settings
+if(NOT CMAKE_BUILD_TYPE)
+	message(STATUS "No build type selected, default to Release")
+	set(CMAKE_BUILD_TYPE "Release")
+endif()
+
 set(GlobalDefines ${GlobalDefines} "BOTLIB")
 set(GlobalDefines ${GlobalDefines} "_JK2")
 
@@ -250,17 +255,8 @@ if(NTClientWorkaround)
 	set(GlobalDefines ${GlobalDefines} "NTCLIENT_WORKAROUND")
 endif()
 
-if(NOT CMAKE_BUILD_TYPE)
-	message(STATUS "No build type selected, default to Release")
-	set(CMAKE_BUILD_TYPE "Release")
-endif()
-
 if(UseInternalPNG)
 	set(GlobalDefines ${GlobalDefines} "INTERNAL_PNG")
-endif()
-
-if(UseInternalJPEG)
-	set(GlobalDefines ${GlobalDefines} "INTERNAL_JPEG")
 endif()
 
 if(UseInternalZLIB)
@@ -271,6 +267,12 @@ if(BuildPortableVersion)
 	set(GlobalDefines ${GlobalDefines} "PORTABLE")
 else()
 	set(GlobalDefines ${GlobalDefines} "INSTALLED")
+endif()
+
+# Libraries
+if(UseInternalJPEG)
+	set(GlobalDefines ${GlobalDefines} "INTERNAL_JPEG")
+	add_subdirectory(libs/jpeg-9a)
 endif()
 
 # Package
