@@ -20,7 +20,6 @@ if (BuildMVMP OR BuildMVDED)
 		endif()
 	endif()
 	set(MVMPDEDIncludeDirs ${MVMPDEDIncludeDirs} ${ZLIB_INCLUDE_DIRS})
-	set(MVMPDEDLibraries ${MVMPDEDLibraries} ${ZLIB_LIBRARIES})
 	
 	if(NOT UseInternalMiniZip)
 		find_package(MiniZip)
@@ -29,7 +28,6 @@ if (BuildMVMP OR BuildMVDED)
 		endif()
 	endif()
 	set(MVMPDEDIncludeDirs ${MVMPDEDIncludeDirs} ${MINIZIP_INCLUDE_DIRS})
-	set(MVMPDEDLibraries ${MVMPDEDLibraries} ${MINIZIP_LIBRARIES})
 
 	# Source
 	set(BotlibFiles
@@ -334,7 +332,6 @@ if (BuildMVMP)
 		endif()
 	endif()
 	set(MVMPIncludeDirs ${MVMPIncludeDirs} ${JPEG_INCLUDE_DIR})
-	set(MVMPLibraries ${MVMPLibraries} ${JPEG_LIBRARIES})
 
 	# PNG
 	if(NOT UseInternalPNG)
@@ -344,7 +341,6 @@ if (BuildMVMP)
 		endif()
 	endif()
 	set(MVMPIncludeDirs ${MVMPIncludeDirs} ${PNG_INCLUDE_DIRS})
-	set(MVMPLibraries ${MVMPLibraries} ${PNG_LIBRARIES})
 
 	# Source
 	set(MVMPClientFiles
@@ -512,7 +508,7 @@ if (BuildMVMP)
 	set_target_properties(${MVMP} PROPERTIES COMPILE_DEFINITIONS_RELEASE "${ReleaseDefines};${GlobalDefines}")
 	set_target_properties(${MVMP} PROPERTIES COMPILE_DEFINITIONS_DEBUG "${DebugDefines};${GlobalDefines}")
 	set_target_properties(${MVMP} PROPERTIES INCLUDE_DIRECTORIES "${MVMPIncludeDirs}")
-	target_link_libraries(${MVMP} ${MVMPLibraries})
+	target_link_libraries(${MVMP} ${MVMPLibraries} ${JPEG_LIBRARIES} ${PNG_LIBRARIES} ${MINIZIP_LIBRARIES} ${ZLIB_LIBRARIES})
 	set_target_properties(${MVMP} PROPERTIES PROJECT_LABEL "jk2mvmp")
 
 	# installation
@@ -577,7 +573,7 @@ if (BuildMVDED)
 	set_target_properties(${MVDED} PROPERTIES COMPILE_DEFINITIONS_RELEASE "${ReleaseDefines};${GlobalDefines};${MVDEDDefines}")
 	set_target_properties(${MVDED} PROPERTIES COMPILE_DEFINITIONS_DEBUG "${DebugDefines};${GlobalDefines};${MVDEDDefines}")
 	set_target_properties(${MVDED} PROPERTIES INCLUDE_DIRECTORIES "${MVDEDIncludeDirs}")
-	target_link_libraries(${MVDED} ${MVDEDLibraries})
+	target_link_libraries(${MVDED} ${MVDEDLibraries} ${MINIZIP_LIBRARIES} ${ZLIB_LIBRARIES})
 	set_target_properties(${MVDED} PROPERTIES PROJECT_LABEL "jk2mvded")
 	
 	# installation
