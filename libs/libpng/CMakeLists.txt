@@ -5,6 +5,7 @@
 
 # This only has effect in this directory (lib/png).
 include_directories(include/)
+include_directories(../zlib/include)
 
 if(MSVC)
 	add_definitions(-D_CRT_SECURE_NO_WARNINGS)

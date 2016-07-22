@@ -13,47 +13,15 @@ if (BuildMVMP OR BuildMVDED)
 		set(MVMPDEDLibraries ${MVMPDEDLibraries} ${CMAKE_DL_LIBS})
 	endif()
 
-	if(UseInternalZLIB)
-		set(ZLIBFiles
-			"${LIBDir}/zlib/crc32.h"
-			"${LIBDir}/zlib/deflate.h"
-			"${LIBDir}/zlib/gzguts.h"
-			"${LIBDir}/zlib/inffast.h"
-			"${LIBDir}/zlib/inffixed.h"
-			"${LIBDir}/zlib/inflate.h"
-			"${LIBDir}/zlib/inftrees.h"
-			"${LIBDir}/zlib/trees.h"
-			"${LIBDir}/zlib/zconf.h"
-			"${LIBDir}/zlib/zlib.h"
-			"${LIBDir}/zlib/zutil.h"
-
-			"${LIBDir}/zlib/adler32.c"
-			"${LIBDir}/zlib/compress.c"
-			"${LIBDir}/zlib/crc32.c"
-			"${LIBDir}/zlib/deflate.c"
-			"${LIBDir}/zlib/gzclose.c"
-			"${LIBDir}/zlib/gzlib.c"
-			"${LIBDir}/zlib/gzread.c"
-			"${LIBDir}/zlib/gzwrite.c"
-			"${LIBDir}/zlib/infback.c"
-			"${LIBDir}/zlib/inffast.c"
-			"${LIBDir}/zlib/inflate.c"
-			"${LIBDir}/zlib/inftrees.c"
-			"${LIBDir}/zlib/trees.c"
-			"${LIBDir}/zlib/uncompr.c"
-			"${LIBDir}/zlib/zutil.c"
-		)
-		source_group("zlib" FILES ${ZLIBFiles})
-		set(MVMPDEDIncludeDirs ${MVMPDEDIncludeDirs} "${LIBDir}/zlib")
-		set(MVMPDEDFiles ${MVMPDEDFiles} ${ZLIBFiles})
-	else()
+	if(NOT UseInternalZLIB)
 		find_package(ZLIB)
 		if(NOT ZLIB_FOUND)
 			message(FATAL_ERROR "zlib dev files not found! Install it or set UseInternalZLIB ON")
 		endif()
-		set(MVMPDEDIncludeDirs ${MVMPDEDIncludeDirs} ${ZLIB_INCLUDE_DIR})
-		set(MVMPDEDLibraries ${MVMPDEDLibraries} ${ZLIB_LIBRARY})
 	endif()
+	set(MVMPDEDIncludeDirs ${MVMPDEDIncludeDirs} ${ZLIB_INCLUDE_DIRS})
+	set(MVMPDEDLibraries ${MVMPDEDLibraries} ${ZLIB_LIBRARIES})
+	
 
 	# Source
 	set(BotlibFiles

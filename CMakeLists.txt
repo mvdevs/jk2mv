@@ -255,10 +255,6 @@ if(NTClientWorkaround)
 	set(GlobalDefines ${GlobalDefines} "NTCLIENT_WORKAROUND")
 endif()
 
-if(UseInternalZLIB)
-	set(GlobalDefines ${GlobalDefines} "INTERNAL_ZLIB")
-endif()
-
 if(BuildPortableVersion)
 	set(GlobalDefines ${GlobalDefines} "PORTABLE")
 else()
@@ -266,6 +262,11 @@ else()
 endif()
 
 # Libraries
+if(UseInternalZLIB)
+	set(GlobalDefines ${GlobalDefines} "INTERNAL_ZLIB")
+	add_subdirectory(libs/zlib)
+endif()
+
 if(UseInternalJPEG)
 	set(GlobalDefines ${GlobalDefines} "INTERNAL_JPEG")
 	add_subdirectory(libs/jpeg-9a)
