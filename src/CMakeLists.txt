@@ -24,7 +24,7 @@ if (BuildMVMP OR BuildMVDED)
 	
 	if(NOT UseInternalMiniZip)
 		find_package(MiniZip)
-		if(NOT ZLIB_FOUND)
+		if(NOT MINIZIP_FOUND)
 			message(FATAL_ERROR "minizip dev files not found! Install it or set UseInternalMiniZip ON")
 		endif()
 	endif()
