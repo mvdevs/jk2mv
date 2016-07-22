@@ -40,6 +40,7 @@ add_library(libpng STATIC include/png.h
 # module).
 set(PNG_LIBRARIES libpng PARENT_SCOPE)
 set(PNG_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/libs/libpng/include/ PARENT_SCOPE)
+set(PNG_FOUND TRUE)
 
 mark_as_advanced(PNG_LIBRARIES PNG_INCLUDE_DIRS)
 

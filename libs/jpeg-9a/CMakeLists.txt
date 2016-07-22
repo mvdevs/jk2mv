@@ -84,6 +84,7 @@ add_library(libjpeg STATIC include/jconfig.h
 # module).
 set(JPEG_LIBRARIES libjpeg PARENT_SCOPE)
 set(JPEG_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/libs/jpeg-9a/include/ PARENT_SCOPE)
+set(JPEG_FOUND TRUE)
 
 mark_as_advanced(JPEG_LIBRARIES JPEG_INCLUDE_DIR)
 
