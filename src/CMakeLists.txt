@@ -365,43 +365,14 @@ if (BuildMVMP)
 	set(MVMPLibraries ${MVMPLibraries} ${JPEG_LIBRARIES})
 
 	# PNG
-	if(UseInternalPNG)
-		set(PNGFiles
-			"${LIBDir}/libpng/png.h"
-			"${LIBDir}/libpng/pngconf.h"
-			"${LIBDir}/libpng/pngdebug.h"
-			"${LIBDir}/libpng/pnginfo.h"
-			"${LIBDir}/libpng/pnglibconf.h"
-			"${LIBDir}/libpng/pngpriv.h"
-			"${LIBDir}/libpng/pngstruct.h"
-
-			"${LIBDir}/libpng/png.c"
-			"${LIBDir}/libpng/pngerror.c"
-			"${LIBDir}/libpng/pngget.c"
-			"${LIBDir}/libpng/pngmem.c"
-			"${LIBDir}/libpng/pngpread.c"
-			"${LIBDir}/libpng/pngread.c"
-			"${LIBDir}/libpng/pngrio.c"
-			"${LIBDir}/libpng/pngrtran.c"
-			"${LIBDir}/libpng/pngrutil.c"
-			"${LIBDir}/libpng/pngset.c"
-			"${LIBDir}/libpng/pngtrans.c"
-			"${LIBDir}/libpng/pngwio.c"
-			"${LIBDir}/libpng/pngwrite.c"
-			"${LIBDir}/libpng/pngwtran.c"
-			"${LIBDir}/libpng/pngwutil.c"
-		)
-		source_group("libpng" FILES ${PNGFiles})
-		set(MVMPIncludeDirs ${MVMPIncludeDirs} "${LIBDir}/libpng")
-		set(MVMPFiles ${MVMPFiles} ${PNGFiles})
-	else()
+	if(NOT UseInternalPNG)
 		find_package(PNG)
 		if(NOT PNG_FOUND)
 			message(FATAL_ERROR "libpng dev files not found! Install it or set UseInternalPNG ON")
 		endif()
-		set(MVMPIncludeDirs ${MVMPIncludeDirs} ${PNG_INCLUDE_DIR})
-		set(MVMPLibraries ${MVMPLibraries} ${PNG_LIBRARIES})
 	endif()
+	set(MVMPIncludeDirs ${MVMPIncludeDirs} ${PNG_INCLUDE_DIR})
+	set(MVMPLibraries ${MVMPLibraries} ${PNG_LIBRARIES})
 
 	# Source
 	set(MVMPClientFiles
