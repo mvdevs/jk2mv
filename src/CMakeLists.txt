@@ -339,7 +339,7 @@ if (BuildMVMP)
 			message(FATAL_ERROR "libpng dev files not found! Install it or set UseInternalPNG ON")
 		endif()
 	endif()
-	set(MVMPIncludeDirs ${MVMPIncludeDirs} ${PNG_INCLUDE_DIR})
+	set(MVMPIncludeDirs ${MVMPIncludeDirs} ${PNG_INCLUDE_DIRS})
 	set(MVMPLibraries ${MVMPLibraries} ${PNG_LIBRARIES})
 
 	# Source
