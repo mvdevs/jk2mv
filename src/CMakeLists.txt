@@ -22,6 +22,14 @@ if (BuildMVMP OR BuildMVDED)
 	set(MVMPDEDIncludeDirs ${MVMPDEDIncludeDirs} ${ZLIB_INCLUDE_DIRS})
 	set(MVMPDEDLibraries ${MVMPDEDLibraries} ${ZLIB_LIBRARIES})
 	
+	if(NOT UseInternalMiniZip)
+		find_package(MiniZip)
+		if(NOT ZLIB_FOUND)
+			message(FATAL_ERROR "minizip dev files not found! Install it or set UseInternalMiniZip ON")
+		endif()
+	endif()
+	set(MVMPDEDIncludeDirs ${MVMPDEDIncludeDirs} ${MINIZIP_INCLUDE_DIRS})
+	set(MVMPDEDLibraries ${MVMPDEDLibraries} ${MINIZIP_LIBRARIES})
 
 	# Source
 	set(BotlibFiles
@@ -133,14 +141,12 @@ if (BuildMVMP OR BuildMVDED)
 		"${SRCDir}/qcommon/cm_polylib.h"
 		"${SRCDir}/qcommon/cm_public.h"
 		"${SRCDir}/qcommon/hstring.h"
-		"${SRCDir}/qcommon/ioapi.h"
 		"${SRCDir}/qcommon/qcommon.h"
 		"${SRCDir}/qcommon/qfiles.h"
 		"${SRCDir}/qcommon/sstring.h"
 		"${SRCDir}/qcommon/q_shared.h"
 		"${SRCDir}/qcommon/strip.h"
 		"${SRCDir}/qcommon/tags.h"
-		"${SRCDir}/qcommon/unzip.h"
 		"${SRCDir}/qcommon/vm_local.h"
 
 		"${SRCDir}/qcommon/CNetProfile.cpp"
@@ -158,7 +164,6 @@ if (BuildMVMP OR BuildMVDED)
 		"${SRCDir}/qcommon/files.cpp"
 		"${SRCDir}/qcommon/hstring.cpp"
 		"${SRCDir}/qcommon/huffman.cpp"
-		"${SRCDir}/qcommon/ioapi.c"
 		"${SRCDir}/qcommon/md4.cpp"
 		"${SRCDir}/qcommon/msg.cpp"
 		"${SRCDir}/qcommon/net_chan.cpp"
@@ -167,7 +172,6 @@ if (BuildMVMP OR BuildMVDED)
 		"${SRCDir}/qcommon/q_math.cpp"
 		"${SRCDir}/qcommon/q_shared.cpp"
 		"${SRCDir}/qcommon/strip.cpp"
-		"${SRCDir}/qcommon/unzip.cpp"
 		"${SRCDir}/qcommon/vm.cpp"
 		"${SRCDir}/qcommon/vm_interpreted.cpp"
 	)

@@ -15,7 +15,7 @@
 #include "../qcommon/q_shared.h"
 #include "../client/client.h"
 #include "qcommon.h"
-#include "unzip.h"
+#include <minizip/unzip.h>
 #include "mv_setup.h"
 
 /*

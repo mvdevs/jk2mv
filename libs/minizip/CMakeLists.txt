@@ -1,0 +1,42 @@
+# Build our bundled minizip.
+#
+# It is built as a static relocatable library, and linked into any target that
+# requires it.  Other targets in JK2MV that consume need to add
+# MINZIP_INCLUDE_DIRS and MINIZIP_LIBRARIES to their lists of include
+# directories and target link libraries.
+#
+# The bundled copy is produced by taking the files ioapi.{c,h} and unzip.{c,h}
+# from the contrib/minizip directory of the zlib release tarball.  The only
+# changes applied are modifications of the macros ALLOC and TRYFREE in unzip.c,
+# and a compatibility definition of the macro OF in include/ioapi.h
+#
+# Since minizip is expected to be reference by user code as
+#
+#     #include <minizip/unzip.h>
+#
+# the public header files are split into the include/minizip subdirectory.
+#
+# The current bundled copy comes from the zlib 1.2.8 release.
+
+# These settings only apply to this directory.
+include_directories(${ZLIB_INCLUDE_DIRS})
+include_directories(include/minizip)
+
+if(MSVC)
+	add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+endif(MSVC)
+
+add_library(minizip STATIC ioapi.c unzip.c)
+
+# Let consumers get at our bundled copy in the standard CMake way.  These
+# variables are not set in the cache, but instead shadow the variables in the
+# cache.
+set(MINIZIP_LIBRARIES minizip PARENT_SCOPE)
+set(MINIZIP_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/libs/minizip/include/ PARENT_SCOPE)
+
+mark_as_advanced(MINIZIP_LIBRARIES MINIZIP_INCLUDE_DIRS)
+
+# We need to build it as position-independent code, because it might get linked
+# into dynamic libraries.
+set_property(TARGET minizip PROPERTY POSITION_INDEPENDENT_CODE True)
+set_property(TARGET minizip PROPERTY FOLDER "libs")
