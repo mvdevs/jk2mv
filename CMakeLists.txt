@@ -1,7 +1,7 @@
 if(WIN32)
 	cmake_minimum_required(VERSION 3.1.0) # assembler stuff
 else()
-	cmake_minimum_required(VERSION 2.8.8)
+	cmake_minimum_required(VERSION 2.8.9)
 endif()
 
 if(POLICY CMP0043)
