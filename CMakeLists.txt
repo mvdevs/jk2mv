@@ -298,6 +298,8 @@ if(UseInternalPNG)
 	add_subdirectory(libs/libpng)
 endif()
 
+add_subdirectory(libs/mongoose)
+
 # Package
 set(CPACK_PACKAGE_NAME ${ProjectName})
 set(CPACK_PACKAGE_FILE_NAME "jk2mv-v${MV_VERSION}")

@@ -9,6 +9,11 @@ configure_file("mv_setup.h.in" "${CMAKE_BINARY_DIR}/mv_setup.h" @ONLY)
 
 if (BuildMVMP OR BuildMVDED)
 	# Libraries
+	
+	# mongoose
+	set(MVMPDEDLibraries ${MVMPDEDLibraries} ${MONGOOSE_LIBRARIES})
+	set(MVMPDEDIncludeDirs ${MVMPDEDIncludeDirs} ${MONGOOSE_INCLUDE_DIRS})
+	
 	if(WIN32)
 		set(MVMPDEDLibraries ${MVMPDEDLibraries} "winmm" "ws2_32")
 	else()
@@ -17,6 +22,7 @@ if (BuildMVMP OR BuildMVDED)
 		set(MVMPDEDLibraries ${MVMPDEDLibraries} ${CMAKE_DL_LIBS})
 	endif()
 
+	# zlib
 	if(NOT UseInternalZLIB)
 		find_package(ZLIB)
 		if(NOT ZLIB_FOUND)
@@ -25,6 +31,7 @@ if (BuildMVMP OR BuildMVDED)
 	endif()
 	set(MVMPDEDIncludeDirs ${MVMPDEDIncludeDirs} ${ZLIB_INCLUDE_DIRS})
 	
+	# minizip
 	if(NOT UseInternalMiniZip)
 		find_package(MiniZip)
 		if(NOT MINIZIP_FOUND)
@@ -32,7 +39,7 @@ if (BuildMVMP OR BuildMVDED)
 		endif()
 	endif()
 	set(MVMPDEDIncludeDirs ${MVMPDEDIncludeDirs} ${MINIZIP_INCLUDE_DIRS})
-
+	
 	# Source
 	set(BotlibFiles
 		"botlib/aasfile.h"
@@ -122,15 +129,6 @@ if (BuildMVMP OR BuildMVDED)
 	)
 	source_group("ghoul2" FILES ${MVMPDEDGhoulFiles})
 	set(MVMPDEDFiles ${MVMPDEDFiles} ${MVMPDEDGhoulFiles})
-
-	set(MVMPDEDMongooseFiles
-		"${LIBDir}/mongoose/mongoose.h"
-
-		"${LIBDir}/mongoose/mongoose.c"
-	)
-	source_group("mongoose" FILES ${MVMPDEDMongooseFiles})
-	set(MVMPDEDIncludeDirs ${MVMPDEDIncludeDirs} "${LIBDir}/mongoose")
-	set(MVMPDEDFiles ${MVMPDEDFiles} ${MVMPDEDMongooseFiles})
 
 	set(MVMPDEDCommonFiles
 		"qcommon/GenericParser2.h"
@@ -472,7 +470,7 @@ if (BuildMVMP)
 	set(MVMPFiles ${MVMPFiles} ${MVMPSDLFiles})
 
 	if ((${CMAKE_C_COMPILER_ID} STREQUAL GNU) OR (${CMAKE_C_COMPILER_ID} STREQUAL Clang))
-		set(LibFiles ${MVMPDEDMongooseFiles} ${MVMPMP3Files})
+		set(LibFiles ${MVMPMP3Files})
 		set_source_files_properties(${LibFiles} PROPERTIES COMPILE_FLAGS "-w")
 	endif()
 
