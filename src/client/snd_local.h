@@ -13,8 +13,14 @@
 
 // Open AL Specific
 #ifdef USE_OPENAL
+#ifdef MACOS_X
+#	include <OpenAL/al.h>
+#	include <OpenAL/alc.h>
+#else
 #	include <AL/al.h>
 #	include <AL/alc.h>
+#endif
+
 #	include <eax.h>
 #	include <EaxMan.h>
 #endif
