@@ -95,10 +95,10 @@ else()
 		set(UseInternalSDL2 OFF)
 	endif()
 	
-	option(UseInternalPNG "Whether to use the included libpng instead of a locally installed one" UseInternalPNGDefault)
-	option(UseInternalJPEG "Whether to use the included libjpeg instead of a locally installed one" UseInternalJPEGDefault)
-	option(UseInternalZLIB "Whether to use the included zlib instead of a locally installed one" UseInternalZLIBDefault)
-	option(UseInternalMiniZip "Whether to use the included minizip instead of a locally installed one" UseInternalMiniZipDefault)
+	option(UseInternalPNG "Whether to use the included libpng instead of a locally installed one" ${UseInternalPNGDefault})
+	option(UseInternalJPEG "Whether to use the included libjpeg instead of a locally installed one" ${UseInternalJPEGDefault})
+	option(UseInternalZLIB "Whether to use the included zlib instead of a locally installed one" ${UseInternalZLIBDefault})
+	option(UseInternalMiniZip "Whether to use the included minizip instead of a locally installed one" ${UseInternalMiniZipDefault})
 endif()
 
 
