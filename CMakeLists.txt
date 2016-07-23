@@ -15,7 +15,6 @@ endif()
 set(InMV TRUE)
 
 # Paths
-set(SRCDir "${CMAKE_SOURCE_DIR}/src")
 set(LIBDir "${CMAKE_SOURCE_DIR}/libs")
 set(RESDir "${CMAKE_SOURCE_DIR}/res")
 
@@ -354,8 +353,4 @@ else()
 	endif()
 endif()
 
-# mv_setup.h preparation
-set(MVGLOBALIncludeDirs ${MVGLOBALIncludeDirs} ${CMAKE_BINARY_DIR})
-configure_file("${SRCDir}/mv_setup.h.in" "${CMAKE_BINARY_DIR}/mv_setup.h" @ONLY)
-
-add_subdirectory(${SRCDir})
+add_subdirectory(src)

@@ -7,25 +7,25 @@ set(MVMENUDefines "GAME_EXPORTS")
 set(MVMENUIncludeDirs ${MVGLOBALIncludeDirs})
 
 set(MVMENUFiles
-	"${SRCDir}/menu/keycodes.h"
-	"${SRCDir}/menu/menudef.h"
-	"${SRCDir}/menu/ui_force.h"
-	"${SRCDir}/menu/ui_local.h"
-	"${SRCDir}/menu/ui_public.h"
-	"${SRCDir}/menu/ui_shared.h"
-	"${SRCDir}/game/bg_weapons.h"
-	"${SRCDir}/qcommon/q_shared.h"
+	"keycodes.h"
+	"menudef.h"
+	"ui_force.h"
+	"ui_local.h"
+	"ui_public.h"
+	"ui_shared.h"
+	"../game/bg_weapons.h"
+	"../qcommon/q_shared.h"
 
-	"${SRCDir}/menu/q_math.c"
-	"${SRCDir}/menu/q_shared.c"
-	"${SRCDir}/menu/ui_atoms.c"
-	"${SRCDir}/menu/ui_force.c"
-	"${SRCDir}/menu/ui_gameinfo.c"
-	"${SRCDir}/menu/ui_main.c"
-	"${SRCDir}/menu/ui_shared.c"
-	"${SRCDir}/menu/ui_syscalls.c"
-	"${SRCDir}/game/bg_misc.c"
-	"${SRCDir}/game/bg_weapons.c"
+	"q_math.c"
+	"q_shared.c"
+	"ui_atoms.c"
+	"ui_force.c"
+	"ui_gameinfo.c"
+	"ui_main.c"
+	"ui_shared.c"
+	"ui_syscalls.c"
+	"../game/bg_misc.c"
+	"../game/bg_weapons.c"
 )
 
 add_library(${MVMENU} SHARED ${MVMENUFiles})
