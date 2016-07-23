@@ -7,6 +7,6 @@ mkdir "$BUILD_DIR"
 cd "$BUILD_DIR"
 
 cmake -G "Unix Makefiles" -DUseInternalPNG=OFF -DUseInternalJPEG=OFF \
-	  -DUseInternalZLIB=OFF -DCMake_Build_Type=Debug ../..
+	  -DUseInternalZLIB=OFF -DUseInternalMiniZip=OFF -DCMake_Build_Type=Debug ../..
 
 make
