@@ -13,8 +13,8 @@
 
 // Open AL Specific
 #ifdef USE_OPENAL
-#	include <al.h>
-#	include <alc.h>
+#	include <AL/al.h>
+#	include <AL/alc.h>
 #	include <eax.h>
 #	include <EaxMan.h>
 #endif
