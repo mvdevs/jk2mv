@@ -293,7 +293,7 @@ if (BuildMVMP)
 	set(MVMPIncludeDirs ${MVMPIncludeDirs} ${OPENGL_INCLUDE_DIR})
 	set(MVMPLibraries ${MVMPLibraries} ${OPENGL_gl_LIBRARY})
 
-	if(WIN32)
+	if(UseInternalOpenAL)
 		# OpenAL
 		find_library(OpenALLib NAMES "softoal_${Architecture}" PATHS "${LIBDir}/OpenAL")
 		if(NOT OpenALLib)
@@ -301,7 +301,17 @@ if (BuildMVMP)
 		endif()
 		set(MVMPLibraries ${MVMPLibraries} ${OpenALLib})
 		set(MVMPIncludeDirs ${MVMPIncludeDirs} "${LIBDir}/OpenAL/include")
-		
+	else()
+		# OpenAL
+		find_package(OpenAL)
+		if(NOT OPENAL_FOUND)
+			message(FATAL_ERROR "OpenAL dev files not found!")
+		endif()
+		set(MVMPIncludeDirs ${MVMPIncludeDirs} ${OPENAL_INCLUDE_DIR})
+		set(MVMPLibraries ${MVMPLibraries} ${OPENAL_LIBRARY})
+	endif()
+	
+	if(UseInternalSDL2)
 		# SDL2
 		find_library(SDL2Lib NAMES "SDL2_${Architecture}" PATHS "${LIBDir}/SDL2")
 		if(NOT SDL2Lib)
@@ -311,14 +321,6 @@ if (BuildMVMP)
 		set(MVMPLibraries ${MVMPLibraries} ${SDL2Lib})
 		set(MVMPIncludeDirs ${MVMPIncludeDirs} "${LIBDir}/SDL2/include")
 	else()
-		# OpenAL
-		find_package(OpenAL)
-		if(NOT OPENAL_FOUND)
-			message(FATAL_ERROR "OpenAL dev files not found!")
-		endif()
-		set(MVMPIncludeDirs ${MVMPIncludeDirs} ${OPENAL_INCLUDE_DIR})
-		set(MVMPLibraries ${MVMPLibraries} ${OPENAL_LIBRARY})
-
 		# SDL2
 		find_package(SDL2)
 		if(NOT SDL2_FOUND)
@@ -490,7 +492,7 @@ if (BuildMVMP)
 		add_executable(${MVMP} ${MVMPFiles})
 	endif()
 
-	if(WIN32)
+	if(MSVC)
 		# copy over openal & sdl dll
 		add_custom_command(TARGET ${MVMP} POST_BUILD
 			COMMAND ${CMAKE_COMMAND} -E copy_if_different
@@ -519,7 +521,7 @@ if (BuildMVMP)
 	set_target_properties(${MVMP} PROPERTIES PROJECT_LABEL "jk2mvmp")
 
 	# installation
-	if(WIN32)
+	if(MSVC)
 		install(TARGETS ${MVMP} RUNTIME DESTINATION ".")
 		install(FILES "${LIBDir}/OpenAL/softoal_${Architecture}.dll" DESTINATION ".")
 		install(FILES "${LIBDir}/SDL2/SDL2_${Architecture}.dll" DESTINATION ".")
