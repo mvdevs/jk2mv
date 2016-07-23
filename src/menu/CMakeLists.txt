@@ -30,9 +30,8 @@ set(MVMENUFiles
 
 add_library(${MVMENU} SHARED ${MVMENUFiles})
 
-if(NOT WIN32)
-	set_target_properties(${MVMENU} PROPERTIES PREFIX "") # remove "lib" prefix for .so/.dylib files
-endif()
+
+set_target_properties(${MVMENU} PROPERTIES PREFIX "") # remove "lib" prefix for library files
 
 set_target_properties(${MVMENU} PROPERTIES COMPILE_DEFINITIONS_RELEASE "${ReleaseDefines};${GlobalDefines};${MVMENUDefines}")
 set_target_properties(${MVMENU} PROPERTIES COMPILE_DEFINITIONS_DEBUG "${DebugDefines};${GlobalDefines};${MVMENUDefines}")

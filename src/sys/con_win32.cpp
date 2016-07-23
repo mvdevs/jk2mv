@@ -304,9 +304,9 @@ void CON_Init( void )
 #ifndef DEDICATED
 	if (AttachConsole(ATTACH_PARENT_PROCESS)) {
 		// started from console
-		freopen_s(&stdinptr, "CONIN$", "r", stdin);
-		freopen_s(&stdoutptr, "CONOUT$", "w", stdout);
-		freopen_s(&stderrptr, "CONOUT$", "w", stderr);
+		stdinptr = freopen("CONIN$", "r", stdin);
+		stdoutptr = freopen("CONOUT$", "w", stdout);
+		stderrptr = freopen("CONOUT$", "w", stderr);
 		never_detach = qtrue;
 	}
 #endif
@@ -357,9 +357,9 @@ void CON_CreateConsoleWindow(void) {
 		CON_Shutdown();
 
 		if (AllocConsole()) {
-			freopen_s(&stdinptr, "CONIN$", "r", stdin);
-			freopen_s(&stdoutptr, "CONOUT$", "w", stdout);
-			freopen_s(&stderrptr, "CONOUT$", "w", stderr);
+			stdinptr = freopen("CONIN$", "r", stdin);
+			stdoutptr = freopen("CONOUT$", "w", stdout);
+			stderrptr = freopen("CONOUT$", "w", stderr);
 		}
 
 		CON_Init();

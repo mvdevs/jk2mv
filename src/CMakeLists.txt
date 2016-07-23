@@ -212,13 +212,15 @@ if (BuildMVMP OR BuildMVDED)
 	source_group("renderer" FILES ${MVMPDEDRendererFiles})
 	set(MVMPDEDFiles ${MVMPDEDFiles} ${MVMPDEDRendererFiles})
 
-	if(WIN32)
+	if(MSVC)
 		set(MVMPDEDWIN32Files
 			"win32/q3asm.asm"
 		)
 		source_group("win32" FILES ${MVMPDEDWIN32Files})
 		set(MVMPDEDFiles ${MVMPDEDFiles} ${MVMPDEDWIN32Files})
-		
+	endif()
+	
+	if(WIN32)
 		set(MVMPDEDSysFiles
 			"sys/sys_public.h"
 			"sys/sys_local.h"
@@ -281,6 +283,8 @@ if (BuildMVMP)
 	set(MVMPIncludeDirs ${MVGLOBALIncludeDirs} ${MVMPDEDIncludeDirs})
 	set(MVMPLibraries ${MVMPDEDLibraries})
 
+	# Libraries
+	
 	# OpenGL
 	find_package(OpenGL)
 	if(NOT OPENGL_FOUND)
@@ -289,7 +293,6 @@ if (BuildMVMP)
 	set(MVMPIncludeDirs ${MVMPIncludeDirs} ${OPENGL_INCLUDE_DIR})
 	set(MVMPLibraries ${MVMPLibraries} ${OPENGL_gl_LIBRARY})
 
-	# Libraries
 	if(WIN32)
 		# OpenAL
 		find_library(OpenALLib NAMES "softoal_${Architecture}" PATHS "${LIBDir}/OpenAL")
@@ -466,8 +469,8 @@ if (BuildMVMP)
 	source_group("sdl" FILES ${MVMPSDLFiles})
 	set(MVMPFiles ${MVMPFiles} ${MVMPSDLFiles})
 
-	if (("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU") OR ("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang"))
-		set(LibFiles ${ZLIBFiles} ${MVMPDEDMongooseFiles} ${MVMPMP3Files} ${JPEGFiles} ${PNGFiles})
+	if ((${CMAKE_C_COMPILER_ID} STREQUAL GNU) OR (${CMAKE_C_COMPILER_ID} STREQUAL Clang))
+		set(LibFiles ${MVMPDEDMongooseFiles} ${MVMPMP3Files})
 		set_source_files_properties(${LibFiles} PROPERTIES COMPILE_FLAGS "-w")
 	endif()
 

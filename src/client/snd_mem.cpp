@@ -281,15 +281,15 @@ static qboolean S_LoadSound_FileLoadAndNameAdjuster(char *psFilename, byte **pDa
 		// account for foreign voices...
 		//
 		extern cvar_t* s_language;
-		if (s_language && stricmp("DEUTSCH",s_language->string)==0)
+		if (s_language && Q_stricmp("DEUTSCH",s_language->string)==0)
 		{
 			strncpy(psVoice,"chr_d",5);	// same number of letters as "chars"
 		}
-		else if (s_language && stricmp("FRANCAIS",s_language->string)==0)
+		else if (s_language && Q_stricmp("FRANCAIS",s_language->string)==0)
 		{
 			strncpy(psVoice,"chr_f",5);	// same number of letters as "chars"
 		}
-		else if (s_language && stricmp("ESPANOL",s_language->string)==0)
+		else if (s_language && Q_stricmp("ESPANOL",s_language->string)==0)
 		{
 			strncpy(psVoice,"chr_e",5);	// same number of letters as "chars"
 		}
@@ -393,7 +393,7 @@ static qboolean S_LoadSound_Actual( sfx_t *sfx )
 	sfx->iLastTimeUsed = Com_Milliseconds()+1;	// why +1? Hmmm, leave it for now I guess
 
 //=========
-	if (strnicmp(psExt,".mp3",4)==0)
+	if (Q_stricmpn(psExt,".mp3",4)==0)
 	{
 		// load MP3 file instead...
 		//

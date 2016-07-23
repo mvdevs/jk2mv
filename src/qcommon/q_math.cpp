@@ -1051,7 +1051,7 @@ float q3powf ( float x, int y )
 }
 
 qboolean Q_isnan(float f) {
-#ifdef _WIN32
+#ifdef _MSC_VER
 	return (qboolean)(_isnan(f) != 0);
 #else
 	return (qboolean)(isnan(f) != 0);

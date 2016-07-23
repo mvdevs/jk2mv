@@ -31,9 +31,6 @@
 
 #define assert(exp)     ((void)0)
 
-#define min(x,y) ((x)<(y)?(x):(y))
-#define max(x,y) ((x)>(y)?(x):(y))
-
 #else
 
 #include <assert.h>
@@ -60,13 +57,13 @@
 #endif
 
 // this is the define for determining if we have an asm version of a C function
-#if (defined _M_IX86 || defined __i386__) && !defined __sun__  && !defined __LCC__
+#if (defined ARCH_X86)  && !defined __LCC__
 #define id386	1
 #else
 #define id386	0
 #endif
 
-#if (defined _M_X64 || defined __amd64__)  && !defined __LCC__
+#if defined(ARCH_X86_64)  && !defined __LCC__
 #define idx64	1
 #else
 #define idx64	0
@@ -88,6 +85,7 @@ float	FloatSwap (const float *f);
 
 //================= COMPILER-SPECIFIC DEFINES ===========================
 #ifdef _MSC_VER
+#define ID_INLINE __inline
 #define Q_NORETURN __declspec(noreturn)
 #define Q_PTR_NORETURN // MSVC doesn't support noreturn function pointers
 #define q_unreachable() abort()
@@ -98,6 +96,7 @@ float	FloatSwap (const float *f);
     + __GNUC_MINOR__ * 100 \
     + __GNUC_PATCHLEVEL__)
 
+#define ID_INLINE inline
 #define Q_NORETURN __attribute__((noreturn))
 #define Q_PTR_NORETURN Q_NORETURN
 #define q_unreachable() __builtin_unreachable()
@@ -109,12 +108,14 @@ float	FloatSwap (const float *f);
 #	define Q_MAX_ALIGN max_align_t
 #endif
 #elif defined __clang__
+#define ID_INLINE inline
 #define Q_NORETURN __attribute__((noreturn))
 #define Q_PTR_NORETURN Q_NORETURN
 #define q_unreachable() __builtin_unreachable()
 #define Q_ALIGNOF(x) alignof(x)
 #define Q_MAX_ALIGN std::max_align_t
 #else
+#define ID_INLINE inline
 #define Q_NORETURN
 #define Q_PTR_NORETURN
 #define q_unreachable() abort()
@@ -133,38 +134,34 @@ float	FloatSwap (const float *f);
 
 // buildstring will be incorporated into the version string
 #ifdef NDEBUG
-#ifdef _M_IX86
+
+#ifdef ARCH_X86
+#define ARCH_STRING "x86"
 #define	CPUSTRING	"win-x86"
-#elif defined _M_X64
+#elif defined ARCH_X86_64
+#define ARCH_STRING "x64"
 #define	CPUSTRING	"win-x64"
-#elif defined _M_ALPHA
-#define	CPUSTRING	"win-AXP"
-#endif
-#else
-#ifdef _M_IX86
-#define	CPUSTRING	"win-x86-debug"
-#elif defined _M_X64
-#define	CPUSTRING	"win-x64-debug"
-#elif defined _M_ALPHA
-#define	CPUSTRING	"win-AXP-debug"
-#endif
 #endif
 
-#ifdef _M_IX86
-#	define ARCH_STRING "x86"
 #else
-#	define ARCH_STRING "x64"
+
+#ifdef ARCH_X86
+#define ARCH_STRING "x86"
+#define	CPUSTRING	"win-x86-debug"
+#elif defined ARCH_X86_64
+#define ARCH_STRING "x64"
+#define	CPUSTRING	"win-x64-debug"
+#endif
+
 #endif
 
 #define LIBRARY_EXTENSION "dll"
-
-#define ID_INLINE __inline
 
 static ID_INLINE short BigShort( short l) { return ShortSwap(l); }
 #define LittleShort
 static ID_INLINE int BigLong(int l) { return LongSwap(l); }
 #define LittleLong
-static ID_INLINE float BigFloat(const float *l) { FloatSwap(l); }
+static ID_INLINE float BigFloat(const float *l) { return FloatSwap(l); }
 #define LittleFloat
 
 #define	PATH_SEP '\\'
@@ -184,7 +181,6 @@ static ID_INLINE float BigFloat(const float *l) { FloatSwap(l); }
 #define MAC_STATIC
 #define __cdecl
 #define __declspec(x)
-#define ID_INLINE inline
 
 #define stricmp strcasecmp
 #define strnicmp strncasecmp
@@ -238,7 +234,6 @@ inline static float LittleFloat (const float *l) { return FloatSwap(l); }
 #define strnicmp strncasecmp
 
 #define	MAC_STATIC // bk: FIXME
-#define ID_INLINE inline
 
 #ifdef __i386__
 #define	CPUSTRING	"linux-i386"
@@ -2340,5 +2335,8 @@ typedef union byteAlias_u {
 #define STRING( a ) #a
 #define XSTRING( a ) STRING( a )
 #define ARRAY_LEN( x ) ( sizeof( x ) / sizeof( *(x) ) )
+
+#define Q_min(x,y) ((x)<(y)?(x):(y))
+#define Q_max(x,y) ((x)>(y)?(x):(y))
 
 #endif	// __Q_SHARED_H

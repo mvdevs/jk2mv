@@ -2,7 +2,6 @@
 #include <windows.h>
 #include <float.h>
 #include <io.h>
-#include <direct.h>
 #include <shlobj.h>
 #include "../qcommon/q_shared.h"
 #include "../qcommon/qcommon.h"
@@ -10,7 +9,7 @@
 char *Sys_GetCurrentUser( void )
 {
 	static char s_userName[1024];
-	unsigned long size = sizeof( s_userName );
+	DWORD size = sizeof( s_userName );
 
 
 	if ( !GetUserNameA( s_userName, &size ) )
@@ -106,8 +105,8 @@ DIRECTORY SCANNING
 void Sys_ListFilteredFiles(const char *basedir, char *subdirs, char *filter, char **psList, int *numfiles) {
 	char		search[MAX_OSPATH], newsubdirs[MAX_OSPATH];
 	char		filename[MAX_OSPATH];
-	intptr_t	findhandle;
-	struct _finddata_t findinfo;
+	HANDLE		findhandle;
+	WIN32_FIND_DATAA findinfo;
 
 	if (*numfiles >= MAX_FOUND_FILES - 1) {
 		return;
@@ -119,18 +118,18 @@ void Sys_ListFilteredFiles(const char *basedir, char *subdirs, char *filter, cha
 		Com_sprintf(search, sizeof(search), "%s\\*", basedir);
 	}
 
-	findhandle = _findfirst(search, &findinfo);
-	if (findhandle == -1) {
+	findhandle = FindFirstFileA(search, &findinfo);
+	if (findhandle == INVALID_HANDLE_VALUE) {
 		return;
 	}
 
 	do {
-		if (findinfo.attrib & _A_SUBDIR) {
-			if (Q_stricmp(findinfo.name, ".") && Q_stricmp(findinfo.name, "..")) {
+		if (findinfo.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+			if (Q_stricmp(findinfo.cFileName, ".") && Q_stricmp(findinfo.cFileName, "..")) {
 				if (strlen(subdirs)) {
-					Com_sprintf(newsubdirs, sizeof(newsubdirs), "%s\\%s", subdirs, findinfo.name);
+					Com_sprintf(newsubdirs, sizeof(newsubdirs), "%s\\%s", subdirs, findinfo.cFileName);
 				} else {
-					Com_sprintf(newsubdirs, sizeof(newsubdirs), "%s", findinfo.name);
+					Com_sprintf(newsubdirs, sizeof(newsubdirs), "%s", findinfo.cFileName);
 				}
 				Sys_ListFilteredFiles(basedir, newsubdirs, filter, psList, numfiles);
 			}
@@ -138,14 +137,14 @@ void Sys_ListFilteredFiles(const char *basedir, char *subdirs, char *filter, cha
 		if (*numfiles >= MAX_FOUND_FILES - 1) {
 			break;
 		}
-		Com_sprintf(filename, sizeof(filename), "%s\\%s", subdirs, findinfo.name);
+		Com_sprintf(filename, sizeof(filename), "%s\\%s", subdirs, findinfo.cFileName);
 		if (!Com_FilterPath(filter, filename, qfalse))
 			continue;
 		psList[*numfiles] = CopyString(filename);
 		(*numfiles)++;
-	} while (_findnext(findhandle, &findinfo) != -1);
+	} while (FindNextFileA(findhandle, &findinfo) != 0);
 
-	_findclose(findhandle);
+	FindClose(findhandle);
 }
 
 static qboolean strgtr(const char *s0, const char *s1) {
@@ -174,8 +173,8 @@ char **Sys_ListFiles(const char *directory, const char *extension, char *filter,
 	int			nfiles;
 	char		**listCopy;
 	char		*list[MAX_FOUND_FILES];
-	struct _finddata_t findinfo;
-	intptr_t	findhandle;
+	HANDLE		findhandle;
+	WIN32_FIND_DATAA findinfo;
 	int			flag;
 	int			i;
 
@@ -208,7 +207,7 @@ char **Sys_ListFiles(const char *directory, const char *extension, char *filter,
 		extension = "";
 		flag = 0;
 	} else {
-		flag = _A_SUBDIR;
+		flag = FILE_ATTRIBUTE_DIRECTORY;
 	}
 
 	Com_sprintf(search, sizeof(search), "%s\\*%s", directory, extension);
@@ -216,25 +215,25 @@ char **Sys_ListFiles(const char *directory, const char *extension, char *filter,
 	// search
 	nfiles = 0;
 
-	findhandle = _findfirst(search, &findinfo);
-	if (findhandle == -1) {
+	findhandle = FindFirstFileA(search, &findinfo);
+	if (findhandle == INVALID_HANDLE_VALUE) {
 		*numfiles = 0;
 		return NULL;
 	}
 
 	do {
-		if ((!wantsubs && flag ^ (findinfo.attrib & _A_SUBDIR)) || (wantsubs && findinfo.attrib & _A_SUBDIR)) {
+		if ((!wantsubs && flag ^ (findinfo.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) || (wantsubs && findinfo.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
 			if (nfiles == MAX_FOUND_FILES - 1) {
 				break;
 			}
-			list[nfiles] = CopyString(findinfo.name);
+			list[nfiles] = CopyString(findinfo.cFileName);
 			nfiles++;
 		}
-	} while (_findnext(findhandle, &findinfo) != -1);
+	} while (FindNextFileA(findhandle, &findinfo) != 0);
 
 	list[nfiles] = 0;
 
-	_findclose(findhandle);
+	FindClose(findhandle);
 
 	// return a copy of the list
 	*numfiles = nfiles;
@@ -285,10 +284,7 @@ Sys_Cwd
 */
 char *Sys_Cwd(void) {
 	static char cwd[MAX_OSPATH];
-
-	_getcwd(cwd, sizeof(cwd) - 1);
-	cwd[MAX_OSPATH - 1] = 0;
-
+	GetCurrentDirectoryA(sizeof(cwd), cwd);
 	return cwd;
 }
 
@@ -436,3 +432,69 @@ void Sys_PlatformExit(void)
 	if (timerResolution)
 		timeEndPeriod(timerResolution);
 }
+
+
+// from ioq3 requires sse
+// i do not care about processors without sse
+#ifdef __GNUC__
+#if idx64
+  #define EAX "%%rax"
+  #define EBX "%%rbx"
+  #define ESP "%%rsp"
+  #define EDI "%%rdi"
+#else
+  #define EAX "%%eax"
+  #define EBX "%%ebx"
+  #define ESP "%%esp"
+  #define EDI "%%edi"
+#endif
+
+long Q_ftol(float f) {
+    long retval;
+
+    __asm__ volatile (
+        "cvttss2si %1, %0\n"
+        : "=r" (retval)
+        : "x" (f)
+    );
+
+    return retval;
+}
+
+int Q_VMftol() {
+    int retval;
+
+    __asm__ volatile (
+        "movss (" EDI ", " EBX ", 4), %%xmm0\n"
+        "cvttss2si %%xmm0, %0\n"
+        : "=r" (retval)
+        :
+        : "%xmm0"
+    );
+
+    return retval;
+}
+
+static unsigned char ssemask[16] __attribute__((aligned(16))) = {
+	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"
+};
+
+void Sys_SnapVector(vec3_t vec) {
+	__asm__ volatile
+	(
+		"movaps (%0), %%xmm1\n"
+		"movups (%1), %%xmm0\n"
+		"movaps %%xmm0, %%xmm2\n"
+		"andps %%xmm1, %%xmm0\n"
+		"andnps %%xmm2, %%xmm1\n"
+		"cvtps2dq %%xmm0, %%xmm0\n"
+		"cvtdq2ps %%xmm0, %%xmm0\n"
+		"orps %%xmm1, %%xmm0\n"
+		"movups %%xmm0, (%1)\n"
+		:
+		: "r" (ssemask), "r" (vec)
+		: "memory", "%xmm0", "%xmm1", "%xmm2"
+	);
+
+}
+#endif
