@@ -348,11 +348,6 @@ void Text_Paint(float x, float y, float scale, vec4_t color, const char *text, f
 							);
 }
 
-
-#ifndef WIN32
-#define min(x,y) ((x)<(y)?(x):(y))
-#endif
-
 void Text_PaintWithCursor(float x, float y, float scale, vec4_t color, const char *text, int cursorPos, char cursor, int limit, int style, int iMenuFont)
 {
 	Text_Paint(x, y, scale, color, text, 0, limit, style, iMenuFont);
@@ -361,9 +356,9 @@ void Text_PaintWithCursor(float x, float y, float scale, vec4_t color, const cha
 	//
 	{
 		char sTemp[1024];
-		size_t iCopyCount = limit ? min(strlen(text), limit) : strlen(text);
-			iCopyCount = min(iCopyCount,cursorPos);
-			iCopyCount = min(iCopyCount,sizeof(sTemp));
+		size_t iCopyCount = limit ? Q_min(strlen(text), limit) : strlen(text);
+			iCopyCount = Q_min(iCopyCount,cursorPos);
+			iCopyCount = Q_min(iCopyCount,sizeof(sTemp));
 
 			// copy text into temp buffer for pixel measure...
 			//

@@ -651,7 +651,7 @@ static void Field_KillWord( field_t *edit ) {
 	edit->cursor = start;
 }
 
-static void Field_BackwardKillWord( field_t *edit, qboolean unix ) {
+static void Field_BackwardKillWord( field_t *edit, qboolean unix_word ) {
 	char	*killBuf;
 	int		end;
 	int		start;
@@ -665,7 +665,7 @@ static void Field_BackwardKillWord( field_t *edit, qboolean unix ) {
 	killBuf = Key_KillRingAdvance();
 	end = edit->cursor;
 
-	if ( unix )
+	if ( unix_word )
 		Field_BackwardUnixWord( edit );
 	else
 		Field_BackwardWord( edit );
@@ -1409,7 +1409,7 @@ int Key_StringToKeynum( char *str ) {
 	// scan for a text match
 	for ( i = 0 ; i < MAX_KEYS ; i++ )
 	{
-		if ( keynames[i].name && !stricmp( str, keynames[i].name ) )
+		if ( keynames[i].name && !Q_stricmp( str, keynames[i].name ) )
 		{
 			return keynames[i].keynum;
 		}

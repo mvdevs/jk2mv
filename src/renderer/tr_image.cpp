@@ -19,9 +19,6 @@ using namespace std;
  */
 
 #ifndef DEDICATED
-#ifdef INTERNAL_JPEG
-#   define JPEG_INTERNALS
-#endif
 #include <jpeglib.h>
 #include <png.h>
 

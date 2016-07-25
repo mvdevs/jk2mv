@@ -2,7 +2,7 @@
 
 #if defined( __LINT__ )
 #	include <GL/gl.h>
-#elif defined( _WIN32 )
+#elif defined( WIN32 )
 #	define WIN32_LEAN_AND_MEAN
 #	include <windows.h>
 #	include <GL/gl.h>

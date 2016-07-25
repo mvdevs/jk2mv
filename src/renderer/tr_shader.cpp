@@ -161,7 +161,7 @@ int R_FindHitMat(const char *fname)
 	// simple linear search, this should only be called during precache anyway
 	for (i=1; i<hitMatCount; i++)
 	{
-		if (!stricmp(hitMatReg[i].name, fname))
+		if (!Q_stricmp(hitMatReg[i].name, fname))
 		{
 			return i;
 		}

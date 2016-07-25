@@ -1,71 +1,34 @@
-//Microsoft Developer Studio generated resource script.
-//
-#include "resource.h"
+#include "mv_setup.h"
 
-#define APSTUDIO_READONLY_SYMBOLS
-/////////////////////////////////////////////////////////////////////////////
-//
-// Generated from the TEXTINCLUDE 2 resource.
-//
-#include "winres.h"
+JK2MV_ICON ICON "../../res/mv.ico"
 
-/////////////////////////////////////////////////////////////////////////////
-#undef APSTUDIO_READONLY_SYMBOLS
-
-/////////////////////////////////////////////////////////////////////////////
-// English (U.S.) resources
-
-#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
-#ifdef _WIN32
-LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
-#pragma code_page(1252)
-#endif //_WIN32
-
-#ifdef APSTUDIO_INVOKED
-/////////////////////////////////////////////////////////////////////////////
-//
-// TEXTINCLUDE
-//
-
-1 TEXTINCLUDE DISCARDABLE 
+1 VERSIONINFO
+FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+FILEFLAGS 0x29L
+#else
+FILEFLAGS 0x28L
+#endif
+FILEOS 0x4L
+FILETYPE 0x1L
+FILESUBTYPE 0x0L
 BEGIN
-    "resource.h\0"
+  BLOCK "StringFileInfo"
+  BEGIN
+    BLOCK "000004b0"
+    BEGIN
+      VALUE "Comments", "JK2 MultiVersion Clientside executable"
+      VALUE "CompanyName", "jk2mv.org"
+      VALUE "FileDescription", "JK2MV Client"
+      VALUE "FileVersion", JK2MV_VERSION
+      VALUE "InternalName", "JK2MV"
+      VALUE "LegalCopyright", "jk2mv.org"
+      VALUE "ProductName", "JK2MV"
+      VALUE "ProductVersion", JK2MV_VERSION
+    END
+  END
+  BLOCK "VarFileInfo"
+  BEGIN
+    VALUE "Translation", 0x0, 1200
+  END
 END
-
-2 TEXTINCLUDE DISCARDABLE 
-BEGIN
-    "#include ""winres.h""\r\n"
-    "\0"
-END
-
-3 TEXTINCLUDE DISCARDABLE 
-BEGIN
-    "\0"
-END
-
-#endif    // APSTUDIO_INVOKED
-
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// Icon
-//
-
-// Icon with lowest ID value placed first to ensure application icon
-// remains consistent on all systems.
-IDI_ICON1               ICON    DISCARDABLE     "../../res/mv.ico"
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// String Table
-//
-
-STRINGTABLE DISCARDABLE 
-BEGIN
-    IDS_STRING1             "JK2MV"
-END
-
-#endif    // English (U.S.) resources
-/////////////////////////////////////////////////////////////////////////////
-
-

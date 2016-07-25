@@ -1,7 +1,7 @@
-if(WIN32)
+if(MSVC)
 	cmake_minimum_required(VERSION 3.1.0) # assembler stuff
 else()
-	cmake_minimum_required(VERSION 2.8.8)
+	cmake_minimum_required(VERSION 2.8.9)
 endif()
 
 if(POLICY CMP0043)
@@ -15,7 +15,6 @@ endif()
 set(InMV TRUE)
 
 # Paths
-set(SRCDir "${CMAKE_SOURCE_DIR}/src")
 set(LIBDir "${CMAKE_SOURCE_DIR}/libs")
 set(RESDir "${CMAKE_SOURCE_DIR}/res")
 
@@ -39,7 +38,7 @@ endif()
 message(STATUS "${ProjectName} Version: ${MV_VERSION}")
 
 # Languages
-if(WIN32)
+if(MSVC)
 	enable_language(C CXX ASM_MASM)
 else()
 	enable_language(C CXX)
@@ -66,58 +65,75 @@ endif()
 option(LegacyHTTPDownloads "Activate this for legacy JK2MF http downloads. Bad code due to bad implementation in jk2mf" OFF)
 option(NTClientWorkaround "Disable loading of NT-Mod pk3 files to prevent crashing the game" ON)
 
-if(WIN32)
+# Internal Libs
+if(MSVC)
 	set(UseInternalPNG ON)
-elseif(APPLE)
-	option(UseInternalPNG "Whether to use the included libpng instead of a locally installed one" ON)
-else()
-	option(UseInternalPNG "Whether to use the included libpng instead of a locally installed one" OFF)
-endif()
-
-if(WIN32)
 	set(UseInternalJPEG ON)
-elseif(APPLE)
-	option(UseInternalJPEG "Whether to use the included libjpeg instead of a locally installed one" ON)
+	set(UseInternalZLIB ON)
+	set(UseInternalMiniZip ON)
+	set(UseInternalSDL2 ON)
+	set(UseInternalOpenAL ON)
 else()
-	option(UseInternalJPEG "Whether to use the included libjpeg instead of a locally installed one" OFF)
+	set(UseInternalSDL2 OFF)
+	set(UseInternalOpenAL OFF)
+
+	if(MINGW)
+		set(UseInternalPNGDefault OFF)
+		set(UseInternalJPEGDefault OFF)
+		set(UseInternalZLIBDefault OFF)
+		set(UseInternalMiniZipDefault OFF)
+	elseif(APPLE)
+		set(UseInternalPNGDefault ON)
+		set(UseInternalJPEGDefault ON)
+		set(UseInternalZLIBDefault ON)
+		set(UseInternalMiniZipDefault ON)
+	else() # Linux
+		set(UseInternalPNGDefault OFF)
+		set(UseInternalJPEGDefault OFF)
+		set(UseInternalZLIBDefault OFF)
+		set(UseInternalMiniZipDefault OFF)
+		set(UseInternalSDL2 OFF)
+	endif()
+	
+	option(UseInternalPNG "Whether to use the included libpng instead of a locally installed one" ${UseInternalPNGDefault})
+	option(UseInternalJPEG "Whether to use the included libjpeg instead of a locally installed one" ${UseInternalJPEGDefault})
+	option(UseInternalZLIB "Whether to use the included zlib instead of a locally installed one" ${UseInternalZLIBDefault})
+	option(UseInternalMiniZip "Whether to use the included minizip instead of a locally installed one" ${UseInternalMiniZipDefault})
 endif()
 
-if(WIN32)
-	set(UseInternalZLIB ON)
-else()
-	option(UseInternalZLIB "Whether to use the included zlib instead of a locally installed one" OFF)
-endif()
 
 if(WIN32)
 	set(X86 ON)
+	set(GlobalDefines ${GlobalDefines} "WIN32")
 	if(CMAKE_SIZEOF_VOID_P MATCHES "8")
+		set(GlobalDefines ${GlobalDefines} "ARCH_X86_64")
 		set(Architecture "x64")
 		set(WIN64 TRUE)
-		set(GlobalDefines ${GlobalDefines} "_M_X64")
 	else()
+		set(GlobalDefines ${GlobalDefines} "ARCH_X86")
 		set(Architecture "x86")
 		set(WIN64 FALSE)
-		set(GlobalDefines ${GlobalDefines} "_M_IX86")
 	endif()
 elseif(APPLE)
 	set(X86 ON)
 	if(CMAKE_SYSTEM_PROCESSOR MATCHES "^i.86$")
-		set(X86 ON)
+		set(GlobalDefines ${GlobalDefines} "ARCH_X86")
 		set(Architecture "i386")
 	elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^x86.64$")
-		set(X86 ON)
+		set(GlobalDefines ${GlobalDefines} "ARCH_X86_64")
 		set(Architecture "x86_64")
 	endif()
 else()
-	set(X86 OFF)
-
 	if(CMAKE_SYSTEM_PROCESSOR MATCHES "^arm")
+		set(GlobalDefines ${GlobalDefines} "ARCH_ARM32")
 		set(Architecture "arm")
 		set(ARM ON)
 	elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^i.86$")
+		set(GlobalDefines ${GlobalDefines} "ARCH_X86")
 		set(X86 ON)
 		set(Architecture "i386")
 	elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^x86.64$")
+		set(GlobalDefines ${GlobalDefines} "ARCH_X86_64")
 		set(X86 ON)
 		set(Architecture "amd64")
 	else()
@@ -144,6 +160,11 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/out)
 set(CPACK_PACKAGE_DIRECTORY ${CMAKE_BINARY_DIR}/out)
 
 # Compiler defines / settings
+if(NOT CMAKE_BUILD_TYPE)
+	message(STATUS "No build type selected, default to Release")
+	set(CMAKE_BUILD_TYPE "Release")
+endif()
+
 set(GlobalDefines ${GlobalDefines} "BOTLIB")
 set(GlobalDefines ${GlobalDefines} "_JK2")
 
@@ -184,7 +205,7 @@ if(MSVC)
 
 		set(CMAKE_ASM_MASM_FLAGS "${CMAKE_ASM_MASM_FLAGS} /safeseh") # safe exception handler
 	endif()
-elseif ((("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU") OR ("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang")) AND NOT WIN32)
+elseif ((${CMAKE_C_COMPILER_ID} STREQUAL GNU) OR (${CMAKE_C_COMPILER_ID} STREQUAL Clang))
 	if(APPLE)
 		set(GlobalDefines ${GlobalDefines} "MACOS_X")
 	endif()
@@ -200,8 +221,8 @@ elseif ((("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU") OR ("${CMAKE_C_COMPILER_ID}" 
 	endif()
 
 	# Optimization
-	set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O3 -ffast-math -flto")
-	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -ffast-math -flto")
+	set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O3 -ffast-math")
+	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -ffast-math")
 
 	# General
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -fvisibility=hidden")
@@ -212,7 +233,7 @@ elseif ((("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU") OR ("${CMAKE_C_COMPILER_ID}" 
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-unknown-pragmas -Wno-write-strings")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-sign-compare")
 
-	if("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU")
+	if(${CMAKE_C_COMPILER_ID} STREQUAL GNU)
 		if(X86)
 			set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -mfpmath=sse")
 		endif()
@@ -222,7 +243,7 @@ elseif ((("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU") OR ("${CMAKE_C_COMPILER_ID}" 
 	elseif("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang")
 	endif()
 
-	if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+	if(${CMAKE_CXX_COMPILER_ID} STREQUAL GNU)
 		if(X86)
 			set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -mfpmath=sse")
 		endif()
@@ -250,28 +271,34 @@ if(NTClientWorkaround)
 	set(GlobalDefines ${GlobalDefines} "NTCLIENT_WORKAROUND")
 endif()
 
-if(NOT CMAKE_BUILD_TYPE)
-	message(STATUS "No build type selected, default to Release")
-	set(CMAKE_BUILD_TYPE "Release")
-endif()
-
-if(UseInternalPNG)
-	set(GlobalDefines ${GlobalDefines} "INTERNAL_PNG")
-endif()
-
-if(UseInternalJPEG)
-	set(GlobalDefines ${GlobalDefines} "INTERNAL_JPEG")
-endif()
-
-if(UseInternalZLIB)
-	set(GlobalDefines ${GlobalDefines} "INTERNAL_ZLIB")
-endif()
-
 if(BuildPortableVersion)
 	set(GlobalDefines ${GlobalDefines} "PORTABLE")
 else()
 	set(GlobalDefines ${GlobalDefines} "INSTALLED")
 endif()
+
+# Libraries
+if(UseInternalZLIB)
+	set(GlobalDefines ${GlobalDefines} "INTERNAL_ZLIB")
+	add_subdirectory(libs/zlib)
+endif()
+
+if(UseInternalMiniZip)
+	set(GlobalDefines ${GlobalDefines} "INTERNAL_MINIZIP")
+	add_subdirectory(libs/minizip)
+endif()
+
+if(UseInternalJPEG)
+	set(GlobalDefines ${GlobalDefines} "INTERNAL_JPEG")
+	add_subdirectory(libs/jpeg-9a)
+endif()
+
+if(UseInternalPNG)
+	set(GlobalDefines ${GlobalDefines} "INTERNAL_PNG")
+	add_subdirectory(libs/libpng)
+endif()
+
+add_subdirectory(libs/mongoose)
 
 # Package
 set(CPACK_PACKAGE_NAME ${ProjectName})
@@ -339,8 +366,4 @@ else()
 	endif()
 endif()
 
-# mv_setup.h preparation
-set(MVGLOBALIncludeDirs ${MVGLOBALIncludeDirs} ${CMAKE_BINARY_DIR})
-configure_file("${SRCDir}/mv_setup.h.in" "${CMAKE_BINARY_DIR}/mv_setup.h" @ONLY)
-
-add_subdirectory(${SRCDir})
+add_subdirectory(src)
