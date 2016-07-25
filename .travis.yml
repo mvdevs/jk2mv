@@ -22,7 +22,7 @@ matrix:
     - os: linux
       env: HOST=linux-x86_64-gcc
     - os: osx
-      env: HOST=macosx-universal-clang
+      env: HOST=macosx-x86_64-clang
 
 before_install:
   - git fetch --unshallow
@@ -48,8 +48,8 @@ script:
   - mkdir travis_build
   - cd travis_build
 
-  - if [[ "$HOST" == linux-x86_64-gcc ]]; then cmake -G "Unix Makefiles" -DUseInternalPNG=ON -DUseInternalJPEG=ON -DUseInternalZLIB=ON -DUseInternalCURL=ON -DBuildPortableVersion=OFF -DBuildPackDEB=ON -DBuildPackRPM=ON ../..; fi
-  - if [[ "$HOST" == macosx-universal-clang ]]; then cmake -G "Unix Makefiles" -DUseInternalPNG=ON -DUseInternalJPEG=ON -DUseInternalZLIB=ON -DUseInternalCURL=ON -DBuildPortableVersion=OFF ../..; fi
+  - if [[ "$HOST" == linux-x86_64-gcc ]]; then cmake -G "Unix Makefiles" -DUseInternalPNG=ON -DUseInternalJPEG=ON -DUseInternalZLIB=ON -DUseInternalMiniZip=ON -DBuildPortableVersion=OFF -DBuildPackDEB=ON -DBuildPackRPM=ON ../..; fi
+  - if [[ "$HOST" == macosx-x86_64-clang ]]; then cmake -G "Unix Makefiles" -DUseInternalPNG=ON -DUseInternalJPEG=ON -DUseInternalZLIB=ON -DUseInternalMiniZip=ON -DBuildPortableVersion=OFF ../..; fi
 
   - make
   - make package
