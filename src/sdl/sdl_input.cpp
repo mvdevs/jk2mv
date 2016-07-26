@@ -294,7 +294,7 @@ static void IN_ActivateMouse( void )
 	}
 
 	// in_nograb makes no sense in fullscreen mode
-	if( !Cvar_VariableIntegerValue("r_fullscreen") )
+	if( !(SDL_GetWindowFlags( SDL_window ) & SDL_WINDOW_FULLSCREEN) )
 	{
 		if( in_nograb->modified || !mouseActive )
 		{
@@ -322,7 +322,7 @@ static void IN_DeactivateMouse( void )
 
 	// Always show the cursor when the mouse is disabled,
 	// but not when fullscreen
-	if( !Cvar_VariableIntegerValue("r_fullscreen") )
+	if( !(SDL_GetWindowFlags( SDL_window ) & SDL_WINDOW_FULLSCREEN) )
 		SDL_ShowCursor( 1 );
 
 	if( !mouseAvailable )
@@ -733,7 +733,7 @@ static void IN_ProcessEvents( void )
 					Sys_QueEvent( 0, SE_KEY, key, qfalse, 0, NULL );
 
 				if ((e.key.keysym.scancode == SDL_SCANCODE_LGUI || e.key.keysym.scancode == SDL_SCANCODE_RGUI) &&
-					Cvar_VariableIntegerValue("r_fullscreen")) {
+					(SDL_GetWindowFlags( SDL_window ) & SDL_WINDOW_FULLSCREEN)) {
 					GLimp_Minimize();
 				}
 				break;
@@ -1035,24 +1035,26 @@ static void IN_JoyMove( void )
 
 
 void IN_Frame (void) {
-	qboolean loading;
+	qboolean	loading;
+	Uint32		flags;
 
 	IN_JoyMove( );
 
 	// If not DISCONNECTED (main menu) or ACTIVE (in game), we're loading
 	loading = (qboolean)( cls.state != CA_DISCONNECTED && cls.state != CA_ACTIVE && !(Key_GetCatcher() & KEYCATCH_UI));
+	flags = SDL_GetWindowFlags( SDL_window );
 
-	if( !cls.glconfig.isFullscreen && ( Key_GetCatcher( ) & KEYCATCH_CONSOLE ) )
+	if( !(flags & SDL_WINDOW_FULLSCREEN) && ( Key_GetCatcher( ) & KEYCATCH_CONSOLE ) )
 	{
 		// Console is down in windowed mode
 		IN_DeactivateMouse( );
 	}
-	else if( !cls.glconfig.isFullscreen && loading )
+	else if( !(flags & SDL_WINDOW_FULLSCREEN) && loading )
 	{
 		// Loading in windowed mode
 		IN_DeactivateMouse( );
 	}
-	else if( !( SDL_GetWindowFlags( SDL_window ) & SDL_WINDOW_INPUT_FOCUS ) )
+	else if( !(flags & SDL_WINDOW_INPUT_FOCUS ) )
 	{
 		// Window not got focus
 		IN_DeactivateMouse( );
