@@ -709,7 +709,7 @@ int Com_RealTime(qtime_t *qtime) {
 
 	t = time(NULL);
 	if (!qtime)
-		return 0;
+		return (int)t;
 
 	tms = localtime(&t);
 	if (tms) {
