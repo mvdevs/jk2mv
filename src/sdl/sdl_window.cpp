@@ -33,6 +33,7 @@ cvar_t	*r_swapInterval;
 cvar_t	*r_stereo;
 cvar_t	*r_mode;
 cvar_t	*r_displayRefresh;
+cvar_t	*r_savedWindows;
 
 // Window surface cvars
 cvar_t	*r_stencilbits;
@@ -92,7 +93,7 @@ const vidmode_t r_vidModes[] = {
 };
 static const int	s_numVidModes = ARRAY_LEN( r_vidModes );
 
-#define R_MODE_FALLBACK (4) // 640x480
+#define R_MODE_FALLBACK 3 // 640x480
 
 qboolean R_GetModeInfo( int *width, int *height, int mode ) {
 	const vidmode_t	*vm;
@@ -133,6 +134,176 @@ static void R_ModeList_f( void )
 		Com_Printf( "%s\n", r_vidModes[i].description );
 	}
 	Com_Printf( "\n" );
+}
+
+// Procedures for saving and restoring window position
+typedef struct {
+	SDL_Rect	display;
+	int			xpos;
+	int			ypos;
+} savedWindow_t;
+
+#define MAX_SAVED 6
+
+static void GLimp_SerializeWindowPosition( char *token, size_t size, const savedWindow_t *saved )
+{
+	// generate saved window data eg. 1280x800+1024+0:-30+60 first 4
+	// integers are X11 geometry format for current display, last 2
+	// are window position relative to current display
+	Com_sprintf( token, size, "%dx%d%+d%+d:%+d%+d",
+		saved->display.w, saved->display.h,
+		saved->display.x, saved->display.y,
+		saved->xpos, saved->ypos );
+}
+
+static qboolean GLimp_DeserializeWindowPosition( savedWindow_t *saved, const char *token )
+{
+	char	testToken[MAX_CVAR_VALUE_STRING];
+	int		consumed;
+	int		ret;
+
+	ret = sscanf( token, "%dx%d%d%d:%d%d%n",
+		&saved->display.w, &saved->display.h,
+		&saved->display.x, &saved->display.y,
+		&saved->xpos, &saved->ypos, &consumed );
+
+	// make sure we read exactly 6 integers
+	if ( ret != 6 )
+		return qfalse;
+
+	// make sure there are no extra characters at the end
+	if ( token[consumed] != '\0' )
+		return qfalse;
+
+	// range tests
+	if ( saved->display.w <= 0 || saved->display.h <= 0 ||
+		saved->display.x < 0 || saved->display.y < 0 )
+		return qfalse;
+
+	// inverse function test
+	GLimp_SerializeWindowPosition( testToken, sizeof( testToken ), saved );
+
+	if ( strcmp( token, testToken ) )
+		return qfalse;
+
+	return qtrue;
+}
+
+static int SDL_RectCmp( SDL_Rect *r1, SDL_Rect *r2 )
+{
+	return r1->w != r2->w || r1->h != r2->h || r1->x != r2->x || r1->y != r2->y;
+}
+
+static void GLimp_SaveWindowPosition( void )
+{
+	char			oldString[MAX_CVAR_VALUE_STRING];
+	char			newString[MAX_CVAR_VALUE_STRING];
+	char			*token;
+	int				display;
+	int				i;
+	savedWindow_t	saved;
+	savedWindow_t	newSaved;
+	Uint32			flags;
+	int				x, y;
+
+	if ( !screen )
+		return;
+
+	SDL_GetWindowPosition( screen, &x, &y );
+
+	// don't save fullscreen window position, it's always 0 0
+	flags = SDL_WINDOW_FULLSCREEN | SDL_WINDOW_FULLSCREEN_DESKTOP |
+		SDL_WINDOW_HIDDEN | SDL_WINDOW_MINIMIZED | SDL_WINDOW_MAXIMIZED;
+
+	if ( SDL_GetWindowFlags( screen ) & flags )
+		return;
+
+	// display containing window's center
+	display = SDL_GetWindowDisplayIndex( screen );
+
+	if ( display < 0 )
+		return;
+
+	if ( SDL_GetDisplayBounds( display, &newSaved.display ) != 0 )
+		return;
+
+	SDL_GetWindowPosition( screen, &newSaved.xpos, &newSaved.ypos );
+	newSaved.xpos = newSaved.xpos - newSaved.display.x;
+	newSaved.ypos = newSaved.ypos - newSaved.display.y;
+
+	Q_strncpyz( oldString, r_savedWindows->string, sizeof( oldString ) );
+
+	GLimp_SerializeWindowPosition( newString, sizeof( newString ), &newSaved );
+
+	// deserialize oldString and write it back
+	token = strtok( oldString, " " );
+	i = 1;
+
+	while ( token && i < MAX_SAVED ) {
+		// skip malformed token
+		if ( GLimp_DeserializeWindowPosition( &saved, token ) ) {
+			// replace token describing position on the same display
+			if ( SDL_RectCmp( &saved.display, &newSaved.display ) ) {
+				Q_strcat( newString, sizeof( newString ), " " );
+				Q_strcat( newString, sizeof( newString ), token );
+
+				i++;
+			}
+		}
+
+		token = strtok( NULL, " " );
+	}
+
+	Cvar_Set( "r_savedWindows", newString );
+}
+
+static int GLimp_GetSavedWindowPosition( int *xpos, int *ypos )
+{
+	savedWindow_t	saved;
+	char			buf[MAX_CVAR_VALUE_STRING];
+	char			*token;
+	int				display = 0;
+	int				numDisplays = SDL_GetNumVideoDisplays();
+	int				x = SDL_WINDOWPOS_UNDEFINED;
+	int				y = SDL_WINDOWPOS_UNDEFINED;
+
+	// find latest window position token matching existing display
+	Q_strncpyz( buf, r_savedWindows->string, sizeof( buf ) );
+
+	token = strtok( buf, " " );
+
+	while ( token ) {
+		if ( GLimp_DeserializeWindowPosition( &saved, token ) ) {
+			// use saved token if the same display is present
+			for ( display = 0; display < numDisplays; display++ ) {
+				SDL_Rect	rect;
+
+				if ( SDL_GetDisplayBounds( display, &rect ) != 0 )
+					continue;
+
+				if ( !SDL_RectCmp( &saved.display, &rect ) ) {
+					x = saved.xpos + saved.display.x;
+					y = saved.ypos + saved.display.y;
+					break;
+				}
+			}
+
+			// found token we can use
+			if ( display < numDisplays )
+				break;
+		}
+
+
+		token = strtok( NULL, " " );
+	}
+
+	if ( display == numDisplays )
+		display = 0;
+
+	*xpos = x;
+	*ypos = y;
+
+	return display;
 }
 
 /*
@@ -184,7 +355,8 @@ void WIN_Present( window_t *window )
 
 		if ( needToToggle )
 		{
-			sdlToggled = SDL_SetWindowFullscreen( screen, r_fullscreen->integer ) >= 0;
+			fullscreen = r_fullscreen->integer ? SDL_WINDOW_FULLSCREEN : 0;
+			sdlToggled = SDL_SetWindowFullscreen( screen, fullscreen ) >= 0;
 
 			// SDL_WM_ToggleFullScreen didn't work, so do it the slow way
 			if ( !sdlToggled )
@@ -398,13 +570,6 @@ static rserr_t GLimp_SetMode(glconfig_t *glConfig, const windowDesc_t *windowDes
 	}
 	Com_Printf( " %d %d\n", glConfig->vidWidth, glConfig->vidHeight);
 
-	// Center window
-	if( r_centerWindow->integer && !fullscreen )
-	{
-		x = ( desktopMode.w / 2 ) - ( glConfig->vidWidth / 2 );
-		y = ( desktopMode.h / 2 ) - ( glConfig->vidHeight / 2 );
-	}
-
 	// Destroy existing state if it exists
 	if( opengl_context != NULL )
 	{
@@ -418,6 +583,15 @@ static rserr_t GLimp_SetMode(glconfig_t *glConfig, const windowDesc_t *windowDes
 		Com_DPrintf( "Existing window at %dx%d before being destroyed\n", x, y );
 		SDL_DestroyWindow( screen );
 		screen = NULL;
+	} else {
+		display = GLimp_GetSavedWindowPosition( &x, &y );
+		Com_DPrintf( "Found saved window at %dx%d display %d\n", x, y, display );
+	}
+
+	if ( r_centerWindow->integer )
+	{
+		x = SDL_WINDOWPOS_CENTERED_DISPLAY( display );
+		y = SDL_WINDOWPOS_CENTERED_DISPLAY( display );
 	}
 
 	if( fullscreen )
@@ -753,6 +927,7 @@ window_t WIN_Init( const windowDesc_t *windowDesc, glconfig_t *glConfig )
 	r_stereo			= Cvar_Get( "r_stereo",				"0",		CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH );
 	r_mode				= Cvar_Get( "r_mode",				"-2",		CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH );
 	r_displayRefresh	= Cvar_Get( "r_displayRefresh",		"0",		CVAR_LATCH );
+	r_savedWindows		= Cvar_Get( "r_savedWindows",		" ",		CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_ROM );
 
 	// Window render surface cvars
 	r_stencilbits		= Cvar_Get( "r_stencilbits",		"8",		CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH );
@@ -831,6 +1006,8 @@ void WIN_Shutdown( void )
 {
 	Cmd_RemoveCommand("modelist");
 	Cmd_RemoveCommand("minimize");
+
+	GLimp_SaveWindowPosition();
 
 	IN_Shutdown();
 

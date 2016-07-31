@@ -6,7 +6,6 @@ BUILD_DIR="`uname`-`uname -m`-debug"
 mkdir "$BUILD_DIR"
 cd "$BUILD_DIR"
 
-cmake -G "Unix Makefiles" -DUseInternalPNG=OFF -DUseInternalJPEG=OFF \
-	  -DUseInternalZLIB=OFF -DUseInternalMiniZip=OFF -DCMake_Build_Type=Debug ../..
+cmake -G "Unix Makefiles" -DUseInternalPNG=OFF -DUseInternalJPEG=OFF -DUseInternalZLIB=OFF -DUseInternalMiniZip=OFF -DCMAKE_BUILD_TYPE=Debug ../..
 
 make

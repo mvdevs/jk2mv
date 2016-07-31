@@ -2839,6 +2839,9 @@ void Com_Shutdown (void)
 {
 	CM_ClearMap();
 
+	// write config file if anything changed
+	Com_WriteConfiguration();
+
 	if (logfile) {
 		FS_FCloseFile (logfile);
 		logfile = 0;
