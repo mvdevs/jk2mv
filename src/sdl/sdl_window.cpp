@@ -143,7 +143,7 @@ typedef struct {
 	int			ypos;
 } savedWindow_t;
 
-#define MAX_SAVED 6
+#define MAX_SAVED 8
 
 static void GLimp_SerializeWindowPosition( char *token, size_t size, const savedWindow_t *saved )
 {
@@ -203,20 +203,12 @@ static void GLimp_SaveWindowPosition( void )
 	int				i;
 	savedWindow_t	saved;
 	savedWindow_t	newSaved;
-	Uint32			flags;
 	int				x, y;
 
 	if ( !screen )
 		return;
 
 	SDL_GetWindowPosition( screen, &x, &y );
-
-	// don't save fullscreen window position, it's always 0 0
-	flags = SDL_WINDOW_FULLSCREEN | SDL_WINDOW_FULLSCREEN_DESKTOP |
-		SDL_WINDOW_HIDDEN | SDL_WINDOW_MINIMIZED | SDL_WINDOW_MAXIMIZED;
-
-	if ( SDL_GetWindowFlags( screen ) & flags )
-		return;
 
 	// display containing window's center
 	display = SDL_GetWindowDisplayIndex( screen );
