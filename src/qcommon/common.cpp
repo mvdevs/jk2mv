@@ -1473,9 +1473,9 @@ Touch all known used data to make sure it is paged in
 ===============
 */
 void Com_TouchMemory( void ) {
-	int		start, end;
-	int		i, j;
-	int		sum;
+	int			start, end;
+	int			i, j;
+	unsigned	sum;
 //	memblock_t	*block;
 
 
@@ -1491,7 +1491,7 @@ void Com_TouchMemory( void ) {
 		byte *pMem = (byte *) &pMemory[1];
 		j = pMemory->iSize >> 2;
 		for (i=0; i<j; i+=64){
-			sum += ((int*)pMem)[i];
+			sum += ((volatile int*)pMem)[i];
 		}
 
 		pMemory = pMemory->pNext;
@@ -1500,20 +1500,20 @@ void Com_TouchMemory( void ) {
 
 	j = hunk_low.permanent >> 2;
 	for ( i = 0 ; i < j ; i+=64 ) {			// only need to touch each page
-		sum += ((int *)s_hunkData)[i];
+		sum += ((volatile int *)s_hunkData)[i];
 	}
 
 	i = ( s_hunkTotal - hunk_high.permanent ) >> 2;
 	j = hunk_high.permanent >> 2;
 	for (  ; i < j ; i+=64 ) {			// only need to touch each page
-		sum += ((int *)s_hunkData)[i];
+		sum += ((volatile int *)s_hunkData)[i];
 	}
 
 /*	for (block = mainzone->blocklist.next ; ; block = block->next) {
 		if ( block->tag ) {
 			j = block->size >> 2;
 			for ( i = 0 ; i < j ; i+=64 ) {				// only need to touch each page
-				sum += ((int *)block)[i];
+				sum += ((volatile int *)block)[i];
 			}
 		}
 		if ( block->next == &mainzone->blocklist ) {
