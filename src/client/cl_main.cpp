@@ -2872,8 +2872,8 @@ void CL_Init( void ) {
 	cl_drawRecording = Cvar_Get ("cl_drawRecording", "1", CVAR_ARCHIVE | CVAR_GLOBAL );
 
 	cl_timedemo = Cvar_Get ("timedemo", "0", 0);
-	cl_aviFrameRate = Cvar_Get ("cl_aviFrameRate", "25", CVAR_ARCHIVE);
-	cl_aviMotionJpeg = Cvar_Get ("cl_aviMotionJpeg", "0", CVAR_ARCHIVE | CVAR_ROM);
+	cl_aviFrameRate = Cvar_Get ("cl_aviFrameRate", "30", CVAR_ARCHIVE);
+	cl_aviMotionJpeg = Cvar_Get ("cl_aviMotionJpeg", "1", CVAR_ARCHIVE);
 	cl_aviMotionJpegQuality = Cvar_Get("cl_aviMotionJpegQuality", "90", CVAR_ARCHIVE);
 	cl_forceavidemo = Cvar_Get ("cl_forceavidemo", "0", 0);
 
