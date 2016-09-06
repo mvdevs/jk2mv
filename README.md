@@ -30,6 +30,7 @@ Main Features:
     * If you plan to build the installer package get NSIS from http://nsis.sourceforge.net
   * Linux: OpenGL, OpenAL, SDL2 and depending on your configuration libjpeg, libpng, libminizip, zlib.
     * Ubuntu/Debian: `apt-get install git debhelper devscripts libsdl2-dev libgl1-mesa-dev libopenal-dev libjpeg8-dev libpng12-dev zlib1g-dev libminizip-dev`
+	* Fedora: `dnf install git SDL2-devel mesa-libGL-devel openal-soft-devel libjpeg-turbo-devel libpng-devel zlib-devel minizip-devel
   * MacOSX: XCode on MacOSX >= 10.6
     * Configure / Build SDL2:
       1. `curl -O https://www.libsdl.org/release/SDL2-2.0.4.tar.gz`
