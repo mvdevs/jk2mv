@@ -2446,20 +2446,27 @@ void CL_Frame ( int msec ) {
 	}
 
 	// if recording an avi, lock to a fixed fps
-	if ( cl_avidemo->integer && msec) {
+	if ( cl_avidemo->value != 0.0f && msec) {
+		static double	overflow = 0.0;
+		double			frameTime;
+
 		// save the current screen
 		if ( cls.state == CA_ACTIVE || cl_forceavidemo->integer) {
-			if (cl_avidemo->integer > 0) {
+			if (cl_avidemo->value > 0.0f) {
 				Cbuf_ExecuteText( EXEC_NOW, "screenshot silent\n" );
 			} else {
 				Cbuf_ExecuteText( EXEC_NOW, "screenshot_tga silent\n" );
 			}
 		}
-		// fixed time for next frame'
-		msec = (1000 / abs(cl_avidemo->integer)) * com_timescale->value;
-		if (msec == 0) {
+
+		frameTime = (1000.0 / fabsf(cl_avidemo->value)) * com_timescale->value;
+		frameTime += overflow;
+
+		msec = floor(frameTime);
+		if (msec == 0)
 			msec = 1;
-		}
+
+		overflow = frameTime - msec;
 	}
 
 	if (cl_autoDemo->integer && !clc.demoplaying) {
