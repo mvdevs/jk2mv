@@ -95,6 +95,8 @@ typedef struct {
 	void (*SetLightStyle)(int style, int color);
 
 	void	(*GetBModelVerts)( int bmodelIndex, vec3_t *vec, vec3_t normal );
+
+	void (*TakeVideoFrame)( int h, int w, byte* captureBuffer, byte *encodeBuffer, qboolean motionJpeg );
 } refexport_t;
 
 //
@@ -155,6 +157,8 @@ typedef struct {
 	void	(*CIN_UploadCinematic)(int handle);
 	int		(*CIN_PlayCinematic)( const char *arg0, int xpos, int ypos, int width, int height, int bits);
 	e_status (*CIN_RunCinematic) (int handle);
+
+	void	(*CL_WriteAVIVideoFrame)( const byte *buffer, int size );
 
 	int (*CM_PointContents)( const vec3_t p, clipHandle_t model );
 

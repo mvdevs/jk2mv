@@ -1674,6 +1674,8 @@ refexport_t *GetRefAPI ( int apiVersion, refimport_t *rimp ) {
 	re.SetLightStyle = RE_SetLightStyle;
 
 	re.GetBModelVerts = RE_GetBModelVerts;
+
+	re.TakeVideoFrame = RE_TakeVideoFrame;
 #endif //!DEDICATED
 	return &re;
 }
