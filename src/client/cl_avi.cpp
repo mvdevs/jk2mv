@@ -428,7 +428,7 @@ static qboolean CL_CheckFileSize( int bytesToAdd )
 
   // I assume all the operating systems
   // we target can handle a 2Gb file
-  if( newFileSize > INT_MAX )
+  if( newFileSize > 0x7fffffffu && !FS_IsFifo( afd.fileName ) )
   {
     // Close the current file...
     CL_CloseAVI( );

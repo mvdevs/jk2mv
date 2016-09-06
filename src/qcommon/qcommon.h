@@ -547,6 +547,7 @@ extern	int			cvar_modifiedFlags;
 // can then be cleared to allow another change detection.
 
 void FS_HomeRemove( const char *homePath );
+qboolean FS_IsFifo( const char *filename );
 
 /*
 ==============================================================

@@ -43,6 +43,7 @@
 #include <ctype.h>
 #include <limits.h>
 #include <stdint.h>
+#include <sys/stat.h>
 
 #ifdef __cplusplus
 #	include <cstddef>
