@@ -566,7 +566,7 @@ void CL_TakeVideoFrame( void )
   if( !afd.fileOpen )
     return;
 
-  re.TakeVideoFrame( afd.width, afd.height, afd.motionJpeg );
+  re.TakeVideoFrame( afd.width, afd.height, afd.motionJpeg, cl_aviMotionJpegQuality->integer );
 }
 
 /*

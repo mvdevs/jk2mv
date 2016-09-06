@@ -1883,7 +1883,7 @@ void RE_EndFrame( int *frontEndMsec, int *backEndMsec );
 void SaveJPG(const char * filename, int quality, int image_width, int image_height, byte *image_buffer, int padding);
 size_t SaveJPGToBuffer(byte *buffer, size_t bufSize, int quality, int image_width,
 	int image_height, byte *image_buffer, int padding);
-void RE_TakeVideoFrame( int width, int height, qboolean motionJpeg );
+void RE_TakeVideoFrame( int width, int height, qboolean motionJpeg, int motionJpegQuality );
 
 /*
 Ghoul2 Insert Start
