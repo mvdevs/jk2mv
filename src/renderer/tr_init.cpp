@@ -712,45 +712,48 @@ void GL_CheckErrors( void ) {
 ==============================================================================
 */
 #ifndef DEDICATED
+
 /*
-==================
-R_TakeScreenshot
-==================
+===============
+RB_ReadPixels
+===============
 */
-
-byte *RB_ReadPixels(int x, int y, int width, int height, size_t *offset, int *padlen)
+byte *RB_ReadPixels(int x, int y, int width, int height, size_t *offset, qboolean swapRB, int packAlign)
 {
-	byte *buffer, *bufstart;
-	int padwidth, linelen;
-	GLint packAlign;
+	byte	*buffer, *bufstart;
+	int		padwidth, linelen;
 
-	qglGetIntegerv(GL_PACK_ALIGNMENT, &packAlign);
+	qglPixelStorei(GL_PACK_ALIGNMENT, packAlign);
 
 	linelen = width * 3;
 	padwidth = PAD(linelen, packAlign);
 
 	// Allocate a few more bytes so that we can choose an alignment we like
-	buffer = (byte *)Hunk_AllocateTempMemory((int)(padwidth * height + *offset + packAlign - 1));
-
+	buffer = (byte *)ri.Hunk_AllocateTempMemory(padwidth * height + *offset + packAlign - 1);
 	bufstart = (byte *)PADP((intptr_t)buffer + *offset, packAlign);
-	qglReadPixels(x, y, width, height, GL_RGB, GL_UNSIGNED_BYTE, bufstart);
+
+	qglReadPixels(x, y, width, height, swapRB ? GL_BGR : GL_RGB, GL_UNSIGNED_BYTE, bufstart);
+
+	// gamma correct
+	if (r_gammamethod->integer == GAMMA_HARDWARE)
+		R_GammaCorrect(bufstart, padwidth * height);
 
 	*offset = bufstart - buffer;
-	*padlen = padwidth - linelen;
 
 	return buffer;
 }
 
+/*
+==================
+R_TakeScreenshot
+==================
+*/
 void R_TakeScreenshot(int x, int y, int width, int height, char *fileName) {
-	byte *allbuf, *buffer;
-	byte *srcptr, *destptr;
-	byte *endline, *endmem;
-	byte temp;
+	byte	*allbuf, *buffer;
+	size_t	offset = 18;
 
-	int linelen, padlen;
-	size_t offset = 18, memcount;
-
-	allbuf = RB_ReadPixels(x, y, width, height, &offset, &padlen);
+	// tga does not use line padding
+	allbuf = RB_ReadPixels(x, y, width, height, &offset, qtrue, 1);
 	buffer = allbuf + offset - 18;
 
 	Com_Memset(buffer, 0, 18);
@@ -761,54 +764,18 @@ void R_TakeScreenshot(int x, int y, int width, int height, char *fileName) {
 	buffer[15] = height >> 8;
 	buffer[16] = 24;	// pixel size
 
-	// swap rgb to bgr and remove padding from line endings
-	linelen = width * 3;
-
-	srcptr = destptr = allbuf + offset;
-	endmem = srcptr + (linelen + padlen) * height;
-
-	while (srcptr < endmem)
-	{
-		endline = srcptr + linelen;
-
-		while (srcptr < endline)
-		{
-			temp = srcptr[0];
-			*destptr++ = srcptr[2];
-			*destptr++ = srcptr[1];
-			*destptr++ = temp;
-
-			srcptr += 3;
-		}
-
-		// Skip the pad
-		srcptr += padlen;
-	}
-
-	memcount = linelen * height;
-
-	// gamma correct
-	if (r_gammamethod->integer == GAMMA_HARDWARE)
-		R_GammaCorrect(allbuf + offset, (int)memcount);
-
-	ri.FS_WriteFile(fileName, buffer, (int)memcount + 18);
+	ri.FS_WriteFile(fileName, buffer, 18 + width * 3 * height);
 
 	ri.Hunk_FreeTempMemory(allbuf);
 }
 
 void R_TakeScreenshotJPEG(int x, int y, int width, int height, char *fileName) {
-	byte *buffer;
-	size_t offset = 0, memcount;
-	int padlen;
+	byte	*buffer;
+	size_t	offset = 0;
 
-	buffer = RB_ReadPixels(x, y, width, height, &offset, &padlen);
-	memcount = (width * 3 + padlen) * height;
+	buffer = RB_ReadPixels(x, y, width, height, &offset, qfalse, 1);
 
-	// gamma correct
-	if (r_gammamethod->integer == GAMMA_HARDWARE)
-		R_GammaCorrect(buffer + offset, (int)memcount);
-
-	SaveJPG(fileName, r_screenshotJpegQuality->integer, width, height, buffer + offset, padlen);
+	SaveJPG(fileName, r_screenshotJpegQuality->integer, width, height, buffer + offset, 0);
 	ri.Hunk_FreeTempMemory(buffer);
 }
 

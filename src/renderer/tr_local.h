@@ -1438,6 +1438,7 @@ float	R_SumOfUsedImages( qboolean bUseFormat );
 void	R_InitSkins( void );
 skin_t	*R_GetSkinByHandle( qhandle_t hSkin );
 
+byte *RB_ReadPixels(int x, int y, int width, int height, size_t *offset, qboolean swapRB, int packAlign);
 
 //
 // tr_shader.c
@@ -1817,8 +1818,6 @@ typedef struct {
 	int		commandId;
 	int		width;
 	int		height;
-	byte		*captureBuffer;
-	byte		*encodeBuffer;
 	qboolean	motionJpeg;
 	int		motionJpegQuality;
 } videoFrameCommand_t;
@@ -1884,8 +1883,7 @@ void RE_EndFrame( int *frontEndMsec, int *backEndMsec );
 void SaveJPG(const char * filename, int quality, int image_width, int image_height, byte *image_buffer, int padding);
 size_t SaveJPGToBuffer(byte *buffer, size_t bufSize, int quality, int image_width,
 	int image_height, byte *image_buffer, int padding);
-void RE_TakeVideoFrame( int width, int height, byte *captureBuffer, byte *encodeBuffer,
-	qboolean motionJpeg );
+void RE_TakeVideoFrame( int width, int height, qboolean motionJpeg );
 
 /*
 Ghoul2 Insert Start

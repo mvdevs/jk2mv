@@ -1324,71 +1324,47 @@ RB_TakeVideoFrameCmd
 const void *RB_TakeVideoFrameCmd( const void *data )
 {
 	const videoFrameCommand_t	*cmd;
-	byte				*cBuf;
-	size_t				memcount, linelen;
-	int				padwidth, avipadwidth, padlen, avipadlen;
-	GLint packAlign;
+	byte	*buffer;
+	byte	*captureBuffer;
+	size_t	offset;
+	size_t	memcount, linelen;
+	int		padwidth, padlen;
 
 	cmd = (const videoFrameCommand_t *)data;
 
-	qglGetIntegerv(GL_PACK_ALIGNMENT, &packAlign);
+	offset = 0;
+	buffer = RB_ReadPixels(0, 0, cmd->width, cmd->height, &offset,
+		(qboolean) !cmd->motionJpeg, AVI_LINE_PADDING);
+	captureBuffer = buffer + offset;
 
-	linelen = cmd->width * 3;
-
-	// Alignment stuff for glReadPixels
-	padwidth = PAD(linelen, packAlign);
-	padlen = padwidth - linelen;
 	// AVI line padding
-	avipadwidth = PAD(linelen, AVI_LINE_PADDING);
-	avipadlen = avipadwidth - linelen;
-
-	cBuf = (byte *)PADP(cmd->captureBuffer, packAlign);
-
-	qglReadPixels(0, 0, cmd->width, cmd->height, GL_RGB,
-		GL_UNSIGNED_BYTE, cBuf);
-
+	linelen = cmd->width * 3;
+	padwidth = PAD(linelen, AVI_LINE_PADDING);
+	padlen = padwidth - linelen;
 	memcount = padwidth * cmd->height;
-
-	// gamma correct
-	if(r_gammamethod->integer == GAMMA_HARDWARE)
-		R_GammaCorrect(cBuf, memcount);
 
 	if(cmd->motionJpeg)
 	{
-		memcount = SaveJPGToBuffer(cmd->encodeBuffer, linelen * cmd->height,
+		byte	*buffer2;
+		byte	*encodeBuffer;
+
+		buffer2 = (byte *)ri.Hunk_AllocateTempMemory(memcount + AVI_LINE_PADDING - 1);
+		encodeBuffer = (byte *)PADP(buffer2, AVI_LINE_PADDING);
+
+		memcount = SaveJPGToBuffer(encodeBuffer, linelen * cmd->height,
 			cmd->motionJpegQuality,
-			cmd->width, cmd->height, cBuf, padlen);
-		ri.CL_WriteAVIVideoFrame(cmd->encodeBuffer, memcount);
+			cmd->width, cmd->height, captureBuffer, padlen);
+
+		ri.CL_WriteAVIVideoFrame(encodeBuffer, memcount);
+
+		ri.Hunk_FreeTempMemory(buffer2);
 	}
 	else
 	{
-		byte *lineend, *memend;
-		byte *srcptr, *destptr;
-
-		srcptr = cBuf;
-		destptr = cmd->encodeBuffer;
-		memend = srcptr + memcount;
-
-		// swap R and B and remove line paddings
-		while(srcptr < memend)
-		{
-			lineend = srcptr + linelen;
-			while(srcptr < lineend)
-			{
-				*destptr++ = srcptr[2];
-				*destptr++ = srcptr[1];
-				*destptr++ = srcptr[0];
-				srcptr += 3;
-			}
-
-			Com_Memset(destptr, '\0', avipadlen);
-			destptr += avipadlen;
-
-			srcptr += padlen;
-		}
-
-		ri.CL_WriteAVIVideoFrame(cmd->encodeBuffer, avipadwidth * cmd->height);
+		ri.CL_WriteAVIVideoFrame(captureBuffer, memcount);
 	}
+
+	ri.Hunk_FreeTempMemory(buffer);
 
 	return (const void *)(cmd + 1);
 }

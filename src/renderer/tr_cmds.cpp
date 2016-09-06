@@ -441,8 +441,7 @@ void RE_EndFrame( int *frontEndMsec, int *backEndMsec ) {
 RE_TakeVideoFrame
 =============
 */
-void RE_TakeVideoFrame( int width, int height,
-			byte *captureBuffer, byte *encodeBuffer, qboolean motionJpeg )
+void RE_TakeVideoFrame( int width, int height, qboolean motionJpeg )
 {
 	videoFrameCommand_t	*cmd;
 
@@ -459,7 +458,5 @@ void RE_TakeVideoFrame( int width, int height,
 
 	cmd->width = width;
 	cmd->height = height;
-	cmd->captureBuffer = captureBuffer;
-	cmd->encodeBuffer = encodeBuffer;
 	cmd->motionJpeg = motionJpeg;
 }
