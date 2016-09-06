@@ -2526,7 +2526,7 @@ void CL_Frame ( int msec ) {
 	}
 
 	// if recording an avi, lock to a fixed fps
-	if ( CL_VideoRecording() && cl_aviFrameRate->value != 0.0f && msec) {
+	if ( CL_VideoRecording() && cl_aviFrameRate->integer && msec) {
 		// save the current screen
 		if ( cls.state == CA_ACTIVE || cl_forceavidemo->integer) {
 			static double	overflow = 0.0;
@@ -2534,7 +2534,7 @@ void CL_Frame ( int msec ) {
 
 			CL_TakeVideoFrame();
 
-			frameTime = (1000.0 / fabsf(cl_aviFrameRate->value)) * com_timescale->value;
+			frameTime = (1000.0 / abs(cl_aviFrameRate->integer)) * com_timescale->value;
 			frameTime += overflow;
 
 			msec = floor(frameTime);
