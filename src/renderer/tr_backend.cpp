@@ -1138,6 +1138,7 @@ const void	*RB_DrawBuffer( const void *data ) {
 	cmd = (const drawBufferCommand_t *)data;
 
 	qglDrawBuffer( cmd->buffer );
+	qglReadBuffer( cmd->buffer );
 
 	// clear screen for debugging
 	if (tr.world && tr.world->globalFog != -1)
@@ -1379,11 +1380,14 @@ smp extensions, or asyncronously by another thread.
 ====================
 */
 void RB_ExecuteRenderCommands( const void *data ) {
-	int		t1, t2;
+	const void	*dataOrig = data;
+	qboolean	firstPassDone = qfalse;
+	qboolean	secondPassDone = qtrue;
+	int			t1, t2;
 
 	t1 = ri.Milliseconds()*Cvar_VariableValue("timescale");
 
-	while (1) {
+	while (!firstPassDone) {
 		switch ( *(const int *)data ) {
 		case RC_SET_COLOR:
 			data = RB_SetColor( data );
@@ -1407,17 +1411,56 @@ void RB_ExecuteRenderCommands( const void *data ) {
 			data = RB_SwapBuffers( data );
 			break;
 		case RC_VIDEOFRAME:
-			data = RB_TakeVideoFrameCmd( data );
+			secondPassDone = qfalse;
+			data = (videoFrameCommand_t *)data + 1;
 			break;
 		case RC_END_OF_LIST:
+			firstPassDone = qtrue;
+			break;
 		default:
-			// stop rendering
-			t2 = ri.Milliseconds()*Cvar_VariableValue("timescale");
-			backEnd.pc.msec = t2 - t1;
-			return;
+			ri.Error(ERR_DROP, "Unknown render command");
 		}
 	}
 
+	data = dataOrig;
+
+	while (!secondPassDone) {
+		switch ( *(const int *)data ) {
+		case RC_SET_COLOR:
+			data = (setColorCommand_t *)data + 1;
+			break;
+		case RC_STRETCH_PIC:
+			data = (stretchPicCommand_t *)data + 1;
+			break;
+		case RC_ROTATE_PIC:
+			data = (rotatePicCommand_t *)data + 1;
+			break;
+		case RC_ROTATE_PIC2:
+			data = (rotatePicCommand_t *)data + 1;
+			break;
+		case RC_DRAW_SURFS:
+			data =(drawSurfsCommand_t *)data + 1;
+			break;
+		case RC_DRAW_BUFFER:
+			data = (drawBufferCommand_t *)data + 1;
+			break;
+		case RC_SWAP_BUFFERS:
+			data = (swapBuffersCommand_t *)data + 1;
+			break;
+		case RC_VIDEOFRAME:
+			data = RB_TakeVideoFrameCmd( data );
+			break;
+		case RC_END_OF_LIST:
+			secondPassDone = qtrue;
+			break;
+		default:
+			ri.Error(ERR_DROP, "Unknown render command");
+		}
+	}
+
+	// stop rendering
+	t2 = ri.Milliseconds()*Cvar_VariableValue("timescale");
+	backEnd.pc.msec = t2 - t1;
 }
 
 // What Pixel Shader type is currently active (regcoms or fragment programs).
