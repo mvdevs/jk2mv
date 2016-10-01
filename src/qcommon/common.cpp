@@ -546,8 +546,9 @@ void Info_Print( const char *s ) {
 Com_StringContains
 ============
 */
-char *Com_StringContains(char *str1, char *str2, int casesensitive) {
-	size_t len, i, j;
+static const char *Com_StringContains(const char *str1, const char *str2, int casesensitive) {
+	ptrdiff_t	len, i;
+	size_t		j;
 
 	len = strlen(str1) - strlen(str2);
 	for (i = 0; i <= len; i++, str1++) {
@@ -575,10 +576,10 @@ char *Com_StringContains(char *str1, char *str2, int casesensitive) {
 Com_Filter
 ============
 */
-int Com_Filter(char *filter, char *name, int casesensitive)
+int Com_Filter(const char *filter, const char *name, int casesensitive)
 {
 	char buf[MAX_TOKEN_CHARS];
-	char *ptr;
+	const char *ptr;
 	int i, found;
 
 	while(*filter) {
