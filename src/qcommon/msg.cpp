@@ -31,6 +31,11 @@ Handles byte ordering and avoids alignment errors
 ==============================================================================
 */
 
+netField_t statsField = { "stats" };
+netField_t persistantField = { "persistant" };
+netField_t ammoField = { "ammo" };
+netField_t powerupField = { "ammo" };
+
 netField_t noField = { "<none>" };
 netField_t *gLastField = &noField;
 
@@ -1634,9 +1639,11 @@ void MSG_WriteDeltaPlayerstate(msg_t *msg, struct playerState_s *from, struct pl
 	if (statsbits) {
 		MSG_WriteBits(msg, 1, 1);	// changed
 		MSG_WriteShort(msg, statsbits);
+		gLastField = &statsField;
 		for (i = 0; i<16; i++)
 			if (statsbits & (1 << i))
 				MSG_WriteShort(msg, to->stats[i]);
+		gLastField = &noField;
 	} else {
 		MSG_WriteBits(msg, 0, 1);	// no change
 	}
@@ -1645,9 +1652,11 @@ void MSG_WriteDeltaPlayerstate(msg_t *msg, struct playerState_s *from, struct pl
 	if (persistantbits) {
 		MSG_WriteBits(msg, 1, 1);	// changed
 		MSG_WriteShort(msg, persistantbits);
+		gLastField = &persistantField;
 		for (i = 0; i<16; i++)
 			if (persistantbits & (1 << i))
 				MSG_WriteShort(msg, to->persistant[i]);
+		gLastField = &noField;
 	} else {
 		MSG_WriteBits(msg, 0, 1);	// no change
 	}
@@ -1656,9 +1665,11 @@ void MSG_WriteDeltaPlayerstate(msg_t *msg, struct playerState_s *from, struct pl
 	if (ammobits) {
 		MSG_WriteBits(msg, 1, 1);	// changed
 		MSG_WriteShort(msg, ammobits);
+		gLastField = &ammoField;
 		for (i = 0; i<16; i++)
 			if (ammobits & (1 << i))
 				MSG_WriteShort(msg, to->ammo[i]);
+		gLastField = &noField;
 	} else {
 		MSG_WriteBits(msg, 0, 1);	// no change
 	}
@@ -1667,9 +1678,11 @@ void MSG_WriteDeltaPlayerstate(msg_t *msg, struct playerState_s *from, struct pl
 	if (powerupbits) {
 		MSG_WriteBits(msg, 1, 1);	// changed
 		MSG_WriteShort(msg, powerupbits);
+		gLastField = &powerupField;
 		for (i = 0; i<16; i++)
 			if (powerupbits & (1 << i))
 				MSG_WriteLong(msg, to->powerups[i]);
+		gLastField = &noField;
 	} else {
 		MSG_WriteBits(msg, 0, 1);	// no change
 	}
