@@ -39,6 +39,7 @@ netField_t powerupsField = { "powerups" };
 netField_t noField = { "<none>" };
 netField_t *gLastField = &noField;
 
+int	fieldIndex;
 int oldsize = 0;
 
 void MSG_initHuffman();
@@ -117,7 +118,7 @@ void MSG_WriteBits(msg_t *msg, int value, int bits) {
 		if (bits > 0) {
 			if (value > ((1 << bits) - 1) || value < 0) {
 				overflows++;
-				Com_DPrintf ("MSG_WriteBits: overflow writing %d in %d bits [field %s]\n", value, bits, gLastField->name);
+				Com_DPrintf ("MSG_WriteBits: overflow writing %d in %d bits [field %s offset %d]\n", value, bits, gLastField->name, fieldIndex);
 				assert (gLastField != &noField); // this means engine bug
 			}
 		} else {
@@ -127,7 +128,7 @@ void MSG_WriteBits(msg_t *msg, int value, int bits) {
 
 			if (value >  r - 1 || value < -r) {
 				overflows++;
-				Com_DPrintf ("MSG_WriteBits: overflow writing %d in %d bits [field %s]\n", value, bits, gLastField->name);
+				Com_DPrintf ("MSG_WriteBits: overflow writing %d in %d bits [field %s offset %d]\n", value, bits, gLastField->name, fieldIndex);
 				assert (gLastField != &noField);  // this means engine bug
 			}
 		}
@@ -1640,10 +1641,11 @@ void MSG_WriteDeltaPlayerstate(msg_t *msg, struct playerState_s *from, struct pl
 		MSG_WriteBits(msg, 1, 1);	// changed
 		MSG_WriteShort(msg, statsbits);
 		gLastField = &statsField;
-		for (i = 0; i<16; i++)
-			if (statsbits & (1 << i))
-				MSG_WriteShort(msg, to->stats[i]);
+		for (fieldIndex = 0; fieldIndex < 16; fieldIndex++)
+			if (statsbits & (1 << fieldIndex))
+				MSG_WriteShort(msg, to->stats[fieldIndex]);
 		gLastField = &noField;
+		fieldIndex = 0;
 	} else {
 		MSG_WriteBits(msg, 0, 1);	// no change
 	}
@@ -1653,10 +1655,11 @@ void MSG_WriteDeltaPlayerstate(msg_t *msg, struct playerState_s *from, struct pl
 		MSG_WriteBits(msg, 1, 1);	// changed
 		MSG_WriteShort(msg, persistantbits);
 		gLastField = &persistantField;
-		for (i = 0; i<16; i++)
-			if (persistantbits & (1 << i))
-				MSG_WriteShort(msg, to->persistant[i]);
+		for (fieldIndex = 0; fieldIndex < 16; fieldIndex++)
+			if (persistantbits & (1 << fieldIndex))
+				MSG_WriteShort(msg, to->persistant[fieldIndex]);
 		gLastField = &noField;
+		fieldIndex = 0;
 	} else {
 		MSG_WriteBits(msg, 0, 1);	// no change
 	}
@@ -1666,10 +1669,11 @@ void MSG_WriteDeltaPlayerstate(msg_t *msg, struct playerState_s *from, struct pl
 		MSG_WriteBits(msg, 1, 1);	// changed
 		MSG_WriteShort(msg, ammobits);
 		gLastField = &ammoField;
-		for (i = 0; i<16; i++)
-			if (ammobits & (1 << i))
-				MSG_WriteShort(msg, to->ammo[i]);
+		for (fieldIndex = 0; fieldIndex < 16; fieldIndex++)
+			if (ammobits & (1 << fieldIndex))
+				MSG_WriteShort(msg, to->ammo[fieldIndex]);
 		gLastField = &noField;
+		fieldIndex = 0;
 	} else {
 		MSG_WriteBits(msg, 0, 1);	// no change
 	}
@@ -1679,10 +1683,11 @@ void MSG_WriteDeltaPlayerstate(msg_t *msg, struct playerState_s *from, struct pl
 		MSG_WriteBits(msg, 1, 1);	// changed
 		MSG_WriteShort(msg, powerupbits);
 		gLastField = &powerupsField;
-		for (i = 0; i<16; i++)
-			if (powerupbits & (1 << i))
-				MSG_WriteLong(msg, to->powerups[i]);
+		for (fieldIndex = 0; fieldIndex < 16; fieldIndex++)
+			if (powerupbits & (1 << fieldIndex))
+				MSG_WriteLong(msg, to->powerups[fieldIndex]);
 		gLastField = &noField;
+		fieldIndex = 0;
 	} else {
 		MSG_WriteBits(msg, 0, 1);	// no change
 	}
