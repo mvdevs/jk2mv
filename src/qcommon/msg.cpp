@@ -34,7 +34,7 @@ Handles byte ordering and avoids alignment errors
 netField_t statsField = { "stats" };
 netField_t persistantField = { "persistant" };
 netField_t ammoField = { "ammo" };
-netField_t powerupField = { "ammo" };
+netField_t powerupsField = { "powerups" };
 
 netField_t noField = { "<none>" };
 netField_t *gLastField = &noField;
@@ -1678,7 +1678,7 @@ void MSG_WriteDeltaPlayerstate(msg_t *msg, struct playerState_s *from, struct pl
 	if (powerupbits) {
 		MSG_WriteBits(msg, 1, 1);	// changed
 		MSG_WriteShort(msg, powerupbits);
-		gLastField = &powerupField;
+		gLastField = &powerupsField;
 		for (i = 0; i<16; i++)
 			if (powerupbits & (1 << i))
 				MSG_WriteLong(msg, to->powerups[i]);
