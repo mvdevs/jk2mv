@@ -75,6 +75,7 @@ cvar_t	*cl_autolodscale;
 cvar_t	*mv_slowrefresh;
 cvar_t	*mv_coloredTextShadows;
 cvar_t	*mv_consoleShiftRequirement;
+cvar_t	*mv_menuOverride;
 
 cvar_t	*cl_downloadName;
 cvar_t	*cl_downloadLocalName;
@@ -2869,6 +2870,7 @@ void CL_Init( void ) {
 	mv_slowrefresh = Cvar_Get("mv_slowrefresh", "3", CVAR_ARCHIVE | CVAR_GLOBAL);
 	mv_coloredTextShadows	= Cvar_Get("mv_coloredTextShadows"	, "2", CVAR_ARCHIVE | CVAR_GLOBAL);
 	mv_consoleShiftRequirement = Cvar_Get("mv_consoleShiftRequirement", "1", CVAR_ARCHIVE | CVAR_GLOBAL);
+	mv_menuOverride = Cvar_Get("mv_menuOverride", "0", CVAR_INIT | CVAR_VM_NOWRITE);
 
 	cl_downloadName = Cvar_Get("cl_downloadName", "", CVAR_INTERNAL);
 	cl_downloadLocalName = Cvar_Get("cl_downloadLocalName", "", CVAR_INTERNAL);

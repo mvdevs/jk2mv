@@ -436,6 +436,7 @@ extern	cvar_t	*mv_allowDownload;
 extern	cvar_t	*cl_conXOffset;
 extern	cvar_t	*cl_inGameVideo;
 extern	cvar_t	*mv_consoleShiftRequirement;
+extern	cvar_t	*mv_menuOverride;
 
 extern	cvar_t	*cl_autoDemo;
 extern	cvar_t	*cl_autoDemoFormat;

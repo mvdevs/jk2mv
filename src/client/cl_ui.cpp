@@ -1220,7 +1220,7 @@ void CL_InitUI(qboolean mainMenu) {
 	Cvar_Get("ui_menulevel", "0", CVAR_ROM | CVAR_INTERNAL, qfalse);
 	Cvar_Set("ui_menulevel", "0");
 
-	if (mainMenu) {
+	if (mainMenu && mv_menuOverride->integer == 0) {
 		uigameversion = VERSION_UNDEF;
 
 		uivm = VM_Create("jk2mvmenu", qtrue, CL_UISystemCalls, VMI_NATIVE);

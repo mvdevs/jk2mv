@@ -104,6 +104,16 @@ Client-Side
 
 ..
 
+:Name: mv_overrideMenu
+:Values: "0", "1"
+:Default: "0"
+:Description:
+   Allow loading custom UI modules in the main menu. Beware! This
+   gives full control over downloaded content to the mod, there will
+   be no download popup. Use only for testing.
+
+..
+
 :Name: mv_slowrefresh
 :Values: Integer >= 0
 :Default: "3"
