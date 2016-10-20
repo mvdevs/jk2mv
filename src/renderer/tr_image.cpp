@@ -611,12 +611,15 @@ static void Upload32( byte * const *mipmaps, qboolean customMip, image_t *image,
 	//
 	c = width*height;
 	samples = 3;
-	for ( i = 0; i < c; i++ )
-	{
-		if ( data[i*4 + 3] != 255 )
+	// lightmaps are always 24-bit
+	if ( !isLightmap ) {
+	  for ( i = 0; i < c; i++ )
 		{
-			samples = 4;
-			break;
+		  if ( data[i*4 + 3] != 255 )
+			{
+			  samples = 4;
+			  break;
+			}
 		}
 	}
 
@@ -638,12 +641,7 @@ static void Upload32( byte * const *mipmaps, qboolean customMip, image_t *image,
 		}
 		else if ( glConfig.textureCompression == TC_S3TC_DXT && !upload->noTC )
 		{	// Compress purely color - no alpha
-			if ( texturebits == 16 ) {
-				image->internalFormat = GL_COMPRESSED_RGB_S3TC_DXT1_EXT;	//this format cuts to 16 bit
-			}
-			else {//if we aren't using 16 bit then, use 32 bit compression
-				image->internalFormat = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
-			}
+			image->internalFormat = GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
 		}
 		else if ( texturebits == 16 )
 		{
