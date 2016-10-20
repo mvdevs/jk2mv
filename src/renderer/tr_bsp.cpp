@@ -231,7 +231,8 @@ static	void R_LoadLightmaps( lump_t *l, const char *psMapName ) {
 			}
 		}
 		tr.lightmaps[i] = R_CreateImage( va("*%s/lightmap%d",sMapName,i), image,
-			LIGHTMAP_SIZE, LIGHTMAP_SIZE, qfalse, qfalse, qtrue, GL_CLAMP );
+										 LIGHTMAP_SIZE, LIGHTMAP_SIZE, qfalse, qfalse,
+										 (qboolean) !!r_ext_compressed_lightmaps->integer, GL_CLAMP );
 	}
 
 	if ( r_lightmap->integer == 2 )	{

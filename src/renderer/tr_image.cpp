@@ -623,36 +623,33 @@ static void Upload32( byte * const *mipmaps, qboolean customMip, image_t *image,
 	// select proper internal format
 	if ( samples == 3 )
 	{
+		int texturebits;
+
+		// Allow different bit depth when we are a lightmap
+		if ( isLightmap && r_texturebitslm->integer > 0 ) {
+			texturebits = r_texturebitslm->integer;
+		} else {
+			texturebits = r_texturebits->integer;
+		}
+
 		if ( glConfig.textureCompression == TC_S3TC && !upload->noTC )
 		{
 			image->internalFormat = GL_RGB4_S3TC;
 		}
 		else if ( glConfig.textureCompression == TC_S3TC_DXT && !upload->noTC )
 		{	// Compress purely color - no alpha
-			if ( r_texturebits->integer == 16 ) {
+			if ( texturebits == 16 ) {
 				image->internalFormat = GL_COMPRESSED_RGB_S3TC_DXT1_EXT;	//this format cuts to 16 bit
 			}
 			else {//if we aren't using 16 bit then, use 32 bit compression
 				image->internalFormat = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
 			}
 		}
-		else if ( isLightmap && r_texturebitslm->integer > 0 )
-		{
-			// Allow different bit depth when we are a lightmap
-			if ( r_texturebitslm->integer == 16 )
-			{
-				image->internalFormat = GL_RGB5;
-			}
-			else if ( r_texturebitslm->integer == 32 )
-			{
-				image->internalFormat = GL_RGB8;
-			}
-		}
-		else if ( r_texturebits->integer == 16 )
+		else if ( texturebits == 16 )
 		{
 			image->internalFormat = GL_RGB5;
 		}
-		else if ( r_texturebits->integer == 32 )
+		else if ( texturebits == 32 )
 		{
 			image->internalFormat = GL_RGB8;
 		}
