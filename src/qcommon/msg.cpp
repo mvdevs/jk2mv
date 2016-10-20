@@ -705,7 +705,11 @@ MSG_WriteDeltaUsercmd
 =====================
 */
 void MSG_WriteDeltaUsercmdKey(msg_t *msg, int key, usercmd_t *from, usercmd_t *to) {
-	if (to->serverTime - from->serverTime < 256) {
+	if (to->serverTime < from->serverTime) {
+		Com_Printf(S_COLOR_YELLOW "WARNING: Command time went backwards\n");
+		MSG_WriteBits(msg, 0, 1);
+		MSG_WriteBits(msg, to->serverTime, 32);
+	} else if (to->serverTime - from->serverTime < 256) {
 		MSG_WriteBits(msg, 1, 1);
 		MSG_WriteBits(msg, to->serverTime - from->serverTime, 8);
 	} else {
