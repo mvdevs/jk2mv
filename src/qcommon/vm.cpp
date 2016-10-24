@@ -230,10 +230,12 @@ void VM_LoadSymbols( vm_t *vm ) {
 		return;
 	}
 
+#ifndef DEBUG_VM
 	// don't load symbols if not developer
 	if ( !com_developer->integer ) {
 		return;
 	}
+#endif
 
 	COM_StripExtension(vm->name, name, sizeof(name));
 	Com_sprintf( symbols, sizeof( symbols ), "vm/%s.map", name );
@@ -848,7 +850,7 @@ VM_VmProfile_f
 ==============
 */
 void VM_VmProfile_f( void ) {
-	vm_t		*vm;
+	vm_t		*vm = NULL;
 	vmSymbol_t	**sorted, *sym;
 	int			i;
 	long		total;
@@ -856,18 +858,6 @@ void VM_VmProfile_f( void ) {
 	qboolean	printHelp = qfalse;
 	qboolean	resetCounts = qfalse;
 	qboolean	printAll = qfalse;
-
-	if ( !lastVM ) {
-		Com_Printf("No VM\n");
-		return;
-	}
-
-	vm = lastVM;
-
-	if ( !vm->numSymbols ) {
-		Com_Printf("No symbols\n");
-		return;
-	}
 
 	if ( Cmd_Argc() >= 2 ) {
 		const char *arg = Cmd_Argv(1);
@@ -881,8 +871,21 @@ void VM_VmProfile_f( void ) {
 			resetCounts = qtrue;
 			Com_Printf("Collecting inclusive function instruction counts...\n");
 		} else if ( !Q_stricmp(arg, "print") ) {
-			if ( !Q_stricmp(Cmd_Argv(2), "all") ) {
-				printAll = qtrue;
+			if (Cmd_Argc() >= 3) {
+				for ( i = 0; i < MAX_VM; i++ ) {
+					if ( !Q_stricmp(Cmd_Argv(2), vmTable[i].name) ) {
+						vm = &vmTable[i];
+						break;
+					}
+				}
+			} else {
+				// pick first VM with symbols
+				for ( i = 0; i < MAX_VM; i++ ) {
+					if ( vmTable[i].numSymbols ) {
+						vm = &vmTable[i];
+						break;
+					}
+				}
 			}
 		} else {
 			printHelp = qtrue;
@@ -892,10 +895,12 @@ void VM_VmProfile_f( void ) {
 	}
 
 	if ( resetCounts ) {
-		for ( sym = vm->symbols ; sym ; sym = sym->next ) {
-			sym->profileCount = 0;
-			sym->callCount = 0;
-			sym->caller = NULL;
+		for ( i = 0; i < MAX_VM; i++ ) {
+			for ( sym = vmTable[i].symbols ; sym ; sym = sym->next ) {
+				sym->profileCount = 0;
+				sym->callCount = 0;
+				sym->caller = NULL;
+			}
 		}
 		return;
 	}
@@ -903,7 +908,12 @@ void VM_VmProfile_f( void ) {
 	if ( printHelp ) {
 		Com_Printf("Usage: vmprofile exclusive        start collecting exclusive counts\n");
 		Com_Printf("       vmprofile inclusive        start collecting inclusive counts\n");
-		Com_Printf("       vmprofile print [all]      print collected data\n");
+		Com_Printf("       vmprofile print [vm]       print collected data\n");
+		return;
+	}
+
+	if ( vm == NULL || vm->numSymbols <= 0 ) {
+		Com_Printf("No symbols\n");
 		return;
 	}
 
@@ -921,36 +931,38 @@ void VM_VmProfile_f( void ) {
 	if ( vm_profileInclusive )
 		total = VM_ValueToFunctionSymbol( vm, 0 )->profileCount;
 
-	qsort( sorted, vm->numSymbols, sizeof( *sorted ), VM_ProfileSort );
+	if ( total > 0 ) {
+		qsort( sorted, vm->numSymbols, sizeof( *sorted ), VM_ProfileSort );
 
-	Com_Printf( "%4s %12s %9s Function Name\n",
-				vm_profileInclusive ? "Incl" : "Excl",
-				"Instructions", "Calls" );
+		Com_Printf( "%4s %12s %9s Function Name\n",
+			vm_profileInclusive ? "Incl" : "Excl",
+			"Instructions", "Calls" );
 
-	// todo: collect associations for generating callgraphs
-	fileHandle_t callgrind = FS_FOpenFileWrite( va("callgrind.out.%s", vm->name) );
-	// callgrind header
-	FS_Printf( callgrind,
-		"events: VM_Instructions\n"
-		"fl=vm/%s.qvm\n\n", vm->name );
+		// todo: collect associations for generating callgraphs
+		fileHandle_t callgrind = FS_FOpenFileWrite( va("callgrind.out.%s", vm->name) );
+		// callgrind header
+		FS_Printf( callgrind,
+			"events: VM_Instructions\n"
+			"fl=vm/%s.qvm\n\n", vm->name );
 
-	for ( i = 0 ; i < vm->numSymbols ; i++ ) {
-		int		perc;
+		for ( i = 0 ; i < vm->numSymbols ; i++ ) {
+			int		perc;
 
-		sym = sorted[i];
+			sym = sorted[i];
 
-		if (printAll || sym->profileCount != 0 || sym->callCount != 0) {
-			perc = 100 * sym->profileCount / total;
-			Com_Printf( "%3i%% %12li %9i %s\n", perc, sym->profileCount, sym->callCount, sym->symName );
+			if (printAll || sym->profileCount != 0 || sym->callCount != 0) {
+				perc = 100 * sym->profileCount / total;
+				Com_Printf( "%3i%% %12li %9i %s\n", perc, sym->profileCount, sym->callCount, sym->symName );
+			}
+
+			FS_Printf(callgrind,
+				"fn=%s\n"
+				"0 %li\n\n",
+				sym->symName, sym->profileCount);
 		}
 
-		FS_Printf(callgrind,
-			"fn=%s\n"
-			"0 %li\n\n",
-			sym->symName, sym->profileCount);
+		FS_FCloseFile( callgrind );
 	}
-
-	FS_FCloseFile( callgrind );
 
 	Com_Printf("     %12li %9i total\n", total, totalCalls );
 
