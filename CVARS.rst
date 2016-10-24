@@ -104,7 +104,7 @@ Client-Side
 
 ..
 
-:Name: mv_overrideMenu
+:Name: mv_menuOverride
 :Values: "0", "1"
 :Default: "0"
 :Description:
