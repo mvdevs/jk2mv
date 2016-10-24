@@ -580,8 +580,8 @@ void Con_DrawNotify (void)
 	re.SetColor( g_color_table[currentColor] );
 
 	static int iFontIndex = re.RegisterFont("ocr_a");
-	float fFontScale;
-	int iPixelHeightToAdvance;
+	float fFontScale = 1.0f;
+	int iPixelHeightToAdvance = 0;
 	if (re.Language_IsAsian())
 	{
 		fFontScale = cls.xadjust * con.charWidth *
@@ -760,7 +760,7 @@ void Con_DrawSolidConsole( float frac ) {
 	re.SetColor( g_color_table[currentColor] );
 
 	static int iFontIndex = re.RegisterFont("ocr_a");
-	float fFontScale;
+	float fFontScale = 1.0f;
 	int iPixelHeightToAdvance = con.charHeight;
 	if (re.Language_IsAsian())
 	{
