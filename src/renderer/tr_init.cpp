@@ -748,7 +748,24 @@ byte *RB_ReadPixels(int x, int y, int width, int height, size_t *offset, qboolea
 R_TakeScreenshot
 ==================
 */
-void R_TakeScreenshot(int x, int y, int width, int height, char *fileName) {
+static void R_TakeScreenshot(int x, int y, int width, int height, const char *fileName, qboolean jpeg) {
+	screenshotCommand_t	*cmd;
+
+	cmd = (screenshotCommand_t *)R_GetCommandBuffer( sizeof( *cmd ) );
+	if ( !cmd ) {
+		return;
+	}
+	cmd->commandId = RC_SCREENSHOT;
+
+	cmd->x = x;
+	cmd->y = y;
+	cmd->width = width;
+	cmd->height = height;
+	Q_strncpyz( cmd->fileName, fileName, sizeof( cmd->fileName ) );
+	cmd->jpeg = jpeg;
+}
+
+void RB_TakeScreenshot(int x, int y, int width, int height, const char *fileName) {
 	byte	*allbuf, *buffer;
 	size_t	offset = 18;
 
@@ -769,7 +786,7 @@ void R_TakeScreenshot(int x, int y, int width, int height, char *fileName) {
 	ri.Hunk_FreeTempMemory(allbuf);
 }
 
-void R_TakeScreenshotJPEG(int x, int y, int width, int height, char *fileName) {
+void RB_TakeScreenshotJPEG(int x, int y, int width, int height, const char *fileName) {
 	byte	*buffer;
 	size_t	offset = 0;
 
@@ -931,7 +948,7 @@ void R_ScreenShotTGA_f (void) {
 	}
 
 
-	R_TakeScreenshot( 0, 0, glConfig.vidWidth, glConfig.vidHeight, checkname );
+	R_TakeScreenshot( 0, 0, glConfig.vidWidth, glConfig.vidHeight, checkname, qfalse );
 
 	if ( !silent ) {
 		ri.Printf (PRINT_ALL, "Wrote %s\n", checkname);
@@ -985,7 +1002,7 @@ void R_ScreenShot_f (void) {
 	}
 
 
-	R_TakeScreenshotJPEG( 0, 0, glConfig.vidWidth, glConfig.vidHeight, checkname );
+	R_TakeScreenshot( 0, 0, glConfig.vidWidth, glConfig.vidHeight, checkname, qtrue );
 
 	if ( !silent ) {
 		ri.Printf (PRINT_ALL, "Wrote %s\n", checkname);

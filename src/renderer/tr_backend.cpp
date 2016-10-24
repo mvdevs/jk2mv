@@ -1370,6 +1370,24 @@ const void *RB_TakeVideoFrameCmd( const void *data )
 	return (const void *)(cmd + 1);
 }
 
+/*
+==================
+RB_TakeScreenshotCmd
+==================
+*/
+const void *RB_TakeScreenshotCmd( const void *data )
+{
+	const screenshotCommand_t	*cmd;
+
+	cmd = (const screenshotCommand_t *)data;
+
+	if (cmd->jpeg)
+		RB_TakeScreenshotJPEG(cmd->x, cmd->y, cmd->width, cmd->height, cmd->fileName);
+	else
+		RB_TakeScreenshot(cmd->x, cmd->y, cmd->width, cmd->height, cmd->fileName);
+
+	return (const void *)(cmd + 1);
+}
 
 /*
 ====================
@@ -1414,6 +1432,9 @@ void RB_ExecuteRenderCommands( const void *data ) {
 			secondPassDone = qfalse;
 			data = (videoFrameCommand_t *)data + 1;
 			break;
+		case RC_SCREENSHOT:
+			secondPassDone = qfalse;
+			data = (screenshotCommand_t *)data + 1;
 		case RC_END_OF_LIST:
 			firstPassDone = qtrue;
 			break;
@@ -1449,6 +1470,9 @@ void RB_ExecuteRenderCommands( const void *data ) {
 			break;
 		case RC_VIDEOFRAME:
 			data = RB_TakeVideoFrameCmd( data );
+			break;
+		case RC_SCREENSHOT:
+			data = RB_TakeScreenshotCmd( data );
 			break;
 		case RC_END_OF_LIST:
 			secondPassDone = qtrue;

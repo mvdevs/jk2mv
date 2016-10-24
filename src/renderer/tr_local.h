@@ -1548,6 +1548,8 @@ void RB_AddQuadStampExt( vec3_t origin, vec3_t left, vec3_t up, byte *color, flo
 
 void RB_ShowImages( void );
 
+void RB_TakeScreenshot(int x, int y, int width, int height, const char *fileName);
+void RB_TakeScreenshotJPEG(int x, int y, int width, int height, const char *fileName);
 
 /*
 ============================================================
@@ -1822,6 +1824,16 @@ typedef struct {
 	int		motionJpegQuality;
 } videoFrameCommand_t;
 
+typedef struct {
+	int		commandId;
+	int		x;
+	int		y;
+	int		width;
+	int		height;
+	char	fileName[MAX_OSPATH]; // large but we don't take screenshots too often
+	qboolean	jpeg;
+} screenshotCommand_t;
+
 typedef enum {
 	RC_END_OF_LIST,
 	RC_SET_COLOR,
@@ -1831,7 +1843,8 @@ typedef enum {
 	RC_DRAW_SURFS,
 	RC_DRAW_BUFFER,
 	RC_SWAP_BUFFERS,
-	RC_VIDEOFRAME
+	RC_VIDEOFRAME,
+	RC_SCREENSHOT,
 } renderCommand_t;
 
 
