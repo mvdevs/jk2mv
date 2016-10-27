@@ -546,6 +546,9 @@ extern	int			cvar_modifiedFlags;
 // etc, variables have been modified since the last check.  The bit
 // can then be cleared to allow another change detection.
 
+void FS_HomeRemove( const char *homePath );
+qboolean FS_IsFifo( const char *filename );
+
 /*
 ==============================================================
 
@@ -936,6 +939,8 @@ void S_ClearSoundBuffer( void );
 
 void SCR_DebugGraph (float value, int color);	// FIXME: move logging to common?
 
+// AVI files have the start of pixel lines 4 byte-aligned
+#define AVI_LINE_PADDING 4
 
 //
 // server interface

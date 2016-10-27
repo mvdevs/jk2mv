@@ -48,6 +48,7 @@
 	TAGDEF(SPECIAL_MEM_TEST),			// special usage for testing z_malloc recover only
 
 	TAGDEF(DOWNLOADBLACKLIST),
+	TAGDEF(AVI),						// image buffers for avi recording
 
 /*	TAGDEF(SHADER),
 	TAGDEF(RMAP),

@@ -1138,6 +1138,7 @@ const void	*RB_DrawBuffer( const void *data ) {
 	cmd = (const drawBufferCommand_t *)data;
 
 	qglDrawBuffer( cmd->buffer );
+	qglReadBuffer( cmd->buffer );
 
 	// clear screen for debugging
 	if (tr.world && tr.world->globalFog != -1)
@@ -1315,6 +1316,79 @@ const void	*RB_SwapBuffers( const void *data ) {
 	return (const void *)(cmd + 1);
 }
 
+
+/*
+==================
+RB_TakeVideoFrameCmd
+==================
+*/
+const void *RB_TakeVideoFrameCmd( const void *data )
+{
+	const videoFrameCommand_t	*cmd;
+	byte	*buffer;
+	byte	*captureBuffer;
+	size_t	offset;
+	size_t	memcount, linelen;
+	int		padwidth, padlen;
+
+	cmd = (const videoFrameCommand_t *)data;
+
+	offset = 0;
+	buffer = RB_ReadPixels(0, 0, cmd->width, cmd->height, &offset,
+		(qboolean) !cmd->motionJpeg, AVI_LINE_PADDING);
+	captureBuffer = buffer + offset;
+
+	// AVI line padding
+	linelen = cmd->width * 3;
+	padwidth = PAD(linelen, AVI_LINE_PADDING);
+	padlen = padwidth - linelen;
+	memcount = padwidth * cmd->height;
+
+	if(cmd->motionJpeg)
+	{
+		byte	*buffer2;
+		byte	*encodeBuffer;
+
+		buffer2 = (byte *)ri.Hunk_AllocateTempMemory(memcount + AVI_LINE_PADDING - 1);
+		encodeBuffer = (byte *)PADP(buffer2, AVI_LINE_PADDING);
+
+		memcount = SaveJPGToBuffer(encodeBuffer, linelen * cmd->height,
+			cmd->motionJpegQuality,
+			cmd->width, cmd->height, captureBuffer, padlen);
+
+		ri.CL_WriteAVIVideoFrame(encodeBuffer, memcount);
+
+		ri.Hunk_FreeTempMemory(buffer2);
+	}
+	else
+	{
+		ri.CL_WriteAVIVideoFrame(captureBuffer, memcount);
+	}
+
+	ri.Hunk_FreeTempMemory(buffer);
+
+	return (const void *)(cmd + 1);
+}
+
+/*
+==================
+RB_TakeScreenshotCmd
+==================
+*/
+const void *RB_TakeScreenshotCmd( const void *data )
+{
+	const screenshotCommand_t	*cmd;
+
+	cmd = (const screenshotCommand_t *)data;
+
+	if (cmd->jpeg)
+		RB_TakeScreenshotJPEG(cmd->x, cmd->y, cmd->width, cmd->height, cmd->fileName);
+	else
+		RB_TakeScreenshot(cmd->x, cmd->y, cmd->width, cmd->height, cmd->fileName);
+
+	return (const void *)(cmd + 1);
+}
+
 /*
 ====================
 RB_ExecuteRenderCommands
@@ -1324,11 +1398,14 @@ smp extensions, or asyncronously by another thread.
 ====================
 */
 void RB_ExecuteRenderCommands( const void *data ) {
-	int		t1, t2;
+	const void	*dataOrig = data;
+	qboolean	firstPassDone = qfalse;
+	qboolean	secondPassDone = qtrue;
+	int			t1, t2;
 
 	t1 = ri.Milliseconds()*Cvar_VariableValue("timescale");
 
-	while (1) {
+	while (!firstPassDone) {
 		switch ( *(const int *)data ) {
 		case RC_SET_COLOR:
 			data = RB_SetColor( data );
@@ -1351,16 +1428,63 @@ void RB_ExecuteRenderCommands( const void *data ) {
 		case RC_SWAP_BUFFERS:
 			data = RB_SwapBuffers( data );
 			break;
-
+		case RC_VIDEOFRAME:
+			secondPassDone = qfalse;
+			data = (videoFrameCommand_t *)data + 1;
+			break;
+		case RC_SCREENSHOT:
+			secondPassDone = qfalse;
+			data = (screenshotCommand_t *)data + 1;
 		case RC_END_OF_LIST:
+			firstPassDone = qtrue;
+			break;
 		default:
-			// stop rendering
-			t2 = ri.Milliseconds()*Cvar_VariableValue("timescale");
-			backEnd.pc.msec = t2 - t1;
-			return;
+			ri.Error(ERR_DROP, "Unknown render command");
 		}
 	}
 
+	data = dataOrig;
+
+	while (!secondPassDone) {
+		switch ( *(const int *)data ) {
+		case RC_SET_COLOR:
+			data = (setColorCommand_t *)data + 1;
+			break;
+		case RC_STRETCH_PIC:
+			data = (stretchPicCommand_t *)data + 1;
+			break;
+		case RC_ROTATE_PIC:
+			data = (rotatePicCommand_t *)data + 1;
+			break;
+		case RC_ROTATE_PIC2:
+			data = (rotatePicCommand_t *)data + 1;
+			break;
+		case RC_DRAW_SURFS:
+			data =(drawSurfsCommand_t *)data + 1;
+			break;
+		case RC_DRAW_BUFFER:
+			data = (drawBufferCommand_t *)data + 1;
+			break;
+		case RC_SWAP_BUFFERS:
+			data = (swapBuffersCommand_t *)data + 1;
+			break;
+		case RC_VIDEOFRAME:
+			data = RB_TakeVideoFrameCmd( data );
+			break;
+		case RC_SCREENSHOT:
+			data = RB_TakeScreenshotCmd( data );
+			break;
+		case RC_END_OF_LIST:
+			secondPassDone = qtrue;
+			break;
+		default:
+			ri.Error(ERR_DROP, "Unknown render command");
+		}
+	}
+
+	// stop rendering
+	t2 = ri.Milliseconds()*Cvar_VariableValue("timescale");
+	backEnd.pc.msec = t2 - t1;
 }
 
 // What Pixel Shader type is currently active (regcoms or fragment programs).

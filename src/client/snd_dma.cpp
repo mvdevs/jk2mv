@@ -2269,6 +2269,22 @@ void S_GetSoundtime(void)
 	}
 	oldsamplepos = samplepos;
 
+	// with updated `buffers` it seems to synchronize better when done
+	if (CL_VideoRecording() && cl_aviFrameRate->integer)
+	{
+		static double	overflow = 0.0f;
+		double			frameSamples;
+		int				samples;
+
+		frameSamples = (double) dma.speed / cl_aviFrameRate->integer + overflow;
+		samples = floor(frameSamples);
+		overflow = frameSamples - samples;
+
+		s_soundtime += samples;
+
+		return;
+	}
+
 	s_soundtime = buffers*fullsamples + samplepos/dma.channels;
 
 #if 0

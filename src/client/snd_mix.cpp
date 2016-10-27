@@ -1,5 +1,6 @@
 // snd_mix.c -- portable code to mix sounds for snd_dma.c
 
+#include "client.h"
 #include "snd_local.h"
 
 #include "snd_mp3.h"
@@ -64,6 +65,9 @@ void S_TransferStereo16 (unsigned int *pbuf, int endtime)
 
 		snd_p += snd_linear_count;
 		ls_paintedtime += (snd_linear_count>>1);
+
+		if ( CL_VideoRecording( ) )
+			CL_WriteAVIAudioFrame( (byte *)snd_out, snd_linear_count << 1 );
 	}
 }
 

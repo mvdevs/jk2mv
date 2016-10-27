@@ -368,6 +368,7 @@ if (BuildMVMP)
 		"client/FxSystem.cpp"
 		"client/FxTemplate.cpp"
 		"client/FxUtil.cpp"
+		"client/cl_avi.cpp"
 		"client/cl_cgame.cpp"
 		"client/cl_cin.cpp"
 		"client/cl_console.cpp"

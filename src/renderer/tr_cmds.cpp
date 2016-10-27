@@ -435,3 +435,29 @@ void RE_EndFrame( int *frontEndMsec, int *backEndMsec ) {
 	backEnd.pc.msec = 0;
 }
 
+
+/*
+=============
+RE_TakeVideoFrame
+=============
+*/
+void RE_TakeVideoFrame( int width, int height, qboolean motionJpeg, int motionJpegQuality )
+{
+	videoFrameCommand_t	*cmd;
+
+	if( !tr.registered ) {
+		return;
+	}
+
+	cmd = (videoFrameCommand_t *)R_GetCommandBuffer( sizeof( *cmd ) );
+	if( !cmd ) {
+		return;
+	}
+
+	cmd->commandId = RC_VIDEOFRAME;
+
+	cmd->width = width;
+	cmd->height = height;
+	cmd->motionJpeg = motionJpeg;
+	cmd->motionJpegQuality = motionJpegQuality;
+}

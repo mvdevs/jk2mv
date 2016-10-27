@@ -621,6 +621,17 @@ static void FS_Remove( const char *osPath ) {
 }
 
 /*
+===========
+FS_HomeRemove
+
+===========
+*/
+void FS_HomeRemove( const char *homePath ) {
+	remove( FS_BuildOSPath( fs_homepath->string,
+				fs_gamedir, homePath ) );
+}
+
+/*
 ================
 FS_FileExists
 
@@ -1052,6 +1063,30 @@ fileHandle_t FS_FOpenFileAppend( const char *filename ) {
 		f = 0;
 	}
 	return f;
+}
+
+/*
+===========
+FS_IsFifo
+
+Check if file is a named pipe (FIFO)
+===========
+*/
+qboolean FS_IsFifo( const char *filename ) {
+	char *ospath;
+	struct stat f_stat;
+
+	if ( !fs_searchpaths ) {
+		Com_Error( ERR_FATAL, "Filesystem call made without initialization\n" );
+	}
+
+	ospath = FS_BuildOSPath( fs_homepath->string, fs_gamedir, filename );
+
+	if ( stat(ospath, &f_stat) == -1 ) {
+		return qfalse;
+	}
+
+	return (qboolean)S_ISFIFO(f_stat.st_mode);
 }
 
 /*
