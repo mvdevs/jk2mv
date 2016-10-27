@@ -406,15 +406,7 @@ qboolean CROFFSystem::Unload( int id )
 	{ // requested item found in the list, free mem, then remove from list
 		delete ((CROFF *)(*itr).second);
 
-#ifndef __linux__
 		itr = mROFFList.erase( itr );
-#else
-		// darn stl differences
-		TROFFList::iterator titr;
-		titr = itr;
-		itr++;
-		mROFFList.erase(titr);
-#endif
 
 #ifdef _DEBUG
 		Com_Printf( S_COLOR_GREEN"roff unloaded\n" );
