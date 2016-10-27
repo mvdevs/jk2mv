@@ -1337,7 +1337,7 @@ Ghoul2 Insert Start
 Ghoul2 Insert End
 */
 
-	r_modelpoolmegs = Cvar_Get("r_modelpoolmegs", "10", CVAR_ARCHIVE | CVAR_GLOBAL);
+	r_modelpoolmegs = Cvar_Get("r_modelpoolmegs", "20", CVAR_ARCHIVE | CVAR_GLOBAL);
 
 	// make sure all the commands added here are also
 	// removed in R_Shutdown
