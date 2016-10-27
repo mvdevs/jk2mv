@@ -119,9 +119,9 @@ qboolean RE_RegisterModels_GetDiskFile( const char *psModelFileName, void **ppvB
 	Q_strncpyz(sModelName,psModelFileName,sizeof(sModelName));
 	Q_strlwr  (sModelName);
 
-	CachedEndianedModelBinary_t &ModelBin = CachedModels[sModelName];
+	CachedModels_t::iterator itModel = CachedModels.find(sModelName);
 
-	if (ModelBin.pModelDiskImage == NULL)
+	if (itModel == CachedModels.end())
 	{
 		// didn't have it cached, so try the disk...
 		//
@@ -152,7 +152,7 @@ qboolean RE_RegisterModels_GetDiskFile( const char *psModelFileName, void **ppvB
 	}
 	else
 	{
-		*ppvBuffer = ModelBin.pModelDiskImage;
+		*ppvBuffer = itModel->second.pModelDiskImage;
 		*pqbAlreadyCached = qtrue;
 		return qtrue;
 	}
@@ -345,11 +345,7 @@ qboolean RE_RegisterModels_LevelLoadEnd(qboolean bDeleteEverythingNotUsedThisLev
 			if (bDeleteThis)
 			{
 				const char *psModelName = (*itModel).first.c_str();
-				ri.Printf( PRINT_DEVELOPER, "Dumping \"%s\"", psModelName);
-
-	#ifdef _DEBUG
-				ri.Printf( PRINT_DEVELOPER, ", used on lvl %d\n",CachedModel.iLastLevelUsedOn);
-	#endif
+				ri.Printf( PRINT_DEVELOPER, "Dumping \"%s\", used on lvl %d\n", psModelName, CachedModel.iLastLevelUsedOn);
 
 				if (CachedModel.pModelDiskImage) {
 					ri.Free(CachedModel.pModelDiskImage);
