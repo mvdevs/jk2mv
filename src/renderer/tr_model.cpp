@@ -435,7 +435,6 @@ void RE_RegisterModels_Info_f( void )
 //
 static void RE_RegisterModels_DeleteAll(void)
 {
-#ifndef __linux__
 	for (CachedModels_t::iterator itModel = CachedModels.begin(); itModel != CachedModels.end(); )
 	{
 		CachedEndianedModelBinary_t &CachedModel = (*itModel).second;
@@ -446,9 +445,6 @@ static void RE_RegisterModels_DeleteAll(void)
 
 		itModel = CachedModels.erase(itModel);
 	}
-#else
-	CachedModels.erase(CachedModels.begin(),CachedModels.end());
-#endif
 }
 
 
