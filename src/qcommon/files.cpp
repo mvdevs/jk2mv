@@ -1080,6 +1080,10 @@ qboolean FS_IsFifo( const char *filename ) {
 		Com_Error( ERR_FATAL, "Filesystem call made without initialization\n" );
 	}
 
+#ifdef _MSC_VER
+	// S_ISFIFO macro is missing in msvc
+	return qfalse;
+#else
 	ospath = FS_BuildOSPath( fs_homepath->string, fs_gamedir, filename );
 
 	if ( stat(ospath, &f_stat) == -1 ) {
@@ -1087,6 +1091,7 @@ qboolean FS_IsFifo( const char *filename ) {
 	}
 
 	return (qboolean)S_ISFIFO(f_stat.st_mode);
+#endif
 }
 
 /*
