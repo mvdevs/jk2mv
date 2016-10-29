@@ -5,7 +5,7 @@ dist: trusty
 env:
   global:
     - "FTP_SERVER=ftp://jk2mv.org"
-    - "FTP_USER=ounedcideploy"
+    - "FTP_USER=defaultcideploy"
     - secure: "Kr9l60txHt8qJsZ/GFRe3f+U3N222qIMFq9Y5kjtF0cZaDb5/+a4cAp58AhtADkWJU5kiB8SR6IFoQ2f71NIuj4/k4SJr6HI8S7gjzY+5HaWdl6/us52BqxlQCg82BJNKavhQ4dK7Yb9GBoXmc7LXmmcXHwGuQR6rsWJs1cR9J8="
 
 notifications:
