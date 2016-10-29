@@ -35,6 +35,6 @@ deploy:
   - provider: FTP
     protocol: ftp
     host: jk2mv.org
-    username: ounedcideploy
+    username: defaultcideploy
     password:
-      secure: g9Yw/gxRzj91kJWpN0kFzQ==
+      secure: TP9rWoVLFDsn7qTz5CxzMA==
