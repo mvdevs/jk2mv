@@ -2277,13 +2277,8 @@ void RB_SurfaceGhoul( CRenderableSurface *surf ) {
 	}
 #endif // id386 || idx64
 
-	// separate loop to not pollute cache
-	baseVert = tess.numVertexes;
-	for ( j = 0; j < numVerts; j++, baseVert++ )
-	{
-		tess.texCoords[baseVert][0][0] = pTexCoords[j].texCoords[0];
-		tess.texCoords[baseVert][0][1] = pTexCoords[j].texCoords[1];
-	}
+	// assumes mdxmVertexTexCoord_t consists only of vec2_t
+	Com_Memcpy( tess.texCoords[0][tess.numVertexes], pTexCoords, numVerts * sizeof( vec2_t ) );
 
 	tess.numVertexes += surface->numVerts;
 }

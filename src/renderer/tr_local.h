@@ -1497,7 +1497,7 @@ struct shaderCommands_s
 	glIndex_t	indexes[SHADER_MAX_INDEXES];
 	alignas(16) vec4_t		xyz[SHADER_MAX_VERTEXES];
 	alignas(16) vec4_t		normal[SHADER_MAX_VERTEXES];
-	vec2_t		texCoords[SHADER_MAX_VERTEXES][NUM_TEX_COORDS];
+	vec2_t		texCoords[NUM_TEX_COORDS][SHADER_MAX_VERTEXES];
 	union {
 		color4ub_t	vertexColors[SHADER_MAX_VERTEXES];
 		uint32_t	vertexColorsui[SHADER_MAX_VERTEXES];

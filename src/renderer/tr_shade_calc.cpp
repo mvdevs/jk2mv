@@ -232,15 +232,14 @@ void RB_CalcBulgeVertexes( deformStage_t *ds )
 	{
 		// I guess do some extra dumb stuff..the fact that it uses ST seems bad though because skin pages may be set up in certain ways that can cause
 		//	very noticeable seams on sufaces ( like on the huge ion_cannon ).
-		const float *st = ( const float * ) tess.texCoords[0];
 		float		now;
 		int			off;
 
 		now = backEnd.refdef.time * ds->bulgeSpeed * 0.001f;
 
-		for ( i = 0; i < tess.numVertexes; i++, xyz += 4, st += 2 * NUM_TEX_COORDS, normal += 4 )
+		for ( i = 0; i < tess.numVertexes; i++, xyz += 4, normal += 4 )
 		{
-			off = (float)( FUNCTABLE_SIZE / (M_PI*2) ) * ( st[0] * ds->bulgeWidth + now );
+			off = (float)( FUNCTABLE_SIZE / (M_PI*2) ) * ( tess.texCoords[0][i][0] * ds->bulgeWidth + now );
 
 			scale = tr.sinTable[ off & FUNCTABLE_MASK ] * ds->bulgeHeight;
 
