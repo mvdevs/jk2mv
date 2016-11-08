@@ -1071,7 +1071,7 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 		return (int)MVAPI_SendConnectionlessPacket((const mvaddr_t *)VMA(1), (const char*)VMA(2));
 
 	case MVAPI_CONTROL_FIXES:
-		return (int)SV_MVAPI_ControlFixes((mvfix_t)args[1]);
+		return (int)SV_MVAPI_ControlFixes(args[1]);
 
 	case MVAPI_GET_VERSION:
 		return (int)MV_GetCurrentGameversion();
@@ -1213,7 +1213,7 @@ SV_MVAPI_ControlFixes
 disable / enable toggleable fixes from the gvm
 ====================
 */
-qboolean SV_MVAPI_ControlFixes(mvfix_t fixes) {
+qboolean SV_MVAPI_ControlFixes(int fixes) {
 	if (VM_MVAPILevel(gvm) < 1) {
 		return qtrue;
 	}

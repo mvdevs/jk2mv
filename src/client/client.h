@@ -346,7 +346,7 @@ typedef struct {
 	size_t downloadBlacklistLen;
 	qboolean ignoreNextDownloadList;
 
-	mvfix_t fixes;
+	int			fixes;
 } clientStatic_t;
 
 #define	CON_TEXTSIZE	131072 // increased in jk2mv
@@ -619,7 +619,7 @@ void CL_SetCGameTime( void );
 void CL_FirstSnapshot( void );
 void CL_ShaderStateChanged(void);
 
-qboolean CL_MVAPI_ControlFixes(mvfix_t fixes);
+qboolean CL_MVAPI_ControlFixes(int fixes);
 
 //
 // cl_ui.c

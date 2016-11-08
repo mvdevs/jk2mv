@@ -1317,7 +1317,7 @@ Ghoul2 Insert End
 		return 0;
 
 	case MVAPI_CONTROL_FIXES:
-		return (int)CL_MVAPI_ControlFixes((mvfix_t)args[1]);
+		return (int)CL_MVAPI_ControlFixes(args[1]);
 
 	case MVAPI_GET_VERSION:
 		return (int)MV_GetCurrentGameversion();
@@ -1680,7 +1680,7 @@ CL_MVAPI_ControlFixes
 disable / enable toggleable fixes from the cgvm
 ====================
 */
-qboolean CL_MVAPI_ControlFixes(mvfix_t fixes) {
+qboolean CL_MVAPI_ControlFixes(int fixes) {
 	if (VM_MVAPILevel(cgvm) < 1) {
 		return qtrue;
 	}

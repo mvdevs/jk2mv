@@ -70,7 +70,7 @@ typedef struct {
 	mvsharedEntity_t *gentitiesMV;
 	int				  gentitySizeMV;
 
-	mvfix_t			fixes;
+	int				fixes;
 } server_t;
 
 typedef struct {
@@ -360,7 +360,7 @@ void		SV_ShutdownGameProgs ( void );
 void		SV_RestartGameProgs( void );
 qboolean	SV_inPVS (const vec3_t p1, const vec3_t p2);
 
-qboolean SV_MVAPI_ControlFixes(mvfix_t fixes);
+qboolean SV_MVAPI_ControlFixes(int fixes);
 
 //
 // sv_bot.c

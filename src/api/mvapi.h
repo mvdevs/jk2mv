@@ -46,7 +46,7 @@ typedef enum {
 
 // ******** SYSCALLS ******** //
 
-// qboolean trap_MVAPI_ControlFixes(mvfix_t fixes);
+// qboolean trap_MVAPI_ControlFixes(int fixes);
 #define MVAPI_CONTROL_FIXES 703                  /* asm: -704 */
 
 // mvversion_t trap_MVAPI_GetVersion(void);
