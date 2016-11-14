@@ -459,6 +459,10 @@ static void RB_SurfaceSaberGlow()
 
 	e = &backEnd.currentEntity->e;
 
+	// should be detected by i > 0 case below, but not with /fp:fast
+	if ( Q_isnan( e->saberLength ) )
+	  return;
+
 	// Render the glow part of the blade
 	for ( float i = e->saberLength; i > 0; i -= e->radius * 0.65f )
 	{
