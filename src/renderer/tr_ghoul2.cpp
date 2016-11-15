@@ -1923,12 +1923,6 @@ void G2_ConstructGhoulSkeleton( CGhoul2Info_v &ghoul2, const int frameNum, qhand
 		return;
 	}
 
-	// have we already transformed this group of ghoul2 skeletons this frame?
-	if (ghoul2[0].mSkelFrameNum == frameNum)
-	{
-		return;
-	}
-
 	// should we be looking to see if any of these models are setting a new origin?
 	if (checkForNewOrigin)
 	{
