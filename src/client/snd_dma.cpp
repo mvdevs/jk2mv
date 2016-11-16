@@ -3471,7 +3471,7 @@ static qboolean S_UpdateBackgroundTrack_Actual( MusicInfo_t *pMusicInfo )
 
 			if (S_FileExists( sTestName ))
 			{
-				S_StartBackgroundTrack_Actual( pMusicInfo, sMusic_BackgroundLoop, sMusic_BackgroundLoop );
+				S_StartBackgroundTrack_Actual( pMusicInfo, sTestName, sTestName );
 			}
 			else
 			{

@@ -436,10 +436,10 @@ void Multiply_3x4Matrix(mdxaBone_t *out, mdxaBone_t *in2, mdxaBone_t *in)
 static int G2_GetBonePoolIndex(	const mdxaHeader_t *pMDXAHeader, int iFrame, int iBone)
 {
 	const int iOffsetToIndex = (iFrame * pMDXAHeader->numBones * 3) + (iBone * 3);
+	const byte *pIndex = (byte*) pMDXAHeader + pMDXAHeader->ofsFrames + iOffsetToIndex;
 
-	mdxaIndex_t *pIndex = (mdxaIndex_t *) ((byte*) pMDXAHeader + pMDXAHeader->ofsFrames + iOffsetToIndex);
-
-	return pIndex->iIndex & 0x00FFFFFF;	// this will cause problems for big-endian machines... ;-)
+	// read it little endian byte-by-byte as it's unaligned anyway
+	return pIndex[0] | (pIndex[1] << 8) | (pIndex[2] << 16);
 }
 
 

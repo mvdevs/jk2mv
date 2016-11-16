@@ -163,7 +163,7 @@ void ResampleSfx (sfx_t *sfx, int iInRate, int iInWidth, byte *pData)
 	int		iSrcSample;
 	float	fStepScale;
 	int		i;
-	int		iSample;
+	short	iSample;
 	unsigned int uiSampleFrac, uiFracStep;	// uiSampleFrac MUST be unsigned, or large samples (eg music tracks) crash
 
 	fStepScale = (float)iInRate / dma.speed;	// this is usually 0.5, 1, or 2
@@ -186,10 +186,11 @@ void ResampleSfx (sfx_t *sfx, int iInRate, int iInWidth, byte *pData)
 		if (iInWidth == 2) {
 			iSample = LittleShort ( ((short *)pData)[iSrcSample] );
 		} else {
-			iSample = (int)( (unsigned char)(pData[iSrcSample]) - 128) << 8;
+			// from [0,255] to [-32768,32767] range
+			iSample = ( (int) pData[iSrcSample] << 8 ) - 0x8000;
 		}
 
-		sfx->pSoundData[i] = (short)iSample;
+		sfx->pSoundData[i] = iSample;
 
 		// work out max vol for this sample...
 		//

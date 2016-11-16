@@ -2582,6 +2582,9 @@ void FS_SortFileList(char **filelist, int numfiles) {
 	int i, j, k, numsortedfiles;
 	char **sortedlist;
 
+	if (numfiles <= 0)
+		return;
+
 	sortedlist = (char **)Z_Malloc( ( numfiles + 1 ) * sizeof( *sortedlist ), TAG_FILESYS, qtrue );
 	sortedlist[0] = NULL;
 	numsortedfiles = 0;
@@ -3791,10 +3794,10 @@ void FS_FilenameCompletion( const char *dir, const char *ext, qboolean stripExt,
 	// pass all the files to callback (FindMatches)
 	for ( int i=0; i<nfiles; i++ ) {
 		FS_ConvertPath( filenames[i] );
-		Q_strncpyz( filename, filenames[i], MAX_STRING_CHARS );
-
 		if ( stripExt )
-			COM_StripExtension( filename, filename, sizeof( filename ) );
+			COM_StripExtension( filenames[i], filename, sizeof( filename ) );
+		else
+			Q_strncpyz( filename, filenames[i], sizeof( filename ) );
 
 		callback( filename );
 	}

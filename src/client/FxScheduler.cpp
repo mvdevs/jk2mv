@@ -1640,6 +1640,9 @@ void CFxScheduler::PlayEffect( int id, vec3_t origin, vec3_t axis[3], const int 
 			prim->mRefCount = count;
 		}
 
+		if ( count <= 0 )
+			continue;
+
 		if ( prim->mSpawnFlags & FX_EVEN_DISTRIBUTION )
 		{
 			factor = abs((int)(prim->mSpawnDelay.GetMax() - prim->mSpawnDelay.GetMin())) / (float)count;
