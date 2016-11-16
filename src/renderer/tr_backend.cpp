@@ -1406,6 +1406,8 @@ void RB_ExecuteRenderCommands( const void *data ) {
 	t1 = ri.Milliseconds()*Cvar_VariableValue("timescale");
 
 	while (!firstPassDone) {
+		data = PADP( data, sizeof( void * ) );
+
 		switch ( *(const int *)data ) {
 		case RC_SET_COLOR:
 			data = RB_SetColor( data );
@@ -1446,6 +1448,8 @@ void RB_ExecuteRenderCommands( const void *data ) {
 	data = dataOrig;
 
 	while (!secondPassDone) {
+		data = PADP( data, sizeof( void * ) );
+
 		switch ( *(const int *)data ) {
 		case RC_SET_COLOR:
 			data = (setColorCommand_t *)data + 1;
