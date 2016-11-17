@@ -21,7 +21,7 @@ void MYgluPerspective( GLdouble fovy, GLdouble aspect, GLdouble zNear, GLdouble 
 {
 	GLdouble xmin, xmax, ymin, ymax;
 
-	ymax = zNear * tan( fovy * M_PI / 360.0 );
+	ymax = zNear * tanf( DEG2RAD(fovy * 0.5f) );
 	ymin = -ymax;
 
 	xmin = ymin * aspect;
@@ -458,14 +458,14 @@ void CMistyFog::Update(CWorldEffectsSystem *system, float elapseTime)
 		mAlpha = -1.0;
 	}
 */
-	if ((fabs(mTextureCoords[0][0] - mTextureCoords[1][0]) < mMinSize ||
-		fabs(mTextureCoords[0][1] - mTextureCoords[1][1]) < mMinSize))// && forwardWind > 0.0)
+	if ((fabsf(mTextureCoords[0][0] - mTextureCoords[1][0]) < mMinSize ||
+		fabsf(mTextureCoords[0][1] - mTextureCoords[1][1]) < mMinSize))// && forwardWind > 0.0)
 	{
 		removeImage = true;
 	}
 
-	if ((fabs(mTextureCoords[0][0] - mTextureCoords[1][0]) > mMaxSize ||
-		fabs(mTextureCoords[0][1] - mTextureCoords[1][1]) > mMaxSize))// && forwardWind < 0.0)
+	if ((fabsf(mTextureCoords[0][0] - mTextureCoords[1][0]) > mMaxSize ||
+		fabsf(mTextureCoords[0][1] - mTextureCoords[1][1]) > mMaxSize))// && forwardWind < 0.0)
 	{
 		removeImage = true;
 	}
@@ -1515,7 +1515,7 @@ void CSnowSystem::Update(float elapseTime)
 //	contentsStart[1] = (((origin[1] + mMinSpread[1]) / mContentsSize[1])) * mContentsSize[1];
 //	contentsStart[2] = (((origin[2] + mMinSpread[2]) / mContentsSize[2])) * mContentsSize[2];
 
-	if (fabs(difference[0]) > 25 || fabs(difference[1]) > 25 || fabs(difference[2]) > 25)
+	if (fabsf(difference[0]) > 25 || fabsf(difference[1]) > 25 || fabsf(difference[2]) > 25)
 	{
 		vec3_t		pos;
 		int			*store;
@@ -2033,8 +2033,8 @@ void CRainSystem::Render(void)
 //			radius *= 1.0 + (item->pos[2] / 20.0);
 		}
 
-		pos[0] = sin(item->pos[0]) * radius + (item->pos[2] * mWindDirection[0] * mWindAngle);
-		pos[1] = cos(item->pos[0]) * radius + (item->pos[2] * mWindDirection[1] * mWindAngle);
+		pos[0] = sinf(item->pos[0]) * radius + (item->pos[2] * mWindDirection[0] * mWindAngle);
+		pos[1] = cosf(item->pos[0]) * radius + (item->pos[2] * mWindDirection[1] * mWindAngle);
 		pos[2] = item->pos[2];
 
 		qglTexCoord2f(1.0, 0.0);

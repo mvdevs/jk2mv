@@ -48,13 +48,13 @@ float R_NoiseGet4f( float x, float y, float z, float t )
 	float back[4];
 	float fvalue, bvalue, value[2], finalvalue;
 
-	ix = ( int ) floor( x );
+	ix = ( int ) floorf( x );
 	fx = x - ix;
-	iy = ( int ) floor( y );
+	iy = ( int ) floorf( y );
 	fy = y - iy;
-	iz = ( int ) floor( z );
+	iz = ( int ) floorf( z );
 	fz = z - iz;
-	it = ( int ) floor( t );
+	it = ( int ) floorf( t );
 	ft = t - it;
 
 	for ( i = 0; i < 2; i++ )

@@ -111,13 +111,13 @@ static void R_SurfaceSpriteFrameUpdate(void)
 		if (backEnd.refdef.fov_x > 50 && backEnd.refdef.fov_x < 135)		// I don't consider anything below 50 or above 135 to be "normal".
 		{
 			standardfovx = backEnd.refdef.fov_x;
-			standardscalex = tan(DEG2RAD(standardfovx * 0.5f));
+			standardscalex = tanf(DEG2RAD(standardfovx * 0.5f));
 			standardfovinitialized = qtrue;
 		}
 		else
 		{
 			standardfovx = 90;
-			standardscalex = tan(DEG2RAD(standardfovx * 0.5f));
+			standardscalex = tanf(DEG2RAD(standardfovx * 0.5f));
 		}
 		rangescalefactor = 1.0;		// Don't multiply the shader range by anything.
 	}
@@ -129,11 +129,11 @@ static void R_SurfaceSpriteFrameUpdate(void)
 	{	// We are using a non-standard FOV.  We need to multiply the range of the shader by a scale factor.
 		if (backEnd.refdef.fov_x > 135)
 		{
-			rangescalefactor = standardscalex / tan(DEG2RAD(135.0f * 0.5f));
+			rangescalefactor = standardscalex / tanf(DEG2RAD(135.0f * 0.5f));
 		}
 		else
 		{
-			rangescalefactor = standardscalex / tan(DEG2RAD(backEnd.refdef.fov_x * 0.5f));
+			rangescalefactor = standardscalex / tanf(DEG2RAD(backEnd.refdef.fov_x * 0.5f));
 		}
 	}
 
@@ -231,8 +231,8 @@ static void R_SurfaceSpriteFrameUpdate(void)
 
 	if (targetspeed>0)
 	{
-//		ang[YAW] += cos(tr.refdef.time*0.01+flrand(-1.0,1.0))*targetspeed*0.5;
-//		ang[PITCH] += sin(tr.refdef.time*0.01+flrand(-1.0,1.0))*targetspeed*0.5;
+//		ang[YAW] += cosf(tr.refdef.time*0.01+flrand(-1.0,1.0))*targetspeed*0.5;
+//		ang[PITCH] += sinf(tr.refdef.time*0.01+flrand(-1.0,1.0))*targetspeed*0.5;
 	}
 
 	// Get the grass wind vector first
@@ -250,7 +250,7 @@ static void R_SurfaceSpriteFrameUpdate(void)
 
 	// Note that since there are a finite number of "practical" delta millisecond values possible,
 	// the ratio should be initialized into a chart ultimately.
-	ratio = pow(dampfactor, dtime);
+	ratio = powf(dampfactor, dtime);
 
 	// Apply this ratio to the windspeed...
 	curWindSpeed = targetspeed - (ratio * (targetspeed-curWindSpeed));
@@ -322,8 +322,8 @@ static void RB_VerticalSurfaceSprite(vec3_t loc, float width, float height, byte
 	if (windidle>0.0f)
 	{
 		windsway = (height*windidle*0.075f);
-		loc2[0] = loc[0]+skew[0]+cos(angle)*windsway;
-		loc2[1] = loc[1]+skew[1]+sin(angle)*windsway;
+		loc2[0] = loc[0]+skew[0]+cosf(angle)*windsway;
+		loc2[1] = loc[1]+skew[1]+sinf(angle)*windsway;
 
 		if (hangdown)
 		{
@@ -363,7 +363,7 @@ static void RB_VerticalSurfaceSprite(vec3_t loc, float width, float height, byte
 		{
 			windsway *= 0.4f;
 		}
-		loc2[2] += sin(angle*2.5f)*windsway;
+		loc2[2] += sinf(angle*2.5f)*windsway;
 	}
 
 	VectorScale(ssrightvectors[rightvectorcount], width*0.5f, right);
@@ -425,8 +425,8 @@ static void RB_VerticalSurfaceSpriteWindPoint(vec3_t loc, float width, float hei
 	if (curWindSpeed <80.0f)
 	{
 		windsway = (height*windidle*0.1f)*(1.0f+windforce);
-		loc2[0] = loc[0]+skew[0]+cos(angle)*windsway;
-		loc2[1] = loc[1]+skew[1]+sin(angle)*windsway;
+		loc2[0] = loc[0]+skew[0]+cosf(angle)*windsway;
+		loc2[1] = loc[1]+skew[1]+sinf(angle)*windsway;
 	}
 	else
 	{
@@ -450,7 +450,7 @@ static void RB_VerticalSurfaceSpriteWindPoint(vec3_t loc, float width, float hei
 
 	loc2[0] += height*winddiff[0]*windforce;
 	loc2[1] += height*winddiff[1]*windforce;
-	loc2[2] -= height*windforce*(0.75f + 0.15f*sin((tr.refdef.time + 500*windforce)*0.01f));
+	loc2[2] -= height*windforce*(0.75f + 0.15f*sinf((tr.refdef.time + 500*windforce)*0.01f));
 
 	VectorScale(ssrightvectors[rightvectorcount], width*0.5f, right);
 
@@ -665,7 +665,7 @@ static void RB_DrawVerticalSurfaceSprites( shaderStage_t *stage, shaderCommands_
 
 		// Now get the cross product of this sum.
 		triarea = vec1to3[0]*vec1to2[1] - vec1to3[1]*vec1to2[0];
-		triarea=fabs(triarea);
+		triarea=fabsf(triarea);
 		if (triarea <= 1.0f)
 		{	// Insanely small abhorrent triangle.
 			continue;
@@ -979,7 +979,7 @@ static void RB_DrawOrientedSurfaceSprites( shaderStage_t *stage, shaderCommands_
 
 		// Now get the cross product of this sum.
 		triarea = vec1to3[0]*vec1to2[1] - vec1to3[1]*vec1to2[0];
-		triarea=fabs(triarea);
+		triarea=fabsf(triarea);
 		if (triarea <= 1.0f)
 		{	// Insanely small abhorrent triangle.
 			continue;
@@ -1281,7 +1281,7 @@ static void RB_DrawEffectSurfaceSprites( shaderStage_t *stage, shaderCommands_t 
 
 		// Now get the cross product of this sum.
 		triarea = vec1to3[0]*vec1to2[1] - vec1to3[1]*vec1to2[0];
-		triarea=fabs(triarea);
+		triarea=fabsf(triarea);
 		if (triarea <= 1.0f)
 		{	// Insanely small abhorrent triangle.
 			continue;

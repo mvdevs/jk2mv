@@ -533,7 +533,7 @@ void CL_MouseMove( usercmd_t *cmd ) {
 	cl.mouseDx[cl.mouseIndex] = 0;
 	cl.mouseDy[cl.mouseIndex] = 0;
 
-	rate = sqrt( mx * mx + my * my ) / (float)frame_msec;
+	rate = sqrtf( mx * mx + my * my ) / frame_msec;
 	accelSensitivity = cl_sensitivity->value + rate * cl_mouseAccel->value;
 
 	// scale by FOV

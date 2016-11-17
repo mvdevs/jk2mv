@@ -1212,7 +1212,7 @@ static void Z_Details_f(void)
 			//
 			float	fSize		= (float)(iThisSize) / 1024.0f / 1024.0f;
 			int		iSize		= fSize;
-			int		iRemainder 	= 100.0f * (fSize - floor(fSize));
+			int		iRemainder 	= 100.0f * (fSize - floorf(fSize));
 			Com_Printf("%20s %9d (%2d.%02dMB) in %6d blocks (%9d average)\n",
 					    psTagStrings[i],
 							  iThisSize,
@@ -2900,7 +2900,7 @@ acos(*(float*) &i) == -1.#IND0
 float Q_acos(float c) {
 	float angle;
 
-	angle = acos(c);
+	angle = acosf(c);
 
 	if (angle > (float) M_PI) {
 		return (float)M_PI;

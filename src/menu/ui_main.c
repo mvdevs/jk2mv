@@ -7038,7 +7038,7 @@ static void UI_DisplayDownloadInfo( const char *downloadName, float centerPoint,
 		// microsoft has no round() in vs2010, wtf?
 		percent = (double)downloadCount * 100 / downloadSize + 0.5;
 
-		Text_PaintCenter(centerPoint, yStart + 100, scale, colorWhite, va("%s ^1[^7%s^1] ^1(^7%i%%^1)", sDownLoading, downloadProtocol, (int)floor(percent)), 0, iMenuFont);
+		Text_PaintCenter(centerPoint, yStart + 100, scale, colorWhite, va("%s ^1[^7%s^1] ^1(^7%i%%^1)", sDownLoading, downloadProtocol, (int) percent), 0, iMenuFont);
 
 		Text_PaintCenter(centerPoint, yStart + 125, scale, colorWhite, va("%s", downloadName), 0, iMenuFont);
 

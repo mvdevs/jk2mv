@@ -345,7 +345,7 @@ void G2_CreateQuaterion(mdxaBone_t *mat, vec4_t quat)
     //Test if ( T > 0.00000001 ) to avoid large distortions!
 	if (t > 0.00000001f)
 	{
-      s = sqrt(t) * 2;
+      s = sqrtf(t) * 2;
       quat[0] = ( mat->matrix[1][2] - mat->matrix[2][1] ) / s;
       quat[1] = ( mat->matrix[2][0] - mat->matrix[0][2] ) / s;
       quat[2] = ( mat->matrix[0][1] - mat->matrix[1][0] ) / s;
@@ -359,21 +359,21 @@ void G2_CreateQuaterion(mdxaBone_t *mat, vec4_t quat)
 		//Depending on this, calculate the following:
 
 		if ( mat->matrix[0][0] > mat->matrix[1][1] && mat->matrix[0][0] > mat->matrix[2][2] )  {	// Column 0:
-			s  = sqrt( 1.0f + mat->matrix[0][0] - mat->matrix[1][1] - mat->matrix[2][2])* 2;
+			s  = sqrtf( 1.0f + mat->matrix[0][0] - mat->matrix[1][1] - mat->matrix[2][2])* 2;
 			quat[0] = 0.25f * s;
 			quat[1] = (mat->matrix[0][1] + mat->matrix[1][0] ) / s;
 			quat[2] = (mat->matrix[2][0] + mat->matrix[0][2] ) / s;
 			quat[3] = (mat->matrix[1][2] - mat->matrix[2][1] ) / s;
 
 		} else if ( mat->matrix[1][1] > mat->matrix[2][2] ) {			// Column 1:
-			s  = sqrt( 1.0f + mat->matrix[1][1] - mat->matrix[0][0] - mat->matrix[2][2] ) * 2;
+			s  = sqrtf( 1.0f + mat->matrix[1][1] - mat->matrix[0][0] - mat->matrix[2][2] ) * 2;
 			quat[0] = (mat->matrix[0][1] + mat->matrix[1][0] ) / s;
 			quat[1] = 0.25f * s;
 			quat[2] = (mat->matrix[1][2] + mat->matrix[2][1] ) / s;
 			quat[3] = (mat->matrix[2][0] - mat->matrix[0][2] ) / s;
 
 		} else {						// Column 2:
-			s  = sqrt( 1.0f + mat->matrix[2][2] - mat->matrix[0][0] - mat->matrix[1][1] ) * 2;
+			s  = sqrtf( 1.0f + mat->matrix[2][2] - mat->matrix[0][0] - mat->matrix[1][1] ) * 2;
 			quat[0] = (mat->matrix[2][0]+ mat->matrix[0][2] ) / s;
 			quat[1] = (mat->matrix[1][2] + mat->matrix[2][1] ) / s;
 			quat[2] = 0.25f * s;
@@ -557,9 +557,9 @@ void G2_TransformBone (CTransformBone &TB)
 								}
 								// now figure out what we are lerping between
 								// delta is the fraction between this frame and the next, since the new anim is always at a .0f;
-								TB.backlerp = (ceil(newFrame_g)-newFrame_g);
+								TB.backlerp = (ceilf(newFrame_g)-newFrame_g);
 								// frames are easy to calculate
-								TB.currentFrame = ceil(newFrame_g);
+								TB.currentFrame = ceilf(newFrame_g);
 								// should we be creating a virtual frame?
 								if (newFrame_g <= endFrame + 1)
 								{
@@ -658,8 +658,8 @@ void G2_TransformBone (CTransformBone &TB)
 					}
 					else
 					{
-						TB.backlerp = (ceil(newFrame_g)-newFrame_g);
-						TB.currentFrame = ceil(newFrame_g);
+						TB.backlerp = (ceilf(newFrame_g)-newFrame_g);
+						TB.currentFrame = ceilf(newFrame_g);
 						if (TB.currentFrame>boneList[boneListIndex].startFrame)
 						{
 							TB.currentFrame=boneList[boneListIndex].startFrame;

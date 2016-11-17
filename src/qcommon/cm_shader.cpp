@@ -421,9 +421,9 @@ static void CM_ParseShader( CCMShader *shader, const char **text )
 			token = COM_ParseExt( text, qfalse );
 			b = DEG2RAD(atof( token ));
 
-			shader->sunDirection[0] = cos( a ) * cos( b );
-			shader->sunDirection[1] = sin( a ) * cos( b );
-			shader->sunDirection[2] = sin( b );
+			shader->sunDirection[0] = cosf( a ) * cosf( b );
+			shader->sunDirection[1] = sinf( a ) * cosf( b );
+			shader->sunDirection[2] = sinf( b );
 		}
 		else if ( !Q_stricmp( token, "surfaceParm" ) )
 		{

@@ -597,7 +597,7 @@ void CParticle::UpdateSize()
 	else if (( mFlags & FX_SIZE_PARM_MASK ) == FX_SIZE_WAVE )
 	{
 		// wave gen, with parm being the frequency multiplier
-		perc1 = perc1 * (float)cos( (theFxHelper.mTime - mTimeStart) * mSizeParm );
+		perc1 = perc1 * cosf( (theFxHelper.mTime - mTimeStart) * mSizeParm );
 	}
 	else if (( mFlags & FX_SIZE_PARM_MASK ) == FX_SIZE_CLAMP )
 	{
@@ -674,7 +674,7 @@ void CParticle::UpdateRGB()
 	else if (( mFlags & FX_RGB_PARM_MASK ) == FX_RGB_WAVE )
 	{
 		// wave gen, with parm being the frequency multiplier
-		perc1 = perc1 * (float)cos(( theFxHelper.mTime - mTimeStart ) * mRGBParm );
+		perc1 = perc1 * cosf(( theFxHelper.mTime - mTimeStart ) * mRGBParm );
 	}
 	else if (( mFlags & FX_RGB_PARM_MASK ) == FX_RGB_CLAMP )
 	{
@@ -752,7 +752,7 @@ void CParticle::UpdateAlpha()
 	else if (( mFlags & FX_ALPHA_PARM_MASK ) == FX_ALPHA_WAVE )
 	{
 		// wave gen, with parm being the frequency multiplier
-		perc1 = perc1 * (float)cos( (theFxHelper.mTime - mTimeStart) * mAlphaParm );
+		perc1 = perc1 * cosf( (theFxHelper.mTime - mTimeStart) * mAlphaParm );
 	}
 	else if (( mFlags & FX_ALPHA_PARM_MASK ) == FX_ALPHA_CLAMP )
 	{
@@ -1138,7 +1138,7 @@ void CTail::UpdateLength()
 	else if (( mFlags & FX_LENGTH_PARM_MASK ) == FX_LENGTH_WAVE )
 	{
 		// wave gen, with parm being the frequency multiplier
-		perc1 = perc1 * (float)cos( (theFxHelper.mTime - mTimeStart) * mLengthParm );
+		perc1 = perc1 * cosf( (theFxHelper.mTime - mTimeStart) * mLengthParm );
 	}
 	else if (( mFlags & FX_LENGTH_PARM_MASK ) == FX_LENGTH_CLAMP )
 	{
@@ -1266,7 +1266,7 @@ void CCylinder::UpdateSize2()
 	else if (( mFlags & FX_SIZE2_PARM_MASK ) == FX_SIZE2_WAVE )
 	{
 		// wave gen, with parm being the frequency multiplier
-		perc1 = perc1 * (float)cos( (theFxHelper.mTime - mTimeStart) * mSize2Parm );
+		perc1 = perc1 * cosf( (theFxHelper.mTime - mTimeStart) * mSize2Parm );
 	}
 	else if (( mFlags & FX_SIZE2_PARM_MASK ) == FX_SIZE2_CLAMP )
 	{
@@ -1544,7 +1544,7 @@ void CLight::UpdateSize()
 	else if (( mFlags & FX_SIZE_PARM_MASK ) == FX_SIZE_WAVE )
 	{
 		// wave gen, with parm being the frequency multiplier
-		perc1 = perc1 * (float)cos( (theFxHelper.mTime - mTimeStart) * mSizeParm );
+		perc1 = perc1 * cosf( (theFxHelper.mTime - mTimeStart) * mSizeParm );
 	}
 	else if (( mFlags & FX_SIZE_PARM_MASK ) == FX_SIZE_CLAMP )
 	{
@@ -1621,7 +1621,7 @@ void CLight::UpdateRGB()
 	else if (( mFlags & FX_RGB_PARM_MASK ) == FX_RGB_WAVE )
 	{
 		// wave gen, with parm being the frequency multiplier
-		perc1 = perc1 * (float)cos(( theFxHelper.mTime - mTimeStart ) * mRGBParm );
+		perc1 = perc1 * cosf(( theFxHelper.mTime - mTimeStart ) * mRGBParm );
 	}
 	else if (( mFlags & FX_RGB_PARM_MASK ) == FX_RGB_CLAMP )
 	{
@@ -1862,12 +1862,12 @@ void CPoly::CalcRotateMatrix()
 
 	// rotate around Z
 	rad = DEG2RAD( mRotDelta[YAW] * theFxHelper.mFrameTime * 0.01f );
-	cosZ = cos( rad );
-	sinZ = sin( rad );
+	cosZ = cosf( rad );
+	sinZ = sinf( rad );
 	// rotate around X
 	rad = DEG2RAD( mRotDelta[PITCH] * theFxHelper.mFrameTime * 0.01f );
-	cosX = cos( rad );
-	sinX = sin( rad );
+	cosX = cosf( rad );
+	sinX = sinf( rad );
 
 /*Pitch - aroundx  Yaw - around z
 1 0  0			 c -s 0
@@ -1898,7 +1898,7 @@ Roll
 void CPoly::Rotate()
 {
 	vec3_t	temp[MAX_CPOLY_VERTS];
-	float	dif = fabs( (float)mLastFrameTime - theFxHelper.mFrameTime );
+	float	dif = fabsf( mLastFrameTime - theFxHelper.mFrameTime );
 
 	if ( dif > 0.1f * mLastFrameTime )
 	{

@@ -1064,22 +1064,22 @@ intptr_t CL_UISystemCalls(intptr_t *args) {
 		return strncpy( (char *)VMA(1), (const char *)VMA(2), args[3] ) ? 1:0;
 
 	case UI_SIN:
-		return FloatAsInt( sin( VMF(1) ) );
+		return FloatAsInt( sinf( VMF(1) ) );
 
 	case UI_COS:
-		return FloatAsInt( cos( VMF(1) ) );
+		return FloatAsInt( cosf( VMF(1) ) );
 
 	case UI_ATAN2:
-		return FloatAsInt( atan2( VMF(1), VMF(2) ) );
+		return FloatAsInt( atan2f( VMF(1), VMF(2) ) );
 
 	case UI_SQRT:
-		return FloatAsInt( sqrt( VMF(1) ) );
+		return FloatAsInt( sqrtf( VMF(1) ) );
 
 	case UI_FLOOR:
-		return FloatAsInt( floor( VMF(1) ) );
+		return FloatAsInt( floorf( VMF(1) ) );
 
 	case UI_CEIL:
-		return FloatAsInt( ceil( VMF(1) ) );
+		return FloatAsInt( ceilf( VMF(1) ) );
 
 	case UI_PC_ADD_GLOBAL_DEFINE:
 		return botlib_export->PC_AddGlobalDefine( (char *)VMA(1) );

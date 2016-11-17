@@ -28,7 +28,7 @@ static void HSVtoRGB( float h, float s, float v, float rgb[3] )
 
 	h *= 5;
 
-	i = floor( h );
+	i = floorf( h );
 	f = h - i;
 
 	p = v * ( 1 - s );
@@ -599,9 +599,9 @@ int R_MergedWidthPoints(srfGridMesh_t *grid, int offset) {
 
 	for (i = 1; i < grid->width-1; i++) {
 		for (j = i + 1; j < grid->width-1; j++) {
-			if ( fabs(grid->verts[i + offset].xyz[0] - grid->verts[j + offset].xyz[0]) > .1) continue;
-			if ( fabs(grid->verts[i + offset].xyz[1] - grid->verts[j + offset].xyz[1]) > .1) continue;
-			if ( fabs(grid->verts[i + offset].xyz[2] - grid->verts[j + offset].xyz[2]) > .1) continue;
+			if ( fabsf(grid->verts[i + offset].xyz[0] - grid->verts[j + offset].xyz[0]) > .1f) continue;
+			if ( fabsf(grid->verts[i + offset].xyz[1] - grid->verts[j + offset].xyz[1]) > .1f) continue;
+			if ( fabsf(grid->verts[i + offset].xyz[2] - grid->verts[j + offset].xyz[2]) > .1f) continue;
 			return qtrue;
 		}
 	}
@@ -620,9 +620,9 @@ int R_MergedHeightPoints(srfGridMesh_t *grid, int offset) {
 
 	for (i = 1; i < grid->height-1; i++) {
 		for (j = i + 1; j < grid->height-1; j++) {
-			if ( fabs(grid->verts[grid->width * i + offset].xyz[0] - grid->verts[grid->width * j + offset].xyz[0]) > .1) continue;
-			if ( fabs(grid->verts[grid->width * i + offset].xyz[1] - grid->verts[grid->width * j + offset].xyz[1]) > .1) continue;
-			if ( fabs(grid->verts[grid->width * i + offset].xyz[2] - grid->verts[grid->width * j + offset].xyz[2]) > .1) continue;
+			if ( fabsf(grid->verts[grid->width * i + offset].xyz[0] - grid->verts[grid->width * j + offset].xyz[0]) > .1f) continue;
+			if ( fabsf(grid->verts[grid->width * i + offset].xyz[1] - grid->verts[grid->width * j + offset].xyz[1]) > .1f) continue;
+			if ( fabsf(grid->verts[grid->width * i + offset].xyz[2] - grid->verts[grid->width * j + offset].xyz[2]) > .1f) continue;
 			return qtrue;
 		}
 	}
@@ -670,9 +670,9 @@ void R_FixSharedVertexLodError_r( int start, srfGridMesh_t *grid1 ) {
 					if (R_MergedWidthPoints(grid2, offset2)) continue;
 					for ( l = 1; l < grid2->width-1; l++) {
 					//
-						if ( fabs(grid1->verts[k + offset1].xyz[0] - grid2->verts[l + offset2].xyz[0]) > .1) continue;
-						if ( fabs(grid1->verts[k + offset1].xyz[1] - grid2->verts[l + offset2].xyz[1]) > .1) continue;
-						if ( fabs(grid1->verts[k + offset1].xyz[2] - grid2->verts[l + offset2].xyz[2]) > .1) continue;
+						if ( fabsf(grid1->verts[k + offset1].xyz[0] - grid2->verts[l + offset2].xyz[0]) > .1f) continue;
+						if ( fabsf(grid1->verts[k + offset1].xyz[1] - grid2->verts[l + offset2].xyz[1]) > .1f) continue;
+						if ( fabsf(grid1->verts[k + offset1].xyz[2] - grid2->verts[l + offset2].xyz[2]) > .1f) continue;
 						// ok the points are equal and should have the same lod error
 						grid2->widthLodError[l] = grid1->widthLodError[k];
 						touch = qtrue;
@@ -685,9 +685,9 @@ void R_FixSharedVertexLodError_r( int start, srfGridMesh_t *grid1 ) {
 					if (R_MergedHeightPoints(grid2, offset2)) continue;
 					for ( l = 1; l < grid2->height-1; l++) {
 					//
-						if ( fabs(grid1->verts[k + offset1].xyz[0] - grid2->verts[grid2->width * l + offset2].xyz[0]) > .1) continue;
-						if ( fabs(grid1->verts[k + offset1].xyz[1] - grid2->verts[grid2->width * l + offset2].xyz[1]) > .1) continue;
-						if ( fabs(grid1->verts[k + offset1].xyz[2] - grid2->verts[grid2->width * l + offset2].xyz[2]) > .1) continue;
+						if ( fabsf(grid1->verts[k + offset1].xyz[0] - grid2->verts[grid2->width * l + offset2].xyz[0]) > .1f) continue;
+						if ( fabsf(grid1->verts[k + offset1].xyz[1] - grid2->verts[grid2->width * l + offset2].xyz[1]) > .1f) continue;
+						if ( fabsf(grid1->verts[k + offset1].xyz[2] - grid2->verts[grid2->width * l + offset2].xyz[2]) > .1f) continue;
 						// ok the points are equal and should have the same lod error
 						grid2->heightLodError[l] = grid1->widthLodError[k];
 						touch = qtrue;
@@ -708,9 +708,9 @@ void R_FixSharedVertexLodError_r( int start, srfGridMesh_t *grid1 ) {
 					if (R_MergedWidthPoints(grid2, offset2)) continue;
 					for ( l = 1; l < grid2->width-1; l++) {
 					//
-						if ( fabs(grid1->verts[grid1->width * k + offset1].xyz[0] - grid2->verts[l + offset2].xyz[0]) > .1) continue;
-						if ( fabs(grid1->verts[grid1->width * k + offset1].xyz[1] - grid2->verts[l + offset2].xyz[1]) > .1) continue;
-						if ( fabs(grid1->verts[grid1->width * k + offset1].xyz[2] - grid2->verts[l + offset2].xyz[2]) > .1) continue;
+						if ( fabsf(grid1->verts[grid1->width * k + offset1].xyz[0] - grid2->verts[l + offset2].xyz[0]) > .1f) continue;
+						if ( fabsf(grid1->verts[grid1->width * k + offset1].xyz[1] - grid2->verts[l + offset2].xyz[1]) > .1f) continue;
+						if ( fabsf(grid1->verts[grid1->width * k + offset1].xyz[2] - grid2->verts[l + offset2].xyz[2]) > .1f) continue;
 						// ok the points are equal and should have the same lod error
 						grid2->widthLodError[l] = grid1->heightLodError[k];
 						touch = qtrue;
@@ -723,9 +723,9 @@ void R_FixSharedVertexLodError_r( int start, srfGridMesh_t *grid1 ) {
 					if (R_MergedHeightPoints(grid2, offset2)) continue;
 					for ( l = 1; l < grid2->height-1; l++) {
 					//
-						if ( fabs(grid1->verts[grid1->width * k + offset1].xyz[0] - grid2->verts[grid2->width * l + offset2].xyz[0]) > .1) continue;
-						if ( fabs(grid1->verts[grid1->width * k + offset1].xyz[1] - grid2->verts[grid2->width * l + offset2].xyz[1]) > .1) continue;
-						if ( fabs(grid1->verts[grid1->width * k + offset1].xyz[2] - grid2->verts[grid2->width * l + offset2].xyz[2]) > .1) continue;
+						if ( fabsf(grid1->verts[grid1->width * k + offset1].xyz[0] - grid2->verts[grid2->width * l + offset2].xyz[0]) > .1f) continue;
+						if ( fabsf(grid1->verts[grid1->width * k + offset1].xyz[1] - grid2->verts[grid2->width * l + offset2].xyz[1]) > .1f) continue;
+						if ( fabsf(grid1->verts[grid1->width * k + offset1].xyz[2] - grid2->verts[grid2->width * l + offset2].xyz[2]) > .1f) continue;
 						// ok the points are equal and should have the same lod error
 						grid2->heightLodError[l] = grid1->heightLodError[k];
 						touch = qtrue;
@@ -803,27 +803,27 @@ int R_StitchPatches( int grid1num, int grid2num ) {
 				//
 					v1 = grid1->verts[k + offset1].xyz;
 					v2 = grid2->verts[l + offset2].xyz;
-					if ( fabs(v1[0] - v2[0]) > .1)
+					if ( fabsf(v1[0] - v2[0]) > .1f)
 						continue;
-					if ( fabs(v1[1] - v2[1]) > .1)
+					if ( fabsf(v1[1] - v2[1]) > .1f)
 						continue;
-					if ( fabs(v1[2] - v2[2]) > .1)
+					if ( fabsf(v1[2] - v2[2]) > .1f)
 						continue;
 
 					v1 = grid1->verts[k + 2 + offset1].xyz;
 					v2 = grid2->verts[l + 1 + offset2].xyz;
-					if ( fabs(v1[0] - v2[0]) > .1)
+					if ( fabsf(v1[0] - v2[0]) > .1f)
 						continue;
-					if ( fabs(v1[1] - v2[1]) > .1)
+					if ( fabsf(v1[1] - v2[1]) > .1f)
 						continue;
-					if ( fabs(v1[2] - v2[2]) > .1)
+					if ( fabsf(v1[2] - v2[2]) > .1f)
 						continue;
 					//
 					v1 = grid2->verts[l + offset2].xyz;
 					v2 = grid2->verts[l + 1 + offset2].xyz;
-					if ( fabs(v1[0] - v2[0]) < .01 &&
-							fabs(v1[1] - v2[1]) < .01 &&
-							fabs(v1[2] - v2[2]) < .01)
+					if ( fabsf(v1[0] - v2[0]) < .01f &&
+							fabsf(v1[1] - v2[1]) < .01f &&
+							fabsf(v1[2] - v2[2]) < .01f)
 						continue;
 					//
 					//ri.Printf( PRINT_ALL, "found highest LoD crack between two patches\n" );
@@ -849,27 +849,27 @@ int R_StitchPatches( int grid1num, int grid2num ) {
 					//
 					v1 = grid1->verts[k + offset1].xyz;
 					v2 = grid2->verts[grid2->width * l + offset2].xyz;
-					if ( fabs(v1[0] - v2[0]) > .1)
+					if ( fabsf(v1[0] - v2[0]) > .1f)
 						continue;
-					if ( fabs(v1[1] - v2[1]) > .1)
+					if ( fabsf(v1[1] - v2[1]) > .1f)
 						continue;
-					if ( fabs(v1[2] - v2[2]) > .1)
+					if ( fabsf(v1[2] - v2[2]) > .1f)
 						continue;
 
 					v1 = grid1->verts[k + 2 + offset1].xyz;
 					v2 = grid2->verts[grid2->width * (l + 1) + offset2].xyz;
-					if ( fabs(v1[0] - v2[0]) > .1)
+					if ( fabsf(v1[0] - v2[0]) > .1f)
 						continue;
-					if ( fabs(v1[1] - v2[1]) > .1)
+					if ( fabsf(v1[1] - v2[1]) > .1f)
 						continue;
-					if ( fabs(v1[2] - v2[2]) > .1)
+					if ( fabsf(v1[2] - v2[2]) > .1f)
 						continue;
 					//
 					v1 = grid2->verts[grid2->width * l + offset2].xyz;
 					v2 = grid2->verts[grid2->width * (l + 1) + offset2].xyz;
-					if ( fabs(v1[0] - v2[0]) < .01 &&
-							fabs(v1[1] - v2[1]) < .01 &&
-							fabs(v1[2] - v2[2]) < .01)
+					if ( fabsf(v1[0] - v2[0]) < .01f &&
+							fabsf(v1[1] - v2[1]) < .01f &&
+							fabsf(v1[2] - v2[2]) < .01f)
 						continue;
 					//
 					//ri.Printf( PRINT_ALL, "found highest LoD crack between two patches\n" );
@@ -904,27 +904,27 @@ int R_StitchPatches( int grid1num, int grid2num ) {
 				//
 					v1 = grid1->verts[grid1->width * k + offset1].xyz;
 					v2 = grid2->verts[l + offset2].xyz;
-					if ( fabs(v1[0] - v2[0]) > .1)
+					if ( fabsf(v1[0] - v2[0]) > .1f)
 						continue;
-					if ( fabs(v1[1] - v2[1]) > .1)
+					if ( fabsf(v1[1] - v2[1]) > .1f)
 						continue;
-					if ( fabs(v1[2] - v2[2]) > .1)
+					if ( fabsf(v1[2] - v2[2]) > .1f)
 						continue;
 
 					v1 = grid1->verts[grid1->width * (k + 2) + offset1].xyz;
 					v2 = grid2->verts[l + 1 + offset2].xyz;
-					if ( fabs(v1[0] - v2[0]) > .1)
+					if ( fabsf(v1[0] - v2[0]) > .1f)
 						continue;
-					if ( fabs(v1[1] - v2[1]) > .1)
+					if ( fabsf(v1[1] - v2[1]) > .1f)
 						continue;
-					if ( fabs(v1[2] - v2[2]) > .1)
+					if ( fabsf(v1[2] - v2[2]) > .1f)
 						continue;
 					//
 					v1 = grid2->verts[l + offset2].xyz;
 					v2 = grid2->verts[(l + 1) + offset2].xyz;
-					if ( fabs(v1[0] - v2[0]) < .01 &&
-							fabs(v1[1] - v2[1]) < .01 &&
-							fabs(v1[2] - v2[2]) < .01)
+					if ( fabsf(v1[0] - v2[0]) < .01f &&
+							fabsf(v1[1] - v2[1]) < .01f &&
+							fabsf(v1[2] - v2[2]) < .01f)
 						continue;
 					//
 					//ri.Printf( PRINT_ALL, "found highest LoD crack between two patches\n" );
@@ -950,27 +950,27 @@ int R_StitchPatches( int grid1num, int grid2num ) {
 				//
 					v1 = grid1->verts[grid1->width * k + offset1].xyz;
 					v2 = grid2->verts[grid2->width * l + offset2].xyz;
-					if ( fabs(v1[0] - v2[0]) > .1)
+					if ( fabsf(v1[0] - v2[0]) > .1f)
 						continue;
-					if ( fabs(v1[1] - v2[1]) > .1)
+					if ( fabsf(v1[1] - v2[1]) > .1f)
 						continue;
-					if ( fabs(v1[2] - v2[2]) > .1)
+					if ( fabsf(v1[2] - v2[2]) > .1f)
 						continue;
 
 					v1 = grid1->verts[grid1->width * (k + 2) + offset1].xyz;
 					v2 = grid2->verts[grid2->width * (l + 1) + offset2].xyz;
-					if ( fabs(v1[0] - v2[0]) > .1)
+					if ( fabsf(v1[0] - v2[0]) > .1f)
 						continue;
-					if ( fabs(v1[1] - v2[1]) > .1)
+					if ( fabsf(v1[1] - v2[1]) > .1f)
 						continue;
-					if ( fabs(v1[2] - v2[2]) > .1)
+					if ( fabsf(v1[2] - v2[2]) > .1f)
 						continue;
 					//
 					v1 = grid2->verts[grid2->width * l + offset2].xyz;
 					v2 = grid2->verts[grid2->width * (l + 1) + offset2].xyz;
-					if ( fabs(v1[0] - v2[0]) < .01 &&
-							fabs(v1[1] - v2[1]) < .01 &&
-							fabs(v1[2] - v2[2]) < .01)
+					if ( fabsf(v1[0] - v2[0]) < .01f &&
+							fabsf(v1[1] - v2[1]) < .01f &&
+							fabsf(v1[2] - v2[2]) < .01f)
 						continue;
 					//
 					//ri.Printf( PRINT_ALL, "found highest LoD crack between two patches\n" );
@@ -1007,27 +1007,27 @@ int R_StitchPatches( int grid1num, int grid2num ) {
 				//
 					v1 = grid1->verts[k + offset1].xyz;
 					v2 = grid2->verts[l + offset2].xyz;
-					if ( fabs(v1[0] - v2[0]) > .1)
+					if ( fabsf(v1[0] - v2[0]) > .1f)
 						continue;
-					if ( fabs(v1[1] - v2[1]) > .1)
+					if ( fabsf(v1[1] - v2[1]) > .1f)
 						continue;
-					if ( fabs(v1[2] - v2[2]) > .1)
+					if ( fabsf(v1[2] - v2[2]) > .1f)
 						continue;
 
 					v1 = grid1->verts[k - 2 + offset1].xyz;
 					v2 = grid2->verts[l + 1 + offset2].xyz;
-					if ( fabs(v1[0] - v2[0]) > .1)
+					if ( fabsf(v1[0] - v2[0]) > .1f)
 						continue;
-					if ( fabs(v1[1] - v2[1]) > .1)
+					if ( fabsf(v1[1] - v2[1]) > .1f)
 						continue;
-					if ( fabs(v1[2] - v2[2]) > .1)
+					if ( fabsf(v1[2] - v2[2]) > .1f)
 						continue;
 					//
 					v1 = grid2->verts[l + offset2].xyz;
 					v2 = grid2->verts[(l + 1) + offset2].xyz;
-					if ( fabs(v1[0] - v2[0]) < .01 &&
-							fabs(v1[1] - v2[1]) < .01 &&
-							fabs(v1[2] - v2[2]) < .01)
+					if ( fabsf(v1[0] - v2[0]) < .01f &&
+							fabsf(v1[1] - v2[1]) < .01f &&
+							fabsf(v1[2] - v2[2]) < .01f)
 						continue;
 					//
 					//ri.Printf( PRINT_ALL, "found highest LoD crack between two patches\n" );
@@ -1054,27 +1054,27 @@ int R_StitchPatches( int grid1num, int grid2num ) {
 				//
 					v1 = grid1->verts[k + offset1].xyz;
 					v2 = grid2->verts[grid2->width * l + offset2].xyz;
-					if ( fabs(v1[0] - v2[0]) > .1)
+					if ( fabsf(v1[0] - v2[0]) > .1f)
 						continue;
-					if ( fabs(v1[1] - v2[1]) > .1)
+					if ( fabsf(v1[1] - v2[1]) > .1f)
 						continue;
-					if ( fabs(v1[2] - v2[2]) > .1)
+					if ( fabsf(v1[2] - v2[2]) > .1f)
 						continue;
 
 					v1 = grid1->verts[k - 2 + offset1].xyz;
 					v2 = grid2->verts[grid2->width * (l + 1) + offset2].xyz;
-					if ( fabs(v1[0] - v2[0]) > .1)
+					if ( fabsf(v1[0] - v2[0]) > .1f)
 						continue;
-					if ( fabs(v1[1] - v2[1]) > .1)
+					if ( fabsf(v1[1] - v2[1]) > .1f)
 						continue;
-					if ( fabs(v1[2] - v2[2]) > .1)
+					if ( fabsf(v1[2] - v2[2]) > .1f)
 						continue;
 					//
 					v1 = grid2->verts[grid2->width * l + offset2].xyz;
 					v2 = grid2->verts[grid2->width * (l + 1) + offset2].xyz;
-					if ( fabs(v1[0] - v2[0]) < .01 &&
-							fabs(v1[1] - v2[1]) < .01 &&
-							fabs(v1[2] - v2[2]) < .01)
+					if ( fabsf(v1[0] - v2[0]) < .01f &&
+							fabsf(v1[1] - v2[1]) < .01f &&
+							fabsf(v1[2] - v2[2]) < .01f)
 						continue;
 					//
 					//ri.Printf( PRINT_ALL, "found highest LoD crack between two patches\n" );
@@ -1112,27 +1112,27 @@ int R_StitchPatches( int grid1num, int grid2num ) {
 				//
 					v1 = grid1->verts[grid1->width * k + offset1].xyz;
 					v2 = grid2->verts[l + offset2].xyz;
-					if ( fabs(v1[0] - v2[0]) > .1)
+					if ( fabsf(v1[0] - v2[0]) > .1f)
 						continue;
-					if ( fabs(v1[1] - v2[1]) > .1)
+					if ( fabsf(v1[1] - v2[1]) > .1f)
 						continue;
-					if ( fabs(v1[2] - v2[2]) > .1)
+					if ( fabsf(v1[2] - v2[2]) > .1f)
 						continue;
 
 					v1 = grid1->verts[grid1->width * (k - 2) + offset1].xyz;
 					v2 = grid2->verts[l + 1 + offset2].xyz;
-					if ( fabs(v1[0] - v2[0]) > .1)
+					if ( fabsf(v1[0] - v2[0]) > .1f)
 						continue;
-					if ( fabs(v1[1] - v2[1]) > .1)
+					if ( fabsf(v1[1] - v2[1]) > .1f)
 						continue;
-					if ( fabs(v1[2] - v2[2]) > .1)
+					if ( fabsf(v1[2] - v2[2]) > .1f)
 						continue;
 					//
 					v1 = grid2->verts[l + offset2].xyz;
 					v2 = grid2->verts[(l + 1) + offset2].xyz;
-					if ( fabs(v1[0] - v2[0]) < .01 &&
-							fabs(v1[1] - v2[1]) < .01 &&
-							fabs(v1[2] - v2[2]) < .01)
+					if ( fabsf(v1[0] - v2[0]) < .01f &&
+							fabsf(v1[1] - v2[1]) < .01f &&
+							fabsf(v1[2] - v2[2]) < .01f)
 						continue;
 					//
 					//ri.Printf( PRINT_ALL, "found highest LoD crack between two patches\n" );
@@ -1158,27 +1158,27 @@ int R_StitchPatches( int grid1num, int grid2num ) {
 				//
 					v1 = grid1->verts[grid1->width * k + offset1].xyz;
 					v2 = grid2->verts[grid2->width * l + offset2].xyz;
-					if ( fabs(v1[0] - v2[0]) > .1)
+					if ( fabsf(v1[0] - v2[0]) > .1f)
 						continue;
-					if ( fabs(v1[1] - v2[1]) > .1)
+					if ( fabsf(v1[1] - v2[1]) > .1f)
 						continue;
-					if ( fabs(v1[2] - v2[2]) > .1)
+					if ( fabsf(v1[2] - v2[2]) > .1f)
 						continue;
 
 					v1 = grid1->verts[grid1->width * (k - 2) + offset1].xyz;
 					v2 = grid2->verts[grid2->width * (l + 1) + offset2].xyz;
-					if ( fabs(v1[0] - v2[0]) > .1)
+					if ( fabsf(v1[0] - v2[0]) > .1f)
 						continue;
-					if ( fabs(v1[1] - v2[1]) > .1)
+					if ( fabsf(v1[1] - v2[1]) > .1f)
 						continue;
-					if ( fabs(v1[2] - v2[2]) > .1)
+					if ( fabsf(v1[2] - v2[2]) > .1f)
 						continue;
 					//
 					v1 = grid2->verts[grid2->width * l + offset2].xyz;
 					v2 = grid2->verts[grid2->width * (l + 1) + offset2].xyz;
-					if ( fabs(v1[0] - v2[0]) < .01 &&
-							fabs(v1[1] - v2[1]) < .01 &&
-							fabs(v1[2] - v2[2]) < .01)
+					if ( fabsf(v1[0] - v2[0]) < .01f &&
+							fabsf(v1[1] - v2[1]) < .01f &&
+							fabsf(v1[2] - v2[2]) < .01f)
 						continue;
 					//
 					//ri.Printf( PRINT_ALL, "found highest LoD crack between two patches\n" );
@@ -1759,8 +1759,8 @@ void R_LoadLightGrid( lump_t *l ) {
 	wMaxs = w->bmodels[0].bounds[1];
 
 	for ( i = 0 ; i < 3 ; i++ ) {
-		w->lightGridOrigin[i] = w->lightGridSize[i] * ceil( wMins[i] / w->lightGridSize[i] );
-		maxs[i] = w->lightGridSize[i] * floor( wMaxs[i] / w->lightGridSize[i] );
+		w->lightGridOrigin[i] = w->lightGridSize[i] * ceilf( wMins[i] / w->lightGridSize[i] );
+		maxs[i] = w->lightGridSize[i] * floorf( wMaxs[i] / w->lightGridSize[i] );
 		w->lightGridBounds[i] = (maxs[i] - w->lightGridOrigin[i])/w->lightGridSize[i] + 1;
 	}
 

@@ -520,7 +520,7 @@ void CL_WriteAVIAudioFrame( const byte *pcmBuffer, int size )
   bytesInBuffer += size;
 
   // Only write if we have a frame's worth of audio
-  if( bytesInBuffer >= (int)ceil( (float)afd.a.rate / (float)afd.frameRate ) *
+  if( bytesInBuffer >= (int)ceilf( (float)afd.a.rate / (float)afd.frameRate ) *
         afd.a.sampleSize )
   {
     int   chunkOffset = afd.fileSize - afd.moviOffset - 8;

@@ -1384,7 +1384,7 @@ void CFxScheduler::CreateEffect( CPrimitiveTemplate *fx, CFxBoltInterface *obj, 
 		height = fx->mHeight.GetVal();
 
 		// calculate point on ellipse
-		VectorSet( temp, sin(x) * width * sin(y), cos(x) * width * sin(y), cos(y) * height ); // sinx * siny, cosx * siny, cosy
+		VectorSet( temp, sinf(x) * width * sinf(y), cosf(x) * width * sinf(y), cosf(y) * height ); // sinx * siny, cosx * siny, cosy
 		VectorAdd( org, temp, org );
 
 		if ( fx->mSpawnFlags & FX_AXIS_FROM_SPHERE )
@@ -2094,7 +2094,7 @@ void CFxScheduler::CreateEffect( CPrimitiveTemplate *fx, vec3_t origin, vec3_t a
 		height = fx->mHeight.GetVal();
 
 		// calculate point on ellipse
-		VectorSet( temp, sin(x) * width * sin(y), cos(x) * width * sin(y), cos(y) * height ); // sinx * siny, cosx * siny, cosy
+		VectorSet( temp, sinf(x) * width * sinf(y), cosf(x) * width * sinf(y), cosf(y) * height ); // sinx * siny, cosx * siny, cosy
 		VectorAdd( org, temp, org );
 
 		if ( fx->mSpawnFlags & FX_AXIS_FROM_SPHERE )

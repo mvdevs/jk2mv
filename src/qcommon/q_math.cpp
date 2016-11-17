@@ -162,7 +162,7 @@ int VectorCompare( const vec3_t v1, const vec3_t v2 ) {
 }
 
 vec_t VectorLength( const vec3_t v ) {
-	return (vec_t)sqrt (v[0]*v[0] + v[1]*v[1] + v[2]*v[2]);
+	return (vec_t)sqrtf(v[0]*v[0] + v[1]*v[1] + v[2]*v[2]);
 }
 
 vec_t VectorLengthSquared( const vec3_t v ) {
@@ -380,10 +380,10 @@ void RotatePointAroundVector( vec3_t dst, const vec3_t dir, const vec3_t point,
 	zrot[0][0] = zrot[1][1] = zrot[2][2] = 1.0F;
 
 	rad = DEG2RAD( degrees );
-	zrot[0][0] = cos( rad );
-	zrot[0][1] = sin( rad );
-	zrot[1][0] = -sin( rad );
-	zrot[1][1] = cos( rad );
+	zrot[0][0] = cosf( rad );
+	zrot[0][1] = sinf( rad );
+	zrot[1][0] = -sinf( rad );
+	zrot[1][1] = cosf( rad );
 
 	MatrixMultiply( m, zrot, tmpmat );
 	MatrixMultiply( tmpmat, im, rot );
@@ -444,7 +444,7 @@ void vectoangles( const vec3_t value1, vec3_t angles ) {
 			yaw += 360;
 		}
 
-		forward = sqrtf ( value1[0]*value1[0] + value1[1]*value1[1] );
+		forward = sqrtf( value1[0]*value1[0] + value1[1]*value1[1] );
 		pitch = atan2f(value1[2], forward) * ( 180.0f / (float) M_PI );
 		if ( pitch < 0 ) {
 			pitch += 360;
@@ -608,7 +608,7 @@ float	AngleSubtract( float a1, float a2 ) {
 	float	a;
 
 	a = a1 - a2;
-	assert(fabs(a) < 3600);
+	assert(fabsf(a) < 3600);
 	while ( a > 180 ) {
 		a -= 360;
 	}
@@ -747,8 +747,8 @@ float RadiusFromBounds( const vec3_t mins, const vec3_t maxs ) {
 	float	a, b;
 
 	for (i=0 ; i<3 ; i++) {
-		a = fabs( mins[i] );
-		b = fabs( maxs[i] );
+		a = fabsf( mins[i] );
+		b = fabsf( maxs[i] );
 		corner[i] = a > b ? a : b;
 	}
 
@@ -789,7 +789,7 @@ vec_t VectorNormalize( vec3_t v ) {
 	float	length, ilength;
 
 	length = v[0]*v[0] + v[1]*v[1] + v[2]*v[2];
-	length = sqrt (length);
+	length = sqrtf(length);
 
 	if ( length ) {
 		ilength = 1/length;
@@ -805,7 +805,7 @@ vec_t VectorNormalize2( const vec3_t v, vec3_t out) {
 	float	length, ilength;
 
 	length = v[0]*v[0] + v[1]*v[1] + v[2]*v[2];
-	length = sqrt (length);
+	length = sqrtf(length);
 
 	if (length)
 	{
@@ -935,14 +935,14 @@ void AngleVectors( const vec3_t angles, vec3_t forward, vec3_t right, vec3_t up)
 	// static to help MS compiler fp bugs
 
 	angle = DEG2RAD(angles[YAW]);
-	sy = sin(angle);
-	cy = cos(angle);
+	sy = sinf(angle);
+	cy = cosf(angle);
 	angle = DEG2RAD(angles[PITCH]);
-	sp = sin(angle);
-	cp = cos(angle);
+	sp = sinf(angle);
+	cp = cosf(angle);
 	angle = DEG2RAD(angles[ROLL]);
-	sr = sin(angle);
-	cr = cos(angle);
+	sr = sinf(angle);
+	cr = cosf(angle);
 
 	if (forward)
 	{

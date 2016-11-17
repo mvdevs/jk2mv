@@ -893,17 +893,17 @@ intptr_t CL_CgameSystemCalls(intptr_t *args) {
 	case CGAME_STRNCPY:
 		return strncpy( (char *)VMA(1), (const char *)VMA(2), args[3] ) ? 1:0;
 	case CGAME_SIN:
-		return FloatAsInt( sin( VMF(1) ) );
+		return FloatAsInt( sinf( VMF(1) ) );
 	case CGAME_COS:
-		return FloatAsInt( cos( VMF(1) ) );
+		return FloatAsInt( cosf( VMF(1) ) );
 	case CGAME_ATAN2:
-		return FloatAsInt( atan2( VMF(1), VMF(2) ) );
+		return FloatAsInt( atan2f( VMF(1), VMF(2) ) );
 	case CGAME_SQRT:
-		return FloatAsInt( sqrt( VMF(1) ) );
+		return FloatAsInt( sqrtf( VMF(1) ) );
 	case CGAME_FLOOR:
-		return FloatAsInt( floor( VMF(1) ) );
+		return FloatAsInt( floorf( VMF(1) ) );
 	case CGAME_CEIL:
-		return FloatAsInt( ceil( VMF(1) ) );
+		return FloatAsInt( ceilf( VMF(1) ) );
 	case CGAME_ACOS:
 		return FloatAsInt( Q_acos( VMF(1) ) );
 

@@ -546,13 +546,13 @@ static void G2_BuildHitPointST( const vec3_t A, const float SA, const float TA,
 	*s = SA * i + SB * j + SC * k;
 	*t = TA * i + TB * j + TC * k;
 
-	*s=fmod(*s, 1);
+	*s=fmodf(*s, 1);
 	if (*s< 0)
 	{
 		*s+= 1.0f;
 	}
 
-	*t=fmod(*t, 1);
+	*t=fmodf(*t, 1);
 	if (*t< 0)
 	{
 		*t+= 1.0f;
@@ -581,7 +581,7 @@ static qboolean G2_SegmentTriangleTest( const vec3_t start, const vec3_t end,
 
 	*denom=DotProduct(ray, returnedNormal);
 
-	if (fabs(*denom)<tiny||        // triangle parallel to ray
+	if (fabsf(*denom)<tiny||        // triangle parallel to ray
 		(!backFaces && *denom>0)||		// not accepting back faces
 		(!frontFaces && *denom<0))		//not accepting front faces
 	{
@@ -692,8 +692,8 @@ static bool G2_RadiusTracePolys( const mdxmSurface_t *surface, const vec3_t rayS
 	VectorNormalize(basis1);
 	VectorNormalize(basis2);
 
-	const float c=cos(0.0f);//theta
-	const float s=sin(0.0f);//theta
+	const float c=cosf(0.0f);//theta
+	const float s=sinf(0.0f);//theta
 
 	VectorScale(basis1, 0.5f * c / fRadius,taxis);
 	VectorMA(taxis,     0.5f * s / fRadius,basis2,taxis);
@@ -1005,7 +1005,7 @@ void G2_TraceSurfaces(CTraceSurface &TS)
 	if (!offFlags)
 	{
 #ifdef G2_COLLISION_ENABLED
-		if (!(fabs(TS.m_fRadius) < 0.1f))	// if not a point-trace
+		if (!(fabsf(TS.m_fRadius) < 0.1f))	// if not a point-trace
 		{
 			// .. then use radius check
 			//

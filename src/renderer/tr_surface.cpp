@@ -150,8 +150,8 @@ static void RB_SurfaceSprite( void ) {
 		float	ang;
 
 		ang = DEG2RAD( backEnd.currentEntity->e.rotation );
-		s = sin( ang );
-		c = cos( ang );
+		s = sinf( ang );
+		c = cosf( ang );
 
 		VectorScale( backEnd.viewParms.ori.axis[1], c * radius, left );
 		VectorMA( left, -s * radius, backEnd.viewParms.ori.axis[2], left );
@@ -193,8 +193,8 @@ static void RB_SurfaceOrientedQuad( void )
 		float	ang;
 
 		ang = DEG2RAD( backEnd.currentEntity->e.rotation );
-		s = sin( ang );
-		c = cos( ang );
+		s = sinf( ang );
+		c = cosf( ang );
 
 		// Use a temp so we don't trash the values we'll need later
 		VectorScale( left, c * radius, tempLeft );
@@ -432,8 +432,8 @@ static void DoSprite( vec3_t origin, float radius, float rotation )
 	vec3_t	left, up;
 
 	ang = DEG2RAD( rotation );
-	s = sin( ang );
-	c = cos( ang );
+	s = sinf( ang );
+	c = cosf( ang );
 
 	VectorScale( backEnd.viewParms.ori.axis[1], c * radius, left );
 	VectorMA( left, -s * radius, backEnd.viewParms.ori.axis[2], left );

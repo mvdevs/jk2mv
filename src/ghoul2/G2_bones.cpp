@@ -631,8 +631,8 @@ qboolean G2_Set_Bone_Anim_Index(
 			{
 				if (animSpeed<0.0f)
 				{
-					blist[index].blendFrame = floor(currentFrame);
-					blist[index].blendLerpFrame = floor(currentFrame);
+					blist[index].blendFrame = floorf(currentFrame);
+					blist[index].blendLerpFrame = floorf(currentFrame);
 				}
 				else
 				{
@@ -856,14 +856,14 @@ qboolean G2_Get_Bone_Anim_Index( boneInfo_v &blist, const int index, const int c
 						{
 							if (newFrame_g <= mendFrame+1)
 							{
-								newFrame_g=mendFrame+fmod(newFrame_g-mendFrame,animSize)-animSize;
+								newFrame_g=mendFrame+fmodf(newFrame_g-mendFrame,animSize)-animSize;
 							}
 						}
 						else
 						{
 							if (newFrame_g >= mendFrame)
 							{
-								newFrame_g=mendFrame+fmod(newFrame_g-mendFrame,animSize)-animSize;
+								newFrame_g=mendFrame+fmodf(newFrame_g-mendFrame,animSize)-animSize;
 							}
 						}
 
@@ -971,14 +971,14 @@ qboolean G2_Get_Bone_Anim(const char *fileName, boneInfo_v &blist, const char *b
 						{
 							if (newFrame_g <= mendFrame+1)
 							{
-								newFrame_g=mendFrame+fmod(newFrame_g-mendFrame,animSize)-animSize;
+								newFrame_g=mendFrame+fmodf(newFrame_g-mendFrame,animSize)-animSize;
 							}
 						}
 						else
 						{
 							if (newFrame_g >= mendFrame)
 							{
-								newFrame_g=mendFrame+fmod(newFrame_g-mendFrame,animSize)-animSize;
+								newFrame_g=mendFrame+fmodf(newFrame_g-mendFrame,animSize)-animSize;
 							}
 						}
 
@@ -1200,14 +1200,14 @@ void G2_Animate_Bone_List(CGhoul2Info_v &ghoul2, const int currentTime, const in
 							{
 								if (newFrame_g <= endFrame+1)
 								{
-									newFrame_g=endFrame+fmod(newFrame_g-endFrame,animSize)-animSize;
+									newFrame_g=endFrame+fmodf(newFrame_g-endFrame,animSize)-animSize;
 								}
 							}
 							else
 							{
 								if (newFrame_g >= endFrame)
 								{
-									newFrame_g=endFrame+fmod(newFrame_g-endFrame,animSize)-animSize;
+									newFrame_g=endFrame+fmodf(newFrame_g-endFrame,animSize)-animSize;
 								}
 							}
 							// figure out new start time

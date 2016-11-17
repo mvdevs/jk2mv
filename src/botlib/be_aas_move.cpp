@@ -389,7 +389,7 @@ void AAS_ApplyFriction(vec3_t vel, float friction, float stopspeed,
 	float speed, control, newspeed;
 
 	//horizontal speed
-	speed = sqrt(vel[0] * vel[0] + vel[1] * vel[1]);
+	speed = sqrtf(vel[0] * vel[0] + vel[1] * vel[1]);
 	if (speed)
 	{
 		control = speed < stopspeed ? stopspeed : speed;
@@ -1064,7 +1064,7 @@ int AAS_HorizontalVelocityForJump(float zvel, vec3_t start, vec3_t end, float *v
 		return 0;
 	} //end if
 	//time a player takes to fall the height
-	t = sqrt(height2fall / (0.5 * phys_gravity));
+	t = sqrtf(height2fall / (0.5f * phys_gravity));
   	//direction from start to end
 	VectorSubtract(end, start, dir);
 	//
@@ -1073,7 +1073,7 @@ int AAS_HorizontalVelocityForJump(float zvel, vec3_t start, vec3_t end, float *v
 		return 0;
 	}
 	//calculate horizontal speed
-	*velocity = sqrt(dir[0]*dir[0] + dir[1]*dir[1]) / (t + zvel / phys_gravity);
+	*velocity = sqrtf(dir[0]*dir[0] + dir[1]*dir[1]) / (t + zvel / phys_gravity);
 	//the horizontal speed must be lower than the max speed
 	if (*velocity > phys_maxvelocity)
 	{

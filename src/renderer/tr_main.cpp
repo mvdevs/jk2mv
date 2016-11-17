@@ -468,7 +468,7 @@ static void SetFarClip( void )
 			farthestCornerDistance = distance;
 		}
 	}
-	tr.viewParms.zFar = sqrt( farthestCornerDistance );
+	tr.viewParms.zFar = sqrtf( farthestCornerDistance );
 }
 
 
@@ -491,10 +491,10 @@ void R_SetupProjection( void ) {
 	zNear	= r_znear->value;
 	zFar	= tr.viewParms.zFar;
 
-	ymax = zNear * tan( DEG2RAD( tr.refdef.fov_y * 0.5f ) );
+	ymax = zNear * tanf( DEG2RAD( tr.refdef.fov_y * 0.5f ) );
 	ymin = -ymax;
 
-	xmax = zNear * tan( DEG2RAD( tr.refdef.fov_x 0.5f ) );
+	xmax = zNear * tanf( DEG2RAD( tr.refdef.fov_x * 0.5f ) );
 	xmin = -xmax;
 
 	width = xmax - xmin;
@@ -535,8 +535,8 @@ void R_SetupFrustum (void) {
 	float	ang;
 
 	ang = DEG2RAD( tr.viewParms.fovX * 0.5f );
-	xs = sin( ang );
-	xc = cos( ang );
+	xs = sinf( ang );
+	xc = cosf( ang );
 
 	VectorScale( tr.viewParms.ori.axis[0], xs, tr.viewParms.frustum[0].normal );
 	VectorMA( tr.viewParms.frustum[0].normal, xc, tr.viewParms.ori.axis[1], tr.viewParms.frustum[0].normal );
@@ -545,8 +545,8 @@ void R_SetupFrustum (void) {
 	VectorMA( tr.viewParms.frustum[1].normal, -xc, tr.viewParms.ori.axis[1], tr.viewParms.frustum[1].normal );
 
 	ang = tr.viewParms.fovY / 180 * M_PI * 0.5f;
-	xs = sin( ang );
-	xc = cos( ang );
+	xs = sinf( ang );
+	xc = cosf( ang );
 
 	VectorScale( tr.viewParms.ori.axis[0], xs, tr.viewParms.frustum[2].normal );
 	VectorMA( tr.viewParms.frustum[2].normal, xc, tr.viewParms.ori.axis[2], tr.viewParms.frustum[2].normal );
@@ -736,7 +736,7 @@ qboolean R_GetPortalOrientations( drawSurf_t *drawSurf, int entityNum,
 				CrossProduct( camera->axis[0], camera->axis[1], camera->axis[2] );
 			} else {
 				// bobbing rotate, with skinNum being the rotation offset
-				d = sin( tr.refdef.time * 0.003f );
+				d = sinf( tr.refdef.time * 0.003f );
 				d = e->e.skinNum + d * 4;
 				VectorCopy( camera->axis[1], transformed );
 				RotatePointAroundVector( camera->axis[1], camera->axis[0], transformed, d );

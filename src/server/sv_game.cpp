@@ -911,16 +911,16 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 		return (intptr_t)strncpy( (char *)VMA(1), (const char *)VMA(2), args[3] );
 
 	case TRAP_SIN:
-		return FloatAsInt( sin( VMF(1) ) );
+		return FloatAsInt( sinf( VMF(1) ) );
 
 	case TRAP_COS:
-		return FloatAsInt( cos( VMF(1) ) );
+		return FloatAsInt( cosf( VMF(1) ) );
 
 	case TRAP_ATAN2:
-		return FloatAsInt( atan2( VMF(1), VMF(2) ) );
+		return FloatAsInt( atan2f( VMF(1), VMF(2) ) );
 
 	case TRAP_SQRT:
-		return FloatAsInt( sqrt( VMF(1) ) );
+		return FloatAsInt( sqrtf( VMF(1) ) );
 
 	case TRAP_MATRIXMULTIPLY:
 		MatrixMultiply( (vec3_t *)VMA(1), (vec3_t *)VMA(2), (vec3_t *)VMA(3) );
@@ -935,10 +935,10 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 		return 0;
 
 	case TRAP_FLOOR:
-		return FloatAsInt( floor( VMF(1) ) );
+		return FloatAsInt( floorf( VMF(1) ) );
 
 	case TRAP_CEIL:
-		return FloatAsInt( ceil( VMF(1) ) );
+		return FloatAsInt( ceilf( VMF(1) ) );
 
 	case G_G2_LISTBONES:
 		G2API_ListBones( (CGhoul2Info *) VMA(1), args[2]);
