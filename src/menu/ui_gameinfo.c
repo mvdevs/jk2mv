@@ -23,8 +23,8 @@ static char		*ui_arenaInfos[MAX_ARENAS];
 UI_ParseInfos
 ===============
 */
-int UI_ParseInfos( char *buf, int max, char *infos[] ) {
-	char	*token;
+int UI_ParseInfos( const char *buf, int max, char *infos[] ) {
+	const char	*token;
 	int		count;
 	char	key[MAX_TOKEN_CHARS];
 	char	info[MAX_INFO_STRING];
@@ -32,7 +32,7 @@ int UI_ParseInfos( char *buf, int max, char *infos[] ) {
 	count = 0;
 
 	while ( 1 ) {
-		token = COM_Parse( (const char **)&buf );
+		token = COM_Parse( &buf );
 		if ( !token[0] ) {
 			break;
 		}
@@ -48,7 +48,7 @@ int UI_ParseInfos( char *buf, int max, char *infos[] ) {
 
 		info[0] = '\0';
 		while ( 1 ) {
-			token = COM_ParseExt( (const char **)&buf, qtrue );
+			token = COM_ParseExt( &buf, qtrue );
 			if ( !token[0] ) {
 				Com_Printf( "Unexpected end of info file\n" );
 				break;
@@ -58,11 +58,11 @@ int UI_ParseInfos( char *buf, int max, char *infos[] ) {
 			}
 			Q_strncpyz( key, token, sizeof( key ) );
 
-			token = COM_ParseExt( (const char **)&buf, qfalse );
-			if ( !token[0] ) {
-				strcpy( token, "<NULL>" );
-			}
-			Info_SetValueForKey( info, key, token );
+			token = COM_ParseExt( &buf, qfalse );
+			if ( !token[0] )
+				Info_SetValueForKey( info, key, "<NULL>" );
+			else
+				Info_SetValueForKey( info, key, token );
 		}
 		//NOTE: extra space for arena number
 		infos[count] = UI_Alloc(strlen(info) + strlen("\\num\\") + strlen(va("%d", MAX_ARENAS)) + 1);

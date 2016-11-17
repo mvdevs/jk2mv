@@ -215,7 +215,7 @@ void VM_LoadSymbols( vm_t *vm ) {
 		void	*v;
 	} mapfile;
 	const char *text_p;
-	char *token;
+	const char *token;
 	char	name[MAX_QPATH];
 	char	symbols[MAX_QPATH];
 	vmSymbol_t	**prev, *sym;
