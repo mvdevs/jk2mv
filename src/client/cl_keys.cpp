@@ -477,7 +477,7 @@ void Field_BigDraw( field_t *edit, int x, int y, qboolean showCursor )
 
 
 static void Field_SaveHistory( field_t *edit ) {
-#ifndef NDEBUG
+#if 0
 	if ( edit->currentTail != edit->historyHead ) {
 		int prev = (edit->currentTail + FIELD_HISTORY_SIZE - 1) % FIELD_HISTORY_SIZE;
 		assert( strcmp( edit->buffer, edit->bufferHistory[prev] ) );
