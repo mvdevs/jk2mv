@@ -1057,10 +1057,10 @@ void WIN_SetGamma( glconfig_t *glConfig, byte red[256], byte green[256], byte bl
 			{
 				for( i = 0 ; i < 128 ; i++ )
 				{
-                                        table[j][i] = Q_min(table[j][i], (128 + i) << 8);
+                                        table[j][i] = MIN(table[j][i], (128 + i) << 8);
 				}
 
-                                table[j][127] = Q_min(table[j][127], 254 << 8);
+                                table[j][127] = MIN(table[j][127], 254 << 8);
 			}
 		}
 	}

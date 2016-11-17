@@ -91,7 +91,7 @@ http://www.exploit-db.com/exploits/1750/
 http://ioqsrc.vampireducks.com/d8/dbe/q__shared_8c-source.html#l00061
 ============
 */
-void COM_StripExtension(const char *in, char *out, int destsize) {
+void COM_StripExtension(const char *in, char *out, size_t destsize) {
 	int length;
 	Q_strncpyz(out, in, destsize);
 	length = (int)strlen(out) - 1;
@@ -110,7 +110,7 @@ void COM_StripExtension(const char *in, char *out, int destsize) {
 COM_DefaultExtension
 ==================
 */
-void COM_DefaultExtension(char *path, int maxSize, const char *extension) {
+void COM_DefaultExtension(char *path, size_t maxSize, const char *extension) {
 	char	oldPath[MAX_QPATH];
 	char	*src;
 
@@ -207,17 +207,11 @@ qint64 Long64NoSwap(qint64 ll) {
 	return ll;
 }
 
-typedef union {
-	float	f;
-	unsigned int i;
-} _FloatByteUnion;
-
 float FloatSwap(const float *f) {
-	const _FloatByteUnion *in;
-	_FloatByteUnion out;
+	floatint_t out;
 
-	in = (_FloatByteUnion *)f;
-	out.i = LongSwap(in->i);
+	out.f = *f;
+	out.i = LongSwap(out.i);
 
 	return out.f;
 }
@@ -465,7 +459,7 @@ char *COM_ParseExt(const char **data_p, qboolean allowLineBreaks) {
 			c = *data++;
 			if (c == '\"' || !c) {
 				com_token[len] = 0;
-				*data_p = (char *)data;
+				*data_p = (const char *)data;
 				return com_token;
 			}
 			if (len < MAX_TOKEN_CHARS) {
@@ -493,7 +487,7 @@ char *COM_ParseExt(const char **data_p, qboolean allowLineBreaks) {
 	}
 	com_token[len] = 0;
 
-	*data_p = (char *)data;
+	*data_p = (const char *)data;
 	return com_token;
 }
 
@@ -764,10 +758,10 @@ int Q_isalnum(int c) {
 
 char* Q_strrchr(const char* string, int c) {
 	char cc = c;
-	char *s;
-	char *sp = (char *)0;
+	const char *s;
+	const char *sp = NULL;
 
-	s = (char*)string;
+	s = (const char *)string;
 
 	while (*s) {
 		if (*s == cc)
@@ -777,7 +771,7 @@ char* Q_strrchr(const char* string, int c) {
 	if (cc == 0)
 		sp = s;
 
-	return sp;
+	return (char *)sp;
 }
 
 /*

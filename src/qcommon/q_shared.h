@@ -971,8 +971,8 @@ float Com_Clamp( float min, float max, float value );
 int Com_Clampi(int min, int max, int value);
 
 char	*COM_SkipPath( char *pathname );
-void	COM_StripExtension(const char *in, char *out, int destsize);
-void	COM_DefaultExtension( char *path, int maxSize, const char *extension );
+void	COM_StripExtension(const char *in, char *out, size_t destsize);
+void	COM_DefaultExtension( char *path, size_t maxSize, const char *extension );
 
 void	COM_BeginParseSession( const char *name );
 int		COM_GetCurrentParseLine( void );
@@ -2336,8 +2336,5 @@ typedef union byteAlias_u {
 #define STRING( a ) #a
 #define XSTRING( a ) STRING( a )
 #define ARRAY_LEN( x ) ( sizeof( x ) / sizeof( *(x) ) )
-
-#define Q_min(x,y) ((x)<(y)?(x):(y))
-#define Q_max(x,y) ((x)>(y)?(x):(y))
 
 #endif	// __Q_SHARED_H

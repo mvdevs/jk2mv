@@ -92,7 +92,6 @@ int MVAPI_Init(int apilevel) {
 	return MV_APILEVEL;
 }
 
-menuDef_t *Menus_FindByName(const char *p);
 void Menu_ShowItemByName(menuDef_t *menu, const char *p, qboolean bShow);
 void UpdateForceUsed();
 
@@ -356,9 +355,9 @@ void Text_PaintWithCursor(float x, float y, float scale, vec4_t color, const cha
 	//
 	{
 		char sTemp[1024];
-		size_t iCopyCount = limit ? Q_min(strlen(text), limit) : strlen(text);
-			iCopyCount = Q_min(iCopyCount,cursorPos);
-			iCopyCount = Q_min(iCopyCount,sizeof(sTemp));
+		size_t iCopyCount = limit ? MIN(strlen(text), limit) : strlen(text);
+			iCopyCount = MIN(iCopyCount,cursorPos);
+			iCopyCount = MIN(iCopyCount,sizeof(sTemp));
 
 			// copy text into temp buffer for pixel measure...
 			//
@@ -1070,7 +1069,7 @@ static void UI_DrawAutoSwitch(rectDef_t *rect, float scale, vec4_t color, int te
 		break;
 	}
 
-	stripString = UI_GetStripEdString("INGAMETEXT", (char *)switchString);
+	stripString = UI_GetStripEdString("INGAMETEXT", switchString);
 
 	if (stripString)
 	{
@@ -1168,7 +1167,7 @@ static void UI_DrawSkill(rectDef_t *rect, float scale, vec4_t color, int textSty
   if (i < 1 || i > numSkillLevels) {
     i = 1;
   }
-  Text_Paint(rect->x, rect->y, scale, color, (char *)UI_GetStripEdString("INGAMETEXT", (char *)skillLevels[i-1]),0, 0, textStyle, iMenuFont);
+  Text_Paint(rect->x, rect->y, scale, color, UI_GetStripEdString("INGAMETEXT", skillLevels[i-1]),0, 0, textStyle, iMenuFont);
 }
 
 
@@ -1190,7 +1189,7 @@ static void UI_DrawGenericNum(rectDef_t *rect, float scale, vec4_t color, int te
 static void UI_DrawForceMastery(rectDef_t *rect, float scale, vec4_t color, int textStyle, int val, int min, int max, int iMenuFont)
 {
 	int i;
-	char *s;
+	const char *s;
 
 	i = val;
 	if (i < min || i > max)
@@ -1198,7 +1197,7 @@ static void UI_DrawForceMastery(rectDef_t *rect, float scale, vec4_t color, int 
 		i = min;
 	}
 
-	s = (char *)UI_GetStripEdString("INGAMETEXT", forceMasteryLevels[val]);
+	s = UI_GetStripEdString("INGAMETEXT", forceMasteryLevels[val]);
 	Text_Paint(rect->x, rect->y, scale, color, s, 0, 0, textStyle, iMenuFont);
 }
 
@@ -2137,12 +2136,12 @@ static int UI_OwnerDrawWidth(int ownerDraw, float scale) {
 		if (i == FORCE_LIGHTSIDE)
 		{
 //			s = "Light";
-			s = (char *)UI_GetStripEdString("MENUS3", "FORCEDESC_LIGHT");
+			s = UI_GetStripEdString("MENUS3", "FORCEDESC_LIGHT");
 		}
 		else
 		{
 //			s = "Dark";
-			s = (char *)UI_GetStripEdString("MENUS3", "FORCEDESC_DARK");
+			s = UI_GetStripEdString("MENUS3", "FORCEDESC_DARK");
 		}
 		break;
     case UI_JEDI_NONJEDI:
@@ -2155,12 +2154,12 @@ static int UI_OwnerDrawWidth(int ownerDraw, float scale) {
 		if (i == FORCE_NONJEDI)
 		{
 //			s = "Non-Jedi";
-			s = (char *)UI_GetStripEdString("MENUS0", "NO");
+			s = UI_GetStripEdString("MENUS0", "NO");
 		}
 		else
 		{
 //			s = "Jedi";
-			s = (char *)UI_GetStripEdString("MENUS0", "YES");
+			s = UI_GetStripEdString("MENUS0", "YES");
 		}
 		break;
     case UI_FORCE_RANK:
@@ -2169,7 +2168,7 @@ static int UI_OwnerDrawWidth(int ownerDraw, float scale) {
 			i = 1;
 		}
 
-		s = (char *)UI_GetStripEdString("INGAMETEXT", forceMasteryLevels[i]);
+		s = UI_GetStripEdString("INGAMETEXT", forceMasteryLevels[i]);
 		break;
 	case UI_FORCE_RANK_HEAL:
 	case UI_FORCE_RANK_LEVITATION:
@@ -2211,7 +2210,7 @@ static int UI_OwnerDrawWidth(int ownerDraw, float scale) {
 				if (i < 1 || i > numSkillLevels) {
 					i = 1;
 				}
-			  s = (char *)UI_GetStripEdString("INGAMETEXT", (char *)skillLevels[i-1]);
+			  s = UI_GetStripEdString("INGAMETEXT", skillLevels[i-1]);
       break;
     case UI_BLUETEAMNAME:
 			  i = UI_TeamIndexFromName(UI_Cvar_VariableString("ui_blueTeam"));
@@ -2353,7 +2352,7 @@ static void UI_DrawBotSkill(rectDef_t *rect, float scale, vec4_t color, int text
 {
 	if (uiInfo.skillIndex >= 0 && uiInfo.skillIndex < numSkillLevels)
 	{
-		Text_Paint(rect->x, rect->y, scale, color, (char *)UI_GetStripEdString("INGAMETEXT", (char *)skillLevels[uiInfo.skillIndex]), 0, 0, textStyle,iMenuFont);
+		Text_Paint(rect->x, rect->y, scale, color, UI_GetStripEdString("INGAMETEXT", skillLevels[uiInfo.skillIndex]), 0, 0, textStyle,iMenuFont);
 	}
 }
 
@@ -2453,11 +2452,11 @@ static void UI_DrawServerRefreshDate(rectDef_t *rect, float scale, vec4_t color,
 	if (uiInfo.serverStatus.refreshActive)
 	{
 		vec4_t lowLight, newColor;
-		lowLight[0] = 0.8 * color[0];
-		lowLight[1] = 0.8 * color[1];
-		lowLight[2] = 0.8 * color[2];
-		lowLight[3] = 0.8 * color[3];
-		LerpColor(color,lowLight,newColor,0.5+0.5*sin(uiInfo.uiDC.realTime / PULSE_DIVISOR));
+		lowLight[0] = 0.8f * color[0];
+		lowLight[1] = 0.8f * color[1];
+		lowLight[2] = 0.8f * color[2];
+		lowLight[3] = 0.8f * color[3];
+		LerpColor(color,lowLight,newColor,0.5f+0.5f*sinf(uiInfo.uiDC.realTime / PULSE_DIVISOR));
 
 		trap_SP_GetStringTextString("INGAMETEXT_GETTINGINFOFORSERVERS", holdSPString, sizeof(holdSPString));
 		Text_Paint(rect->x - 8, rect->y, scale, newColor, va((char *) holdSPString, trap_LAN_GetServerCount(ui_netSource.integer)), 0, 0, textStyle, iMenuFont);
@@ -2687,9 +2686,9 @@ static void UI_OwnerDraw(float x, float y, float w, float h, float text_x, float
 		//this will give us the index as long as UI_FORCE_RANK is always one below the first force rank index
 		if (uiForcePowerDarkLight[findex] && uiForceSide != uiForcePowerDarkLight[findex])
 		{
-			color[0] *= 0.5;
-			color[1] *= 0.5;
-			color[2] *= 0.5;
+			color[0] *= 0.5f;
+			color[1] *= 0.5f;
+			color[2] *= 0.5f;
 		}
 /*		else if (uiForceRank < UI_ForceColorMinRank[bgForcePowerCost[findex][FORCE_LEVEL_1]])
 		{
@@ -2889,18 +2888,19 @@ static void UI_OwnerDraw(float x, float y, float w, float h, float text_x, float
 
 static qboolean UI_OwnerDrawVisible(int flags) {
 	qboolean vis = qtrue;
+	gametype_t gametype = trap_Cvar_VariableValue("g_gametype");
 
 	while (flags) {
 
 		if (flags & UI_SHOW_FFA) {
-			if (trap_Cvar_VariableValue("g_gametype") != GT_FFA && trap_Cvar_VariableValue("g_gametype") != GT_HOLOCRON && trap_Cvar_VariableValue("g_gametype") != GT_JEDIMASTER) {
+			if (gametype != GT_FFA && gametype != GT_HOLOCRON && gametype != GT_JEDIMASTER) {
 				vis = qfalse;
 			}
 			flags &= ~UI_SHOW_FFA;
 		}
 
 		if (flags & UI_SHOW_NOTFFA) {
-			if (trap_Cvar_VariableValue("g_gametype") == GT_FFA || trap_Cvar_VariableValue("g_gametype") == GT_HOLOCRON || trap_Cvar_VariableValue("g_gametype") != GT_JEDIMASTER) {
+			if (gametype == GT_FFA || gametype == GT_HOLOCRON || gametype != GT_JEDIMASTER) {
 				vis = qfalse;
 			}
 			flags &= ~UI_SHOW_NOTFFA;
@@ -3616,7 +3616,7 @@ static int QDECL UI_ServersQsortCompare( const void *arg1, const void *arg2 ) {
 		fakeKey = MVSORT_CLIENTS_NOBOTS;
 	}
 
-	return trap_LAN_CompareServers(ui_netSource.integer, fakeKey, uiInfo.serverStatus.sortDir, *(int*)arg1, *(int*)arg2);
+	return trap_LAN_CompareServers(ui_netSource.integer, fakeKey, uiInfo.serverStatus.sortDir, *(const int*)arg1, *(const int*)arg2);
 }
 
 
@@ -6781,7 +6781,7 @@ void _UI_Init( qboolean inGameLoad ) {
 
 /*
 =================
-UI_KeyEvent
+_UI_KeyEvent
 =================
 */
 void _UI_KeyEvent( int key, qboolean down ) {
@@ -6958,7 +6958,7 @@ qboolean _UI_IsFullscreen( void ) {
 static connstate_t	lastConnState;
 static char			lastLoadingText[MAX_INFO_VALUE];
 
-static void UI_ReadableSize ( char *buf, int bufsize, int value )
+static void UI_ReadableSize ( char *buf, size_t bufsize, int value )
 {
 	if (value > 1024*1024*1024 ) { // gigs
 		Com_sprintf( buf, bufsize, "%d", value / (1024*1024*1024) );
@@ -6976,7 +6976,7 @@ static void UI_ReadableSize ( char *buf, int bufsize, int value )
 }
 
 // Assumes time is in msec
-static void UI_PrintTime ( char *buf, int bufsize, int time ) {
+static void UI_PrintTime ( char *buf, size_t bufsize, int time ) {
 	time /= 1000;  // change to seconds
 
 	if (time > 3600) { // in the hours range

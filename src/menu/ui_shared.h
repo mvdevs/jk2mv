@@ -474,14 +474,6 @@ int			trap_PC_SourceFileAndLine		( int handle, char *filename, int *line );
 int			trap_PC_LoadGlobalDefines		( const char* filename );
 void		trap_PC_RemoveAllGlobalDefines	( void );
 
-int			trap_R_Font_StrLenPixels(const char *text, const int iFontIndex, const float scale);
-int			trap_R_Font_StrLenChars(const char *text);
-int			trap_R_Font_HeightPixels(const int iFontIndex, const float scale);
-void		trap_R_Font_DrawString(int ox, int oy, const char *text, const float *rgba, const int setIndex, int iCharLimit, const float scale);
-qboolean	trap_Language_IsAsian(void);
-qboolean	trap_Language_UsesSpaces(void);
-unsigned int trap_AnyLanguage_ReadCharFromString( const char *psText, int *piAdvanceCount, qboolean *pbIsTrailingPunctuation );
-
 qboolean	trap_SP_RegisterServer( const char *package );
 qboolean	trap_SP_Register(char *file );
 int trap_SP_GetStringTextString(const char *text, char *buffer, int bufferLength);

@@ -149,7 +149,7 @@ float	Q_random( int *seed ) {
 }
 
 float	Q_crandom( int *seed ) {
-	return 2.0 * ( Q_random( seed ) - 0.5 );
+	return 2.0f * ( Q_random( seed ) - 0.5f );
 }
 
 #ifdef __LCC__
@@ -432,7 +432,7 @@ void vectoangles( const vec3_t value1, vec3_t angles ) {
 	}
 	else {
 		if ( value1[0] ) {
-			yaw = ( atan2 ( value1[1], value1[0] ) * 180 / M_PI );
+			yaw = atan2f ( value1[1], value1[0] ) * ( 180.0f / (float) M_PI );
 		}
 		else if ( value1[1] > 0 ) {
 			yaw = 90;
@@ -444,8 +444,8 @@ void vectoangles( const vec3_t value1, vec3_t angles ) {
 			yaw += 360;
 		}
 
-		forward = sqrt ( value1[0]*value1[0] + value1[1]*value1[1] );
-		pitch = ( atan2(value1[2], forward) * 180 / M_PI );
+		forward = sqrtf ( value1[0]*value1[0] + value1[1]*value1[1] );
+		pitch = atan2f(value1[2], forward) * ( 180.0f / (float) M_PI );
 		if ( pitch < 0 ) {
 			pitch += 360;
 		}
@@ -627,7 +627,7 @@ void AnglesSubtract( vec3_t v1, vec3_t v2, vec3_t v3 ) {
 
 
 float	AngleMod(float a) {
-	a = (360.0/65536) * ((int)(a*(65536/360.0)) & 65535);
+	a = (360.0f/65536) * ((int)(a*(65536/360.0f)) & 65535);
 	return a;
 }
 
@@ -640,7 +640,7 @@ returns angle normalized to the range [0 <= angle < 360]
 =================
 */
 float AngleNormalize360 ( float angle ) {
-	return (360.0 / 65536) * ((int)(angle * (65536 / 360.0)) & 65535);
+	return (360.0f / 65536) * ((int)(angle * (65536 / 360.0f)) & 65535);
 }
 
 
@@ -653,8 +653,8 @@ returns angle normalized to the range [-180 < angle <= 180]
 */
 float AngleNormalize180 ( float angle ) {
 	angle = AngleNormalize360( angle );
-	if ( angle > 180.0 ) {
-		angle -= 360.0;
+	if ( angle > 180.0f ) {
+		angle -= 360.0f;
 	}
 	return angle;
 }
@@ -978,10 +978,10 @@ void PerpendicularVector( vec3_t dst, const vec3_t src )
 	*/
 	for ( pos = 0, i = 0; i < 3; i++ )
 	{
-		if ( fabs( src[i] ) < minelem )
+		if ( fabsf( src[i] ) < minelem )
 		{
 			pos = i;
-			minelem = fabs( src[i] );
+			minelem = fabsf( src[i] );
 		}
 	}
 	tempvec[0] = tempvec[1] = tempvec[2] = 0.0F;
