@@ -3216,7 +3216,7 @@ void BotMoveToGoal(bot_moveresult_t *result, int movestate, bot_goal_t *goal, in
 				(reach.traveltype & TRAVELTYPE_MASK) == TRAVEL_FUNCBOB)
 			{
 				if ((result->flags & MOVERESULT_ONTOPOF_FUNCBOB) ||
-					(result->flags & MOVERESULT_ONTOPOF_FUNCBOB))
+					(result->flags & MOVERESULT_ONTOPOF_ELEVATOR))
 				{
 					ms->reachability_time = AAS_Time() + 5;
 				} //end if
