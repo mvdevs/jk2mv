@@ -272,9 +272,9 @@ static void R_SetupEntityLightingGrid( trRefEntity_t *ent ) {
 			VectorMA( direction, factor, normal, direction );
 		}
 
-		if ( totalFactor > 0 && totalFactor < 0.99 )
+		if ( totalFactor > 0 && totalFactor < 0.99f )
 		{
-			totalFactor = 1.0 / totalFactor;
+			totalFactor = 1.0f / totalFactor;
 			VectorScale( ent->ambientLight, totalFactor, ent->ambientLight );
 			VectorScale( ent->directedLight, totalFactor, ent->directedLight );
 		}
@@ -333,7 +333,7 @@ static void R_SetupEntityLightingGrid( trRefEntity_t *ent ) {
 					factor *= frac[j];
 					gridPos += gridStep[j];
 				} else {
-					factor *= (1.0 - frac[j]);
+					factor *= (1.0f - frac[j]);
 				}
 			}
 
@@ -385,9 +385,9 @@ static void R_SetupEntityLightingGrid( trRefEntity_t *ent ) {
 			VectorMA( direction, factor, normal, direction );
 		}
 
-		if ( totalFactor > 0 && totalFactor < 0.99 )
+		if ( totalFactor > 0 && totalFactor < 0.99f )
 		{
-			totalFactor = 1.0 / totalFactor;
+			totalFactor = 1.0f / totalFactor;
 			VectorScale( ent->ambientLight, totalFactor, ent->ambientLight );
 			VectorScale( ent->directedLight, totalFactor, ent->directedLight );
 		}

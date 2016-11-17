@@ -106,7 +106,7 @@ qboolean CROFFSystem::IsROFF( unsigned char *data )
 		return qfalse;
 	}
 
-	if (hdr->mVersion == ROFF_VERSION && hdr->mCount <= 0.0)
+	if (hdr->mVersion == ROFF_VERSION && hdr->mCount <= 0.0f)
 	{	// bad count
 		return qfalse;
 	}

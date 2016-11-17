@@ -359,7 +359,7 @@ Dlls will call this directly
 
 ============
 */
-intptr_t QDECL VM_DllSyscall( intptr_t arg, ... ) {
+intptr_t QDECL __attribute__((no_sanitize_address)) VM_DllSyscall( intptr_t arg, ... ) {
 #if !id386 || defined __clang__
   // rcg010206 - see commentary above
   intptr_t args[MAX_VMSYSCALL_ARGS];
@@ -757,7 +757,7 @@ locals from sp
 ==============
 */
 
-intptr_t QDECL VM_Call( vm_t *vm, int callnum, ... )
+intptr_t QDECL  __attribute__((no_sanitize_address)) VM_Call( vm_t *vm, int callnum, ... )
 {
 	vm_t	*oldVM;
 	intptr_t r;

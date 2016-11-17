@@ -1193,8 +1193,8 @@ void RB_ShowImages( void ) {
 
 		// show in proportional size in mode 2
 		if ( r_showImages->integer == 2 ) {
-			w *= image->uploadWidth / 512.0;
-			h *= image->uploadHeight / 512.0;
+			w *= image->uploadWidth / 512.0f;
+			h *= image->uploadHeight / 512.0f;
 		}
 
 		GL_Bind( image );

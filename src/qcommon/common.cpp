@@ -2316,7 +2316,7 @@ static void Com_Freeze_f (void) {
 
 	while ( 1 ) {
 		now = Com_Milliseconds();
-		if ( ( now - start ) * 0.001 > s ) {
+		if ( ( now - start ) * 0.001f > s ) {
 			break;
 		}
 	}
@@ -2902,10 +2902,10 @@ float Q_acos(float c) {
 
 	angle = acos(c);
 
-	if (angle > M_PI) {
+	if (angle > (float) M_PI) {
 		return (float)M_PI;
 	}
-	if (angle < -M_PI) {
+	if (angle < -(float) M_PI) {
 		return (float)M_PI;
 	}
 	return angle;

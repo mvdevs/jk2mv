@@ -929,8 +929,8 @@ void S_SpatializeOrigin (vec3_t origin, int master_vol, int *left_vol, int *righ
 	}
 	else
 	{
-		rscale = 0.5 * (1.0 + dot);
-		lscale = 0.5 * (1.0 - dot);
+		rscale = 0.5f * (1.0f + dot);
+		lscale = 0.5f * (1.0f - dot);
 		//rscale = s_separation->value + ( 1.0 - s_separation->value ) * dot;
 		//lscale = s_separation->value - ( 1.0 - s_separation->value ) * dot;
 		if ( rscale < 0 ) {
@@ -942,12 +942,12 @@ void S_SpatializeOrigin (vec3_t origin, int master_vol, int *left_vol, int *righ
 	}
 
 	// add in distance effect
-	scale = (1.0 - dist) * rscale;
+	scale = (1.0f - dist) * rscale;
 	*right_vol = (master_vol * scale);
 	if (*right_vol < 0)
 		*right_vol = 0;
 
-	scale = (1.0 - dist) * lscale;
+	scale = (1.0f - dist) * lscale;
 	*left_vol = (master_vol * scale);
 	if (*left_vol < 0)
 		*left_vol = 0;
@@ -1877,7 +1877,7 @@ void S_RawSamples( int samples, int rate, int width, int s_channels, const byte 
 //Com_Printf ("%i < %i < %i\n", s_soundtime, s_paintedtime, s_rawend);
 	if (s_channels == 2 && width == 2)
 	{
-		if (scale == 1.0)
+		if (scale == 1.0f)
 		{	// optimized case
 			for (i=0 ; i<samples ; i++)
 			{
@@ -2504,7 +2504,7 @@ void S_Update_(void) {
 		}
 
 		ma = s_mixahead->value * dma.speed;
-		op = s_mixPreStep->value + sane*dma.speed*0.01;
+		op = s_mixPreStep->value + sane*dma.speed*0.01f;
 
 		if (op < ma) {
 			ma = op;
@@ -4151,7 +4151,7 @@ bool EAX3ListenerInterpolate(LPEAXLISTENERPROPERTIES lpStart, LPEAXLISTENERPROPE
 	if (lpStart->flReflectionsDelay == lpFinish->flReflectionsDelay)
 		lpResult->flReflectionsDelay = lpStart->flReflectionsDelay;
 	else
-		lpResult->flReflectionsDelay = (float)exp( (log(lpStart->flReflectionsDelay+0.0001) * flInvRatio) + (log(lpFinish->flReflectionsDelay+0.0001) * flRatio) );
+		lpResult->flReflectionsDelay = exp( (log(lpStart->flReflectionsDelay+0.0001f) * flInvRatio) + (log(lpFinish->flReflectionsDelay+0.0001f) * flRatio) );
 
 	// Reflections Pan
 
@@ -4187,7 +4187,7 @@ bool EAX3ListenerInterpolate(LPEAXLISTENERPROPERTIES lpStart, LPEAXLISTENERPROPE
 	if (lpStart->flReverbDelay == lpFinish->flReverbDelay)
 		lpResult->flReverbDelay = lpStart->flReverbDelay;
 	else
-		lpResult->flReverbDelay = (float)exp( (log(lpStart->flReverbDelay+0.0001) * flInvRatio) + (log(lpFinish->flReverbDelay+0.0001) * flRatio) );
+		lpResult->flReverbDelay = (float)exp( (log(lpStart->flReverbDelay+0.0001f) * flInvRatio) + (log(lpFinish->flReverbDelay+0.0001f) * flRatio) );
 
 	// Reverb Pan
 

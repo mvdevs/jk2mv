@@ -536,7 +536,7 @@ static void Autosprite2Deform( void ) {
 			v1 = xyz + 4 * edgeVerts[nums[j]][0];
 			v2 = xyz + 4 * edgeVerts[nums[j]][1];
 
-			l = 0.5 * sqrt( lengths[j] );
+			l = 0.5f * sqrt( lengths[j] );
 
 			// we need to see which direction this edge
 			// is used to determine direction of projection
@@ -757,7 +757,7 @@ void RB_CalcModulateColorsByFog( unsigned char *colors ) {
 	RB_CalcFogTexCoords( texCoords[0] );
 
 	for ( i = 0; i < tess.numVertexes; i++, colors += 4 ) {
-		float f = 1.0 - R_FogFactor( texCoords[i][0], texCoords[i][1] );
+		float f = 1.0f - R_FogFactor( texCoords[i][0], texCoords[i][1] );
 		colors[0] *= f;
 		colors[1] *= f;
 		colors[2] *= f;
@@ -777,7 +777,7 @@ void RB_CalcModulateAlphasByFog( unsigned char *colors ) {
 	RB_CalcFogTexCoords( texCoords[0] );
 
 	for ( i = 0; i < tess.numVertexes; i++, colors += 4 ) {
-		float f = 1.0 - R_FogFactor( texCoords[i][0], texCoords[i][1] );
+		float f = 1.0f - R_FogFactor( texCoords[i][0], texCoords[i][1] );
 		colors[3] *= f;
 	}
 }
@@ -795,7 +795,7 @@ void RB_CalcModulateRGBAsByFog( unsigned char *colors ) {
 	RB_CalcFogTexCoords( texCoords[0] );
 
 	for ( i = 0; i < tess.numVertexes; i++, colors += 4 ) {
-		float f = 1.0 - R_FogFactor( texCoords[i][0], texCoords[i][1] );
+		float f = 1.0f - R_FogFactor( texCoords[i][0], texCoords[i][1] );
 		colors[0] *= f;
 		colors[1] *= f;
 		colors[2] *= f;
@@ -870,7 +870,7 @@ void RB_CalcFogTexCoords( float *st ) {
 		eyeOutside = qfalse;
 	}
 
-	fogDistanceVector[3] += 1.0/512;
+	fogDistanceVector[3] += 1.0f/512;
 
 	// calculate density for each point
 	for (i = 0, v = tess.xyz[0] ; i < tess.numVertexes ; i++, v += 4) {
@@ -881,16 +881,16 @@ void RB_CalcFogTexCoords( float *st ) {
 
 		// partially clipped fogs use the T axis
 		if ( eyeOutside ) {
-			if ( t < 1.0 ) {
-				t = 1.0/32;	// point is outside, so no fogging
+			if ( t < 1.0f ) {
+				t = 1.0f/32;	// point is outside, so no fogging
 			} else {
-				t = 1.0/32 + 30.0/32 * t / ( t - eyeT );	// cut the distance at the fog plane
+				t = 1.0f/32 + 30.0f/32 * t / ( t - eyeT );	// cut the distance at the fog plane
 			}
 		} else {
 			if ( t < 0 ) {
-				t = 1.0/32;	// point is outside, so no fogging
+				t = 1.0f/32;	// point is outside, so no fogging
 			} else {
-				t = 31.0/32;
+				t = 31.0f/32;
 			}
 		}
 
@@ -926,8 +926,8 @@ void RB_CalcEnvironmentTexCoords( float *st )
 		reflected[1] = normal[1]*2*d - viewer[1];
 		reflected[2] = normal[2]*2*d - viewer[2];
 
-		st[0] = 0.5 + reflected[1] * 0.5;
-		st[1] = 0.5 - reflected[2] * 0.5;
+		st[0] = 0.5f + reflected[1] * 0.5f;
+		st[1] = 0.5f - reflected[2] * 0.5f;
 	}
 }
 
@@ -946,8 +946,8 @@ void RB_CalcTurbulentTexCoords( const waveForm_t *wf, float *st )
 		float s = st[0];
 		float t = st[1];
 
-		st[0] = s + tr.sinTable[ ( ( int ) ( ( ( tess.xyz[i][0] + tess.xyz[i][2] )* 1.0/128 * 0.125 + now ) * FUNCTABLE_SIZE ) ) & ( FUNCTABLE_MASK ) ] * wf->amplitude;
-		st[1] = t + tr.sinTable[ ( ( int ) ( ( tess.xyz[i][1] * 1.0/128 * 0.125 + now ) * FUNCTABLE_SIZE ) ) & ( FUNCTABLE_MASK ) ] * wf->amplitude;
+		st[0] = s + tr.sinTable[ ( ( int ) ( ( ( tess.xyz[i][0] + tess.xyz[i][2] )* (1.0f / 128 * 0.125f) + now ) * FUNCTABLE_SIZE ) ) & ( FUNCTABLE_MASK ) ] * wf->amplitude;
+		st[1] = t + tr.sinTable[ ( ( int ) ( ( tess.xyz[i][1] * (1.0f / 128 * 0.125f) + now ) * FUNCTABLE_SIZE ) ) & ( FUNCTABLE_MASK ) ] * wf->amplitude;
 	}
 }
 
@@ -1025,11 +1025,11 @@ void RB_CalcRotateTexCoords( float degsPerSecond, float *st )
 
 	tmi.matrix[0][0] = cosValue;
 	tmi.matrix[1][0] = -sinValue;
-	tmi.translate[0] = 0.5 - 0.5 * cosValue + 0.5 * sinValue;
+	tmi.translate[0] = 0.5f - 0.5f * cosValue + 0.5f * sinValue;
 
 	tmi.matrix[0][1] = sinValue;
 	tmi.matrix[1][1] = cosValue;
-	tmi.translate[1] = 0.5 - 0.5 * sinValue - 0.5 * cosValue;
+	tmi.translate[1] = 0.5f - 0.5f * sinValue - 0.5f * cosValue;
 
 	RB_CalcTransformTexCoords( &tmi, st );
 }

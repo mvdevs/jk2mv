@@ -2396,22 +2396,22 @@ and for each vertex of transparent shaders in fog dynamically
 float	R_FogFactor( float s, float t ) {
 	float	d;
 
-	s -= 1.0/512;
+	s -= 1.0f/512;
 	if ( s < 0 ) {
 		return 0;
 	}
-	if ( t < 1.0/32 ) {
+	if ( t < 1.0f/32 ) {
 		return 0;
 	}
-	if ( t < 31.0/32 ) {
-		s *= (t - 1.0f/32.0f) / (30.0f/32.0f);
+	if ( t < 31.0f/32 ) {
+		s *= (t - 1.0f/32.0f) * (32.0f/30.0f);
 	}
 
 	// we need to leave a lot of clamp range
 	s *= 8;
 
-	if ( s > 1.0 ) {
-		s = 1.0;
+	if ( s > 1.0f ) {
+		s = 1.0f;
 	}
 
 	d = tr.fogTable[ (int)(s * (FOG_TABLE_SIZE-1)) ];

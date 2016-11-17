@@ -302,11 +302,11 @@ void RB_ProjectionShadowDeform( void ) {
 	VectorCopy( backEnd.currentEntity->lightDir, lightDir );
 	d = DotProduct( lightDir, ground );
 	// don't let the shadows get too long or go negative
-	if ( d < 0.5 ) {
-		VectorMA( lightDir, (0.5 - d), ground, lightDir );
+	if ( d < 0.5f ) {
+		VectorMA( lightDir, (0.5f - d), ground, lightDir );
 		d = DotProduct( lightDir, ground );
 	}
-	d = 1.0 / d;
+	d = 1.0f / d;
 
 	light[0] = lightDir[0] * d;
 	light[1] = lightDir[1] * d;

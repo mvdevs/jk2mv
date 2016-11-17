@@ -471,12 +471,12 @@ void CMistyFog::Update(CWorldEffectsSystem *system, float elapseTime)
 	}
 
 	if (mTextureCoords[0][0] < mCurrentSize || mTextureCoords[0][1] < mCurrentSize ||
-		mTextureCoords[0][0] > 1.0-mCurrentSize || mTextureCoords[0][1] > 1.0-mCurrentSize)
+		mTextureCoords[0][0] > 1-mCurrentSize || mTextureCoords[0][1] > 1-mCurrentSize)
 	{
 //		mAlphaFade = true;
 	}
 	if (mTextureCoords[1][0] < mCurrentSize || mTextureCoords[1][1] < mCurrentSize ||
-		mTextureCoords[1][0] > 1.0-mCurrentSize || mTextureCoords[1][1] > 1.0-mCurrentSize)
+		mTextureCoords[1][0] > 1-mCurrentSize || mTextureCoords[1][1] > 1-mCurrentSize)
 	{
 //		mAlphaFade = true;
 	}
@@ -591,7 +591,7 @@ void CMistyFog::CreateTextureCoords(void)
 	forwardWind = DotProduct(mWindTransform, backEnd.viewParms.ori.axis[0]);
 	rightWind = DotProduct(mWindTransform, backEnd.viewParms.ori.axis[1]);
 
-	if (forwardWind > 0.5)
+	if (forwardWind > 0.5f)
 	{	// moving away, so make the size smaller
 		mCurrentSize = flrand(mMinSize, mMinSize + mMinSize * 0.01f);
 //		mCurrentSize = mMinSize / 3.0;
@@ -670,8 +670,8 @@ CMistyFog2::CMistyFog2(void) :
 	{
 		for(x=0;x<MISTYFOG_WIDTH;x++)
 		{
-			mVerts[y][x][0] = -10 + (x * xStep) + flrand(-xStep / 16.0, xStep / 16.0);
-			mVerts[y][x][1] = 10 - (y * yStep) + flrand(-xStep / 16.0, xStep / 16.0);
+			mVerts[y][x][0] = -10 + (x * xStep) + flrand(-xStep * (1.0f / 16), xStep * (1.0f / 16));
+			mVerts[y][x][1] = 10 - (y * yStep) + flrand(-xStep * (1.0f / 16), xStep * (1.0f / 16));
 			mVerts[y][x][2] = -10;
 
 			mColors[y][x][0] = 1.0;
@@ -723,23 +723,23 @@ void CMistyFog2::Update(CWorldEffectsSystem *system, float elapseTime)
 
 	if (originContents & CONTENTS_OUTSIDE && !(originContents & CONTENTS_WATER))
 	{
-		if (mFadeAlpha < 1.0)
+		if (mFadeAlpha < 1.0f)
 		{
-			mFadeAlpha += elapseTime / 2.0;
+			mFadeAlpha += elapseTime * 0.5f;
 		}
-		if (mFadeAlpha > 1.0)
+		if (mFadeAlpha > 1.0f)
 		{
-			mFadeAlpha = 1.0;
+			mFadeAlpha = 1.0f;
 		}
 	}
 	else
 	{
-		if (mFadeAlpha > 0.0)
+		if (mFadeAlpha > 0.0f)
 		{
-			mFadeAlpha -= elapseTime / 2.0;
+			mFadeAlpha -= elapseTime * 0.5f;
 		}
 
-		if (mFadeAlpha <= 0.0)
+		if (mFadeAlpha <= 0.0f)
 		{
 			return;
 		}
@@ -774,7 +774,7 @@ void CMistyFog2::UpdateTexture(CMistyFog *fog)
 	int				width = fog->GetWidth();
 	int				height = fog->GetHeight();
 	int				andWidth, andHeight;
-	float			alpha = fog->GetAlpha() * mAlpha * (1.0/255.0) * mFadeAlpha;
+	float			alpha = fog->GetAlpha() * mAlpha * (1.0f/255) * mFadeAlpha;
 	float			*color;
 
 	if (!fog->GetRendering())
@@ -807,7 +807,7 @@ void CMistyFog2::UpdateTexture(CMistyFog *fog)
 
 void CMistyFog2::Render(CWorldEffectsSystem *system)
 {
-	if (mFadeAlpha <= 0.0)
+	if (mFadeAlpha <= 0.0f)
 	{
 		return;
 	}
@@ -971,7 +971,7 @@ void CWind::UpdateParms(vec3_t point, vec3_t velocity, vec3_t size, int duration
 
 	VectorCopy(point, mPoint);
 	VectorCopy(size, mSize);
-	mSize[0] /= 2.0;
+	mSize[0] *= 0.5f;
 	VectorScale(mSize, 2, mSize);
 	VectorCopy(velocity, mVelocity);
 
@@ -994,9 +994,9 @@ void CWind::UpdateParms(vec3_t point, vec3_t velocity, vec3_t size, int duration
 	mMaxDistance[mNumPlanes] = mSize[2];
 	mNumPlanes++;
 
-	mPlanes[0][3] -= (mSize[0] / 2.0);
-	mPlanes[1][3] -= (mSize[1] / 2.0);
-	mPlanes[2][3] -= (mSize[2] / 2.0);
+	mPlanes[0][3] -= mSize[0] * 0.5f;
+	mPlanes[1][3] -= mSize[1] * 0.5f;
+	mPlanes[2][3] -= mSize[2] * 0.5f;
 
 	mAffectedDuration = duration;
 }
@@ -1014,7 +1014,7 @@ void CWind::Update(CWorldEffectsSystem *system, float elapseTime)
 	}
 
 	VectorSubtract(backEnd.viewParms.ori.origin, mPoint, difference);
-	if (VectorLength(difference) > 300.0)
+	if (VectorLength(difference) > 300.0f)
 	{
 		return;
 	}
@@ -1036,7 +1036,7 @@ void CWind::Update(CWorldEffectsSystem *system, float elapseTime)
 				{
 					dist = DotProduct(item->pos, mPlanes[j]) - mPlanes[j][3];
 
-					if (dist < 0.01 || dist > mMaxDistance[j])
+					if (dist < 0.01f || dist > mMaxDistance[j])
 					{
 						break;
 					}
@@ -1051,7 +1051,7 @@ void CWind::Update(CWorldEffectsSystem *system, float elapseTime)
 				}
 			}
 
-			float	scaleLength = 1.0 - (calcDist[0] / mMaxDistance[0]);
+			float	scaleLength = 1.0f - (calcDist[0] / mMaxDistance[0]);
 
 			(*affected) = mAffectedDuration * scaleLength;
 
@@ -1083,6 +1083,7 @@ void CWind::ParmUpdate(CWorldEffectsSystem *system, int which)
 void CWind::Render(CWorldEffectsSystem *system)
 {
 	vec3_t	output;
+	vec3_t	scale;
 
 	if (!mEnabled || !debugShowWind)
 	{
@@ -1096,69 +1097,73 @@ void CWind::Render(CWorldEffectsSystem *system)
 	qglColor4f(1.0, 0.0, 0.0, 0.5);
 	qglBegin(GL_QUADS);
 
-	VectorMA(mPoint, -(mSize[0]/2.0), mPlanes[0], output);
-	VectorMA(output, -(mSize[1]/2.0), mPlanes[1], output);
-	VectorMA(output, -(mSize[2]/2.0), mPlanes[2], output);
+	scale[0] = mSize[0] * 0.5f;
+	scale[1] = mSize[1] * 0.5f;
+	scale[2] = mSize[2] * 0.5f;
+
+	VectorMA(mPoint, -scale[0], mPlanes[0], output);
+	VectorMA(output, -scale[1], mPlanes[1], output);
+	VectorMA(output, -scale[2], mPlanes[2], output);
 	qglVertex3fv(output);
 
-	VectorMA(mPoint, -(mSize[0]/2.0), mPlanes[0], output);
-	VectorMA(output, (mSize[1]/2.0), mPlanes[1], output);
-	VectorMA(output, -(mSize[2]/2.0), mPlanes[2], output);
+	VectorMA(mPoint, -scale[0], mPlanes[0], output);
+	VectorMA(output, scale[1], mPlanes[1], output);
+	VectorMA(output, -scale[2], mPlanes[2], output);
 	qglVertex3fv(output);
 
-	VectorMA(mPoint, -(mSize[0]/2.0), mPlanes[0], output);
-	VectorMA(output, (mSize[1]/2.0), mPlanes[1], output);
-	VectorMA(output, (mSize[2]/2.0), mPlanes[2], output);
+	VectorMA(mPoint, -scale[0], mPlanes[0], output);
+	VectorMA(output, scale[1], mPlanes[1], output);
+	VectorMA(output, scale[2], mPlanes[2], output);
 	qglVertex3fv(output);
 
-	VectorMA(mPoint, -(mSize[0]/2.0), mPlanes[0], output);
-	VectorMA(output, -(mSize[1]/2.0), mPlanes[1], output);
-	VectorMA(output, (mSize[2]/2.0), mPlanes[2], output);
+	VectorMA(mPoint, -scale[0], mPlanes[0], output);
+	VectorMA(output, -scale[1], mPlanes[1], output);
+	VectorMA(output, scale[2], mPlanes[2], output);
 	qglVertex3fv(output);
 
 
 
 	qglColor4f(0.0, 1.0, 0.0, 0.5);
-	VectorMA(mPoint, -(mSize[0]/2.0), mPlanes[0], output);
-	VectorMA(output, -(mSize[1]/2.0), mPlanes[1], output);
-	VectorMA(output, -(mSize[2]/2.0), mPlanes[2], output);
+	VectorMA(mPoint, -scale[0], mPlanes[0], output);
+	VectorMA(output, -scale[1], mPlanes[1], output);
+	VectorMA(output, -scale[2], mPlanes[2], output);
 	qglVertex3fv(output);
 
-	VectorMA(mPoint, (mSize[0]/2.0), mPlanes[0], output);
-	VectorMA(output, -(mSize[1]/2.0), mPlanes[1], output);
-	VectorMA(output, -(mSize[2]/2.0), mPlanes[2], output);
+	VectorMA(mPoint, scale[0], mPlanes[0], output);
+	VectorMA(output, -scale[1], mPlanes[1], output);
+	VectorMA(output, -scale[2], mPlanes[2], output);
 	qglVertex3fv(output);
 
-	VectorMA(mPoint, (mSize[0]/2.0), mPlanes[0], output);
-	VectorMA(output, -(mSize[1]/2.0), mPlanes[1], output);
-	VectorMA(output, (mSize[2]/2.0), mPlanes[2], output);
+	VectorMA(mPoint, scale[0], mPlanes[0], output);
+	VectorMA(output, -scale[1], mPlanes[1], output);
+	VectorMA(output, scale[2], mPlanes[2], output);
 	qglVertex3fv(output);
 
-	VectorMA(mPoint, -(mSize[0]/2.0), mPlanes[0], output);
-	VectorMA(output, -(mSize[1]/2.0), mPlanes[1], output);
-	VectorMA(output, (mSize[2]/2.0), mPlanes[2], output);
+	VectorMA(mPoint, -scale[0], mPlanes[0], output);
+	VectorMA(output, -scale[1], mPlanes[1], output);
+	VectorMA(output, scale[2], mPlanes[2], output);
 	qglVertex3fv(output);
 
 
 	qglColor4f(0.0, 0.0, 1.0, 0.5);
-	VectorMA(mPoint, -(mSize[0]/2.0), mPlanes[0], output);
-	VectorMA(output, -(mSize[2]/2.0), mPlanes[2], output);
-	VectorMA(output, -(mSize[1]/2.0), mPlanes[1], output);
+	VectorMA(mPoint, -scale[0], mPlanes[0], output);
+	VectorMA(output, -scale[2], mPlanes[2], output);
+	VectorMA(output, -scale[1], mPlanes[1], output);
 	qglVertex3fv(output);
 
-	VectorMA(mPoint, (mSize[0]/2.0), mPlanes[0], output);
-	VectorMA(output, -(mSize[2]/2.0), mPlanes[2], output);
-	VectorMA(output, -(mSize[1]/2.0), mPlanes[1], output);
+	VectorMA(mPoint, scale[0], mPlanes[0], output);
+	VectorMA(output, -scale[2], mPlanes[2], output);
+	VectorMA(output, -scale[1], mPlanes[1], output);
 	qglVertex3fv(output);
 
-	VectorMA(mPoint, (mSize[0]/2.0), mPlanes[0], output);
-	VectorMA(output, -(mSize[2]/2.0), mPlanes[2], output);
-	VectorMA(output, (mSize[1]/2.0), mPlanes[1], output);
+	VectorMA(mPoint, scale[0], mPlanes[0], output);
+	VectorMA(output, -scale[2], mPlanes[2], output);
+	VectorMA(output, scale[1], mPlanes[1], output);
 	qglVertex3fv(output);
 
-	VectorMA(mPoint, -(mSize[0]/2.0), mPlanes[0], output);
-	VectorMA(output, -(mSize[2]/2.0), mPlanes[2], output);
-	VectorMA(output, (mSize[1]/2.0), mPlanes[1], output);
+	VectorMA(mPoint, -scale[0], mPlanes[0], output);
+	VectorMA(output, -scale[2], mPlanes[2], output);
+	VectorMA(output, scale[1], mPlanes[1], output);
 	qglVertex3fv(output);
 
 
@@ -1435,7 +1440,7 @@ void CSnowSystem::Update(float elapseTime)
 		mWindDirection[1] = flrand(-1.0f, 1.0f);
 		mWindDirection[2] = 0.0f;
 		VectorNormalize(mWindDirection);
-		VectorScale(mWindDirection, 0.025, mWindSpeed);
+		VectorScale(mWindDirection, 0.025f, mWindSpeed);
 
 		mWindChange = irand(200, 450);
 //		mWindChange = 10;
@@ -1451,7 +1456,7 @@ void CSnowSystem::Update(float elapseTime)
 	VectorCopy(backEnd.viewParms.ori.origin, origin);
 
 	mNextWindGust -= elapseTime;
-	if (mNextWindGust < 0.0)
+	if (mNextWindGust < 0.0f)
 	{
 		mWindGust->SetVariable(CWorldEffect::WORLDEFFECT_ENABLED, false);
 	}
@@ -1488,7 +1493,7 @@ void CSnowSystem::Update(float elapseTime)
 	for(i=0;i<3;i++)
 	{
 		difference[i] = newMaxs[i] - mMaxs[i];
-		if (difference[i] >= 0.0)
+		if (difference[i] >= 0.0f)
 		{
 			if (difference[i] > newMaxs[i]-newMins[i])
 			{
@@ -1510,7 +1515,7 @@ void CSnowSystem::Update(float elapseTime)
 //	contentsStart[1] = (((origin[1] + mMinSpread[1]) / mContentsSize[1])) * mContentsSize[1];
 //	contentsStart[2] = (((origin[2] + mMinSpread[2]) / mContentsSize[2])) * mContentsSize[2];
 
-	if (fabs(difference[0]) > 25.0 || fabs(difference[1]) > 25.0 || fabs(difference[2]) > 25.0)
+	if (fabs(difference[0]) > 25 || fabs(difference[1]) > 25 || fabs(difference[2]) > 25)
 	{
 		vec3_t		pos;
 		int			*store;
@@ -1612,7 +1617,7 @@ void CSnowSystem::Update(float elapseTime)
 			}
 			if (item->velocity[2] > mMinVelocity[2])
 			{
-				item->velocity[2] -= mVelocityStabilize*2.0;
+				item->velocity[2] -= mVelocityStabilize*2;
 			}
 		}
 //		VectorMA(item->pos, elapseTime, item->velocity);
@@ -1735,7 +1740,7 @@ CRainSystem::CRainSystem(int maxRain) :
 	mIsRaining(false)
 
 {
-	mSpread[0] = M_PI*2.0f;		// angle spread
+	mSpread[0] = M_PI*2;		// angle spread
 	mSpread[1] = 20.0f;			// radius spread
 	mSpread[2] = 20.0f;			// z spread
 
@@ -1815,10 +1820,10 @@ float CRainSystem::GetFloatVariable(int which)
 	switch(which)
 	{
 		case CRainSystem::RAINSYSTEM_WIND_SPEED:
-			return mWindAngle * 75.0;		// pat scaled
+			return mWindAngle * 75.0f;		// pat scaled
 	}
 
-	return 0.0;
+	return 0.0f;
 }
 
 float *CRainSystem::GetVecVariable(int which)
@@ -1900,7 +1905,7 @@ void CRainSystem::Update(float elapseTime)
 		mNewWindDirection[1] = flrand(-1.0f, 1.0f);
 		mNewWindDirection[2] = 0.0f;
 		VectorNormalize(mNewWindDirection);
-		VectorScale(mNewWindDirection, 0.025, mWindSpeed);
+		VectorScale(mNewWindDirection, 0.025f, mWindSpeed);
 
 		mWindChange = irand(200, 450);
 //		mWindChange = 10;
@@ -1917,24 +1922,24 @@ void CRainSystem::Update(float elapseTime)
 	if (originContents & CONTENTS_OUTSIDE && !(originContents & CONTENTS_WATER))
 	{
 		mIsRaining = true;
-		if (mFadeAlpha < 1.0)
+		if (mFadeAlpha < 1.0f)
 		{
-			mFadeAlpha += elapseTime / 2.0;
+			mFadeAlpha += elapseTime * 0.5f;
 		}
-		if (mFadeAlpha > 1.0)
+		if (mFadeAlpha > 1.0f)
 		{
-			mFadeAlpha = 1.0;
+			mFadeAlpha = 1.0f;
 		}
 	}
 	else
 	{
 		mIsRaining = false;
-		if (mFadeAlpha > 0.0)
+		if (mFadeAlpha > 0.0f)
 		{
-			mFadeAlpha -= elapseTime / 2.0;
+			mFadeAlpha -= elapseTime * 0.5f;
 		}
 
-		if (mFadeAlpha <= 0.0)
+		if (mFadeAlpha <= 0.0f)
 		{
 			return;
 		}
@@ -1981,7 +1986,7 @@ void CRainSystem::Render(void)
 	}
 
 	VectorScale(backEnd.viewParms.ori.axis[0], 1, forward);		// forward
-	VectorScale(backEnd.viewParms.ori.axis[1], 0.2, left);		// left
+	VectorScale(backEnd.viewParms.ori.axis[1], 0.2f, left);		// left
 	down[0] = 0 - mWindDirection[0] * mRainHeight * mWindAngle;
 	down[1] = 0 - mWindDirection[1] * mRainHeight * mWindAngle;
 	down[2] = -mRainHeight;
@@ -2011,7 +2016,7 @@ void CRainSystem::Render(void)
 			radius = 10 * (1.0 - percent);
 		}*/
 		radius = item->pos[1];
-		if (item->pos[2] < 0.0)
+		if (item->pos[2] < 0)
 		{
 //			radius *= 1.0 - (item->pos[2] / 40.0);
 			float alpha = mAlpha * (item->pos[1] / -item->pos[2]);

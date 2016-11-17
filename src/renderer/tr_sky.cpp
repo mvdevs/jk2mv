@@ -97,7 +97,7 @@ static void AddSkyPolygon (int nump, vec3_t vecs)
 			dv = vecs[j - 1];
 		else
 			dv = -vecs[-j - 1];
-		if (dv < 0.001)
+		if (dv < 0.001f)
 			continue;	// don't divide by zero
 		j = vec_to_st[axis][0];
 		if (j < 0)
@@ -289,7 +289,7 @@ static void MakeSkyVec( float s, float t, int axis, float outSt[2], vec3_t outXY
 	int			j, k;
 	float	boxSize;
 
-	boxSize = backEnd.viewParms.zFar / 1.75;		// div sqrt(3)
+	boxSize = backEnd.viewParms.zFar * (1.0f / 1.75f);		// div sqrt(3)
 	b[0] = s*boxSize;
 	b[1] = t*boxSize;
 	b[2] = boxSize;
@@ -308,8 +308,8 @@ static void MakeSkyVec( float s, float t, int axis, float outSt[2], vec3_t outXY
 	}
 
 	// avoid bilerp seam
-	s = (s+1)*0.5;
-	t = (t+1)*0.5;
+	s = (s+1)*0.5f;
+	t = (t+1)*0.5f;
 	if (s < sky_min)
 	{
 		s = sky_min;
@@ -328,7 +328,7 @@ static void MakeSkyVec( float s, float t, int axis, float outSt[2], vec3_t outXY
 		t = sky_max;
 	}
 
-	t = 1.0 - t;
+	t = 1.0f - t;
 
 
 	if ( outSt )
@@ -591,8 +591,8 @@ void R_BuildCloudData( shaderCommands_t *input )
 
 	assert( shader->isSky );
 
-	sky_min = 1.0 / 256.0f;		// FIXME: not correct?
-	sky_max = 255.0 / 256.0f;
+	sky_min = 1.0f / 256.0f;		// FIXME: not correct?
+	sky_max = 255.0f / 256.0f;
 
 	// set up for drawing
 	tess.numIndexes = 0;
@@ -691,8 +691,8 @@ void RB_DrawSun( void ) {
 	qglLoadMatrixf( backEnd.viewParms.world.modelMatrix );
 	qglTranslatef (backEnd.viewParms.ori.origin[0], backEnd.viewParms.ori.origin[1], backEnd.viewParms.ori.origin[2]);
 
-	dist =	backEnd.viewParms.zFar / 1.75;		// div sqrt(3)
-	size = dist * 0.4;
+	dist =	backEnd.viewParms.zFar * (1.0f / 1.75f);		// div sqrt(3)
+	size = dist * 0.4f;
 
 	VectorScale( tr.sunDirection, dist, origin );
 	PerpendicularVector( vec1, tr.sunDirection );

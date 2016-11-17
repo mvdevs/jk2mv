@@ -149,7 +149,7 @@ static void RB_SurfaceSprite( void ) {
 		float	s, c;
 		float	ang;
 
-		ang = M_PI * backEnd.currentEntity->e.rotation / 180;
+		ang = DEG2RAD( backEnd.currentEntity->e.rotation );
 		s = sin( ang );
 		c = cos( ang );
 
@@ -192,7 +192,7 @@ static void RB_SurfaceOrientedQuad( void )
 		float	s, c;
 		float	ang;
 
-		ang = M_PI * backEnd.currentEntity->e.rotation / 180;
+		ang = DEG2RAD( backEnd.currentEntity->e.rotation );
 		s = sin( ang );
 		c = cos( ang );
 
@@ -431,7 +431,7 @@ static void DoSprite( vec3_t origin, float radius, float rotation )
 	float	ang;
 	vec3_t	left, up;
 
-	ang = M_PI * rotation / 180.0f;
+	ang = DEG2RAD( rotation );
 	s = sin( ang );
 	c = cos( ang );
 
@@ -702,7 +702,7 @@ void RB_SurfaceOrientedLine( void )
 	// compute side vector
 	VectorNormalize( e->axis[1] );
 	VectorCopy(e->axis[1], right);
-	DoLine_Oriented( start, end, right, e->data.line.width*0.5 );
+	DoLine_Oriented( start, end, right, e->data.line.width*0.5f );
 }
 
 /*
@@ -1148,8 +1148,8 @@ static void LerpMeshVertexes (md3Surface_t *surf, float backlerp)
 		+ (backEnd.currentEntity->e.frame * surf->numVerts * 4);
 	newNormals = newXyz + 3;
 
-	newXyzScale = MD3_XYZ_SCALE * (1.0 - backlerp);
-	newNormalScale = 1.0 - backlerp;
+	newXyzScale = MD3_XYZ_SCALE * (1.0f - backlerp);
+	newNormalScale = 1.0f - backlerp;
 
 	numVerts = surf->numVerts;
 

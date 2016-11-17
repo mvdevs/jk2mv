@@ -403,7 +403,7 @@ void BotImport_DebugLineShow(int line, vec3_t start, vec3_t end, int color) {
 	VectorSubtract(end, start, dir);
 	VectorNormalize(dir);
 	dot = DotProduct(dir, up);
-	if (dot > 0.99 || dot < -0.99) VectorSet(cross, 1, 0, 0);
+	if (dot > 0.99f || dot < -0.99f) VectorSet(cross, 1, 0, 0);
 	else CrossProduct(dir, up, cross);
 
 	VectorNormalize(cross);

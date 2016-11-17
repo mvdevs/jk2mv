@@ -337,8 +337,8 @@ void LerpColor(vec4_t a, vec4_t b, vec4_t c, float t)
 		c[i] = a[i] + t*(b[i]-a[i]);
 		if (c[i] < 0)
 			c[i] = 0;
-		else if (c[i] > 1.0)
-			c[i] = 1.0;
+		else if (c[i] > 1)
+			c[i] = 1;
 	}
 }
 
@@ -657,7 +657,7 @@ void Fade(int *flags, float *f, float clamp, int *nextTime, int offsetTime, qboo
       *nextTime = DC->realTime + offsetTime;
       if (*flags & WINDOW_FADINGOUT) {
         *f -= fadeAmount;
-        if (bFlags && *f <= 0.0) {
+        if (bFlags && *f <= 0.0f) {
           *flags &= ~(WINDOW_FADINGOUT | WINDOW_VISIBLE);
         }
       } else {
@@ -3561,17 +3561,17 @@ void Item_TextColor(itemDef_t *item, vec4_t *newColor) {
 	Fade(&item->window.flags, &item->window.foreColor[3], parent->fadeClamp, &item->window.nextTime, parent->fadeCycle, qtrue, parent->fadeAmount);
 
 	if (item->window.flags & WINDOW_HASFOCUS) {
-		lowLight[0] = 0.8 * parent->focusColor[0];
-		lowLight[1] = 0.8 * parent->focusColor[1];
-		lowLight[2] = 0.8 * parent->focusColor[2];
-		lowLight[3] = 0.8 * parent->focusColor[3];
-		LerpColor(parent->focusColor,lowLight,*newColor,0.5+0.5*sin(DC->realTime / PULSE_DIVISOR));
+		lowLight[0] = 0.8f * parent->focusColor[0];
+		lowLight[1] = 0.8f * parent->focusColor[1];
+		lowLight[2] = 0.8f * parent->focusColor[2];
+		lowLight[3] = 0.8f * parent->focusColor[3];
+		LerpColor(parent->focusColor,lowLight,*newColor,0.5f+0.5f*sinf(DC->realTime / PULSE_DIVISOR));
 	} else if (item->textStyle == ITEM_TEXTSTYLE_BLINK && !((DC->realTime/BLINK_DIVISOR) & 1)) {
-		lowLight[0] = 0.8 * item->window.foreColor[0];
-		lowLight[1] = 0.8 * item->window.foreColor[1];
-		lowLight[2] = 0.8 * item->window.foreColor[2];
-		lowLight[3] = 0.8 * item->window.foreColor[3];
-		LerpColor(item->window.foreColor,lowLight,*newColor,0.5+0.5*sin(DC->realTime / PULSE_DIVISOR));
+		lowLight[0] = 0.8f * item->window.foreColor[0];
+		lowLight[1] = 0.8f * item->window.foreColor[1];
+		lowLight[2] = 0.8f * item->window.foreColor[2];
+		lowLight[3] = 0.8f * item->window.foreColor[3];
+		LerpColor(item->window.foreColor,lowLight,*newColor,0.5f+0.5f*sinf(DC->realTime / PULSE_DIVISOR));
 	} else {
 		memcpy(newColor, &item->window.foreColor, sizeof(vec4_t));
 		// items can be enabled and disabled based on cvars
@@ -4401,14 +4401,14 @@ void Item_Model_Paint(itemDef_t *item)
 
 	DC->modelBounds( item->asset, mins, maxs );
 
-	origin[2] = -0.5 * ( mins[2] + maxs[2] );
-	origin[1] = 0.5 * ( mins[1] + maxs[1] );
+	origin[2] = -0.5f * ( mins[2] + maxs[2] );
+	origin[1] = 0.5f * ( mins[1] + maxs[1] );
 
 	// calculate distance so the model nearly fills the box
 	if (qtrue)
 	{
-		float len = 0.5 * ( maxs[2] - mins[2] );
-		origin[0] = len / 0.268;	// len / tan( fov/2 )
+		float len = 0.5f * ( maxs[2] - mins[2] );
+		origin[0] = len / 0.268f;	// len / tan( fov/2 )
 		//origin[0] = len / tan(w/2);
 	}
 	else
@@ -4767,11 +4767,11 @@ void Item_OwnerDraw_Paint(itemDef_t *item) {
 		}
 
 		if (item->window.flags & WINDOW_HASFOCUS) {
-			lowLight[0] = 0.8 * parent->focusColor[0];
-			lowLight[1] = 0.8 * parent->focusColor[1];
-			lowLight[2] = 0.8 * parent->focusColor[2];
-			lowLight[3] = 0.8 * parent->focusColor[3];
-			LerpColor(parent->focusColor,lowLight,color,0.5+0.5*sin(DC->realTime / PULSE_DIVISOR));
+			lowLight[0] = 0.8f * parent->focusColor[0];
+			lowLight[1] = 0.8f * parent->focusColor[1];
+			lowLight[2] = 0.8f * parent->focusColor[2];
+			lowLight[3] = 0.8f * parent->focusColor[3];
+			LerpColor(parent->focusColor,lowLight,color,0.5f+0.5f*sinf(DC->realTime / PULSE_DIVISOR));
 		} else if (item->textStyle == ITEM_TEXTSTYLE_BLINK && !((DC->realTime/BLINK_DIVISOR) & 1)) {
 			lowLight[0] = 0.8 * item->window.foreColor[0];
 			lowLight[1] = 0.8 * item->window.foreColor[1];

@@ -234,7 +234,7 @@ void R_TransformEachSurface( mdxmSurface_t	*surface, vec3_t scale, CMiniHeap *G2
 	int *piBoneRefs = (int*) ((byte*)surface + surface->ofsBoneReferences);
 
 	// optimisation issue
-	if ((scale[0] != 1.0) || (scale[1] != 1.0) || (scale[2] != 1.0))
+	if ((scale[0] != 1.0f) || (scale[1] != 1.0f) || (scale[2] != 1.0f))
 	{
 		for ( j = pos = 0; j < numVerts; j++ )
 		{
@@ -549,13 +549,13 @@ static void G2_BuildHitPointST( const vec3_t A, const float SA, const float TA,
 	*s=fmod(*s, 1);
 	if (*s< 0)
 	{
-		*s+= 1.0;
+		*s+= 1.0f;
 	}
 
 	*t=fmod(*t, 1);
 	if (*t< 0)
 	{
-		*t+= 1.0;
+		*t+= 1.0f;
 	}
 
 }
@@ -1005,7 +1005,7 @@ void G2_TraceSurfaces(CTraceSurface &TS)
 	if (!offFlags)
 	{
 #ifdef G2_COLLISION_ENABLED
-		if (!(fabs(TS.m_fRadius) < 0.1))	// if not a point-trace
+		if (!(fabs(TS.m_fRadius) < 0.1f))	// if not a point-trace
 		{
 			// .. then use radius check
 			//

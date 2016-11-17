@@ -735,8 +735,8 @@ extern vec4_t	g_color_table[];
 #define	MAKERGB( v, r, g, b ) v[0]=r;v[1]=g;v[2]=b
 #define	MAKERGBA( v, r, g, b, a ) v[0]=r;v[1]=g;v[2]=b;v[3]=a
 
-#define DEG2RAD( a ) ( ( (a) * M_PI ) / 180.0F )
-#define RAD2DEG( a ) ( ( (a) * 180.0f ) / M_PI )
+#define DEG2RAD( a ) ( (a) * (float) ( M_PI / 180.0 ) )
+#define RAD2DEG( a ) ( (a) * (float) ( 180.0 / M_PI ) )
 
 struct cplane_s;
 
@@ -930,8 +930,8 @@ int		Q_rand( int *seed );
 float	Q_random( int *seed );
 float	Q_crandom( int *seed );
 
-#define qrandom()	((rand () & 0x7fff) / ((float)0x7fff))
-#define qcrandom()	(2.0 * (qrandom() - 0.5))
+#define qrandom()	((rand () & 0x7fff) * (1.0f / 0x7fff))
+#define qcrandom()	(2.0f * (qrandom() - 0.5f))
 
 void vectoangles( const vec3_t value1, vec3_t angles);
 void AnglesToAxis( const vec3_t angles, vec3_t axis[3] );
@@ -1208,7 +1208,7 @@ PlaneTypeForNormal
 =================
 */
 
-#define PlaneTypeForNormal(x) (x[0] == 1.0 ? PLANE_X : (x[1] == 1.0 ? PLANE_Y : (x[2] == 1.0 ? PLANE_Z : PLANE_NON_AXIAL) ) )
+#define PlaneTypeForNormal(x) (x[0] == 1 ? PLANE_X : (x[1] == 1 ? PLANE_Y : (x[2] == 1 ? PLANE_Z : PLANE_NON_AXIAL) ) )
 
 // plane_t structure
 // !!! if this is changed, it must be changed in asm code too !!!
@@ -1317,8 +1317,8 @@ typedef enum {
 ========================================================================
 */
 
-#define	ANGLE2SHORT(x)	((int)((x)*65536/360) & 65535)
-#define	SHORT2ANGLE(x)	((x)*(360.0/65536))
+#define	ANGLE2SHORT(x)	((int)((x)*(65536.0f/360.0f)) & 65535)
+#define	SHORT2ANGLE(x)	((x)*(360.0f/65536))
 
 #define	SNAPFLAG_RATE_DELAYED	1
 #define	SNAPFLAG_NOT_ACTIVE		2	// snapshot used during connection and for zombies

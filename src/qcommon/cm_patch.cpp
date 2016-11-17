@@ -168,12 +168,12 @@ static qboolean	CM_NeedsSubdivision( vec3_t a, vec3_t b, vec3_t c ) {
 
 	// calculate the linear midpoint
 	for ( i = 0 ; i < 3 ; i++ ) {
-		lmid[i] = 0.5*(a[i] + c[i]);
+		lmid[i] = 0.5f*(a[i] + c[i]);
 	}
 
 	// calculate the exact curve midpoint
 	for ( i = 0 ; i < 3 ; i++ ) {
-		cmid[i] = 0.5 * ( 0.5*(a[i] + b[i]) + 0.5*(b[i] + c[i]) );
+		cmid[i] = 0.5f * ( 0.5f*(a[i] + b[i]) + 0.5f*(b[i] + c[i]) );
 	}
 
 	// see if the curve is far enough away from the linear mid
@@ -195,9 +195,9 @@ static void CM_Subdivide( vec3_t a, vec3_t b, vec3_t c, vec3_t out1, vec3_t out2
 	int		i;
 
 	for ( i = 0 ; i < 3 ; i++ ) {
-		out1[i] = 0.5 * (a[i] + b[i]);
-		out3[i] = 0.5 * (b[i] + c[i]);
-		out2[i] = 0.5 * (out1[i] + out3[i]);
+		out1[i] = 0.5f * (a[i] + b[i]);
+		out3[i] = 0.5f * (b[i] + c[i]);
+		out2[i] = 0.5f * (out1[i] + out3[i]);
 	}
 }
 
@@ -354,7 +354,7 @@ static void CM_SubdivideGridColumns( cGrid_t *grid ) {
 }
 
 
-#define	POINT_EPSILON	0.1
+#define	POINT_EPSILON	0.1f
 /*
 ======================
 CM_ComparePoints
@@ -426,8 +426,8 @@ static	patchPlane_t	planes[MAX_PATCH_PLANES];
 static	int				numFacets;
 static	facet_t			facets[MAX_PATCH_PLANES]; //maybe MAX_FACETS ??
 
-#define	NORMAL_EPSILON	0.0001
-#define	DIST_EPSILON	0.02
+#define	NORMAL_EPSILON	0.0001f
+#define	DIST_EPSILON	0.02f
 
 int CM_PlaneEqual(patchPlane_t *p, float plane[4], int *flipped) {
 	float invplane[4];
@@ -860,7 +860,7 @@ void CM_AddFacetBevels( facet_t *facet ) {
 		k = (j+1)%w->numpoints;
 		VectorSubtract (w->p[j], w->p[k], vec);
 		//if it's a degenerate edge
-		if (VectorNormalize (vec) < 0.5)
+		if (VectorNormalize (vec) < 0.5f)
 			continue;
 		CM_SnapVector(vec);
 		for ( k = 0; k < 3 ; k++ )
@@ -878,7 +878,7 @@ void CM_AddFacetBevels( facet_t *facet ) {
 				VectorClear (vec2);
 				vec2[axis] = dir;
 				CrossProduct (vec, vec2, plane);
-				if (VectorNormalize (plane) < 0.5)
+				if (VectorNormalize (plane) < 0.5f)
 					continue;
 				plane[3] = DotProduct (w->p[j], plane);
 
@@ -887,7 +887,7 @@ void CM_AddFacetBevels( facet_t *facet ) {
 				for ( l = 0 ; l < w->numpoints ; l++ )
 				{
 					d = DotProduct (w->p[l], plane) - plane[3];
-					if (d > 0.1)
+					if (d > 0.1f)
 						break;	// point in front
 				}
 				if ( l < w->numpoints )

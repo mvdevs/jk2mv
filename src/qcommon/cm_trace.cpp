@@ -294,7 +294,7 @@ void CM_TestCapsuleInCapsule( traceWork_t *tw, clipHandle_t model ) {
 	VectorAdd(tw->start, tw->sphere.offset, top);
 	VectorSubtract(tw->start, tw->sphere.offset, bottom);
 	for ( i = 0 ; i < 3 ; i++ ) {
-		offset[i] = ( mins[i] + maxs[i] ) * 0.5;
+		offset[i] = ( mins[i] + maxs[i] ) * 0.5f;
 		symetricSize[0][i] = mins[i] - offset[i];
 		symetricSize[1][i] = maxs[i] - offset[i];
 	}
@@ -361,7 +361,7 @@ void CM_TestBoundingBoxInCapsule( traceWork_t *tw, clipHandle_t model ) {
 
 	// offset for capsule center
 	for ( i = 0 ; i < 3 ; i++ ) {
-		offset[i] = ( mins[i] + maxs[i] ) * 0.5;
+		offset[i] = ( mins[i] + maxs[i] ) * 0.5f;
 		size[0][i] = mins[i] - offset[i];
 		size[1][i] = maxs[i] - offset[i];
 		tw->start[i] -= offset[i];
@@ -923,7 +923,7 @@ void CM_TraceCapsuleThroughCapsule( traceWork_t *tw, clipHandle_t model ) {
 
 	// calculate top and bottom of the capsule spheres to collide with
 	for ( i = 0 ; i < 3 ; i++ ) {
-		offset[i] = ( mins[i] + maxs[i] ) * 0.5;
+		offset[i] = ( mins[i] + maxs[i] ) * 0.5f;
 		symetricSize[0][i] = mins[i] - offset[i];
 		symetricSize[1][i] = maxs[i] - offset[i];
 	}
@@ -970,7 +970,7 @@ void CM_TraceBoundingBoxThroughCapsule( traceWork_t *tw, clipHandle_t model ) {
 
 	// offset for capsule center
 	for ( i = 0 ; i < 3 ; i++ ) {
-		offset[i] = ( mins[i] + maxs[i] ) * 0.5;
+		offset[i] = ( mins[i] + maxs[i] ) * 0.5f;
 		size[0][i] = mins[i] - offset[i];
 		size[1][i] = maxs[i] - offset[i];
 		tw->start[i] -= offset[i];
@@ -1068,12 +1068,12 @@ void CM_TraceThroughTree( traceWork_t *tw, int num, float p1f, float p2f, vec3_t
 
 	// put the crosspoint SURFACE_CLIP_EPSILON pixels on the near side
 	if ( t1 < t2 ) {
-		idist = 1.0/(t1-t2);
+		idist = 1.0f/(t1-t2);
 		side = 1;
 		frac2 = (t1 + offset + SURFACE_CLIP_EPSILON)*idist;
 		frac = (t1 - offset + SURFACE_CLIP_EPSILON)*idist;
 	} else if (t1 > t2) {
-		idist = 1.0/(t1-t2);
+		idist = 1.0f/(t1-t2);
 		side = 0;
 		frac2 = (t1 - offset - SURFACE_CLIP_EPSILON)*idist;
 		frac = (t1 + offset + SURFACE_CLIP_EPSILON)*idist;
@@ -1166,7 +1166,7 @@ void CM_Trace( trace_t *results, const vec3_t start, const vec3_t end,
 	// avoids some complications with plane expanding of rotated
 	// bmodels
 	for ( i = 0 ; i < 3 ; i++ ) {
-		offset[i] = ( mins[i] + maxs[i] ) * 0.5;
+		offset[i] = ( mins[i] + maxs[i] ) * 0.5f;
 		tw.size[0][i] = mins[i] - offset[i];
 		tw.size[1][i] = maxs[i] - offset[i];
 		tw.start[i] = start[i] + offset[i];
@@ -1335,8 +1335,8 @@ void CM_Trace( trace_t *results, const vec3_t start, const vec3_t end,
         // If fraction == 1.0, we never hit anything, and thus the plane is not valid.
         // Otherwise, the normal on the plane should have unit length
         assert(tw.trace.allsolid ||
-               tw.trace.fraction == 1.0 ||
-               VectorLengthSquared(tw.trace.plane.normal) > 0.9999);
+               tw.trace.fraction == 1.0f ||
+               VectorLengthSquared(tw.trace.plane.normal) > 0.9999f);
 	*results = tw.trace;
 }
 
@@ -1386,7 +1386,7 @@ void CM_TransformedBoxTrace( trace_t *results, const vec3_t start, const vec3_t 
 	// avoids some complications with plane expanding of rotated
 	// bmodels
 	for ( i = 0 ; i < 3 ; i++ ) {
-		offset[i] = ( mins[i] + maxs[i] ) * 0.5;
+		offset[i] = ( mins[i] + maxs[i] ) * 0.5f;
 		symetricSize[0][i] = mins[i] - offset[i];
 		symetricSize[1][i] = maxs[i] - offset[i];
 		start_l[i] = start[i] + offset[i];
@@ -1436,7 +1436,7 @@ void CM_TransformedBoxTrace( trace_t *results, const vec3_t start, const vec3_t 
 	CM_Trace( &trace, start_l, end_l, symetricSize[0], symetricSize[1], model, origin, brushmask, capsule, &sphere );
 
 	// if the bmodel was rotated and there was a collision
-	if ( rotated && trace.fraction != 1.0 ) {
+	if ( rotated && trace.fraction != 1.0f ) {
 		// rotation of bmodel collision plane
 		TransposeMatrix(matrix, transpose);
 		RotatePoint(trace.plane.normal, transpose);

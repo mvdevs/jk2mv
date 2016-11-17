@@ -714,7 +714,7 @@ qboolean G2_Set_Bone_Anim_Index(
 	// start up the animation:)
 	if (setFrame != -1)
 	{
-		blist[index].lastTime = blist[index].startTime = (currentTime - (((setFrame - (float)startFrame) * 50.0)/ animSpeed));
+		blist[index].lastTime = blist[index].startTime = (currentTime - (((setFrame - startFrame) * 50.0f)/ animSpeed));
 	}
 	else
 	{

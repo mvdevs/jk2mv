@@ -285,7 +285,7 @@ static int G2_ComputeLOD( trRefEntity_t *ent, const model_t *currentModel, int l
 		largestScale = 1;
 	}
 
-	if ( ( projectedRadius = ProjectRadius( 0.75*largestScale*ent->e.radius, ent->e.origin ) ) != 0 )	//we reduce the radius to make the LOD match other model types which use the actual bound box size
+	if ( ( projectedRadius = ProjectRadius( 0.75f*largestScale*ent->e.radius, ent->e.origin ) ) != 0 )	//we reduce the radius to make the LOD match other model types which use the actual bound box size
  	{
  		lodscale = (r_lodscale->value+r_autolodscalevalue->value);
  		if ( lodscale > 20 )
@@ -343,13 +343,13 @@ void G2_CreateQuaterion(mdxaBone_t *mat, vec4_t quat)
     //perform an "instant" calculation.
     //Important note wrt. rouning errors:
     //Test if ( T > 0.00000001 ) to avoid large distortions!
-	if (t > 0.00000001)
+	if (t > 0.00000001f)
 	{
       s = sqrt(t) * 2;
       quat[0] = ( mat->matrix[1][2] - mat->matrix[2][1] ) / s;
       quat[1] = ( mat->matrix[2][0] - mat->matrix[0][2] ) / s;
       quat[2] = ( mat->matrix[0][1] - mat->matrix[1][0] ) / s;
-      quat[3] = 0.25 * s;
+      quat[3] = 0.25f * s;
 	}
 	else
 	{
@@ -359,24 +359,24 @@ void G2_CreateQuaterion(mdxaBone_t *mat, vec4_t quat)
 		//Depending on this, calculate the following:
 
 		if ( mat->matrix[0][0] > mat->matrix[1][1] && mat->matrix[0][0] > mat->matrix[2][2] )  {	// Column 0:
-			s  = sqrt( 1.0 + mat->matrix[0][0] - mat->matrix[1][1] - mat->matrix[2][2])* 2;
-			quat[0] = 0.25 * s;
+			s  = sqrt( 1.0f + mat->matrix[0][0] - mat->matrix[1][1] - mat->matrix[2][2])* 2;
+			quat[0] = 0.25f * s;
 			quat[1] = (mat->matrix[0][1] + mat->matrix[1][0] ) / s;
 			quat[2] = (mat->matrix[2][0] + mat->matrix[0][2] ) / s;
 			quat[3] = (mat->matrix[1][2] - mat->matrix[2][1] ) / s;
 
 		} else if ( mat->matrix[1][1] > mat->matrix[2][2] ) {			// Column 1:
-			s  = sqrt( 1.0 + mat->matrix[1][1] - mat->matrix[0][0] - mat->matrix[2][2] ) * 2;
+			s  = sqrt( 1.0f + mat->matrix[1][1] - mat->matrix[0][0] - mat->matrix[2][2] ) * 2;
 			quat[0] = (mat->matrix[0][1] + mat->matrix[1][0] ) / s;
-			quat[1] = 0.25 * s;
+			quat[1] = 0.25f * s;
 			quat[2] = (mat->matrix[1][2] + mat->matrix[2][1] ) / s;
 			quat[3] = (mat->matrix[2][0] - mat->matrix[0][2] ) / s;
 
 		} else {						// Column 2:
-			s  = sqrt( 1.0 + mat->matrix[2][2] - mat->matrix[0][0] - mat->matrix[1][1] ) * 2;
+			s  = sqrt( 1.0f + mat->matrix[2][2] - mat->matrix[0][0] - mat->matrix[1][1] ) * 2;
 			quat[0] = (mat->matrix[2][0]+ mat->matrix[0][2] ) / s;
 			quat[1] = (mat->matrix[1][2] + mat->matrix[2][1] ) / s;
-			quat[2] = 0.25 * s;
+			quat[2] = 0.25f * s;
 			quat[3] = (mat->matrix[0][1] - mat->matrix[1][0] ) / s;
 		}
 	}
@@ -553,7 +553,7 @@ void G2_TransformBone (CTransformBone &TB)
 							{
 								if (newFrame_g <= endFrame+1)
 								{
-									newFrame_g=endFrame+fmod(newFrame_g-endFrame,animSize)-animSize;
+									newFrame_g=endFrame+fmodf(newFrame_g-endFrame,animSize)-animSize;
 								}
 								// now figure out what we are lerping between
 								// delta is the fraction between this frame and the next, since the new anim is always at a .0f;
@@ -588,7 +588,7 @@ void G2_TransformBone (CTransformBone &TB)
 							{
 								if (newFrame_g >= endFrame)
 								{
-									newFrame_g=endFrame+fmod(newFrame_g-endFrame,animSize)-animSize;
+									newFrame_g=endFrame+fmodf(newFrame_g-endFrame,animSize)-animSize;
 								}
 								// now figure out what we are lerping between
 								// delta is the fraction between this frame and the next, since the new anim is always at a .0f;
@@ -632,7 +632,7 @@ void G2_TransformBone (CTransformBone &TB)
 				}
 				else //
 				{
-					if (animSpeed> 0.0)
+					if (animSpeed> 0.0f)
 					{
 
 						TB.currentFrame = (int)newFrame_g;
@@ -687,7 +687,7 @@ void G2_TransformBone (CTransformBone &TB)
 			}
 			else
 			{
-				if (animSpeed<0.0)
+				if (animSpeed<0.0f)
 				{
 					TB.currentFrame = boneList[boneListIndex].endFrame+1;
 				}
@@ -772,7 +772,7 @@ void G2_TransformBone (CTransformBone &TB)
 	if (TB.blendMode)
 	{
 		const float backlerp = TB.blendFrame - (int)TB.blendFrame;
-		const float frontlerp = 1.0 - backlerp;
+		const float frontlerp = 1.0f - backlerp;
 
 		// figure out where the location of the blended animation data is
 //		const mdxaFrame_t	*bFrame =	(mdxaFrame_t *)((byte *)TB.header + TB.header->ofsFrames + (int)TB.blendFrame * TB.frameSize );
@@ -808,7 +808,7 @@ void G2_TransformBone (CTransformBone &TB)
 		// blend in the other frame if we need to
 		if (TB.blendMode)
 		{
-		float blendFrontlerp = 1.0 - TB.blendLerp;
+		float blendFrontlerp = 1.0f - TB.blendLerp;
 	  		for ( j = 0 ; j < 12 ; j++ )
 			{
   				((float *)&tbone[2])[j] = (TB.blendLerp * ((float *)&tbone[2])[j])
@@ -824,7 +824,7 @@ void G2_TransformBone (CTransformBone &TB)
   	}
 	else
   	{
-		const float frontlerp = 1.0 - TB.backlerp;
+		const float frontlerp = 1.0f - TB.backlerp;
 		// figure out where the location of the bone animation data is
 		assert (TB.header->numFrames > TB.newFrame);//validate the frame we're about to grab
 //		const mdxaFrame_t	*aFrame = (mdxaFrame_t *)((byte *)TB.header + TB.header->ofsFrames + TB.newFrame * TB.frameSize );
@@ -843,7 +843,7 @@ void G2_TransformBone (CTransformBone &TB)
 		// blend in the other frame if we need to
 		if (TB.blendMode)
 		{
-			const float blendFrontlerp = 1.0 - TB.blendLerp;
+			const float blendFrontlerp = 1.0f - TB.blendLerp;
 			for ( j = 0 ; j < 12 ; j++ )
 			{
 				((float *)&tbone[2])[j] = (TB.blendLerp * ((float *)&tbone[2])[j])
@@ -900,7 +900,7 @@ void G2_TransformBone (CTransformBone &TB)
 				Multiply_3x4Matrix(&temp, &boneOverride.newMatrix,&skel->BasePoseMatInv);
 
 				// now do the blend into the destination
-				const float blendFrontlerp = 1.0 - blendLerp;
+				const float blendFrontlerp = 1.0f - blendLerp;
 				for ( j = 0 ; j < 12 ; j++ )
 				{
 					((float *)&bone)[j] = (blendLerp * ((float *)&temp)[j])
@@ -1140,7 +1140,7 @@ void G2_ProcessSurfaceBolt(mdxaBone_v &bonePtr, mdxmSurface_t *surface, int bolt
 		vec3_t right;
 		vec3_t vec0, vec1;
 		// work out baryCentricK
-		float baryCentricK = 1.0 - (surfInfo->genBarycentricI + surfInfo->genBarycentricJ);
+		float baryCentricK = 1.0f - (surfInfo->genBarycentricI + surfInfo->genBarycentricJ);
 
 		// now we have the model transformed into model space, now generate an origin.
 		boltList[boltNum].position.matrix[0][3] = (pTri[0][0] * surfInfo->genBarycentricI) + (pTri[1][0] * surfInfo->genBarycentricJ) + (pTri[2][0] * baryCentricK);

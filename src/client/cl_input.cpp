@@ -383,9 +383,9 @@ void CL_AdjustAngles( void ) {
 	float	speed;
 
 	if ( in_speed.active ) {
-		speed = 0.001 * cls.frametime * cl_anglespeedkey->value;
+		speed = 0.001f * cls.frametime * cl_anglespeedkey->value;
 	} else {
-		speed = 0.001 * cls.frametime;
+		speed = 0.001f * cls.frametime;
 	}
 
 	if ( !in_strafe.active ) {

@@ -264,8 +264,8 @@ void R_TransformClipToWindow( const vec4_t clip, const viewParms_t *view, vec4_t
 	window[1] = 0.5f * ( 1.0f + normalized[1] ) * view->viewportHeight;
 	window[2] = normalized[2];
 
-	window[0] = (int) ( window[0] + 0.5 );
-	window[1] = (int) ( window[1] + 0.5 );
+	window[0] = (int) ( window[0] + 0.5f );
+	window[1] = (int) ( window[1] + 0.5f );
 }
 
 
@@ -491,10 +491,10 @@ void R_SetupProjection( void ) {
 	zNear	= r_znear->value;
 	zFar	= tr.viewParms.zFar;
 
-	ymax = zNear * tan( tr.refdef.fov_y * M_PI / 360.0f );
+	ymax = zNear * tan( DEG2RAD( tr.refdef.fov_y * 0.5f ) );
 	ymin = -ymax;
 
-	xmax = zNear * tan( tr.refdef.fov_x * M_PI / 360.0f );
+	xmax = zNear * tan( DEG2RAD( tr.refdef.fov_x 0.5f ) );
 	xmin = -xmax;
 
 	width = xmax - xmin;
@@ -534,7 +534,7 @@ void R_SetupFrustum (void) {
 	float	xs, xc;
 	float	ang;
 
-	ang = tr.viewParms.fovX / 180 * M_PI * 0.5f;
+	ang = DEG2RAD( tr.viewParms.fovX * 0.5f );
 	xs = sin( ang );
 	xc = cos( ang );
 

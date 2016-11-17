@@ -842,7 +842,7 @@ static void ParseSurfaceSprites( const char *_text, shaderStage_t *stage )
 	stage->ss.fadeDist = fadedist;
 
 	// These are defaults that can be overwritten.
-	stage->ss.fadeMax = fadedist*1.33;
+	stage->ss.fadeMax = fadedist*1.33f;
 	stage->ss.fadeScale = 0.0;
 	stage->ss.wind = 0.0;
 	stage->ss.windIdle = 0.0;
@@ -1018,7 +1018,7 @@ static void ParseSurfaceSpritesOptional( const char *param, const char *_text, s
 			return;
 		}
 		value = atof(token);
-		if (value < 0.0)
+		if (value < 0.0f)
 		{
 			ri.Printf( PRINT_WARNING, "WARNING: invalid surfacesprite wind in shader '%s'\n", shader.name );
 			return;
@@ -1043,7 +1043,7 @@ static void ParseSurfaceSpritesOptional( const char *param, const char *_text, s
 			return;
 		}
 		value = atof(token);
-		if (value < 0.0)
+		if (value < 0.0f)
 		{
 			ri.Printf( PRINT_WARNING, "WARNING: invalid surfacesprite windidle in shader '%s'\n", shader.name );
 			return;
@@ -1064,7 +1064,7 @@ static void ParseSurfaceSpritesOptional( const char *param, const char *_text, s
 			return;
 		}
 		value = atof(token);
-		if (value < 0.0)
+		if (value < 0.0f)
 		{
 			ri.Printf( PRINT_WARNING, "WARNING: invalid surfacesprite vertskew in shader '%s'\n", shader.name );
 			return;
@@ -1141,7 +1141,7 @@ static void ParseSurfaceSpritesOptional( const char *param, const char *_text, s
 			return;
 		}
 		value = atof(token);
-		if (value < 0 || value > 1.0)
+		if (value < 0 || value > 1.0f)
 		{
 			ri.Printf( PRINT_WARNING, "WARNING: invalid surfacesprite fxalpha start in shader '%s'\n", shader.name );
 			return;
@@ -1155,7 +1155,7 @@ static void ParseSurfaceSpritesOptional( const char *param, const char *_text, s
 			return;
 		}
 		value = atof(token);
-		if (value < 0 || value > 1.0)
+		if (value < 0 || value > 1.0f)
 		{
 			ri.Printf( PRINT_WARNING, "WARNING: invalid surfacesprite fxalpha end in shader '%s'\n", shader.name );
 			return;
@@ -1838,7 +1838,7 @@ static void ParseDeform( const char **text ) {
 
 		if ( atof( token ) != 0 )
 		{
-			ds->deformationSpread = 1.0f / atof( token );
+			ds->deformationSpread = 1.0 / atof( token );
 		}
 		else
 		{
@@ -2205,11 +2205,11 @@ static qboolean ParseShader( const char **text )
 
 			token = COM_ParseExt( text, qfalse );
 			a = atof( token );
-			a = a / 180 * M_PI;
+			a = DEG2RAD( a );
 
 			token = COM_ParseExt( text, qfalse );
 			float b = atof( token );
-			b = b / 180 * M_PI;
+			b = DEG2RAD( b );
 
 			tr.sunDirection[0] = cos( a ) * cos( b );
 			tr.sunDirection[1] = sin( a ) * cos( b );
