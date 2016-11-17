@@ -828,10 +828,10 @@ intptr_t QDECL  __attribute__((no_sanitize_address)) VM_Call( vm_t *vm, int call
 //=================================================================
 
 static int QDECL VM_ProfileSort( const void *a, const void *b ) {
-	vmSymbol_t	*sa, *sb;
+	const vmSymbol_t	*sa, *sb;
 
-	sa = *(vmSymbol_t **)a;
-	sb = *(vmSymbol_t **)b;
+	sa = *(const vmSymbol_t * const *)a;
+	sb = *(const vmSymbol_t * const *)b;
 
 	if ( sa->profileCount < sb->profileCount ) {
 		return -1;

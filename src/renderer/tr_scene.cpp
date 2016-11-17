@@ -422,8 +422,8 @@ void RE_RenderScene( const refdef_t *fd ) {
 		// compare the area bits
 		areaDiff = 0;
 		for (i = 0 ; i < MAX_MAP_AREA_BYTES/4 ; i++) {
-			areaDiff |= ((int *)tr.refdef.areamask)[i] ^ ((int *)fd->areamask)[i];
-			((int *)tr.refdef.areamask)[i] = ((int *)fd->areamask)[i];
+			areaDiff |= ((int *)tr.refdef.areamask)[i] ^ ((const int *)fd->areamask)[i];
+			((int *)tr.refdef.areamask)[i] = ((const int *)fd->areamask)[i];
 		}
 
 		if ( areaDiff ) {

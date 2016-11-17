@@ -179,7 +179,7 @@ CTextPool::~CTextPool(void)
 #endif
 }
 
-char *CTextPool::AllocText(char *text, bool addNULL, CTextPool **poolPtr)
+char *CTextPool::AllocText(const char *text, bool addNULL, CTextPool **poolPtr)
 {
 	int	length = (int)strlen(text) + (addNULL ? 1 : 0);
 
@@ -222,12 +222,12 @@ bool CGPObject::WriteText(CTextPool **textPool, const char *text)
    if (strchr(text, ' '))
    {
 	   (*textPool)->AllocText("\"", false, textPool);
-	   (*textPool)->AllocText((char *)text, false, textPool);
+	   (*textPool)->AllocText(text, false, textPool);
 	   (*textPool)->AllocText("\"", false, textPool);
    }
    else
    {
-	   (*textPool)->AllocText((char *)text, false, textPool);
+	   (*textPool)->AllocText(text, false, textPool);
    }
 
    return true;
@@ -345,7 +345,7 @@ bool CGPValue::Write(CTextPool **textPool, int depth)
 	if (!mList->GetNext())
 	{
 		(*textPool)->AllocText("\t\t", false, textPool);
-		(*textPool)->AllocText((char *)mList->GetName(), false, textPool);
+		(*textPool)->AllocText(mList->GetName(), false, textPool);
 		(*textPool)->AllocText("\r\n", false, textPool);
 	}
 	else
@@ -365,7 +365,7 @@ bool CGPValue::Write(CTextPool **textPool, int depth)
 			{
 				(*textPool)->AllocText("\t", false, textPool);
 			}
-			(*textPool)->AllocText((char *)next->GetName(), false, textPool);
+			(*textPool)->AllocText(next->GetName(), false, textPool);
 			(*textPool)->AllocText("\r\n", false, textPool);
 
 			next = next->GetNext();

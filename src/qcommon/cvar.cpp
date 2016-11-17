@@ -792,8 +792,8 @@ with the archive flag set to qtrue.
 */
 
 static int Cvar_CvarCmp(const void *p1, const void *p2) {
-    const cvar_t **e1 = (const cvar_t **)p1;
-    const cvar_t **e2 = (const cvar_t **)p2;
+    const cvar_t * const *e1 = (const cvar_t * const *)p1;
+    const cvar_t * const *e2 = (const cvar_t * const *)p2;
 
 	return strcmp( (*e1)->name, (*e2)->name );
 }

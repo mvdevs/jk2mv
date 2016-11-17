@@ -474,10 +474,11 @@ void CL_ConsolePrint( const char *txt, qboolean extendedColors ) {
 
 	color = ColorIndex(COLOR_WHITE);
 
-	while ( (c = (unsigned char) *txt) != 0 ) {
-		if ( Q_IsColorString( (unsigned char*) txt ) ||
-			(extendedColors && Q_IsColorString_Extended( (unsigned char*)txt )) ||
-			  	( use102color && Q_IsColorString_1_02( (unsigned char*) txt ) ) ) {
+	while ( (c = *txt) != 0 ) {
+		if ( Q_IsColorString( txt ) ||
+			(extendedColors && Q_IsColorString_Extended( txt )) ||
+			( use102color && Q_IsColorString_1_02( txt ) ) )
+		{
 			if (extendedColors) color = ColorIndex_Extended( *(txt+1) );
 			else color = ColorIndex( *(txt+1) );
 			txt += 2;

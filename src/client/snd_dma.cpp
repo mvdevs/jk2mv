@@ -1826,7 +1826,7 @@ If raw data has been loaded in little endien binary form, this must be done.
 If raw data was calculated, as with ADPCM, this should not be called.
 =================
 */
-void S_ByteSwapRawSamples( int samples, int width, int s_channels, const byte *data ) {
+static void S_ByteSwapRawSamples( int samples, int width, int s_channels, byte *data ) {
 	int		i;
 
 	if ( width != 2 ) {
@@ -1883,8 +1883,8 @@ void S_RawSamples( int samples, int rate, int width, int s_channels, const byte 
 			{
 				dst = s_rawend&(MAX_RAW_SAMPLES-1);
 				s_rawend++;
-				s_rawsamples[dst].left = ((short *)data)[i*2] * intVolume;
-				s_rawsamples[dst].right = ((short *)data)[i*2+1] * intVolume;
+				s_rawsamples[dst].left = ((const short *)data)[i*2] * intVolume;
+				s_rawsamples[dst].right = ((const short *)data)[i*2+1] * intVolume;
 			}
 		}
 		else
@@ -1896,8 +1896,8 @@ void S_RawSamples( int samples, int rate, int width, int s_channels, const byte 
 					break;
 				dst = s_rawend&(MAX_RAW_SAMPLES-1);
 				s_rawend++;
-				s_rawsamples[dst].left = ((short *)data)[src*2] * intVolume;
-				s_rawsamples[dst].right = ((short *)data)[src*2+1] * intVolume;
+				s_rawsamples[dst].left = ((const short *)data)[src*2] * intVolume;
+				s_rawsamples[dst].right = ((const short *)data)[src*2+1] * intVolume;
 			}
 		}
 	}
@@ -1910,8 +1910,8 @@ void S_RawSamples( int samples, int rate, int width, int s_channels, const byte 
 				break;
 			dst = s_rawend&(MAX_RAW_SAMPLES-1);
 			s_rawend++;
-			s_rawsamples[dst].left = ((short *)data)[src] * intVolume;
-			s_rawsamples[dst].right = ((short *)data)[src] * intVolume;
+			s_rawsamples[dst].left = ((const short *)data)[src] * intVolume;
+			s_rawsamples[dst].right = ((const short *)data)[src] * intVolume;
 		}
 	}
 	else if (s_channels == 2 && width == 1)
@@ -1925,8 +1925,8 @@ void S_RawSamples( int samples, int rate, int width, int s_channels, const byte 
 				break;
 			dst = s_rawend&(MAX_RAW_SAMPLES-1);
 			s_rawend++;
-			s_rawsamples[dst].left = ((char *)data)[src*2] * intVolume;
-			s_rawsamples[dst].right = ((char *)data)[src*2+1] * intVolume;
+			s_rawsamples[dst].left = ((const char *)data)[src*2] * intVolume;
+			s_rawsamples[dst].right = ((const char *)data)[src*2+1] * intVolume;
 		}
 	}
 	else if (s_channels == 1 && width == 1)
@@ -1940,8 +1940,8 @@ void S_RawSamples( int samples, int rate, int width, int s_channels, const byte 
 				break;
 			dst = s_rawend&(MAX_RAW_SAMPLES-1);
 			s_rawend++;
-			s_rawsamples[dst].left = (((byte *)data)[src]-128) * intVolume;
-			s_rawsamples[dst].right = (((byte *)data)[src]-128) * intVolume;
+			s_rawsamples[dst].left = (((const byte *)data)[src]-128) * intVolume;
+			s_rawsamples[dst].right = (((const byte *)data)[src]-128) * intVolume;
 		}
 	}
 

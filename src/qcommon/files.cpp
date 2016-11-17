@@ -1490,7 +1490,7 @@ Properly handles partial writes
 int FS_Write( const void *buffer, int len, fileHandle_t h ) {
 	size_t		block, remaining;
 	size_t		written;
-	byte	*buf;
+	const byte	*buf;
 	int		tries;
 	FILE	*f;
 
@@ -1503,7 +1503,7 @@ int FS_Write( const void *buffer, int len, fileHandle_t h ) {
 	}
 
 	f = FS_FileForHandle(h);
-	buf = (byte *)buffer;
+	buf = (const byte *)buffer;
 
 	remaining = len;
 	tries = 0;
@@ -2703,10 +2703,10 @@ void FS_TouchFile_f( void ) {
 
 
 static int QDECL paksort( const void *a, const void *b ) {
-	char	*aa, *bb;
+	const char	*aa, *bb;
 
-	aa = *(char **)a;
-	bb = *(char **)b;
+	aa = *(const char * const *)a;
+	bb = *(const char * const *)b;
 
 	// downloaded files have priority
 	// this is needed because otherwise even if a clientside was downloaded, there is no gurantee it is actually used.

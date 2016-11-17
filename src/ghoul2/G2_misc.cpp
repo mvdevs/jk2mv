@@ -758,7 +758,7 @@ static bool G2_RadiusTracePolys( const mdxmSurface_t *surface, const vec3_t rayS
 		return false; // completely off the gore splotch  (so presumably hit nothing? -Ste)
 	}
 	const int numTris = surface->numTriangles;
-	const mdxmTriangle_t * const tris = (mdxmTriangle_t *) ((byte *)surface + surface->ofsTriangles);
+	const mdxmTriangle_t * const tris = (const mdxmTriangle_t *) ((const byte *)surface + surface->ofsTriangles);
 
 	for ( j = 0; j < numTris; j++ )
 	{
@@ -852,7 +852,7 @@ bool G2_TracePolys( const mdxmSurface_t *surface, const vec3_t rayStart, const v
 	int		j, numTris;
 
 	// whip through and actually transform each vertex
-	const mdxmTriangle_t *tris = (mdxmTriangle_t *) ((byte *)surface + surface->ofsTriangles);
+	const mdxmTriangle_t *tris = (const mdxmTriangle_t *) ((const byte *)surface + surface->ofsTriangles);
 	const float *verts = (float *)TransformedVertsArray[surface->thisSurfaceIndex];
 	numTris = surface->numTriangles;
 
@@ -979,9 +979,9 @@ void G2_TraceSurfaces(CTraceSurface &TS)
 {
 	int	i;
 	// back track and get the surfinfo struct for this surface
-	const mdxmSurface_t				*surface = (mdxmSurface_t *)G2_FindSurface((void *)TS.currentModel, TS.surfaceNum, TS.lod);
-	const mdxmHierarchyOffsets_t	*surfIndexes = (mdxmHierarchyOffsets_t *)((byte *)TS.currentModel->mdxm + sizeof(mdxmHeader_t));
-	const mdxmSurfHierarchy_t		*surfInfo = (mdxmSurfHierarchy_t *)((byte *)surfIndexes + surfIndexes->offsets[surface->thisSurfaceIndex]);
+	const mdxmSurface_t				*surface = (const mdxmSurface_t *)G2_FindSurface((void *)TS.currentModel, TS.surfaceNum, TS.lod);
+	const mdxmHierarchyOffsets_t	*surfIndexes = (const mdxmHierarchyOffsets_t *)((byte *)TS.currentModel->mdxm + sizeof(mdxmHeader_t));
+	const mdxmSurfHierarchy_t		*surfInfo = (const mdxmSurfHierarchy_t *)((const byte *)surfIndexes + surfIndexes->offsets[surface->thisSurfaceIndex]);
 
 	// see if we have an override surface in the surface list
 	const surfaceInfo_t	*surfOverride = G2_FindOverrideSurface(TS.surfaceNum, TS.rootSList);

@@ -413,7 +413,7 @@ void G2_CreateMatrixFromQuaterion(mdxaBone_t *mat, vec4_t quat)
 }
 
 // nasty little matrix multiply going on here..
-void Multiply_3x4Matrix(mdxaBone_t *out, mdxaBone_t *in2, mdxaBone_t *in)
+void Multiply_3x4Matrix(mdxaBone_t *out, const mdxaBone_t *in2, const mdxaBone_t *in)
 {
 	// first row of out
 	out->matrix[0][0] = (in2->matrix[0][0] * in->matrix[0][0]) + (in2->matrix[0][1] * in->matrix[1][0]) + (in2->matrix[0][2] * in->matrix[2][0]);
@@ -436,7 +436,7 @@ void Multiply_3x4Matrix(mdxaBone_t *out, mdxaBone_t *in2, mdxaBone_t *in)
 static int G2_GetBonePoolIndex(	const mdxaHeader_t *pMDXAHeader, int iFrame, int iBone)
 {
 	const int iOffsetToIndex = (iFrame * pMDXAHeader->numBones * 3) + (iBone * 3);
-	const byte *pIndex = (byte*) pMDXAHeader + pMDXAHeader->ofsFrames + iOffsetToIndex;
+	const byte *pIndex = (const byte*) pMDXAHeader + pMDXAHeader->ofsFrames + iOffsetToIndex;
 
 	// read it little endian byte-by-byte as it's unaligned anyway
 	return pIndex[0] | (pIndex[1] << 8) | (pIndex[2] << 16);
@@ -445,7 +445,7 @@ static int G2_GetBonePoolIndex(	const mdxaHeader_t *pMDXAHeader, int iFrame, int
 
 /*static inline*/ void UnCompressBone(float mat[3][4], int iBoneIndex, const mdxaHeader_t *pMDXAHeader, int iFrame)
 {
-	mdxaCompQuatBone_t *pCompBonePool = (mdxaCompQuatBone_t *) ((byte *)pMDXAHeader + pMDXAHeader->ofsCompBonePool);
+	const mdxaCompQuatBone_t *pCompBonePool = (const mdxaCompQuatBone_t *) ((const byte *)pMDXAHeader + pMDXAHeader->ofsCompBonePool);
 	MC_UnCompressQuat(mat, pCompBonePool[ G2_GetBonePoolIndex( pMDXAHeader, iFrame, iBoneIndex ) ].Comp);
 }
 
@@ -1458,7 +1458,7 @@ void G2_ConstructUsedBoneList(CConstructBoneList &CBL)
 	// back track and get the surfinfo struct for this surface
 	const mdxmSurface_t			*surface = (mdxmSurface_t *)G2_FindSurface((void *)CBL.currentModel, CBL.surfaceNum, 0);
 	const mdxmHierarchyOffsets_t	*surfIndexes = (mdxmHierarchyOffsets_t *)((byte *)CBL.currentModel->mdxm + sizeof(mdxmHeader_t));
-	const mdxmSurfHierarchy_t	*surfInfo = (mdxmSurfHierarchy_t *)((byte *)surfIndexes + surfIndexes->offsets[surface->thisSurfaceIndex]);
+	const mdxmSurfHierarchy_t	*surfInfo = (const mdxmSurfHierarchy_t *)((const byte *)surfIndexes + surfIndexes->offsets[surface->thisSurfaceIndex]);
 	const model_t				*mod_a = R_GetModelByHandle(CBL.currentModel->mdxm->animIndex);
 	const mdxaSkelOffsets_t		*offsets = (mdxaSkelOffsets_t *)((byte *)mod_a->mdxa + sizeof(mdxaHeader_t));
 	const mdxaSkel_t			*skel, *childSkel;
@@ -1478,7 +1478,7 @@ void G2_ConstructUsedBoneList(CConstructBoneList &CBL)
 	// if this surface is not off, add it to the shader render list
 	if (!(offFlags & G2SURFACEFLAG_OFF))
 	{
-		int	*bonesReferenced = (int *)((byte*)surface + surface->ofsBoneReferences);
+		const int	*bonesReferenced = (const int *)((const byte*)surface + surface->ofsBoneReferences);
 		// now whip through the bones this surface uses
 		for (i=0; i<surface->numBoneReferences;i++)
 		{
@@ -1681,7 +1681,7 @@ void R_AddGhoulSurfaces( trRefEntity_t *ent ) {
 				tempMatrix.matrix[2][2]=1.0f;
 				tempMatrix.matrix[2][3]=-ghoul2[i].mBltlist[ghoul2[i].mNewOrigin].position.matrix[2][3];
 				//Inverse_Matrix(&ghoul2[i].mBltlist[ghoul2[i].mNewOrigin].position, &tempMatrix);
-				Multiply_3x4Matrix(&rootMatrix, &tempMatrix, (mdxaBone_t*)&identityMatrix);
+				Multiply_3x4Matrix(&rootMatrix, &tempMatrix, &identityMatrix);
 
 				setNewOrigin = true;
 			}
@@ -1955,7 +1955,7 @@ void G2_ConstructGhoulSkeleton( CGhoul2Info_v &ghoul2, const int frameNum, qhand
 					VectorNormalize((float*)&ghoul2[i].mBltlist[ghoul2[i].mNewOrigin].position.matrix[2]);
 					mdxaBone_t		tempMatrix;
 					Inverse_Matrix(&ghoul2[i].mBltlist[ghoul2[i].mNewOrigin].position, &tempMatrix);
-					Multiply_3x4Matrix(&rootMatrix, &tempMatrix, (mdxaBone_t*)&identityMatrix);
+					Multiply_3x4Matrix(&rootMatrix, &tempMatrix, &identityMatrix);
 					setNewOrigin = true;
 				}
 			}
@@ -2178,7 +2178,7 @@ void RB_SurfaceGhoul( CRenderableSurface *surf ) {
 	const int *piBoneRefs = (int*) ((byte*)surface + surface->ofsBoneReferences);
 	const int numVerts = surface->numVerts;
 	const mdxmVertex_t 	*v = (mdxmVertex_t *) ((byte *)surface + surface->ofsVerts);
-	mdxmVertexTexCoord_t *pTexCoords = (mdxmVertexTexCoord_t *) &v[numVerts];
+	const mdxmVertexTexCoord_t *pTexCoords = (const mdxmVertexTexCoord_t *) &v[numVerts];
 
 	int baseVert = tess.numVertexes;
 	for ( j = 0; j < numVerts; j++, baseVert++ )

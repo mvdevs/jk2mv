@@ -150,7 +150,7 @@ void G2API_CleanGhoul2Models(CGhoul2Info_v **ghoul2Ptr) {
 
 qhandle_t G2API_PrecacheGhoul2Model(const char *fileName)
 {
-	return RE_RegisterModel((char *)fileName);
+	return RE_RegisterModel(fileName);
 }
 
 void CL_InitRef( void );
@@ -206,7 +206,7 @@ int G2API_InitGhoul2Model(CGhoul2Info_v **ghoul2Ptr, const char *fileName, int m
 			// this is only valid and used on the game side. Client side ignores this
 			ghoul2[model].mModelindex = modelIndex;
 				// on the game side this is valid. On the client side it is valid only after it has been filled in by trap_G2_SetGhoul2ModelIndexes
-			ghoul2[model].mModel = RE_RegisterModel((char *)fileName);
+			ghoul2[model].mModel = RE_RegisterModel(fileName);
 			model_t		*mod_m = R_GetModelByHandle(ghoul2[model].mModel);
 			if (mod_m->type == MOD_BAD)
 			{
@@ -239,12 +239,12 @@ int G2API_InitGhoul2Model(CGhoul2Info_v **ghoul2Ptr, const char *fileName, int m
 	// on the game side this is valid. On the client side it is valid only after it has been filled in by trap_G2_SetGhoul2ModelIndexes
 	if (customShader <= -20)
 	{ //This means the server is making the function call. And the server does not like registering models.
-		newModel.mModel = RE_RegisterServerModel((char *)fileName);
+		newModel.mModel = RE_RegisterServerModel(fileName);
 		customShader = 0;
 	}
 	else
 	{
-		newModel.mModel = RE_RegisterModel((char *)fileName);
+		newModel.mModel = RE_RegisterModel(fileName);
 	}
 	model_t		*mod_m = R_GetModelByHandle(newModel.mModel);
 	if (mod_m->type == MOD_BAD)
@@ -1093,8 +1093,8 @@ SV_QsortEntityNumbers
 =======================
 */
 static int QDECL QsortDistance( const void *a, const void *b ) {
-	const float	&ea = ((CCollisionRecord*)a)->mDistance;
-	const float	&eb = ((CCollisionRecord*)b)->mDistance;
+	const float	&ea = ((const CCollisionRecord*)a)->mDistance;
+	const float	&eb = ((const CCollisionRecord*)b)->mDistance;
 
 	if ( ea < eb ) {
 		return -1;

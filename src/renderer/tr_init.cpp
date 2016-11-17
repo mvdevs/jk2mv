@@ -632,13 +632,13 @@ static void InitOpenGL(void) {
 
         glWindow = WIN_Init(&windowDesc, &glConfig);
 
-		Com_Printf("GL_RENDERER: %s\n", (char *)qglGetString(GL_RENDERER));
+		Com_Printf("GL_RENDERER: %s\n", (const char *)qglGetString(GL_RENDERER));
 
 		// get our config strings
-		glConfig.vendor_string = (char *)qglGetString(GL_VENDOR);
-		glConfig.renderer_string = (char *)qglGetString(GL_RENDERER);
-		glConfig.version_string = (char *)qglGetString(GL_VERSION);
-		glConfig.extensions_string = (char *)qglGetString(GL_EXTENSIONS);
+		glConfig.vendor_string = (const char *)qglGetString(GL_VENDOR);
+		glConfig.renderer_string = (const char *)qglGetString(GL_RENDERER);
+		glConfig.version_string = (const char *)qglGetString(GL_VERSION);
+		glConfig.extensions_string = (const char *)qglGetString(GL_EXTENSIONS);
 
 		// OpenGL driver constants
 		qglGetIntegerv(GL_MAX_TEXTURE_SIZE, &glConfig.maxTextureSize);

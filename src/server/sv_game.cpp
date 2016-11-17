@@ -450,7 +450,7 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 		{
 			const char	*s;
 
-			s = COM_Parse( (const char **) &sv.entityParsePoint );
+			s = COM_Parse( &sv.entityParsePoint );
 			Q_strncpyz( (char *)VMA(1), s, args[2] );
 			if ( !sv.entityParsePoint && !s[0] ) {
 				return qfalse;
@@ -1114,7 +1114,7 @@ static void SV_InitGameVM( qboolean restart ) {
 	int apireq;
 
 	// start the entity parsing at the beginning
-	sv.entityParsePoint = CM_EntityString();
+	sv.entityParsePoint = (const char *) CM_EntityString();
 
 	// use the current msec count for a random seed
 	// init for this gamestate

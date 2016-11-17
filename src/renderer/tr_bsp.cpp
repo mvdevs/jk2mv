@@ -1851,7 +1851,7 @@ void R_LoadEntities( lump_t *l ) {
 	// store for reference by the cgame
 	w->entityString = (char *)ri.Hunk_Alloc( l->filelen + 1, h_low );
 	strcpy( w->entityString, p );
-	w->entityParsePoint = w->entityString;
+	w->entityParsePoint = (const char *) w->entityString;
 
 	token = COM_ParseExt( &p, qtrue );
 	if (!*token || *token != '{') {
@@ -1918,10 +1918,10 @@ R_GetEntityToken
 qboolean R_GetEntityToken( char *buffer, int size ) {
 	const char	*s;
 
-	s = COM_Parse( (const char **) &s_worldData.entityParsePoint );
+	s = COM_Parse( &s_worldData.entityParsePoint );
 	Q_strncpyz( buffer, s, size );
 	if ( !s_worldData.entityParsePoint || !s[0] ) {
-		s_worldData.entityParsePoint = s_worldData.entityString;
+		s_worldData.entityParsePoint = (const char *) s_worldData.entityString;
 		return qfalse;
 	} else {
 		return qtrue;

@@ -858,14 +858,16 @@ int Q_stricmp(const char *s1, const char *s2) {
 	return (s1 && s2) ? Q_stricmpn(s1, s2, 99999) : -1;
 }
 
-char *Q_stristr(char *str, char *charset) {
+char *Q_stristr(const char *str, char *charset) {
 	int i;
 
 	while (*str) {
 		for (i = 0; charset[i] && str[i]; i++) {
 			if (toupper(charset[i]) != toupper(str[i])) break;
 		}
-		if (!charset[i]) return str;
+		if (!charset[i]) {
+			return (char *) str;
+		}
 		str++;
 	}
 	return NULL;

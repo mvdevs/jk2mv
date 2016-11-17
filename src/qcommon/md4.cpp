@@ -122,7 +122,7 @@ void MD4Update (MD4_CTX *context, const unsigned char *input, unsigned int input
 	/* Transform as many times as possible.*/
 	if (inputLen >= partLen)
 	{
-		Com_Memcpy((POINTER)&context->buffer[index], (POINTER)input, partLen);
+		Com_Memcpy(&context->buffer[index], input, partLen);
 		MD4Transform (context->state, context->buffer);
 
 		for (i = partLen; i + 63 < inputLen; i += 64)
@@ -134,7 +134,7 @@ void MD4Update (MD4_CTX *context, const unsigned char *input, unsigned int input
 		i = 0;
 
 	/* Buffer remaining input */
-	Com_Memcpy ((POINTER)&context->buffer[index], (POINTER)&input[i], inputLen-i);
+	Com_Memcpy (&context->buffer[index], &input[i], inputLen-i);
 }
 
 
@@ -266,7 +266,7 @@ unsigned Com_BlockChecksum (const void *buffer, int length)
 	MD4_CTX		ctx;
 
 	MD4Init (&ctx);
-	MD4Update (&ctx, (unsigned char *)buffer, length);
+	MD4Update (&ctx, (const unsigned char *)buffer, length);
 	MD4Final ( (unsigned char *)digest, &ctx);
 
 	val = digest[0] ^ digest[1] ^ digest[2] ^ digest[3];

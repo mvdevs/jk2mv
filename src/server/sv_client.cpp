@@ -189,7 +189,7 @@ void SV_DirectConnect( netadr_t from ) {
 	int			startIndex;
 	char		*denied;
 	int			count;
-	char		*ip;
+	const char	*ip;
 
 	Com_DPrintf ("SVC_DirectConnect ()\n");
 
@@ -226,7 +226,7 @@ void SV_DirectConnect( netadr_t from ) {
 	if ( NET_IsLocalAddress (from) )
 		ip = "localhost";
 	else
-		ip = (char *)NET_AdrToString( from );
+		ip = NET_AdrToString( from );
 
 	if ( !Info_SetValueForKey( userinfo, "ip", ip ) )
 	{
@@ -1125,8 +1125,9 @@ into a more C friendly form.
 =================
 */
 void SV_UserinfoChanged( client_t *cl ) {
-	char	*val, *ip;
-	int		i;
+	const char	*ip;
+	char		*val;
+	int			i;
 
 	// name for C code
 	Q_strncpyz( cl->name, Info_ValueForKey (cl->userinfo, "name"), sizeof(cl->name) );
@@ -1289,7 +1290,7 @@ void SV_UserinfoChanged( client_t *cl ) {
 	if( NET_IsLocalAddress(cl->netchan.remoteAddress) )
 		ip = "localhost";
 	else
-		ip = (char*)NET_AdrToString( cl->netchan.remoteAddress );
+		ip = NET_AdrToString( cl->netchan.remoteAddress );
 
 	if ( !Info_SetValueForKey(cl->userinfo, "ip", ip) )
 		SV_DropClient( cl, "userinfo string length exceeded" );

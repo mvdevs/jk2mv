@@ -1056,7 +1056,7 @@ int Q_isalnum( int c );
 int		Q_stricmp (const char *s1, const char *s2);
 int		Q_strncmp (const char *s1, const char *s2, int n);
 int		Q_stricmpn (const char *s1, const char *s2, int n);
-char	*Q_stristr(char *str, char *charset);
+char	*Q_stristr(const char *str, char *charset);
 char	*Q_strlwr( char *s1 );
 char	*Q_strupr( char *s1 );
 char	*Q_strrchr( const char* string, int c );

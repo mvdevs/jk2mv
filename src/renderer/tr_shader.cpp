@@ -9,7 +9,7 @@
 // unusual thing it does is add the inputed texel offsets to all four texture units (this allows
 // nearest neighbor pixel peeking).
 #ifndef DEDICATED
-const unsigned char g_strGlowVShaderARB[] =
+const char g_strGlowVShaderARB[] =
 {
 	"!!ARBvp1.0\
 	\
@@ -53,7 +53,7 @@ const unsigned char g_strGlowVShaderARB[] =
 
 // This Pixel Shader loads four texture units and adds them all together (with a modifier
 // multiplied to each in the process). The final output is r0 = t0 + t1 + t2 + t3.
-const unsigned char g_strGlowPShaderARB[] =
+const char g_strGlowPShaderARB[] =
 {
 	"!!ARBfp1.0\
 	\
@@ -105,7 +105,7 @@ static	qboolean		deferLoad;
 static	shader_t*		hashTable[FILE_HASH_SIZE];
 
 #define MAX_SHADERTEXT_HASH		2048
-static char **shaderTextHashTable[MAX_SHADERTEXT_HASH];
+static const char **shaderTextHashTable[MAX_SHADERTEXT_HASH];
 
 const int lightmapsNone[MAXLIGHTMAPS] =
 {
@@ -3889,11 +3889,13 @@ static void ScanAndLoadShaderFiles( const char *path )
 {
 	char **shaderFiles[2];
 	char *buffers[MAX_SHADER_FILES];
-	char *p;
+	const char *p;
+	char *pw;
 	int numShaderFiles;
 	int numShaderFilesType[2];
 	int i, j, type;
-	char *oldp, *token, *hashMem;
+	const char *oldp, *token;
+	char *hashMem;
 	int shaderTextHashTableSizes[MAX_SHADERTEXT_HASH], hash, size;
 	int sum;
 
@@ -3942,11 +3944,11 @@ static void ScanAndLoadShaderFiles( const char *path )
 
 	// build single large buffer
 	s_shaderText = (char *)ri.Hunk_Alloc( sum + numShaderFiles + 1, h_low );
-	p = s_shaderText;
+	pw = s_shaderText;
 	for ( i = 0; i < numShaderFiles ; i++ ) {
-		strcat( p, buffers[i] );
-		strcat( p, "\n" );
-		p += strlen( p );
+		strcat( pw, buffers[i] );
+		strcat( pw, "\n" );
+		pw += strlen( pw );
 		ri.FS_FreeFile( (void*) buffers[i] );
 	}
 	assert(strlen(s_shaderText) == sum + numShaderFiles);
@@ -3961,7 +3963,7 @@ static void ScanAndLoadShaderFiles( const char *path )
 
 	while ( 1 ) {
 		// look for label
-		token = COM_ParseExt( (const char **)&p, qtrue );
+		token = COM_ParseExt( &p, qtrue );
 		if ( token[0] == 0 ) {
 			break;
 		}
@@ -3969,7 +3971,7 @@ static void ScanAndLoadShaderFiles( const char *path )
 		hash = generateHashValue(token, MAX_SHADERTEXT_HASH);
 		shaderTextHashTableSizes[hash]++;
 		size++;
-		SkipBracedSection((const char **)&p);
+		SkipBracedSection(&p);
 	}
 
 	size += MAX_SHADERTEXT_HASH;
@@ -3977,7 +3979,7 @@ static void ScanAndLoadShaderFiles( const char *path )
 	hashMem = (char *)ri.Hunk_Alloc( size * sizeof(char *), h_low );
 
 	for (i = 0; i < MAX_SHADERTEXT_HASH; i++) {
-		shaderTextHashTable[i] = (char **) hashMem;
+		shaderTextHashTable[i] = (const char **) hashMem;
 		hashMem = ((char *) hashMem) + ((shaderTextHashTableSizes[i] + 1) * sizeof(char *));
 	}
 
@@ -3987,7 +3989,7 @@ static void ScanAndLoadShaderFiles( const char *path )
 	p = s_shaderText;
 	while ( 1 ) {
 		oldp = p;
-		token = COM_ParseExt( (const char **)&p, qtrue );
+		token = COM_ParseExt( &p, qtrue );
 		if ( token[0] == 0 ) {
 			break;
 		}
@@ -3995,7 +3997,7 @@ static void ScanAndLoadShaderFiles( const char *path )
 		hash = generateHashValue(token, MAX_SHADERTEXT_HASH);
 		shaderTextHashTable[hash][shaderTextHashTableSizes[hash]++] = oldp;
 
-		SkipBracedSection((const char **)&p);
+		SkipBracedSection(&p);
 	}
 }
 
@@ -4091,7 +4093,7 @@ qboolean MV_GammaGenerateProgram() {
 	// vertex shader
 	qglGenProgramsARB(1, &tr.gammaVertexShader);
 	qglBindProgramARB(GL_VERTEX_PROGRAM_ARB, tr.gammaVertexShader);
-	qglProgramStringARB(GL_VERTEX_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, (int)strlen((char *)g_GammaVertexShaderARB), g_GammaVertexShaderARB);
+	qglProgramStringARB(GL_VERTEX_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, (int)strlen(g_GammaVertexShaderARB), g_GammaVertexShaderARB);
 	qglGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &err);
 	if (err != -1) {
 		return qtrue;
@@ -4100,7 +4102,7 @@ qboolean MV_GammaGenerateProgram() {
 	// pixel shader
 	qglGenProgramsARB(1, &tr.gammaPixelShader);
 	qglBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, tr.gammaPixelShader);
-	qglProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, (int)strlen((char *)g_GammaPixelShaderARB), g_GammaPixelShaderARB);
+	qglProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, (int)strlen(g_GammaPixelShaderARB), g_GammaPixelShaderARB);
 	qglGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &err);
 	if (err != -1) {
 		return qtrue;
@@ -4143,7 +4145,7 @@ static void CreateInternalShaders( void ) {
 	{
 		qglGenProgramsARB( 1, &tr.glowVShader );
 		qglBindProgramARB( GL_VERTEX_PROGRAM_ARB, tr.glowVShader );
-		qglProgramStringARB(GL_VERTEX_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, (int)strlen((char *)g_strGlowVShaderARB), g_strGlowVShaderARB);
+		qglProgramStringARB(GL_VERTEX_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, (int)strlen(g_strGlowVShaderARB), g_strGlowVShaderARB);
 
 //		const GLubyte *strErr = qglGetString( GL_PROGRAM_ERROR_STRING_ARB );
 		int iErrPos = 0;
@@ -4207,7 +4209,7 @@ static void CreateInternalShaders( void ) {
 	{
 		qglGenProgramsARB( 1, &tr.glowPShader );
 		qglBindProgramARB( GL_FRAGMENT_PROGRAM_ARB, tr.glowPShader );
-		qglProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, (int)strlen((char *)g_strGlowPShaderARB), g_strGlowPShaderARB);
+		qglProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, (int)strlen(g_strGlowPShaderARB), g_strGlowPShaderARB);
 
 //		const GLubyte *strErr = qglGetString( GL_PROGRAM_ERROR_STRING_ARB );
 		int iErrPos = 0;
