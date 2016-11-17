@@ -930,16 +930,17 @@ void MatrixMultiply(float in1[3][3], float in2[3][3], float out[3][3]) {
 
 void AngleVectors( const vec3_t angles, vec3_t forward, vec3_t right, vec3_t up) {
 	float		angle;
-	static float		sr, sp, sy, cr, cp, cy;
+	float		sr, sp, sy, cr, cp, cy;
+	// static float		sr, sp, sy, cr, cp, cy;
 	// static to help MS compiler fp bugs
 
-	angle = angles[YAW] * (float) (M_PI*2 / 360);
+	angle = DEG2RAD(angles[YAW]);
 	sy = sin(angle);
 	cy = cos(angle);
-	angle = angles[PITCH] * (float) (M_PI*2 / 360);
+	angle = DEG2RAD(angles[PITCH]);
 	sp = sin(angle);
 	cp = cos(angle);
-	angle = angles[ROLL] * (float) (M_PI*2 / 360);
+	angle = DEG2RAD(angles[ROLL]);
 	sr = sin(angle);
 	cr = cos(angle);
 
