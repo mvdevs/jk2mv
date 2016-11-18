@@ -488,19 +488,9 @@ void CL_DemoCompleted( void ) {
 		}
 	}
 
-/*	CL_Disconnect( qtrue );
 	CL_NextDemo();
-	*/
-
-	//rww - The above code seems to just stick you in a no-menu state and you can't do anything there.
-	//I'm not sure why it ever worked in TA, but whatever. This code will bring us back to the main menu
-	//after a demo is finished playing instead.
 	CL_Disconnect_f();
-	MV_SetCurrentGameversion(VERSION_UNDEF); // Set the protocol to undefined after completing the demo.
-	S_StopAllSounds();
-	VM_Call( uivm, UI_SET_ACTIVE_MENU, UIMENU_MAIN );
-
-	CL_NextDemo();
+	// disconnect here does long jump, don't put anything after
 }
 
 /*
