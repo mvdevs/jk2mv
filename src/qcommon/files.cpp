@@ -3992,6 +3992,14 @@ const char *FS_MV_VerifyDownloadPath(const char *pk3file) {
 	return NULL;
 }
 
+static void FS_StripTrailingPathSeparator( char *path ) {
+	size_t len = strlen(path);
+
+	if (len > 0 && path[len - 1] == '/') {
+		path[len - 1] = '\0';
+	}
+}
+
 void FS_FilenameCompletion( const char *dir, const char *ext, qboolean stripExt, callbackFunc_t callback ) { // for auto-complete (copied from OpenJK)
 	int nfiles;
 	const char **filenames;
@@ -4013,10 +4021,13 @@ void FS_FilenameCompletion( const char *dir, const char *ext, qboolean stripExt,
 	// pass all the files to callback (FindMatches)
 	for ( int i=0; i<nfiles; i++ ) {
 		char *converted = FS_ConvertPath( filenames[i] );
-		if ( stripExt )
+
+		if ( stripExt ) {
 			COM_StripExtension( converted, filename, sizeof( filename ) );
-		else
+			FS_StripTrailingPathSeparator( filename );
+		} else {
 			Q_strncpyz( filename, converted, sizeof( filename ) );
+		}
 
 		callback( filename );
 	}

@@ -3062,6 +3062,100 @@ static void FindMatches( const char *s ) {
 	}
 }
 
+#ifndef DEDICATED
+/*
+===============
+FullSkinName
+
+Write full skin name ("model/skin") to dst. model string must begin
+with a model name, optionally followed by a '/'. skinName must be a
+name of a skin, optionally followed by "model_" prefix
+
+ ===============
+*/
+static void FullSkinName( char *dst, size_t dstSize, const char *model, const char *skinName ) {
+	char	*skinSep;
+
+	// copy model name to dst
+	Q_strncpyz(dst, model, dstSize);
+
+	if ((skinSep = strchr(dst, '/'))) {
+		*skinSep = '\0';
+	}
+
+	Q_strcat(dst, dstSize, "/");
+
+	// append skin name so it's "model/skin"
+	if (!Q_stricmpn( skinName, "model_", strlen("model_"))) {
+		skinName += strlen("model_");
+	}
+
+	Q_strcat(dst, dstSize, skinName);
+}
+
+/*
+===============
+FindSkinMatches
+
+===============
+*/
+static void FindSkinMatches( const char *s ) {
+	int			i;
+	char		arg[MAX_TOKEN_CHARS];
+
+	FullSkinName(arg, sizeof(arg), completionString, s);
+
+	if ( Q_stricmpn( arg, completionString, (int)strlen( completionString ) ) ) {
+		return;
+	}
+	matchCount++;
+	if ( matchCount == 1 ) {
+		Q_strncpyz( shortestMatch, arg, sizeof( shortestMatch ) );
+		return;
+	}
+
+	// cut shortestMatch to the amount common with s
+	for ( i = 0 ; arg[i] ; i++ ) {
+		if ( tolower(shortestMatch[i]) != tolower(arg[i]) ) {
+			shortestMatch[i] = 0;
+			break;
+		}
+	}
+	if (!arg[i])
+	{
+		shortestMatch[i] = 0;
+	}
+}
+
+/*
+===============
+PrintSkinMatches
+
+===============
+*/
+static void PrintSkinMatches( const char *s ) {
+	char		arg[MAX_TOKEN_CHARS];
+
+	FullSkinName(arg, sizeof(arg), shortestMatch, s);
+
+	if ( !Q_stricmpn( arg, shortestMatch, (int)strlen( shortestMatch ) ) ) {
+		Com_Printf_Ext(qtrue, S_COMPLETION_COLOR "Skin " S_COLOR_WHITE "%s\n", arg );
+	}
+}
+
+/*
+===============
+PrintModelMatches
+
+===============
+*/
+static void PrintModelMatches( const char *s ) {
+	if (!Q_stricmpn(s, shortestMatch, (int)strlen(shortestMatch))) {
+		Com_Printf_Ext(qtrue, S_COMPLETION_COLOR "Model " S_COLOR_WHITE "%s\n", s);
+	}
+}
+#endif // !DEDICATED
+
 /*
 ===============
 PrintMatches
@@ -3242,6 +3336,41 @@ void Field_CompleteKeyname( void )
 
 	if( !Field_Complete( ) )
 		Key_KeynameCompletion( PrintKeyMatches );
+}
+
+/*
+===============
+Field_CompleteModelName
+===============
+*/
+void Field_CompleteModelname( void )
+{
+	const char *skinSep = strchr(completionString, '/');
+
+	matchCount = 0;
+	shortestMatch[ 0 ] = 0;
+
+	if (!skinSep)
+	{
+		FS_FilenameCompletion( "models/players", "/", qtrue, FindMatches );
+
+		if ( !Field_Complete() )
+			FS_FilenameCompletion( "models/players", "/", qtrue, PrintModelMatches );
+	}
+	else
+	{
+		char	model[MAX_TOKEN_CHARS];
+		char	path[MAX_QPATH];
+		size_t	skinSepOffs = skinSep - completionString;
+
+		Q_strncpyz(model, completionString, MIN(sizeof(model), skinSepOffs + 1));
+		Com_sprintf(path, sizeof(path), "models/players/%s", model);
+
+		FS_FilenameCompletion( path, ".skin", qtrue, FindSkinMatches );
+
+		if ( !Field_Complete() )
+			FS_FilenameCompletion( path, ".skin", qtrue, PrintSkinMatches );
+	}
 }
 #endif
 

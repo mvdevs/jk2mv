@@ -1201,6 +1201,17 @@ static void CL_CompleteDemoName( char *args, int argNum )
 }
 
 /*
+==================
+CL_CompleteModelName
+==================
+*/
+static void CL_CompleteModelName( char *args, int argNum )
+{
+	if( argNum == 2 )
+		Field_CompleteModelname();
+}
+
+/*
 =================
 CL_SendPureChecksums
 =================
@@ -2874,6 +2885,7 @@ void CL_Init( void ) {
 	Cmd_AddCommand ("fs_openedList", CL_OpenedPK3List_f );
 	Cmd_AddCommand ("fs_referencedList", CL_ReferencedPK3List_f );
 	Cmd_AddCommand ("model", CL_SetModel_f );
+	Cmd_SetCommandCompletionFunc( "model", CL_CompleteModelName );
 	Cmd_AddCommand ("forcepowers", CL_SetForcePowers_f );
 	Cmd_AddCommand ("saveDemo", demoAutoSave_f);
 	Cmd_AddCommand ("saveDemoLast", demoAutoSaveLast_f);
