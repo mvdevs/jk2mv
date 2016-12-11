@@ -754,7 +754,7 @@ typedef struct
 
 static inline zoneTail_t *ZoneTailFromHeader(zoneHeader_t *pHeader)
 {
-  return (zoneTail_t*) ((char*)(pHeader + 1) + PAD(pHeader->iSize, Q_ALIGNOF(zoneTail_t)));
+  return (zoneTail_t*) ((char*)(pHeader + 1) + PAD(pHeader->iSize, alignof(zoneTail_t)));
 }
 
 #ifdef DETAILED_ZONE_DEBUG_CODE
@@ -873,7 +873,7 @@ void *Z_Malloc(int iSize, memtag_t eTag, qboolean bZeroit /* = qfalse */)
 		return &pMemory[1];
 	}
 
-	int iRealSize = sizeof(zoneHeader_t) + PAD(iSize, Q_ALIGNOF(zoneTail_t)) + sizeof(zoneTail_t);
+	int iRealSize = sizeof(zoneHeader_t) + PAD(iSize, alignof(zoneTail_t)) + sizeof(zoneTail_t);
 
 	// Allocate a chunk...
 	//
