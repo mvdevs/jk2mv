@@ -513,6 +513,14 @@ if (BuildMVMP)
 		"$<TARGET_FILE_DIR:${MVMP}>/base/assetsmv.pk3"
 	)
 	
+	# add DPI awareness manifest
+	if(MSVC)
+		add_custom_command(TARGET ${MVMP} POST_BUILD
+			COMMAND "mt.exe" -manifest \"${CMAKE_CURRENT_SOURCE_DIR}\\win32\\dpi_scaling.manifest\" -inputresource:\"$<TARGET_FILE:${MVMP}>\"\;\#1 -outputresource:\"$<TARGET_FILE:${MVMP}>\"\;\#1
+			COMMENT "Adding manifest..." 
+		)
+	endif()
+	
 	set_target_properties(${MVMP} PROPERTIES COMPILE_DEFINITIONS_RELEASE "${ReleaseDefines};${GlobalDefines}")
 	set_target_properties(${MVMP} PROPERTIES COMPILE_DEFINITIONS_DEBUG "${DebugDefines};${GlobalDefines}")
 	set_target_properties(${MVMP} PROPERTIES INCLUDE_DIRECTORIES "${MVMPIncludeDirs}")
