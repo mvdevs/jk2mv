@@ -26,11 +26,11 @@ Main Features:
 
 1. Get CMake from either https://cmake.org or, in case of Linux, from the repositories of your distribution.
 2. Dependencies
-  * Windows: Requires at least Visual Studio 2010, required libraries are shipped with JK2MV in the `libs` directory.
+  * Windows: Requires at least Visual Studio 2013, required libraries are shipped with JK2MV in the `libs` directory.
     * If you plan to build the installer package get NSIS from http://nsis.sourceforge.net
   * Linux: OpenGL, OpenAL, SDL2 and depending on your configuration libjpeg, libpng, libminizip, zlib.
     * Ubuntu/Debian: `apt-get install git debhelper devscripts libsdl2-dev libgl1-mesa-dev libopenal-dev libjpeg8-dev libpng12-dev zlib1g-dev libminizip-dev`
-	* Fedora: `dnf install git SDL2-devel mesa-libGL-devel openal-soft-devel libjpeg-turbo-devel libpng-devel zlib-devel minizip-devel
+	* Fedora: `dnf install git SDL2-devel mesa-libGL-devel openal-soft-devel libjpeg-turbo-devel libpng-devel zlib-devel minizip-devel`
   * MacOSX: XCode on MacOSX >= 10.6
     * Configure / Build SDL2:
       1. `curl -O https://www.libsdl.org/release/SDL2-2.0.4.tar.gz`
