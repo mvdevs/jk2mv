@@ -34,9 +34,9 @@ install: |
       sudo aptitude install -y cmake curl rpm debhelper devscripts libsdl2-dev libgl1-mesa-dev libopenal-dev
   else
       cd ~
-      curl -O https://www.libsdl.org/release/SDL2-2.0.4.tar.gz
-      tar xzf SDL2-2.0.4.tar.gz
-      cd SDL2-2.0.4/Xcode/SDL
+      curl -O https://www.libsdl.org/release/SDL2-2.0.5.tar.gz
+      tar xzf SDL2-2.0.5.tar.gz
+      cd SDL2-2.0.5/Xcode/SDL
       sed -i -e 's/@rpath//g' SDL.xcodeproj/project.pbxproj
       xcodebuild -configuration Release
       mkdir -p ~/Library/Frameworks/
