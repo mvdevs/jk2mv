@@ -254,7 +254,8 @@ void Con_CheckResize (void)
 	}
 	else
 	{
-		float	scale = (con_scale && con_scale->value > 0.0f) ? con_scale->value : 1.0f;
+		float	scale = cls.glconfig.displayDPI / 96.0f; 
+		scale *= (con_scale && con_scale->value > 0.0f) ? con_scale->value : 1.0f;
 		int		charWidth = scale * SMALLCHAR_WIDTH;
 
 		width = (cls.glconfig.vidWidth / charWidth) - 2;

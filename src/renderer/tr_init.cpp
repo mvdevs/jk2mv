@@ -1100,6 +1100,8 @@ void GfxInfo_f( void )
 		ri.Printf( PRINT_ALL, "N/A\n" );
 	}
 
+	ri.Printf(PRINT_ALL, "Display DPI: %f\n", glConfig.displayDPI);
+
 	// gamma correction
 	if (r_gammamethod->integer == GAMMA_POSTPROCESSING) {
 		ri.Printf(PRINT_ALL, "gamma method: postprocessing\n");
