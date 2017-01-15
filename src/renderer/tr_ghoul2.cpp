@@ -2181,7 +2181,77 @@ void RB_SurfaceGhoul( CRenderableSurface *surf ) {
 	const mdxmVertexTexCoord_t *pTexCoords = (const mdxmVertexTexCoord_t *) &v[numVerts];
 
 	int baseVert = tess.numVertexes;
-	for ( j = 0; j < numVerts; j++, baseVert++ )
+
+#if id386 || idx64
+	// SSE2 version
+    __m128 bones[32][4];
+
+	// precache referenced bones
+	assert( surface->numBoneReferences <= 32 );
+    for ( j = 0; j < surface->numBoneReferences; j++ )
+    {
+		const mdxaBone_t &bone = bonePtr[piBoneRefs[j]].second;
+
+		bones[j][0] = _mm_loadu_ps( bone.matrix[0] );
+		bones[j][1] = _mm_loadu_ps( bone.matrix[1] );
+		bones[j][2] = _mm_loadu_ps( bone.matrix[2] );
+		bones[j][3] = _mm_setzero_ps();
+
+		// use transposed bone matrix for faster calculations
+		_MM_TRANSPOSE4_PS( bones[j][0], bones[j][1], bones[j][2], bones[j][3] );
+    }
+
+	for ( j = 0; j < numVerts; j++, baseVert++, v++ )
+	{
+		const int iNumWeights = G2_GetVertWeights( v );
+
+		__m128 matrix[4] = {
+			_mm_setzero_ps(),
+			_mm_setzero_ps(),
+			_mm_setzero_ps(),
+			_mm_setzero_ps()
+		};
+
+		// calculate weighted bone matrix
+		float fTotalWeight = 0.0f;
+		for ( k = 0 ; k < iNumWeights ; k++ )
+		{
+			int		iBoneIndex	= G2_GetVertBoneIndex( v, k );
+			float	fBoneWeight	= G2_GetVertBoneWeight( v, k, fTotalWeight, iNumWeights );
+			__m128	weight = _mm_set_ps1( fBoneWeight );
+
+			matrix[0] = _mm_add_ps( matrix[0], _mm_mul_ps( weight, bones[iBoneIndex][0] ) );
+			matrix[1] = _mm_add_ps( matrix[1], _mm_mul_ps( weight, bones[iBoneIndex][1] ) );
+			matrix[2] = _mm_add_ps( matrix[2], _mm_mul_ps( weight, bones[iBoneIndex][2] ) );
+			matrix[3] = _mm_add_ps( matrix[3], _mm_mul_ps( weight, bones[iBoneIndex][3] ) );
+		}
+
+		{
+			__m128 xyz[4] = {
+				_mm_mul_ps( matrix[0], _mm_set_ps1( v->vertCoords[0] ) ),
+				_mm_mul_ps( matrix[1], _mm_set_ps1( v->vertCoords[1] ) ),
+				_mm_mul_ps( matrix[2], _mm_set_ps1( v->vertCoords[2] ) ),
+				matrix[3] // matrix[3] * 1 - translation
+			};
+
+			__m128 result = _mm_add_ps( _mm_add_ps( xyz[0], xyz[1] ), _mm_add_ps( xyz[2], xyz[3] ) );
+			_mm_store_ps( tess.xyz[baseVert], result ); // [3] = 0
+		}
+
+		{
+			__m128 norm[3] = {
+				_mm_mul_ps( matrix[0], _mm_set_ps1( v->normal[0] ) ),
+				_mm_mul_ps( matrix[1], _mm_set_ps1( v->normal[1] ) ),
+				_mm_mul_ps( matrix[2], _mm_set_ps1( v->normal[2] ) ),
+				// no translation
+			};
+
+			__m128 result = _mm_add_ps( _mm_add_ps( norm[0], norm[1] ), norm[2] );
+			_mm_store_ps( tess.normal[baseVert], result );
+		}
+	}
+#else // id386 || idx64
+	for ( j = 0; j < numVerts; j++, baseVert++, v++ )
 	{
 		const int iNumWeights = G2_GetVertWeights( v );
 //		const mdxmWeight_t	*w = v->weights;
@@ -2204,11 +2274,15 @@ void RB_SurfaceGhoul( CRenderableSurface *surf ) {
 			tess.normal[baseVert][1] += fBoneWeight * DotProduct( bone.matrix[1], v->normal );
 			tess.normal[baseVert][2] += fBoneWeight * DotProduct( bone.matrix[2], v->normal );
 		}
+	}
+#endif // id386 || idx64
 
+	// separate loop to not pollute cache
+	baseVert = tess.numVertexes;
+	for ( j = 0; j < numVerts; j++, baseVert++ )
+	{
 		tess.texCoords[baseVert][0][0] = pTexCoords[j].texCoords[0];
 		tess.texCoords[baseVert][0][1] = pTexCoords[j].texCoords[1];
-
-		v++;// = (mdxmVertex_t *)&v->weights[/*v->numWeights*/surface->maxVertBoneWeights];
 	}
 
 	tess.numVertexes += surface->numVerts;

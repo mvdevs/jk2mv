@@ -1495,8 +1495,8 @@ typedef struct stageVars
 struct shaderCommands_s
 {
 	glIndex_t	indexes[SHADER_MAX_INDEXES];
-	vec4_t		xyz[SHADER_MAX_VERTEXES];
-	vec4_t		normal[SHADER_MAX_VERTEXES];
+	alignas(16) vec4_t		xyz[SHADER_MAX_VERTEXES];
+	alignas(16) vec4_t		normal[SHADER_MAX_VERTEXES];
 	vec2_t		texCoords[SHADER_MAX_VERTEXES][NUM_TEX_COORDS];
 	union {
 		color4ub_t	vertexColors[SHADER_MAX_VERTEXES];

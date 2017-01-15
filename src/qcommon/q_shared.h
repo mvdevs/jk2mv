@@ -76,6 +76,11 @@
 #define idppc	0
 #endif
 
+// Enable SSE
+#if id386 || idx64
+#include <emmintrin.h>
+#endif
+
 // for windows fastcall option
 
 #define	QDECL
@@ -93,6 +98,10 @@ float	FloatSwap (const float *f);
 #ifndef __alignof_is_defined
 #define alignof(x) __alignof(x)
 #define __alignof_is_defined 1
+#endif
+#ifndef __alignas_is_defined
+#define alignas(x) __declspec(align(x))
+#define __alignas_is_defined 1
 #endif
 #define Q_MAX_ALIGN std::max_align_t
 #elif defined __GNUC__ && !defined __clang__
