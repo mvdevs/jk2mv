@@ -544,7 +544,7 @@ void R_SetupFrustum (void) {
 	VectorScale( tr.viewParms.ori.axis[0], xs, tr.viewParms.frustum[1].normal );
 	VectorMA( tr.viewParms.frustum[1].normal, -xc, tr.viewParms.ori.axis[1], tr.viewParms.frustum[1].normal );
 
-	ang = tr.viewParms.fovY / 180 * M_PI * 0.5f;
+	ang = DEG2RAD( tr.viewParms.fovY * 0.5f );
 	xs = sinf( ang );
 	xc = cosf( ang );
 
