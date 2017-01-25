@@ -397,7 +397,7 @@ static void GLimp_InitExtensions(void) {
 		qglGetFloatv( GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &glConfig.textureFilterAnisotropicMax );
 		Com_Printf ("...GL_EXT_texture_filter_anisotropic available\n" );
 
-		if ( r_ext_texture_filter_anisotropic->value > 0.0f )
+		if ( r_ext_texture_filter_anisotropic->value > 1.0f )
 		{
 			Com_Printf ("...using GL_EXT_texture_filter_anisotropic\n" );
 		}
@@ -1146,9 +1146,9 @@ void GfxInfo_f( void )
 	ri.Printf( PRINT_ALL, "compressed textures: %s\n", enablestrings[glConfig.textureCompression != TC_NONE] );
 	ri.Printf( PRINT_ALL, "compressed lightmaps: %s\n", enablestrings[(r_ext_compressed_lightmaps->integer != 0 && glConfig.textureCompression != TC_NONE)] );
 	ri.Printf( PRINT_ALL, "texture compression method: %s\n", tc_table[glConfig.textureCompression] );
-	if (glConfig.textureFilterAnisotropicMax > 1.0f && r_ext_texture_filter_anisotropic->value > 0.0f) {
+	if (glConfig.textureFilterAnisotropicMax >= 2.0f && r_ext_texture_filter_anisotropic->value > 1.0f) {
 		float aniso = r_ext_texture_filter_anisotropic->value;
-		aniso = Com_Clamp(2.0f, glConfig.textureFilterAnisotropicMax, aniso);
+		aniso = Com_Clamp(1.0f, glConfig.textureFilterAnisotropicMax, aniso);
 		ri.Printf( PRINT_ALL, "anisotropic filtering: %s (level: %.1f)\n", enablestrings[1], aniso );
 	} else {
 		ri.Printf( PRINT_ALL, "anisotropic filtering: %s\n", enablestrings[0] );

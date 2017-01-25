@@ -117,7 +117,7 @@ void GL_TextureMode( const char *string ) {
 		if ( !glt->upload.noMipMaps ) {
 			if(glConfig.textureFilterAnisotropicMax >= 2.0f) {
 				float aniso = r_ext_texture_filter_anisotropic->value;
-				aniso = Com_Clamp(2.0f, glConfig.textureFilterAnisotropicMax, aniso);
+				aniso = Com_Clamp(1.0f, glConfig.textureFilterAnisotropicMax, aniso);
 				qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, aniso);
 			}
 		}
@@ -739,7 +739,7 @@ static void Upload32( byte * const *mipmaps, qboolean customMip, image_t *image,
 	if (!upload->noMipMaps) {
 		if(glConfig.textureFilterAnisotropicMax >= 2.0f) {
 			float aniso = r_ext_texture_filter_anisotropic->value;
-			aniso = Com_Clamp(2.0f, glConfig.textureFilterAnisotropicMax, aniso);
+			aniso = Com_Clamp(1.0f, glConfig.textureFilterAnisotropicMax, aniso);
 			qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, aniso);
 		}
 	}
