@@ -1061,7 +1061,8 @@ intptr_t CL_UISystemCalls(intptr_t *args) {
 		return 0;
 
 	case UI_STRNCPY:
-		return strncpy( (char *)VMA(1), (const char *)VMA(2), args[3] ) ? 1:0;
+		strncpy( (char *)VMA(1), (const char *)VMA(2), args[3] );
+		return args[1];
 
 	case UI_SIN:
 		return FloatAsInt( sinf( VMF(1) ) );

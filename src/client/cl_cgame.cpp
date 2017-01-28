@@ -891,7 +891,8 @@ intptr_t CL_CgameSystemCalls(intptr_t *args) {
 		Com_Memcpy( VMA(1), VMA(2), args[3] );
 		return 0;
 	case CGAME_STRNCPY:
-		return strncpy( (char *)VMA(1), (const char *)VMA(2), args[3] ) ? 1:0;
+		strncpy( (char *)VMA(1), (const char *)VMA(2), args[3] );
+		return args[1];
 	case CGAME_SIN:
 		return FloatAsInt( sinf( VMF(1) ) );
 	case CGAME_COS:

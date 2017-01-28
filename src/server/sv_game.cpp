@@ -908,7 +908,8 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 		return 0;
 
 	case TRAP_STRNCPY:
-		return (intptr_t)strncpy( (char *)VMA(1), (const char *)VMA(2), args[3] );
+		strncpy( (char *)VMA(1), (const char *)VMA(2), args[3] );
+		return args[1];
 
 	case TRAP_SIN:
 		return FloatAsInt( sinf( VMF(1) ) );
