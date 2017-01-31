@@ -194,7 +194,7 @@ static int SDL_RectCmp( SDL_Rect *r1, SDL_Rect *r2 )
 	return r1->w != r2->w || r1->h != r2->h || r1->x != r2->x || r1->y != r2->y;
 }
 
-static void GLimp_SaveWindowPosition( void )
+void GLimp_SaveWindowPosition( void )
 {
 	char			oldString[MAX_CVAR_VALUE_STRING];
 	char			newString[MAX_CVAR_VALUE_STRING];
@@ -249,22 +249,22 @@ static void GLimp_SaveWindowPosition( void )
 	Cvar_Set( "r_savedWindows", newString );
 }
 
-static int GLimp_GetSavedWindowPosition( int *xpos, int *ypos )
+static qboolean GLimp_GetSavedWindowPosition( int *dsp, int *xpos, int *ypos )
 {
 	savedWindow_t	saved;
+	qboolean		found = qfalse;
 	char			buf[MAX_CVAR_VALUE_STRING];
 	char			*token;
-	int				display = 0;
 	int				numDisplays = SDL_GetNumVideoDisplays();
-	int				x = SDL_WINDOWPOS_UNDEFINED;
-	int				y = SDL_WINDOWPOS_UNDEFINED;
+	int				display = numDisplays;
+	int				x, y;
 
 	// find latest window position token matching existing display
 	Q_strncpyz( buf, r_savedWindows->string, sizeof( buf ) );
 
 	token = strtok( buf, " " );
 
-	while ( token ) {
+	while ( token && !found ) {
 		if ( GLimp_DeserializeWindowPosition( &saved, token ) ) {
 			// use saved token if the same display is present
 			for ( display = 0; display < numDisplays; display++ ) {
@@ -276,26 +276,22 @@ static int GLimp_GetSavedWindowPosition( int *xpos, int *ypos )
 				if ( !SDL_RectCmp( &saved.display, &rect ) ) {
 					x = saved.xpos + saved.display.x;
 					y = saved.ypos + saved.display.y;
+					found = qtrue;
 					break;
 				}
 			}
-
-			// found token we can use
-			if ( display < numDisplays )
-				break;
 		}
-
 
 		token = strtok( NULL, " " );
 	}
 
-	if ( display == numDisplays )
-		display = 0;
+	if ( found ) {
+		*dsp = display;
+		*xpos = x;
+		*ypos = y;
+	}
 
-	*xpos = x;
-	*ypos = y;
-
-	return display;
+	return found;
 }
 
 /*
@@ -352,9 +348,27 @@ void WIN_Present( window_t *window )
 
 			// SDL_WM_ToggleFullScreen didn't work, so do it the slow way
 			if ( !sdlToggled )
+			{
 				Cbuf_AddText( "vid_restart\n" );
+			}
+			else if ( !fullscreen )
+			{
+				int x, y;
+				int display = 0;
+				qboolean setpos = GLimp_GetSavedWindowPosition( &display, &x, &y );
 
-			IN_Restart();
+				if ( r_centerWindow->integer )
+				{
+					x = SDL_WINDOWPOS_CENTERED_DISPLAY( display );
+					y = SDL_WINDOWPOS_CENTERED_DISPLAY( display );
+					setpos = qtrue;
+				}
+
+				if ( setpos )
+					SDL_SetWindowPosition( screen, x, y );
+
+				IN_Restart();
+			}
 		}
 
 		r_fullscreen->modified = qfalse;
@@ -576,8 +590,8 @@ static rserr_t GLimp_SetMode(glconfig_t *glConfig, const windowDesc_t *windowDes
 		SDL_DestroyWindow( screen );
 		screen = NULL;
 	} else {
-		display = GLimp_GetSavedWindowPosition( &x, &y );
-		Com_DPrintf( "Found saved window at %dx%d display %d\n", x, y, display );
+		if ( GLimp_GetSavedWindowPosition( &display, &x, &y ) )
+			Com_DPrintf( "Found saved window at %dx%d display %d\n", x, y, display );
 	}
 
 	if ( r_centerWindow->integer )
@@ -1011,8 +1025,6 @@ void WIN_Shutdown( void )
 {
 	Cmd_RemoveCommand("modelist");
 	Cmd_RemoveCommand("minimize");
-
-	GLimp_SaveWindowPosition();
 
 	IN_Shutdown();
 

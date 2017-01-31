@@ -23,6 +23,8 @@ static SDL_Window *SDL_window = NULL;
 
 #define CTRL(a) ((a)-'a'+1)
 
+extern void GLimp_SaveWindowPosition( void );
+
 /*
 ===============
 IN_PrintKey
@@ -804,6 +806,14 @@ static void IN_ProcessEvents( void )
 			case SDL_WINDOWEVENT:
 				switch( e.window.event )
 				{
+					case SDL_WINDOWEVENT_MOVED:
+					case SDL_WINDOWEVENT_SIZE_CHANGED:
+					{
+						if ( !(SDL_GetWindowFlags( SDL_window ) & SDL_WINDOW_FULLSCREEN) )
+							GLimp_SaveWindowPosition();
+						break;
+					}
+
 					case SDL_WINDOWEVENT_MINIMIZED:    Cvar_SetValue( "com_minimized", 1 ); break;
 					case SDL_WINDOWEVENT_RESTORED:
 					case SDL_WINDOWEVENT_MAXIMIZED:    Cvar_SetValue( "com_minimized", 0 ); break;
