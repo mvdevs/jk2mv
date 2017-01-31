@@ -203,12 +203,9 @@ void GLimp_SaveWindowPosition( void )
 	int				i;
 	savedWindow_t	saved;
 	savedWindow_t	newSaved;
-	int				x, y;
 
 	if ( !screen )
 		return;
-
-	SDL_GetWindowPosition( screen, &x, &y );
 
 	// display containing window's center
 	display = SDL_GetWindowDisplayIndex( screen );
@@ -220,8 +217,22 @@ void GLimp_SaveWindowPosition( void )
 		return;
 
 	SDL_GetWindowPosition( screen, &newSaved.xpos, &newSaved.ypos );
-	newSaved.xpos = newSaved.xpos - newSaved.display.x;
-	newSaved.ypos = newSaved.ypos - newSaved.display.y;
+
+	// workaround for x11 decorations shifting new window down
+#if SDL_VERSION_ATLEAST(2, 0, 5)
+	// SDL_GetWindowBordersSize segfaults on macOS
+	if ( !strcmp( SDL_GetCurrentVideoDriver(), "x11" ) ) {
+		int				top, left;
+
+		if ( SDL_GetWindowBordersSize( screen, &top, &left, NULL, NULL ) == 0 ) {
+			newSaved.ypos -= top;
+			newSaved.xpos -= left;
+		}
+	}
+#endif
+
+	newSaved.xpos -= newSaved.display.x;
+	newSaved.ypos -= newSaved.display.y;
 
 	Q_strncpyz( oldString, r_savedWindows->string, sizeof( oldString ) );
 
