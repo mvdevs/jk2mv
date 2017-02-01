@@ -13,7 +13,6 @@
 #ifdef WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-#define SDL_MAIN_HANDLED
 #endif
 #include "SDL.h"
 #endif
@@ -218,19 +217,9 @@ void Sys_SigHandler(int signal) {
 		Sys_Exit(2);
 }
 
-#if defined(_MSC_VER) && !defined(DEDICATED)
-#define argv __argv
-#define argc __argc
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd) {
-#else
 int main(int argc, char* argv[]) {
-#endif
 	int		i;
 	char	commandLine[MAX_STRING_CHARS] = { 0 };
-
-#if !defined(DEDICATED) && defined(WIN32)
-	SDL_SetMainReady();
-#endif
 
 	Sys_PlatformInit();
 

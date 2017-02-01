@@ -309,17 +309,15 @@ if (BuildMVMP)
 		set(MVMPLibraries ${MVMPLibraries} ${OPENAL_LIBRARY})
 	endif()
 	
+	# SDL2
 	if(UseInternalSDL2)
-		# SDL2
-		find_library(SDL2Lib NAMES "SDL2_${Architecture}" PATHS "${LIBDir}/SDL2")
-		if(NOT SDL2Lib)
-			message(FATAL_ERROR "SDL2 library not found!")
-		endif()
+		set(MVMPLibraries ${MVMPLibraries}
+			${LIBDir}/SDL2/lib/${Architecture}/SDL2main.lib
+			${LIBDir}/SDL2/lib/${Architecture}/SDL2.lib
+		)
 		
-		set(MVMPLibraries ${MVMPLibraries} ${SDL2Lib})
 		set(MVMPIncludeDirs ${MVMPIncludeDirs} "${LIBDir}/SDL2/include")
 	else()
-		# SDL2
 		find_package(SDL2)
 		if(NOT SDL2_FOUND)
 			message(FATAL_ERROR "libsdl2 dev files not found!")
@@ -501,7 +499,7 @@ if (BuildMVMP)
 		
 		add_custom_command(TARGET ${MVMP} POST_BUILD
 			COMMAND ${CMAKE_COMMAND} -E copy_if_different
-			"${LIBDir}/SDL2/SDL2_${Architecture}.dll"
+			"${LIBDir}/SDL2/bin/${Architecture}/SDL2.dll"
 			$<TARGET_FILE_DIR:${MVMP}>
 		)
 	endif()
