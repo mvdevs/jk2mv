@@ -161,12 +161,11 @@ float	LittleFloat (const float *l) {return _LittleFloat(l);}
 */
 
 short   ShortSwap(short l) {
-	byte	b1, b2;
+	unsigned short us = *(unsigned short *)&l;
 
-	b1 = l & 255;
-	b2 = (l >> 8) & 255;
-
-	return (b1 << 8) + b2;
+	return
+		((us & 0x00FFu) << 8u) |
+		((us & 0xFF00u) >> 8u);
 }
 
 short	ShortNoSwap(short l) {
@@ -174,14 +173,14 @@ short	ShortNoSwap(short l) {
 }
 
 int	LongSwap(int l) {
-	byte	b1, b2, b3, b4;
+	unsigned int ui = *(unsigned int *)&l;
 
-	b1 = l & 255;
-	b2 = (l >> 8) & 255;
-	b3 = (l >> 16) & 255;
-	b4 = (l >> 24) & 255;
+  return
+    ((ui & 0x000000FFu) << 24u) |
+    ((ui & 0x0000FF00u) <<  8u) |
+    ((ui & 0x00FF0000u) >>  8u) |
+    ((ui & 0xFF000000u) >> 24u);
 
-	return ((int)b1 << 24) + ((int)b2 << 16) + ((int)b3 << 8) + b4;
 }
 
 int	LongNoSwap(int l) {
