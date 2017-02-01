@@ -739,7 +739,7 @@ void CL_ParseServerMessage( msg_t *msg ) {
 	// other commands
 		switch ( cmd ) {
 		default:
-			Com_Error (ERR_DROP,"CL_ParseServerMessage: Illegible server message\n");
+			Com_Error (ERR_DROP,"CL_ParseServerMessage: Illegible server message");
 			break;
 		case svc_nop:
 			break;

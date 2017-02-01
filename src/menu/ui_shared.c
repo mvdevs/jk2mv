@@ -130,7 +130,7 @@ void *UI_Alloc( size_t size ) {
 
 	if ( allocPoint + size > MEM_POOL_SIZE ) {
 		outOfMemory = qtrue;
-		DC->Error( ERR_DROP, "UI_Alloc: Failure. Out of memory!\n");
+		DC->Error( ERR_DROP, "UI_Alloc: Failure. Out of memory!");
 	}
 
 	p = &memoryPool[allocPoint];

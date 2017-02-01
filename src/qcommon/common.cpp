@@ -964,7 +964,7 @@ void *Z_Malloc(int iSize, memtag_t eTag, qboolean bZeroit /* = qfalse */)
 
 			Com_Printf(S_COLOR_RED"Z_Malloc(): Failed to alloc %d bytes (TAG_%s) !!!!!\n", iSize, psTagStrings[eTag]);
 			Z_Details_f();
-			Com_Error(ERR_FATAL,"(Repeat): Z_Malloc(): Failed to alloc %d bytes (TAG_%s) !!!!!\n", iSize, psTagStrings[eTag]);
+			Com_Error(ERR_FATAL,"(Repeat): Z_Malloc(): Failed to alloc %d bytes (TAG_%s) !!!!!", iSize, psTagStrings[eTag]);
 			return NULL;
 		}
 	}
@@ -1972,7 +1972,7 @@ void Hunk_Trash( void ) {
 		return;
 
 #ifdef _DEBUG
-	Com_Error(ERR_DROP, "hunk trashed\n");
+	Com_Error(ERR_DROP, "hunk trashed");
 	return;
 #endif
 

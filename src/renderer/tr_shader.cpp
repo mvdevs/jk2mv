@@ -505,7 +505,7 @@ static void ParseTexMod( const char *_text, shaderStage_t *stage )
 	texModInfo_t *tmi;
 
 	if ( stage->bundle[0].numTexMods == TR_MAX_TEXMODS ) {
-		ri.Error( ERR_DROP, "ERROR: too many tcMod stages in shader '%s'\n", shader.name );
+		ri.Error( ERR_DROP, "ERROR: too many tcMod stages in shader '%s'", shader.name );
 		return;
 	}
 
@@ -2403,7 +2403,7 @@ Ghoul2 Insert Start
 				// sanity check
 				if (hitMatCount == MAX_HITMAT_ENTRIES)
 				{
-					ri.Error(ERR_DROP, "Not enough entry space for hit location file %s\n", token);
+					ri.Error(ERR_DROP, "Not enough entry space for hit location file %s", token);
 				}
 				// find us a new spot in the material list - and make sure we avoid the 0 spot in the list
 				hitMatCount++;
@@ -2454,7 +2454,7 @@ Ghoul2 Insert Start
 				// sanity check
 				if (hitMatCount == MAX_HITMAT_ENTRIES)
 				{
-					ri.Error(ERR_DROP, "Not enough entry space for hit Material file %s\n", token);
+					ri.Error(ERR_DROP, "Not enough entry space for hit Material file %s", token);
 				}
 				// find us a new spot in the material list - and make sure we avoid the 0 spot in the list
 				hitMatCount++;
@@ -3921,7 +3921,7 @@ static void ScanAndLoadShaderFiles( const char *path )
 	numShaderFiles = numShaderFilesType[0] + numShaderFilesType[1];
 
 	if (numShaderFiles == 0) {
-			ri.Error( ERR_FATAL, "ERROR: no shader files found\n" );
+			ri.Error( ERR_FATAL, "ERROR: no shader files found" );
 	}
 
 	assert(numShaderFilesType[0] > 0 || numShaderFilesType[1] > 0);

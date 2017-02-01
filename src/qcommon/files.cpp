@@ -537,7 +537,7 @@ qboolean FS_CopyFile( char *fromOSPath, char *toOSPath, char *newOSPath, const i
 	// probably won't work on a mac... Its only for developers anyway...
 	buf = (byte *)Z_Malloc( len, TAG_FILESYS, qfalse );
 	if (fread( buf, 1, len, f ) != len)
-		Com_Error( ERR_FATAL, "Short read in FS_Copyfiles()\n" );
+		Com_Error( ERR_FATAL, "Short read in FS_Copyfiles()" );
 	fclose( f );
 
 	if( FS_CreatePath( toOSPath ) ) {
@@ -604,7 +604,7 @@ qboolean FS_CopyFile( char *fromOSPath, char *toOSPath, char *newOSPath, const i
 		return qfalse;
 	}
 	if (fwrite( buf, 1, len, f ) != len)
-		Com_Error( ERR_FATAL, "Short write in FS_Copyfiles()\n" );
+		Com_Error( ERR_FATAL, "Short write in FS_Copyfiles()" );
 	fclose( f );
 	Z_Free( buf );
 	return qtrue;
@@ -760,7 +760,7 @@ fileHandle_t FS_SV_FOpenFileWrite( const char *filename ) {
 	fileHandle_t	f;
 
 	if ( !fs_searchpaths ) {
-		Com_Error( ERR_FATAL, "Filesystem call made without initialization\n" );
+		Com_Error( ERR_FATAL, "Filesystem call made without initialization" );
 	}
 
 	ospath = FS_BuildOSPath( fs_homepath->string, filename, "" );
@@ -801,7 +801,7 @@ int FS_SV_FOpenFileRead( const char *filename, fileHandle_t *fp ) {
 	fileHandle_t	f = 0; // bk001129 - from cvs1.17
 
 	if ( !fs_searchpaths ) {
-		Com_Error( ERR_FATAL, "Filesystem call made without initialization\n" );
+		Com_Error( ERR_FATAL, "Filesystem call made without initialization" );
 	}
 
 	f = FS_HandleForFile();
@@ -864,7 +864,7 @@ void FS_SV_Rename( const char *from, const char *to ) {
 	char			*from_ospath, *to_ospath;
 
 	if ( !fs_searchpaths ) {
-		Com_Error( ERR_FATAL, "Filesystem call made without initialization\n" );
+		Com_Error( ERR_FATAL, "Filesystem call made without initialization" );
 	}
 
 	// don't let sound stutter
@@ -898,7 +898,7 @@ void FS_Rename( const char *from, const char *to ) {
 	char			*from_ospath, *to_ospath;
 
 	if ( !fs_searchpaths ) {
-		Com_Error( ERR_FATAL, "Filesystem call made without initialization\n" );
+		Com_Error( ERR_FATAL, "Filesystem call made without initialization" );
 	}
 
 	// don't let sound stutter
@@ -930,7 +930,7 @@ on files returned by FS_FOpenFile...
 */
 void FS_FCloseFile( fileHandle_t f ) {
 	if ( !fs_searchpaths ) {
-		Com_Error( ERR_FATAL, "Filesystem call made without initialization\n" );
+		Com_Error( ERR_FATAL, "Filesystem call made without initialization" );
 	}
 
 	if (fsh[f].zipFile == qtrue) {
@@ -960,7 +960,7 @@ fileHandle_t FS_FOpenFileWrite( const char *filename ) {
 	fileHandle_t	f;
 
 	if ( !fs_searchpaths ) {
-		Com_Error( ERR_FATAL, "Filesystem call made without initialization\n" );
+		Com_Error( ERR_FATAL, "Filesystem call made without initialization" );
 	}
 
 	f = FS_HandleForFile();
@@ -995,7 +995,7 @@ fileHandle_t FS_FOpenBaseFileWrite(const char *filename) {
 	fileHandle_t	f;
 
 	if (!fs_searchpaths) {
-		Com_Error(ERR_FATAL, "Filesystem call made without initialization\n");
+		Com_Error(ERR_FATAL, "Filesystem call made without initialization");
 	}
 
 	f = FS_HandleForFile();
@@ -1036,7 +1036,7 @@ fileHandle_t FS_FOpenFileAppend( const char *filename ) {
 	fileHandle_t	f;
 
 	if ( !fs_searchpaths ) {
-		Com_Error( ERR_FATAL, "Filesystem call made without initialization\n" );
+		Com_Error( ERR_FATAL, "Filesystem call made without initialization" );
 	}
 
 	f = FS_HandleForFile();
@@ -1077,7 +1077,7 @@ qboolean FS_IsFifo( const char *filename ) {
 	struct stat f_stat;
 
 	if ( !fs_searchpaths ) {
-		Com_Error( ERR_FATAL, "Filesystem call made without initialization\n" );
+		Com_Error( ERR_FATAL, "Filesystem call made without initialization" );
 	}
 
 #ifdef _MSC_VER
@@ -1198,15 +1198,15 @@ int FS_FOpenFileReadHash(const char *filename, fileHandle_t *file, qboolean uniq
 	hash = 0;
 
 	if ( !fs_searchpaths ) {
-		Com_Error( ERR_FATAL, "Filesystem call made without initialization\n" );
+		Com_Error( ERR_FATAL, "Filesystem call made without initialization" );
 	}
 
 	if ( file == NULL ) {
-		Com_Error( ERR_FATAL, "FS_FOpenFileRead: NULL 'file' parameter passed\n" );
+		Com_Error( ERR_FATAL, "FS_FOpenFileRead: NULL 'file' parameter passed" );
 	}
 
 	if ( !filename ) {
-		Com_Error( ERR_FATAL, "FS_FOpenFileRead: NULL 'filename' parameter passed\n" );
+		Com_Error( ERR_FATAL, "FS_FOpenFileRead: NULL 'filename' parameter passed" );
 	}
 
 	Com_sprintf (demoExt, sizeof(demoExt), ".dm_%d", MV_GetCurrentProtocol());
@@ -1424,7 +1424,7 @@ Properly handles partial reads
 */
 int FS_Read2( void *buffer, int len, fileHandle_t f ) {
 	if ( !fs_searchpaths ) {
-		Com_Error( ERR_FATAL, "Filesystem call made without initialization\n" );
+		Com_Error( ERR_FATAL, "Filesystem call made without initialization" );
 	}
 
 	if ( !f ) {
@@ -1441,7 +1441,7 @@ int FS_Read( void *buffer, int len, fileHandle_t f ) {
 	int		tries;
 
 	if ( !fs_searchpaths ) {
-		Com_Error( ERR_FATAL, "Filesystem call made without initialization\n" );
+		Com_Error( ERR_FATAL, "Filesystem call made without initialization" );
 	}
 
 	if ( !f ) {
@@ -1495,7 +1495,7 @@ int FS_Write( const void *buffer, int len, fileHandle_t h ) {
 	FILE	*f;
 
 	if ( !fs_searchpaths ) {
-		Com_Error( ERR_FATAL, "Filesystem call made without initialization\n" );
+		Com_Error( ERR_FATAL, "Filesystem call made without initialization" );
 	}
 
 	if ( !h ) {
@@ -1551,7 +1551,7 @@ int FS_Seek( fileHandle_t f, int offset, int origin ) {
 	char	foo[65536];
 
 	if ( !fs_searchpaths ) {
-		Com_Error( ERR_FATAL, "Filesystem call made without initialization\n" );
+		Com_Error( ERR_FATAL, "Filesystem call made without initialization" );
 		return -1;
 	}
 
@@ -1566,7 +1566,7 @@ int FS_Seek( fileHandle_t f, int offset, int origin ) {
 			unzOpenCurrentFile(fsh[f].handleFiles.file.z);
 			return FS_Read(foo, offset, f);
 		} else {
-			Com_Error( ERR_FATAL, "ZIP FILE FSEEK NOT YET IMPLEMENTED\n" );
+			Com_Error( ERR_FATAL, "ZIP FILE FSEEK NOT YET IMPLEMENTED" );
 			return -1;
 		}
 	} else {
@@ -1584,7 +1584,7 @@ int FS_Seek( fileHandle_t f, int offset, int origin ) {
 			break;
 		default:
 			_origin = SEEK_CUR;
-			Com_Error( ERR_FATAL, "Bad origin in FS_Seek\n" );
+			Com_Error( ERR_FATAL, "Bad origin in FS_Seek" );
 			break;
 		}
 
@@ -1608,11 +1608,11 @@ int	FS_FileIsInPAK(const char *filename, int *pChecksum ) {
 	int			hash = 0;
 
 	if ( !fs_searchpaths ) {
-		Com_Error( ERR_FATAL, "Filesystem call made without initialization\n" );
+		Com_Error( ERR_FATAL, "Filesystem call made without initialization" );
 	}
 
 	if ( !filename ) {
-		Com_Error( ERR_FATAL, "FS_FOpenFileRead: NULL 'filename' parameter passed\n" );
+		Com_Error( ERR_FATAL, "FS_FOpenFileRead: NULL 'filename' parameter passed" );
 	}
 
 	// qpaths are not supposed to have a leading slash
@@ -1683,11 +1683,11 @@ int FS_ReadFile( const char *qpath, void **buffer ) {
 	int				len;
 
 	if ( !fs_searchpaths ) {
-		Com_Error( ERR_FATAL, "Filesystem call made without initialization\n" );
+		Com_Error( ERR_FATAL, "Filesystem call made without initialization" );
 	}
 
 	if ( !qpath || !qpath[0] ) {
-		Com_Error( ERR_FATAL, "FS_ReadFile with empty name\n" );
+		Com_Error( ERR_FATAL, "FS_ReadFile with empty name" );
 	}
 
 	buf = NULL;	// quiet compiler warning
@@ -1799,7 +1799,7 @@ FS_FreeFile
 void FS_FreeFile( void *buffer ) {
 	/*
 	if ( !fs_searchpaths ) {
-		Com_Error( ERR_FATAL, "Filesystem call made without initialization\n" );
+		Com_Error( ERR_FATAL, "Filesystem call made without initialization" );
 	}
 	if ( !buffer ) {
 		Com_Error( ERR_FATAL, "FS_FreeFile( NULL )" );
@@ -1815,7 +1815,7 @@ void FS_FreeFile( void *buffer ) {
 	*/
 
 	if ( !fs_searchpaths ) {
-		Com_Error( ERR_FATAL, "Filesystem call made without initialization\n" );
+		Com_Error( ERR_FATAL, "Filesystem call made without initialization" );
 	}
 	if ( !buffer ) {
 		Com_Error( ERR_FATAL, "FS_FreeFile( NULL )" );
@@ -1835,7 +1835,7 @@ void FS_WriteFile( const char *qpath, const void *buffer, int size ) {
 	fileHandle_t f;
 
 	if ( !fs_searchpaths ) {
-		Com_Error( ERR_FATAL, "Filesystem call made without initialization\n" );
+		Com_Error( ERR_FATAL, "Filesystem call made without initialization" );
 	}
 
 	if ( !qpath || !buffer ) {
@@ -2097,7 +2097,7 @@ char **FS_ListFilteredFiles( const char *path, const char *extension, char *filt
 	char			zpath[MAX_ZPATH];
 
 	if ( !fs_searchpaths ) {
-		Com_Error( ERR_FATAL, "Filesystem call made without initialization\n" );
+		Com_Error( ERR_FATAL, "Filesystem call made without initialization" );
 	}
 
 	if ( !path ) {
@@ -2247,7 +2247,7 @@ void FS_FreeFileList( char **list ) {
 	int		i;
 
 	if ( !fs_searchpaths ) {
-		Com_Error( ERR_FATAL, "Filesystem call made without initialization\n" );
+		Com_Error( ERR_FATAL, "Filesystem call made without initialization" );
 	}
 
 	if ( !list ) {
@@ -3076,14 +3076,14 @@ static void FS_Startup( const char *gameName ) {
 		// assets files found in none of the paths
 #if defined(INSTALLED)
 #ifdef WIN32
-		Com_Error(ERR_FATAL, "could not find JK2 installation... make sure you have JK2 installed (CD or Steam).\n");
+		Com_Error(ERR_FATAL, "could not find JK2 installation... make sure you have JK2 installed (CD or Steam).");
 #elif MACOS_X
-		Com_Error(ERR_FATAL, "could not find JK2 App... put it either in /Applications or side by side with the JK2MV app.\n");
+		Com_Error(ERR_FATAL, "could not find JK2 App... put it either in /Applications or side by side with the JK2MV app.");
 #else
-		Com_Error(ERR_FATAL, "could not find assets(0,1,2,5).pk3 files... copy them into the base directory (%s/base or %s/base).\n", fs_basepath->string, fs_homepath->string);
+		Com_Error(ERR_FATAL, "could not find assets(0,1,2,5).pk3 files... copy them into the base directory (%s/base or %s/base).", fs_basepath->string, fs_homepath->string);
 #endif
 #else
-		Com_Error(ERR_FATAL, "could not find assets(0,1,2,5).pk3 files... copy them into the base directory.\n");
+		Com_Error(ERR_FATAL, "could not find assets(0,1,2,5).pk3 files... copy them into the base directory.");
 #endif
 		return;
 	}
@@ -3617,7 +3617,7 @@ void FS_Restart( int checksumFeed ) {
 			lastValidBase[0] = '\0';
 			lastValidGame[0] = '\0';
 			FS_Restart(checksumFeed);
-			Com_Error( ERR_DROP, "Invalid game folder\n" );
+			Com_Error( ERR_DROP, "Invalid game folder" );
 			return;
 		}
 		Com_Error( ERR_FATAL, "Couldn't load mpdefault.cfg" );

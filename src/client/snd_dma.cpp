@@ -634,10 +634,10 @@ sfx_t *S_FindName( const char *name ) {
 	sfx_t	*sfx;
 
 	if (!name) {
-		Com_Error (ERR_FATAL, "S_FindName: NULL\n");
+		Com_Error (ERR_FATAL, "S_FindName: NULL");
 	}
 	if (!name[0]) {
-		Com_Error (ERR_FATAL, "S_FindName: empty name\n");
+		Com_Error (ERR_FATAL, "S_FindName: empty name");
 	}
 
 	if (strlen(name) >= MAX_QPATH) {
@@ -828,15 +828,15 @@ sfxHandle_t	S_RegisterSound( const char *name)
 
 	if (!name)
 	{
-		Com_Error (ERR_FATAL, "S_RegisterSound: NULL name\n");
+		Com_Error (ERR_FATAL, "S_RegisterSound: NULL name");
 	}
 	if (!name[0])
 	{
-		Com_Error (ERR_FATAL, "S_RegisterSound: empty name\n");
+		Com_Error (ERR_FATAL, "S_RegisterSound: empty name");
 	}
 
 	if ( strlen( name ) >= MAX_QPATH ) {
-		Com_Error (ERR_FATAL, "S_RegisterSound: Sound name exceeds MAX_QPATH - %s\n", name );
+		Com_Error (ERR_FATAL, "S_RegisterSound: Sound name exceeds MAX_QPATH - %s", name );
 		return 0;
 	}
 
@@ -1725,7 +1725,7 @@ static qboolean LoopSound_ChannelInit(loopSound_t *pLoopSound, int iLeftVol, int
 	//
 	if (pLoopSound->sfx->pMP3StreamHeader)
 	{
-		Com_Error( ERR_DROP, "LoopSound_ChannelInit(): Cannot use streamed MP3 files here for random access (%s)\n",pLoopSound->sfx->sSoundName );
+		Com_Error( ERR_DROP, "LoopSound_ChannelInit(): Cannot use streamed MP3 files here for random access (%s)",pLoopSound->sfx->sSoundName );
 	}
 	else
 	{

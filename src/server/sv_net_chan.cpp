@@ -151,7 +151,7 @@ qboolean SV_Netchan_Process( client_t *client, msg_t *msg ) {
 //	Huff_Decompress( msg, SV_DECODE_START );
 //	for(i=SV_DECODE_START+msg->readcount;i<msg->cursize;i++) {
 //		if (msg->data[i] != chksum[i-(SV_DECODE_START+msg->readcount)]) {
-//			Com_Error(ERR_DROP,"bad\n");
+//			Com_Error(ERR_DROP,"bad");
 //		}
 //	}
 	return qtrue;

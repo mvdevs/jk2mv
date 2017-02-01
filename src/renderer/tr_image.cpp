@@ -991,7 +991,7 @@ image_t *R_CreateImageNew( const char *name, byte * const *mipmaps, qboolean cus
 	qboolean	isLightmap = qfalse;
 
 	if (strlen(name) >= MAX_QPATH ) {
-		ri.Error (ERR_DROP, "R_CreateImage: \"%s\" is too long\n", name);
+		ri.Error (ERR_DROP, "R_CreateImage: \"%s\" is too long", name);
 	}
 
 	if(glConfig.clampToEdgeAvailable && glWrapClampMode == GL_CLAMP) {
@@ -1008,7 +1008,7 @@ image_t *R_CreateImageNew( const char *name, byte * const *mipmaps, qboolean cus
 
 	if ( (width&(width-1)) || (height&(height-1)) )
 	{
-		ri.Error( ERR_FATAL, "R_CreateImage: %s dimensions (%i x %i) not power of 2!\n",name,width,height);
+		ri.Error( ERR_FATAL, "R_CreateImage: %s dimensions (%i x %i) not power of 2!",name,width,height);
 	}
 
 	image = R_FindImageFile_NoLoad(name, upload, glWrapClampMode );
@@ -1137,12 +1137,12 @@ bool LoadTGAPalletteImage ( const char *name, byte **pic, int *width, int *heigh
 
 	if (targa_header.image_type!=1 )
 	{
-		ri.Error (ERR_DROP, "LoadTGAPalletteImage: Only type 1 (uncompressed pallettised) TGA images supported\n");
+		ri.Error (ERR_DROP, "LoadTGAPalletteImage: Only type 1 (uncompressed pallettised) TGA images supported");
 	}
 
 	if ( targa_header.colormap_type == 0 )
 	{
-		ri.Error( ERR_DROP, "LoadTGAPalletteImage: colormaps ONLY supported\n" );
+		ri.Error( ERR_DROP, "LoadTGAPalletteImage: colormaps ONLY supported" );
 	}
 
 	columns = targa_header.width;
@@ -1520,7 +1520,7 @@ TGADone:
 
 	if (bFormatErrors)
 	{
-		ri.Error( ERR_DROP, "%s( File: \"%s\" )\n",sErrorString,name);
+		ri.Error( ERR_DROP, "%s( File: \"%s\" )",sErrorString,name);
 	}
 }
 

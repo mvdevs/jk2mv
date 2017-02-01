@@ -227,7 +227,7 @@ void R_TransformEachSurface( mdxmSurface_t	*surface, vec3_t scale, CMiniHeap *G2
 	TransformedVertsArray[surface->thisSurfaceIndex] = (size_t)TransformedVerts;
 	if (!TransformedVerts)
 	{
-		Com_Error(ERR_DROP, "Ran out of transform space gameside for Ghoul2 Models.\n");
+		Com_Error(ERR_DROP, "Ran out of transform space gameside for Ghoul2 Models.");
 	}
 
 	// whip through and actually transform each vertex
@@ -315,7 +315,7 @@ void R_TransformEachSurface( mdxmSurface_t	*surface, vec3_t scale, CMiniHeap *G2
 	TransformedVertsArray[surface->thisSurfaceIndex] = (int)TransformedVerts;
 	if (!TransformedVerts)
 	{
-		Com_Error(ERR_DROP, "Ran out of transform space gameside for Ghoul2 Models. Please See Jake to Make space larger\n");
+		Com_Error(ERR_DROP, "Ran out of transform space gameside for Ghoul2 Models. Please See Jake to Make space larger");
 	}
 
 	// whip through and actually transform each vertex

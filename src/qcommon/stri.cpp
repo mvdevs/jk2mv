@@ -1598,7 +1598,7 @@ cStringsSingle *SP_GetString(unsigned short ID)
 
 	if (!string)
 	{
-		Com_Error(ERR_DROP, "String ID %04x not defined\n", ID);
+		Com_Error(ERR_DROP, "String ID %04x not defined", ID);
 	}
 
 	return string;
