@@ -668,11 +668,11 @@ void GL_CheckErrors( void ) {
 	int		err;
 	char	s[64];
 
-	err = qglGetError();
-	if ( err == GL_NO_ERROR ) {
+	if ( r_ignoreGLErrors->integer ) {
 		return;
 	}
-	if ( r_ignoreGLErrors->integer ) {
+	err = qglGetError();
+	if ( err == GL_NO_ERROR ) {
 		return;
 	}
 	switch( err ) {
@@ -695,7 +695,7 @@ void GL_CheckErrors( void ) {
 			strcpy( s, "GL_OUT_OF_MEMORY" );
 			break;
 		default:
-			Com_sprintf( s, sizeof(s), "%i", err);
+			Com_sprintf( s, sizeof(s), "0x%x", err);
 			break;
 	}
 
@@ -1446,9 +1446,7 @@ void R_Init( void ) {
 	}
 #endif
 
-	int	err = qglGetError();
-	if ( err != GL_NO_ERROR )
-		ri.Printf (PRINT_ALL, "glGetError() = 0x%x\n", err);
+	GL_CheckErrors();
 #endif
 	ri.Printf( PRINT_ALL, "----- finished R_Init -----\n" );
 }
