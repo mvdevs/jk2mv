@@ -285,8 +285,13 @@ cvar_t *Cvar_Get( const char *var_name, const char *var_value, int flags, qboole
 	var->string = CopyString (var_value);
 	var->modified = qtrue;
 	var->modificationCount = 1;
+#if defined (_MSC_VER) && (_MSC_VER < 1800)
 	var->value = atof (var->string);
 	var->integer = atoi(var->string);
+#else
+	var->value = strtof(var->string, NULL);
+	var->integer = var->value;
+#endif
 	var->resetString = CopyString( var_value );
 
 	// link the variable in
@@ -433,8 +438,13 @@ cvar_t *Cvar_Set2( const char *var_name, const char *value, qboolean force, qboo
 	Z_Free (var->string);	// free the old value string
 
 	var->string = CopyString(value);
+#if defined (_MSC_VER) && (_MSC_VER < 1800)
 	var->value = atof (var->string);
 	var->integer = atoi (var->string);
+#else
+	var->value = strtof(var->string, NULL);
+	var->integer = var->value;
+#endif
 
 	return var;
 }
