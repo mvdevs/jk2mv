@@ -1125,8 +1125,6 @@ void Info_NextPair( const char **s, char *key, char *value );
 Q_NORETURN void	QDECL  Com_Error( int level, const char *error, ... );
 void	QDECL Com_Printf( const char *msg, ... );
 
-int Com_HexStrToInt(const char *str);
-
 /*
 ==========================================================
 
