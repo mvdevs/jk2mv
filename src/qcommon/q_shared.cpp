@@ -1381,40 +1381,6 @@ void Com_TruncateLongString(char *buffer, const char *s) {
 
 /*
 ==================
-Com_CharIsOneOfCharset
-==================
-*/
-static qboolean Com_CharIsOneOfCharset(char c, char *set) {
-	size_t i;
-
-	for (i = 0; i<strlen(set); i++) {
-		if (set[i] == c)
-			return qtrue;
-	}
-
-	return qfalse;
-}
-
-/*
-==================
-Com_SkipCharset
-==================
-*/
-char *Com_SkipCharset(char *s, char *sep) {
-	char *p = s;
-
-	while (p) {
-		if (Com_CharIsOneOfCharset(*p, sep))
-			p++;
-		else
-			break;
-	}
-
-	return p;
-}
-
-/*
-==================
 Com_SkipTokens
 ==================
 */
@@ -1423,9 +1389,9 @@ char *Com_SkipTokens(char *s, int numTokens, char *sep) {
 	char *p = s;
 
 	while (sepCount < numTokens) {
-		if (Com_CharIsOneOfCharset(*p++, sep)) {
+		if (strchr(sep, *p++)) {
 			sepCount++;
-			while (Com_CharIsOneOfCharset(*p, sep))
+			while (strchr(sep, *p))
 				p++;
 		} else if (*p == '\0')
 			break;

@@ -1033,7 +1033,6 @@ void	QDECL Com_sprintf (char *dest, size_t size, const char *fmt, ...);
 #define TRUNCATE_LENGTH	64
 void Com_TruncateLongString( char *buffer, const char *s );
 char *Com_SkipTokens( char *s, int numTokens, char *sep );
-char *Com_SkipCharset( char *s, char *sep );
 
 
 // mode parm for FS_FOpenFile
