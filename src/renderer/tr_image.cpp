@@ -1939,14 +1939,8 @@ struct PNGFileReader
 	{
 		ri.FS_FreeFile(buf);
 
-		if (info_ptr != NULL)
-		{
-			// Destroys both structs
-			png_destroy_info_struct(png_ptr, &info_ptr);
-		} else if (png_ptr != NULL)
-		{
-			png_destroy_read_struct(&png_ptr, NULL, NULL);
-		}
+		// Destroys both structs
+		png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
 	}
 
 	int Read(byte **data, int *width, int *height)
