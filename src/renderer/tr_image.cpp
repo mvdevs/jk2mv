@@ -785,7 +785,7 @@ void R_Images_DeleteLightMaps(void)
 			continue;
 		}
 
-		itImage++;
+		++itImage;
 	}
 
 	GL_ResetBinds();
@@ -888,7 +888,7 @@ qboolean RE_RegisterImages_LevelLoadEnd(void)
 			}
 		}
 
-		itImage++;
+		++itImage;
 	}
 
 

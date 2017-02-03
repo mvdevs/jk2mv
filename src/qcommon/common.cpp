@@ -3138,7 +3138,7 @@ void Field_CheckRep( field_t *edit ) {
 	else
 		assert( edit->currentTail <= edit->historyTail || edit->historyHead <= edit->currentTail );
 
-	assert( edit->buffer = edit->bufferHistory[edit->currentTail] );
+	assert( edit->buffer == edit->bufferHistory[edit->currentTail] );
 #endif // NDEBUG
 }
 

@@ -97,7 +97,7 @@ void CFxScheduler::Clean(bool bRemoveTemplates /*= true*/, int idToPreserve /*= 
 	while ( itr != mFxSchedule.end() )
 	{
 		next = itr;
-		next++;
+		++next;
 
 		if ((*itr)->mParent&&OutstandClouds.find((*itr)->mParent)!=OutstandClouds.end())
 		{
@@ -470,7 +470,7 @@ void CFxScheduler::DeletePrimitive(int id, CPrimitiveTemplate *prim)
 	while ( itr != mFxSchedule.end() )
 	{
 		next = itr;
-		next++;
+		++next;
 
 		if ( (*itr)->mpTemplate == prim )
 		{
@@ -1826,7 +1826,7 @@ void CFxScheduler::AddScheduledEffects( void )
 	while ( itr != mFxSchedule.end() )
 	{
 		next = itr;
-		next++;
+		++next;
 		schedEffect = (*itr);
 		if ( *(*itr) <= theFxHelper.mTime )
 		{
@@ -1889,7 +1889,7 @@ void CFxScheduler::AddScheduledEffects( void )
 	while ( itr != mFxSchedule.end() )
 	{
 		next = itr;
-		next++;
+		++next;
 		schedEffect = (*itr);
 		if ( *(*itr) <= theFxHelper.mTime )
 		{

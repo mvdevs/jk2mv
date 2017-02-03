@@ -92,7 +92,7 @@ void FixGhoul2InfoLeaks(bool clearClient,bool clearServer)
 	if (clearClient && ghoultable[0].size())
 	{
 		set<ghoul2entry_t>::iterator i;
-		for (i = ghoultable[0].begin(); i != ghoultable[0].end(); i++) {
+		for (i = ghoultable[0].begin(); i != ghoultable[0].end(); ++i) {
 			delete i->ghoul2info;
 		}
 		ghoultable[0].clear();
@@ -101,7 +101,7 @@ void FixGhoul2InfoLeaks(bool clearClient,bool clearServer)
 	if (clearServer && ghoultable[1].size())
 	{
 		set<ghoul2entry_t>::iterator i;
-		for (i = ghoultable[1].begin(); i != ghoultable[1].end(); i++) {
+		for (i = ghoultable[1].begin(); i != ghoultable[1].end(); ++i) {
 			delete i->ghoul2info;
 		}
 		ghoultable[1].clear();

@@ -1369,7 +1369,7 @@ int MV_MenuPatchFile(const char *in, unsigned long inhash, const char *patch, ch
 					currline.vline = 0;
 					*it = currline;
 
-					it++;
+					++it;
 					currline = patchfile.at(++i);
 				}
 			} else {

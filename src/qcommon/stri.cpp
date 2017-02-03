@@ -1535,7 +1535,7 @@ void SP_Unload(unsigned char Registration)
 	for(i = SP_ListByName.begin(); i != SP_ListByName.end(); i = next)
 	{
 		next = i;
-		next++;
+		--next;
 
 		if ((*i).second->UnRegister(Registration))
 		{
@@ -1557,7 +1557,7 @@ int SP_GetStringID(const char *Reference)
 	map<unsigned char,cStringPackageSingle *>::iterator	i;
 	int													ID;
 
-	for(i = SP_ListByID.begin(); i != SP_ListByID.end(); i++)
+	for(i = SP_ListByID.begin(); i != SP_ListByID.end(); ++i)
 	{
 		ID = (*i).second->FindStringID(Reference);
 		if (ID >= 0)
@@ -1655,7 +1655,7 @@ static void SP_UpdateLanguage(void)
 	list<cStringPackageID>::iterator						spit;
 
 	// Grab all SP ids
-	for(it = SP_ListByID.begin(); it != SP_ListByID.end(); it++)
+	for(it = SP_ListByID.begin(); it != SP_ListByID.end(); ++it)
 	{
 		sps.push_back(cStringPackageID((*it).second->GetName(), (*it).second->GetRegistration()));
 	}
@@ -1663,7 +1663,7 @@ static void SP_UpdateLanguage(void)
 	SP_Unload(SP_REGISTER_CLIENT | SP_REGISTER_SERVER | SP_REGISTER_MENU | SP_REGISTER_REQUIRED);
 
 	// Reinitialise with new language
-	for(spit = sps.begin(); spit != sps.end(); spit++)
+	for(spit = sps.begin(); spit != sps.end(); ++spit)
 	{
 		SP_Register((*spit).GetName(), (*spit).GetReg());
 	}

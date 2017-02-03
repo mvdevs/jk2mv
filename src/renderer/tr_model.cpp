@@ -356,7 +356,7 @@ qboolean RE_RegisterModels_LevelLoadEnd(qboolean bDeleteEverythingNotUsedThisLev
 				continue;
 			}
 
-			itModel++;
+			++itModel;
 		}
 	}
 
@@ -404,7 +404,7 @@ static void RE_RegisterModels_DumpNonPure(void)
 			}
 		}
 
-		itModel++;
+		++itModel;
 	}
 
 	Com_DPrintf( "RE_RegisterModels_DumpNonPure(): Ok\n");
