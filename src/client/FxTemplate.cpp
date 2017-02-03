@@ -261,7 +261,7 @@ bool CPrimitiveTemplate::ParseGroupFlags( const char *val, int *flags )
 	bool	ok = true;
 
 	// For a sub group, really you probably only have one or two flags set
-	int v = sscanf( val, "%s %s %s %s", flag[0], flag[1], flag[2], flag[3] );
+	int v = sscanf( val, "%31s %31s %31s %31s", flag[0], flag[1], flag[2], flag[3] );
 
 	// Clear out the flags field, then convert the flag string to an actual value ( use generic flags )
 	*flags = 0;
@@ -707,7 +707,7 @@ bool CPrimitiveTemplate::ParseFlags( const char *val )
 	bool	ok = true;
 
 	// For a primitive, really you probably only have two or less flags set
-	int v = sscanf( val, "%s %s %s %s %s %s %s", flag[0], flag[1], flag[2], flag[3], flag[4], flag[5], flag[6] );
+	int v = sscanf( val, "%31s %31s %31s %31s %31s %31s %31s", flag[0], flag[1], flag[2], flag[3], flag[4], flag[5], flag[6] );
 
 	for ( int i = 0; i < 7; i++ )
 	{
@@ -790,7 +790,7 @@ bool CPrimitiveTemplate::ParseSpawnFlags( const char *val )
 	bool	ok = true;
 
 	// For a primitive, really you probably only have two or less flags set
-	int v = sscanf( val, "%s %s %s %s %s %s %s", flag[0], flag[1], flag[2], flag[3], flag[4], flag[5], flag[6] );
+	int v = sscanf( val, "%31s %31s %31s %31s %31s %31s %31s", flag[0], flag[1], flag[2], flag[3], flag[4], flag[5], flag[6] );
 
 	for ( int i = 0; i < 7; i++ )
 	{

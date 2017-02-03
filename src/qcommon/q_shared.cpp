@@ -1283,7 +1283,8 @@ qboolean Info_SetValueForKey(char *s, const char *key, const char *value) {
 	}
 
 	Info_RemoveKey(s, key);
-	if (!value || !strlen(value))
+
+	if (!strlen(value))
 		return qfalse;
 
 	Com_sprintf(newi, sizeof(newi), "\\%s\\%s", key, value);
@@ -1329,7 +1330,8 @@ void Info_SetValueForKey_Big(char *s, const char *key, const char *value) {
 	}
 
 	Info_RemoveKey_Big(s, key);
-	if (!value || !strlen(value))
+
+	if (!strlen(value))
 		return;
 
 	Com_sprintf(newi, sizeof(newi), "\\%s\\%s", key, value);

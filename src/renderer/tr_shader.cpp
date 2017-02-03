@@ -1959,11 +1959,7 @@ static void ParseSkyParms( const char **text ) {
 #else
 			shader.sky.innerbox[i] = R_FindImageFile( ( char * ) pathname, qtrue, qtrue, (qboolean)!shader.upload.noTC, GL_CLAMP );
 			if ( !shader.sky.innerbox[i] ) {
-				if (i) {
-					shader.sky.innerbox[i] = shader.sky.innerbox[i];//not found, so let's use the previous
-				}else{
-					shader.sky.innerbox[i] = tr.defaultImage;
-				}
+				shader.sky.innerbox[i] = tr.defaultImage;
 			}
 #endif // !DEDICATED
 		}

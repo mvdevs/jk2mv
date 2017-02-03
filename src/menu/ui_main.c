@@ -357,12 +357,11 @@ void Text_PaintWithCursor(float x, float y, float scale, vec4_t color, const cha
 		char sTemp[1024];
 		size_t iCopyCount = limit ? MIN(strlen(text), limit) : strlen(text);
 			iCopyCount = MIN(iCopyCount,cursorPos);
-			iCopyCount = MIN(iCopyCount,sizeof(sTemp));
+			iCopyCount = MIN(iCopyCount,sizeof(sTemp) - 1);
 
 			// copy text into temp buffer for pixel measure...
 			//
-			strncpy(sTemp,text,iCopyCount);
-					sTemp[iCopyCount] = '\0';
+			Q_strncpyz(sTemp, text, iCopyCount + 1);
 
 			{
 				int iFontIndex = MenuFontToHandle( iMenuFont );
