@@ -2866,20 +2866,6 @@ void Com_Shutdown (void)
 */
 }
 
-void Com_Memcpy (void* dest, const void* src, const size_t count)
-{
-	memcpy(dest, src, count);
-}
-
-void Com_Memset (void* dest, const int val, const size_t count)
-{
-	memset(dest, val, count);
-}
-
-qboolean Com_Memcmp (const void *src0, const void *src1, const unsigned int count)
-{
-	return (qboolean)memcmp(src0, src1, count);
-}
 
 //------------------------------------------------------------------------
 
