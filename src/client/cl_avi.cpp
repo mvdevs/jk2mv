@@ -99,12 +99,10 @@ static ID_INLINE void WRITE_STRING( const char *s )
 WRITE_4BYTES
 ===============
 */
-static ID_INLINE void WRITE_4BYTES( int x )
+static ID_INLINE void WRITE_4BYTES( int32_t x )
 {
-  buffer[ bufIndex + 0 ] = (byte)( ( x >>  0 ) & 0xFF );
-  buffer[ bufIndex + 1 ] = (byte)( ( x >>  8 ) & 0xFF );
-  buffer[ bufIndex + 2 ] = (byte)( ( x >> 16 ) & 0xFF );
-  buffer[ bufIndex + 3 ] = (byte)( ( x >> 24 ) & 0xFF );
+  x = LittleLong( x );
+  Com_Memcpy( &buffer[ bufIndex ], &x, 4 );
   bufIndex += 4;
 }
 
@@ -113,10 +111,10 @@ static ID_INLINE void WRITE_4BYTES( int x )
 WRITE_2BYTES
 ===============
 */
-static ID_INLINE void WRITE_2BYTES( int x )
+static ID_INLINE void WRITE_2BYTES( int16_t x )
 {
-  buffer[ bufIndex + 0 ] = (byte)( ( x >>  0 ) & 0xFF );
-  buffer[ bufIndex + 1 ] = (byte)( ( x >>  8 ) & 0xFF );
+  x = LittleShort( x );
+  Com_Memcpy( &buffer[ bufIndex ], &x, 2 );
   bufIndex += 2;
 }
 
