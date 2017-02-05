@@ -532,6 +532,17 @@ static ID_INLINE void Com_Memcpy (void* dest, const void* src, const size_t coun
 	memcpy( dest, src, count );
 }
 
+static ID_INLINE float Com_Clamp( float min, float max, float value ) {
+	value = value > max ? max : value;
+	value = value < min ? min : value;
+	return value;
+}
+static ID_INLINE int Com_Clampi( int min, int max, int value ) {
+	value = value > max ? max : value;
+	value = value < min ? min : value;
+	return value;
+}
+
 #define CIN_system	1
 #define CIN_loop	2
 #define	CIN_hold	4
@@ -978,9 +989,6 @@ void PerpendicularVector( vec3_t dst, const vec3_t src );
 
 
 //=============================================
-
-float Com_Clamp( float min, float max, float value );
-int Com_Clampi(int min, int max, int value);
 
 char	*COM_SkipPath( char *pathname );
 void	COM_StripExtension(const char *in, char *out, size_t destsize);
