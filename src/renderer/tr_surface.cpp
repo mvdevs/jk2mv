@@ -254,7 +254,9 @@ inline uint32_t ComputeFinalVertexColor(const byte *colors)
 	color4u_t	result;
 	uint32_t		r, g, b;
 
-	memcpy(&result, colors, 4);
+	for (k = 0; k < 4; k++)
+		result.b[k] = colors[k];
+
 	if (tess.shader->lightmapIndex[0] != LIGHTMAP_BY_VERTEX || r_fullbright->integer)
 	{
 		result.b[0] = 255;
@@ -280,9 +282,9 @@ inline uint32_t ComputeFinalVertexColor(const byte *colors)
 			break;
 		}
 	}
-	result.b[0] = Com_Clamp(0, 255, r >> 8);
-	result.b[1] = Com_Clamp(0, 255, g >> 8);
-	result.b[2] = Com_Clamp(0, 255, b >> 8);
+	result.b[0] = (r >> 8) & 0xffu;
+	result.b[1] = (g >> 8) & 0xffu;
+	result.b[2] = (b >> 8) & 0xffu;
 
 	return result.ui;
 }
