@@ -1915,4 +1915,13 @@ Ghoul2 Insert End
 // tr_surfacesprites
 void RB_DrawSurfaceSprites( shaderStage_t *stage, shaderCommands_t *input);
 #endif
+
+static inline int Q_ftol( float f ) {
+#if 0 // original win32 client
+	return lrintf( f );
+#else // original mac client, jk2mv so far
+	return (int) f;
+#endif
+}
+
 #endif //TR_LOCAL_H

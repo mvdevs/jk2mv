@@ -493,18 +493,6 @@ char *Sys_GetCurrentUser( void )
   #define EDI "%%edi"
 #endif
 
-long Q_ftol(float f) {
-    long retval;
-
-    __asm__ volatile (
-        "cvttss2si %1, %0\n"
-        : "=r" (retval)
-        : "x" (f)
-    );
-
-    return retval;
-}
-
 int Q_VMftol() {
     int retval;
 
@@ -542,10 +530,6 @@ void Sys_SnapVector(vec3_t vec) {
 
 }
 #else
-long Q_ftol(float f) {
-    return (long)f;
-}
-
 void Sys_SnapVector(float *v) {
     v[0] = nearbyintf(v[0]);
     v[1] = nearbyintf(v[1]);

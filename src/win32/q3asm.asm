@@ -55,11 +55,6 @@ IFDEF ARCH_X86_64
 		ret
 	Sys_SnapVector ENDP
 
-	Q_ftol PROC
-		cvttss2si eax, xmm0
-		ret
-	Q_ftol ENDP
-
 	Q_VMftol PROC
 		movss xmm0, dword ptr [rdi + rbx * 4]
 		cvttss2si eax, xmm0
@@ -104,12 +99,6 @@ ELSE
 		movups [eax], xmm0			; write 3 rounded and 1 unchanged values back to memory
 		ret
 	Sys_SnapVector ENDP
-
-	Q_ftol PROC
-		movss xmm0, dword ptr [esp + 4]
-		cvttss2si eax, xmm0
-		ret
-	Q_ftol ENDP
 
 	Q_VMftol PROC
 		movss xmm0, dword ptr [edi + ebx * 4]

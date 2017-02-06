@@ -1027,7 +1027,5 @@ mvprotocol_t MV_GetCurrentProtocol();
 void MV_CopyStringWithColors( const char *src, char *dst, int dstSize, int nonColors );
 int MV_StrlenSkipColors( const char *str );
 
-extern "C" long QDECL Q_ftol(float f);
 extern "C" int QDECL Q_VMftol();
-
 #endif // _QCOMMON_H_
