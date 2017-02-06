@@ -1,6 +1,8 @@
 language: cpp
 sudo: required
 dist: trusty
+services:
+  - docker
 
 env:
   global:
@@ -24,14 +26,17 @@ matrix:
     - os: osx
       env: HOST=macosx-x86_64-clang
 
-before_install:
-  - git fetch --unshallow
-  - if [[ "$HOST" == linux-x86_64-gcc ]]; then sudo apt-get update; fi
+before_install: |
+  git fetch --unshallow
+  if [[ "$HOST" == linux-x86_64-gcc ]]; then
+      docker pull ubuntu:16.04
+      docker run --name bc -v $TRAVIS_BUILD_DIR:/jk2mv -td ubuntu:16.04 /bin/bash
+  fi
 
 install: |
-  export MVDIR=`pwd`
   if [[ "$HOST" == linux-x86_64-gcc ]]; then
-      sudo aptitude install -y cmake curl rpm debhelper devscripts libsdl2-dev libgl1-mesa-dev libopenal-dev
+      docker exec bc apt update
+      docker exec bc apt -y install git cmake zip rpm debhelper devscripts build-essential libsdl2-dev libgl1-mesa-dev libopenal-dev
   else
       cd ~
       curl -O https://www.libsdl.org/release/SDL2-2.0.5.tar.gz
@@ -43,21 +48,25 @@ install: |
       ln -s `pwd`/build/Release/SDL2.framework ~/Library/Frameworks/
   fi
 
-script:
-  - cd "$MVDIR/build"
-  - mkdir travis_build
-  - cd travis_build
+script: |
+  mkdir $TRAVIS_BUILD_DIR/build/travis
+  cd $TRAVIS_BUILD_DIR/build/travis
+  if [[ "$HOST" == linux-x86_64-gcc ]]; then
+      docker exec bc sh -c "cd /jk2mv/build/travis && cmake -DUseInternalPNG=ON -DUseInternalJPEG=ON -DUseInternalZLIB=ON -DUseInternalMiniZip=ON -DBuildPortableVersion=OFF -DBuildPackDEB=ON -DBuildPackRPM=ON ../.."
+      docker exec bc sh -c "cd /jk2mv/build/travis && make"
+      docker exec bc sh -c "cd /jk2mv/build/travis && make package"
+  else
+      cmake -G "Unix Makefiles" -DUseInternalPNG=ON -DUseInternalJPEG=ON -DUseInternalZLIB=ON -DUseInternalMiniZip=ON -DBuildPortableVersion=OFF ../..
+      make
+      make package
+  fi
 
-  - if [[ "$HOST" == linux-x86_64-gcc ]]; then cmake -G "Unix Makefiles" -DUseInternalPNG=ON -DUseInternalJPEG=ON -DUseInternalZLIB=ON -DUseInternalMiniZip=ON -DBuildPortableVersion=OFF -DBuildPackDEB=ON -DBuildPackRPM=ON ../..; fi
-  - if [[ "$HOST" == macosx-x86_64-clang ]]; then cmake -G "Unix Makefiles" -DUseInternalPNG=ON -DUseInternalJPEG=ON -DUseInternalZLIB=ON -DUseInternalMiniZip=ON -DBuildPortableVersion=OFF ../..; fi
-
-  - make
-  - make package
+after_script: |
+  docker stop bc
 
 after_success: |
-  if [[ "${TRAVIS_PULL_REQUEST}" = "false" ]]; then
-      cd "$MVDIR/build/travis_build/out"
-
+  if [[ "${TRAVIS_PULL_REQUEST}" = "false" ]] && [[ "${TRAVIS_BRANCH}" = "master" ]]; then
+      cd $TRAVIS_BUILD_DIR/build/travis/out
       for i in *.{deb,rpm,dmg}; do
           curl -T ${i} -u $FTP_USER:$FTP_PASSWORD $FTP_SERVER
       done
