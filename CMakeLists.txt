@@ -44,6 +44,9 @@ else()
 	enable_language(C CXX)
 endif()
 
+set(CMAKE_C_STANDARD 90)
+set(CMAKE_CXX_STANDARD 11)
+
 # Customizable options
 option(BuildPortableVersion "Build portable version (does not read or write files from your user/home directory" ON)
 option(BuildMVMP "Whether to create targets for the client (jk2mvmp & jk2mvmenu)" ON)
@@ -225,8 +228,8 @@ elseif ((${CMAKE_C_COMPILER_ID} STREQUAL GNU) OR (${CMAKE_C_COMPILER_ID} STREQUA
 	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -ffast-math")
 
 	# General
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -fvisibility=hidden")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fvisibility=hidden")
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=hidden")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden")
 
 	# Warnings
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wno-unknown-pragmas -Wformat=2")
