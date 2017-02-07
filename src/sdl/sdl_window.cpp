@@ -366,17 +366,13 @@ void WIN_Present( window_t *window )
 			{
 				int x, y;
 				int display = 0;
-				qboolean setpos = GLimp_GetSavedWindowPosition( &display, &x, &y );
 
-				if ( r_centerWindow->integer )
+				if ( !GLimp_GetSavedWindowPosition( &display, &x, &y ) )
 				{
-					x = SDL_WINDOWPOS_CENTERED_DISPLAY( display );
-					y = SDL_WINDOWPOS_CENTERED_DISPLAY( display );
-					setpos = qtrue;
+					x = y = SDL_WINDOWPOS_CENTERED;
 				}
 
-				if ( setpos )
-					SDL_SetWindowPosition( screen, x, y );
+				SDL_SetWindowPosition( screen, x, y );
 
 				IN_Restart();
 			}
@@ -519,7 +515,7 @@ static rserr_t GLimp_SetMode(glconfig_t *glConfig, const windowDesc_t *windowDes
 	Uint32 flags = SDL_WINDOW_SHOWN;
 	SDL_DisplayMode desktopMode;
 	int display = 0;
-	int x = SDL_WINDOWPOS_UNDEFINED, y = SDL_WINDOWPOS_UNDEFINED;
+	int x = SDL_WINDOWPOS_CENTERED, y = SDL_WINDOWPOS_CENTERED;
 
 	if ( windowDesc->api == GRAPHICS_API_OPENGL )
 	{
