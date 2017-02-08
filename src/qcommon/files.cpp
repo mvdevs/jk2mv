@@ -1073,9 +1073,6 @@ Check if file is a named pipe (FIFO)
 ===========
 */
 qboolean FS_IsFifo( const char *filename ) {
-	char *ospath;
-	struct stat f_stat;
-
 	if ( !fs_searchpaths ) {
 		Com_Error( ERR_FATAL, "Filesystem call made without initialization" );
 	}
@@ -1084,6 +1081,9 @@ qboolean FS_IsFifo( const char *filename ) {
 	// S_ISFIFO macro is missing in msvc
 	return qfalse;
 #else
+	char *ospath;
+	struct stat f_stat;
+
 	ospath = FS_BuildOSPath( fs_homepath->string, fs_gamedir, filename );
 
 	if ( stat(ospath, &f_stat) == -1 ) {
