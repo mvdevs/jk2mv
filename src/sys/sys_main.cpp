@@ -154,7 +154,7 @@ void Q_NORETURN QDECL Sys_Error(const char *error, ...) {
 	char    string[1024];
 
 	va_start(argptr, error);
-	vsnprintf(string, sizeof(string), error, argptr);
+	Q_vsnprintf(string, sizeof(string), error, argptr);
 	va_end(argptr);
 
 	Sys_Print(string,qfalse);

@@ -46,7 +46,7 @@ void LogFile(char *Text, ...)
 	FILE	*FH;
 
 	va_start (argptr,Text);
-	vsprintf (Buffer,Text,argptr);
+	Q_vsnprintf (Buffer,sizeof(Buffer),Text,argptr);
 	va_end (argptr);
 
 	FH = fopen("c:\\striped.log", "r+");

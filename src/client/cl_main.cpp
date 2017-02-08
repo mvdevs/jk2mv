@@ -2628,7 +2628,7 @@ void QDECL CL_RefPrintf( int print_level, const char *fmt, ...) {
 	char		msg[MAXPRINTMSG];
 
 	va_start (argptr,fmt);
-	vsnprintf (msg, sizeof(msg), fmt, argptr);
+	Q_vsnprintf (msg, sizeof(msg), fmt, argptr);
 	va_end (argptr);
 
 	if ( print_level == PRINT_ALL ) {

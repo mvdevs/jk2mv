@@ -187,7 +187,7 @@ void QDECL Com_Printf( const char *fmt, ... )
 	char		msg[MAXPRINTMSG];
 
 	va_start (argptr,fmt);
-	vsprintf (msg,fmt,argptr);
+	Q_vsnprintf (msg,sizeof(msg),fmt,argptr);
 	va_end (argptr);
 
 	Com_Puts_Ext( qfalse, msg );
@@ -199,7 +199,7 @@ void QDECL Com_Printf_Ext( qboolean extendedColors, const char *fmt, ... )
 	char		msg[MAXPRINTMSG];
 
 	va_start (argptr,fmt);
-	vsprintf (msg,fmt,argptr);
+	Q_vsnprintf (msg,sizeof(msg),fmt,argptr);
 	va_end (argptr);
 
 	Com_Puts_Ext( extendedColors, msg);
@@ -222,7 +222,7 @@ void QDECL Com_DPrintf( const char *fmt, ...) {
 	}
 
 	va_start (argptr,fmt);
-	vsprintf (msg,fmt,argptr);
+	Q_vsnprintf (msg,sizeof(msg),fmt,argptr);
 	va_end (argptr);
 
 	Com_Puts_Ext (qfalse, msg);
@@ -235,7 +235,7 @@ void QDECL Com_OPrintf( const char *fmt, ...)
 	char		msg[MAXPRINTMSG];
 
 	va_start (argptr,fmt);
-	vsprintf (msg,fmt,argptr);
+	Q_vsnprintf (msg,sizeof(msg),fmt,argptr);
 	va_end (argptr);
 #ifdef WIN32
 	OutputDebugStringA(msg);
@@ -284,7 +284,7 @@ Q_NORETURN void QDECL Com_Error( int code, const char *fmt, ... ) {
 	com_errorEntered = qtrue;
 
 	va_start (argptr,fmt);
-	vsprintf (com_errorMessage,fmt,argptr);
+	Q_vsnprintf (com_errorMessage,sizeof(com_errorMessage),fmt,argptr);
 	va_end (argptr);
 
 	if ( code != ERR_DISCONNECT ) {

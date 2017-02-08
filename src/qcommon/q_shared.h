@@ -1041,6 +1041,12 @@ void Parse3DMatrix (const char **buf_p, int z, int y, int x, float *m);
 
 void	QDECL Com_sprintf (char *dest, size_t size, const char *fmt, ...);
 
+#if defined(_MSC_VER) && _MSC_VER < 1900
+size_t Q_vsnprintf(char *str, size_t size, const char *format, va_list ap);
+#else
+#define Q_vsnprintf vsnprintf
+#endif
+
 // for auto-complete (copied from OpenJK)
 #define TRUNCATE_LENGTH	64
 void Com_TruncateLongString( char *buffer, const char *s );

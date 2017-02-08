@@ -265,7 +265,7 @@ void COM_ParseError(char *format, ...) {
 	static char string[4096];
 
 	va_start(argptr, format);
-	vsprintf(string, format, argptr);
+	Q_vsnprintf(string, sizeof(string), format, argptr);
 	va_end(argptr);
 
 	Com_Printf("ERROR: %s, line %d: %s\n", com_parsename, com_lines, string);
@@ -276,7 +276,7 @@ void COM_ParseWarning(char *format, ...) {
 	static char string[4096];
 
 	va_start(argptr, format);
-	vsprintf(string, format, argptr);
+	Q_vsnprintf(string, sizeof(string), format, argptr);
 	va_end(argptr);
 
 	Com_Printf("WARNING: %s, line %d: %s\n", com_parsename, com_lines, string);
@@ -930,13 +930,12 @@ char *Q_CleanStr(char *string, qboolean use102color) {
 }
 
 
-#ifdef _MSC_VER
+#if defined(_MSC_VER) && _MSC_VER < 1900
 /*
 =============
 Q_vsnprintf
 
 Special wrapper function for Microsoft's broken _vsnprintf() function.
-MinGW comes with its own snprintf() which is not broken.
 =============
 */
 
@@ -955,25 +954,19 @@ size_t Q_vsnprintf(char *str, size_t size, const char *format, va_list ap) {
 	}
 	return retval;
 }
-#else
-#define Q_vsnprintf vsnprintf
 #endif
 
 void QDECL Com_sprintf(char *dest, size_t size, const char *fmt, ...) {
 	int		len;
 	va_list		argptr;
-	char	bigbuffer[32000];	// big, but small enough to fit in PPC stack
 
 	va_start(argptr, fmt);
-	len = vsprintf(bigbuffer, fmt, argptr);
+	len = Q_vsnprintf(dest, size, fmt, argptr);
 	va_end(argptr);
-	if (len >= sizeof(bigbuffer)) {
-		Com_Error(ERR_FATAL, "Com_sprintf: overflowed bigbuffer");
-	}
+
 	if (len >= size) {
 		Com_Printf("Com_sprintf: overflow of %i in %i\n", len, size);
 	}
-	Q_strncpyz(dest, bigbuffer, size);
 }
 
 
@@ -997,7 +990,7 @@ char * QDECL va(const char *format, ...) {
 
 	va_start(argptr, format);
 	buf = (char *)&string[index++ & 3];
-	Q_vsnprintf(buf, MAX_VA_STRING - 1, format, argptr);
+	Q_vsnprintf(buf, MAX_VA_STRING, format, argptr);
 	va_end(argptr);
 
 	return buf;
