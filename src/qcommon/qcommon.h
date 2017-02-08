@@ -736,7 +736,7 @@ void		Info_Print( const char *s );
 
 void		Com_BeginRedirect (char *buffer, int buffersize, void (*flush)(char *));
 void		Com_EndRedirect( void );
-void 		QDECL Com_Printf(qboolean extendedColors, const char *fmt, ... );
+void 		QDECL Com_Printf( const char *fmt, ... );
 void		QDECL Com_Printf_Ext( qboolean extendedColors, const char *msg, ... );
 void 		QDECL Com_DPrintf( const char *fmt, ... );
 void		QDECL Com_OPrintf( const char *fmt, ...); // Outputs to the VC / Windows Debug window (only in debug compile)
