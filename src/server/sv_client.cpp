@@ -1174,8 +1174,6 @@ void SV_UserinfoChanged( client_t *cl ) {
 		cl->snapshotMsec = 50;
 	}
 
-	// namecrash fix
-#define VALIDNAMECHARS " aäbcdefghijklmnoöpqrstuüvwxyzßAÄBCDEFGHIJKLMNOÖPQRSTUÜVWXYZ1234567890^$&/()=?!´`'+#*.,:<>|{[]}-_~@%§\x0B\x7F"
 	if (mv_fixnamecrash->integer && !(sv.fixes & MVFIX_NAMECRASH)) {
 		char name[61], cleanedName[61]; // 60 because some mods increased this
 		Q_strncpyz(name, Info_ValueForKey(cl->userinfo, "name"), sizeof(name));
@@ -1184,7 +1182,19 @@ void SV_UserinfoChanged( client_t *cl ) {
 		for (int i = 0; i < (int)strlen(name); i++) {
 			char ch = name[i];
 
-			if (strchr(VALIDNAMECHARS, ch)) {
+			if (isascii(ch) ||
+				ch == '\x0A' || // underscore cursor (console only)
+				ch == '\x0B' || // block cursor (console only)
+				ch == '\xB7' || // section sign (§)
+				ch == '\xB4' || // accute accent (´)
+				ch == '\xC4' || // A umlaut (Ä)
+				ch == '\xD6' || // O umlaut (Ö)
+				ch == '\xDC' || // U umlaut (Ü)
+				ch == '\xDF' || // sharp S (ß)
+				ch == '\xE4' || // a umlaut (ä)
+				ch == '\xF6' || // o umlaut (ö)
+				ch == '\xFC')   // u umlaut (ü)
+			{
 				cleanedName[count++] = ch;
 			}
 		}
