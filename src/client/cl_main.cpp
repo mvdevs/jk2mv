@@ -3091,12 +3091,12 @@ static void CL_SetServerInfo(serverInfo_t *server, const char *info, int ping) {
 			server->minPing = atoi(Info_ValueForKey(info, "minping"));
 			server->maxPing = atoi(Info_ValueForKey(info, "maxping"));
 //			server->allowAnonymous = atoi(Info_ValueForKey(info, "sv_allowAnonymous"));
-			server->needPassword = (qboolean)atoi(Info_ValueForKey(info, "needpass" ));
+			server->needPassword = (qboolean)!!atoi(Info_ValueForKey(info, "needpass" ));
 			server->trueJedi = atoi(Info_ValueForKey(info, "truejedi" ));
 			server->weaponDisable = atoi(Info_ValueForKey(info, "wdisable" ));
 			server->forceDisable = atoi(Info_ValueForKey(info, "fdisable" ));
 			server->protocol = atoi(Info_ValueForKey(info, "protocol"));
-//			server->pure = (qboolean)atoi(Info_ValueForKey(info, "pure" ));
+//			server->pure = (qboolean)!!atoi(Info_ValueForKey(info, "pure" ));
 		}
 		server->ping = ping;
 	}

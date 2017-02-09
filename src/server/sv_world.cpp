@@ -452,7 +452,7 @@ Ghoul2 Insert Start
 
 	int			passEntityNum;
 	int			contentmask;
-	int			capsule;
+	qboolean	capsule;
 
 	int			traceFlags;
 	int			useLod;
@@ -469,7 +469,7 @@ SV_ClipToEntity
 
 ====================
 */
-void SV_ClipToEntity( trace_t *trace, const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, int entityNum, int contentmask, int capsule ) {
+void SV_ClipToEntity( trace_t *trace, const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, int entityNum, int contentmask, qboolean capsule ) {
 	sharedEntity_t	*touch;
 	clipHandle_t	clipHandle;
 	float			*origin, *angles;
@@ -689,7 +689,7 @@ passEntityNum and entities owned by passEntityNum are explicitly not checked.
 /*
 Ghoul2 Insert Start
 */
-void SV_Trace( trace_t *results, const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, int passEntityNum, int contentmask, int capsule, int traceFlags, int useLod ) {
+void SV_Trace( trace_t *results, const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, int passEntityNum, int contentmask, qboolean capsule, int traceFlags, int useLod ) {
 /*
 Ghoul2 Insert End
 */

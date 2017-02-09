@@ -966,7 +966,7 @@ window_t WIN_Init( const windowDesc_t *windowDesc, glconfig_t *glConfig )
 
 	// Create the window and set up the context
 	if(!GLimp_StartDriverAndSetMode( glConfig, windowDesc, r_mode->integer,
-										(qboolean)r_fullscreen->integer, (qboolean)r_noborder->integer ))
+										(qboolean)!!r_fullscreen->integer, (qboolean)!!r_noborder->integer ))
 	{
 		if( r_mode->integer != R_MODE_FALLBACK )
 		{

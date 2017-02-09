@@ -921,7 +921,7 @@ intptr_t CL_UISystemCalls(intptr_t *args) {
 		return Key_GetOverstrikeMode();
 
 	case UI_KEY_SETOVERSTRIKEMODE:
-		Key_SetOverstrikeMode( (qboolean)args[1] );
+		Key_SetOverstrikeMode( (qboolean)!!args[1] );
 		return 0;
 
 	case UI_KEY_CLEARSTATES:
@@ -995,7 +995,7 @@ intptr_t CL_UISystemCalls(intptr_t *args) {
 		return LAN_GetServerPing( args[1], args[2] );
 
 	case UI_LAN_MARKSERVERVISIBLE:
-		LAN_MarkServerVisible( args[1], args[2], (qboolean)args[3] );
+		LAN_MarkServerVisible( args[1], args[2], (qboolean)!!args[3] );
 		return 0;
 
 	case UI_LAN_SERVERISVISIBLE:
@@ -1279,7 +1279,7 @@ qboolean UI_GameCommand( void ) {
 		return qfalse;
 	}
 
-	return (qboolean)VM_Call( uivm, UI_CONSOLE_COMMAND, cls.realtime );
+	return (qboolean)!!VM_Call( uivm, UI_CONSOLE_COMMAND, cls.realtime );
 }
 
 mvversion_t UI_GetCurrentGameversion() {

@@ -1090,7 +1090,7 @@ qboolean FS_IsFifo( const char *filename ) {
 		return qfalse;
 	}
 
-	return (qboolean)S_ISFIFO(f_stat.st_mode);
+	return (qboolean)!!S_ISFIFO(f_stat.st_mode);
 #endif
 }
 
@@ -1101,7 +1101,7 @@ FS_FilenameCompare
 Ignore case and seprator char distinctions
 ===========
 */
-qboolean FS_FilenameCompare( const char *s1, const char *s2 ) {
+int FS_FilenameCompare( const char *s1, const char *s2 ) {
 	int		c1, c2;
 
 	do {
@@ -1123,11 +1123,11 @@ qboolean FS_FilenameCompare( const char *s1, const char *s2 ) {
 		}
 
 		if (c1 != c2) {
-			return (qboolean)-1;		// strings not equal
+			return -1;		// strings not equal
 		}
 	} while (c1);
 
-	return (qboolean)0;		// strings are equal
+	return 0;		// strings are equal
 }
 
 const char *get_filename_ext(const char *filename) {

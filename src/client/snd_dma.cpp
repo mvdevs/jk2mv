@@ -107,8 +107,8 @@ channel_t   s_channels[MAX_CHANNELS];
 channel_t   loop_channels[MAX_CHANNELS];
 int			numLoopChannels;
 
-static int	s_soundStarted;
-qboolean	s_soundMuted;
+static qboolean	s_soundStarted;
+qboolean		s_soundMuted;
 
 dma_t		dma;
 
@@ -340,7 +340,7 @@ void S_Init( void )
 		if (alcGetError(ALCDevice) != ALC_NO_ERROR)
 			return;
 
-		s_soundStarted = 1;
+		s_soundStarted = qtrue;
 		s_soundMuted = qtrue;
 		s_soundtime = 0;
 		s_paintedtime = 0;
@@ -429,8 +429,8 @@ void S_Init( void )
 		Com_Printf("------------------------------------\n");
 
 		if ( r ) {
-		s_soundStarted = 1;
-		s_soundMuted = (qboolean)1;
+		s_soundStarted = qtrue;
+		s_soundMuted = qtrue;
 //		s_numSfx = 0;
 
 		s_soundtime = 0;
@@ -582,7 +582,7 @@ void S_Shutdown( void )
 	}
 #endif
 
-	s_soundStarted = 0;
+	s_soundStarted = qfalse;
 
     Cmd_RemoveCommand("play");
 	Cmd_RemoveCommand("music");

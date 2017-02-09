@@ -519,7 +519,7 @@ static void RB_DrawVerticalSurfaceSprites( shaderStage_t *stage, shaderCommands_
 	vec2_t fogv;
 	vec2_t winddiffv;
 	float windforce=0;
-	qboolean usewindpoint = (qboolean) !! (curWindPointActive && stage->ss.wind > 0);
+	qboolean usewindpoint = (qboolean)(curWindPointActive && stage->ss.wind > 0);
 
 	float cutdist=stage->ss.fadeMax*rangescalefactor, cutdist2=cutdist*cutdist;
 	float fadedist=stage->ss.fadeDist*rangescalefactor, fadedist2=fadedist*fadedist;

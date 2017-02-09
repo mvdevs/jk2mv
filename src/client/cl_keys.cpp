@@ -2117,7 +2117,7 @@ void Key_ClearStates (void)
 			CL_KeyEvent( i, qfalse, 0 );
 
 		}
-		kg.keys[i].down = (qboolean)0;
+		kg.keys[i].down = qfalse;
 		kg.keys[i].repeats = 0;
 	}
 }

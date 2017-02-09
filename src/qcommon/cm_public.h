@@ -5,7 +5,7 @@
 void		CM_LoadMap( const char *name, qboolean clientload, int *checksum);
 void		CM_ClearMap( void );
 clipHandle_t CM_InlineModel( int index );		// 0 = world, 1 + are bmodels
-clipHandle_t CM_TempBoxModel( const vec3_t mins, const vec3_t maxs, int capsule );
+clipHandle_t CM_TempBoxModel( const vec3_t mins, const vec3_t maxs, qboolean capsule );
 
 void		CM_ModelBounds( clipHandle_t model, vec3_t mins, vec3_t maxs );
 
@@ -19,11 +19,11 @@ int			CM_TransformedPointContents( const vec3_t p, clipHandle_t model, const vec
 
 void		CM_BoxTrace ( trace_t *results, const vec3_t start, const vec3_t end,
 						  const vec3_t mins, const vec3_t maxs,
-						  clipHandle_t model, int brushmask, int capsule );
+						  clipHandle_t model, int brushmask, qboolean capsule );
 void		CM_TransformedBoxTrace( trace_t *results, const vec3_t start, const vec3_t end,
 						  const vec3_t mins, const vec3_t maxs,
 						  clipHandle_t model, int brushmask,
-						  const vec3_t origin, const vec3_t angles, int capsule );
+						  const vec3_t origin, const vec3_t angles, qboolean capsule );
 
 byte		*CM_ClusterPVS (int cluster);
 

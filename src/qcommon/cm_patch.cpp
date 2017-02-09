@@ -845,7 +845,7 @@ void CM_AddFacetBevels( facet_t *facet ) {
 			if ( i == facet->numBorders ) {
 				if (facet->numBorders > 4 + 6 + 16) Com_Printf("ERROR: too many bevels\n");
 				facet->borderPlanes[facet->numBorders] = CM_FindPlane2(plane, &flipped);
-				facet->borderNoAdjust[facet->numBorders] = (qboolean)0;
+				facet->borderNoAdjust[facet->numBorders] = qfalse;
 				facet->borderInward[facet->numBorders] = flipped;
 				facet->numBorders++;
 			}
@@ -913,7 +913,7 @@ void CM_AddFacetBevels( facet_t *facet ) {
 							facet->borderPlanes[k]) Com_Printf("WARNING: bevel plane already used\n");
 					}
 
-					facet->borderNoAdjust[facet->numBorders] = (qboolean)0;
+					facet->borderNoAdjust[facet->numBorders] = qfalse;
 					facet->borderInward[facet->numBorders] = flipped;
 					//
 					w2 = CopyWinding(w);
@@ -944,7 +944,7 @@ void CM_AddFacetBevels( facet_t *facet ) {
 #ifndef BSPC
 	//add opposite plane
 	facet->borderPlanes[facet->numBorders] = facet->surfacePlane;
-	facet->borderNoAdjust[facet->numBorders] = (qboolean)0;
+	facet->borderNoAdjust[facet->numBorders] = qfalse;
 	facet->borderInward[facet->numBorders] = qtrue;
 	facet->numBorders++;
 #endif //BSPC
@@ -969,7 +969,7 @@ static void CM_PatchCollideFromGrid( cGrid_t *grid, patchCollide_t *pf ) {
 	MAC_STATIC int				gridPlanes[MAX_GRID_SIZE][MAX_GRID_SIZE][2];
 	facet_t			*facet;
 	int				borders[4];
-	int				noAdjust[4];
+	qboolean		noAdjust[4];
 
 	numPlanes = 0;
 	numFacets = 0;
@@ -999,7 +999,7 @@ static void CM_PatchCollideFromGrid( cGrid_t *grid, patchCollide_t *pf ) {
 			} else if ( grid->wrapHeight ) {
 				borders[EN_TOP] = gridPlanes[i][grid->height-2][1];
 			}
-			noAdjust[EN_TOP] = ( borders[EN_TOP] == gridPlanes[i][j][0] );
+			noAdjust[EN_TOP] = (qboolean)( borders[EN_TOP] == gridPlanes[i][j][0] );
 			if ( borders[EN_TOP] == -1 || noAdjust[EN_TOP] ) {
 				borders[EN_TOP] = CM_EdgePlaneNum( grid, gridPlanes, i, j, 0 );
 			}
@@ -1010,7 +1010,7 @@ static void CM_PatchCollideFromGrid( cGrid_t *grid, patchCollide_t *pf ) {
 			} else if ( grid->wrapHeight ) {
 				borders[EN_BOTTOM] = gridPlanes[i][0][0];
 			}
-			noAdjust[EN_BOTTOM] = ( borders[EN_BOTTOM] == gridPlanes[i][j][1] );
+			noAdjust[EN_BOTTOM] = (qboolean)( borders[EN_BOTTOM] == gridPlanes[i][j][1] );
 			if ( borders[EN_BOTTOM] == -1 || noAdjust[EN_BOTTOM] ) {
 				borders[EN_BOTTOM] = CM_EdgePlaneNum( grid, gridPlanes, i, j, 2 );
 			}
@@ -1021,7 +1021,7 @@ static void CM_PatchCollideFromGrid( cGrid_t *grid, patchCollide_t *pf ) {
 			} else if ( grid->wrapWidth ) {
 				borders[EN_LEFT] = gridPlanes[grid->width-2][j][0];
 			}
-			noAdjust[EN_LEFT] = ( borders[EN_LEFT] == gridPlanes[i][j][1] );
+			noAdjust[EN_LEFT] = (qboolean)( borders[EN_LEFT] == gridPlanes[i][j][1] );
 			if ( borders[EN_LEFT] == -1 || noAdjust[EN_LEFT] ) {
 				borders[EN_LEFT] = CM_EdgePlaneNum( grid, gridPlanes, i, j, 3 );
 			}
@@ -1032,7 +1032,7 @@ static void CM_PatchCollideFromGrid( cGrid_t *grid, patchCollide_t *pf ) {
 			} else if ( grid->wrapWidth ) {
 				borders[EN_RIGHT] = gridPlanes[0][j][1];
 			}
-			noAdjust[EN_RIGHT] = ( borders[EN_RIGHT] == gridPlanes[i][j][0] );
+			noAdjust[EN_RIGHT] = (qboolean)( borders[EN_RIGHT] == gridPlanes[i][j][0] );
 			if ( borders[EN_RIGHT] == -1 || noAdjust[EN_RIGHT] ) {
 				borders[EN_RIGHT] = CM_EdgePlaneNum( grid, gridPlanes, i, j, 1 );
 			}
@@ -1050,13 +1050,13 @@ static void CM_PatchCollideFromGrid( cGrid_t *grid, patchCollide_t *pf ) {
 				facet->surfacePlane = gridPlanes[i][j][0];
 				facet->numBorders = 4;
 				facet->borderPlanes[0] = borders[EN_TOP];
-				facet->borderNoAdjust[0] = (qboolean)noAdjust[EN_TOP];
+				facet->borderNoAdjust[0] = noAdjust[EN_TOP];
 				facet->borderPlanes[1] = borders[EN_RIGHT];
-				facet->borderNoAdjust[1] = (qboolean)noAdjust[EN_RIGHT];
+				facet->borderNoAdjust[1] = noAdjust[EN_RIGHT];
 				facet->borderPlanes[2] = borders[EN_BOTTOM];
-				facet->borderNoAdjust[2] = (qboolean)noAdjust[EN_BOTTOM];
+				facet->borderNoAdjust[2] = noAdjust[EN_BOTTOM];
 				facet->borderPlanes[3] = borders[EN_LEFT];
-				facet->borderNoAdjust[3] = (qboolean)noAdjust[EN_LEFT];
+				facet->borderNoAdjust[3] = noAdjust[EN_LEFT];
 				CM_SetBorderInward( facet, grid, gridPlanes, i, j, -1 );
 				if ( CM_ValidateFacet( facet ) ) {
 					CM_AddFacetBevels( facet );
@@ -1067,9 +1067,9 @@ static void CM_PatchCollideFromGrid( cGrid_t *grid, patchCollide_t *pf ) {
 				facet->surfacePlane = gridPlanes[i][j][0];
 				facet->numBorders = 3;
 				facet->borderPlanes[0] = borders[EN_TOP];
-				facet->borderNoAdjust[0] = (qboolean)noAdjust[EN_TOP];
+				facet->borderNoAdjust[0] = noAdjust[EN_TOP];
 				facet->borderPlanes[1] = borders[EN_RIGHT];
-				facet->borderNoAdjust[1] = (qboolean)noAdjust[EN_RIGHT];
+				facet->borderNoAdjust[1] = noAdjust[EN_RIGHT];
 				facet->borderPlanes[2] = gridPlanes[i][j][1];
 				if ( facet->borderPlanes[2] == -1 ) {
 					facet->borderPlanes[2] = borders[EN_BOTTOM];
@@ -1092,9 +1092,9 @@ static void CM_PatchCollideFromGrid( cGrid_t *grid, patchCollide_t *pf ) {
 				facet->surfacePlane = gridPlanes[i][j][1];
 				facet->numBorders = 3;
 				facet->borderPlanes[0] = borders[EN_BOTTOM];
-				facet->borderNoAdjust[0] = (qboolean)noAdjust[EN_BOTTOM];
+				facet->borderNoAdjust[0] = noAdjust[EN_BOTTOM];
 				facet->borderPlanes[1] = borders[EN_LEFT];
-				facet->borderNoAdjust[1] = (qboolean)noAdjust[EN_LEFT];
+				facet->borderNoAdjust[1] = noAdjust[EN_LEFT];
 				facet->borderPlanes[2] = gridPlanes[i][j][0];
 				if ( facet->borderPlanes[2] == -1 ) {
 					facet->borderPlanes[2] = borders[EN_TOP];

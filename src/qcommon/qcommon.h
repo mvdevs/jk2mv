@@ -665,7 +665,7 @@ int		FS_FOpenFileByModeHash( const char *qpath, fileHandle_t *f, fsMode_t mode, 
 int		FS_Seek( fileHandle_t f, int offset, int origin );
 // seek on a file (doesn't work for zip files!!!!!!!!)
 
-qboolean FS_FilenameCompare( const char *s1, const char *s2 );
+int		FS_FilenameCompare( const char *s1, const char *s2 );
 
 const char *FS_LoadedPakNames( void );
 const char *FS_LoadedPakChecksums( void );
