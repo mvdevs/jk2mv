@@ -1152,7 +1152,7 @@ redump:
 		if (cinTable[currentHandle].numQuads != 1) cinTable[currentHandle].numQuads = 0;
 		break;
 	case	ROQ_PACKET:
-		cinTable[currentHandle].inMemory = (qboolean)cinTable[currentHandle].roq_flags;
+		cinTable[currentHandle].inMemory = (qboolean)!!cinTable[currentHandle].roq_flags;
 		cinTable[currentHandle].RoQFrameSize = 0;		   // for header
 		break;
 	case	ROQ_QUAD_HANG:
@@ -1197,7 +1197,7 @@ redump:
 	}
 	if (cinTable[currentHandle].inMemory && (cinTable[currentHandle].status != FMV_EOF))
 	{
-		cinTable[currentHandle].inMemory = (qboolean)(((int)cinTable[currentHandle].inMemory) - 1);
+		cinTable[currentHandle].inMemory = qfalse;
 		framedata += 8;
 		goto redump;
 	}
