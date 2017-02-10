@@ -1904,7 +1904,15 @@ void R_LoadEntities( lump_t *l ) {
 		}
 		// check for a different grid size
 		if (!Q_stricmp(keyname, "gridsize")) {
-			sscanf(value, "%f %f %f", &w->lightGridSize[0], &w->lightGridSize[1], &w->lightGridSize[2] );
+			vec3_t gridSize;
+
+			if ( sscanf(value, "%f %f %f", &gridSize[0], &gridSize[1], &gridSize[2]) != 3 ) {
+				ri.Printf( PRINT_WARNING, "WARNING: Malformed gridsize '%s'\n", value);
+			} else {
+				w->lightGridSize[0] = gridSize[0];
+				w->lightGridSize[1] = gridSize[1];
+				w->lightGridSize[2] = gridSize[2];
+			}
 			continue;
 		}
 	}

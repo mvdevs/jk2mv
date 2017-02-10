@@ -1105,7 +1105,8 @@ void CL_Setenv_f( void ) {
 			strcat( buffer, " " );
 		}
 
-		putenv( buffer );
+		if ( putenv( buffer ) != 0 )
+			Com_Printf( "Unable to set environment variable, errno = %d\n", errno );
 	} else if ( argc == 2 ) {
 		char *env = getenv( Cmd_Argv(1) );
 

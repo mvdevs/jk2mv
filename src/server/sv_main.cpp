@@ -92,8 +92,10 @@ int SV_ReplacePendingServerCommands( client_t *client, const char *cmd ) {
 		index = i & ( MAX_RELIABLE_COMMANDS - 1 );
 		//
 		if (!Q_strncmp(cmd, client->reliableCommands[index], (int)strlen("cs"))) {
-			sscanf(cmd, "cs %i", &csnum1);
-			sscanf(client->reliableCommands[ index ], "cs %i", &csnum2);
+			if ( sscanf(cmd, "cs %i", &csnum1) != 1 )
+				return qfalse;
+			if ( sscanf(client->reliableCommands[ index ], "cs %i", &csnum2) != 1 )
+				return qfalse;
 			if ( csnum1 == csnum2 ) {
 				Q_strncpyz( client->reliableCommands[ index ], cmd, sizeof( client->reliableCommands[ index ] ) );
 				/*

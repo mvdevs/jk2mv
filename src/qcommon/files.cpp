@@ -2922,7 +2922,7 @@ we are not interested in a download string format, we want something human-reada
 */
 qboolean FS_ComparePaks( char *neededpaks, int len, int *chksums, size_t maxchksums, qboolean dlstring ) {
 	searchpath_t	*sp;
-	qboolean havepak, badchecksum;
+	qboolean havepak, badchecksum, badname;
 	int i;
 
 	if ( !fs_numServerReferencedPaks ) {
@@ -2930,6 +2930,7 @@ qboolean FS_ComparePaks( char *neededpaks, int len, int *chksums, size_t maxchks
 	}
 
 	*neededpaks = 0;
+	badname = qfalse;
 
 	for ( i = 0 ; i < fs_numServerReferencedPaks ; i++ ) {
 		// Ok, see if we have this pak file
@@ -2957,7 +2958,13 @@ qboolean FS_ComparePaks( char *neededpaks, int len, int *chksums, size_t maxchks
 		if ( !havepak && fs_serverReferencedPakNames[i] && *fs_serverReferencedPakNames[i] ) {
 			// Don't got it
 			char moddir[MAX_QPATH], filename[MAX_QPATH];
-			sscanf(fs_serverReferencedPakNames[i], "%63[^'/']/%63s", moddir, filename);
+			int read = sscanf(fs_serverReferencedPakNames[i], "%63[^'/']/%63s", moddir, filename);
+
+			if ( read != 2 ) {
+				Com_Printf( "WARNING: Unable to parse pak name: %s\n", fs_serverReferencedPakNames[i] );
+				badname = qtrue;
+				continue;
+			}
 
 			if (dlstring) {
 				// Remote name
@@ -2998,7 +3005,7 @@ qboolean FS_ComparePaks( char *neededpaks, int len, int *chksums, size_t maxchks
 			}
 		}
 	}
-	if ( *neededpaks ) {
+	if ( *neededpaks || badname ) {
 		return qtrue;
 	}
 
