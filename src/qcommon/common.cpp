@@ -119,7 +119,7 @@ void Com_EndRedirect (void)
 	rd_flush = NULL;
 }
 
-static void Com_Puts_Ext( qboolean extendedColors, char *msg )
+static void Com_Puts_Ext( qboolean extendedColors, const char *msg )
 {
 	if ( rd_buffer ) {
 		if ((strlen (msg) + strlen(rd_buffer)) > (rd_buffersize - 1)) {
@@ -165,7 +165,7 @@ static void Com_Puts_Ext( qboolean extendedColors, char *msg )
 #if defined(_WIN32) && defined(_DEBUG)
 	if ( *msg )
 	{
-		OutputDebugStringA ( Q_CleanStr(msg, (qboolean)MV_USE102COLOR) );
+		OutputDebugStringA ( Q_CleanStr((char *)msg, (qboolean)MV_USE102COLOR) );
 		OutputDebugStringA ("\n");
 	}
 #endif

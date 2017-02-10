@@ -2396,13 +2396,13 @@ Ghoul2 Insert Start
 			// nope, better load it in and register it
 			if (!shader.hitLocation)
 			{
+				// find us a new spot in the material list - and make sure we avoid the 0 spot in the list
+				hitMatCount++;
 				// sanity check
 				if (hitMatCount == MAX_HITMAT_ENTRIES)
 				{
 					ri.Error(ERR_DROP, "Not enough entry space for hit location file %s", token);
 				}
-				// find us a new spot in the material list - and make sure we avoid the 0 spot in the list
-				hitMatCount++;
 
 				// now load that file in
 				LoadTGAPalletteImage(token, &buffer, &hitMatReg[hitMatCount].width, &hitMatReg[hitMatCount].height);
@@ -2447,13 +2447,13 @@ Ghoul2 Insert Start
 			// nope, better load it in and register it
 			if (!shader.hitMaterial)
 			{
+				// find us a new spot in the material list - and make sure we avoid the 0 spot in the list
+				hitMatCount++;
 				// sanity check
 				if (hitMatCount == MAX_HITMAT_ENTRIES)
 				{
 					ri.Error(ERR_DROP, "Not enough entry space for hit Material file %s", token);
 				}
-				// find us a new spot in the material list - and make sure we avoid the 0 spot in the list
-				hitMatCount++;
 
 				// now load that file in
 				LoadTGAPalletteImage(token, &buffer, &hitMatReg[hitMatCount].width, &hitMatReg[hitMatCount].height);
