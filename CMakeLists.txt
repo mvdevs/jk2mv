@@ -105,6 +105,7 @@ if(WIN32)
 	endif()
 elseif(APPLE)
 	set(X86 ON)
+	set(GlobalDefines ${GlobalDefines} "MACOS_X")
 	if(CMAKE_SYSTEM_PROCESSOR MATCHES "^i.86$")
 		set(GlobalDefines ${GlobalDefines} "ARCH_X86")
 		set(Architecture "i386")
@@ -201,10 +202,6 @@ if(MSVC)
 		set(CMAKE_ASM_MASM_FLAGS "${CMAKE_ASM_MASM_FLAGS} /safeseh") # safe exception handler
 	endif()
 elseif ((${CMAKE_C_COMPILER_ID} STREQUAL GNU) OR (${CMAKE_C_COMPILER_ID} MATCHES Clang|AppleClang))
-	if(APPLE)
-		set(GlobalDefines ${GlobalDefines} "MACOS_X")
-	endif()
-
 	# Additional flags for debug configuration
 	set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -ggdb3")
 	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -ggdb3")
