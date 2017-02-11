@@ -70,14 +70,6 @@ source_group("assets" FILES ${AssetsFiles})
 
 # generate assetsmv.pk3
 include(InstallZIP)
-if(NOT ZIP_EXECUTABLE)
-	if(WIN32)
-		message(FATAL_ERROR "No ZIP executable found! Install 7zip, WinZIP or WinRAR.")
-	else()
-		message(FATAL_ERROR "No zip executable found! Install the zip program.")
-	endif()
-endif()
-
 add_zip_command("${CMAKE_CURRENT_BINARY_DIR}/assetsmv.pk3"
 	DIR "${CMAKE_SOURCE_DIR}/assets"
 	FILES "${AssetsFiles}"
