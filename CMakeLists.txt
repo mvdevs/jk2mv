@@ -11,12 +11,13 @@ set(RESDir "${CMAKE_SOURCE_DIR}/res")
 list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_SOURCE_DIR}/tools")
 list(INSERT CMAKE_MODULE_PATH 0 "${RESDir}")
 
-# Project name & version
+# Project & Versioning
 set(CMAKE_CONFIGURATION_TYPES Debug Release CACHE TYPE INTERNAL FORCE)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+
 set(ProjectName "JK2MV" CACHE STRING "Project Name")
-project(${ProjectName})
 set(ProjectURL "https://jk2mv.org")
+project(${ProjectName})
 
 include(GetGitRevisionDescription)
 git_describe(MV_VERSION --tags)
@@ -27,10 +28,9 @@ endif()
 message(STATUS "${ProjectName} Version: ${MV_VERSION}")
 
 # Languages
+enable_language(C CXX)
 if(MSVC)
-	enable_language(C CXX ASM_MASM)
-else()
-	enable_language(C CXX)
+	enable_language(ASM_MASM)
 endif()
 
 set(CMAKE_C_STANDARD 90)
@@ -44,10 +44,6 @@ option(BuildMVDED "Whether to create targets for the dedicated server (jk2mvded)
 if(NOT APPLE AND NOT WIN32)
 	option(BuildPackDEB "Whether to create the DEB package" OFF)
 	option(BuildPackRPM "Whether to create the RPM package" OFF)
-	
-	if (BuildPackRPM AND CMAKE_MAJOR_VERSION LESS 3)
-		message(WARNING "Generated RPM file will not work on newer distributions")
-	endif()
 	
 	if ((BuildPackDEB OR BuildPackRPM) AND BuildPortableVersion)
 		message(FATAL_ERROR "Packaging the portable version is not supported.")
@@ -93,48 +89,56 @@ else()
 	option(UseInternalMiniZip "Whether to use the included minizip instead of a locally installed one" ${UseInternalMiniZipDefault})
 endif()
 
-
+# Platform & Architecture
 if(WIN32)
-	set(X86 ON)
+	set(ARCH_X86 ON)
 	set(GlobalDefines ${GlobalDefines} "WIN32")
 	if(CMAKE_SIZEOF_VOID_P MATCHES "8")
-		set(GlobalDefines ${GlobalDefines} "ARCH_X86_64")
+		set(GlobalDefines ${GlobalDefines} "ARCH_X86_64" "WIN64")
 		set(Architecture "x64")
-		set(WIN64 TRUE)
+		set(ARCH_X86_64 ON)
 	else()
 		set(GlobalDefines ${GlobalDefines} "ARCH_X86")
 		set(Architecture "x86")
-		set(WIN64 FALSE)
+		set(ARCH_X86_32 ON)
 	endif()
 elseif(APPLE)
 	set(X86 ON)
 	if(CMAKE_SYSTEM_PROCESSOR MATCHES "^i.86$")
 		set(GlobalDefines ${GlobalDefines} "ARCH_X86")
 		set(Architecture "i386")
+		set(ARCH_X86_32 ON)
 	elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^x86.64$")
 		set(GlobalDefines ${GlobalDefines} "ARCH_X86_64")
 		set(Architecture "x86_64")
+		set(ARCH_X86_64 ON)
 	endif()
 else()
 	if(CMAKE_SYSTEM_PROCESSOR MATCHES "^arm")
 		set(GlobalDefines ${GlobalDefines} "ARCH_ARM32")
 		set(Architecture "arm")
-		set(ARM ON)
+		set(ARCH_ARM32 ON)
 	elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^i.86$")
 		set(GlobalDefines ${GlobalDefines} "ARCH_X86")
-		set(X86 ON)
 		set(Architecture "i386")
+		set(ARCH_X86 ON)
+		set(ARCH_X86_32 ON)
 	elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^x86.64$")
 		set(GlobalDefines ${GlobalDefines} "ARCH_X86_64")
-		set(X86 ON)
 		set(Architecture "amd64")
+		set(ARCH_X86 ON)
+		set(ARCH_X86_64 ON)
 	else()
-		set(Architecture "${CMAKE_SYSTEM_PROCESSOR}")
 		set(GlobalDefines ${GlobalDefines} "NO_VM_COMPILED")
+		set(Architecture "${CMAKE_SYSTEM_PROCESSOR}")
+		set(ARCH_UNKNOWN ON)
 	endif()
 endif()
 
 message(STATUS "Architecture is ${Architecture}")
+if(ARCH_UNKNOWN)
+	message(WARNING "Building for unsupported Architecture ${Architecture}.")
+endif()
 
 # Binary names
 set(MVMP "jk2mvmp")
@@ -189,9 +193,7 @@ if(MSVC)
 	set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} /O2 /Oi /Ot /Ob2 /fp:fast") # maximize speed
 	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /O2 /Oi /Ot /Ob2 /fp:fast")
 
-	if(WIN64)
-		set(GlobalDefines ${GlobalDefines} "WIN64")
-	else()
+	if(ARCH_X86_32)
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /arch:SSE2")
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /arch:SSE2")
 
@@ -207,7 +209,7 @@ elseif ((${CMAKE_C_COMPILER_ID} STREQUAL GNU) OR (${CMAKE_C_COMPILER_ID} STREQUA
 	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -ggdb3")
 
 	# we need sse optimizations in debug configuration, too because of the inline assembler which is sse code
-	if(X86)
+	if(ARCH_X86)
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -msse2")
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse2")
 	endif()
@@ -226,7 +228,7 @@ elseif ((${CMAKE_C_COMPILER_ID} STREQUAL GNU) OR (${CMAKE_C_COMPILER_ID} STREQUA
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-sign-compare")
 
 	if(${CMAKE_C_COMPILER_ID} STREQUAL GNU)
-		if(X86)
+		if(ARCH_X86)
 			set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -mfpmath=sse")
 		endif()
 
@@ -236,7 +238,7 @@ elseif ((${CMAKE_C_COMPILER_ID} STREQUAL GNU) OR (${CMAKE_C_COMPILER_ID} STREQUA
 	endif()
 
 	if(${CMAKE_CXX_COMPILER_ID} STREQUAL GNU)
-		if(X86)
+		if(ARCH_X86)
 			set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -mfpmath=sse")
 		endif()
 

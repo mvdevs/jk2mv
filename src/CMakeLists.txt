@@ -176,11 +176,11 @@ if (BuildMVMP OR BuildMVDED)
 		"qcommon/vm_interpreted.cpp"
 	)
 
-	if(X86)
+	if(ARCH_X86)
 		set(MVMPDEDCommonFiles ${MVMPDEDCommonFiles}
 			"qcommon/vm_x86.cpp"
 		)
-	elseif(ARM)
+	elseif(ARCH_ARM)
 		set(MVMPDEDCommonFiles ${MVMPDEDCommonFiles}
 			"qcommon/vm_arm.cpp"
 		)
