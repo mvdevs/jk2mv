@@ -200,7 +200,7 @@ if(MSVC)
 
 		set(CMAKE_ASM_MASM_FLAGS "${CMAKE_ASM_MASM_FLAGS} /safeseh") # safe exception handler
 	endif()
-elseif ((${CMAKE_C_COMPILER_ID} STREQUAL GNU) OR (${CMAKE_C_COMPILER_ID} STREQUAL Clang))
+elseif ((${CMAKE_C_COMPILER_ID} STREQUAL GNU) OR (${CMAKE_C_COMPILER_ID} MATCHES Clang|AppleClang))
 	if(APPLE)
 		set(GlobalDefines ${GlobalDefines} "MACOS_X")
 	endif()
@@ -235,7 +235,6 @@ elseif ((${CMAKE_C_COMPILER_ID} STREQUAL GNU) OR (${CMAKE_C_COMPILER_ID} STREQUA
 
 		# Link only libs actually needed
 		set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -Wl,--as-needed")
-	elseif("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang")
 	endif()
 
 	if(${CMAKE_CXX_COMPILER_ID} STREQUAL GNU)
@@ -251,7 +250,7 @@ elseif ((${CMAKE_C_COMPILER_ID} STREQUAL GNU) OR (${CMAKE_C_COMPILER_ID} STREQUA
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility-inlines-hidden")
 
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wformat=2 -Wno-unused-but-set-variable")
-	elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+	elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES Clang|AppleClang)
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-char-subscripts -Wno-self-assign")
 	endif()
 else()
