@@ -84,7 +84,7 @@ add_zip_command("${CMAKE_CURRENT_BINARY_DIR}/assetsmv.pk3"
 	DEPENDS "${AssetsFiles}"
 )
 
-add_custom_target(assets DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/assetsmv.pk3")
+add_custom_target(assets DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/assetsmv.pk3" ${AssetsFiles})
 
 if(WIN32)
 	install(FILES ${CMAKE_CURRENT_BINARY_DIR}/assetsmv.pk3 DESTINATION "base")

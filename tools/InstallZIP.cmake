@@ -100,6 +100,7 @@ function(add_zip_command output)
   string(REPLACE <FILES> "${ARGS_FILES}" ZipCommand "${ZipCommand}")
   add_custom_command(OUTPUT ${output}
     WORKING_DIRECTORY ${ARGS_DIR}
+    COMMAND ${CMAKE_COMMAND} -E remove "${output}"
     COMMAND ${ZipCommand}
     DEPENDS ${ARGS_DEPENDS})
 endfunction(add_zip_command)
