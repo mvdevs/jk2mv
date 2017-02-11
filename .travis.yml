@@ -62,7 +62,7 @@ script: |
   fi
 
 after_script: |
-  docker stop bc
+  if [[ "$HOST" == linux-x86_64-gcc ]]; then docker stop bc; fi
 
 after_success: |
   if [[ "${TRAVIS_PULL_REQUEST}" = "false" ]] && [[ "${TRAVIS_BRANCH}" = "master" ]]; then
