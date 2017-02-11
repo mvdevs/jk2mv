@@ -15,13 +15,14 @@ cvar_t		*con_speed;
 cvar_t		*con_timestamps;
 
 #define	DEFAULT_CONSOLE_WIDTH	78
-#define CON_WRAP				((ColorIndex_Extended(COLOR_LT_TRANSPARENT) << 8) | '\\')
 #define CON_BLANK_CHAR			' '
-#define CON_BLANK				((ColorIndex(COLOR_WHITE)<<8) | CON_BLANK_CHAR)
 #define CON_SCROLL_L_CHAR		'$'
 #define CON_SCROLL_R_CHAR		'$'
 #define CON_TIMESTAMP_LEN		11 // "[13:37:00] "
 #define CON_MIN_WIDTH			20
+
+static const conChar_t CON_WRAP = { { ColorIndex_Extended(COLOR_LT_TRANSPARENT), '\\' } };
+static const conChar_t CON_BLANK = { { ColorIndex(COLOR_WHITE), CON_BLANK_CHAR } };
 
 vec4_t	console_color = {1.0, 1.0, 1.0, 1.0};
 
@@ -154,7 +155,7 @@ void Con_Dump_f (void)
 		line = ((con.current + 1 + l) % con.totallines) * con.rowwidth;
 
 		for (j = CON_TIMESTAMP_LEN ; j < con.rowwidth - 1 ; j++)
-			if ((con.text[line + j] & 0xff) != CON_BLANK_CHAR)
+			if (con.text[line + j].f.character != CON_BLANK_CHAR)
 				break;
 
 		if (j != con.rowwidth - 1)
@@ -171,7 +172,7 @@ void Con_Dump_f (void)
 			line = ((con.current + 1 + l) % con.totallines) * con.rowwidth;
 
 			for (i = 0; i < CON_TIMESTAMP_LEN; i++)
-				buffer[i] = con.text[line + i];
+				buffer[i] = con.text[line + i].f.character;
 
 			lineLen = CON_TIMESTAMP_LEN;
 		}
@@ -182,16 +183,16 @@ void Con_Dump_f (void)
 			line = ((con.current + 1 + l) % con.totallines) * con.rowwidth;
 
 			for (j = CON_TIMESTAMP_LEN; j < con.rowwidth - 1 && i < sizeof(buffer) - 1; j++, i++) {
-				buffer[i] = con.text[line + j] & 0xff;
+				buffer[i] = con.text[line + j].f.character;
 
-				if ((con.text[line + j] & 0xff) != CON_BLANK_CHAR)
+				if (con.text[line + j].f.character != CON_BLANK_CHAR)
 					lineLen = i + 1;
 			}
 
 			if (i == sizeof(buffer) - 1)
 				break;
 
-			if (con.text[line + j] != CON_WRAP)
+			if (con.text[line + j].compare != CON_WRAP.compare)
 				break;
 		}
 
@@ -235,7 +236,7 @@ void Con_CheckResize (void)
 	int		width;
 	int		oldrowwidth;
 	int		oldtotallines;
-	static short tbuf[CON_TEXTSIZE];
+	static conChar_t tbuf[CON_TEXTSIZE];
 
 	if (cls.glconfig.vidWidth <= 0.0f)			// video hasn't been initialized yet
 	{
@@ -301,8 +302,8 @@ void Con_CheckResize (void)
 
 		while (oi < oldtotallines)
 		{
-			short	line[MAXPRINTMSG];
-			short	timestamp[CON_TIMESTAMP_LEN];
+			conChar_t	line[MAXPRINTMSG];
+			conChar_t	timestamp[CON_TIMESTAMP_LEN];
 			int		lineLen = 0;
 			int		oldline = ((con.current + oi) % oldtotallines) * oldrowwidth;
 			int		newline = (ni % con.totallines) * con.rowwidth;
@@ -319,14 +320,14 @@ void Con_CheckResize (void)
 				for (j = CON_TIMESTAMP_LEN; j < oldrowwidth - 1 && i < ARRAY_LEN(line); j++, i++) {
 					line[i] = tbuf[oldline + j];
 
-					if ((line[i] & 0xff) != CON_BLANK_CHAR)
+					if (line[i].f.character != CON_BLANK_CHAR)
 						lineLen = i + 1;
 				}
 
 				if (i == ARRAY_LEN(line))
 					break;
 
-				if (tbuf[oldline + j] != CON_WRAP)
+				if (tbuf[oldline + j].compare != CON_WRAP.compare)
 					break;
 			}
 
@@ -413,14 +414,14 @@ void Con_Linefeed (void)
 	{
 		qtime_t	time;
 		char	timestamp[CON_TIMESTAMP_LEN + 1];
-		short	colorMask = ColorIndex_Extended(COLOR_LT_TRANSPARENT) << 8;
+		const unsigned char color = ColorIndex_Extended(COLOR_LT_TRANSPARENT);
 
 		Com_RealTime(&time);
 		Com_sprintf(timestamp, sizeof(timestamp), "[%02d:%02d:%02d] ",
 			time.tm_hour, time.tm_min, time.tm_sec);
 
 		for ( i = 0; i < CON_TIMESTAMP_LEN; i++ ) {
-			con.text[line + i] = colorMask | timestamp[i];
+			con.text[line + i].f = { color, timestamp[i] };
 		}
 	}
 
@@ -450,9 +451,9 @@ If no console is visible, the text will appear at the top of the game window
 ================
 */
 void CL_ConsolePrint( const char *txt, qboolean extendedColors ) {
-	int		y;
-	int		c;
-	int		color;
+	unsigned char	color;
+	char			c;
+	int				y;
 
 	// for some demos we don't want to ever show anything on the console
 	if ( cl_noprint && cl_noprint->integer ) {
@@ -504,7 +505,7 @@ void CL_ConsolePrint( const char *txt, qboolean extendedColors ) {
 				y = con.current % con.totallines;
 			}
 
-			con.text[y * con.rowwidth + CON_TIMESTAMP_LEN + con.x] = (short) ((color << 8) | c);
+			con.text[y * con.rowwidth + CON_TIMESTAMP_LEN + con.x].f = { color, c };
 			con.x++;
 			break;
 		}
@@ -571,12 +572,12 @@ Draws the last few lines of output transparently over the game top
 */
 void Con_DrawNotify (void)
 {
+	unsigned char	currentColor;
+	conChar_t		*text;
 	int		x, v;
-	short	*text;
 	int		i;
 	int		time;
 	int		skip;
-	int		currentColor;
 
 	currentColor = 7;
 	re.SetColor( g_color_table[currentColor] );
@@ -627,11 +628,11 @@ void Con_DrawNotify (void)
 			char sTemp[4096]={0};	// ott
 			for (x = 0 ; x < con.linewidth ; x++)
 			{
-				if ( ( (text[x]>>8) ) != currentColor ) {
-					currentColor = (text[x]>>8);
+				if ( text[x].f.color != currentColor ) {
+					currentColor = text[x].f.color;
 					strcat(sTemp,va("^%i", (currentColor > 7 ? COLOR_JK2MV_FALLBACK : currentColor) ));
 				}
-				strcat(sTemp,va("%c",text[x] & 0xFF));
+				strcat(sTemp,va("%c",text[x].f.character));
 			}
 			//
 			// and print...
@@ -644,18 +645,18 @@ void Con_DrawNotify (void)
 		else
 		{
 			for (x = 0 ; x < con.linewidth ; x++) {
-				if ( (text[x] & 0xff) == ' ' ) {
+				if ( text[x].f.character == ' ' ) {
 					continue;
 				}
-				if ( ( (text[x]>>8) ) != currentColor ) {
-					currentColor = (text[x]>>8);
+				if ( text[x].f.color != currentColor ) {
+					currentColor = text[x].f.color;
 					re.SetColor( g_color_table[currentColor] );
 				}
 				if (!cl_conXOffset)
 				{
 					cl_conXOffset = Cvar_Get ("cl_conXOffset", "0", 0);
 				}
-				SCR_DrawSmallChar( (int)(cl_conXOffset->integer + (x+1)*con.charWidth), v, text[x] & 0xff );
+				SCR_DrawSmallChar( (int)(cl_conXOffset->integer + (x+1)*con.charWidth), v, text[x].f.character );
 			}
 
 			v += con.charHeight;
@@ -697,13 +698,13 @@ Draws the console with the solid background
 ================
 */
 void Con_DrawSolidConsole( float frac ) {
+	unsigned char	currentColor;
+	conChar_t		*text;
 	int				i, x, y;
 	int				rows;
-	short			*text;
 	int				row;
 	int				lines;
 //	qhandle_t		conShader;
-	int				currentColor;
 	char *vertext;
 
 	lines = (int) (cls.glconfig.vidHeight * frac);
@@ -796,11 +797,11 @@ void Con_DrawSolidConsole( float frac ) {
 			char sTemp[4096]={0};	// ott
 			for (x = 0 ; x < con.linewidth + 1 ; x++)
 			{
-				if ( ( (text[x]>>8) ) != currentColor ) {
-					currentColor = (text[x]>>8);
+				if ( text[x].f.color != currentColor ) {
+					currentColor = text[x].f.color;
 					strcat(sTemp,va("^%i", (currentColor > 7 ? COLOR_JK2MV_FALLBACK : currentColor) ));
 				}
-				strcat(sTemp,va("%c",text[x] & 0xFF));
+				strcat(sTemp,va("%c",text[x].f.character));
 			}
 			//
 			// and print...
@@ -811,15 +812,15 @@ void Con_DrawSolidConsole( float frac ) {
 		else
 		{
 			for (x = 0; x < con.linewidth + 1 ; x++) {
-				if ( (text[x] & 0xff) == ' ' ) {
+				if ( text[x].f.character == ' ' ) {
 					continue;
 				}
 
-				if ( ( (text[x]>>8) ) != currentColor ) {
-					currentColor = (text[x]>>8);
+				if ( text[x].f.color != currentColor ) {
+					currentColor = text[x].f.color;
 					re.SetColor( g_color_table[currentColor] );
 				}
-				SCR_DrawSmallChar( (x+1)*con.charWidth, y, text[x] & 0xff );
+				SCR_DrawSmallChar( (x+1)*con.charWidth, y, text[x].f.character );
 			}
 		}
 	}

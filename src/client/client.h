@@ -352,6 +352,14 @@ typedef struct {
 #define	CON_TEXTSIZE	131072 // increased in jk2mv
 #define	NUM_CON_TIMES	4
 
+typedef union {
+	struct {
+		unsigned char	color;
+		char			character;
+	} f;
+	unsigned short	compare;
+} conChar_t;
+
 typedef struct {
 	qboolean	initialized;
 
@@ -359,7 +367,7 @@ typedef struct {
 	// length. Line's first `CON_TIMESTAMP_LEN' characters are
 	// reserved for timestamp and last character is either blank
 	// or contains `CON_WRAP_CHAR' indicating a line wrap.
-	short	text[CON_TEXTSIZE];
+	conChar_t	text[CON_TEXTSIZE];
 
 	int		current;		// line where next message will be printed
 	int		x;				// offset in current line for next print
