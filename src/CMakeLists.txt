@@ -519,8 +519,12 @@ if (BuildMVMP)
 		)
 	endif()
 	
-	set_target_properties(${MVMP} PROPERTIES COMPILE_DEFINITIONS_RELEASE "${ReleaseDefines};${GlobalDefines}")
-	set_target_properties(${MVMP} PROPERTIES COMPILE_DEFINITIONS_DEBUG "${DebugDefines};${GlobalDefines}")
+	target_compile_definitions(${MVMP}
+		PRIVATE ${GlobalDefines}
+		PRIVATE $<$<CONFIG:Debug>:${DebugDefines}>
+		PRIVATE $<$<CONFIG:Release>:${ReleaseDefines}>
+	)
+	
 	set_target_properties(${MVMP} PROPERTIES INCLUDE_DIRECTORIES "${MVMPIncludeDirs}")
 	target_link_libraries(${MVMP} ${MVMPLibraries} ${JPEG_LIBRARIES} ${PNG_LIBRARIES} ${MINIZIP_LIBRARIES} ${ZLIB_LIBRARIES})
 	set_target_properties(${MVMP} PROPERTIES PROJECT_LABEL "jk2mvmp")
@@ -584,8 +588,12 @@ if (BuildMVDED)
 		"$<TARGET_FILE_DIR:${MVDED}>/base/assetsmv.pk3"
 	)
 	
-	set_target_properties(${MVDED} PROPERTIES COMPILE_DEFINITIONS_RELEASE "${ReleaseDefines};${GlobalDefines};${MVDEDDefines}")
-	set_target_properties(${MVDED} PROPERTIES COMPILE_DEFINITIONS_DEBUG "${DebugDefines};${GlobalDefines};${MVDEDDefines}")
+	target_compile_definitions(${MVDED}
+		PRIVATE ${GlobalDefines} ${MVDEDDefines}
+		PRIVATE $<$<CONFIG:Debug>:${DebugDefines}>
+		PRIVATE $<$<CONFIG:Release>:${ReleaseDefines}>
+	)
+	
 	set_target_properties(${MVDED} PROPERTIES INCLUDE_DIRECTORIES "${MVDEDIncludeDirs}")
 	target_link_libraries(${MVDED} ${MVDEDLibraries} ${MINIZIP_LIBRARIES} ${ZLIB_LIBRARIES})
 	set_target_properties(${MVDED} PROPERTIES PROJECT_LABEL "jk2mvded")

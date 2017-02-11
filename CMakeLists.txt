@@ -1,15 +1,4 @@
-if(MSVC)
-	cmake_minimum_required(VERSION 3.1.0) # assembler stuff
-else()
-	cmake_minimum_required(VERSION 2.8.9)
-endif()
-
-if(POLICY CMP0043)
-	cmake_policy(SET CMP0043 OLD) # debian wheezy still uses 2.8.9
-endif()
-if(POLICY CMP0042)
-	cmake_policy(SET CMP0042 OLD)
-endif()
+cmake_minimum_required(VERSION 3.1.0)
 
 # For checks in subdirectories
 set(InMV TRUE)

@@ -33,8 +33,12 @@ add_library(${MVMENU} SHARED ${MVMENUFiles})
 
 set_target_properties(${MVMENU} PROPERTIES PREFIX "") # remove "lib" prefix for library files
 
-set_target_properties(${MVMENU} PROPERTIES COMPILE_DEFINITIONS_RELEASE "${ReleaseDefines};${GlobalDefines};${MVMENUDefines}")
-set_target_properties(${MVMENU} PROPERTIES COMPILE_DEFINITIONS_DEBUG "${DebugDefines};${GlobalDefines};${MVMENUDefines}")
+target_compile_definitions(${MVMENU}
+	PRIVATE ${GlobalDefines} ${MVMENUDefines}
+	PRIVATE $<$<CONFIG:Debug>:${DebugDefines}>
+	PRIVATE $<$<CONFIG:Release>:${ReleaseDefines}>
+)
+
 set_target_properties(${MVMENU} PROPERTIES INCLUDE_DIRECTORIES "${MVMENUIncludeDirs}")
 set_target_properties(${MVMENU} PROPERTIES PROJECT_LABEL "jk2mvmenu")
 
