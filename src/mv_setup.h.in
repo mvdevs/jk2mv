@@ -1,2 +1,7 @@
+#ifndef MV_VERSION_H
+#define MV_VERSION_H
+
 #define JK2MV_VERSION "@MV_VERSION@"
 #define Q3_VERSION "JK2MV: v" JK2MV_VERSION
+
+#endif /* MV_VERSION_H */
