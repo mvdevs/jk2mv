@@ -21,8 +21,9 @@ project(${ProjectName})
 
 include(GetGitRevisionDescription)
 git_describe(MV_VERSION --tags)
-if(NOT MV_VERSION)
-	set(MV_VERSION "UNDEFINED")
+if(NOT MV_VERSION OR MV_VERSION STREQUAL "GIT-NOTFOUND" OR MV_VERSION STREQUAL "HEAD-HASH-NOTFOUND")
+	set(MV_VERSION "UNKNOWN")
+	message(WARNING "Could not find git or git repository. Install git and make sure you actually cloned the repository (Directory named .git must exist) for correct versioning.")
 endif()
 
 message(STATUS "${ProjectName} Version: ${MV_VERSION}")
