@@ -370,4 +370,5 @@ else()
 	endif()
 endif()
 
+add_subdirectory(assets)
 add_subdirectory(src)

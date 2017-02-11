@@ -251,28 +251,6 @@ if (BuildMVMP OR BuildMVDED)
 	)
 	source_group("api" FILES ${MVMPDEDApiFiles})
 	set(MVMPDEDFiles ${MVMPDEDFiles} ${MVMPDEDApiFiles})
-	
-	# generate assetsmv.pk3
-	include(InstallZIP)
-	if(NOT ZIP_EXECUTABLE)
-		message(FATAL_ERROR "No ZIP executable found! Install 7zip, WinZIP or WinRAR.")
-	endif()
-	
-	add_zip_command("${CMAKE_CURRENT_BINARY_DIR}/assetsmv.pk3"
-		DIR "${CMAKE_SOURCE_DIR}/assets"
-		FILES "*"
-	)
-	add_custom_target(assets
-		ALL
-		DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/assetsmv.pk3"
-	)
-	
-	# installation
-	if(WIN32)
-		install(FILES ${CMAKE_CURRENT_BINARY_DIR}/assetsmv.pk3 DESTINATION "base")
-	elseif(NOT APPLE)
-		install(FILES ${CMAKE_CURRENT_BINARY_DIR}/assetsmv.pk3 DESTINATION "share/jk2mv/base")
-	endif()
 endif()
 
 # jk2mvmp
@@ -504,10 +482,10 @@ if (BuildMVMP)
 		)
 	endif()
 	
-	# copy assetsmv.pk3 to the output directory (for debugging)
+	# Copy assets to the output directory (for debugging)
 	add_custom_command(TARGET ${MVMP} POST_BUILD
 		COMMAND ${CMAKE_COMMAND} -E copy_if_different
-		"${CMAKE_CURRENT_BINARY_DIR}/assetsmv.pk3"
+		"${CMAKE_BINARY_DIR}/assets/assetsmv.pk3"
 		"$<TARGET_FILE_DIR:${MVMP}>/base/assetsmv.pk3"
 	)
 	
@@ -580,13 +558,6 @@ if (BuildMVDED)
 
 	# Project
 	add_executable(${MVDED} ${MVDEDFiles})
-
-	# copy assetsmv.pk3 to the output directory (for debugging)
-	add_custom_command(TARGET ${MVDED} POST_BUILD
-		COMMAND ${CMAKE_COMMAND} -E copy_if_different
-		"${CMAKE_CURRENT_BINARY_DIR}/assetsmv.pk3"
-		"$<TARGET_FILE_DIR:${MVDED}>/base/assetsmv.pk3"
-	)
 	
 	target_compile_definitions(${MVDED}
 		PRIVATE ${GlobalDefines} ${MVDEDDefines}
@@ -604,6 +575,4 @@ if (BuildMVDED)
 	else()
 		install(TARGETS ${MVDED} RUNTIME DESTINATION "bin")
 	endif()
-	
-	add_dependencies(${MVDED} assets)
 endif()
