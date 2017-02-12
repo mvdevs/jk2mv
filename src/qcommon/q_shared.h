@@ -696,12 +696,11 @@ extern	vec4_t		colorDkBlue;
 
 #define Q_COLOR_ESCAPE	'^'
 #define Q_COLOR_BITS 0x7
+
 // you MUST have the last bit on here about colour strings being less than 7 or taiwanese strings register as colour!!!!
-#define Q_IsColorString(p)	( p && *(p) == Q_COLOR_ESCAPE && *((p)+1) && *((p)+1) != Q_COLOR_ESCAPE && *((p)+1) <= '7' && *((p)+1) >= '0' )
+#define Q_IsColorString(p)	( p && *(p) == Q_COLOR_ESCAPE && *((p)+1) <= '7' && *((p)+1) >= '0' )
 #define Q_IsColorString_1_02(p)	( p && *(p) == Q_COLOR_ESCAPE && *((p)+1) && *((p)+1) != Q_COLOR_ESCAPE ) // 1.02 ColorStrings
 #define Q_IsColorString_Extended(p) Q_IsColorString_1_02(p)
-
-#define Q_IsColorStringExt(p)	((p) && *(p) == Q_COLOR_ESCAPE && *((p)+1) && *((p)+1) >= '0' && *((p)+1) <= '7') // ^[0-7]
 
 // Default Colors
 #define COLOR_BLACK		'0'
@@ -729,9 +728,9 @@ extern	vec4_t		colorDkBlue;
 	#define COLOR_JK2MV_FALLBACK 5 // If the extended colors are not supported use this as fallback
 #endif
 
-#define COLOR_EXT_AMOUNT 16
+#define COLOR_EXT_AMOUNT 16 // can be safely raised only to 32
 #define ColorIndex(c)	( ( (c) - '0' ) & 7 )
-#define ColorIndex_Extended(c) ( ((c >= '0' && c <= '9') ? ((c) - '0') : ((c) - 'a' + 1)) % COLOR_EXT_AMOUNT )
+#define ColorIndex_Extended(c) ( ( (c) - '0' ) & (COLOR_EXT_AMOUNT - 1) ) // compatible with 1.02, 'a' & 15 = 1
 
 // Default Colors
 #define S_COLOR_BLACK	"^0"
@@ -753,7 +752,7 @@ extern	vec4_t		colorDkBlue;
 #define S_COLOR_JK2MV   "^n" // Different in Debug/Release
 #define S_COLOR_LT_TRANSPARENT "^o"
 
-extern vec4_t	g_color_table[];
+extern vec4_t	g_color_table[COLOR_EXT_AMOUNT];
 
 #define	MAKERGB( v, r, g, b ) v[0]=r;v[1]=g;v[2]=b
 #define	MAKERGBA( v, r, g, b, a ) v[0]=r;v[1]=g;v[2]=b;v[3]=a
