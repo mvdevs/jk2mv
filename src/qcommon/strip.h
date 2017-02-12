@@ -269,8 +269,8 @@ typedef struct sFlagPair
 	unsigned int	Value;
 } tFlagPair;
 
-extern sFlagPair FlagPairs[];
-extern sFlagPair LanguagePairs[];
+extern const sFlagPair FlagPairs[];
+extern const sFlagPair LanguagePairs[];
 
 #ifdef _STRIPED_
 

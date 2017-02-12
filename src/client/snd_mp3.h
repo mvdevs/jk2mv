@@ -25,10 +25,6 @@ typedef struct id3v1_1 {
 } id3v1_1;	// 128 bytes in size
 
 
-extern const char sKEY_MAXVOL[];
-extern const char sKEY_UNCOMP[];
-
-
 // (so far, all these functions are only called from one place in snd_mem.cpp)
 //
 // (filenames are used purely for error reporting, all files should already be loaded before you get here)

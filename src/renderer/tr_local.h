@@ -92,14 +92,14 @@ typedef struct {
 } orientationr_t;
 
 typedef struct {
-	char *name;
+	const char *name;
 	int	minimize, maximize;
 } textureMode_t;
 
 extern	int				gl_filter_min, gl_filter_max;
-extern	textureMode_t	modes[];
+extern	const textureMode_t	modes[];
 
-textureMode_t *GetTextureMode( const char *name );
+const textureMode_t *GetTextureMode( const char *name );
 
 #define MAX_MIP_LEVELS 10
 
@@ -108,7 +108,7 @@ typedef struct {
 	qboolean		noPicMip;			// for images that must always be full resolution
 	qboolean		noLightScale;		// don't scale gamma/intensity. Included in noMipMaps
 	qboolean		noTC;				// for images that don't want to be texture compressed (eg skies)
-	textureMode_t	*textureMode;		// NULL = follow r_texturemode
+	const textureMode_t	*textureMode;		// NULL = follow r_texturemode
 } upload_t;
 
 typedef struct image_s {

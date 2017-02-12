@@ -15,8 +15,8 @@
 // The vertigons are applied as part of the renderer backend.  That is, they access OpenGL calls directly.
 
 
-unsigned char randomindex, randominterval;
-const float randomchart[256] = {
+static unsigned char randomindex, randominterval;
+static const float randomchart[256] = {
 	0.6554f, 0.6909f, 0.4806f, 0.6218f, 0.5717f, 0.3896f, 0.0677f, 0.7356f,
 	0.8333f, 0.1105f, 0.4445f, 0.8161f, 0.4689f, 0.0433f, 0.7152f, 0.0336f,
 	0.0186f, 0.9140f, 0.1626f, 0.6553f, 0.8340f, 0.7094f, 0.2020f, 0.8087f,
@@ -55,30 +55,30 @@ const float randomchart[256] = {
 #define WIND_GUST_TIME 2500.0f
 #define WIND_GUST_DECAY (1.0f / WIND_GUST_TIME)
 
-int		lastSSUpdateTime = 0;
-float	curWindSpeed=0;
-float	curWindGust=5;
-float	curWeatherAmount=1;
-vec3_t	curWindBlowVect={0,0,0}, targetWindBlowVect={0,0,0};
-vec3_t	curWindGrassDir={0,0,0}, targetWindGrassDir={0,0,0};
-int		totalsurfsprites=0, sssurfaces=0;
+static int		lastSSUpdateTime = 0;
+static float	curWindSpeed=0;
+static float	curWindGust=5;
+static float	curWeatherAmount=1;
+static vec3_t	curWindBlowVect={0,0,0}, targetWindBlowVect={0,0,0};
+static vec3_t	curWindGrassDir={0,0,0}, targetWindGrassDir={0,0,0};
+static int		totalsurfsprites=0, sssurfaces=0;
 
-qboolean curWindPointActive=qfalse;
-float curWindPointForce = 0;
-vec3_t curWindPoint;
-int nextGustTime=0;
-float gustLeft=0;
+static qboolean curWindPointActive=qfalse;
+static float curWindPointForce = 0;
+static vec3_t curWindPoint;
+static int nextGustTime=0;
+static float gustLeft=0;
 
-qboolean standardfovinitialized=qfalse;
-float	standardfovx = 90, standardscalex = 1.0;
-float	rangescalefactor=1.0;
+static qboolean standardfovinitialized=qfalse;
+static float	standardfovx = 90, standardscalex = 1.0;
+static float	rangescalefactor=1.0;
 
-vec3_t  ssrightvectors[4];
-vec3_t  ssfwdvector;
-int		rightvectorcount;
+static vec3_t  ssrightvectors[4];
+static vec3_t  ssfwdvector;
+static int		rightvectorcount;
 
-trRefEntity_t *ssLastEntityDrawn=NULL;
-vec3_t	ssViewOrigin, ssViewRight, ssViewUp;
+static trRefEntity_t *ssLastEntityDrawn=NULL;
+static vec3_t	ssViewOrigin, ssViewRight, ssViewUp;
 
 
 static void R_SurfaceSpriteFrameUpdate(void)

@@ -44,7 +44,7 @@ void R_GammaCorrect( byte *buffer, int bufSize ) {
 		buffer[i] = s_gammatable[buffer[i]];
 	}
 }
-textureMode_t modes[] = {
+const textureMode_t modes[] = {
 	{"GL_NEAREST", GL_NEAREST, GL_NEAREST},
 	{"GL_LINEAR", GL_LINEAR, GL_LINEAR},
 	{"GL_NEAREST_MIPMAP_NEAREST", GL_NEAREST_MIPMAP_NEAREST, GL_NEAREST},
@@ -84,7 +84,7 @@ GL_TextureMode
 */
 void GL_TextureMode( const char *string ) {
 	image_t			*glt;
-	textureMode_t	*mode;
+	const textureMode_t	*mode;
 
 	mode = GetTextureMode(string);
 
@@ -1071,7 +1071,7 @@ image_t *R_CreateImageNew( const char *name, byte * const *mipmaps, qboolean cus
 GetTextureMode
 =================
 */
-textureMode_t *GetTextureMode( const char *name )
+const textureMode_t *GetTextureMode( const char *name )
 {
 #ifndef DEDICATED
 	for (int i = 0; i < ARRAY_LEN(modes); i++) {

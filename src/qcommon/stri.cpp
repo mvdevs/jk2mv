@@ -101,7 +101,7 @@ enum
 };
 
 
-char *Tokens[TK_END] =
+const char *Tokens[TK_END] =
 {
 	"VERSION",
 	"ID",
@@ -137,7 +137,7 @@ char *Tokens[TK_END] =
 };
 
 
-sFlagPair FlagPairs[] =
+const sFlagPair FlagPairs[] =
 {
 	{ TK_SP_FLAG1,		SP_FLAG1 },
 	{ TK_SP_FLAG2,		SP_FLAG2 },
@@ -152,7 +152,7 @@ sFlagPair FlagPairs[] =
 	{ TK_INVALID,				0 }
 };
 
-sFlagPair LanguagePairs[] =
+const sFlagPair LanguagePairs[] =
 {
 	{ TK_TEXT_LANGUAGE1,	SP_LANGUAGE_ENGLISH },
 	{ TK_TEXT_LANGUAGE2,	SP_LANGUAGE_FRENCH },

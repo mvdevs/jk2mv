@@ -16,6 +16,8 @@
 #include "copyright.h"
 
 
+static const char sKEY_MAXVOL[]="#MAXVOL";	// formerly #defines
+static const char sKEY_UNCOMP[]="#UNCOMP";	//    "        "
 
 // maybe I'm re-inventing the wheel, here, but I can't see any functions that already do this, so...
 //
@@ -454,11 +456,6 @@ qboolean MP3_FakeUpWAVInfo( const char *psLocalFilename, void *pvData, int iData
 
 	return psError ? qfalse : qtrue;
 }
-
-
-
-const char sKEY_MAXVOL[]="#MAXVOL";	// formerly #defines
-const char sKEY_UNCOMP[]="#UNCOMP";	//    "        "
 
 // returns qtrue for success...
 //
