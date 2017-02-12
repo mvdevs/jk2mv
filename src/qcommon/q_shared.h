@@ -574,7 +574,7 @@ typedef	int	fixed16_t;
 #endif
 
 #define NUMVERTEXNORMALS	162
-extern	vec3_t	bytedirs[NUMVERTEXNORMALS];
+extern const vec3_t	bytedirs[NUMVERTEXNORMALS];
 
 // all drawing is done to a 640*480 virtual screen size
 // and will be automatically scaled to the real resolution
@@ -678,21 +678,21 @@ CT_HUD_ORANGE,
 CT_MAX
 } ct_table_t;
 
-extern vec4_t colorTable[CT_MAX];
+extern const vec4_t colorTable[CT_MAX];
 
-extern	vec4_t		colorBlack;
-extern	vec4_t		colorRed;
-extern	vec4_t		colorGreen;
-extern	vec4_t		colorBlue;
-extern	vec4_t		colorYellow;
-extern	vec4_t		colorMagenta;
-extern	vec4_t		colorCyan;
-extern	vec4_t		colorWhite;
-extern	vec4_t		colorLtGrey;
-extern	vec4_t		colorMdGrey;
-extern	vec4_t		colorDkGrey;
-extern	vec4_t		colorLtBlue;
-extern	vec4_t		colorDkBlue;
+extern const vec4_t		colorBlack;
+extern const vec4_t		colorRed;
+extern const vec4_t		colorGreen;
+extern const vec4_t		colorBlue;
+extern const vec4_t		colorYellow;
+extern const vec4_t		colorMagenta;
+extern const vec4_t		colorCyan;
+extern const ec4_t		colorWhite;
+extern const ec4_t		colorLtGrey;
+extern const ec4_t		colorMdGrey;
+extern const ec4_t		colorDkGrey;
+extern const ec4_t		colorLtBlue;
+extern const ec4_t		colorDkBlue;
 
 #define Q_COLOR_ESCAPE	'^'
 #define Q_COLOR_BITS 0x7
@@ -752,7 +752,7 @@ extern	vec4_t		colorDkBlue;
 #define S_COLOR_JK2MV   "^n" // Different in Debug/Release
 #define S_COLOR_LT_TRANSPARENT "^o"
 
-extern vec4_t	g_color_table[COLOR_EXT_AMOUNT];
+extern const vec4_t	g_color_table[COLOR_EXT_AMOUNT];
 
 #define	MAKERGB( v, r, g, b ) v[0]=r;v[1]=g;v[2]=b
 #define	MAKERGBA( v, r, g, b, a ) v[0]=r;v[1]=g;v[2]=b;v[3]=a
@@ -762,8 +762,8 @@ extern vec4_t	g_color_table[COLOR_EXT_AMOUNT];
 
 struct cplane_s;
 
-extern	vec3_t	vec3_origin;
-extern	vec3_t	axisDefault[3];
+extern const vec3_t	vec3_origin;
+extern const vec3_t	axisDefault[3];
 
 #define	nanmask (255<<23)
 
