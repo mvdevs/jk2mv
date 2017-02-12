@@ -159,7 +159,7 @@ typedef struct botlib_import_s
 	//print messages from the bot library
 	void		(QDECL *Print)(int type, char *fmt, ...);
 	//trace a bbox through the world
-	void		(*Trace)(bsp_trace_t *trace, vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, int passent, int contentmask);
+	void		(*Trace)(bsp_trace_t *trace, const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, int passent, int contentmask);
 	//trace a bbox against a specific entity
 	void		(*EntityTrace)(bsp_trace_t *trace, vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, int entnum, int contentmask);
 	//retrieve the contents at the given point
@@ -245,9 +245,9 @@ typedef struct aas_export_s
 	//--------------------------------------------
 	int			(*AAS_Swimming)(vec3_t origin);
 	int			(*AAS_PredictClientMovement)(struct aas_clientmove_s *move,
-											int entnum, vec3_t origin,
+											int entnum, const vec3_t origin,
 											int presencetype, int onground,
-											vec3_t velocity, vec3_t cmdmove,
+											const vec3_t velocity, vec3_t cmdmove,
 											int cmdframes,
 											int maxframes, float frametime,
 											int stopevent, int stopareanum, int visualize);

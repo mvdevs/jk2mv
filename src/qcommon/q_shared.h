@@ -687,12 +687,12 @@ extern const vec4_t		colorBlue;
 extern const vec4_t		colorYellow;
 extern const vec4_t		colorMagenta;
 extern const vec4_t		colorCyan;
-extern const ec4_t		colorWhite;
-extern const ec4_t		colorLtGrey;
-extern const ec4_t		colorMdGrey;
-extern const ec4_t		colorDkGrey;
-extern const ec4_t		colorLtBlue;
-extern const ec4_t		colorDkBlue;
+extern const vec4_t		colorWhite;
+extern const vec4_t		colorLtGrey;
+extern const vec4_t		colorMdGrey;
+extern const vec4_t		colorDkGrey;
+extern const vec4_t		colorLtBlue;
+extern const vec4_t		colorDkBlue;
 
 #define Q_COLOR_ESCAPE	'^'
 #define Q_COLOR_BITS 0x7

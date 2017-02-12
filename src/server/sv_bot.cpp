@@ -154,7 +154,9 @@ void QDECL BotImport_Print(int type, char *fmt, ...)
 BotImport_Trace
 ==================
 */
-void BotImport_Trace(bsp_trace_t *bsptrace, vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, int passent, int contentmask) {
+void BotImport_Trace(bsp_trace_t *bsptrace, const vec3_t start, const vec3_t mins,
+					 const vec3_t maxs, const vec3_t end, int passent, int contentmask)
+{
 	trace_t trace;
 
 	SV_Trace(&trace, start, mins, maxs, end, passent, contentmask, qfalse, 0, 10);

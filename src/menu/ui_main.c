@@ -318,7 +318,7 @@ int Text_Height(const char *text, float scale, int iMenuFont)
 	return trap_R_Font_HeightPixels(iFontIndex, scale);
 }
 
-void Text_Paint(float x, float y, float scale, vec4_t color, const char *text, float adjust, int limit, int style, int iMenuFont)
+static void Text_Paint(float x, float y, float scale, const vec4_t color, const char *text, float adjust, int limit, int style, int iMenuFont)
 {
 	int iStyleOR = 0;
 
@@ -456,7 +456,7 @@ vmCvar_t	ui_rankChange;
 static void UI_BuildPlayerList();
 char parsedFPMessage[1024];
 extern int FPMessageTime;
-void Text_PaintCenter(float x, float y, float scale, vec4_t color, const char *text, float adjust, int iMenuFont);
+static void Text_PaintCenter(float x, float y, float scale, const vec4_t color, const char *text, float adjust, int iMenuFont);
 
 const char *UI_GetStripEdString(const char *refSection, const char *refName)
 {
@@ -6987,7 +6987,7 @@ static void UI_PrintTime ( char *buf, size_t bufsize, int time ) {
 	}
 }
 
-void Text_PaintCenter(float x, float y, float scale, vec4_t color, const char *text, float adjust, int iMenuFont) {
+static void Text_PaintCenter(float x, float y, float scale, const vec4_t color, const char *text, float adjust, int iMenuFont) {
 	int len = Text_Width(text, scale, iMenuFont);
 	Text_Paint(x - len / 2, y, scale, color, text, 0, 0, ITEM_TEXTSTYLE_SHADOWEDMORE, iMenuFont);
 }

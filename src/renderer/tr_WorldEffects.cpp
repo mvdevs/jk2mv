@@ -1967,8 +1967,6 @@ void CRainSystem::Update(float elapseTime)
 	}
 }
 
-extern vec3_t	mViewAngles, mOrigin;
-
 void CRainSystem::Render(void)
 {
 	int			i;

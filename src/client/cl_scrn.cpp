@@ -150,7 +150,7 @@ to a fixed color.
 Coordinates are at 640 by 480 virtual resolution
 ==================
 */
-void SCR_DrawStringExt( int x, int y, float size, const char *string, float *setColor, qboolean forceColor ) {
+static void SCR_DrawStringExt( int x, int y, float size, const char *string, const float *setColor, qboolean forceColor ) {
 	vec4_t		color;
 	const char	*s;
 	int			xx;
@@ -204,7 +204,7 @@ void SCR_DrawBigString( int x, int y, const char *s, float alpha ) {
 	SCR_DrawStringExt( x, y, BIGCHAR_WIDTH, s, color, qfalse );
 }
 
-void SCR_DrawBigStringColor( int x, int y, const char *s, vec4_t color ) {
+void SCR_DrawBigStringColor( int x, int y, const char *s, const vec4_t color ) {
 	SCR_DrawStringExt( x, y, BIGCHAR_WIDTH, s, color, qtrue );
 }
 
@@ -219,7 +219,7 @@ to a fixed color.
 Coordinates are at 640 by 480 virtual resolution
 ==================
 */
-void SCR_DrawSmallStringExt( int x, int y, const char *string, float *setColor, qboolean forceColor ) {
+void SCR_DrawSmallStringExt( int x, int y, const char *string, const vec4_t setColor, qboolean forceColor ) {
 	vec4_t		color;
 	const char	*s;
 	int			xx;

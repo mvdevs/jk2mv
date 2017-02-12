@@ -36,7 +36,7 @@ aas_settings_t aassettings;
 // Returns:				-
 // Changes Globals:		-
 //===========================================================================
-int AAS_DropToFloor(vec3_t origin, vec3_t mins, vec3_t maxs)
+int AAS_DropToFloor(vec3_t origin, const vec3_t mins, const vec3_t maxs)
 {
 	vec3_t end;
 	bsp_trace_t trace;
@@ -274,9 +274,9 @@ float AAS_WeaponJumpZVelocity(vec3_t origin, float radiusdamage)
 {
 	vec3_t kvel, v, start, end, forward, right, viewangles, dir;
 	float	mass, knockback, points;
-	vec3_t rocketoffset = {8, 8, -8};
-	vec3_t botmins = {-16, -16, -24};
-	vec3_t botmaxs = {16, 16, 32};
+	const vec3_t rocketoffset = {8, 8, -8};
+	const vec3_t botmins = {-16, -16, -24};
+	const vec3_t botmaxs = {16, 16, 32};
 	bsp_trace_t bsptrace;
 
 	//look down (90 degrees)
@@ -486,9 +486,9 @@ int AAS_ClipToBBox(aas_trace_t *trace, vec3_t start, vec3_t end, int presencetyp
 // Changes Globals:		-
 //===========================================================================
 int AAS_ClientMovementPrediction(struct aas_clientmove_s *move,
-								int entnum, vec3_t origin,
+								int entnum, const vec3_t origin,
 								int presencetype, int onground,
-								vec3_t velocity, vec3_t cmdmove,
+								const vec3_t velocity, vec3_t cmdmove,
 								int cmdframes,
 								int maxframes, float frametime,
 								int stopevent, int stopareanum,
@@ -975,9 +975,9 @@ int AAS_ClientMovementPrediction(struct aas_clientmove_s *move,
 // Changes Globals:		-
 //===========================================================================
 int AAS_PredictClientMovement(struct aas_clientmove_s *move,
-								int entnum, vec3_t origin,
+								int entnum, const vec3_t origin,
 								int presencetype, int onground,
-								vec3_t velocity, vec3_t cmdmove,
+								const vec3_t velocity, vec3_t cmdmove,
 								int cmdframes,
 								int maxframes, float frametime,
 								int stopevent, int stopareanum, int visualize)

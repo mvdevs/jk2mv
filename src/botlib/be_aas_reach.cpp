@@ -340,7 +340,7 @@ int AAS_BestReachableFromJumpPadArea(vec3_t origin, vec3_t mins, vec3_t maxs)
 // Returns:					-
 // Changes Globals:		-
 //===========================================================================
-int AAS_BestReachableArea(vec3_t origin, vec3_t mins, vec3_t maxs, vec3_t goalorigin)
+int AAS_BestReachableArea(vec3_t origin, const vec3_t mins, const vec3_t maxs, vec3_t goalorigin)
 {
 	int areanum, i, j, k, l;
 	aas_link_t *areas;
@@ -3786,7 +3786,8 @@ int AAS_Reachability_Grapple(int area1num, int area2num)
 	aas_face_t *face2;
 	aas_area_t *area1, *area2;
 	aas_lreachability_t *lreach;
-	vec3_t areastart, facecenter, start, end, dir, down = {0, 0, -1};
+	vec3_t areastart, facecenter, start, end, dir;
+	const vec3_t down = {0, 0, -1};
 	vec_t *v;
 
 	//only grapple when on the ground or swimming
@@ -3921,7 +3922,7 @@ int AAS_Reachability_Grapple(int area1num, int area2num)
 void AAS_SetWeaponJumpAreaFlags(void)
 {
 	int ent, i;
-	vec3_t mins = {-15, -15, -15}, maxs = {15, 15, 15};
+	const vec3_t mins = {-15, -15, -15}, maxs = {15, 15, 15};
 	vec3_t origin;
 	int areanum, weaponjumpareas, spawnflags;
 	char classname[MAX_EPAIRKEY];

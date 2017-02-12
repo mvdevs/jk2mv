@@ -22,7 +22,7 @@ CParticle *FX_AddParticle( CCloud *effectCloud, vec3_t org, vec3_t vel, vec3_t a
 							float alpha1, float alpha2, float alphaParm,
 							vec3_t rgb1, vec3_t rgb2, float rgbParm,
 							float rotation, float rotationDelta,
-							vec3_t min, vec3_t max, float elasticity,
+							const vec3_t min, const vec3_t max, float elasticity,
 							int deathID, int impactID,
 							int killTime, qhandle_t shader, int flags );
 
