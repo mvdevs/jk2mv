@@ -127,8 +127,6 @@ static void Com_Puts_Ext( qboolean extendedColors, const char *msg )
 			*rd_buffer = 0;
 		}
 		Q_strcat(rd_buffer, rd_buffersize, msg);
-		rd_flush(rd_buffer);
-		*rd_buffer = 0;
 		return;
 	}
 
