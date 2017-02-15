@@ -30,7 +30,7 @@ qboolean	G2_Pause_Bone_Anim(const char *fileName, boneInfo_v &blist, const char 
 qboolean	G2_IsPaused(const char *fileName, boneInfo_v &blist, const char *boneName);
 qboolean	G2_Stop_Bone_Anim(const char *fileName, boneInfo_v &blist, const char *boneName);
 qboolean	G2_Stop_Bone_Angles(const char *fileName, boneInfo_v &blist, const char *boneName);
-void		G2_Animate_Bone_List(CGhoul2Info_v &ghoul2, const int currentTime, const int index);
+void		G2_Animate_Bone_List(boneInfo_v &blist, const int currentTime);
 void		G2_Init_Bone_List(boneInfo_v &blist);
 int			G2_Find_Bone_In_List(boneInfo_v &blist, const int boneNum);
 void		G2_RemoveRedundantBoneOverrides(boneInfo_v &blist, int *activeBones);

@@ -1155,10 +1155,9 @@ qboolean G2_Stop_Bone_Angles(const char *fileName, boneInfo_v &blist, const char
 
 
 // actually walk the bone list and update each and every bone if we have ended an animation for them.
-void G2_Animate_Bone_List(CGhoul2Info_v &ghoul2, const int currentTime, const int index )
+void G2_Animate_Bone_List(boneInfo_v &blist, const int currentTime)
 {
 	int i;
-	boneInfo_v &blist = ghoul2[index].mBlist;
 
 	// look through entire list
 	for(i=0; i<blist.size(); i++)
