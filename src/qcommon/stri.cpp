@@ -1535,7 +1535,7 @@ void SP_Unload(unsigned char Registration)
 	for(i = SP_ListByName.begin(); i != SP_ListByName.end(); i = next)
 	{
 		next = i;
-		--next;
+		++next;
 
 		if ((*i).second->UnRegister(Registration))
 		{
