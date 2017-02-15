@@ -304,7 +304,7 @@ void G2_RemoveRedundantGeneratedSurfaces(surfaceInfo_v &slist, int *activeSurfac
 	}
 }
 
-qboolean G2_SetRootSurface(CGhoul2Info_v &ghoul2, const int modelIndex, const char *surfaceName)
+qboolean G2_SetRootSurface(g2handle_t g2h, CGhoul2Info_v &ghoul2, const int modelIndex, const char *surfaceName)
 {
 	model_t				*mod_m = R_GetModelByHandle(RE_RegisterModel(ghoul2[modelIndex].mFileName));
 	model_t				*mod_a = R_GetModelByHandle(mod_m->mdxm->animIndex);
@@ -373,8 +373,7 @@ qboolean G2_SetRootSurface(CGhoul2Info_v &ghoul2, const int modelIndex, const ch
 					((ghoul2[boltMod].mBltlist[boltNum].boneNumber == -1) &&
 					 (ghoul2[boltMod].mBltlist[boltNum].surfaceNumber == -1)))
 				{
-					CGhoul2Info_v *g2i = &ghoul2;
-					G2API_RemoveGhoul2Model((CGhoul2Info_v **)&g2i, i);
+					G2API_RemoveGhoul2Model(&g2h, i);
 				}
 			}
 		}

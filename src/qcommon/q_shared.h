@@ -311,6 +311,7 @@ typedef int		fxHandle_t;
 typedef int		sfxHandle_t;
 typedef int		fileHandle_t;
 typedef int		clipHandle_t;
+typedef int		g2handle_t;
 
 #define G2_COLLISION_ENABLED
 
@@ -2282,31 +2283,6 @@ Ghoul2 Insert End
 typedef enum {
 	#include "../qcommon/tags.h"
 } memtag_t;
-
-
-typedef struct
-{
-	int		isValid;
-	void	*ghoul2;
-	int		modelNum;
-	int		boltNum;
-	vec3_t	angles;
-	vec3_t	origin;
-	vec3_t	scale;
-	int		entNum;
-} sharedBoltInterface_t;
-
-typedef struct
-{
-	int		isValid;
-	uint32_t ghoul2;
-	int		modelNum;
-	int		boltNum;
-	vec3_t	angles;
-	vec3_t	origin;
-	vec3_t	scale;
-	int		entNum;
-} vmsharedBoltInterface_t;
 
 /*
 ========================================================================

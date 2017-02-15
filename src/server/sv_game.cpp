@@ -321,7 +321,6 @@ The module is making a system call
 #endif
 
 extern bool RicksCrazyOnServer;
-
 intptr_t SV_GameSystemCalls( intptr_t *args ) {
 	// fix syscalls from 1.02 to match 1.04
 	// this is a mess... can it be done better?
@@ -330,6 +329,9 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 			args[0]++;
 		}
 	}
+
+	// set game ghoul2 context
+	RicksCrazyOnServer = true;
 
 	switch( args[0] ) {
 	case G_PRINT:
@@ -950,48 +952,42 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 		return 0;
 
 	case G_G2_HAVEWEGHOULMODELS:
-		return G2API_HaveWeGhoul2Models(GhoulHandle(args[1]));
+		return G2API_HaveWeGhoul2Models((g2handle_t)args[1]);
 
 	case G_G2_SETMODELS:
-		G2API_SetGhoul2ModelIndexes(GhoulHandle(args[1]), (qhandle_t *)VMA(2), (qhandle_t *)VMA(3));
+		G2API_SetGhoul2ModelIndexes((g2handle_t)args[1], (qhandle_t *)VMA(2), (qhandle_t *)VMA(3));
 		return 0;
 
 	case G_G2_GETBOLT:
-		return G2API_GetBoltMatrix(GhoulHandle(args[1]), args[2], args[3], (mdxaBone_t *)VMA(4), (const float *)VMA(5), (const float *)VMA(6), args[7], (qhandle_t *)VMA(8), (float *)VMA(9));
+		return G2API_GetBoltMatrix((g2handle_t)args[1], args[2], args[3], (mdxaBone_t *)VMA(4), (const float *)VMA(5), (const float *)VMA(6), args[7], (qhandle_t *)VMA(8), (float *)VMA(9));
 
 	case G_G2_GETBOLT_NOREC:
 		gG2_GBMNoReconstruct = qtrue;
-		return G2API_GetBoltMatrix(GhoulHandle(args[1]), args[2], args[3], (mdxaBone_t *)VMA(4), (const float *)VMA(5), (const float *)VMA(6), args[7], (qhandle_t *)VMA(8), (float *)VMA(9));
+		return G2API_GetBoltMatrix((g2handle_t)args[1], args[2], args[3], (mdxaBone_t *)VMA(4), (const float *)VMA(5), (const float *)VMA(6), args[7], (qhandle_t *)VMA(8), (float *)VMA(9));
 
 	case G_G2_GETBOLT_NOREC_NOROT:
 		gG2_GBMNoReconstruct = qtrue;
 		gG2_GBMUseSPMethod = qtrue;
-		return G2API_GetBoltMatrix(GhoulHandle(args[1]), args[2], args[3], (mdxaBone_t *)VMA(4), (const float *)VMA(5), (const float *)VMA(6), args[7], (qhandle_t *)VMA(8), (float *)VMA(9));
+		return G2API_GetBoltMatrix((g2handle_t)args[1], args[2], args[3], (mdxaBone_t *)VMA(4), (const float *)VMA(5), (const float *)VMA(6), args[7], (qhandle_t *)VMA(8), (float *)VMA(9));
 
 	case G_G2_INITGHOUL2MODEL:
-		RicksCrazyOnServer=true;
-#if id386
-		return	G2API_InitGhoul2Model((CGhoul2Info_v **)VMA(1), (const char *)VMA(2), args[3], (qhandle_t)args[4],
+		return	G2API_InitGhoul2Model((g2handle_t *)VMA(1), (const char *)VMA(2), args[3], (qhandle_t)args[4],
 			(qhandle_t)args[5], args[6], args[7]);
-#else
-		return	G2API_VM_InitGhoul2Model((qhandle_t *)VMA(1), (const char *)VMA(2), args[3], (qhandle_t)args[4],
-			(qhandle_t)args[5], args[6], args[7]);
-#endif
 
 	case G_G2_ADDBOLT:
-		return	G2API_AddBolt(GhoulHandle(args[1]), args[2], (const char *)VMA(3));
+		return	G2API_AddBolt((g2handle_t)args[1], args[2], (const char *)VMA(3));
 
 	case G_G2_SETBOLTINFO:
-		G2API_SetBoltInfo(GhoulHandle(args[1]), args[2], args[3]);
+		G2API_SetBoltInfo((g2handle_t)args[1], args[2], args[3]);
 		return 0;
 
 	case G_G2_ANGLEOVERRIDE:
-		return G2API_SetBoneAngles(GhoulHandle(args[1]), args[2], (const char *)VMA(3), (float *)VMA(4), args[5],
+		return G2API_SetBoneAngles((g2handle_t)args[1], args[2], (const char *)VMA(3), (float *)VMA(4), args[5],
 			(const Eorientations)args[6], (const Eorientations)args[7], (const Eorientations)args[8],
 			(qhandle_t *)VMA(9), args[10], args[11]);
 
 	case G_G2_PLAYANIM:
-		return G2API_SetBoneAnim(GhoulHandle(args[1]), args[2], (const char *)VMA(3), args[4], args[5],
+		return G2API_SetBoneAnim((g2handle_t)args[1], args[2], (const char *)VMA(3), args[4], args[5],
 								args[6], VMF(7), args[8], VMF(9), args[10]);
 
 	case G_G2_GETGLANAME:
@@ -999,7 +995,7 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 		{ //Since returning a pointer in such a way to a VM seems to cause MASSIVE FAILURE<tm>, we will shove data into the pointer the vm passes instead
 			char *point = ((char *)VMA(3));
 			char *local;
-			local = G2API_GetGLAName(GhoulHandle(args[1]), args[2]);
+			local = G2API_GetGLAName((g2handle_t)args[1], args[2]);
 			if (local)
 			{
 				strcpy(point, local);
@@ -1009,48 +1005,30 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 		return 0;
 
 	case G_G2_COPYGHOUL2INSTANCE:
-		return (int)G2API_CopyGhoul2Instance(GhoulHandle(args[1]), GhoulHandle(args[2]), args[3]);
+		return G2API_CopyGhoul2Instance((g2handle_t)args[1], (g2handle_t)args[2], args[3]);
 
 	case G_G2_COPYSPECIFICGHOUL2MODEL:
-		G2API_CopySpecificG2Model(GhoulHandle(args[1]), args[2], GhoulHandle(args[3]), args[4]);
+		G2API_CopySpecificG2Model((g2handle_t)args[1], args[2], (g2handle_t)args[3], args[4]);
 		return 0;
 
 	case G_G2_DUPLICATEGHOUL2INSTANCE:
-#if id386
-		G2API_DuplicateGhoul2Instance(GhoulHandle(args[1]), (CGhoul2Info_v **)VMA(2));
-#else
-		G2API_VM_DuplicateGhoul2Instance(GhoulHandle(args[1]), (qhandle_t *)VMA(2));
-#endif
+		G2API_DuplicateGhoul2Instance((g2handle_t)args[1], (g2handle_t *)VMA(2));
 		return 0;
 
 	case G_G2_HASGHOUL2MODELONINDEX:
-#if id386
-		return (int)G2API_HasGhoul2ModelOnIndex((CGhoul2Info_v **)VMA(1), args[2]);
-#else
-		{
-			CGhoul2Info_v *ptr = GhoulHandle(*(qhandle_t *)VMA(1));
-			return (int)G2API_HasGhoul2ModelOnIndex(&ptr, args[2]);
-		}
-#endif
+		return G2API_HasGhoul2ModelOnIndex((const g2handle_t *)VMA(1), args[2]);
 
 	case G_G2_REMOVEGHOUL2MODEL:
-#if id386
-		return (int)G2API_RemoveGhoul2Model((CGhoul2Info_v **)VMA(1), args[2]);
-#else
-		return (int)G2API_VM_RemoveGhoul2Model((qhandle_t *)VMA(1), args[2]);
-#endif
+		return G2API_RemoveGhoul2Model((g2handle_t *)VMA(1), args[2]);
 
 	case G_G2_CLEANMODELS:
-#if id386
-		G2API_CleanGhoul2Models((CGhoul2Info_v **)VMA(1));
-#else
-		G2API_VM_CleanGhoul2Models((qhandle_t *)VMA(1));
-#endif
+		G2API_CleanGhoul2Models((g2handle_t *)VMA(1));
 		return 0;
 
 	case G_G2_COLLISIONDETECT:
 #ifdef G2_COLLISION_ENABLED
-		G2API_CollisionDetect((CollisionRecord_t*)VMA(1), GhoulHandle(args[2]),
+		G2API_CollisionDetect((CollisionRecord_t*)VMA(1),
+			(g2handle_t)args[2],
 			(const float*)VMA(3),
 			(const float*)VMA(4),
 			args[5],

@@ -1623,7 +1623,15 @@ void R_AddGhoulSurfaces( trRefEntity_t *ent ) {
 	int				*modelList;
 	mdxaBone_t		rootMatrix;
 	bool			setNewOrigin = false;
-	CGhoul2Info_v	&ghoul2 = *((CGhoul2Info_v *)ent->e.ghoul2);
+	CGhoul2Info_v	*ghoul2Ptr = G2API_GetGhoul2Model( ent->e.ghoul2 );
+
+	if ( !ghoul2Ptr )
+	{
+		assert(0);
+		return;
+	}
+
+	CGhoul2Info_v	&ghoul2 = *ghoul2Ptr;
 
 	// if we don't want server ghoul2 models and this is one, then return
 	if ((r_noServerGhoul2->integer && !(ghoul2[0].mCreationID & WF_CLIENTONLY)) )

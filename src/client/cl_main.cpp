@@ -4118,24 +4118,6 @@ qboolean CL_CDKeyValidate( const char *key, const char *checksum ) {
 
 #endif // USE_CD_KEY
 
-#ifdef idx64
-void VM_AddRefEntityToScene(refEntity_t *r) {
-	static refEntity_t tmp_r;
-	qhandle_t *hptr;
-	qhandle_t handle;
-
-	// we need a temp copy of it because the sizeof is different
-	// (why did they use pointers for the ghoul2 "handles" :/ ?)
-	memcpy(&tmp_r, r, sizeof(tmp_r));
-
-	hptr = (qhandle_t *)(&r->ghoul2);
-	handle = *hptr;
-
-	tmp_r.ghoul2 = (void *)(GhoulHandle(handle));
-	re.AddRefEntityToScene(&tmp_r);
-}
-#endif
-
 /*
 ====================
 CL_GetVMGLConfig

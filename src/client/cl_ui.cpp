@@ -856,11 +856,7 @@ intptr_t CL_UISystemCalls(intptr_t *args) {
 		return 0;
 
 	case UI_R_ADDREFENTITYTOSCENE:
-#if id386
 		re.AddRefEntityToScene((const refEntity_t *)VMA(1));
-#else
-		VM_AddRefEntityToScene((refEntity_t *)VMA(1));
-#endif
 		return 0;
 
 	case UI_R_ADDPOLYTOSCENE:
@@ -1151,7 +1147,7 @@ intptr_t CL_UISystemCalls(intptr_t *args) {
 Ghoul2 Insert Start
 */
 	case UI_G2_ANGLEOVERRIDE:
-		return G2API_SetBoneAngles(GhoulHandle(args[1]), args[2], (const char *)VMA(3), (float *)VMA(4), args[5],
+		return G2API_SetBoneAngles((g2handle_t)args[1], args[2], (const char *)VMA(3), (float *)VMA(4), args[5],
 							 (const Eorientations) args[6], (const Eorientations) args[7], (const Eorientations) args[8],
 							 (qhandle_t *)VMA(9), args[10], args[11] );
 /*

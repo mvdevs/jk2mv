@@ -97,7 +97,7 @@ private:
 	vec3_t				mOrg;
 	vec3_t				mFwd;
 	vec3_t				mScale;
-	CGhoul2Info_v		*mG2Inst;
+	g2handle_t			mG2Inst;
 	int					mModelNum;
 	int					mBoltNum;
 	int					mEntNum;
@@ -117,7 +117,7 @@ public:
 	void GetInitialPartOrg( vec3_t org ) { VectorCopy(mInitialPartOrg, org); };
 	void GetInitialOffset( vec3_t org ) { VectorCopy(mInitialOffset, org); };
 
-	CGhoul2Info_v *GetG2Handle( void ) { return mG2Inst; }
+	g2handle_t GetG2Handle( void ) { return mG2Inst; }
 	int GetModelNum( void ) { return mModelNum; }
 	int GetBoltNum( void ) { return mBoltNum; }
 	int GetEntNum( void ) { return mEntNum; }
@@ -129,7 +129,7 @@ public:
 	void SetInitialPartOrg( vec3_t org ) { VectorCopy(org, mInitialPartOrg); };
 	void SetInitialOffset( vec3_t org ) { VectorCopy(org, mInitialOffset); };
 
-	void SetG2Handle( CGhoul2Info_v *g2Inst ) { mG2Inst = g2Inst; }
+	void SetG2Handle( g2handle_t g2h ) { mG2Inst = g2h; }
 	void SetModelNum( int modelNum ) { mModelNum = modelNum; }
 	void SetBoltNum( int boltNum ) { mBoltNum = boltNum; }
 	void SetEntNum( int entNum ) { mEntNum = entNum; }

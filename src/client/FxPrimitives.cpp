@@ -123,7 +123,7 @@ bool CCloud::Update()
 	CEffect	*current = mNext;
 	CEffect	*next, *previous;
 	bool	willDie;
-	CGhoul2Info_v *g2Handle;
+	g2handle_t g2Handle;
 	mdxaBone_t boltMatrix;
 	int entNum;
 	vec3_t	objOrg, objAng, objScale, org;
@@ -382,7 +382,7 @@ bool CParticle::Update()
 
 		vec3_t	objOrg, objAng, objScale;
 
-		CGhoul2Info_v *g2Handle;
+		g2handle_t g2Handle;
 		mdxaBone_t boltMatrix;
 		int entNum = mObj->GetEntNum();
 

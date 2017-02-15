@@ -191,9 +191,9 @@ void RE_AddRefEntityToScene( const refEntity_t *ent ) {
 #ifdef WIN32
 	if (ent->ghoul2)
 	{
-		CGhoul2Info_v	&ghoul2 = *((CGhoul2Info_v *)ent->ghoul2);
+		CGhoul2Info_v	*ghoul2 = G2API_GetGhoul2Model(ent->ghoul2);
 
-		if (!ghoul2[0].mModel)
+		if (!ghoul2 || ghoul2->empty() || !(*ghoul2)[0].mModel)
 		{
 			DebugBreak();
 		}

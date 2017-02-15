@@ -8,7 +8,6 @@
 Ghoul2 Insert Start
 */
 #include <vector>
-#include <map>
 #include <stdint.h>
 using namespace std;
 /*
@@ -208,14 +207,6 @@ enum EWraithInstFlags
 	WF_SERVERONLY =					(1<<2),
 	WF_NPC =						(1<<3),
 };
-
-CGhoul2Info_v *GetGhoul2InfovByHandle(qhandle_t handle);
-
-#if id386
-#	define GhoulHandle(x) ((CGhoul2Info_v *)x)
-#else
-#	define GhoulHandle(x) GetGhoul2InfovByHandle(x)
-#endif
 
 //====================================================================
 

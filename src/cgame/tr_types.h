@@ -64,6 +64,18 @@ typedef struct poly_s {
 	polyVert_t			*verts;
 } poly_t;
 
+typedef struct
+{
+	int		isValid;
+	g2handle_t	ghoul2;
+	int		modelNum;
+	int		boltNum;
+	vec3_t	angles;
+	vec3_t	origin;
+	vec3_t	scale;
+	int		entNum;
+} sharedBoltInterface_t;
+
 typedef enum {
 	RT_MODEL,
 	RT_POLY,
@@ -233,8 +245,8 @@ Ghoul2 Insert Start
 	vec3_t		angles;				// rotation angles - used for Ghoul2
 
 	vec3_t		modelScale;			// axis scale for models
-//	CGhoul2Info_v	*ghoul2;  		// has to be at the end of the ref-ent in order for it to be created properly
-	void		*ghoul2;  		// has to be at the end of the ref-ent in order for it to be created properly
+//	void		*ghoul2;  		// has to be at the end of the ref-ent in order for it to be created properly
+	g2handle_t	ghoul2;  		// has to be at the end of the ref-ent in order for it to be created properly
 /*
 Ghoul2 Insert End
 */
