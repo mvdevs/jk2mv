@@ -39,6 +39,7 @@ target_compile_definitions(${MVMENU}
 	PRIVATE $<$<CONFIG:Release>:${ReleaseDefines}>
 )
 
+set_target_properties(${MVMENU} PROPERTIES C_STANDARD 90)
 set_target_properties(${MVMENU} PROPERTIES INCLUDE_DIRECTORIES "${MVMENUIncludeDirs}")
 set_target_properties(${MVMENU} PROPERTIES PROJECT_LABEL "jk2mvmenu")
 

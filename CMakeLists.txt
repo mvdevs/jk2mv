@@ -34,9 +34,6 @@ if(MSVC)
 	enable_language(ASM_MASM)
 endif()
 
-set(CMAKE_C_STANDARD 90)
-set(CMAKE_CXX_STANDARD 11)
-
 # Customizable options
 option(BuildPortableVersion "Build portable version (does not read or write files from your user/home directory" ON)
 option(BuildMVMP "Whether to create targets for the client (jk2mvmp & jk2mvmenu)" ON)
