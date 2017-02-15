@@ -2,7 +2,7 @@
 
 #include "tr_local.h"
 
-#include "../qcommon/sstring.h"	// #include <string>
+#include <string>
 #include <vector>
 #include <map>
 
@@ -57,7 +57,7 @@ struct CachedEndianedModelBinary_s
 	}
 };
 typedef struct CachedEndianedModelBinary_s CachedEndianedModelBinary_t;
-typedef map <sstring_t,CachedEndianedModelBinary_t>	CachedModels_t;
+typedef map <string,CachedEndianedModelBinary_t>	CachedModels_t;
 CachedModels_t CachedModels;	// the important cache item.
 
 void RE_RegisterModels_StoreShaderRequest(const char *psModelFileName, const char *psShaderName, int *piShaderIndexPoke)

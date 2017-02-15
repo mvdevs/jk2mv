@@ -4,14 +4,12 @@
 #include "tr_local.h"
 //#include "../qcommon/qcommon.h"
 
-#include "../qcommon/sstring.h"	// stl string class won't compile in here (MS shite), so use Gil's.
 #include "tr_local.h"
 #include "tr_font.h"
 
 #include <vector>
 #include <map>
-//#include <list>
-//#include <string>
+#include <string>
 
 using namespace std;
 
@@ -23,7 +21,7 @@ inline int Round(float value)
 
 int							fontIndex;	// entry 0 is reserved index for missing/invalid, else ++ with each new font registered
 vector<CFontInfo *>			fontArray;
-typedef map<sstring_t, int>	fontIndexMap_t;
+typedef map<string, int>	fontIndexMap_t;
 							fontIndexMap_t fontIndexMap;
 //paletteRGBA_c				lastcolour;
 

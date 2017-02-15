@@ -143,7 +143,6 @@ if (BuildMVMP OR BuildMVDED)
 		"qcommon/hstring.h"
 		"qcommon/qcommon.h"
 		"qcommon/qfiles.h"
-		"qcommon/sstring.h"
 		"qcommon/q_shared.h"
 		"qcommon/strip.h"
 		"qcommon/tags.h"
