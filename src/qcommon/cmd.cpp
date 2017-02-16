@@ -390,6 +390,23 @@ void	Cmd_ArgsBuffer( char *buffer, int bufferLength ) {
 	Q_strncpyz( buffer, Cmd_Args(), bufferLength );
 }
 
+/*
+============
+Cmd_DropArg
+
+Drop argument from tokenized command
+Doesn't update cmd_cmd
+============
+*/
+void	Cmd_DropArg( int arg ) {
+	if ( 0 <= arg && arg < cmd_argc ) {
+		for ( ; arg < cmd_argc - 1; arg++ ) {
+			cmd_argv[arg] = cmd_argv[arg + 1];
+		}
+
+		cmd_argc--;
+	}
+}
 
 /*
 ============
@@ -469,10 +486,21 @@ A complete command line has been parsed, so try to execute it
 ============
 */
 void	Cmd_ExecuteString( const char *text ) {
+	Cmd_TokenizeString( text );
+	Cmd_Execute();
+}
+
+/*
+============
+Cmd_Execute
+
+Execute tokenized command line.
+============
+*/
+void	Cmd_Execute( void ) {
 	cmd_function_t	*cmd, **prev;
 
 	// execute the command line
-	Cmd_TokenizeString( text );
 	if ( !Cmd_Argc() ) {
 		return;		// no tokens
 	}
@@ -520,8 +548,7 @@ void	Cmd_ExecuteString( const char *text ) {
 
 	// send it as a server command if we are connected
 	// this will usually result in a chat message
-	//CL_ForwardCommandToServer ( text );
-	CL_ForwardCommandToServer ( text );
+	CL_ForwardCommandToServer ( cmd_cmd );
 }
 
 /*

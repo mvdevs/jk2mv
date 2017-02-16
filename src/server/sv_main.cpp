@@ -627,7 +627,6 @@ Redirect all printfs
 */
 void SVC_RemoteCommand( netadr_t from, msg_t *msg ) {
 	qboolean	valid;
-	unsigned int	i;
 // max length that MSG_ReadString in CL_ConnectionlessPacket can read
 #define	SV_OUTPUTBUF_LENGTH MAX_STRING_CHARS
 	char		sv_outputbuf[SV_OUTPUTBUF_LENGTH];
@@ -665,14 +664,9 @@ void SVC_RemoteCommand( netadr_t from, msg_t *msg ) {
 	} else if ( !valid ) {
 		Com_Printf ("Bad rconpassword.\n");
 	} else {
-		remaining[0] = 0;
-
-		for (i=2 ; i<Cmd_Argc() ; i++) {
-			strcat (remaining, Cmd_Argv(i) );
-			strcat (remaining, " ");
-		}
-
-		Cmd_ExecuteString (remaining);
+		Cmd_DropArg (1);
+		Cmd_DropArg (0);
+		Cmd_Execute ();
 	}
 
 	Com_EndRedirect ();
