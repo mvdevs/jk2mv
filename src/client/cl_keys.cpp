@@ -1589,7 +1589,7 @@ void Key_SetBinding( int keynum, const char *binding ) {
 
 	// free old bindings
 	if ( kg.keys[ keynames[keynum].upper ].binding ) {
-		Z_Free( kg.keys[ keynames[keynum].upper ].binding );
+		Z_Free( (void *)kg.keys[ keynames[keynum].upper ].binding );
 		kg.keys[ keynames[keynum].upper ].binding = NULL;
 	}
 
@@ -1610,7 +1610,7 @@ void Key_SetBinding( int keynum, const char *binding ) {
 Key_GetBinding
 ===================
 */
-char *Key_GetBinding( int keynum ) {
+const char *Key_GetBinding( int keynum ) {
 	if (keynum == -1) {
 		return "<KEY NOT FOUND>";
 	}
@@ -1839,7 +1839,7 @@ void CL_InitKeyCommands( void ) {
 CL_AddKeyUpCommands
 ===================
 */
-void CL_AddKeyUpCommands( int key, char *kb ) {
+void CL_AddKeyUpCommands( int key, const char *kb ) {
 	int i;
 	char button[1024], *buttonPtr;
 	char	cmd[1024];
@@ -1889,8 +1889,8 @@ Called by the system for both key up and key down events
 qboolean ignoreNextChar;
 
 void CL_KeyEvent (int key, qboolean down, unsigned time) {
-	char	*kb;
-	char	cmd[1024];
+	const char	*kb;
+	char		cmd[1024];
 
 	// update auto-repeat status and BUTTON_ANY status
 	kg.keys[ keynames[key].upper ].down = down;

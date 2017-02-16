@@ -268,15 +268,15 @@ typedef struct {
 static fileHandleData_t	fsh[MAX_FILE_HANDLES];
 
 // never load anything from pk3 files that are not present at the server when pure
-static int		fs_numServerPaks;
-static int		fs_serverPaks[MAX_SEARCH_PATHS];				// checksums
-static char		*fs_serverPakNames[MAX_SEARCH_PATHS];			// pk3 names
+static int			fs_numServerPaks;
+static int			fs_serverPaks[MAX_SEARCH_PATHS];				// checksums
+static const char	*fs_serverPakNames[MAX_SEARCH_PATHS];			// pk3 names
 
 // only used for autodownload, to make sure the client has at least
 // all the pk3 files that are referenced at the server side
-static int		fs_numServerReferencedPaks;
-static int		fs_serverReferencedPaks[MAX_SEARCH_PATHS];			// checksums
-static char		*fs_serverReferencedPakNames[MAX_SEARCH_PATHS];		// pk3 names
+static int			fs_numServerReferencedPaks;
+static int			fs_serverReferencedPaks[MAX_SEARCH_PATHS];			// checksums
+static const char	*fs_serverReferencedPakNames[MAX_SEARCH_PATHS];		// pk3 names
 
 // last valid game folder used
 char lastValidBase[MAX_OSPATH];
@@ -2058,7 +2058,7 @@ static int FS_ReturnPath( const char *zname, char *zpath, int *depth ) {
 FS_AddFileToList
 ==================
 */
-static int FS_AddFileToList( char *name, char *list[MAX_FOUND_FILES], int nfiles ) {
+static int FS_AddFileToList( const char *name, const char *list[MAX_FOUND_FILES], int nfiles ) {
 	int		i;
 
 	if ( nfiles == MAX_FOUND_FILES - 1 ) {
@@ -2083,10 +2083,10 @@ Returns a uniqued list of files that match the given criteria
 from all search paths
 ===============
 */
-char **FS_ListFilteredFiles( const char *path, const char *extension, char *filter, int *numfiles ) {
+static const char **FS_ListFilteredFiles( const char *path, const char *extension, char *filter, int *numfiles ) {
 	int				nfiles;
-	char			**listCopy;
-	char			*list[MAX_FOUND_FILES];
+	const char		**listCopy;
+	const char		*list[MAX_FOUND_FILES];
 	searchpath_t	*search;
 	int				i;
 	int				pathLength;
@@ -2187,10 +2187,10 @@ char **FS_ListFilteredFiles( const char *path, const char *extension, char *filt
 				}
 			}
 		} else if (search->dir) { // scan for files in the filesystem
-			char	*netpath;
-			int		numSysFiles;
-			char	**sysFiles;
-			char	*name;
+			const char	*netpath;
+			int			numSysFiles;
+			const char	**sysFiles;
+			const char	*name;
 
 			// don't scan directories for files if we are pure or restricted
 			if ( (fs_numServerPaks) &&
@@ -2220,7 +2220,7 @@ char **FS_ListFilteredFiles( const char *path, const char *extension, char *filt
 		return NULL;
 	}
 
-	listCopy = (char **)Z_Malloc( ( nfiles + 1 ) * sizeof( *listCopy ), TAG_FILESYS );
+	listCopy = (const char **)Z_Malloc( ( nfiles + 1 ) * sizeof( *listCopy ), TAG_FILESYS );
 	for ( i = 0 ; i < nfiles ; i++ ) {
 		listCopy[i] = list[i];
 	}
@@ -2234,7 +2234,7 @@ char **FS_ListFilteredFiles( const char *path, const char *extension, char *filt
 FS_ListFiles
 =================
 */
-char **FS_ListFiles( const char *path, const char *extension, int *numfiles ) {
+const char **FS_ListFiles( const char *path, const char *extension, int *numfiles ) {
 	return FS_ListFilteredFiles( path, extension, NULL, numfiles );
 }
 
@@ -2243,7 +2243,7 @@ char **FS_ListFiles( const char *path, const char *extension, int *numfiles ) {
 FS_FreeFileList
 =================
 */
-void FS_FreeFileList( char **list ) {
+void FS_FreeFileList( const char **list ) {
 	int		i;
 
 	if ( !fs_searchpaths ) {
@@ -2255,7 +2255,7 @@ void FS_FreeFileList( char **list ) {
 	}
 
 	for ( i = 0 ; list[i] ; i++ ) {
-		Z_Free( list[i] );
+		Z_Free( (void *)list[i] );
 	}
 
 	Z_Free( list );
@@ -2269,7 +2269,7 @@ FS_GetFileList
 */
 int	FS_GetFileList(  const char *path, const char *extension, char *listbuf, int bufsize ) {
 	int		nFiles, i, nTotal, nLen;
-	char **pFiles = NULL;
+	const char **pFiles = NULL;
 
 	*listbuf = 0;
 	nFiles = 0;
@@ -2312,7 +2312,7 @@ bk001129 - from cvs1.17 (mkv)
 FIXME TTimo those two should move to common.c next to Sys_ListFiles
 =======================
  */
-static unsigned int Sys_CountFileList(char **list)
+static unsigned int Sys_CountFileList(const char **list)
 {
   int i = 0;
 
@@ -2327,17 +2327,17 @@ static unsigned int Sys_CountFileList(char **list)
   return i;
 }
 
-static char** Sys_ConcatenateFileLists( char **list0, char **list1, char **list2 )
+static const char** Sys_ConcatenateFileLists( const char **list0, const char **list1, const char **list2 )
 {
-        int totalLength = 0;
-	char** cat = NULL, **dst, **src;
+	int totalLength = 0;
+	const char** cat = NULL, **dst, **src;
 
-        totalLength += Sys_CountFileList(list0);
-        totalLength += Sys_CountFileList(list1);
-        totalLength += Sys_CountFileList(list2);
+	totalLength += Sys_CountFileList(list0);
+	totalLength += Sys_CountFileList(list1);
+	totalLength += Sys_CountFileList(list2);
 
 	/* Create new list. */
-	dst = cat = (char **)Z_Malloc( ( totalLength + 1 ) * sizeof( char* ), TAG_FILESYS, qtrue );
+	dst = cat = (const char **)Z_Malloc( ( totalLength + 1 ) * sizeof( char* ), TAG_FILESYS, qtrue );
 
 	/* Copy over lists. */
         if (list0) {
@@ -2377,16 +2377,16 @@ The directories are searched in base path, cd path and home path
 */
 int	FS_GetModList( char *listbuf, int bufsize ) {
   int		nMods, i, j, nTotal, nLen, nPaks, nPotential, nDescLen;
-  char **pFiles = NULL;
-  char **pPaks = NULL;
-  char *name, *path;
+  const char **pFiles = NULL;
+  const char **pPaks = NULL;
+  const char *name, *path;
   char descPath[MAX_OSPATH];
   fileHandle_t descHandle;
 
   int dummy;
-  char **pFiles0 = NULL;
-  char **pFiles1 = NULL;
-  char **pFiles2 = NULL;
+  const char **pFiles0 = NULL;
+  const char **pFiles1 = NULL;
+  const char **pFiles2 = NULL;
   qboolean bDrop = qfalse;
 
   *listbuf = 0;
@@ -2492,7 +2492,7 @@ FS_Dir_f
 void FS_Dir_f( void ) {
 	char	*path;
 	char	*extension;
-	char	**dirnames;
+	const char	**dirnames;
 	int		ndirs;
 	int		i;
 
@@ -2525,13 +2525,22 @@ void FS_Dir_f( void ) {
 FS_ConvertPath
 ===========
 */
-void FS_ConvertPath( char *s ) {
-	while (*s) {
+static char *FS_ConvertPath( const char *s ) {
+	static char path[MAX_QPATH];
+	char *o = path;
+
+	while (*s && o < &path[MAX_QPATH - 1]) {
 		if ( *s == '\\' || *s == ':' ) {
-			*s = '/';
+			*o = '/';
+		} else {
+			*o = *s;
 		}
 		s++;
+		o++;
 	}
+
+	*o = '\0';
+	return path;
 }
 
 /*
@@ -2578,14 +2587,14 @@ int FS_PathCmp( const char *s1, const char *s2 ) {
 FS_SortFileList
 ================
 */
-void FS_SortFileList(char **filelist, int numfiles) {
+void FS_SortFileList(const char **filelist, int numfiles) {
 	int i, j, k, numsortedfiles;
-	char **sortedlist;
+	const char **sortedlist;
 
 	if (numfiles <= 0)
 		return;
 
-	sortedlist = (char **)Z_Malloc( ( numfiles + 1 ) * sizeof( *sortedlist ), TAG_FILESYS, qtrue );
+	sortedlist = (const char **)Z_Malloc( ( numfiles + 1 ) * sizeof( *sortedlist ), TAG_FILESYS, qtrue );
 	sortedlist[0] = NULL;
 	numsortedfiles = 0;
 	for (i = 0; i < numfiles; i++) {
@@ -2611,7 +2620,7 @@ FS_NewDir_f
 */
 void FS_NewDir_f( void ) {
 	char	*filter;
-	char	**dirnames;
+	const char	**dirnames;
 	int		ndirs;
 	int		i;
 
@@ -2630,8 +2639,7 @@ void FS_NewDir_f( void ) {
 	FS_SortFileList(dirnames, ndirs);
 
 	for ( i = 0; i < ndirs; i++ ) {
-		FS_ConvertPath(dirnames[i]);
-		Com_Printf( "%s\n", dirnames[i] );
+		Com_Printf( "%s\n", FS_ConvertPath(dirnames[i]) );
 	}
 	Com_Printf( "%d files listed\n", ndirs );
 	FS_FreeFileList( dirnames );
@@ -2741,8 +2749,8 @@ static void FS_AddGameDirectory( const char *path, const char *dir, qboolean ass
 	pack_t			*pak;
 	char			*pakfile;
 	int				numfiles;
-	char			**pakfiles;
-	char			*sorted[MAX_PAKFILES];
+	const char		**pakfiles;
+	const char		*sorted[MAX_PAKFILES];
 	const char		*filename;
 
 	// this fixes the case where fs_basepath is the same as fs_cdpath
@@ -3489,7 +3497,7 @@ void FS_PureServerSetLoadedPaks( const char *pakSums, const char *pakNames ) {
 
 	for ( i = 0 ; i < c ; i++ ) {
 		if (fs_serverPakNames[i]) {
-			Z_Free(fs_serverPakNames[i]);
+			Z_Free((void *)fs_serverPakNames[i]);
 		}
 		fs_serverPakNames[i] = NULL;
 	}
@@ -3534,7 +3542,7 @@ void FS_PureServerSetReferencedPaks( const char *pakSums, const char *pakNames )
 
 	for ( i = 0 ; i < c ; i++ ) {
 		if (fs_serverReferencedPakNames[i]) {
-			Z_Free(fs_serverReferencedPakNames[i]);
+			Z_Free((void *)fs_serverReferencedPakNames[i]);
 		}
 		fs_serverReferencedPakNames[i] = NULL;
 	}
@@ -3783,7 +3791,8 @@ const char *FS_MV_VerifyDownloadPath(const char *pk3file) {
 
 void FS_FilenameCompletion( const char *dir, const char *ext, qboolean stripExt, callbackFunc_t callback ) { // for auto-complete (copied from OpenJK)
 	int nfiles;
-	char **filenames, filename[MAX_STRING_CHARS];
+	const char **filenames;
+	char filename[MAX_STRING_CHARS];
 
 	char realExt[32];
 	// add: if ext is like "cfg|txt|bsp", we will first use a list of cfg files, then txt files, then bsp files
@@ -3800,11 +3809,11 @@ void FS_FilenameCompletion( const char *dir, const char *ext, qboolean stripExt,
 
 	// pass all the files to callback (FindMatches)
 	for ( int i=0; i<nfiles; i++ ) {
-		FS_ConvertPath( filenames[i] );
+		char *converted = FS_ConvertPath( filenames[i] );
 		if ( stripExt )
-			COM_StripExtension( filenames[i], filename, sizeof( filename ) );
+			COM_StripExtension( converted, filename, sizeof( filename ) );
 		else
-			Q_strncpyz( filename, filenames[i], sizeof( filename ) );
+			Q_strncpyz( filename, converted, sizeof( filename ) );
 
 		callback( filename );
 	}
@@ -3816,7 +3825,7 @@ void FS_FilenameCompletion( const char *dir, const char *ext, qboolean stripExt,
 }
 
 int FS_GetDLList(dlfile_t *files, int maxfiles) {
-	char **dirs, **pakfiles;
+	const char **dirs, **pakfiles;
 	int c, d, paknum, dirnum;
 	char *gamepath;
 	int ret = 0;

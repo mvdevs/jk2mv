@@ -102,7 +102,7 @@ DIRECTORY SCANNING
 
 #define	MAX_FOUND_FILES	0x1000
 
-void Sys_ListFilteredFiles(const char *basedir, char *subdirs, char *filter, char **psList, int *numfiles) {
+static void Sys_ListFilteredFiles(const char *basedir, char *subdirs, char *filter, const char **psList, int *numfiles) {
 	char		search[MAX_OSPATH], newsubdirs[MAX_OSPATH];
 	char		filename[MAX_OSPATH];
 	HANDLE		findhandle;
@@ -168,11 +168,11 @@ static qboolean strgtr(const char *s0, const char *s1) {
 	return qfalse;
 }
 
-char **Sys_ListFiles(const char *directory, const char *extension, char *filter, int *numfiles, qboolean wantsubs) {
+const char **Sys_ListFiles(const char *directory, const char *extension, char *filter, int *numfiles, qboolean wantsubs) {
 	char		search[MAX_OSPATH];
 	int			nfiles;
-	char		**listCopy;
-	char		*list[MAX_FOUND_FILES];
+	const char	**listCopy;
+	const char	*list[MAX_FOUND_FILES];
 	HANDLE		findhandle;
 	WIN32_FIND_DATAA findinfo;
 	int			flag;
@@ -189,7 +189,7 @@ char **Sys_ListFiles(const char *directory, const char *extension, char *filter,
 		if (!nfiles)
 			return NULL;
 
-		listCopy = (char **)Z_Malloc((nfiles + 1) * sizeof(*listCopy), TAG_LISTFILES);
+		listCopy = (const char **)Z_Malloc((nfiles + 1) * sizeof(*listCopy), TAG_LISTFILES);
 		for (i = 0; i < nfiles; i++) {
 			listCopy[i] = list[i];
 		}
@@ -242,7 +242,7 @@ char **Sys_ListFiles(const char *directory, const char *extension, char *filter,
 		return NULL;
 	}
 
-	listCopy = (char **)Z_Malloc((nfiles + 1) * sizeof(*listCopy), TAG_LISTFILES);
+	listCopy = (const char **)Z_Malloc((nfiles + 1) * sizeof(*listCopy), TAG_LISTFILES);
 	for (i = 0; i < nfiles; i++) {
 		listCopy[i] = list[i];
 	}
@@ -252,7 +252,7 @@ char **Sys_ListFiles(const char *directory, const char *extension, char *filter,
 		flag = 0;
 		for (i = 1; i<nfiles; i++) {
 			if (strgtr(listCopy[i - 1], listCopy[i])) {
-				char *temp = listCopy[i];
+				const char *temp = listCopy[i];
 				listCopy[i] = listCopy[i - 1];
 				listCopy[i - 1] = temp;
 				flag = 1;
@@ -263,7 +263,7 @@ char **Sys_ListFiles(const char *directory, const char *extension, char *filter,
 	return listCopy;
 }
 
-void	Sys_FreeFileList(char **psList) {
+void	Sys_FreeFileList(const char **psList) {
 	int		i;
 
 	if (!psList) {
@@ -271,7 +271,7 @@ void	Sys_FreeFileList(char **psList) {
 	}
 
 	for (i = 0; psList[i]; i++) {
-		Z_Free(psList[i]);
+		Z_Free((void *)psList[i]);
 	}
 
 	Z_Free(psList);
@@ -313,7 +313,7 @@ Used to load a module (jk2mpgame, cgame, ui) dll
 void *Sys_LoadModuleLibrary(const char *name, qboolean mvOverride, intptr_t(QDECL **entryPoint)(int, ...), intptr_t(QDECL *systemcalls)(intptr_t, ...)) {
 	HMODULE	libHandle;
 	void	(QDECL *dllEntry)(intptr_t(QDECL *syscallptr)(intptr_t, ...));
-	char	*path, *filePath;
+	const char	*path, *filePath;
 	char	filename[MAX_QPATH];
 
 	Com_sprintf(filename, sizeof(filename), "%s_" ARCH_STRING "." LIBRARY_EXTENSION, name);

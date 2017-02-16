@@ -72,6 +72,7 @@ http://ioqsrc.vampireducks.com/d8/dbe/q__shared_8c-source.html#l00061
 */
 void COM_StripExtension(const char *in, char *out, size_t destsize) {
 	int length;
+	assert(out != in);
 	Q_strncpyz(out, in, destsize);
 	length = (int)strlen(out) - 1;
 	while (length > 0 && out[length] != '.') {

@@ -68,8 +68,8 @@ void R_CheckMP3s( const char *psDir )
 //	Com_Printf(va("Scanning Dir: %s\n",psDir));
 	Com_Printf(".");	// stops useful info scrolling off screen
 
-	char	**sysFiles, **dirFiles;
-	int		numSysFiles, i, numdirs;
+	const char	**sysFiles, **dirFiles;
+	int			numSysFiles, i, numdirs;
 
 	dirFiles = FS_ListFiles( psDir, "/", &numdirs);
 	if (numdirs > 2)

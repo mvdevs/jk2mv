@@ -537,7 +537,7 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 	case BOTLIB_SHUTDOWN:
 		return SV_BotLibShutdown();
 	case BOTLIB_LIBVAR_SET:
-		return botlib_export->BotLibVarSet( (char *)VMA(1), (char *)VMA(2) );
+		return botlib_export->BotLibVarSet( (const char *)VMA(1), (const char *)VMA(2) );
 	case BOTLIB_LIBVAR_GET:
 		return botlib_export->BotLibVarGet( (char *)VMA(1), (char *)VMA(2), args[3] );
 

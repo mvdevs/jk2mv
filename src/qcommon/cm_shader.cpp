@@ -72,10 +72,10 @@ a single large text block that can be scanned for shader names
 
 void CM_LoadShaderFiles( void )
 {
-	char	**shaderFiles1;
+	const char	**shaderFiles1;
 	int		numShaders1;
 #ifndef FINAL_BUILD
-	char	**shaderFiles2;
+	const char	**shaderFiles2;
 	int		numShaders2;
 #endif
 	char	*buffers[MAX_SHADER_FILES];

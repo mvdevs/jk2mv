@@ -131,7 +131,7 @@ int Cvar_VariableIntegerValue( const char *var_name ) {
 Cvar_VariableString
 ============
 */
-char *Cvar_VariableString( const char *var_name ) {
+const char *Cvar_VariableString( const char *var_name ) {
 	cvar_t *var;
 
 	var = Cvar_FindVar (var_name);
@@ -235,7 +235,7 @@ cvar_t *Cvar_Get( const char *var_name, const char *var_value, int flags, qboole
 		if ( ( var->flags & CVAR_USER_CREATED ) && !( flags & CVAR_USER_CREATED )
 			&& var_value[0] ) {
 			var->flags &= ~CVAR_USER_CREATED;
-			Z_Free( var->resetString );
+			Z_Free( (void *)var->resetString );
 			var->resetString = CopyString( var_value );
 
 			// ZOID--needs to be set so that cvars the game sets as
@@ -247,7 +247,7 @@ cvar_t *Cvar_Get( const char *var_name, const char *var_value, int flags, qboole
 		// only allow one non-empty reset string without a warning
 		if ( !var->resetString[0] ) {
 			// we don't have a reset string yet
-			Z_Free( var->resetString );
+			Z_Free( (void *)var->resetString );
 			var->resetString = CopyString( var_value );
 		} else if ( var_value[0] && strcmp( var->resetString, var_value ) ) {
 			Com_DPrintf( "Warning: cvar \"%s\" given initial values: \"%s\" and \"%s\"\n",
@@ -255,12 +255,12 @@ cvar_t *Cvar_Get( const char *var_name, const char *var_value, int flags, qboole
 		}
 		// if we have a latched string, take that value now
 		if ( var->latchedString ) {
-			char *s;
+			const char *s;
 
 			s = var->latchedString;
 			var->latchedString = NULL;	// otherwise cvar_set2 would free it
 			Cvar_Set2( var_name, s, qtrue );
-			Z_Free( s );
+			Z_Free( (void *)s );
 		}
 
 // use a CVAR_SET for rom sets, get won't override
@@ -363,7 +363,7 @@ cvar_t *Cvar_Set2( const char *var_name, const char *value, qboolean force, qboo
 
 		if ( (var->flags & CVAR_LATCH) && var->latchedString ) {
 			Com_Printf("Cvar %s is no longer latched to \"%s\".\n", var->name, var->latchedString);
-			Z_Free (var->latchedString);
+			Z_Free ((void *)var->latchedString);
 			var->latchedString = NULL;
 			var->modified = qtrue;
 			var->modificationCount++;
@@ -398,7 +398,7 @@ cvar_t *Cvar_Set2( const char *var_name, const char *value, qboolean force, qboo
 					Com_Printf("Cvar %s is already latched to \"%s\".\n", var->name, value);
 					return var;
 				}
-				Z_Free (var->latchedString);
+				Z_Free ((void *)var->latchedString);
 			}
 			else
 			{
@@ -424,7 +424,7 @@ cvar_t *Cvar_Set2( const char *var_name, const char *value, qboolean force, qboo
 	{
 		if (var->latchedString)
 		{
-			Z_Free (var->latchedString);
+			Z_Free ((void *)var->latchedString);
 			var->latchedString = NULL;
 		}
 	}
@@ -435,7 +435,7 @@ cvar_t *Cvar_Set2( const char *var_name, const char *value, qboolean force, qboo
 	var->modified = qtrue;
 	var->modificationCount++;
 
-	Z_Free (var->string);	// free the old value string
+	Z_Free ((void *)var->string);	// free the old value string
 
 	var->string = CopyString(value);
 #if defined (_MSC_VER) && (_MSC_VER < 1800)
@@ -527,7 +527,7 @@ void Cvar_SetCheatState( void ) {
 			// because of a different var->latchedString
 			if (var->latchedString)
 			{
-				Z_Free(var->latchedString);
+				Z_Free((void *)var->latchedString);
 				var->latchedString = NULL;
 			}
 			if (strcmp(var->resetString,var->string)) {
@@ -951,16 +951,16 @@ void Cvar_Restart_f( void ) {
 		if ( var->flags & CVAR_USER_CREATED ) {
 			*prev = var->next;
 			if ( var->name ) {
-				Z_Free( var->name );
+				Z_Free( (void *)var->name );
 			}
 			if ( var->string ) {
-				Z_Free( var->string );
+				Z_Free( (void *)var->string );
 			}
 			if ( var->latchedString ) {
-				Z_Free( var->latchedString );
+				Z_Free( (void *)var->latchedString );
 			}
 			if ( var->resetString ) {
-				Z_Free( var->resetString );
+				Z_Free( (void *)var->resetString );
 			}
 			// clear the var completely, since we
 			// can't remove the index from the list

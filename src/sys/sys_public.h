@@ -118,8 +118,8 @@ const char *Sys_Basename( char *path );
 
 bool Sys_PathCmp( const char *path1, const char *path2 );
 
-char **Sys_ListFiles( const char *directory, const char *extension, char *filter, int *numfiles, qboolean wantsubs );
-void	Sys_FreeFileList( char **fileList );
+const char **Sys_ListFiles( const char *directory, const char *extension, char *filter, int *numfiles, qboolean wantsubs );
+void	Sys_FreeFileList( const char **fileList );
 //rwwRMG - changed to fileList to not conflict with list type
 
 time_t Sys_FileTime( const char *path );

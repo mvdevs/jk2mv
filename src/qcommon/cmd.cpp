@@ -248,7 +248,7 @@ Inserts the current value of a variable as command text
 ===============
 */
 void Cmd_Vstr_f( void ) {
-	char	*v;
+	const char	*v;
 
 	if (Cmd_Argc () != 2) {
 		Com_Printf ("vstr <variablename> : execute a variable command\n");
@@ -284,7 +284,7 @@ void Cmd_Echo_f (void)
 typedef struct cmd_function_s
 {
 	struct cmd_function_s	*next;
-	char					*name;
+	const char				*name;
 	xcommand_t				function;
 	completionFunc_t		complete; // for auto-complete (copied from OpenJK)
 } cmd_function_t;
@@ -454,7 +454,7 @@ void	Cmd_RemoveCommand( const char *cmd_name ) {
 		if ( !strcmp( cmd_name, cmd->name ) ) {
 			*back = cmd->next;
 			if (cmd->name) {
-				Z_Free(cmd->name);
+				Z_Free((void *)cmd->name);
 			}
 			Z_Free (cmd);
 			return;

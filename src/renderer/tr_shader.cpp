@@ -3882,7 +3882,7 @@ a single large text block that can be scanned for shader names
 #define	MAX_SHADER_FILES	4096
 static void ScanAndLoadShaderFiles( const char *path )
 {
-	char **shaderFiles[2];
+	const char **shaderFiles[2];
 	char *buffers[MAX_SHADER_FILES];
 	const char *p;
 	char *pw;
@@ -4003,7 +4003,7 @@ ScanAndLoadDynGlowFiles
 */
 static void ScanAndLoadDynGlowFiles( const char *path )
 {
-	char	**shaderFiles;
+	const char	**shaderFiles;
 	char	*dynGlowBuffers[MAX_SHADER_FILES];
 	char	*p;
 	int		numDynGlowShaders;

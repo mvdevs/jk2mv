@@ -3,7 +3,7 @@
 typedef struct {
 	qboolean	down;
 	int			repeats;		// if > 1, it is autorepeating
-	char		*binding;
+	const char	*binding;
 } qkey_t;
 
 typedef struct keyGlobals_s
@@ -54,7 +54,7 @@ extern	int			chat_playerNum;
 
 void Key_WriteBindings( fileHandle_t f );
 void Key_SetBinding( int keynum, const char *binding );
-char *Key_GetBinding( int keynum );
+const char *Key_GetBinding( int keynum );
 qboolean Key_IsDown( int keynum );
 int	Key_StringToKeynum(char *str);
 qboolean Key_GetOverstrikeMode( void );

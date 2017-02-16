@@ -507,7 +507,7 @@ int		Cvar_VariableIntegerValue( const char *var_name );
 int		Cvar_VariableIntegerValue( const char *var_name, qboolean isVmCall );
 // returns 0 if not defined or non numeric
 
-char	*Cvar_VariableString( const char *var_name );
+const char *Cvar_VariableString( const char *var_name );
 void	Cvar_VariableStringBuffer( const char *var_name, char *buffer, int bufsize );
 void	Cvar_VariableStringBuffer( const char *var_name, char *buffer, int bufsize, qboolean isVmCall );
 // returns an empty string if not defined
@@ -585,12 +585,12 @@ qboolean	FS_ConditionalRestart( int checksumFeed );
 void	FS_Restart( int checksumFeed );
 // shutdown and restart the filesystem so changes to fs_gamedir can take effect
 
-char	**FS_ListFiles( const char *directory, const char *extension, int *numfiles );
+const char	**FS_ListFiles( const char *directory, const char *extension, int *numfiles );
 // directory should not have either a leading or trailing /
 // if extension is "/", only subdirectories will be returned
 // the returned files will not include any directories or /
 
-void	FS_FreeFileList( char **list );
+void	FS_FreeFileList( const char **list );
 
 qboolean FS_FileExists( const char *file );
 qboolean FS_Base_FileExists(const char *file);
@@ -733,7 +733,7 @@ MISC
 //==========================================================
 
 
-char		*CopyString( const char *in );
+const char	*CopyString( const char *in );
 void		Info_Print( const char *s );
 
 void		Com_BeginRedirect (char *buffer, int buffersize, void (*flush)(char *));

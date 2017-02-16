@@ -92,7 +92,7 @@ qboolean Sys_Mkdir( const char *path )
 #define	MAX_FOUND_FILES	0x1000
 
 // bk001129 - new in 1.26
-void Sys_ListFilteredFiles( const char *basedir, char *subdirs, char *filter, char **list, int *numfiles ) {
+static void Sys_ListFilteredFiles( const char *basedir, char *subdirs, char *filter, const char **list, int *numfiles ) {
 	char		search[MAX_OSPATH], newsubdirs[MAX_OSPATH];
 	char		filename[MAX_OSPATH];
 	DIR			*fdir;
@@ -145,7 +145,7 @@ void Sys_ListFilteredFiles( const char *basedir, char *subdirs, char *filter, ch
 
 // bk001129 - in 1.17 this used to be
 // char **Sys_ListFiles( const char *directory, const char *extension, int *numfiles, qboolean wantsubs )
-char **Sys_ListFiles( const char *directory, const char *extension, char *filter, int *numfiles, qboolean wantsubs )
+const char **Sys_ListFiles( const char *directory, const char *extension, char *filter, int *numfiles, qboolean wantsubs )
 {
 	struct dirent *d;
 	// char *p; // bk001204 - unused
@@ -153,8 +153,8 @@ char **Sys_ListFiles( const char *directory, const char *extension, char *filter
 	qboolean dironly = wantsubs;
 	char		search[MAX_OSPATH];
 	int			nfiles;
-	char		**listCopy;
-	char		*list[MAX_FOUND_FILES];
+	const char	**listCopy;
+	const char	*list[MAX_FOUND_FILES];
 	//int			flag; // bk001204 - unused
 	int			i;
 	struct stat st;
@@ -172,7 +172,7 @@ char **Sys_ListFiles( const char *directory, const char *extension, char *filter
 		if (!nfiles)
 			return NULL;
 
-		listCopy = (char **)Z_Malloc( ( nfiles + 1 ) * sizeof( *listCopy ),TAG_FILESYS,qfalse );
+		listCopy = (const char **)Z_Malloc( ( nfiles + 1 ) * sizeof( *listCopy ),TAG_FILESYS,qfalse );
 		for ( i = 0 ; i < nfiles ; i++ ) {
 			listCopy[i] = list[i];
 		}
@@ -233,7 +233,7 @@ char **Sys_ListFiles( const char *directory, const char *extension, char *filter
 		return NULL;
 	}
 
-	listCopy = (char **)Z_Malloc( ( nfiles + 1 ) * sizeof( *listCopy ),TAG_FILESYS,qfalse );
+	listCopy = (const char **)Z_Malloc( ( nfiles + 1 ) * sizeof( *listCopy ),TAG_FILESYS,qfalse );
 	for ( i = 0 ; i < nfiles ; i++ ) {
 		listCopy[i] = list[i];
 	}
@@ -242,7 +242,7 @@ char **Sys_ListFiles( const char *directory, const char *extension, char *filter
 	return listCopy;
 }
 
-void	Sys_FreeFileList( char **list ) {
+void	Sys_FreeFileList( const char **list ) {
 	int		i;
 
 	if ( !list ) {
@@ -250,7 +250,7 @@ void	Sys_FreeFileList( char **list ) {
 	}
 
 	for ( i = 0 ; list[i] ; i++ ) {
-		Z_Free( list[i] );
+		Z_Free( (void *)list[i] );
 	}
 
 	Z_Free( list );
@@ -601,7 +601,7 @@ Used to load a module (jk2mpgame, cgame, ui) so/dylib
 void *Sys_LoadModuleLibrary(const char *name, qboolean mvOverride, intptr_t(QDECL **entryPoint)(int, ...), intptr_t(QDECL *systemcalls)(intptr_t, ...)) {
 	void (*dllEntry)(intptr_t(*syscallptr)(intptr_t, ...));
 	char filename[MAX_QPATH];
-	char *path, *filePath;
+	const char *path, *filePath;
 	void *libHandle;
 
 	Com_sprintf(filename, sizeof(filename), "%s_" ARCH_STRING "." LIBRARY_EXTENSION, name);

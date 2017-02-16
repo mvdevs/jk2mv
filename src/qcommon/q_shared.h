@@ -1180,10 +1180,10 @@ default values.
 
 // nothing outside the Cvar_*() functions should modify these fields!
 typedef struct cvar_s {
-	char		*name;
-	char		*string;
-	char		*resetString;		// cvar_restart will reset to this value
-	char		*latchedString;		// for CVAR_LATCH vars
+	const char	*name;
+	const char	*string;
+	const char	*resetString;		// cvar_restart will reset to this value
+	const char	*latchedString;		// for CVAR_LATCH vars
 	int			flags;
 	qboolean	modified;			// set each time the cvar is changed
 	int			modificationCount;	// incremented each time the cvar is changed

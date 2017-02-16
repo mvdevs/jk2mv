@@ -1271,7 +1271,7 @@ CopyString
 		memory from a memstatic_t might be returned
 ========================
 */
-char *CopyString( const char *in ) {
+const char *CopyString( const char *in ) {
 	char	*out;
 
 	if (!in[0]) {
