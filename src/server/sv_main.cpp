@@ -628,9 +628,8 @@ Redirect all printfs
 void SVC_RemoteCommand( netadr_t from, msg_t *msg ) {
 	qboolean	valid;
 	unsigned int	i;
-	char		remaining[1024];
-// this is because remote command is parsed in CL_ConnectionlessPacket
-#define	SV_OUTPUTBUF_LENGTH MAX_TOKEN_CHARS
+// max length that MSG_ReadString in CL_ConnectionlessPacket can read
+#define	SV_OUTPUTBUF_LENGTH MAX_STRING_CHARS
 	char		sv_outputbuf[SV_OUTPUTBUF_LENGTH];
 
 	// Prevent using rcon as an amplifier and make dictionary attacks impractical
