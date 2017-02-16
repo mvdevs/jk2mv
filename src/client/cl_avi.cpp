@@ -450,7 +450,7 @@ void CL_WriteAVIVideoFrame( const byte *imageBuffer, int size )
   int   chunkOffset = afd.fileSize - afd.moviOffset - 8;
   int   chunkSize = 8 + size;
   int   paddingSize = PADLEN(size, 2);
-  byte  padding[ 4 ] = { 0 };
+  const byte padding[ 4 ] = { 0 };
 
   if( !afd.fileOpen )
     return;
@@ -524,7 +524,7 @@ void CL_WriteAVIAudioFrame( const byte *pcmBuffer, int size )
     int   chunkOffset = afd.fileSize - afd.moviOffset - 8;
     int   chunkSize = 8 + bytesInBuffer;
     int   paddingSize = PADLEN(bytesInBuffer, 2);
-    byte  padding[ 4 ] = { 0 };
+    const byte padding[ 4 ] = { 0 };
 
     bufIndex = 0;
     WRITE_STRING( "01wb" );

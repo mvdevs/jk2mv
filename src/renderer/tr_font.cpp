@@ -720,7 +720,7 @@ int RE_Font_StrLenPixels(const char *psText, const int iFontHandle, float fScale
 {			
 	int			i = 0;
 	CFontInfo	*curfont;
-	char		parseText[8192] = {0};
+	char		parseText[8192];
 	float 		fTotalWidth = 0.0f;
 
 	//It gets confused about ^blah here too and reports an inaccurate length as a result

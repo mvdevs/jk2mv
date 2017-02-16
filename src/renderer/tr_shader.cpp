@@ -9,7 +9,7 @@
 // unusual thing it does is add the inputed texel offsets to all four texture units (this allows
 // nearest neighbor pixel peeking).
 #ifndef DEDICATED
-const char g_strGlowVShaderARB[] =
+static const char g_strGlowVShaderARB[] =
 {
 	"!!ARBvp1.0\
 	\
@@ -53,7 +53,7 @@ const char g_strGlowVShaderARB[] =
 
 // This Pixel Shader loads four texture units and adds them all together (with a modifier
 // multiplied to each in the process). The final output is r0 = t0 + t1 + t2 + t3.
-const char g_strGlowPShaderARB[] =
+static const char g_strGlowPShaderARB[] =
 {
 	"!!ARBfp1.0\
 	\
@@ -1903,7 +1903,7 @@ skyParms <outerbox> <cloudheight> <innerbox>
 */
 static void ParseSkyParms( const char **text ) {
 	char		*token;
-	const char	*suf[6] = {"rt", "lf", "bk", "ft", "up", "dn"};
+	const char * const suf[6] = {"rt", "lf", "bk", "ft", "up", "dn"};
 	char		pathname[MAX_QPATH];
 	int			i;
 
@@ -2022,7 +2022,7 @@ static void ParseSort( const char **text ) {
 ParseMaterial
 =================
 */
-const char *materialNames[MATERIAL_LAST] =
+static const char * const materialNames[MATERIAL_LAST] =
 {
 	MATERIALS
 };
@@ -2053,11 +2053,11 @@ void ParseMaterial( const char **text )
 
 typedef struct {
 	const char	*name;
-	uint32_t		clearSolid, surfaceFlags, contents;
+	uint32_t	clearSolid, surfaceFlags, contents;
 } infoParm_t;
 
 
-infoParm_t	infoParms[] = {
+static const infoParm_t	infoParms[] = {
 	// Game content Flags
 	{"nonsolid",	~CONTENTS_SOLID,	0,				0 },						// special hack to clear solid flag
 	{"nonopaque",	~CONTENTS_OPAQUE,	0,				0 },						// special hack to clear opaque flag
@@ -2104,11 +2104,10 @@ surfaceparm <name>
 */
 static void ParseSurfaceParm( const char **text ) {
 	char	*token;
-	int		numInfoParms = sizeof(infoParms) / sizeof(infoParms[0]);
 	int		i;
 
 	token = COM_ParseExt( text, qfalse );
-	for ( i = 0 ; i < numInfoParms ; i++ ) {
+	for ( i = 0 ; i < ARRAY_LEN(infoParms) ; i++ ) {
 		if ( !Q_stricmp( token, infoParms[i].name ) ) {
 			shader.surfaceFlags |= infoParms[i].surfaceFlags;
 			shader.contentFlags |= infoParms[i].contents;
@@ -2604,7 +2603,7 @@ typedef struct {
 } collapse_t;
 
 #ifndef DEDICATED
-static collapse_t	collapse[] = {
+static const collapse_t collapse[] = {
 	{ 0, GLS_DSTBLEND_SRC_COLOR | GLS_SRCBLEND_ZERO,
 		GL_MODULATE, 0 },
 

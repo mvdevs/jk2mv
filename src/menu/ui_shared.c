@@ -28,7 +28,7 @@ static void (*captureFunc) (void *p) = 0;
 static void *captureData = NULL;
 static itemDef_t *itemCapture = NULL;   // item that has the mouse captured ( if any )
 
-displayContextDef_t *DC = NULL;
+static displayContextDef_t *DC = NULL;
 
 static qboolean g_waitingForKey = qfalse;
 static qboolean g_editingField = qfalse;
@@ -36,11 +36,11 @@ static qboolean g_editingField = qfalse;
 static itemDef_t *g_bindItem = NULL;
 static itemDef_t *g_editItem = NULL;
 
-menuDef_t Menus[MAX_MENUS];	  // defined menus
-int menuCount = 0;			   // how many
+static menuDef_t Menus[MAX_MENUS];	  // defined menus
+static int menuCount = 0;			   // how many
 
-menuDef_t *menuStack[MAX_OPEN_MENUS];
-int openMenuCount = 0;
+static menuDef_t *menuStack[MAX_OPEN_MENUS];
+static int openMenuCount = 0;
 
 static qboolean debugMode = qfalse;
 
@@ -69,16 +69,16 @@ static size_t		allocPoint, outOfMemory;
 
 
 typedef struct  itemFlagsDef_s {
-	char *string;
+	const char *string;
 	int value;
 }	itemFlagsDef_t;
 
-itemFlagsDef_t itemFlags [] = {
+static const itemFlagsDef_t itemFlags [] = {
 	{ "WINDOW_INACTIVE",	WINDOW_INACTIVE },
 	{ NULL,					0 },
 };
 
-char *styles [] = {
+static const char *styles [] = {
 "WINDOW_STYLE_EMPTY",
 "WINDOW_STYLE_FILLED",
 "WINDOW_STYLE_GRADIENT",
@@ -88,14 +88,15 @@ char *styles [] = {
 NULL
 };
 
-char *alignment [] = {
+/*
+static const char *alignment [] = {
 "ITEM_ALIGN_LEFT",
 "ITEM_ALIGN_CENTER",
 "ITEM_ALIGN_RIGHT",
 NULL
 };
 
-char *types [] = {
+static const char *types [] = {
 "ITEM_TYPE_TEXT",
 "ITEM_TYPE_BUTTON",
 "ITEM_TYPE_RADIOBUTTON",
@@ -113,7 +114,7 @@ char *types [] = {
 "ITEM_TYPE_TEXTSCROLL",
 NULL
 };
-
+*/
 
 extern int MenuFontToHandle(int iMenuFont);
 
@@ -6360,7 +6361,7 @@ qboolean ItemParse_Appearance_slot( itemDef_t *item, int handle )
 }
 
 
-keywordHash_t itemParseKeywords[] = {
+static keywordHash_t itemParseKeywords[] = {
 	{"action",			ItemParse_action,			NULL	},
 	{"addColorRange",	ItemParse_addColorRange,	NULL	},
 	{"align",			ItemParse_align,			NULL	},
@@ -6438,7 +6439,7 @@ keywordHash_t itemParseKeywords[] = {
 	{0,					0,							0		}
 };
 
-keywordHash_t *itemParseKeywordHash[KEYWORDHASH_SIZE];
+static keywordHash_t *itemParseKeywordHash[KEYWORDHASH_SIZE];
 
 /*
 ===============
@@ -7135,7 +7136,7 @@ qboolean MenuParse_appearanceIncrement( itemDef_t *item, int handle )
 	return qtrue;
 }
 
-keywordHash_t menuParseKeywords[] = {
+static keywordHash_t menuParseKeywords[] = {
 	{"appearanceIncrement",	MenuParse_appearanceIncrement,	NULL	},
 	{"backcolor",			MenuParse_backcolor,	NULL	},
 	{"background",			MenuParse_background,	NULL	},
@@ -7173,7 +7174,7 @@ keywordHash_t menuParseKeywords[] = {
 	{0,						0,						0		}
 };
 
-keywordHash_t *menuParseKeywordHash[KEYWORDHASH_SIZE];
+static keywordHash_t *menuParseKeywordHash[KEYWORDHASH_SIZE];
 
 /*
 ===============

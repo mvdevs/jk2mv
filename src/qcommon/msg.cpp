@@ -572,7 +572,7 @@ delta functions with keys
 =============================================================================
 */
 
-uint32_t kbitmask[32] = {
+static const uint32_t kbitmask[32] = {
 	0x00000001, 0x00000003, 0x00000007, 0x0000000F,
 	0x0000001F, 0x0000003F, 0x0000007F, 0x000000FF,
 	0x000001FF, 0x000003FF, 0x000007FF, 0x00000FFF,
@@ -2155,7 +2155,7 @@ int msg_hData[256] =
 */
 
 // Q3 TA freq. table.
-int msg_hData[256] = {
+static const int msg_hData[256] = {
 	250315,			// 0
 	41193,			// 1
 	6292,			// 2

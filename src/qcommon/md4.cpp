@@ -74,9 +74,7 @@ static void MD4Transform (UINT4 [4], const unsigned char [64]);
 static void Encode (unsigned char *, UINT4 *, unsigned int);
 static void Decode (UINT4 *, const unsigned char *, unsigned int);
 
-static unsigned char PADDING[64] = {
-0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-};
+static const unsigned char PADDING[64] = { 0x80, 0 };
 
 /* F, G and H are basic MD4 functions. */
 #define F(x, y, z) (((x) & (y)) | ((~x) & (z)))

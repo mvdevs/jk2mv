@@ -283,7 +283,7 @@ void SV_ParseSurfaceParm( CCMShader * shader, const char **text )
 ParseMaterial
 =================
 */
-const char *svMaterialNames[MATERIAL_LAST] =
+static const char * const svMaterialNames[MATERIAL_LAST] =
 {
 	MATERIALS
 };

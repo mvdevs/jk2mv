@@ -1566,8 +1566,8 @@ static void RB_BlurGlowTexture()
 
 	// NOTE: The 0.25 is because we're blending 4 textures (so = 1.0) and we want a relatively normalized pixel
 	// intensity distribution, but this won't happen anyways if intensity is higher than 1.0.
-	float fBlurDistribution = r_DynamicGlowIntensity->value * 0.25f;
-	float fBlurWeight[4] = { fBlurDistribution, fBlurDistribution, fBlurDistribution, 1.0f };
+	const float fBlurDistribution = r_DynamicGlowIntensity->value * 0.25f;
+	const float fBlurWeight[4] = { fBlurDistribution, fBlurDistribution, fBlurDistribution, 1.0f };
 
 	// Enable and set the Vertex Program.
 	qglEnable( GL_VERTEX_PROGRAM_ARB );

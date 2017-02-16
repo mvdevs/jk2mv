@@ -625,7 +625,8 @@ void Con_DrawNotify (void)
 		{
 			// concat the text to be printed...
 			//
-			char sTemp[4096]={0};	// ott
+			char sTemp[4096];	// ott
+			sTemp[0] = '\0';
 			for (x = 0 ; x < con.linewidth ; x++)
 			{
 				if ( text[x].f.color != currentColor ) {
@@ -794,7 +795,8 @@ void Con_DrawSolidConsole( float frac ) {
 		{
 			// concat the text to be printed...
 			//
-			char sTemp[4096]={0};	// ott
+			char sTemp[4096];	// ott
+			sTemp[0] = '\0';
 			for (x = 0 ; x < con.linewidth + 1 ; x++)
 			{
 				if ( text[x].f.color != currentColor ) {

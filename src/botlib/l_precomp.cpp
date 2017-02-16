@@ -666,11 +666,10 @@ void PC_AddBuiltinDefines(source_t *source)
 {
 	int i;
 	define_t *define;
-	struct builtin
-	{
-		char *string;
+	struct {
+		const char *string;
 		int mBuiltin;
-	} builtin[] = { // bk001204 - brackets
+	} const builtin[] = { // bk001204 - brackets
 		{ "__LINE__",	BUILTIN_LINE },
 		{ "__FILE__",	BUILTIN_FILE },
 		{ "__DATE__",	BUILTIN_DATE },

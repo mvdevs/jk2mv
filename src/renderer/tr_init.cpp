@@ -1065,18 +1065,18 @@ GfxInfo_f
 extern bool g_bTextureRectangleHack;
 void GfxInfo_f( void )
 {
-	const char *enablestrings[] =
+	const char * const enablestrings[] =
 	{
 		"disabled",
 		"enabled"
 	};
-	const char *fsstrings[] =
+	const char * const fsstrings[] =
 	{
 		"windowed",
 		"fullscreen"
 	};
 
-	const char *tc_table[] =
+	const char * const tc_table[] =
 	{
 		"None",
 		"GL_S3_s3tc",

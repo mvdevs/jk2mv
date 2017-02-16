@@ -13,7 +13,7 @@ extern int uiForceAvailable;
 extern qboolean gTouchedForce;
 extern qboolean uiForcePowersDisabled[NUM_FORCE_POWERS];
 extern int uiForcePowersRank[NUM_FORCE_POWERS];
-extern int uiForcePowerDarkLight[NUM_FORCE_POWERS];
+extern const int uiForcePowerDarkLight[NUM_FORCE_POWERS];
 extern int uiSaberColorShaders[NUM_SABER_COLORS];
 // Dots above or equal to a given rank carry a certain color.
 extern vmCvar_t	ui_freeSaber, ui_forcePowerDisable;

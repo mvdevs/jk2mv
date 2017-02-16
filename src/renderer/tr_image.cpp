@@ -44,7 +44,8 @@ void R_GammaCorrect( byte *buffer, int bufSize ) {
 		buffer[i] = s_gammatable[buffer[i]];
 	}
 }
-const textureMode_t modes[] = {
+
+static const textureMode_t modes[] = {
 	{"GL_NEAREST", GL_NEAREST, GL_NEAREST},
 	{"GL_LINEAR", GL_LINEAR, GL_LINEAR},
 	{"GL_NEAREST_MIPMAP_NEAREST", GL_NEAREST_MIPMAP_NEAREST, GL_NEAREST},
@@ -219,7 +220,7 @@ void R_ImageList_f( void ) {
 	image_t	*image;
 	int		texels=0;
 	float	texBytes = 0.0f;
-	const char *yesno[] = {"no ", "yes"};
+	const char * const yesno[] = {"no ", "yes"};
 
 	ri.Printf (PRINT_ALL, "\n      -w-- -h-- -mm- -TMU- -if-- wrap --name-------\n");
 
@@ -466,7 +467,7 @@ R_BlendOverTexture
 Apply a color blend over a set of pixels
 ==================
 */
-static void R_BlendOverTexture( byte *data, int pixelCount, byte blend[4] ) {
+static void R_BlendOverTexture( byte *data, int pixelCount, const byte blend[4] ) {
 	int		i;
 	int		inverseAlpha;
 	int		premult[3];
@@ -483,7 +484,7 @@ static void R_BlendOverTexture( byte *data, int pixelCount, byte blend[4] ) {
 	}
 }
 
-byte	mipBlendColors[16][4] = {
+static const byte mipBlendColors[16][4] = {
 	{0,0,0,0},
 	{255,0,0,128},
 	{0,255,0,128},

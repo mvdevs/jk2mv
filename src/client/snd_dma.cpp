@@ -2930,7 +2930,7 @@ static void S_Music_f( void ) {
 
 // this table needs to be in-sync with the typedef'd enum "SoundCompressionMethod_t"...	-ste
 //
-static const char *sSoundCompressionMethodStrings[ct_NUMBEROF] =
+static const char * const sSoundCompressionMethodStrings[ct_NUMBEROF] =
 {
 	"16b",	// ct_16
 	"mp3"	// ct_MP3
@@ -3277,8 +3277,8 @@ static void S_StartBackgroundTrack_Actual( MusicInfo_t *pMusicInfo, const char *
 
 
 
-static char gsIntroMusic[MAX_QPATH]={0};
-static char gsLoopMusic [MAX_QPATH]={0};
+static char gsIntroMusic[MAX_QPATH];
+static char gsLoopMusic [MAX_QPATH];
 
 void S_RestartMusic( void )
 {

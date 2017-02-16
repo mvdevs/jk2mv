@@ -563,7 +563,7 @@ ParseFlare
 static void ParseFlare( dsurface_t *ds, mapVert_t *verts, msurface_t *surf, int *indexes ) {
 	srfFlare_t		*flare;
 	int				i;
-	int				lightmaps[MAXLIGHTMAPS] = { LIGHTMAP_BY_VERTEX };
+	const int		lightmaps[MAXLIGHTMAPS] = { LIGHTMAP_BY_VERTEX };
 
 	// get fog volume
 	surf->fogIndex = LittleLong( ds->fogNum ) + 1;
@@ -1627,7 +1627,7 @@ static	void R_LoadFogs( lump_t *l, lump_t *brushesLump, lump_t *sidesLump ) {
 	shader_t	*shader;
 	float		d;
 	int			firstSide=0;
-	int			lightmaps[MAXLIGHTMAPS] = { LIGHTMAP_NONE } ;
+	const int	lightmaps[MAXLIGHTMAPS] = { LIGHTMAP_NONE } ;
 
 	fogs = (dfog_t *)(fileBase + l->fileofs);
 	if (l->filelen % sizeof(*fogs)) {

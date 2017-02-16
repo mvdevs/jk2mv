@@ -266,7 +266,7 @@ void R_CheckMP3s( const char *psDir )
 void S_MP3_CalcVols_f( void )
 {
 	char sStartDir[MAX_QPATH] = {"sound"};
-	const char sUsage[] = "Usage: mp3_calcvols [-rescan] [startdir (default='sound')]\n";
+	static const char sUsage[] = "Usage: mp3_calcvols [-rescan] [startdir (default='sound')]\n";
 
 	if (Cmd_Argc()>4)	// 3 optional arguments
 	{

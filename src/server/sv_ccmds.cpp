@@ -665,7 +665,7 @@ static void SV_ConSay_f(void) {
 	SV_SendServerCommand(NULL, "chat \"%s\n\"", text);
 }
 
-static const char *forceToggleNamePrints[] =
+static const char * const forceToggleNamePrints[] =
 {
 	"HEAL",//FP_HEAL
 	"JUMP",//FP_LEVITATION

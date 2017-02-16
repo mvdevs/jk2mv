@@ -1348,11 +1348,11 @@ static void SV_UpdateUserinfo_f( client_t *cl ) {
 }
 
 typedef struct {
-	char	*name;
-	void	(*func)( client_t *cl );
+	const char	*name;
+	void		(*func)( client_t *cl );
 } ucmd_t;
 
-static ucmd_t ucmds[] = {
+static const ucmd_t ucmds[] = {
 	{"userinfo", SV_UpdateUserinfo_f},
 	{"disconnect", SV_Disconnect_f},
 	{"cp", SV_VerifyPaks_f},
@@ -1373,7 +1373,7 @@ Also called by bot code
 ==================
 */
 void SV_ExecuteClientCommand( client_t *cl, const char *s, qboolean clientOK ) {
-	ucmd_t	*u;
+	const ucmd_t *u;
 	char cmd[MAX_TOKEN_CHARS];
 	char arg1[MAX_TOKEN_CHARS];
 	char arg2[MAX_TOKEN_CHARS];

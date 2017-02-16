@@ -7,7 +7,7 @@
 #include "../qcommon/INetProfile.h"
 #endif
 
-char *svc_strings[256] = {
+static const char * const svc_strings[256] = {
 	"svc_bad",
 
 	"svc_nop",
@@ -20,7 +20,7 @@ char *svc_strings[256] = {
 	"svc_mapchange",
 };
 
-void SHOWNET( msg_t *msg, char *s) {
+static void SHOWNET( const msg_t *msg, const char *s) {
 	if ( cl_shownet->integer >= 2) {
 		Com_Printf ("%3i:%s\n", msg->readcount-1, s);
 	}

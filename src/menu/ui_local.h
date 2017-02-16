@@ -731,7 +731,7 @@ typedef struct {
 
 typedef struct {
 	char address[MAX_ADDRESSLENGTH];
-	char *lines[MAX_SERVERSTATUS_LINES][4];
+	const char *lines[MAX_SERVERSTATUS_LINES][4];
 	char text[MAX_SERVERSTATUS_TEXT];
 	char pings[MAX_CLIENTS * 3];
 	int numLines;

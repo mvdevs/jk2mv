@@ -95,7 +95,7 @@ int MVAPI_Init(int apilevel) {
 void Menu_ShowItemByName(menuDef_t *menu, const char *p, qboolean bShow);
 void UpdateForceUsed();
 
-char holdSPString[1024]={0};
+static char holdSPString[1024]={0};
 
 uiInfo_t uiInfo;
 
@@ -128,7 +128,7 @@ static const int numServerFilters = sizeof(serverFilters) / sizeof(serverFilter_
 
 
 
-static const char *skillLevels[] = {
+static const char * const skillLevels[] = {
   "SKILL1",//"I Can Win",
   "SKILL2",//"Bring It On",
   "SKILL3",//"Hurt Me Plenty",
@@ -139,7 +139,7 @@ static const int numSkillLevels = sizeof(skillLevels) / sizeof(const char*);
 
 
 
-static const char *teamArenaGameTypes[] = {
+static const char * const teamArenaGameTypes[] = {
 	"FFA",
 	"HOLOCRON",
 	"JEDIMASTER",
@@ -155,7 +155,7 @@ static int const numTeamArenaGameTypes = sizeof(teamArenaGameTypes) / sizeof(con
 
 
 
-static char* netnames[] = {
+static const char * const netnames[] = {
 	"???",
 	"UDP",
 	"IPX",
@@ -215,7 +215,7 @@ static const char *GetMonthAbbrevString( int iMonth )
 
 
 /*
-static const char *netSources[] = {
+static const char * const netSources[] = {
 	"Local",
 	"Internet",
 	"Favorites"
@@ -1005,7 +1005,7 @@ void UI_Load() {
 
 }
 
-static const char *handicapValues[] = {"None","95","90","85","80","75","70","65","60","55","50","45","40","35","30","25","20","15","10","5",NULL};
+static const char * const handicapValues[] = {"None","95","90","85","80","75","70","65","60","55","50","45","40","35","30","25","20","15","10","5",NULL};
 
 static void UI_DrawHandicap(rectDef_t *rect, float scale, vec4_t color, int textStyle, int iMenuFont) {
   int i, h;
@@ -4066,13 +4066,13 @@ static void UI_Update(const char *name) {
 	}
 	// screen resolutions
 	else if (!Q_stricmp(name, "ui_r_aspectratio")) {
-		int r_mode = (int)trap_Cvar_VariableValue("ui_r_mode");
+		int ui_r_mode = (int)trap_Cvar_VariableValue("ui_r_mode");
 
-		if (val == 0 && (r_mode < 0 || r_mode >= 11)) {
+		if (val == 0 && (ui_r_mode < 0 || ui_r_mode >= 11)) {
 			trap_Cvar_SetValue("ui_r_mode", 0);
-		} else if (val == 1 && (r_mode < 11 || r_mode >= 27)) {
+		} else if (val == 1 && (ui_r_mode < 11 || ui_r_mode >= 27)) {
 			trap_Cvar_SetValue("ui_r_mode", 11);
-		} else if (val == 2 && (r_mode < 27 || r_mode >= 32)) {
+		} else if (val == 2 && (ui_r_mode < 27 || ui_r_mode >= 32)) {
 			trap_Cvar_SetValue("ui_r_mode", 27);
 		} else if (val == -1) {
 			trap_Cvar_SetValue("ui_r_mode", -2);
@@ -4081,7 +4081,7 @@ static void UI_Update(const char *name) {
 	}
 }
 
-int gUISelectedMap = 0;
+static int gUISelectedMap = 0;
 
 /*
 ===============
@@ -5185,10 +5185,10 @@ static void UI_BuildServerDisplayList(int force) {
 
 typedef struct
 {
-	char *name, *altName;
+	const char *name, *altName;
 } serverStatusCvar_t;
 
-serverStatusCvar_t serverStatusCvars[] = {
+static const serverStatusCvar_t serverStatusCvars[] = {
 	{"sv_hostname", "Name"},
 	{"Address", ""},
 	{"gamename", "Game name"},
@@ -5209,7 +5209,7 @@ UI_SortServerStatusInfo
 */
 static void UI_SortServerStatusInfo( serverStatusInfo_t *info ) {
 	int i, j, index;
-	char *tmp1, *tmp2;
+	const char *tmp1, *tmp2;
 
 	// FIXME: if "gamename" == "base" or "missionpack" then
 	// replace the gametype number by FFA, CTF etc.
@@ -7214,8 +7214,8 @@ cvars
 
 typedef struct {
 	vmCvar_t	*vmCvar;
-	char		*cvarName;
-	char		*defaultString;
+	const char	*cvarName;
+	const char	*defaultString;
 	int			cvarFlags;
 } cvarTable_t;
 
@@ -7349,7 +7349,7 @@ vmCvar_t	s_language;
 vmCvar_t	ui_botfilter;
 
 // bk001129 - made static to avoid aliasing
-static cvarTable_t		cvarTable[] = {
+static const cvarTable_t cvarTable[] = {
 	{ &ui_ffa_fraglimit, "ui_ffa_fraglimit", "20", CVAR_ARCHIVE },
 	{ &ui_ffa_timelimit, "ui_ffa_timelimit", "0", CVAR_ARCHIVE },
 
@@ -7489,7 +7489,7 @@ UI_RegisterCvars
 */
 void UI_RegisterCvars( void ) {
 	int			i;
-	cvarTable_t	*cv;
+	const cvarTable_t *cv;
 
 	for ( i = 0, cv = cvarTable ; i < cvarTableSize ; i++, cv++ ) {
 		trap_Cvar_Register( cv->vmCvar, cv->cvarName, cv->defaultString, cv->cvarFlags );
@@ -7503,7 +7503,7 @@ UI_UpdateCvars
 */
 void UI_UpdateCvars( void ) {
 	int			i;
-	cvarTable_t	*cv;
+	const cvarTable_t *cv;
 
 	for ( i = 0, cv = cvarTable ; i < cvarTableSize ; i++, cv++ ) {
 		trap_Cvar_Update( cv->vmCvar );

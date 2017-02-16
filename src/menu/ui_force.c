@@ -68,7 +68,7 @@ int uiForcePowersRank[NUM_FORCE_POWERS] = {
 	0//FP_SABERTHROW,
 };
 
-int uiForcePowerDarkLight[NUM_FORCE_POWERS] = //0 == neutral
+const int uiForcePowerDarkLight[NUM_FORCE_POWERS] = //0 == neutral
 { //nothing should be usable at rank 0..
 	FORCE_LIGHTSIDE,//FP_HEAL,//instant
 	0,//FP_LEVITATION,//hold/duration
@@ -91,7 +91,7 @@ int uiForcePowerDarkLight[NUM_FORCE_POWERS] = //0 == neutral
 		//NUM_FORCE_POWERS
 };
 
-int uiForceStarShaders[NUM_FORCE_STAR_IMAGES][2];
+static int uiForceStarShaders[NUM_FORCE_STAR_IMAGES][2];
 int uiSaberColorShaders[NUM_SABER_COLORS];
 void UI_InitForceShaders(void)
 {
@@ -1062,7 +1062,7 @@ qboolean UI_ForcePowerRank_HandleKey(int flags, float *special, int key, int num
 int gCustRank = 0;
 int gCustSide = 0;
 
-int gCustPowersRank[NUM_FORCE_POWERS] = {
+static int gCustPowersRank[NUM_FORCE_POWERS] = {
 	0,//FP_HEAL = 0,//instant
 	1,//FP_LEVITATION,//hold/duration, this one defaults to 1 (gives a free point)
 	0,//FP_SPEED,//duration

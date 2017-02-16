@@ -24,16 +24,13 @@
 #define DEF_COMHUNKMEGS "128"
 //#define DEF_COMZONEMEGS "16"
 
-int		com_argc;
-char	*com_argv[MAX_NUM_ARGVS+1];
-
 ////////////////////////////////////////////////
 //
 #ifdef TAGDEF	// itu?
 #undef TAGDEF
 #endif
 #define TAGDEF(blah) #blah
-const static char *psTagStrings[TAG_COUNT+1]=	// +1 because TAG_COUNT will itself become a string here. Oh well.
+static const char * const psTagStrings[TAG_COUNT+1]=	// +1 because TAG_COUNT will itself become a string here. Oh well.
 {
 	#include "../qcommon/tags.h"
 };
@@ -42,9 +39,8 @@ const static char *psTagStrings[TAG_COUNT+1]=	// +1 because TAG_COUNT will itsel
 
 static void Z_Details_f(void);
 
-jmp_buf abortframe;		// an ERR_DROP occured, exit the entire frame
+static jmp_buf abortframe;		// an ERR_DROP occured, exit the entire frame
 
-FILE *debuglogfile;
 static fileHandle_t logfile;
 fileHandle_t	com_journalFile;			// events are written here
 fileHandle_t	com_journalDataFile;		// config files are written here
@@ -85,8 +81,6 @@ int			com_frameNumber;
 qboolean	com_errorEntered;
 qboolean	com_fullyInitialized;
 qboolean	com_demoplaying;
-
-char	com_errorMessage[MAXPRINTMSG];
 
 void Com_WriteConfig_f( void );
 void CIN_CloseAllVideos();
@@ -251,6 +245,7 @@ do the apropriate things.
 =============
 */
 Q_NORETURN void QDECL Com_Error( int code, const char *fmt, ... ) {
+	static char	com_errorMessage[MAXPRINTMSG];
 	va_list		argptr;
 	static int	lastErrorTime;
 	static int	errorCount;
@@ -782,7 +777,7 @@ typedef struct zone_s
 
 cvar_t	*com_validateZone;
 
-zone_t	TheZone = {};
+static zone_t	TheZone = {};
 
 
 
@@ -839,15 +834,15 @@ typedef struct
 typedef struct
 {
 	zoneHeader_t	Header;
-	byte mem[2];
+	const byte		mem[2];
 	zoneTail_t		Tail;
 } StaticMem_t;
 
-StaticZeroMem_t gZeroMalloc  =
+static const StaticZeroMem_t gZeroMalloc  =
 	{ {ZONE_MAGIC, TAG_STATIC,0,NULL,NULL},{ZONE_MAGIC}};
-StaticMem_t gEmptyString =
+static const StaticMem_t gEmptyString =
 	{ {ZONE_MAGIC, TAG_STATIC,2,NULL,NULL}, {'\0', '\0'}, {ZONE_MAGIC}};
-StaticMem_t gNumberString[] = {
+static const StaticMem_t gNumberString[] = {
 	{ {ZONE_MAGIC, TAG_STATIC,2,NULL,NULL}, {'0', '\0'}, {ZONE_MAGIC}},
 	{ {ZONE_MAGIC, TAG_STATIC,2,NULL,NULL}, {'1', '\0'}, {ZONE_MAGIC}},
 	{ {ZONE_MAGIC, TAG_STATIC,2,NULL,NULL}, {'2', '\0'}, {ZONE_MAGIC}},
@@ -860,7 +855,7 @@ StaticMem_t gNumberString[] = {
 	{ {ZONE_MAGIC, TAG_STATIC,2,NULL,NULL}, {'9', '\0'}, {ZONE_MAGIC}},
 };
 
-qboolean gbMemFreeupOccured = qfalse;
+static qboolean gbMemFreeupOccured = qfalse;
 void *Z_Malloc(int iSize, memtag_t eTag, qboolean bZeroit /* = qfalse */)
 {
 	gbMemFreeupOccured = qfalse;

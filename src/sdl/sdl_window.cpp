@@ -21,27 +21,27 @@ static SDL_Window *screen = NULL;
 static SDL_GLContext opengl_context;
 static float displayAspect;
 
-cvar_t *r_sdlDriver;
+static cvar_t *r_sdlDriver;
 
 // Window cvars
-cvar_t	*r_fullscreen = 0;
-cvar_t	*r_noborder;
-cvar_t	*r_centerWindow;
-cvar_t	*r_customwidth;
-cvar_t	*r_customheight;
-cvar_t	*r_swapInterval;
-cvar_t	*r_stereo;
-cvar_t	*r_mode;
-cvar_t	*r_displayRefresh;
-cvar_t	*r_savedWindows;
+cvar_t			*r_fullscreen;
+static cvar_t	*r_noborder;
+static cvar_t	*r_centerWindow;
+static cvar_t	*r_customwidth;
+static cvar_t	*r_customheight;
+static cvar_t	*r_swapInterval;
+static cvar_t	*r_stereo;
+cvar_t			*r_mode;
+cvar_t			*r_displayRefresh;
+static cvar_t	*r_savedWindows;
 
 // Window surface cvars
-cvar_t	*r_stencilbits;
-cvar_t	*r_depthbits;
-cvar_t	*r_colorbits;
-cvar_t  *r_ext_multisample;
-cvar_t	*r_allowsoftwaregl;
-cvar_t	*r_gammamethod;
+static cvar_t	*r_stencilbits;
+static cvar_t	*r_depthbits;
+static cvar_t	*r_colorbits;
+static cvar_t	*r_ext_multisample;
+static cvar_t	*r_allowsoftwaregl;
+cvar_t			*r_gammamethod;
 
 /*
 ** R_GetModeInfo
@@ -52,7 +52,7 @@ typedef struct vidmode_s
     int         width, height;
 } vidmode_t;
 
-const vidmode_t r_vidModes[] = {
+static const vidmode_t r_vidModes[] = {
 	// 4:3
 	{ "Mode  0:  320x240",	320,  240},
 	{ "Mode  1:  400x300",	400,  300},

@@ -97,7 +97,6 @@ typedef struct {
 } textureMode_t;
 
 extern	int				gl_filter_min, gl_filter_max;
-extern	const textureMode_t	modes[];
 
 const textureMode_t *GetTextureMode( const char *name );
 
@@ -1238,7 +1237,6 @@ extern	cvar_t	*r_colorMipLevels;				// development aid to see texture mip usage
 extern	cvar_t	*r_picmip;						// controls picmip values
 extern	cvar_t	*r_finish;
 extern	cvar_t	*r_drawBuffer;
-extern	cvar_t	*r_swapInterval;
 extern	cvar_t	*r_textureMode;
 extern	cvar_t	*r_offsetFactor;
 extern	cvar_t	*r_offsetUnits;
@@ -1281,9 +1279,6 @@ extern	cvar_t	*r_printShaders;
 
 extern	cvar_t	*r_convertModelBones;
 extern	cvar_t	*r_loadSkinsJKA;
-
-extern cvar_t	*r_customwidth;
-extern cvar_t	*r_customheight;
 
 /*
 Ghoul2 Insert Start

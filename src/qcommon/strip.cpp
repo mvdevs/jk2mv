@@ -103,7 +103,7 @@ enum
 };
 
 
-const char *Tokens[TK_END] =
+static const char * const Tokens[TK_END] =
 {
 	"VERSION",
 	"ID",
