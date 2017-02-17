@@ -913,19 +913,23 @@ qboolean G2API_GetBoltMatrix(g2handle_t g2h, const int modelIndex, const int bol
 	return qfalse;
 }
 
-void G2API_ListSurfaces(CGhoul2Info *ghlInfo)
+void G2API_ListSurfaces(g2handle_t g2h, int modelIndex)
 {
-	if (ghlInfo)
+	CGhoul2Info_v *ghoul2 = G2API_GetGhoul2Model(g2h);
+
+	if (ghoul2 && (unsigned)modelIndex < ghoul2->size())
 	{
-		G2_List_Model_Surfaces(ghlInfo->mFileName);
+		G2_List_Model_Surfaces((*ghoul2)[modelIndex].mFileName);
 	}
 }
 
-void G2API_ListBones(CGhoul2Info *ghlInfo, int frame)
+void G2API_ListBones(g2handle_t g2h, int modelIndex, int frame)
 {
-	if (ghlInfo)
+	CGhoul2Info_v *ghoul2 = G2API_GetGhoul2Model(g2h);
+
+	if (ghoul2 && (unsigned)modelIndex < ghoul2->size())
 	{
-		G2_List_Model_Bones(ghlInfo->mFileName, frame);
+		G2_List_Model_Bones((*ghoul2)[modelIndex].mFileName, frame);
 	}
 }
 

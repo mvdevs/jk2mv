@@ -120,8 +120,8 @@ void		G2API_DetachEnt(int *boltInfo);
 qboolean	G2API_GetBoltMatrix(g2handle_t g2h, const int modelIndex, const int boltIndex, mdxaBone_t *matrix,
 								const vec3_t angles, const vec3_t position, const int frameNum, qhandle_t *modelList, vec3_t scale);
 
-void		G2API_ListSurfaces(CGhoul2Info *ghlInfo);
-void		G2API_ListBones(CGhoul2Info *ghlInfo, int frame);
+void		G2API_ListSurfaces(g2handle_t g2h, int modelIndex);
+void		G2API_ListBones(g2handle_t g2h, int modelIndex, int frame);
 qboolean	G2API_HaveWeGhoul2Models(g2handle_t g2h);
 void		G2API_SetGhoul2ModelIndexes(g2handle_t g2h, qhandle_t *modelList, qhandle_t *skinList);
 qboolean	G2API_SetGhoul2ModelFlags(CGhoul2Info *ghlInfo, const int flags);

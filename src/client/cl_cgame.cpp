@@ -1134,11 +1134,13 @@ Ghoul2 Insert Start
 */
 
 	case CG_G2_LISTSURFACES:
-		G2API_ListSurfaces( (CGhoul2Info *) args[1] );
+		// G2API_ListSurfaces( (CGhoul2Info *) args[1] );
+		G2API_ListSurfaces((g2handle_t)args[1], args[2]);
 		return 0;
 
 	case CG_G2_LISTBONES:
-		G2API_ListBones( (CGhoul2Info *) args[1], args[2]);
+		// G2API_ListBones( (CGhoul2Info *) args[1], args[2]);
+		G2API_ListBones((g2handle_t)args[1], args[2], args[3]);
 		return 0;
 
 	case CG_G2_HAVEWEGHOULMODELS:

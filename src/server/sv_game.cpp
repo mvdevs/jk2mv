@@ -944,11 +944,13 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 		return FloatAsInt( ceilf( VMF(1) ) );
 
 	case G_G2_LISTBONES:
-		G2API_ListBones( (CGhoul2Info *) VMA(1), args[2]);
+		// G2API_ListBones( (CGhoul2Info *) VMA(1), args[2]);
+		G2API_ListBones((g2handle_t)args[1], args[2], args[3]);
 		return 0;
 
 	case G_G2_LISTSURFACES:
-		G2API_ListSurfaces( (CGhoul2Info *) args[1] );
+		// G2API_ListSurfaces( (CGhoul2Info *) args[1] );
+		G2API_ListSurfaces((g2handle_t)args[1], args[2]);
 		return 0;
 
 	case G_G2_HAVEWEGHOULMODELS:
