@@ -51,10 +51,8 @@ extern void G2_ConstructUsedBoneList(CConstructBoneList &CBL);
 // find a particular surface in the surface override list
 surfaceInfo_t *G2_FindOverrideSurface(int surfaceNum, surfaceInfo_v &surfaceList)
 {
-	int i;
-
 	// look through entire list
-	for(i=0; i<surfaceList.size(); i++)
+	for(size_t i = 0; i < surfaceList.size(); i++)
 	{
 		if (surfaceList[i].surface == surfaceNum)
 		{
@@ -275,10 +273,8 @@ void G2_FindRecursiveSurface(model_t *currentModel, int surfaceNum, surfaceInfo_
 
 void G2_RemoveRedundantGeneratedSurfaces(surfaceInfo_v &slist, int *activeSurfaces)
 {
-	int		i;
-
 	// walk the surface list, removing surface overrides or generated surfaces that are pointing at surfaces that aren't active anymore
-	for (i=0; i<slist.size(); i++)
+	for (size_t i = 0; i < slist.size(); i++)
 	{
 		if (slist[i].surface != -1)
 		{
@@ -361,13 +357,13 @@ qboolean G2_SetRootSurface(g2handle_t g2h, CGhoul2Info_v &ghoul2, const int mode
 		G2_RemoveRedundantBolts(ghoul2[modelIndex].mBltlist, ghoul2[modelIndex].mSlist, activeSurfaces, activeBones);
 
 		// then remove all models on this ghoul2 instance that use those bolts that are being removed.
-		for (int i=0; i<ghoul2.size(); i++)
+		for (size_t i = 0; i < ghoul2.size(); i++)
 		{
 			// are we even bolted to anything?
 			if (ghoul2[i].mModelBoltLink != -1)
 			{
-				int	boltMod = (ghoul2[i].mModelBoltLink >> MODEL_SHIFT) & MODEL_AND;
-				int	boltNum = (ghoul2[i].mModelBoltLink >> BOLT_SHIFT) & BOLT_AND;
+				unsigned	boltMod = (ghoul2[i].mModelBoltLink >> MODEL_SHIFT) & MODEL_AND;
+				unsigned	boltNum = (ghoul2[i].mModelBoltLink >> BOLT_SHIFT) & BOLT_AND;
 				// if either the bolt list is too small, or the bolt we are pointing at references nothing, remove this model
 				if ((ghoul2[boltMod].mBltlist.size() <= boltNum) ||
 					((ghoul2[boltMod].mBltlist[boltNum].boneNumber == -1) &&
@@ -485,7 +481,7 @@ int G2_AddSurface(CGhoul2Info *ghoul2, int surfaceNumber, int polyNumber, float 
 	lod = G2_DecideTraceLod(*(CGhoul2Info *)(ghoul2), lod, currentModel);
 
 	// first up, see if we have a free one already set up  - look only from the end of the constant surfaces onwards
-	for (int i=0; i<ghoul2->mSlist.size(); i++)
+	for (size_t i = 0; i < ghoul2->mSlist.size(); i++)
 	{
 		// is the surface count -1? That would indicate it's free
 		if (ghoul2->mSlist[i].surface == -1)
@@ -537,7 +533,7 @@ qboolean G2_RemoveSurface(surfaceInfo_v &slist, const int index)
 			}
 		}
 		// do we need to resize?
-		if (newSize != slist.size())
+		if (newSize != (int)slist.size())
 		{
 			// yes, so lets do it
 			slist.resize(newSize);

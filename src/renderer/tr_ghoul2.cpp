@@ -1005,7 +1005,7 @@ void G2_SetUpBolts( mdxaHeader_t *header, CGhoul2Info &ghoul2, mdxaBone_v &boneP
 	mdxaSkelOffsets_t *offsets;
 	offsets = (mdxaSkelOffsets_t *)((byte *)header + sizeof(mdxaHeader_t));
 
-	for (int i=0; i<boltList.size(); i++)
+	for (size_t i = 0; i < boltList.size(); i++)
 	{
 		if (boltList[i].boneNumber != -1)
 		{
@@ -1267,7 +1267,7 @@ void G2_ProcessSurfaceBolt(mdxaBone_v &bonePtr, mdxmSurface_t *surface, int bolt
 void G2_ProcessGeneratedSurfaceBolts(CGhoul2Info &ghoul2, mdxaBone_v &bonePtr, model_t *mod_t)
 {
 	// look through the surfaces off the end of the pre-defined model surfaces
-	for (int i=0; i< ghoul2.mSlist.size(); i++)
+	for (size_t i = 0; i < ghoul2.mSlist.size(); i++)
 	{
 		// only look for bolts if we are actually a generated surface, and not just an overriden one
 		if (ghoul2.mSlist[i].offFlags & G2SURFACEFLAG_GENERATED)
@@ -1538,12 +1538,12 @@ void G2_ConstructUsedBoneList(CConstructBoneList &CBL)
 static void G2_Sort_Models(CGhoul2Info_v &ghoul2, int * const modelList, int * const modelCount)
 {
 	int		startPoint, endPoint;
-	int		i, boltTo, j;
+	int		boltTo, j;
 
 	*modelCount = 0;
 
 	// first walk all the possible ghoul2 models, and stuff the out array with those with no parents
-	for (i=0; i<ghoul2.size();i++)
+	for (size_t i = 0; i < ghoul2.size(); i++)
 	{
 		// have a ghoul model here?
 		if (ghoul2[i].mModelindex == -1)
@@ -1564,7 +1564,7 @@ static void G2_Sort_Models(CGhoul2Info_v &ghoul2, int * const modelList, int * c
 	// now, using that list of parentless models, walk the descendant tree for each of them, inserting the descendents in the list
 	while (startPoint != endPoint)
 	{
-		for (i=0; i<ghoul2.size(); i++)
+		for (size_t i = 0; i < ghoul2.size(); i++)
 		{
 			// have a ghoul model here?
 			if (ghoul2[i].mModelindex == -1)
@@ -1648,7 +1648,7 @@ void R_AddGhoulSurfaces( trRefEntity_t *ent ) {
 	}
 
 	// are any of these models setting a new origin?
-	for (i=0; i<ghoul2.size(); i++)
+	for (size_t i = 0; i < ghoul2.size(); i++)
 	{
 		if (ghoul2[i].mModelindex != -1)
 		{
@@ -1784,7 +1784,7 @@ void R_AddGhoulSurfaces( trRefEntity_t *ent ) {
 					boneUsedList[0] =1;
 				}
 
-				if (ghoul2[i].mTempBoneList.size()!=animModel->mdxa->numBones+1)
+				if (ghoul2[i].mTempBoneList.size() != (size_t)animModel->mdxa->numBones+1)
 				{
 					ghoul2[i].mTempBoneList.resize(animModel->mdxa->numBones+1);
 					int k;
@@ -1806,8 +1806,8 @@ void R_AddGhoulSurfaces( trRefEntity_t *ent ) {
 					// yes we are bolted to another model, better use the bolt as the root matrix then, so our model is offset correctly for the bone bolt
 					else
 					{
-						int	boltMod = (ghoul2[i].mModelBoltLink >> MODEL_SHIFT) & MODEL_AND;
-						int	boltNum = (ghoul2[i].mModelBoltLink >> BOLT_SHIFT) & BOLT_AND;
+						unsigned boltMod = (ghoul2[i].mModelBoltLink >> MODEL_SHIFT) & MODEL_AND;
+						unsigned boltNum = (ghoul2[i].mModelBoltLink >> BOLT_SHIFT) & BOLT_AND;
 
 						if (boltMod >= ghoul2.size() || boltNum >= ghoul2[boltMod].mBltlist.size())
 							rootMatrix = identityMatrix;
@@ -1935,7 +1935,7 @@ void G2_ConstructGhoulSkeleton( CGhoul2Info_v &ghoul2, const int frameNum, qhand
 	if (checkForNewOrigin)
 	{
 		// are any of these models setting a new origin?
-		for (int i=0; i<ghoul2.size(); i++)
+		for (size_t i = 0; i < ghoul2.size(); i++)
 		{
 			if (ghoul2[i].mModelindex != -1)
 			{
@@ -2024,7 +2024,7 @@ void G2_ConstructGhoulSkeleton( CGhoul2Info_v &ghoul2, const int frameNum, qhand
 				boneUsedList[0] =1;
 			}
 
-			if (ghoul2[i].mTempBoneList.size()!=animModel->mdxa->numBones+1)
+			if (ghoul2[i].mTempBoneList.size() != (size_t)animModel->mdxa->numBones+1)
 			{
 				ghoul2[i].mTempBoneList.resize(animModel->mdxa->numBones+1);
 				int k;
@@ -2047,8 +2047,8 @@ void G2_ConstructGhoulSkeleton( CGhoul2Info_v &ghoul2, const int frameNum, qhand
 				// yes we are bolted to another model, better use the bolt as the root matrix then, so our model is offset correctly for the bone bolt
 				else
 				{
-					int	boltMod = (ghoul2[i].mModelBoltLink >> MODEL_SHIFT) & MODEL_AND;
-					int	boltNum = (ghoul2[i].mModelBoltLink >> BOLT_SHIFT) & BOLT_AND;
+					unsigned	boltMod = (ghoul2[i].mModelBoltLink >> MODEL_SHIFT) & MODEL_AND;
+					unsigned	boltNum = (ghoul2[i].mModelBoltLink >> BOLT_SHIFT) & BOLT_AND;
 
 					if (boltMod >= ghoul2.size() || boltNum >= ghoul2[boltMod].mBltlist.size())
 						rootMatrix = identityMatrix;

@@ -33,14 +33,13 @@
 // gla file, not the glm file type.
 int G2_Find_Bone(const model_t *mod, boneInfo_v &blist, const char *boneName)
 {
-	int					i;
 	mdxaSkel_t			*skel;
 	mdxaSkelOffsets_t	*offsets;
 	offsets = (mdxaSkelOffsets_t *)((byte *)mod->mdxa + sizeof(mdxaHeader_t));
 	skel = (mdxaSkel_t *)((byte *)mod->mdxa + sizeof(mdxaHeader_t) + offsets->offsets[0]);
 
 	// look through entire list
-	for(i=0; i<blist.size(); i++)
+	for(size_t i = 0; i < blist.size(); i++)
 	{
 		// if this bone entry has no info in it, bounce over it
 		if (blist[i].boneNumber == -1)
@@ -65,7 +64,7 @@ int G2_Find_Bone(const model_t *mod, boneInfo_v &blist, const char *boneName)
 // we need to add a bone to the list - find a free one and see if we can find a corresponding bone in the gla file
 int G2_Add_Bone (const model_t *mod, boneInfo_v &blist, const char *boneName)
 {
-	int i, x;
+	int x;
 	mdxaSkel_t			*skel;
 	mdxaSkelOffsets_t	*offsets;
 	boneInfo_t			tempBone;
@@ -92,7 +91,7 @@ int G2_Add_Bone (const model_t *mod, boneInfo_v &blist, const char *boneName)
 	}
 
 	// look through entire list - see if it's already there first
-	for(i=0; i<blist.size(); i++)
+	for(size_t i = 0; i < blist.size(); i++)
 	{
 		// if this bone entry has info in it, bounce over it
 		if (blist[i].boneNumber != -1)
@@ -149,7 +148,7 @@ qboolean G2_Remove_Bone_Index ( boneInfo_v &blist, int index)
 				}
 			}
 			// do we need to resize?
-			if (newSize != blist.size())
+			if (newSize != (int)blist.size())
 			{
 				// yes, so lets do it
 				blist.resize(newSize);
@@ -167,10 +166,8 @@ qboolean G2_Remove_Bone_Index ( boneInfo_v &blist, int index)
 // given a bone number, see if there is an override bone in the bone list
 int	G2_Find_Bone_In_List(boneInfo_v &blist, const int boneNum)
 {
-	int i;
-
 	// look through entire list
-	for(i=0; i<blist.size(); i++)
+	for(size_t i = 0; i < blist.size(); i++)
 	{
 		if (blist[i].boneNumber == boneNum)
 		{
@@ -429,7 +426,7 @@ qboolean G2_Set_Bone_Angles_Index( boneInfo_v &blist, const int index,
 							const Eorientations pitch, const Eorientations roll, qhandle_t *modelList,
 							const int modelIndex, const int blendTime, const int currentTime)
 {
-	if ((index >= blist.size()) || (blist[index].boneNumber == -1))
+	if (((unsigned)index >= blist.size()) || (blist[index].boneNumber == -1))
 	{
 		// we are attempting to set a bone override that doesn't exist
 		assert(0);
@@ -522,7 +519,7 @@ qboolean G2_Set_Bone_Angles_Matrix_Index(boneInfo_v &blist, const int index,
 								   const int modelIndex, const int blendTime, const int currentTime)
 {
 
-	if ((index >= blist.size()) || (blist[index].boneNumber == -1))
+	if (((unsigned)index >= blist.size()) || (blist[index].boneNumber == -1))
 	{
 		// we are attempting to set a bone override that doesn't exist
 		assert(0);
@@ -604,7 +601,7 @@ qboolean G2_Set_Bone_Anim_Index(
 {
 	int			modFlags = flags;
 
-	if ((index >= blist.size()) || (blist[index].boneNumber == -1))
+	if (((unsigned)index >= blist.size()) || (blist[index].boneNumber == -1))
 	{
 		// we are attempting to set a bone override that doesn't exist
 		assert(0);
@@ -817,7 +814,7 @@ qboolean G2_Get_Bone_Anim_Index( boneInfo_v &blist, const int index, const int c
 {
 
 	// did we find it?
-	if ((index != -1) && !((index >= blist.size()) || (blist[index].boneNumber == -1)))
+	if ((index != -1) && !(((unsigned)index >= blist.size()) || (blist[index].boneNumber == -1)))
 	{
 		// are we an animating bone?
 		if (blist[index].flags & (BONE_ANIM_OVERRIDE_LOOP | BONE_ANIM_OVERRIDE))
@@ -1086,7 +1083,7 @@ qboolean	G2_IsPaused(const char *fileName, boneInfo_v &blist, const char *boneNa
 qboolean G2_Stop_Bone_Anim_Index(boneInfo_v &blist, const int index)
 {
 
-	if ((index >= blist.size()) || (blist[index].boneNumber == -1))
+	if (((unsigned)index >= blist.size()) || (blist[index].boneNumber == -1))
 	{
 		// we are attempting to set a bone override that doesn't exist
 		assert(0);
@@ -1121,7 +1118,7 @@ qboolean G2_Stop_Bone_Anim(const char *fileName, boneInfo_v &blist, const char *
 qboolean G2_Stop_Bone_Angles_Index(boneInfo_v &blist, const int index)
 {
 
-	if ((index >= blist.size()) || (blist[index].boneNumber == -1))
+	if (((unsigned)index >= blist.size()) || (blist[index].boneNumber == -1))
 	{
 		// we are attempting to set a bone override that doesn't exist
 		assert(0);
@@ -1157,10 +1154,8 @@ qboolean G2_Stop_Bone_Angles(const char *fileName, boneInfo_v &blist, const char
 // actually walk the bone list and update each and every bone if we have ended an animation for them.
 void G2_Animate_Bone_List(boneInfo_v &blist, const int currentTime)
 {
-	int i;
-
 	// look through entire list
-	for(i=0; i<blist.size(); i++)
+	for(size_t i = 0; i < blist.size(); i++)
 	{
 		// we we a valid bone override?
 		if (blist[i].boneNumber != -1)
@@ -1241,10 +1236,8 @@ void G2_Init_Bone_List(boneInfo_v &blist)
 
 void G2_RemoveRedundantBoneOverrides(boneInfo_v &blist, int *activeBones)
 {
-	int		i;
-
 	// walk the surface list, removing surface overrides or generated surfaces that are pointing at surfaces that aren't active anymore
-	for (i=0; i<blist.size(); i++)
+	for (size_t i = 0; i < blist.size(); i++)
 	{
 		if (blist[i].boneNumber != -1)
 		{
