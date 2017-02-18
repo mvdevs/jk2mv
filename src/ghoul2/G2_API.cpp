@@ -108,7 +108,7 @@ int G2API_InitGhoul2Model(g2handle_t *g2hPtr, const char *fileName, int modelInd
 			G2_Init_Bolt_List(it->mBltlist);
 			it->mCustomShader = customShader;
 			it->mCustomSkin = customSkin;
-			strcpy(it->mFileName, fileName);
+			Q_strncpyz(it->mFileName, fileName, sizeof(it->mFileName));
 			it->mCreationID = modelFlags;
 			it->mLodBias = lodBias;
 			it->mAnimFrameDefault = 0;
@@ -150,7 +150,7 @@ int G2API_InitGhoul2Model(g2handle_t *g2hPtr, const char *fileName, int modelInd
 	G2_Init_Bolt_List(newModel.mBltlist);
 	newModel.mCustomShader = customShader;
 	newModel.mCustomSkin = customSkin;
-	strcpy(newModel.mFileName, fileName);
+	Q_strncpyz(newModel.mFileName, fileName, sizeof(newModel.mFileName));
 	newModel.mCreationID = modelFlags;
 	newModel.mLodBias = lodBias;
 	newModel.mAnimFrameDefault = 0;

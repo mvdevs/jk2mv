@@ -305,7 +305,7 @@ void S_MP3_CalcVols_f( void )
 			}
 			continue;
 		}
-		strcpy(sStartDir,Cmd_Argv(i));
+		Q_strncpyz(sStartDir, Cmd_Argv(i), sizeof(sStartDir));
 	}
 
 	Com_Printf("Starting Scan for Updates in Dir: %s\n",sStartDir);

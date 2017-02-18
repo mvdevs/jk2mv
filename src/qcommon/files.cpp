@@ -2836,7 +2836,7 @@ static void FS_AddGameDirectory( const char *path, const char *dir, qboolean ass
 #endif
 
 		// store the game name for downloading
-		strcpy(pak->pakGamename, dir);
+		Q_strncpyz(pak->pakGamename, dir, sizeof(pak->pakGamename));
 
 		// if the pk3 is not in base, always reference it (standard jk2 behaviour)
 		if (Q_stricmpn(pak->pakGamename, BASEGAME, (int)strlen(BASEGAME))) {
