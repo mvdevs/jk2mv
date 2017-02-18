@@ -1095,15 +1095,10 @@ void CL_Setenv_f( void ) {
 
 	if ( argc > 2 ) {
 		char buffer[1024];
-		int i;
 
-		strcpy( buffer, Cmd_Argv(1) );
-		strcat( buffer, "=" );
-
-		for ( i = 2; i < argc; i++ ) {
-			strcat( buffer, Cmd_Argv( i ) );
-			strcat( buffer, " " );
-		}
+		Q_strncpyz( buffer, Cmd_Argv(1), sizeof( buffer ) );
+		Q_strcat( buffer, sizeof( buffer ), "=" );
+		Q_strcat( buffer, sizeof( buffer ), Cmd_ArgsFrom(2) );
 
 		if ( putenv( buffer ) != 0 )
 			Com_Printf( "Unable to set environment variable\n" );

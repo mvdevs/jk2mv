@@ -1374,19 +1374,19 @@ Also called by bot code
 */
 void SV_ExecuteClientCommand( client_t *cl, const char *s, qboolean clientOK ) {
 	const ucmd_t *u;
-	char cmd[MAX_TOKEN_CHARS];
-	char arg1[MAX_TOKEN_CHARS];
-	char arg2[MAX_TOKEN_CHARS];
+	const char *cmd;
+	const char *arg1;
+	const char *arg2;
 	qboolean foundCommand = qfalse;
 
 	Cmd_TokenizeString(s);
-	Q_strncpyz(cmd, Cmd_Argv(0), sizeof(cmd));
-	Q_strncpyz(arg1, Cmd_Argv(1), sizeof(arg1));
-	Q_strncpyz(arg2, Cmd_Argv(2), sizeof(arg2));
+	cmd = Cmd_Argv(0);
+	arg1 = Cmd_Argv(1);
+	arg2 = Cmd_Argv(2);
 
 	// see if it is a server level command
 	for (u=ucmds ; u->name ; u++) {
-		if (!strcmp (Cmd_Argv(0), u->name) ) {
+		if (!strcmp (cmd, u->name) ) {
 			foundCommand = qtrue;
 			u->func( cl );
 			break;
@@ -1396,7 +1396,7 @@ void SV_ExecuteClientCommand( client_t *cl, const char *s, qboolean clientOK ) {
 	// q3cbufexec fix
 	if (!Q_stricmp(cmd, "say") || !Q_stricmp(cmd, "say_team") || !Q_stricmp(cmd, "tell")) {
 		for (int i = 1; i < Cmd_Argc(); i++) {
-			if (strchr(Cmd_Argv(i), '\n') || strchr(Cmd_Argv(i), '\r')) {
+			if (strpbrk(Cmd_Argv(i), "\n\r")) {
 				return;
 			}
 		}
@@ -1410,7 +1410,7 @@ void SV_ExecuteClientCommand( client_t *cl, const char *s, qboolean clientOK ) {
 
 	// q3cbufexec fix
 	if ((!Q_stricmp(cmd, "callvote") || !Q_stricmp(cmd, "callteamvote"))) {
-		if (strchr(arg1, ';') || strchr(arg2, ';') || strchr(arg1, '\n') || strchr(arg2, '\n') || strchr(arg1, '\r') || strchr(arg2, '\r')) {
+	  if (strpbrk(arg1, ";\n\r") || strpbrk(arg2, ";\n\r")) {
 			return;
 		}
 	}
