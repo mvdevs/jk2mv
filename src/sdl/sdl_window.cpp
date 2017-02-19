@@ -2,6 +2,7 @@
 #include <SDL_syswm.h>
 #include "../qcommon/qcommon.h"
 #include "../sys/sys_local.h"
+#include "../renderer/tr_public.h"
 #include "sdl_icon.h"
 
 #define CLIENT_WINDOW_TITLE "JK2MV"
@@ -32,14 +33,15 @@ cvar_t	*r_swapInterval;
 cvar_t	*r_stereo;
 cvar_t	*r_mode;
 cvar_t	*r_displayRefresh;
+cvar_t	*r_savedWindows;
 
 // Window surface cvars
 cvar_t	*r_stencilbits;
 cvar_t	*r_depthbits;
 cvar_t	*r_colorbits;
-cvar_t	*r_ignorehwgamma;
 cvar_t  *r_ext_multisample;
 cvar_t	*r_allowsoftwaregl;
+cvar_t	*r_gammamethod;
 
 /*
 ** R_GetModeInfo
@@ -91,7 +93,7 @@ const vidmode_t r_vidModes[] = {
 };
 static const int	s_numVidModes = ARRAY_LEN( r_vidModes );
 
-#define R_MODE_FALLBACK (4) // 640x480
+#define R_MODE_FALLBACK 3 // 640x480
 
 qboolean R_GetModeInfo( int *width, int *height, int mode ) {
 	const vidmode_t	*vm;
@@ -132,6 +134,175 @@ static void R_ModeList_f( void )
 		Com_Printf( "%s\n", r_vidModes[i].description );
 	}
 	Com_Printf( "\n" );
+}
+
+// Procedures for saving and restoring window position
+typedef struct {
+	SDL_Rect	display;
+	int			xpos;
+	int			ypos;
+} savedWindow_t;
+
+#define MAX_SAVED 8
+
+static void GLimp_SerializeWindowPosition( char *token, size_t size, const savedWindow_t *saved )
+{
+	// generate saved window data eg. 1280x800+1024+0:-30+60 first 4
+	// integers are X11 geometry format for current display, last 2
+	// are window position relative to current display
+	Com_sprintf( token, size, "%dx%d%+d%+d:%+d%+d",
+		saved->display.w, saved->display.h,
+		saved->display.x, saved->display.y,
+		saved->xpos, saved->ypos );
+}
+
+static qboolean GLimp_DeserializeWindowPosition( savedWindow_t *saved, const char *token )
+{
+	char	testToken[MAX_CVAR_VALUE_STRING];
+	int		consumed;
+	int		ret;
+
+	ret = sscanf( token, "%dx%d%d%d:%d%d%n",
+		&saved->display.w, &saved->display.h,
+		&saved->display.x, &saved->display.y,
+		&saved->xpos, &saved->ypos, &consumed );
+
+	// make sure we read exactly 6 integers
+	if ( ret != 6 )
+		return qfalse;
+
+	// make sure there are no extra characters at the end
+	if ( token[consumed] != '\0' )
+		return qfalse;
+
+	// range tests
+	if ( saved->display.w <= 0 || saved->display.h <= 0 ||
+		saved->display.x < 0 || saved->display.y < 0 )
+		return qfalse;
+
+	// inverse function test
+	GLimp_SerializeWindowPosition( testToken, sizeof( testToken ), saved );
+
+	if ( strcmp( token, testToken ) )
+		return qfalse;
+
+	return qtrue;
+}
+
+static int SDL_RectCmp( SDL_Rect *r1, SDL_Rect *r2 )
+{
+	return r1->w != r2->w || r1->h != r2->h || r1->x != r2->x || r1->y != r2->y;
+}
+
+void GLimp_SaveWindowPosition( void )
+{
+	char			oldString[MAX_CVAR_VALUE_STRING];
+	char			newString[MAX_CVAR_VALUE_STRING];
+	char			*token;
+	int				display;
+	int				i;
+	savedWindow_t	saved;
+	savedWindow_t	newSaved;
+
+	if ( !screen )
+		return;
+
+	// display containing window's center
+	display = SDL_GetWindowDisplayIndex( screen );
+
+	if ( display < 0 )
+		return;
+
+	if ( SDL_GetDisplayBounds( display, &newSaved.display ) != 0 )
+		return;
+
+	SDL_GetWindowPosition( screen, &newSaved.xpos, &newSaved.ypos );
+
+	// workaround for x11 decorations shifting new window down
+#if SDL_VERSION_ATLEAST(2, 0, 5)
+	// SDL_GetWindowBordersSize segfaults on macOS
+	if ( !strcmp( SDL_GetCurrentVideoDriver(), "x11" ) ) {
+		int				top, left;
+
+		if ( SDL_GetWindowBordersSize( screen, &top, &left, NULL, NULL ) == 0 ) {
+			newSaved.ypos -= top;
+			newSaved.xpos -= left;
+		}
+	}
+#endif
+
+	newSaved.xpos -= newSaved.display.x;
+	newSaved.ypos -= newSaved.display.y;
+
+	Q_strncpyz( oldString, r_savedWindows->string, sizeof( oldString ) );
+
+	GLimp_SerializeWindowPosition( newString, sizeof( newString ), &newSaved );
+
+	// deserialize oldString and write it back
+	token = strtok( oldString, " " );
+	i = 1;
+
+	while ( token && i < MAX_SAVED ) {
+		// skip malformed token
+		if ( GLimp_DeserializeWindowPosition( &saved, token ) ) {
+			// replace token describing position on the same display
+			if ( SDL_RectCmp( &saved.display, &newSaved.display ) ) {
+				Q_strcat( newString, sizeof( newString ), " " );
+				Q_strcat( newString, sizeof( newString ), token );
+
+				i++;
+			}
+		}
+
+		token = strtok( NULL, " " );
+	}
+
+	Cvar_Set( "r_savedWindows", newString );
+}
+
+static qboolean GLimp_GetSavedWindowPosition( int *dsp, int *xpos, int *ypos )
+{
+	savedWindow_t	saved;
+	qboolean		found = qfalse;
+	char			buf[MAX_CVAR_VALUE_STRING];
+	char			*token;
+	int				numDisplays = SDL_GetNumVideoDisplays();
+	int				display = numDisplays;
+	int				x, y;
+
+	// find latest window position token matching existing display
+	Q_strncpyz( buf, r_savedWindows->string, sizeof( buf ) );
+
+	token = strtok( buf, " " );
+
+	while ( token && !found ) {
+		if ( GLimp_DeserializeWindowPosition( &saved, token ) ) {
+			// use saved token if the same display is present
+			for ( display = 0; display < numDisplays; display++ ) {
+				SDL_Rect	rect;
+
+				if ( SDL_GetDisplayBounds( display, &rect ) != 0 )
+					continue;
+
+				if ( !SDL_RectCmp( &saved.display, &rect ) ) {
+					x = saved.xpos + saved.display.x;
+					y = saved.ypos + saved.display.y;
+					found = qtrue;
+					break;
+				}
+			}
+		}
+
+		token = strtok( NULL, " " );
+	}
+
+	if ( found ) {
+		*dsp = display;
+		*xpos = x;
+		*ypos = y;
+	}
+
+	return found;
 }
 
 /*
@@ -183,13 +354,28 @@ void WIN_Present( window_t *window )
 
 		if ( needToToggle )
 		{
-			sdlToggled = SDL_SetWindowFullscreen( screen, r_fullscreen->integer ) >= 0;
+			fullscreen = r_fullscreen->integer ? SDL_WINDOW_FULLSCREEN : 0;
+			sdlToggled = SDL_SetWindowFullscreen( screen, fullscreen ) >= 0;
 
 			// SDL_WM_ToggleFullScreen didn't work, so do it the slow way
 			if ( !sdlToggled )
+			{
 				Cbuf_AddText( "vid_restart\n" );
+			}
+			else if ( !fullscreen )
+			{
+				int x, y;
+				int display = 0;
 
-			IN_Restart();
+				if ( !GLimp_GetSavedWindowPosition( &display, &x, &y ) )
+				{
+					x = y = SDL_WINDOWPOS_CENTERED;
+				}
+
+				SDL_SetWindowPosition( screen, x, y );
+
+				IN_Restart();
+			}
 		}
 
 		r_fullscreen->modified = qfalse;
@@ -204,14 +390,14 @@ GLimp_CompareModes
 static int GLimp_CompareModes( const void *a, const void *b )
 {
 	const float ASPECT_EPSILON = 0.001f;
-	SDL_Rect *modeA = (SDL_Rect *)a;
-	SDL_Rect *modeB = (SDL_Rect *)b;
+	const SDL_Rect *modeA = (const SDL_Rect *)a;
+	const SDL_Rect *modeB = (const SDL_Rect *)b;
 	float aspectA = (float)modeA->w / (float)modeA->h;
 	float aspectB = (float)modeB->w / (float)modeB->h;
 	int areaA = modeA->w * modeA->h;
 	int areaB = modeB->w * modeB->h;
-	float aspectDiffA = fabs( aspectA - displayAspect );
-	float aspectDiffB = fabs( aspectB - displayAspect );
+	float aspectDiffA = fabsf( aspectA - displayAspect );
+	float aspectDiffB = fabsf( aspectB - displayAspect );
 	float aspectDiffsDiff = aspectDiffA - aspectDiffB;
 
 	if( aspectDiffsDiff > ASPECT_EPSILON )
@@ -329,7 +515,7 @@ static rserr_t GLimp_SetMode(glconfig_t *glConfig, const windowDesc_t *windowDes
 	Uint32 flags = SDL_WINDOW_SHOWN;
 	SDL_DisplayMode desktopMode;
 	int display = 0;
-	int x = SDL_WINDOWPOS_UNDEFINED, y = SDL_WINDOWPOS_UNDEFINED;
+	int x = SDL_WINDOWPOS_CENTERED, y = SDL_WINDOWPOS_CENTERED;
 
 	if ( windowDesc->api == GRAPHICS_API_OPENGL )
 	{
@@ -397,13 +583,6 @@ static rserr_t GLimp_SetMode(glconfig_t *glConfig, const windowDesc_t *windowDes
 	}
 	Com_Printf( " %d %d\n", glConfig->vidWidth, glConfig->vidHeight);
 
-	// Center window
-	if( r_centerWindow->integer && !fullscreen )
-	{
-		x = ( desktopMode.w / 2 ) - ( glConfig->vidWidth / 2 );
-		y = ( desktopMode.h / 2 ) - ( glConfig->vidHeight / 2 );
-	}
-
 	// Destroy existing state if it exists
 	if( opengl_context != NULL )
 	{
@@ -417,6 +596,15 @@ static rserr_t GLimp_SetMode(glconfig_t *glConfig, const windowDesc_t *windowDes
 		Com_DPrintf( "Existing window at %dx%d before being destroyed\n", x, y );
 		SDL_DestroyWindow( screen );
 		screen = NULL;
+	} else {
+		if ( GLimp_GetSavedWindowPosition( &display, &x, &y ) )
+			Com_DPrintf( "Found saved window at %dx%d display %d\n", x, y, display );
+	}
+
+	if ( r_centerWindow->integer )
+	{
+		x = SDL_WINDOWPOS_CENTERED_DISPLAY( display );
+		y = SDL_WINDOWPOS_CENTERED_DISPLAY( display );
 	}
 
 	if( fullscreen )
@@ -570,9 +758,20 @@ static rserr_t GLimp_SetMode(glconfig_t *glConfig, const windowDesc_t *windowDes
 			if( ( screen = SDL_CreateWindow( windowTitle, x, y,
 					glConfig->vidWidth, glConfig->vidHeight, flags ) ) == NULL )
 			{
+				if ( samples > 0 ) {
+					SDL_GL_SetAttribute( SDL_GL_MULTISAMPLEBUFFERS, 0 );
+					SDL_GL_SetAttribute( SDL_GL_MULTISAMPLESAMPLES, 0 );
+
+					screen = SDL_CreateWindow( windowTitle, x, y,
+						glConfig->vidWidth, glConfig->vidHeight, flags );
+				}
+			}
+
+			if ( screen == NULL ) {
 				Com_DPrintf( "SDL_CreateWindow failed: %s\n", SDL_GetError( ) );
 				continue;
 			}
+
 
 #ifndef MACOS_X
 			SDL_SetWindowIcon(screen, icon);
@@ -649,6 +848,19 @@ static rserr_t GLimp_SetMode(glconfig_t *glConfig, const windowDesc_t *windowDes
 			}
 		}
 	}
+
+	glConfig->displayDPI = 96.0f;
+#if SDL_VERSION_ATLEAST(2, 0, 4)
+	float hdpi, vdpi;
+	if (!SDL_GetDisplayDPI(display, NULL, &hdpi, &vdpi)) {
+		if (hdpi == vdpi) {
+			glConfig->displayDPI = hdpi;
+		} else {
+			Com_DPrintf("SDL_CreateWindow: hdpi != vdpi unsupported, using default DPI settings...\n");
+		}
+	}
+	Com_DPrintf("SDL_CreateWindow: Screen DPI: %f\n", glConfig->displayDPI);
+#endif
 
 	SDL_FreeSurface(icon);
 
@@ -732,7 +944,7 @@ window_t WIN_Init( const windowDesc_t *windowDesc, glconfig_t *glConfig )
 	r_sdlDriver			= Cvar_Get( "r_sdlDriver",			"",			CVAR_ROM );
 
 	// Window cvars
-	r_fullscreen		= Cvar_Get( "r_fullscreen",			"1",		CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH );
+	r_fullscreen		= Cvar_Get( "r_fullscreen",			"1",		CVAR_ARCHIVE | CVAR_GLOBAL );
 	r_noborder			= Cvar_Get( "r_noborder",			"0",		CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH );
 	r_centerWindow		= Cvar_Get( "r_centerWindow",		"0",		CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH );
 	r_customwidth		= Cvar_Get( "r_customwidth",		"1600",		CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH );
@@ -741,19 +953,20 @@ window_t WIN_Init( const windowDesc_t *windowDesc, glconfig_t *glConfig )
 	r_stereo			= Cvar_Get( "r_stereo",				"0",		CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH );
 	r_mode				= Cvar_Get( "r_mode",				"-2",		CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH );
 	r_displayRefresh	= Cvar_Get( "r_displayRefresh",		"0",		CVAR_LATCH );
+	r_savedWindows		= Cvar_Get( "r_savedWindows",		" ",		CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_ROM );
 
 	// Window render surface cvars
 	r_stencilbits		= Cvar_Get( "r_stencilbits",		"8",		CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH );
 	r_depthbits			= Cvar_Get( "r_depthbits",			"0",		CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH );
 	r_colorbits			= Cvar_Get( "r_colorbits",			"0",		CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH );
-	r_ignorehwgamma		= Cvar_Get( "r_ignorehwgamma",		"0",		CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH );
 	r_ext_multisample	= Cvar_Get( "r_ext_multisample",	"0",		CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH );
 	r_allowsoftwaregl	= Cvar_Get( "r_allowsoftwaregl",	"0",		CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH );
+	r_gammamethod		= Cvar_Get( "r_gammamethod",		"2",		CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH );
 	Cvar_Get( "r_availableModes", "", CVAR_ROM );
 
 	// Create the window and set up the context
 	if(!GLimp_StartDriverAndSetMode( glConfig, windowDesc, r_mode->integer,
-										(qboolean)r_fullscreen->integer, (qboolean)r_noborder->integer ))
+										(qboolean)!!r_fullscreen->integer, (qboolean)!!r_noborder->integer ))
 	{
 		if( r_mode->integer != R_MODE_FALLBACK )
 		{
@@ -766,9 +979,6 @@ window_t WIN_Init( const windowDesc_t *windowDesc, glconfig_t *glConfig )
 			}
 		}
 	}
-
-	glConfig->deviceSupportsGamma =
-		(qboolean)(!r_ignorehwgamma->integer && SDL_SetWindowBrightness( screen, 1.0f ) >= 0);
 
 	// This depends on SDL_INIT_VIDEO, hence having it here
 	IN_Init( screen );
@@ -796,6 +1006,21 @@ window_t WIN_Init( const windowDesc_t *windowDesc, glconfig_t *glConfig )
 #endif
 
 	return window;
+}
+
+void WIN_InitGammaMethod(glconfig_t *glConfig) {
+	if (r_gammamethod->integer == GAMMA_POSTPROCESSING && !glConfig->deviceSupportsPostprocessingGamma) {
+		Com_Printf("postprocessing gamma correction not supported, falling back to hardware gamma...\n");
+		r_gammamethod->integer = GAMMA_HARDWARE;
+	}
+
+	if (r_gammamethod->integer == GAMMA_HARDWARE) {
+		glConfig->deviceSupportsGamma = (qboolean)(SDL_SetWindowBrightness(screen, 1.0f) >= 0);
+		if (!glConfig->deviceSupportsGamma) {
+			Com_Printf("hardware gamma correction not supported, proceeding without gamma correction...\n");
+			r_gammamethod->integer = GAMMA_NONE;
+		}
+	}
 }
 
 /*
@@ -827,7 +1052,7 @@ void WIN_SetGamma( glconfig_t *glConfig, byte red[256], byte green[256], byte bl
 	Uint16 table[3][256];
 	int i, j;
 
-	if( !glConfig->deviceSupportsGamma || r_ignorehwgamma->integer > 0 )
+	if( r_gammamethod->integer != GAMMA_HARDWARE )
 		return;
 
 	for (i = 0; i < 256; i++)
@@ -851,10 +1076,10 @@ void WIN_SetGamma( glconfig_t *glConfig, byte red[256], byte green[256], byte bl
 			{
 				for( i = 0 ; i < 128 ; i++ )
 				{
-					table[j][i] = min(table[j][i], (128 + i) << 8);
+                                        table[j][i] = MIN(table[j][i], (128 + i) << 8);
 				}
 
-				table[j][127] = min(table[j][127], 254 << 8);
+                                table[j][127] = MIN(table[j][127], 254 << 8);
 			}
 		}
 	}

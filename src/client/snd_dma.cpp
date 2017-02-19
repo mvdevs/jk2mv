@@ -107,8 +107,8 @@ channel_t   s_channels[MAX_CHANNELS];
 channel_t   loop_channels[MAX_CHANNELS];
 int			numLoopChannels;
 
-static int	s_soundStarted;
-qboolean	s_soundMuted;
+static qboolean	s_soundStarted;
+qboolean		s_soundMuted;
 
 dma_t		dma;
 
@@ -340,7 +340,7 @@ void S_Init( void )
 		if (alcGetError(ALCDevice) != ALC_NO_ERROR)
 			return;
 
-		s_soundStarted = 1;
+		s_soundStarted = qtrue;
 		s_soundMuted = qtrue;
 		s_soundtime = 0;
 		s_paintedtime = 0;
@@ -429,8 +429,8 @@ void S_Init( void )
 		Com_Printf("------------------------------------\n");
 
 		if ( r ) {
-		s_soundStarted = 1;
-		s_soundMuted = (qboolean)1;
+		s_soundStarted = qtrue;
+		s_soundMuted = qtrue;
 //		s_numSfx = 0;
 
 		s_soundtime = 0;
@@ -582,7 +582,7 @@ void S_Shutdown( void )
 	}
 #endif
 
-	s_soundStarted = 0;
+	s_soundStarted = qfalse;
 
     Cmd_RemoveCommand("play");
 	Cmd_RemoveCommand("music");
@@ -634,10 +634,10 @@ sfx_t *S_FindName( const char *name ) {
 	sfx_t	*sfx;
 
 	if (!name) {
-		Com_Error (ERR_FATAL, "S_FindName: NULL\n");
+		Com_Error (ERR_FATAL, "S_FindName: NULL");
 	}
 	if (!name[0]) {
-		Com_Error (ERR_FATAL, "S_FindName: empty name\n");
+		Com_Error (ERR_FATAL, "S_FindName: empty name");
 	}
 
 	if (strlen(name) >= MAX_QPATH) {
@@ -828,15 +828,15 @@ sfxHandle_t	S_RegisterSound( const char *name)
 
 	if (!name)
 	{
-		Com_Error (ERR_FATAL, "S_RegisterSound: NULL name\n");
+		Com_Error (ERR_FATAL, "S_RegisterSound: NULL name");
 	}
 	if (!name[0])
 	{
-		Com_Error (ERR_FATAL, "S_RegisterSound: empty name\n");
+		Com_Error (ERR_FATAL, "S_RegisterSound: empty name");
 	}
 
 	if ( strlen( name ) >= MAX_QPATH ) {
-		Com_Error (ERR_FATAL, "S_RegisterSound: Sound name exceeds MAX_QPATH - %s\n", name );
+		Com_Error (ERR_FATAL, "S_RegisterSound: Sound name exceeds MAX_QPATH - %s", name );
 		return 0;
 	}
 
@@ -929,8 +929,8 @@ void S_SpatializeOrigin (vec3_t origin, int master_vol, int *left_vol, int *righ
 	}
 	else
 	{
-		rscale = 0.5 * (1.0 + dot);
-		lscale = 0.5 * (1.0 - dot);
+		rscale = 0.5f * (1.0f + dot);
+		lscale = 0.5f * (1.0f - dot);
 		//rscale = s_separation->value + ( 1.0 - s_separation->value ) * dot;
 		//lscale = s_separation->value - ( 1.0 - s_separation->value ) * dot;
 		if ( rscale < 0 ) {
@@ -942,12 +942,12 @@ void S_SpatializeOrigin (vec3_t origin, int master_vol, int *left_vol, int *righ
 	}
 
 	// add in distance effect
-	scale = (1.0 - dist) * rscale;
+	scale = (1.0f - dist) * rscale;
 	*right_vol = (master_vol * scale);
 	if (*right_vol < 0)
 		*right_vol = 0;
 
-	scale = (1.0 - dist) * lscale;
+	scale = (1.0f - dist) * lscale;
 	*left_vol = (master_vol * scale);
 	if (*left_vol < 0)
 		*left_vol = 0;
@@ -1725,7 +1725,7 @@ static qboolean LoopSound_ChannelInit(loopSound_t *pLoopSound, int iLeftVol, int
 	//
 	if (pLoopSound->sfx->pMP3StreamHeader)
 	{
-		Com_Error( ERR_DROP, "LoopSound_ChannelInit(): Cannot use streamed MP3 files here for random access (%s)\n",pLoopSound->sfx->sSoundName );
+		Com_Error( ERR_DROP, "LoopSound_ChannelInit(): Cannot use streamed MP3 files here for random access (%s)",pLoopSound->sfx->sSoundName );
 	}
 	else
 	{
@@ -1826,7 +1826,7 @@ If raw data has been loaded in little endien binary form, this must be done.
 If raw data was calculated, as with ADPCM, this should not be called.
 =================
 */
-void S_ByteSwapRawSamples( int samples, int width, int s_channels, const byte *data ) {
+static void S_ByteSwapRawSamples( int samples, int width, int s_channels, byte *data ) {
 	int		i;
 
 	if ( width != 2 ) {
@@ -1877,14 +1877,14 @@ void S_RawSamples( int samples, int rate, int width, int s_channels, const byte 
 //Com_Printf ("%i < %i < %i\n", s_soundtime, s_paintedtime, s_rawend);
 	if (s_channels == 2 && width == 2)
 	{
-		if (scale == 1.0)
+		if (scale == 1.0f)
 		{	// optimized case
 			for (i=0 ; i<samples ; i++)
 			{
 				dst = s_rawend&(MAX_RAW_SAMPLES-1);
 				s_rawend++;
-				s_rawsamples[dst].left = ((short *)data)[i*2] * intVolume;
-				s_rawsamples[dst].right = ((short *)data)[i*2+1] * intVolume;
+				s_rawsamples[dst].left = ((const short *)data)[i*2] * intVolume;
+				s_rawsamples[dst].right = ((const short *)data)[i*2+1] * intVolume;
 			}
 		}
 		else
@@ -1896,8 +1896,8 @@ void S_RawSamples( int samples, int rate, int width, int s_channels, const byte 
 					break;
 				dst = s_rawend&(MAX_RAW_SAMPLES-1);
 				s_rawend++;
-				s_rawsamples[dst].left = ((short *)data)[src*2] * intVolume;
-				s_rawsamples[dst].right = ((short *)data)[src*2+1] * intVolume;
+				s_rawsamples[dst].left = ((const short *)data)[src*2] * intVolume;
+				s_rawsamples[dst].right = ((const short *)data)[src*2+1] * intVolume;
 			}
 		}
 	}
@@ -1910,8 +1910,8 @@ void S_RawSamples( int samples, int rate, int width, int s_channels, const byte 
 				break;
 			dst = s_rawend&(MAX_RAW_SAMPLES-1);
 			s_rawend++;
-			s_rawsamples[dst].left = ((short *)data)[src] * intVolume;
-			s_rawsamples[dst].right = ((short *)data)[src] * intVolume;
+			s_rawsamples[dst].left = ((const short *)data)[src] * intVolume;
+			s_rawsamples[dst].right = ((const short *)data)[src] * intVolume;
 		}
 	}
 	else if (s_channels == 2 && width == 1)
@@ -1925,8 +1925,8 @@ void S_RawSamples( int samples, int rate, int width, int s_channels, const byte 
 				break;
 			dst = s_rawend&(MAX_RAW_SAMPLES-1);
 			s_rawend++;
-			s_rawsamples[dst].left = ((char *)data)[src*2] * intVolume;
-			s_rawsamples[dst].right = ((char *)data)[src*2+1] * intVolume;
+			s_rawsamples[dst].left = ((const char *)data)[src*2] * intVolume;
+			s_rawsamples[dst].right = ((const char *)data)[src*2+1] * intVolume;
 		}
 	}
 	else if (s_channels == 1 && width == 1)
@@ -1940,8 +1940,8 @@ void S_RawSamples( int samples, int rate, int width, int s_channels, const byte 
 				break;
 			dst = s_rawend&(MAX_RAW_SAMPLES-1);
 			s_rawend++;
-			s_rawsamples[dst].left = (((byte *)data)[src]-128) * intVolume;
-			s_rawsamples[dst].right = (((byte *)data)[src]-128) * intVolume;
+			s_rawsamples[dst].left = (((const byte *)data)[src]-128) * intVolume;
+			s_rawsamples[dst].right = (((const byte *)data)[src]-128) * intVolume;
 		}
 	}
 
@@ -2269,6 +2269,22 @@ void S_GetSoundtime(void)
 	}
 	oldsamplepos = samplepos;
 
+	// with updated `buffers` it seems to synchronize better when done
+	if (CL_VideoRecording() && cl_aviFrameRate->integer)
+	{
+		static double	overflow = 0.0f;
+		double			frameSamples;
+		int				samples;
+
+		frameSamples = (double) dma.speed / cl_aviFrameRate->integer + overflow;
+		samples = floor(frameSamples);
+		overflow = frameSamples - samples;
+
+		s_soundtime += samples;
+
+		return;
+	}
+
 	s_soundtime = buffers*fullsamples + samplepos/dma.channels;
 
 #if 0
@@ -2488,7 +2504,7 @@ void S_Update_(void) {
 		}
 
 		ma = s_mixahead->value * dma.speed;
-		op = s_mixPreStep->value + sane*dma.speed*0.01;
+		op = s_mixPreStep->value + sane*dma.speed*0.01f;
 
 		if (op < ma) {
 			ma = op;
@@ -3338,7 +3354,7 @@ static qboolean S_UpdateBackgroundTrack_Actual( MusicInfo_t *pMusicInfo )
 
 	float fMasterVol = (s_musicVolume->value*s_musicMult->value);
 
-	static	float	musicVolume = 0.25f;
+	static	float	musicVolume = fMasterVol;
 
 // this is to work around an obscure issue to do with sliding decoder windows and amounts being requested, since the
 //	original MP3 stream-decoder wrapper was designed to work with audio-paintbuffer sized pieces... Basically 30000
@@ -3352,7 +3368,13 @@ static qboolean S_UpdateBackgroundTrack_Actual( MusicInfo_t *pMusicInfo )
 		return qfalse;
 	}
 
-	musicVolume = (musicVolume + fMasterVol)/2.0f;
+	// note: I think amplitude is directly proportional to "perceived
+	// loudness" and our volume simply scales amplitude
+	float volumeDelta = fMasterVol - musicVolume;
+	if ( volumeDelta > 0 )
+		musicVolume += MIN(0.0008f * com_frameMsec, volumeDelta);
+	else if ( volumeDelta < 0 )
+		musicVolume -= MIN(0.0008f * com_frameMsec, -volumeDelta);
 
 	// don't bother playing anything if musicvolume is 0
 	if ( musicVolume <= 0 ) {
@@ -3370,6 +3392,11 @@ static qboolean S_UpdateBackgroundTrack_Actual( MusicInfo_t *pMusicInfo )
 
 		// decide how much data needs to be read from the file
 		fileSamples = bufferSamples * pMusicInfo->s_backgroundInfo.rate / dma.speed;
+
+		// don't try to play if there are no more samples in the file
+		if ( !fileSamples ) {
+			return qfalse;
+		}
 
 		// don't try and read past the end of the file
 		if ( fileSamples > pMusicInfo->s_backgroundSamples ) {
@@ -3449,7 +3476,7 @@ static qboolean S_UpdateBackgroundTrack_Actual( MusicInfo_t *pMusicInfo )
 
 			if (S_FileExists( sTestName ))
 			{
-				S_StartBackgroundTrack_Actual( pMusicInfo, sMusic_BackgroundLoop, sMusic_BackgroundLoop );
+				S_StartBackgroundTrack_Actual( pMusicInfo, sTestName, sTestName );
 			}
 			else
 			{
@@ -4075,7 +4102,7 @@ bool EAX3ListenerInterpolate(LPEAXLISTENERPROPERTIES lpStart, LPEAXLISTENERPROPE
 	if (lpStart->flEnvironmentSize == lpFinish->flEnvironmentSize)
 		lpResult->flEnvironmentSize = lpStart->flEnvironmentSize;
 	else
-		lpResult->flEnvironmentSize = (float)exp( (log(lpStart->flEnvironmentSize) * flInvRatio) + (log(lpFinish->flEnvironmentSize) * flRatio) );
+		lpResult->flEnvironmentSize = expf( (logf(lpStart->flEnvironmentSize) * flInvRatio) + (logf(lpFinish->flEnvironmentSize) * flRatio) );
 
 	// Environment Diffusion
 	if (lpStart->flEnvironmentDiffusion == lpFinish->flEnvironmentDiffusion)
@@ -4087,49 +4114,49 @@ bool EAX3ListenerInterpolate(LPEAXLISTENERPROPERTIES lpStart, LPEAXLISTENERPROPE
 	if (lpStart->lRoom == lpFinish->lRoom)
 		lpResult->lRoom = lpStart->lRoom;
 	else
-		lpResult->lRoom = (int)( ((float)lpStart->lRoom * flInvRatio) + ((float)lpFinish->lRoom * flRatio) );
+		lpResult->lRoom = lpStart->lRoom * flInvRatio + lpFinish->lRoom * flRatio;
 
 	// Room HF
 	if (lpStart->lRoomHF == lpFinish->lRoomHF)
 		lpResult->lRoomHF = lpStart->lRoomHF;
 	else
-		lpResult->lRoomHF = (int)( ((float)lpStart->lRoomHF * flInvRatio) + ((float)lpFinish->lRoomHF * flRatio) );
+		lpResult->lRoomHF = lpStart->lRoomHF * flInvRatio + lpFinish->lRoomHF * flRatio;
 
 	// Room LF
 	if (lpStart->lRoomLF == lpFinish->lRoomLF)
 		lpResult->lRoomLF = lpStart->lRoomLF;
 	else
-		lpResult->lRoomLF = (int)( ((float)lpStart->lRoomLF * flInvRatio) + ((float)lpFinish->lRoomLF * flRatio) );
+		lpResult->lRoomLF = lpStart->lRoomLF * flInvRatio + lpFinish->lRoomLF * flRatio;
 
 	// Decay Time
 	if (lpStart->flDecayTime == lpFinish->flDecayTime)
 		lpResult->flDecayTime = lpStart->flDecayTime;
 	else
-		lpResult->flDecayTime = (float)exp( (log(lpStart->flDecayTime) * flInvRatio) + (log(lpFinish->flDecayTime) * flRatio) );
+		lpResult->flDecayTime = expf( (logf(lpStart->flDecayTime) * flInvRatio) + (logf(lpFinish->flDecayTime) * flRatio) );
 
 	// Decay HF Ratio
 	if (lpStart->flDecayHFRatio == lpFinish->flDecayHFRatio)
 		lpResult->flDecayHFRatio = lpStart->flDecayHFRatio;
 	else
-		lpResult->flDecayHFRatio = (float)exp( (log(lpStart->flDecayHFRatio) * flInvRatio) + (log(lpFinish->flDecayHFRatio) * flRatio) );
+		lpResult->flDecayHFRatio = expf( (logf(lpStart->flDecayHFRatio) * flInvRatio) + (logf(lpFinish->flDecayHFRatio) * flRatio) );
 
 	// Decay LF Ratio
 	if (lpStart->flDecayLFRatio == lpFinish->flDecayLFRatio)
 		lpResult->flDecayLFRatio = lpStart->flDecayLFRatio;
 	else
-		lpResult->flDecayLFRatio = (float)exp( (log(lpStart->flDecayLFRatio) * flInvRatio) + (log(lpFinish->flDecayLFRatio) * flRatio) );
+		lpResult->flDecayLFRatio = expf( (logf(lpStart->flDecayLFRatio) * flInvRatio) + (logf(lpFinish->flDecayLFRatio) * flRatio) );
 
 	// Reflections
 	if (lpStart->lReflections == lpFinish->lReflections)
 		lpResult->lReflections = lpStart->lReflections;
 	else
-		lpResult->lReflections = (int)( ((float)lpStart->lReflections * flInvRatio) + ((float)lpFinish->lReflections * flRatio) );
+		lpResult->lReflections = lpStart->lReflections * flInvRatio + lpFinish->lReflections * flRatio;
 
 	// Reflections Delay
 	if (lpStart->flReflectionsDelay == lpFinish->flReflectionsDelay)
 		lpResult->flReflectionsDelay = lpStart->flReflectionsDelay;
 	else
-		lpResult->flReflectionsDelay = (float)exp( (log(lpStart->flReflectionsDelay+0.0001) * flInvRatio) + (log(lpFinish->flReflectionsDelay+0.0001) * flRatio) );
+		lpResult->flReflectionsDelay = expf( (logf(lpStart->flReflectionsDelay+0.0001f) * flInvRatio) + (logf(lpFinish->flReflectionsDelay+0.0001f) * flRatio) );
 
 	// Reflections Pan
 
@@ -4159,13 +4186,13 @@ bool EAX3ListenerInterpolate(LPEAXLISTENERPROPERTIES lpStart, LPEAXLISTENERPROPE
 	if (lpStart->lReverb == lpFinish->lReverb)
 		lpResult->lReverb = lpStart->lReverb;
 	else
-		lpResult->lReverb = (int)( ((float)lpStart->lReverb * flInvRatio) + ((float)lpFinish->lReverb * flRatio) );
+		lpResult->lReverb = lpStart->lReverb * flInvRatio + lpFinish->lReverb * flRatio;
 
 	// Reverb Delay
 	if (lpStart->flReverbDelay == lpFinish->flReverbDelay)
 		lpResult->flReverbDelay = lpStart->flReverbDelay;
 	else
-		lpResult->flReverbDelay = (float)exp( (log(lpStart->flReverbDelay+0.0001) * flInvRatio) + (log(lpFinish->flReverbDelay+0.0001) * flRatio) );
+		lpResult->flReverbDelay = expf( (logf(lpStart->flReverbDelay+0.0001f) * flInvRatio) + (logf(lpFinish->flReverbDelay+0.0001f) * flRatio) );
 
 	// Reverb Pan
 
@@ -4195,7 +4222,7 @@ bool EAX3ListenerInterpolate(LPEAXLISTENERPROPERTIES lpStart, LPEAXLISTENERPROPE
 	if (lpStart->flEchoTime == lpFinish->flEchoTime)
 		lpResult->flEchoTime = lpStart->flEchoTime;
 	else
-		lpResult->flEchoTime = (float)exp( (log(lpStart->flEchoTime) * flInvRatio) + (log(lpFinish->flEchoTime) * flRatio) );
+		lpResult->flEchoTime = expf( (logf(lpStart->flEchoTime) * flInvRatio) + (logf(lpFinish->flEchoTime) * flRatio) );
 
 	// Echo Depth
 	if (lpStart->flEchoDepth == lpFinish->flEchoDepth)
@@ -4207,7 +4234,7 @@ bool EAX3ListenerInterpolate(LPEAXLISTENERPROPERTIES lpStart, LPEAXLISTENERPROPE
 	if (lpStart->flModulationTime == lpFinish->flModulationTime)
 		lpResult->flModulationTime = lpStart->flModulationTime;
 	else
-		lpResult->flModulationTime = (float)exp( (log(lpStart->flModulationTime) * flInvRatio) + (log(lpFinish->flModulationTime) * flRatio) );
+		lpResult->flModulationTime = expf( (logf(lpStart->flModulationTime) * flInvRatio) + (logf(lpFinish->flModulationTime) * flRatio) );
 
 	// Modulation Depth
 	if (lpStart->flModulationDepth == lpFinish->flModulationDepth)
@@ -4225,13 +4252,13 @@ bool EAX3ListenerInterpolate(LPEAXLISTENERPROPERTIES lpStart, LPEAXLISTENERPROPE
 	if (lpStart->flHFReference == lpFinish->flHFReference)
 		lpResult->flHFReference = lpStart->flHFReference;
 	else
-		lpResult->flHFReference = (float)exp( (log(lpStart->flHFReference) * flInvRatio) + (log(lpFinish->flHFReference) * flRatio) );
+		lpResult->flHFReference = expf( (logf(lpStart->flHFReference) * flInvRatio) + (logf(lpFinish->flHFReference) * flRatio) );
 
 	// LF Reference
 	if (lpStart->flLFReference == lpFinish->flLFReference)
 		lpResult->flLFReference = lpStart->flLFReference;
 	else
-		lpResult->flLFReference = (float)exp( (log(lpStart->flLFReference) * flInvRatio) + (log(lpFinish->flLFReference) * flRatio) );
+		lpResult->flLFReference = expf( (logf(lpStart->flLFReference) * flInvRatio) + (logf(lpFinish->flLFReference) * flRatio) );
 
 	// Room Rolloff Factor
 	if (lpStart->flRoomRolloffFactor == lpFinish->flRoomRolloffFactor)
@@ -4337,7 +4364,7 @@ void Clamp(EAXVECTOR *eaxVector)
 	float flMagnitude;
 	float flInvMagnitude;
 
-	flMagnitude = (float)sqrt((eaxVector->x*eaxVector->x) + (eaxVector->y*eaxVector->y) + (eaxVector->z*eaxVector->z));
+	flMagnitude = sqrtf((eaxVector->x*eaxVector->x) + (eaxVector->y*eaxVector->y) + (eaxVector->z*eaxVector->z));
 
 	if (flMagnitude <= 1.0f)
 		return;

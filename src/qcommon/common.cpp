@@ -7,7 +7,9 @@
 #endif
 
 #include "../qcommon/q_shared.h"
+#include "../sys/sys_local.h"
 #include "qcommon.h"
+#include "../client/client.h"
 #include "strip.h"
 #include "mv_setup.h"
 #ifdef WIN32
@@ -117,42 +119,24 @@ void Com_EndRedirect (void)
 	rd_flush = NULL;
 }
 
-/*
-=============
-Com_Printf
-
-Both client and server can use this, and it will output
-to the apropriate place.
-
-A raw string should NEVER be passed as fmt, because of "%f" type crashers.
-=============
-*/
-void QDECL Com_Printf( const char *fmt, ... ) {
-	va_list		argptr;
-	char		msg[MAXPRINTMSG];
-
-	va_start (argptr,fmt);
-	vsprintf (msg,fmt,argptr);
-	va_end (argptr);
-
+static void Com_Puts_Ext( qboolean extendedColors, const char *msg )
+{
 	if ( rd_buffer ) {
 		if ((strlen (msg) + strlen(rd_buffer)) > (rd_buffersize - 1)) {
 			rd_flush(rd_buffer);
 			*rd_buffer = 0;
 		}
 		Q_strcat(rd_buffer, rd_buffersize, msg);
-		rd_flush(rd_buffer);
-		*rd_buffer = 0;
 		return;
 	}
 
 	// echo to console if we're not a dedicated server
 	if ( com_dedicated && !com_dedicated->integer ) {
-		CL_ConsolePrint( msg );
+		CL_ConsolePrint( msg, extendedColors );
 	}
 
 	// echo to dedicated console and early console
-	Sys_Print( msg );
+	Sys_Print( msg, extendedColors );
 
 	// logfile
 	if ( com_logfile && com_logfile->integer ) {
@@ -179,10 +163,44 @@ void QDECL Com_Printf( const char *fmt, ... ) {
 #if defined(_WIN32) && defined(_DEBUG)
 	if ( *msg )
 	{
-		OutputDebugStringA ( Q_CleanStr(msg, (qboolean)MV_USE102COLOR) );
+		OutputDebugStringA ( Q_CleanStr((char *)msg, (qboolean)MV_USE102COLOR) );
 		OutputDebugStringA ("\n");
 	}
 #endif
+}
+
+/*
+=============
+Com_Printf
+
+Both client and server can use this, and it will output
+to the apropriate place.
+
+A raw string should NEVER be passed as fmt, because of "%f" type crashers.
+=============
+*/
+void QDECL Com_Printf( const char *fmt, ... )
+{
+	va_list		argptr;
+	char		msg[MAXPRINTMSG];
+
+	va_start (argptr,fmt);
+	Q_vsnprintf (msg,sizeof(msg),fmt,argptr);
+	va_end (argptr);
+
+	Com_Puts_Ext( qfalse, msg );
+}
+
+void QDECL Com_Printf_Ext( qboolean extendedColors, const char *fmt, ... )
+{
+	va_list		argptr;
+	char		msg[MAXPRINTMSG];
+
+	va_start (argptr,fmt);
+	Q_vsnprintf (msg,sizeof(msg),fmt,argptr);
+	va_end (argptr);
+
+	Com_Puts_Ext( extendedColors, msg);
 }
 
 
@@ -202,10 +220,10 @@ void QDECL Com_DPrintf( const char *fmt, ...) {
 	}
 
 	va_start (argptr,fmt);
-	vsprintf (msg,fmt,argptr);
+	Q_vsnprintf (msg,sizeof(msg),fmt,argptr);
 	va_end (argptr);
 
-	Com_Printf ("%s", msg);
+	Com_Puts_Ext (qfalse, msg);
 }
 
 // Outputs to the VC / Windows Debug window (only in debug compile)
@@ -215,7 +233,7 @@ void QDECL Com_OPrintf( const char *fmt, ...)
 	char		msg[MAXPRINTMSG];
 
 	va_start (argptr,fmt);
-	vsprintf (msg,fmt,argptr);
+	Q_vsnprintf (msg,sizeof(msg),fmt,argptr);
 	va_end (argptr);
 #ifdef WIN32
 	OutputDebugStringA(msg);
@@ -264,7 +282,7 @@ Q_NORETURN void QDECL Com_Error( int code, const char *fmt, ... ) {
 	com_errorEntered = qtrue;
 
 	va_start (argptr,fmt);
-	vsprintf (com_errorMessage,fmt,argptr);
+	Q_vsnprintf (com_errorMessage,sizeof(com_errorMessage),fmt,argptr);
 	va_end (argptr);
 
 	if ( code != ERR_DISCONNECT ) {
@@ -526,8 +544,9 @@ void Info_Print( const char *s ) {
 Com_StringContains
 ============
 */
-char *Com_StringContains(char *str1, char *str2, int casesensitive) {
-	size_t len, i, j;
+static const char *Com_StringContains(const char *str1, const char *str2, int casesensitive) {
+	ptrdiff_t	len, i;
+	size_t		j;
 
 	len = strlen(str1) - strlen(str2);
 	for (i = 0; i <= len; i++, str1++) {
@@ -555,10 +574,10 @@ char *Com_StringContains(char *str1, char *str2, int casesensitive) {
 Com_Filter
 ============
 */
-int Com_Filter(char *filter, char *name, int casesensitive)
+int Com_Filter(const char *filter, const char *name, int casesensitive)
 {
 	char buf[MAX_TOKEN_CHARS];
-	char *ptr;
+	const char *ptr;
 	int i, found;
 
 	while(*filter) {
@@ -689,7 +708,7 @@ int Com_RealTime(qtime_t *qtime) {
 
 	t = time(NULL);
 	if (!qtime)
-		return 0;
+		return (int)t;
 
 	tms = localtime(&t);
 	if (tms) {
@@ -733,7 +752,7 @@ typedef struct
 
 static inline zoneTail_t *ZoneTailFromHeader(zoneHeader_t *pHeader)
 {
-	return (zoneTail_t*) ( (char*)pHeader + sizeof(*pHeader) + pHeader->iSize );
+  return (zoneTail_t*) ((char*)(pHeader + 1) + PAD(pHeader->iSize, alignof(zoneTail_t)));
 }
 
 #ifdef DETAILED_ZONE_DEBUG_CODE
@@ -810,8 +829,6 @@ void Z_Validate(void)
 
 // static mem blocks to reduce a lot of small zone overhead
 //
-#pragma pack(push)
-#pragma pack(1)
 typedef struct
 {
 	zoneHeader_t	Header;
@@ -825,7 +842,6 @@ typedef struct
 	byte mem[2];
 	zoneTail_t		Tail;
 } StaticMem_t;
-#pragma pack(pop)
 
 StaticZeroMem_t gZeroMalloc  =
 	{ {ZONE_MAGIC, TAG_STATIC,0,NULL,NULL},{ZONE_MAGIC}};
@@ -855,10 +871,7 @@ void *Z_Malloc(int iSize, memtag_t eTag, qboolean bZeroit /* = qfalse */)
 		return &pMemory[1];
 	}
 
-	// Add in tracking info and round to a longword...  (ignore longword aligning now we're not using contiguous blocks)
-	//
-//	int iRealSize = (iSize + sizeof(zoneHeader_t) + sizeof(zoneTail_t) + 3) & 0xfffffffc;
-	int iRealSize = (iSize + sizeof(zoneHeader_t) + sizeof(zoneTail_t));
+	int iRealSize = sizeof(zoneHeader_t) + PAD(iSize, alignof(zoneTail_t)) + sizeof(zoneTail_t);
 
 	// Allocate a chunk...
 	//
@@ -949,7 +962,7 @@ void *Z_Malloc(int iSize, memtag_t eTag, qboolean bZeroit /* = qfalse */)
 
 			Com_Printf(S_COLOR_RED"Z_Malloc(): Failed to alloc %d bytes (TAG_%s) !!!!!\n", iSize, psTagStrings[eTag]);
 			Z_Details_f();
-			Com_Error(ERR_FATAL,"(Repeat): Z_Malloc(): Failed to alloc %d bytes (TAG_%s) !!!!!\n", iSize, psTagStrings[eTag]);
+			Com_Error(ERR_FATAL,"(Repeat): Z_Malloc(): Failed to alloc %d bytes (TAG_%s) !!!!!", iSize, psTagStrings[eTag]);
 			return NULL;
 		}
 	}
@@ -1197,7 +1210,7 @@ static void Z_Details_f(void)
 			//
 			float	fSize		= (float)(iThisSize) / 1024.0f / 1024.0f;
 			int		iSize		= fSize;
-			int		iRemainder 	= 100.0f * (fSize - floor(fSize));
+			int		iRemainder 	= 100.0f * (fSize - floorf(fSize));
 			Com_Printf("%20s %9d (%2d.%02dMB) in %6d blocks (%9d average)\n",
 					    psTagStrings[i],
 							  iThisSize,
@@ -1458,9 +1471,9 @@ Touch all known used data to make sure it is paged in
 ===============
 */
 void Com_TouchMemory( void ) {
-	int		start, end;
-	int		i, j;
-	int		sum;
+	int			start, end;
+	int			i, j;
+	unsigned	sum;
 //	memblock_t	*block;
 
 
@@ -1476,7 +1489,7 @@ void Com_TouchMemory( void ) {
 		byte *pMem = (byte *) &pMemory[1];
 		j = pMemory->iSize >> 2;
 		for (i=0; i<j; i+=64){
-			sum += ((int*)pMem)[i];
+			sum += ((volatile int*)pMem)[i];
 		}
 
 		pMemory = pMemory->pNext;
@@ -1485,20 +1498,20 @@ void Com_TouchMemory( void ) {
 
 	j = hunk_low.permanent >> 2;
 	for ( i = 0 ; i < j ; i+=64 ) {			// only need to touch each page
-		sum += ((int *)s_hunkData)[i];
+		sum += ((volatile int *)s_hunkData)[i];
 	}
 
 	i = ( s_hunkTotal - hunk_high.permanent ) >> 2;
 	j = hunk_high.permanent >> 2;
 	for (  ; i < j ; i+=64 ) {			// only need to touch each page
-		sum += ((int *)s_hunkData)[i];
+		sum += ((volatile int *)s_hunkData)[i];
 	}
 
 /*	for (block = mainzone->blocklist.next ; ; block = block->next) {
 		if ( block->tag ) {
 			j = block->size >> 2;
 			for ( i = 0 ; i < j ; i+=64 ) {				// only need to touch each page
-				sum += ((int *)block)[i];
+				sum += ((volatile int *)block)[i];
 			}
 		}
 		if ( block->next == &mainzone->blocklist ) {
@@ -1957,7 +1970,7 @@ void Hunk_Trash( void ) {
 		return;
 
 #ifdef _DEBUG
-	Com_Error(ERR_DROP, "hunk trashed\n");
+	Com_Error(ERR_DROP, "hunk trashed");
 	return;
 #endif
 
@@ -2301,7 +2314,7 @@ static void Com_Freeze_f (void) {
 
 	while ( 1 ) {
 		now = Com_Milliseconds();
-		if ( ( now - start ) * 0.001 > s ) {
+		if ( ( now - start ) * 0.001f > s ) {
 			break;
 		}
 	}
@@ -2443,7 +2456,10 @@ void Com_Init( char *commandLine ) {
 
 	SP_Init();
 	Sys_Init();
-	Netchan_Init( Com_Milliseconds() & 0xffff );	// pick a port value that should be nice and random
+
+	srand(time(NULL));
+	Netchan_Init( rand() % 0xffff );	// pick a port value that should be nice and random
+
 	VM_Init();
 	SV_Init();
 
@@ -2676,6 +2692,12 @@ void Com_Frame( void ) {
 			else
 				minMsec = 1;
 
+#ifndef DEDICATED
+			// limit FPS while downloading so slow systems still reach full-speed
+			if (CL_DownloadRunning())
+				minMsec = 1000 / 20;
+#endif
+
 			timeVal = com_frameTime - lastTime;
 			bias += timeVal - minMsec;
 
@@ -2698,6 +2720,9 @@ void Com_Frame( void ) {
 			NET_Sleep(timeVal - 1);
 	} while ((timeVal = Com_TimeVal(minMsec)) != 0);
 
+	// make sure mouse and joystick are only called once a frame
+	IN_Frame();
+
 	lastTime = com_frameTime;
 	com_frameTime = Com_EventLoop();
 
@@ -2708,6 +2733,8 @@ void Com_Frame( void ) {
 	// mess with msec if needed
 	com_frameMsec = msec;
 	msec = Com_ModifyMsec( msec );
+
+	NET_HTTP_ProcessEvents();
 
 	//
 	// server side
@@ -2727,10 +2754,12 @@ void Com_Frame( void ) {
 		Cvar_Get( "dedicated", "0", 0 );
 		com_dedicated->modified = qfalse;
 		if ( !com_dedicated->integer ) {
+			CON_DeleteConsoleWindow();
 			CL_Init();
 			CL_StartHunkUsers();	//fire up the UI!
 		} else {
 			CL_Shutdown();
+			CON_CreateConsoleWindow();
 		}
 	}
 
@@ -2809,6 +2838,9 @@ void Com_Shutdown (void)
 {
 	CM_ClearMap();
 
+	// write config file if anything changed
+	Com_WriteConfiguration();
+
 	if (logfile) {
 		FS_FCloseFile (logfile);
 		logfile = 0;
@@ -2832,20 +2864,6 @@ void Com_Shutdown (void)
 */
 }
 
-void Com_Memcpy (void* dest, const void* src, const size_t count)
-{
-	memcpy(dest, src, count);
-}
-
-void Com_Memset (void* dest, const int val, const size_t count)
-{
-	memset(dest, val, count);
-}
-
-qboolean Com_Memcmp (const void *src0, const void *src1, const unsigned int count)
-{
-	return (qboolean)memcmp(src0, src1, count);
-}
 
 //------------------------------------------------------------------------
 
@@ -2866,12 +2884,12 @@ acos(*(float*) &i) == -1.#IND0
 float Q_acos(float c) {
 	float angle;
 
-	angle = acos(c);
+	angle = acosf(c);
 
-	if (angle > M_PI) {
+	if (angle > (float) M_PI) {
 		return (float)M_PI;
 	}
-	if (angle < -M_PI) {
+	if (angle < -(float) M_PI) {
 		return (float)M_PI;
 	}
 	return angle;
@@ -2973,7 +2991,7 @@ static int	matchCount;
 static field_t *completionField;
 static qboolean wasComplete;
 
-#define S_COMPLETION_COLOR S_COLOR_GREEN
+#define S_COMPLETION_COLOR S_COLOR_JK2MV
 
 
 
@@ -3016,7 +3034,7 @@ PrintMatches
 */
 static void PrintMatches( const char *s ) {
 	if (!Q_stricmpn(s, shortestMatch, (int)strlen(shortestMatch))) {
-		Com_Printf(S_COMPLETION_COLOR "Cmd  " S_COLOR_WHITE "%s\n", s);
+		Com_Printf_Ext(qtrue, S_COMPLETION_COLOR "Cmd  " S_COLOR_WHITE "%s\n", s);
 	}
 }
 
@@ -3044,7 +3062,7 @@ PrintKeyMatches
 */
 static void PrintKeyMatches( const char *s ) {
 	if ( !Q_stricmpn( s, shortestMatch, (int)strlen( shortestMatch ) ) ) {
-		Com_Printf( S_COMPLETION_COLOR "Key  " S_COLOR_WHITE "%s\n", s );
+		Com_Printf_Ext(qtrue, S_COMPLETION_COLOR "Key  " S_COLOR_WHITE "%s\n", s );
 	}
 }
 #endif
@@ -3057,7 +3075,7 @@ PrintFileMatches
 */
 static void PrintFileMatches( const char *s ) {
 	if (!Q_stricmpn(s, shortestMatch, (int)strlen(shortestMatch))) {
-		Com_Printf(S_COMPLETION_COLOR "File " S_COLOR_WHITE "%s\n", s);
+		Com_Printf_Ext(qtrue, S_COMPLETION_COLOR "File " S_COLOR_WHITE "%s\n", s);
 	}
 }
 
@@ -3072,18 +3090,57 @@ static void PrintCvarMatches( const char *s ) {
 
 	if ( !Q_stricmpn( s, shortestMatch, (int)strlen( shortestMatch ) ) ) {
 		Com_TruncateLongString( value, Cvar_VariableString( s ) );
-		Com_Printf(S_COMPLETION_COLOR "Cvar " S_COLOR_WHITE "%s = " S_COMPLETION_COLOR "\"" S_COLOR_WHITE "%s" S_COMPLETION_COLOR "\"" S_COLOR_WHITE "\n", s, value);
+		Com_Printf_Ext(qtrue, S_COMPLETION_COLOR "Cvar " S_COLOR_WHITE "%s = " S_COMPLETION_COLOR "\"", s);
+		Com_Printf_Ext(qfalse, S_COLOR_WHITE "%s", value);
+		Com_Printf_Ext(qtrue, S_COMPLETION_COLOR "\"" S_COLOR_WHITE "\n");
 	}
 }
+
+
+/*
+==================
+Field_CheckRep
+==================
+*/
+void Field_CheckRep( field_t *edit ) {
+#ifndef NDEBUG
+	int len = strlen(edit->buffer);
+
+	assert( len < MAX_EDIT_LINE );
+	assert( edit->widthInChars >= 0 );
+	assert( edit->cursor >= 0 );
+	assert( edit->cursor <= len );
+	assert( edit->scroll >= 0 );
+	assert( edit->scroll <= len );
+
+	assert( 0 <= edit->historyTail && edit->historyTail < FIELD_HISTORY_SIZE );
+	assert( 0 <= edit->historyHead && edit->historyHead < FIELD_HISTORY_SIZE );
+	assert( 0 <= edit->currentTail && edit->currentTail < FIELD_HISTORY_SIZE );
+
+	if ( edit->historyHead <= edit->historyTail )
+		assert( edit->historyHead <= edit->currentTail && edit->currentTail <= edit->historyTail );
+	else
+		assert( edit->currentTail <= edit->historyTail || edit->historyHead <= edit->currentTail );
+
+	assert( edit->buffer == edit->bufferHistory[edit->currentTail] );
+#endif // NDEBUG
+}
+
 /*
 ==================
 Field_Clear
 ==================
 */
 void Field_Clear( field_t *edit ) {
-	memset(edit->buffer, 0, MAX_EDIT_LINE);
+	edit->buffer = edit->bufferHistory[0];
+	Com_Memset( edit->buffer, 0, MAX_EDIT_LINE );
 	edit->cursor = 0;
 	edit->scroll = 0;
+	edit->historyTail = 0;
+	edit->historyHead = 0;
+	edit->currentTail = 0;
+	edit->typing = qfalse;
+	edit->mod = qfalse;
 }
 
 /*
@@ -3116,12 +3173,12 @@ static qboolean Field_Complete( void ) {
 
 	completionOffset = (int)strlen(completionField->buffer) - (int)strlen(completionString);
 
-	Q_strncpyz( &completionField->buffer[completionOffset], shortestMatch, sizeof( completionField->buffer ) - completionOffset );
+	Q_strncpyz( &completionField->buffer[completionOffset], shortestMatch, MAX_EDIT_LINE - completionOffset );
 
 	completionField->cursor = (int)strlen(completionField->buffer);
 
 	if ( matchCount == 1 ) {
-		Q_strcat( completionField->buffer, sizeof( completionField->buffer ), " " );
+		Q_strcat( completionField->buffer, MAX_EDIT_LINE, " " );
 		completionField->cursor++;
 		wasComplete = qtrue;
 		return qtrue;
@@ -3177,7 +3234,7 @@ void Field_CompleteCommand( char *cmd, qboolean doCommands, qboolean doCvars, qb
 	int completionArgument = 0;
 
 	// Skip leading whitespace and quotes
-	cmd = Com_SkipCharset( cmd, " \"" );
+	cmd += strspn( cmd, " \"" );
 
 	Cmd_TokenizeStringIgnoreQuotes( cmd );
 	completionArgument = Cmd_Argc();

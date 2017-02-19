@@ -297,13 +297,13 @@ srfGridMesh_t *R_CreateSurfaceGridMesh(int width, int height,
 	grid->heightLodError = (float *)/*ri.Hunk_Alloc*/ ri.Malloc( height * 4, TAG_GRIDMESH, qfalse );
 	Com_Memcpy( grid->heightLodError, errorTable[1], height * 4 );
 #else
-	grid = ri.Hunk_Alloc( size );
+	grid = (struct srfGridMesh_s *)ri.Malloc( size, TAG_GRIDMESH, qfalse );
 	Com_Memset(grid, 0, size);
 
-	grid->widthLodError = ri.Hunk_Alloc( width * 4 );
+	grid->widthLodError = (float *)ri.Malloc( width * 4, TAG_GRIDMESH, qfalse );
 	Com_Memcpy( grid->widthLodError, errorTable[0], width * 4 );
 
-	grid->heightLodError = ri.Hunk_Alloc( height * 4 );
+	grid->heightLodError = (float *)ri.Malloc( height * 4, TAG_GRIDMESH, qfalse );
 	Com_Memcpy( grid->heightLodError, errorTable[1], height * 4 );
 #endif
 
@@ -407,7 +407,7 @@ srfGridMesh_t *R_SubdividePatchToGrid( int width, int height,
 				}
 			}
 
-			maxLen = sqrt(maxLen);
+			maxLen = sqrtf(maxLen);
 			// if all the points are on the lines, remove the entire columns
 			if ( maxLen < 0.1f ) {
 				errorTable[dir][j+1] = 999;

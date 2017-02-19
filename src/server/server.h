@@ -11,8 +11,6 @@
 #include "../game/g_public.h"
 #include "../game/bg_public.h"
 
-#include "../meerkat/meerkat.h"
-
 #include "../api/mvapi.h"
 
 //=============================================================================
@@ -53,7 +51,7 @@ typedef struct {
 	char			*configstrings[MAX_CONFIGSTRINGS];
 	svEntity_t		svEntities[MAX_GENTITIES];
 
-	char			*entityParsePoint;	// used during game VM init
+	const char		*entityParsePoint;	// used during game VM init
 
 	// the game virtual machine will update these on init and changes
 	sharedEntity_t	*gentities;
@@ -72,7 +70,7 @@ typedef struct {
 	mvsharedEntity_t *gentitiesMV;
 	int				  gentitySizeMV;
 
-	mvfix_t			fixes;
+	int				fixes;
 } server_t;
 
 typedef struct {
@@ -253,6 +251,7 @@ extern	cvar_t	*mv_fixbrokenmodels;
 extern	cvar_t	*mv_fixturretcrash;
 extern	cvar_t	*mv_blockchargejump;
 extern	cvar_t	*mv_blockspeedhack;
+extern	cvar_t	*mv_fixsaberstealing;
 
 //===========================================================
 
@@ -314,9 +313,6 @@ void SV_SpawnServer( char *server, qboolean killBots, ForceReload_e eForceReload
 //
 // sv_client.c
 //
-
-extern mvmutex_t m_webreq;
-
 void SV_GetChallenge( netadr_t from );
 
 void SV_DirectConnect( netadr_t from );
@@ -334,9 +330,6 @@ void SV_ExecuteClientCommand( client_t *cl, const char *s, qboolean clientOK );
 void SV_ClientThink (client_t *cl, usercmd_t *cmd);
 
 void SV_WriteDownloadToClient( client_t *cl , msg_t *msg );
-
-int SV_MV_Websrv_Request_ExtThread(struct mg_connection *conn, enum mg_event ev);
-void SV_MV_Websrv_Request_MainThread();
 
 //
 // sv_ccmds.c
@@ -367,7 +360,7 @@ void		SV_ShutdownGameProgs ( void );
 void		SV_RestartGameProgs( void );
 qboolean	SV_inPVS (const vec3_t p1, const vec3_t p2);
 
-qboolean SV_MVAPI_ControlFixes(mvfix_t fixes);
+qboolean SV_MVAPI_ControlFixes(int fixes);
 
 //
 // sv_bot.c
@@ -427,7 +420,7 @@ int SV_PointContents( const vec3_t p, int passEntityNum );
 // returns the CONTENTS_* value from the world and all entities at the given point.
 
 
-void SV_Trace( trace_t *results, const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, int passEntityNum, int contentmask, int capsule, int traceFlags, int useLod );
+void SV_Trace( trace_t *results, const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, int passEntityNum, int contentmask, qboolean capsule, int traceFlags, int useLod );
 // mins and maxs are relative
 
 // if the entire move stays in a solid volume, trace.allsolid will be set,
@@ -439,7 +432,7 @@ void SV_Trace( trace_t *results, const vec3_t start, const vec3_t mins, const ve
 // passEntityNum is explicitly excluded from clipping checks (normally ENTITYNUM_NONE)
 
 
-void SV_ClipToEntity( trace_t *trace, const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, int entityNum, int contentmask, int capsule );
+void SV_ClipToEntity( trace_t *trace, const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, int entityNum, int contentmask, qboolean capsule );
 // clip to a specific entity
 
 //

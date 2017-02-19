@@ -30,14 +30,14 @@ void GL_Bind( image_t *image ) {
 
 	if ( !image ) {
 		ri.Printf( PRINT_WARNING, "GL_Bind: NULL image\n" );
-		texnum = tr.defaultImage->texnum;
-	} else {
-		texnum = image->texnum;
+		image = tr.defaultImage;
 	}
 
 	if ( r_nobind->integer && tr.dlightImage ) {		// performance evaluation option
-		texnum = tr.dlightImage->texnum;
+		image = tr.dlightImage;
 	}
+
+	texnum = image->texnum;
 
 	if ( glState.currenttextures[glState.currenttmu] != texnum ) {
 		image->frameUsed = tr.frameCount;
@@ -179,7 +179,7 @@ void GL_TexEnv( int env )
 		qglTexEnvf( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_ADD );
 		break;
 	default:
-		ri.Error( ERR_DROP, "GL_TexEnv: invalid env '%d' passed\n", env );
+		ri.Error( ERR_DROP, "GL_TexEnv: invalid env '%d' passed", env );
 		break;
 	}
 }
@@ -254,7 +254,7 @@ void GL_State( unsigned int stateBits )
 				break;
 			default:
 				srcFactor = GL_ONE;		// to get warning to shut up
-				ri.Error( ERR_DROP, "GL_State: invalid src blend state bits\n" );
+				ri.Error( ERR_DROP, "GL_State: invalid src blend state bits" );
 				break;
 			}
 
@@ -286,7 +286,7 @@ void GL_State( unsigned int stateBits )
 				break;
 			default:
 				dstFactor = GL_ONE;		// to get warning to shut up
-				ri.Error( ERR_DROP, "GL_State: invalid dst blend state bits\n" );
+				ri.Error( ERR_DROP, "GL_State: invalid dst blend state bits" );
 				break;
 			}
 
@@ -593,7 +593,7 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 		// a "entityMergable" shader is a shader that can have surfaces from seperate
 		// entities merged into a single batch, like smoke and blood puff sprites
 		if (shader != oldShader || fogNum != oldFogNum || dlighted != oldDlighted
-			|| ( entityNum != oldEntityNum && !shader->entityMergable ) ) {
+			|| ( entityNum != oldEntityNum && (assert(shader), !shader->entityMergable) ) ) {
 			if (oldShader != NULL) {
 				RB_EndSurface();
 			}
@@ -786,10 +786,10 @@ void RE_StretchRaw (int x, int y, int w, int h, int cols, int rows, const byte *
 		tr.scratchImage[client]->width = tr.scratchImage[client]->uploadWidth = cols;
 		tr.scratchImage[client]->height = tr.scratchImage[client]->uploadHeight = rows;
 		qglTexImage2D( GL_TEXTURE_2D, 0, GL_RGB8, cols, rows, 0, GL_RGBA, GL_UNSIGNED_BYTE, data );
-		qglTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-		qglTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-		qglTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP );
-		qglTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP );
+		qglTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+		qglTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+		qglTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP );
+		qglTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP );
 	} else {
 		if (dirty) {
 			// otherwise, just subimage upload it so that drivers can tell we are going to be changing
@@ -828,10 +828,10 @@ void RE_UploadCinematic (int cols, int rows, const byte *data, int client, qbool
 		tr.scratchImage[client]->width = tr.scratchImage[client]->uploadWidth = cols;
 		tr.scratchImage[client]->height = tr.scratchImage[client]->uploadHeight = rows;
 		qglTexImage2D( GL_TEXTURE_2D, 0, GL_RGB8, cols, rows, 0, GL_RGBA, GL_UNSIGNED_BYTE, data );
-		qglTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-		qglTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-		qglTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP );
-		qglTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP );
+		qglTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+		qglTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+		qglTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP );
+		qglTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP );
 	} else {
 		if (dirty) {
 			// otherwise, just subimage upload it so that drivers can tell we are going to be changing
@@ -909,29 +909,29 @@ const void *RB_StretchPic ( const void *data ) {
 	tess.xyz[ numVerts ][1] = cmd->y;
 	tess.xyz[ numVerts ][2] = 0;
 
-	tess.texCoords[ numVerts ][0][0] = cmd->s1;
-	tess.texCoords[ numVerts ][0][1] = cmd->t1;
+	tess.texCoords[0][ numVerts ][0] = cmd->s1;
+	tess.texCoords[0][ numVerts ][1] = cmd->t1;
 
 	tess.xyz[ numVerts + 1 ][0] = cmd->x + cmd->w;
 	tess.xyz[ numVerts + 1 ][1] = cmd->y;
 	tess.xyz[ numVerts + 1 ][2] = 0;
 
-	tess.texCoords[ numVerts + 1 ][0][0] = cmd->s2;
-	tess.texCoords[ numVerts + 1 ][0][1] = cmd->t1;
+	tess.texCoords[0][ numVerts + 1 ][0] = cmd->s2;
+	tess.texCoords[0][ numVerts + 1 ][1] = cmd->t1;
 
 	tess.xyz[ numVerts + 2 ][0] = cmd->x + cmd->w;
 	tess.xyz[ numVerts + 2 ][1] = cmd->y + cmd->h;
 	tess.xyz[ numVerts + 2 ][2] = 0;
 
-	tess.texCoords[ numVerts + 2 ][0][0] = cmd->s2;
-	tess.texCoords[ numVerts + 2 ][0][1] = cmd->t2;
+	tess.texCoords[0][ numVerts + 2 ][0] = cmd->s2;
+	tess.texCoords[0][ numVerts + 2 ][1] = cmd->t2;
 
 	tess.xyz[ numVerts + 3 ][0] = cmd->x;
 	tess.xyz[ numVerts + 3 ][1] = cmd->y + cmd->h;
 	tess.xyz[ numVerts + 3 ][2] = 0;
 
-	tess.texCoords[ numVerts + 3 ][0][0] = cmd->s1;
-	tess.texCoords[ numVerts + 3 ][0][1] = cmd->t2;
+	tess.texCoords[0][ numVerts + 3 ][0] = cmd->s1;
+	tess.texCoords[0][ numVerts + 3 ][1] = cmd->t2;
 
 	return (const void *)(cmd + 1);
 }
@@ -1138,6 +1138,7 @@ const void	*RB_DrawBuffer( const void *data ) {
 	cmd = (const drawBufferCommand_t *)data;
 
 	qglDrawBuffer( cmd->buffer );
+	qglReadBuffer( cmd->buffer );
 
 	// clear screen for debugging
 	if (tr.world && tr.world->globalFog != -1)
@@ -1192,8 +1193,8 @@ void RB_ShowImages( void ) {
 
 		// show in proportional size in mode 2
 		if ( r_showImages->integer == 2 ) {
-			w *= image->uploadWidth / 512.0;
-			h *= image->uploadHeight / 512.0;
+			w *= image->uploadWidth / 512.0f;
+			h *= image->uploadHeight / 512.0f;
 		}
 
 		GL_Bind( image );
@@ -1233,7 +1234,7 @@ const void	*RB_SwapBuffers( const void *data ) {
 	}
 
 	// gamma correction
-	if (glConfig.deviceSupportsPostprocessingGamma && r_gammamethod->integer == GAMMA_POSTPROCESSING) {
+	if (r_gammamethod->integer == GAMMA_POSTPROCESSING) {
 		RB_SetGL2D();
 
 		qglEnable(GL_VERTEX_PROGRAM_ARB);
@@ -1315,6 +1316,79 @@ const void	*RB_SwapBuffers( const void *data ) {
 	return (const void *)(cmd + 1);
 }
 
+
+/*
+==================
+RB_TakeVideoFrameCmd
+==================
+*/
+const void *RB_TakeVideoFrameCmd( const void *data )
+{
+	const videoFrameCommand_t	*cmd;
+	byte	*buffer;
+	byte	*captureBuffer;
+	size_t	offset;
+	size_t	memcount, linelen;
+	int		padwidth, padlen;
+
+	cmd = (const videoFrameCommand_t *)data;
+
+	offset = 0;
+	buffer = RB_ReadPixels(0, 0, cmd->width, cmd->height, &offset,
+		(qboolean) !cmd->motionJpeg, AVI_LINE_PADDING);
+	captureBuffer = buffer + offset;
+
+	// AVI line padding
+	linelen = cmd->width * 3;
+	padwidth = PAD(linelen, AVI_LINE_PADDING);
+	padlen = padwidth - linelen;
+	memcount = padwidth * cmd->height;
+
+	if(cmd->motionJpeg)
+	{
+		byte	*buffer2;
+		byte	*encodeBuffer;
+
+		buffer2 = (byte *)ri.Hunk_AllocateTempMemory(memcount + AVI_LINE_PADDING - 1);
+		encodeBuffer = (byte *)PADP(buffer2, AVI_LINE_PADDING);
+
+		memcount = SaveJPGToBuffer(encodeBuffer, linelen * cmd->height,
+			cmd->motionJpegQuality,
+			cmd->width, cmd->height, captureBuffer, padlen);
+
+		ri.CL_WriteAVIVideoFrame(encodeBuffer, memcount);
+
+		ri.Hunk_FreeTempMemory(buffer2);
+	}
+	else
+	{
+		ri.CL_WriteAVIVideoFrame(captureBuffer, memcount);
+	}
+
+	ri.Hunk_FreeTempMemory(buffer);
+
+	return (const void *)(cmd + 1);
+}
+
+/*
+==================
+RB_TakeScreenshotCmd
+==================
+*/
+const void *RB_TakeScreenshotCmd( const void *data )
+{
+	const screenshotCommand_t	*cmd;
+
+	cmd = (const screenshotCommand_t *)data;
+
+	if (cmd->jpeg)
+		RB_TakeScreenshotJPEG(cmd->x, cmd->y, cmd->width, cmd->height, cmd->fileName);
+	else
+		RB_TakeScreenshot(cmd->x, cmd->y, cmd->width, cmd->height, cmd->fileName);
+
+	return (const void *)(cmd + 1);
+}
+
 /*
 ====================
 RB_ExecuteRenderCommands
@@ -1324,11 +1398,16 @@ smp extensions, or asyncronously by another thread.
 ====================
 */
 void RB_ExecuteRenderCommands( const void *data ) {
-	int		t1, t2;
+	const void	*dataOrig = data;
+	qboolean	firstPassDone = qfalse;
+	qboolean	secondPassDone = qtrue;
+	int			t1, t2;
 
 	t1 = ri.Milliseconds()*Cvar_VariableValue("timescale");
 
-	while (1) {
+	while (!firstPassDone) {
+		data = PADP( data, sizeof( void * ) );
+
 		switch ( *(const int *)data ) {
 		case RC_SET_COLOR:
 			data = RB_SetColor( data );
@@ -1351,16 +1430,65 @@ void RB_ExecuteRenderCommands( const void *data ) {
 		case RC_SWAP_BUFFERS:
 			data = RB_SwapBuffers( data );
 			break;
-
+		case RC_VIDEOFRAME:
+			secondPassDone = qfalse;
+			data = (videoFrameCommand_t *)data + 1;
+			break;
+		case RC_SCREENSHOT:
+			secondPassDone = qfalse;
+			data = (screenshotCommand_t *)data + 1;
 		case RC_END_OF_LIST:
+			firstPassDone = qtrue;
+			break;
 		default:
-			// stop rendering
-			t2 = ri.Milliseconds()*Cvar_VariableValue("timescale");
-			backEnd.pc.msec = t2 - t1;
-			return;
+			ri.Error(ERR_DROP, "Unknown render command");
 		}
 	}
 
+	data = dataOrig;
+
+	while (!secondPassDone) {
+		data = PADP( data, sizeof( void * ) );
+
+		switch ( *(const int *)data ) {
+		case RC_SET_COLOR:
+			data = (setColorCommand_t *)data + 1;
+			break;
+		case RC_STRETCH_PIC:
+			data = (stretchPicCommand_t *)data + 1;
+			break;
+		case RC_ROTATE_PIC:
+			data = (rotatePicCommand_t *)data + 1;
+			break;
+		case RC_ROTATE_PIC2:
+			data = (rotatePicCommand_t *)data + 1;
+			break;
+		case RC_DRAW_SURFS:
+			data =(drawSurfsCommand_t *)data + 1;
+			break;
+		case RC_DRAW_BUFFER:
+			data = (drawBufferCommand_t *)data + 1;
+			break;
+		case RC_SWAP_BUFFERS:
+			data = (swapBuffersCommand_t *)data + 1;
+			break;
+		case RC_VIDEOFRAME:
+			data = RB_TakeVideoFrameCmd( data );
+			break;
+		case RC_SCREENSHOT:
+			data = RB_TakeScreenshotCmd( data );
+			break;
+		case RC_END_OF_LIST:
+			secondPassDone = qtrue;
+			break;
+		default:
+			ri.Error(ERR_DROP, "Unknown render command");
+		}
+	}
+
+	// stop rendering
+	t2 = ri.Milliseconds()*Cvar_VariableValue("timescale");
+	backEnd.pc.msec = t2 - t1;
 }
 
 // What Pixel Shader type is currently active (regcoms or fragment programs).

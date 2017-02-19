@@ -269,11 +269,7 @@ Just prints the rest of the line to the console
 */
 void Cmd_Echo_f (void)
 {
-	int		i;
-
-	for (i=1 ; i<Cmd_Argc() ; i++)
-		Com_Printf ("%s ",Cmd_Argv(i));
-	Com_Printf ("\n");
+	Com_Printf( "%s\n", Cmd_Args() );
 }
 
 
@@ -535,8 +531,8 @@ Cmd_List_f
 */
 
 static int Cmd_CommandCmp(const void *p1, const void *p2) {
-    const cmd_function_t **e1 = (const cmd_function_t **)p1;
-    const cmd_function_t **e2 = (const cmd_function_t **)p2;
+    const cmd_function_t * const *e1 = (const cmd_function_t * const *)p1;
+    const cmd_function_t * const *e2 = (const cmd_function_t * const *)p2;
 
 	return strcmp( (*e1)->name, (*e2)->name );
 }

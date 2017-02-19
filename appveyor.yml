@@ -1,4 +1,4 @@
-os: Windows Server 2012 R2
+os: Visual Studio 2015
 configuration: Release
 version: jk2mv-{branch}-{build}
 
@@ -17,14 +17,18 @@ build_script:
       if ($env:TYPE -eq "win-x86-installer") {
         choco install -y nsis
 
-        cmake -G "Visual Studio 12" -DBuildPortableVersion=OFF ../..
+        cmake -G "Visual Studio 14" -DBuildPortableVersion=OFF ../..
         msbuild /m /p:Configuration=Release PACKAGE.vcxproj
       } elseif ($env:TYPE -eq "win-x86-portable") {
-        cmake -G "Visual Studio 12" -DBuildPortableVersion=ON ../..
+        cmake -G "Visual Studio 14" -DBuildPortableVersion=ON ../..
         msbuild /m /p:Configuration=Release PACKAGE.vcxproj
       } elseif ($env:TYPE -eq "win-x64-portable") {
-        cmake -G "Visual Studio 12 Win64" -DBuildPortableVersion=ON ../..
+        cmake -G "Visual Studio 14 Win64" -DBuildPortableVersion=ON ../..
         msbuild /m /p:Configuration=Release PACKAGE.vcxproj
+      }
+
+      if (! $?) {
+        throw "Build failed."
       }
 
       cd $env:APPVEYOR_BUILD_FOLDER\build\appveyor\out
@@ -35,6 +39,6 @@ deploy:
   - provider: FTP
     protocol: ftp
     host: jk2mv.org
-    username: ounedcideploy
+    username: defaultcideploy
     password:
-      secure: g9Yw/gxRzj91kJWpN0kFzQ==
+      secure: TP9rWoVLFDsn7qTz5CxzMA==

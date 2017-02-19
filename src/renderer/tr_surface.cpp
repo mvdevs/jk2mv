@@ -97,17 +97,17 @@ void RB_AddQuadStampExt( vec3_t origin, vec3_t left, vec3_t up, byte *color, flo
 	tess.normal[ndx][2] = tess.normal[ndx+1][2] = tess.normal[ndx+2][2] = tess.normal[ndx+3][2] = normal[2];
 
 	// standard square texture coordinates
-	tess.texCoords[ndx][0][0] = tess.texCoords[ndx][1][0] = s1;
-	tess.texCoords[ndx][0][1] = tess.texCoords[ndx][1][1] = t1;
+	tess.texCoords[0][ndx][0] = tess.texCoords[1][ndx][0] = s1;
+	tess.texCoords[0][ndx][1] = tess.texCoords[1][ndx][1] = t1;
 
-	tess.texCoords[ndx+1][0][0] = tess.texCoords[ndx+1][1][0] = s2;
-	tess.texCoords[ndx+1][0][1] = tess.texCoords[ndx+1][1][1] = t1;
+	tess.texCoords[0][ndx+1][0] = tess.texCoords[1][ndx+1][0] = s2;
+	tess.texCoords[0][ndx+1][1] = tess.texCoords[1][ndx+1][1] = t1;
 
-	tess.texCoords[ndx+2][0][0] = tess.texCoords[ndx+2][1][0] = s2;
-	tess.texCoords[ndx+2][0][1] = tess.texCoords[ndx+2][1][1] = t2;
+	tess.texCoords[0][ndx+2][0] = tess.texCoords[1][ndx+2][0] = s2;
+	tess.texCoords[0][ndx+2][1] = tess.texCoords[1][ndx+2][1] = t2;
 
-	tess.texCoords[ndx+3][0][0] = tess.texCoords[ndx+3][1][0] = s1;
-	tess.texCoords[ndx+3][0][1] = tess.texCoords[ndx+3][1][1] = t2;
+	tess.texCoords[0][ndx+3][0] = tess.texCoords[1][ndx+3][0] = s1;
+	tess.texCoords[0][ndx+3][1] = tess.texCoords[1][ndx+3][1] = t2;
 
 	// constant color all the way around
 	// should this be identity and let the shader specify from entity?
@@ -149,9 +149,9 @@ static void RB_SurfaceSprite( void ) {
 		float	s, c;
 		float	ang;
 
-		ang = M_PI * backEnd.currentEntity->e.rotation / 180;
-		s = sin( ang );
-		c = cos( ang );
+		ang = DEG2RAD( backEnd.currentEntity->e.rotation );
+		s = sinf( ang );
+		c = cosf( ang );
 
 		VectorScale( backEnd.viewParms.ori.axis[1], c * radius, left );
 		VectorMA( left, -s * radius, backEnd.viewParms.ori.axis[2], left );
@@ -192,9 +192,9 @@ static void RB_SurfaceOrientedQuad( void )
 		float	s, c;
 		float	ang;
 
-		ang = M_PI * backEnd.currentEntity->e.rotation / 180;
-		s = sin( ang );
-		c = cos( ang );
+		ang = DEG2RAD( backEnd.currentEntity->e.rotation );
+		s = sinf( ang );
+		c = cosf( ang );
 
 		// Use a temp so we don't trash the values we'll need later
 		VectorScale( left, c * radius, tempLeft );
@@ -230,8 +230,8 @@ void RB_SurfacePolychain( srfPoly_t *p ) {
 	numv = tess.numVertexes;
 	for ( i = 0; i < p->numVerts; i++ ) {
 		VectorCopy( p->verts[i].xyz, tess.xyz[numv] );
-		tess.texCoords[numv][0][0] = p->verts[i].st[0];
-		tess.texCoords[numv][0][1] = p->verts[i].st[1];
+		tess.texCoords[0][numv][0] = p->verts[i].st[0];
+		tess.texCoords[0][numv][1] = p->verts[i].st[1];
 		tess.vertexColorsui[numv] = p->verts[ i ].modulateui;
 
 		numv++;
@@ -254,7 +254,9 @@ inline uint32_t ComputeFinalVertexColor(const byte *colors)
 	color4u_t	result;
 	uint32_t		r, g, b;
 
-	memcpy(&result, colors, 4);
+	for (k = 0; k < 4; k++)
+		result.b[k] = colors[k];
+
 	if (tess.shader->lightmapIndex[0] != LIGHTMAP_BY_VERTEX || r_fullbright->integer)
 	{
 		result.b[0] = 255;
@@ -280,9 +282,9 @@ inline uint32_t ComputeFinalVertexColor(const byte *colors)
 			break;
 		}
 	}
-	result.b[0] = Com_Clamp(0, 255, r >> 8);
-	result.b[1] = Com_Clamp(0, 255, g >> 8);
-	result.b[2] = Com_Clamp(0, 255, b >> 8);
+	result.b[0] = (r >> 8) & 0xffu;
+	result.b[1] = (g >> 8) & 0xffu;
+	result.b[2] = (b >> 8) & 0xffu;
 
 	return result.ui;
 }
@@ -296,8 +298,8 @@ RB_SurfaceTriangles
 void RB_SurfaceTriangles( srfTriangles_t *srf ) {
 	int			i, k;
 	drawVert_t	*dv;
-	float		*xyz, *normal, *texCoords;
-	byte		*color;
+	float		*xyz, *normal;
+	uint32_t	*color;
 	int			dlightBits;
 	qboolean	needsNormal;
 
@@ -316,8 +318,7 @@ void RB_SurfaceTriangles( srfTriangles_t *srf ) {
 	dv = srf->verts;
 	xyz = tess.xyz[ tess.numVertexes ];
 	normal = tess.normal[ tess.numVertexes ];
-	texCoords = tess.texCoords[ tess.numVertexes ][0];
-	color = tess.vertexColors[ tess.numVertexes ];
+	color = &tess.vertexColorsui[ tess.numVertexes ];
 	needsNormal = tess.shader->needsNormal;
 
 	for ( i = 0 ; i < srf->numVerts ; i++, dv++)
@@ -335,25 +336,24 @@ void RB_SurfaceTriangles( srfTriangles_t *srf ) {
 		}
 		normal += 4;
 
-		texCoords[0] = dv->st[0];
-		texCoords[1] = dv->st[1];
+		tess.texCoords[0][tess.numVertexes + i][0] = dv->st[0];
+		tess.texCoords[0][tess.numVertexes + i][1] = dv->st[1];
 
 		for(k=0;k<MAXLIGHTMAPS;k++)
 		{
 			if (tess.shader->lightmapIndex[k] >= 0)
 			{
-				texCoords[2+(k*2)] = dv->lightmap[k][0];
-				texCoords[2+(k*2)+1] = dv->lightmap[k][1];
+				tess.texCoords[k + 1][tess.numVertexes + i][0] = dv->lightmap[k][0];
+				tess.texCoords[k + 1][tess.numVertexes + i][1] = dv->lightmap[k][1];
 			}
 			else
 			{	// can't have an empty slot in the middle, so we are done
 				break;
 			}
 		}
-		texCoords += NUM_TEX_COORDS*2;
 
-		*(unsigned *)color = ComputeFinalVertexColor((byte *)dv->color);
-		color += 4;
+		*color = ComputeFinalVertexColor((byte *)dv->color);
+		color++;
 	}
 
 	for ( i = 0 ; i < srf->numVerts ; i++ ) {
@@ -431,9 +431,9 @@ static void DoSprite( vec3_t origin, float radius, float rotation )
 	float	ang;
 	vec3_t	left, up;
 
-	ang = M_PI * rotation / 180.0f;
-	s = sin( ang );
-	c = cos( ang );
+	ang = DEG2RAD( rotation );
+	s = sinf( ang );
+	c = cosf( ang );
 
 	VectorScale( backEnd.viewParms.ori.axis[1], c * radius, left );
 	VectorMA( left, -s * radius, backEnd.viewParms.ori.axis[2], left );
@@ -459,6 +459,10 @@ static void RB_SurfaceSaberGlow()
 
 	e = &backEnd.currentEntity->e;
 
+	// should be detected by i > 0 case below, but not with /fp:fast
+	if ( Q_isnan( e->saberLength ) )
+	  return;
+
 	// Render the glow part of the blade
 	for ( float i = e->saberLength; i > 0; i -= e->radius * 0.65f )
 	{
@@ -471,7 +475,7 @@ static void RB_SurfaceSaberGlow()
 	// Big hilt sprite
 	// Please don't kill me Pat...I liked the hilt glow blob, but wanted a subtle pulse.:)  Feel free to ditch it if you don't like it.  --Jeff
 	// Please don't kill me Jeff...  The pulse is good, but now I want the halo bigger if the saber is shorter...  --Pat
-	DoSprite( e->origin, 5.5f + random() * 0.25f, 0.0f );//random() * 360.0f );
+	DoSprite( e->origin, 5.5f + qrandom() * 0.25f, 0.0f );//random() * 360.0f );
 }
 
 /*
@@ -505,8 +509,8 @@ static void DoLine( const vec3_t start, const vec3_t end, const vec3_t up, float
 	spanWidth2 = -spanWidth;
 
 	VectorMA( start, spanWidth, up, tess.xyz[tess.numVertexes] );
-	tess.texCoords[tess.numVertexes][0][0] = 0;
-	tess.texCoords[tess.numVertexes][0][1] = 0;
+	tess.texCoords[0][tess.numVertexes][0] = 0;
+	tess.texCoords[0][tess.numVertexes][1] = 0;
 	tess.vertexColors[tess.numVertexes][0] = backEnd.currentEntity->e.shaderRGBA[0];// * 0.25;//wtf??not sure why the code would be doing this
 	tess.vertexColors[tess.numVertexes][1] = backEnd.currentEntity->e.shaderRGBA[1];// * 0.25;
 	tess.vertexColors[tess.numVertexes][2] = backEnd.currentEntity->e.shaderRGBA[2];// * 0.25;
@@ -514,8 +518,8 @@ static void DoLine( const vec3_t start, const vec3_t end, const vec3_t up, float
 	tess.numVertexes++;
 
 	VectorMA( start, spanWidth2, up, tess.xyz[tess.numVertexes] );
-	tess.texCoords[tess.numVertexes][0][0] = 1;//backEnd.currentEntity->e.shaderTexCoord[0];
-	tess.texCoords[tess.numVertexes][0][1] = 0;
+	tess.texCoords[0][tess.numVertexes][0] = 1;//backEnd.currentEntity->e.shaderTexCoord[0];
+	tess.texCoords[0][tess.numVertexes][1] = 0;
 	tess.vertexColors[tess.numVertexes][0] = backEnd.currentEntity->e.shaderRGBA[0];
 	tess.vertexColors[tess.numVertexes][1] = backEnd.currentEntity->e.shaderRGBA[1];
 	tess.vertexColors[tess.numVertexes][2] = backEnd.currentEntity->e.shaderRGBA[2];
@@ -524,8 +528,8 @@ static void DoLine( const vec3_t start, const vec3_t end, const vec3_t up, float
 
 	VectorMA( end, spanWidth, up, tess.xyz[tess.numVertexes] );
 
-	tess.texCoords[tess.numVertexes][0][0] = 0;
-	tess.texCoords[tess.numVertexes][0][1] = 1;//backEnd.currentEntity->e.shaderTexCoord[1];
+	tess.texCoords[0][tess.numVertexes][0] = 0;
+	tess.texCoords[0][tess.numVertexes][1] = 1;//backEnd.currentEntity->e.shaderTexCoord[1];
 	tess.vertexColors[tess.numVertexes][0] = backEnd.currentEntity->e.shaderRGBA[0];
 	tess.vertexColors[tess.numVertexes][1] = backEnd.currentEntity->e.shaderRGBA[1];
 	tess.vertexColors[tess.numVertexes][2] = backEnd.currentEntity->e.shaderRGBA[2];
@@ -533,8 +537,8 @@ static void DoLine( const vec3_t start, const vec3_t end, const vec3_t up, float
 	tess.numVertexes++;
 
 	VectorMA( end, spanWidth2, up, tess.xyz[tess.numVertexes] );
-	tess.texCoords[tess.numVertexes][0][0] = 1;//backEnd.currentEntity->e.shaderTexCoord[0];
-	tess.texCoords[tess.numVertexes][0][1] = 1;//backEnd.currentEntity->e.shaderTexCoord[1];
+	tess.texCoords[0][tess.numVertexes][0] = 1;//backEnd.currentEntity->e.shaderTexCoord[0];
+	tess.texCoords[0][tess.numVertexes][1] = 1;//backEnd.currentEntity->e.shaderTexCoord[1];
 	tess.vertexColors[tess.numVertexes][0] = backEnd.currentEntity->e.shaderRGBA[0];
 	tess.vertexColors[tess.numVertexes][1] = backEnd.currentEntity->e.shaderRGBA[1];
 	tess.vertexColors[tess.numVertexes][2] = backEnd.currentEntity->e.shaderRGBA[2];
@@ -559,8 +563,8 @@ static void DoLine2( const vec3_t start, const vec3_t end, const vec3_t up, floa
 	vbase = tess.numVertexes;
 
 	VectorMA( start, spanWidth, up, tess.xyz[tess.numVertexes] );
-	tess.texCoords[tess.numVertexes][0][0] = 0;
-	tess.texCoords[tess.numVertexes][0][1] = 0;
+	tess.texCoords[0][tess.numVertexes][0] = 0;
+	tess.texCoords[0][tess.numVertexes][1] = 0;
 	tess.vertexColors[tess.numVertexes][0] = backEnd.currentEntity->e.shaderRGBA[0];// * 0.25;//wtf??not sure why the code would be doing this
 	tess.vertexColors[tess.numVertexes][1] = backEnd.currentEntity->e.shaderRGBA[1];// * 0.25;
 	tess.vertexColors[tess.numVertexes][2] = backEnd.currentEntity->e.shaderRGBA[2];// * 0.25;
@@ -568,8 +572,8 @@ static void DoLine2( const vec3_t start, const vec3_t end, const vec3_t up, floa
 	tess.numVertexes++;
 
 	VectorMA( start, -spanWidth, up, tess.xyz[tess.numVertexes] );
-	tess.texCoords[tess.numVertexes][0][0] = 1;//backEnd.currentEntity->e.shaderTexCoord[0];
-	tess.texCoords[tess.numVertexes][0][1] = 0;
+	tess.texCoords[0][tess.numVertexes][0] = 1;//backEnd.currentEntity->e.shaderTexCoord[0];
+	tess.texCoords[0][tess.numVertexes][1] = 0;
 	tess.vertexColors[tess.numVertexes][0] = backEnd.currentEntity->e.shaderRGBA[0];
 	tess.vertexColors[tess.numVertexes][1] = backEnd.currentEntity->e.shaderRGBA[1];
 	tess.vertexColors[tess.numVertexes][2] = backEnd.currentEntity->e.shaderRGBA[2];
@@ -578,8 +582,8 @@ static void DoLine2( const vec3_t start, const vec3_t end, const vec3_t up, floa
 
 	VectorMA( end, spanWidth2, up, tess.xyz[tess.numVertexes] );
 
-	tess.texCoords[tess.numVertexes][0][0] = 0;
-	tess.texCoords[tess.numVertexes][0][1] = 1;//backEnd.currentEntity->e.shaderTexCoord[1];
+	tess.texCoords[0][tess.numVertexes][0] = 0;
+	tess.texCoords[0][tess.numVertexes][1] = 1;//backEnd.currentEntity->e.shaderTexCoord[1];
 	tess.vertexColors[tess.numVertexes][0] = backEnd.currentEntity->e.shaderRGBA[0];
 	tess.vertexColors[tess.numVertexes][1] = backEnd.currentEntity->e.shaderRGBA[1];
 	tess.vertexColors[tess.numVertexes][2] = backEnd.currentEntity->e.shaderRGBA[2];
@@ -587,8 +591,8 @@ static void DoLine2( const vec3_t start, const vec3_t end, const vec3_t up, floa
 	tess.numVertexes++;
 
 	VectorMA( end, -spanWidth2, up, tess.xyz[tess.numVertexes] );
-	tess.texCoords[tess.numVertexes][0][0] = 1;//backEnd.currentEntity->e.shaderTexCoord[0];
-	tess.texCoords[tess.numVertexes][0][1] = 1;//backEnd.currentEntity->e.shaderTexCoord[1];
+	tess.texCoords[0][tess.numVertexes][0] = 1;//backEnd.currentEntity->e.shaderTexCoord[0];
+	tess.texCoords[0][tess.numVertexes][1] = 1;//backEnd.currentEntity->e.shaderTexCoord[1];
 	tess.vertexColors[tess.numVertexes][0] = backEnd.currentEntity->e.shaderRGBA[0];
 	tess.vertexColors[tess.numVertexes][1] = backEnd.currentEntity->e.shaderRGBA[1];
 	tess.vertexColors[tess.numVertexes][2] = backEnd.currentEntity->e.shaderRGBA[2];
@@ -615,8 +619,8 @@ static void DoLine_Oriented( const vec3_t start, const vec3_t end, const vec3_t 
 
 	// FIXME: use quad stamp?
 	VectorMA( start, spanWidth, up, tess.xyz[tess.numVertexes] );
-	tess.texCoords[tess.numVertexes][0][0] = 0;
-	tess.texCoords[tess.numVertexes][0][1] = 0;
+	tess.texCoords[0][tess.numVertexes][0] = 0;
+	tess.texCoords[0][tess.numVertexes][1] = 0;
 	tess.vertexColors[tess.numVertexes][0] = backEnd.currentEntity->e.shaderRGBA[0];// * 0.25;
 	tess.vertexColors[tess.numVertexes][1] = backEnd.currentEntity->e.shaderRGBA[1];// * 0.25;
 	tess.vertexColors[tess.numVertexes][2] = backEnd.currentEntity->e.shaderRGBA[2];// * 0.25;
@@ -624,8 +628,8 @@ static void DoLine_Oriented( const vec3_t start, const vec3_t end, const vec3_t 
 	tess.numVertexes++;
 
 	VectorMA( start, spanWidth2, up, tess.xyz[tess.numVertexes] );
-	tess.texCoords[tess.numVertexes][0][0] = 1;
-	tess.texCoords[tess.numVertexes][0][1] = 0;
+	tess.texCoords[0][tess.numVertexes][0] = 1;
+	tess.texCoords[0][tess.numVertexes][1] = 0;
 	tess.vertexColors[tess.numVertexes][0] = backEnd.currentEntity->e.shaderRGBA[0];
 	tess.vertexColors[tess.numVertexes][1] = backEnd.currentEntity->e.shaderRGBA[1];
 	tess.vertexColors[tess.numVertexes][2] = backEnd.currentEntity->e.shaderRGBA[2];
@@ -634,8 +638,8 @@ static void DoLine_Oriented( const vec3_t start, const vec3_t end, const vec3_t 
 
 	VectorMA( end, spanWidth, up, tess.xyz[tess.numVertexes] );
 
-	tess.texCoords[tess.numVertexes][0][0] = 0;
-	tess.texCoords[tess.numVertexes][0][1] = backEnd.currentEntity->e.data.line.stscale;
+	tess.texCoords[0][tess.numVertexes][0] = 0;
+	tess.texCoords[0][tess.numVertexes][1] = backEnd.currentEntity->e.data.line.stscale;
 	tess.vertexColors[tess.numVertexes][0] = backEnd.currentEntity->e.shaderRGBA[0];
 	tess.vertexColors[tess.numVertexes][1] = backEnd.currentEntity->e.shaderRGBA[1];
 	tess.vertexColors[tess.numVertexes][2] = backEnd.currentEntity->e.shaderRGBA[2];
@@ -643,8 +647,8 @@ static void DoLine_Oriented( const vec3_t start, const vec3_t end, const vec3_t 
 	tess.numVertexes++;
 
 	VectorMA( end, spanWidth2, up, tess.xyz[tess.numVertexes] );
-	tess.texCoords[tess.numVertexes][0][0] = 1;
-	tess.texCoords[tess.numVertexes][0][1] = backEnd.currentEntity->e.data.line.stscale;
+	tess.texCoords[0][tess.numVertexes][0] = 1;
+	tess.texCoords[0][tess.numVertexes][1] = backEnd.currentEntity->e.data.line.stscale;
 	tess.vertexColors[tess.numVertexes][0] = backEnd.currentEntity->e.shaderRGBA[0];
 	tess.vertexColors[tess.numVertexes][1] = backEnd.currentEntity->e.shaderRGBA[1];
 	tess.vertexColors[tess.numVertexes][2] = backEnd.currentEntity->e.shaderRGBA[2];
@@ -698,7 +702,7 @@ void RB_SurfaceOrientedLine( void )
 	// compute side vector
 	VectorNormalize( e->axis[1] );
 	VectorCopy(e->axis[1], right);
-	DoLine_Oriented( start, end, right, e->data.line.width*0.5 );
+	DoLine_Oriented( start, end, right, e->data.line.width*0.5f );
 }
 
 /*
@@ -722,8 +726,8 @@ static void DoCylinderPart(polyVert_t *verts)
 	for (i=0; i<4; i++)
 	{
 		VectorCopy( verts->xyz, tess.xyz[tess.numVertexes] );
-		tess.texCoords[tess.numVertexes][0][0] = verts->st[0];
-		tess.texCoords[tess.numVertexes][0][1] = verts->st[1];
+		tess.texCoords[0][tess.numVertexes][0] = verts->st[0];
+		tess.texCoords[0][tess.numVertexes][1] = verts->st[1];
 		tess.vertexColors[tess.numVertexes][0] = verts->modulate[0];
 		tess.vertexColors[tess.numVertexes][1] = verts->modulate[1];
 		tess.vertexColors[tess.numVertexes][2] = verts->modulate[2];
@@ -871,14 +875,14 @@ static float Q_crandom( int *seed ) {
 static void CreateShape()
 //----------------------------------------------------------------------------
 {
-	VectorSet( sh1, 0.66f + crandom() * 0.1f,	// fwd
-				0.07f + crandom() * 0.025f,
-				0.07f + crandom() * 0.025f );
+	VectorSet( sh1, 0.66f + qcrandom() * 0.1f,	// fwd
+				0.07f + qcrandom() * 0.025f,
+				0.07f + qcrandom() * 0.025f );
 
 	// it seems to look best to have a point on one side of the ideal line, then the other point on the other side.
-	VectorSet( sh2, 0.33f + crandom() * 0.1f,	// fwd
-					-sh1[1] + crandom() * 0.02f,	// forcing point to be on the opposite side of the line -- right
-					-sh1[2] + crandom() * 0.02f );// up
+	VectorSet( sh2, 0.33f + qcrandom() * 0.1f,	// fwd
+					-sh1[1] + qcrandom() * 0.02f,	// forcing point to be on the opposite side of the line -- right
+					-sh1[2] + qcrandom() * 0.02f );// up
 }
 
 //----------------------------------------------------------------------------
@@ -1144,8 +1148,8 @@ static void LerpMeshVertexes (md3Surface_t *surf, float backlerp)
 		+ (backEnd.currentEntity->e.frame * surf->numVerts * 4);
 	newNormals = newXyz + 3;
 
-	newXyzScale = MD3_XYZ_SCALE * (1.0 - backlerp);
-	newNormalScale = 1.0 - backlerp;
+	newXyzScale = MD3_XYZ_SCALE * (1.0f - backlerp);
+	newNormalScale = 1.0f - backlerp;
 
 	numVerts = surf->numVerts;
 
@@ -1261,11 +1265,8 @@ void RB_SurfaceMesh(md3Surface_t *surface) {
 	texCoords = (float *) ((byte *)surface + surface->ofsSt);
 
 	numVerts = surface->numVerts;
-	for ( j = 0; j < numVerts; j++ ) {
-		tess.texCoords[Doug + j][0][0] = texCoords[j*2+0];
-		tess.texCoords[Doug + j][0][1] = texCoords[j*2+1];
-		// FIXME: fill in lightmapST for completeness?
-	}
+	Com_Memcpy( tess.texCoords[0][Doug], texCoords, numVerts * sizeof( tess.texCoords[0][0] ) );
+	// FIXME: fill in lightmapST for completeness?
 
 	tess.numVertexes += surface->numVerts;
 
@@ -1318,14 +1319,14 @@ void RB_SurfaceFace( srfSurfaceFace_t *surf ) {
 	for ( i = 0, v = surf->points[0], ndx = tess.numVertexes; i < numPoints; i++, v += VERTEXSIZE, ndx++ )
 	{
 		VectorCopy( v, tess.xyz[ndx]);
-		tess.texCoords[ndx][0][0] = v[3];
-		tess.texCoords[ndx][0][1] = v[4];
+		tess.texCoords[0][ndx][0] = v[3];
+		tess.texCoords[0][ndx][1] = v[4];
 		for(k=0;k<MAXLIGHTMAPS;k++)
 		{
 			if (tess.shader->lightmapIndex[k] >= 0)
 			{
-				tess.texCoords[ndx][k+1][0] = v[VERTEX_LM+(k*2)];
-				tess.texCoords[ndx][k+1][1] = v[VERTEX_LM+(k*2)+1];
+				tess.texCoords[k+1][ndx][0] = v[VERTEX_LM+(k*2)];
+				tess.texCoords[k+1][ndx][1] = v[VERTEX_LM+(k*2)+1];
 			}
 			else
 			{
@@ -1381,9 +1382,8 @@ Just copy the grid of points and triangulate
 void RB_SurfaceGrid( srfGridMesh_t *cv ) {
 	int		i, j, k;
 	float	*xyz;
-	float	*texCoords;
 	float	*normal;
-	unsigned char *color;
+	uint32_t	*color;
 	drawVert_t	*dv;
 	int		rows, irows, vrows;
 	int		used;
@@ -1459,10 +1459,11 @@ void RB_SurfaceGrid( srfGridMesh_t *cv ) {
 
 		xyz = tess.xyz[numVertexes];
 		normal = tess.normal[numVertexes];
-		texCoords = tess.texCoords[numVertexes][0];
-		color = ( unsigned char * ) &tess.vertexColors[numVertexes];
+		color = &tess.vertexColorsui[numVertexes];
 		vDlightBits = &tess.vertexDlightBits[numVertexes];
 		needsNormal = tess.shader->needsNormal;
+
+		int vert = numVertexes;
 
 		for ( i = 0 ; i < rows ; i++ ) {
 			for ( j = 0 ; j < lodWidth ; j++ ) {
@@ -1474,14 +1475,14 @@ void RB_SurfaceGrid( srfGridMesh_t *cv ) {
 				xyz[2] = dv->xyz[2];
 				xyz += 4;
 
-				texCoords[0] = dv->st[0];
-				texCoords[1] = dv->st[1];
+				tess.texCoords[0][vert][0] = dv->st[0];
+				tess.texCoords[0][vert][1] = dv->st[1];
+
 				for(k=0;k<MAXLIGHTMAPS;k++)
 				{
-					texCoords[2+(k*2)]= dv->lightmap[k][0];
-					texCoords[2+(k*2)+1]= dv->lightmap[k][1];
+					tess.texCoords[k+1][vert][0] = dv->lightmap[k][0];
+					tess.texCoords[k+1][vert][1] = dv->lightmap[k][1];
 				}
-				texCoords += NUM_TEX_COORDS*2;
 
 				if ( needsNormal ) {
 					normal[0] = dv->normal[0];
@@ -1490,9 +1491,10 @@ void RB_SurfaceGrid( srfGridMesh_t *cv ) {
 				}
 				normal += 4;
 
-				*(unsigned *)color = ComputeFinalVertexColor((byte *)dv->color);
-				color += 4;
+				*color = ComputeFinalVertexColor((byte *)dv->color);
+				color++;
 				*vDlightBits++ = dlightBits;
+				vert++;
 			}
 		}
 

@@ -97,7 +97,7 @@ void CFxScheduler::Clean(bool bRemoveTemplates /*= true*/, int idToPreserve /*= 
 	while ( itr != mFxSchedule.end() )
 	{
 		next = itr;
-		next++;
+		++next;
 
 		if ((*itr)->mParent&&OutstandClouds.find((*itr)->mParent)!=OutstandClouds.end())
 		{
@@ -470,7 +470,7 @@ void CFxScheduler::DeletePrimitive(int id, CPrimitiveTemplate *prim)
 	while ( itr != mFxSchedule.end() )
 	{
 		next = itr;
-		next++;
+		++next;
 
 		if ( (*itr)->mpTemplate == prim )
 		{
@@ -658,59 +658,59 @@ int CFxScheduler::ParseEffect( const char *file, CGPGroup *base )
 	{
 		grpName = primitiveGroup->GetName();
 
-		// Huge stricmp lists suxor
-		if ( !stricmp( grpName, "particle" ))
+		// Huge Q_stricmp lists suxor
+		if ( !Q_stricmp( grpName, "particle" ))
 		{
 			type = Particle;
 		}
-		else if ( !stricmp( grpName, "line" ))
+		else if ( !Q_stricmp( grpName, "line" ))
 		{
 			type = Line;
 		}
-		else if ( !stricmp( grpName, "tail" ))
+		else if ( !Q_stricmp( grpName, "tail" ))
 		{
 			type = Tail;
 		}
-		else if ( !stricmp( grpName, "sound" ))
+		else if ( !Q_stricmp( grpName, "sound" ))
 		{
 			type = Sound;
 		}
-		else if ( !stricmp( grpName, "cylinder" ))
+		else if ( !Q_stricmp( grpName, "cylinder" ))
 		{
 			type = Cylinder;
 		}
-		else if ( !stricmp( grpName, "electricity" ))
+		else if ( !Q_stricmp( grpName, "electricity" ))
 		{
 			type = Electricity;
 		}
-		else if ( !stricmp( grpName, "emitter" ))
+		else if ( !Q_stricmp( grpName, "emitter" ))
 		{
 			type = Emitter;
 		}
-		else if ( !stricmp( grpName, "decal" ))
+		else if ( !Q_stricmp( grpName, "decal" ))
 		{
 			type = Decal;
 		}
-		else if ( !stricmp( grpName, "orientedparticle" ))
+		else if ( !Q_stricmp( grpName, "orientedparticle" ))
 		{
 			type = OrientedParticle;
 		}
-		else if ( !stricmp( grpName, "fxrunner" ))
+		else if ( !Q_stricmp( grpName, "fxrunner" ))
 		{
 			type = FxRunner;
 		}
-		else if ( !stricmp( grpName, "light" ))
+		else if ( !Q_stricmp( grpName, "light" ))
 		{
 			type = Light;
 		}
-		else if ( !stricmp( grpName, "cameraShake" ))
+		else if ( !Q_stricmp( grpName, "cameraShake" ))
 		{
 			type = CameraShake;
 		}
 /*
 		// NOTE:  Pat requested that flashes be disabled in MP.  Since fx files are shared with SP, this is the easiest way to accomplish that....
 		//	 code will fall through and become type NONE....and therefore not parsed and added to the effect definition.
-		else if ( !stricmp( grpName, "flash" ))
+		else if ( !Q_stricmp( grpName, "flash" ))
 		{
 			type = ScreenFlash;
 		}
@@ -887,7 +887,7 @@ CPrimitiveTemplate *CFxScheduler::GetPrimitiveCopy( SEffectTemplate *effectCopy,
 
 	for ( int i = 0; i < effectCopy->mPrimitiveCount; i++ )
 	{
-		if ( !stricmp( effectCopy->mPrimitives[i]->mName, componentName ))
+		if ( !Q_stricmp( effectCopy->mPrimitives[i]->mName, componentName ))
 		{
 			// we found a match, so return it
 			return effectCopy->mPrimitives[i];
@@ -1349,7 +1349,7 @@ void CFxScheduler::CreateEffect( CPrimitiveTemplate *fx, CFxBoltInterface *obj, 
 
 	if( fx->mSpawnFlags & FX_RAND_ROT_AROUND_FWD )
 	{
-		RotatePointAroundVector( ax[1], ax[0], axis[1], random()*360.0f );
+		RotatePointAroundVector( ax[1], ax[0], axis[1], qrandom()*360.0f );
 		CrossProduct( ax[0], ax[1], ax[2] );
 	}
 
@@ -1377,14 +1377,14 @@ void CFxScheduler::CreateEffect( CPrimitiveTemplate *fx, CFxBoltInterface *obj, 
 		float x, y;
 		float width, height;
 
-		x = DEG2RAD( random() * 360.0f );
-		y = DEG2RAD( random() * 180.0f );
+		x = DEG2RAD( qrandom() * 360.0f );
+		y = DEG2RAD( qrandom() * 180.0f );
 
 		width = fx->mRadius.GetVal();
 		height = fx->mHeight.GetVal();
 
 		// calculate point on ellipse
-		VectorSet( temp, sin(x) * width * sin(y), cos(x) * width * sin(y), cos(y) * height ); // sinx * siny, cosx * siny, cosy
+		VectorSet( temp, sinf(x) * width * sinf(y), cosf(x) * width * sinf(y), cosf(y) * height ); // sinx * siny, cosx * siny, cosy
 		VectorAdd( org, temp, org );
 
 		if ( fx->mSpawnFlags & FX_AXIS_FROM_SPHERE )
@@ -1400,8 +1400,8 @@ void CFxScheduler::CreateEffect( CPrimitiveTemplate *fx, CFxBoltInterface *obj, 
 
 		// set up our point, then rotate around the current direction to.  Make unrotated cylinder centered around 0,0,0
 		VectorScale( ax[1], fx->mRadius.GetVal(), pt );
-		VectorMA( pt, crandom() * 0.5f * fx->mHeight.GetVal(), ax[0], pt );
-		RotatePointAroundVector( temp, ax[0], pt, random() * 360.0f );
+		VectorMA( pt, qcrandom() * 0.5f * fx->mHeight.GetVal(), ax[0], pt );
+		RotatePointAroundVector( temp, ax[0], pt, qrandom() * 360.0f );
 
 		VectorAdd( org, temp, org );
 
@@ -1488,7 +1488,7 @@ void CFxScheduler::CreateEffect( CPrimitiveTemplate *fx, CFxBoltInterface *obj, 
 	{
 		if ( fx->mSpawnFlags & FX_RGB_COMPONENT_INTERP )
 		{
-			float perc = random();
+			float perc = qrandom();
 
 			VectorSet( sRGB, fx->mRedStart.GetVal( perc ), fx->mGreenStart.GetVal( perc ), fx->mBlueStart.GetVal( perc ) );
 			VectorSet( eRGB, fx->mRedEnd.GetVal( perc ), fx->mGreenEnd.GetVal( perc ), fx->mBlueEnd.GetVal( perc ) );
@@ -1639,6 +1639,9 @@ void CFxScheduler::PlayEffect( int id, vec3_t origin, vec3_t axis[3], const int 
 			//	can keep the primitive template around for the correct amount of time.
 			prim->mRefCount = count;
 		}
+
+		if ( count <= 0 )
+			continue;
 
 		if ( prim->mSpawnFlags & FX_EVEN_DISTRIBUTION )
 		{
@@ -1823,7 +1826,7 @@ void CFxScheduler::AddScheduledEffects( void )
 	while ( itr != mFxSchedule.end() )
 	{
 		next = itr;
-		next++;
+		++next;
 		schedEffect = (*itr);
 		if ( *(*itr) <= theFxHelper.mTime )
 		{
@@ -1886,7 +1889,7 @@ void CFxScheduler::AddScheduledEffects( void )
 	while ( itr != mFxSchedule.end() )
 	{
 		next = itr;
-		next++;
+		++next;
 		schedEffect = (*itr);
 		if ( *(*itr) <= theFxHelper.mTime )
 		{
@@ -2057,7 +2060,7 @@ void CFxScheduler::CreateEffect( CPrimitiveTemplate *fx, vec3_t origin, vec3_t a
 
 	if( fx->mSpawnFlags & FX_RAND_ROT_AROUND_FWD )
 	{
-		RotatePointAroundVector( ax[1], ax[0], axis[1], random()*360.0f );
+		RotatePointAroundVector( ax[1], ax[0], axis[1], qrandom()*360.0f );
 		CrossProduct( ax[0], ax[1], ax[2] );
 	}
 
@@ -2084,14 +2087,14 @@ void CFxScheduler::CreateEffect( CPrimitiveTemplate *fx, vec3_t origin, vec3_t a
 		float x, y;
 		float width, height;
 
-		x = DEG2RAD( random() * 360.0f );
-		y = DEG2RAD( random() * 180.0f );
+		x = DEG2RAD( qrandom() * 360.0f );
+		y = DEG2RAD( qrandom() * 180.0f );
 
 		width = fx->mRadius.GetVal();
 		height = fx->mHeight.GetVal();
 
 		// calculate point on ellipse
-		VectorSet( temp, sin(x) * width * sin(y), cos(x) * width * sin(y), cos(y) * height ); // sinx * siny, cosx * siny, cosy
+		VectorSet( temp, sinf(x) * width * sinf(y), cosf(x) * width * sinf(y), cosf(y) * height ); // sinx * siny, cosx * siny, cosy
 		VectorAdd( org, temp, org );
 
 		if ( fx->mSpawnFlags & FX_AXIS_FROM_SPHERE )
@@ -2107,8 +2110,8 @@ void CFxScheduler::CreateEffect( CPrimitiveTemplate *fx, vec3_t origin, vec3_t a
 
 		// set up our point, then rotate around the current direction to.  Make unrotated cylinder centered around 0,0,0
 		VectorScale( ax[1], fx->mRadius.GetVal(), pt );
-		VectorMA( pt, crandom() * 0.5f * fx->mHeight.GetVal(), ax[0], pt );
-		RotatePointAroundVector( temp, ax[0], pt, random() * 360.0f );
+		VectorMA( pt, qcrandom() * 0.5f * fx->mHeight.GetVal(), ax[0], pt );
+		RotatePointAroundVector( temp, ax[0], pt, qrandom() * 360.0f );
 
 		VectorAdd( org, temp, org );
 
@@ -2247,7 +2250,7 @@ void CFxScheduler::CreateEffect( CPrimitiveTemplate *fx, vec3_t origin, vec3_t a
 	{
 		if ( fx->mSpawnFlags & FX_RGB_COMPONENT_INTERP )
 		{
-			float perc = random();
+			float perc = qrandom();
 
 			VectorSet( sRGB, fx->mRedStart.GetVal( perc ), fx->mGreenStart.GetVal( perc ), fx->mBlueStart.GetVal( perc ) );
 			VectorSet( eRGB, fx->mRedEnd.GetVal( perc ), fx->mGreenEnd.GetVal( perc ), fx->mBlueEnd.GetVal( perc ) );

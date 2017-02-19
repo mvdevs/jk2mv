@@ -2160,27 +2160,7 @@ void FX_BlasterAltFireThink( centity_t *cent, const struct weaponInfo_s *weapon 
 void FX_BlasterWeaponHitWall( vec3_t origin, vec3_t normal );
 void FX_BlasterWeaponHitPlayer( vec3_t origin, vec3_t normal, qboolean humanoid );
 
-
 void FX_ForceDrained(vec3_t origin, vec3_t dir);
-
-
-//-----------------------------
-// Effects related prototypes
-//-----------------------------
-
-// Environmental effects
-void CG_Spark( vec3_t origin, vec3_t dir );
-
-// Weapon prototypes
-void FX_BryarHitWall( vec3_t origin, vec3_t normal );
-void FX_BryarAltHitWall( vec3_t origin, vec3_t normal, int power );
-void FX_BryarHitPlayer( vec3_t origin, vec3_t normal, qboolean humanoid );
-void FX_BryarAltHitPlayer( vec3_t origin, vec3_t normal, qboolean humanoid );
-
-void FX_BlasterProjectileThink( centity_t *cent, const struct weaponInfo_s *weapon );
-void FX_BlasterAltFireThink( centity_t *cent, const struct weaponInfo_s *weapon );
-void FX_BlasterWeaponHitWall( vec3_t origin, vec3_t normal );
-void FX_BlasterWeaponHitPlayer( vec3_t origin, vec3_t normal, qboolean humanoid );
 
 
 void		trap_G2API_CollisionDetect		( CollisionRecord_t *collRecMap, void* ghoul2, const vec3_t angles, const vec3_t position,int frameNumber, int entNum, const vec3_t rayStart, const vec3_t rayEnd, const vec3_t scale, int traceFlags, int useLod, float fRadius );

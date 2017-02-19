@@ -383,9 +383,9 @@ void CL_AdjustAngles( void ) {
 	float	speed;
 
 	if ( in_speed.active ) {
-		speed = 0.001 * cls.frametime * cl_anglespeedkey->value;
+		speed = 0.001f * cls.frametime * cl_anglespeedkey->value;
 	} else {
-		speed = 0.001 * cls.frametime;
+		speed = 0.001f * cls.frametime;
 	}
 
 	if ( !in_strafe.active ) {
@@ -533,7 +533,7 @@ void CL_MouseMove( usercmd_t *cmd ) {
 	cl.mouseDx[cl.mouseIndex] = 0;
 	cl.mouseDy[cl.mouseIndex] = 0;
 
-	rate = sqrt( mx * mx + my * my ) / (float)frame_msec;
+	rate = sqrtf( mx * mx + my * my ) / frame_msec;
 	accelSensitivity = cl_sensitivity->value + rate * cl_mouseAccel->value;
 
 	// scale by FOV

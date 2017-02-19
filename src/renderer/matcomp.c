@@ -234,7 +234,7 @@ void MC_UnCompressQuat(float mat[3][4],const unsigned char * comp)
     float fTyz;
     float fTzz;
 
-	const unsigned short *pwIn = (unsigned short *) comp;
+	const unsigned short *pwIn = (const unsigned short *) comp;
 
 	w = *pwIn++;
 	w/=16383.0f;

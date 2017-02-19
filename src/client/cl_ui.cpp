@@ -787,30 +787,30 @@ intptr_t CL_UISystemCalls(intptr_t *args) {
 		return 0;
 
 	case UI_CVAR_SET:
-		Cvar_Set( (const char *)VMA(1), (const char *)VMA(2) );
+		Cvar_Set2( (const char *)VMA(1), (const char *)VMA(2), qtrue, qtrue );
 		return 0;
 
 	case UI_CVAR_VARIABLEVALUE:
-		return FloatAsInt( Cvar_VariableValue( (const char *)VMA(1) ) );
+		return FloatAsInt( Cvar_VariableValue( (const char *)VMA(1), qtrue ) );
 
 	case UI_CVAR_VARIABLESTRINGBUFFER:
-		Cvar_VariableStringBuffer( (const char *)VMA(1), (char *)VMA(2), args[3] );
+		Cvar_VariableStringBuffer( (const char *)VMA(1), (char *)VMA(2), args[3], qtrue );
 		return 0;
 
 	case UI_CVAR_SETVALUE:
-		Cvar_SetValue( (const char *)VMA(1), VMF(2) );
+		Cvar_SetValue( (const char *)VMA(1), VMF(2), qtrue );
 		return 0;
 
 	case UI_CVAR_RESET:
-		Cvar_Reset( (const char *)VMA(1) );
+		Cvar_Reset( (const char *)VMA(1), qtrue );
 		return 0;
 
 	case UI_CVAR_CREATE:
-		Cvar_Get( (const char *)VMA(1), (const char *)VMA(2), args[3] );
+		Cvar_Get( (const char *)VMA(1), (const char *)VMA(2), args[3], qtrue );
 		return 0;
 
 	case UI_CVAR_INFOSTRINGBUFFER:
-		Cvar_InfoStringBuffer( args[1], (char *)VMA(2), args[3] );
+		Cvar_InfoStringBuffer( args[1], (char *)VMA(2), args[3], qtrue );
 		return 0;
 
 	case UI_ARGC:
@@ -921,7 +921,7 @@ intptr_t CL_UISystemCalls(intptr_t *args) {
 		return Key_GetOverstrikeMode();
 
 	case UI_KEY_SETOVERSTRIKEMODE:
-		Key_SetOverstrikeMode( (qboolean)args[1] );
+		Key_SetOverstrikeMode( (qboolean)!!args[1] );
 		return 0;
 
 	case UI_KEY_CLEARSTATES:
@@ -995,7 +995,7 @@ intptr_t CL_UISystemCalls(intptr_t *args) {
 		return LAN_GetServerPing( args[1], args[2] );
 
 	case UI_LAN_MARKSERVERVISIBLE:
-		LAN_MarkServerVisible( args[1], args[2], (qboolean)args[3] );
+		LAN_MarkServerVisible( args[1], args[2], (qboolean)!!args[3] );
 		return 0;
 
 	case UI_LAN_SERVERISVISIBLE:
@@ -1061,25 +1061,26 @@ intptr_t CL_UISystemCalls(intptr_t *args) {
 		return 0;
 
 	case UI_STRNCPY:
-		return strncpy( (char *)VMA(1), (const char *)VMA(2), args[3] ) ? 1:0;
+		strncpy( (char *)VMA(1), (const char *)VMA(2), args[3] );
+		return args[1];
 
 	case UI_SIN:
-		return FloatAsInt( sin( VMF(1) ) );
+		return FloatAsInt( sinf( VMF(1) ) );
 
 	case UI_COS:
-		return FloatAsInt( cos( VMF(1) ) );
+		return FloatAsInt( cosf( VMF(1) ) );
 
 	case UI_ATAN2:
-		return FloatAsInt( atan2( VMF(1), VMF(2) ) );
+		return FloatAsInt( atan2f( VMF(1), VMF(2) ) );
 
 	case UI_SQRT:
-		return FloatAsInt( sqrt( VMF(1) ) );
+		return FloatAsInt( sqrtf( VMF(1) ) );
 
 	case UI_FLOOR:
-		return FloatAsInt( floor( VMF(1) ) );
+		return FloatAsInt( floorf( VMF(1) ) );
 
 	case UI_CEIL:
-		return FloatAsInt( ceil( VMF(1) ) );
+		return FloatAsInt( ceilf( VMF(1) ) );
 
 	case UI_PC_ADD_GLOBAL_DEFINE:
 		return botlib_export->PC_AddGlobalDefine( (char *)VMA(1) );
@@ -1217,7 +1218,10 @@ void CL_InitUI(qboolean mainMenu) {
 	vmInterpret_t		interpret;
 	int v;
 
-	if (mainMenu) {
+	Cvar_Get("ui_menulevel", "0", CVAR_ROM | CVAR_INTERNAL, qfalse);
+	Cvar_Set("ui_menulevel", "0");
+
+	if (mainMenu && mv_menuOverride->integer == 0) {
 		uigameversion = VERSION_UNDEF;
 
 		uivm = VM_Create("jk2mvmenu", qtrue, CL_UISystemCalls, VMI_NATIVE);
@@ -1275,7 +1279,7 @@ qboolean UI_GameCommand( void ) {
 		return qfalse;
 	}
 
-	return (qboolean)VM_Call( uivm, UI_CONSOLE_COMMAND, cls.realtime );
+	return (qboolean)!!VM_Call( uivm, UI_CONSOLE_COMMAND, cls.realtime );
 }
 
 mvversion_t UI_GetCurrentGameversion() {

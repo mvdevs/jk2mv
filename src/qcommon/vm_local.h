@@ -135,8 +135,10 @@ typedef int	vmptr_t;
 
 typedef struct vmSymbol_s {
 	struct vmSymbol_s	*next;
+	struct vmSymbol_s	*caller;
 	int		symValue;
-	int		profileCount;
+	long	profileCount;
+	int		callCount;
 	char	symName[1];		// variable sized
 } vmSymbol_t;
 
@@ -177,7 +179,8 @@ struct vm_s {
 	int			stackBottom;		// if programStack < stackBottom, error
 
 	int			numSymbols;
-	struct vmSymbol_s	*symbols;
+	vmSymbol_t	*symbols;
+	vmSymbol_t	**symbolTable;
 
 	int			callLevel;		// counts recursive VM_Call
 	int			breakFunction;		// increment breakCount on function entry to this
@@ -192,6 +195,7 @@ struct vm_s {
 
 extern	vm_t	*currentVM;
 extern	int		vm_debugLevel;
+extern	qboolean vm_profileInclusive;
 
 void VM_Compile( vm_t *vm, vmHeader_t *header );
 int	VM_CallCompiled( vm_t *vm, int *args );

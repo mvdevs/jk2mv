@@ -24,7 +24,7 @@ int AAS_BestReachableLinkArea(aas_link_t *areas);
 //returns true if the are has reachabilities to other areas
 int AAS_AreaReachability(int areanum);
 //returns the best reachable area and goal origin for a bounding box at the given origin
-int AAS_BestReachableArea(vec3_t origin, vec3_t mins, vec3_t maxs, vec3_t goalorigin);
+int AAS_BestReachableArea(vec3_t origin, const vec3_t mins, const vec3_t maxs, vec3_t goalorigin);
 //returns the best jumppad area from which the bbox at origin is reachable
 int AAS_BestReachableFromJumpPadArea(vec3_t origin, vec3_t mins, vec3_t maxs);
 //returns the next reachability using the given model

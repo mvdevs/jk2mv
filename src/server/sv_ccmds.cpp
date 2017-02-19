@@ -564,7 +564,7 @@ static void SV_Status_f( void )
 	// make sure server is running
 	if ( !com_sv_running->integer )
 	{
-		Com_Printf( SP_GetStringText(STR_SERVER_SERVER_NOT_RUNNING) );
+		Com_Printf( "%s", SP_GetStringText(STR_SERVER_SERVER_NOT_RUNNING) );
 		return;
 	}
 
@@ -713,7 +713,7 @@ void SV_ForceToggle_f(void)
 				powerDisabled = "Enabled";
 			}
 
-			Com_Printf(va("%i - %s - Status: %s\n", i, forceToggleNamePrints[i], powerDisabled));
+			Com_Printf("%i - %s - Status: %s\n", i, forceToggleNamePrints[i], powerDisabled);
 			i++;
 		}
 

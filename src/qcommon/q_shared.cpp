@@ -44,27 +44,6 @@ const char *GetStringForID(stringID_table_t *table, int id) {
 	return NULL;
 }
 
-
-float Com_Clamp(float min, float max, float value) {
-	if (value < min) {
-		return min;
-	}
-	if (value > max) {
-		return max;
-	}
-	return value;
-}
-
-int Com_Clampi(int min, int max, int value) {
-	if (value < min) {
-		return min;
-	}
-	if (value > max) {
-		return max;
-	}
-	return value;
-}
-
 /*
 ============
 COM_SkipPath
@@ -91,7 +70,7 @@ http://www.exploit-db.com/exploits/1750/
 http://ioqsrc.vampireducks.com/d8/dbe/q__shared_8c-source.html#l00061
 ============
 */
-void COM_StripExtension(const char *in, char *out, int destsize) {
+void COM_StripExtension(const char *in, char *out, size_t destsize) {
 	int length;
 	Q_strncpyz(out, in, destsize);
 	length = (int)strlen(out) - 1;
@@ -110,7 +89,7 @@ void COM_StripExtension(const char *in, char *out, int destsize) {
 COM_DefaultExtension
 ==================
 */
-void COM_DefaultExtension(char *path, int maxSize, const char *extension) {
+void COM_DefaultExtension(char *path, size_t maxSize, const char *extension) {
 	char	oldPath[MAX_QPATH];
 	char	*src;
 
@@ -161,12 +140,11 @@ float	LittleFloat (const float *l) {return _LittleFloat(l);}
 */
 
 short   ShortSwap(short l) {
-	byte	b1, b2;
+	unsigned short us = *(unsigned short *)&l;
 
-	b1 = l & 255;
-	b2 = (l >> 8) & 255;
-
-	return (b1 << 8) + b2;
+	return
+		((us & 0x00FFu) << 8u) |
+		((us & 0xFF00u) >> 8u);
 }
 
 short	ShortNoSwap(short l) {
@@ -174,14 +152,14 @@ short	ShortNoSwap(short l) {
 }
 
 int	LongSwap(int l) {
-	byte	b1, b2, b3, b4;
+	unsigned int ui = *(unsigned int *)&l;
 
-	b1 = l & 255;
-	b2 = (l >> 8) & 255;
-	b3 = (l >> 16) & 255;
-	b4 = (l >> 24) & 255;
+  return
+    ((ui & 0x000000FFu) << 24u) |
+    ((ui & 0x0000FF00u) <<  8u) |
+    ((ui & 0x00FF0000u) >>  8u) |
+    ((ui & 0xFF000000u) >> 24u);
 
-	return ((int)b1 << 24) + ((int)b2 << 16) + ((int)b3 << 8) + b4;
 }
 
 int	LongNoSwap(int l) {
@@ -207,17 +185,11 @@ qint64 Long64NoSwap(qint64 ll) {
 	return ll;
 }
 
-typedef union {
-	float	f;
-	unsigned int i;
-} _FloatByteUnion;
-
 float FloatSwap(const float *f) {
-	const _FloatByteUnion *in;
-	_FloatByteUnion out;
+	floatint_t out;
 
-	in = (_FloatByteUnion *)f;
-	out.i = LongSwap(in->i);
+	out.f = *f;
+	out.i = LongSwap(out.i);
 
 	return out.f;
 }
@@ -293,7 +265,7 @@ void COM_ParseError(char *format, ...) {
 	static char string[4096];
 
 	va_start(argptr, format);
-	vsprintf(string, format, argptr);
+	Q_vsnprintf(string, sizeof(string), format, argptr);
 	va_end(argptr);
 
 	Com_Printf("ERROR: %s, line %d: %s\n", com_parsename, com_lines, string);
@@ -304,7 +276,7 @@ void COM_ParseWarning(char *format, ...) {
 	static char string[4096];
 
 	va_start(argptr, format);
-	vsprintf(string, format, argptr);
+	Q_vsnprintf(string, sizeof(string), format, argptr);
 	va_end(argptr);
 
 	Com_Printf("WARNING: %s, line %d: %s\n", com_parsename, com_lines, string);
@@ -402,8 +374,9 @@ int COM_Compress(char *data_p) {
 				}
 			}
 		}
+
+		*out = 0;
 	}
-	*out = 0;
 	return out - data_p;
 }
 
@@ -464,7 +437,7 @@ char *COM_ParseExt(const char **data_p, qboolean allowLineBreaks) {
 			c = *data++;
 			if (c == '\"' || !c) {
 				com_token[len] = 0;
-				*data_p = (char *)data;
+				*data_p = (const char *)data;
 				return com_token;
 			}
 			if (len < MAX_TOKEN_CHARS) {
@@ -492,7 +465,7 @@ char *COM_ParseExt(const char **data_p, qboolean allowLineBreaks) {
 	}
 	com_token[len] = 0;
 
-	*data_p = (char *)data;
+	*data_p = (const char *)data;
 	return com_token;
 }
 
@@ -504,8 +477,8 @@ char *COM_ParseExt(const char **data_p, qboolean allowLineBreaks) {
 COM_ParseInfos
 ===============
 */
-int COM_ParseInfos(char *buf, int max, char infos[][MAX_INFO_STRING]) {
-	char	*token;
+int COM_ParseInfos(const char *buf, int max, char infos[][MAX_INFO_STRING]) {
+	const char	*token;
 	int		count;
 	char	key[MAX_TOKEN_CHARS];
 
@@ -626,7 +599,7 @@ COM_MatchToken
 ==================
 */
 void COM_MatchToken(const char **buf_p, char *match) {
-	char	*token;
+	const char	*token;
 
 	token = COM_Parse(buf_p);
 	if (strcmp(token, match)) {
@@ -683,8 +656,8 @@ void SkipRestOfLine(const char **data) {
 
 
 void Parse1DMatrix(const char **buf_p, int x, float *m) {
-	char	*token;
-	int		i;
+	const char	*token;
+	int			i;
 
 	COM_MatchToken(buf_p, "(");
 
@@ -753,12 +726,20 @@ int Q_isalpha(int c) {
 	return (0);
 }
 
+int Q_isdigit(int c) {
+	return (c >= '0' && c <= '9');
+}
+
+int Q_isalnum(int c) {
+	return Q_isdigit(c) | Q_isalpha(c);
+}
+
 char* Q_strrchr(const char* string, int c) {
 	char cc = c;
-	char *s;
-	char *sp = (char *)0;
+	const char *s;
+	const char *sp = NULL;
 
-	s = (char*)string;
+	s = (const char *)string;
 
 	while (*s) {
 		if (*s == cc)
@@ -768,7 +749,7 @@ char* Q_strrchr(const char* string, int c) {
 	if (cc == 0)
 		sp = s;
 
-	return sp;
+	return (char *)sp;
 }
 
 /*
@@ -855,14 +836,16 @@ int Q_stricmp(const char *s1, const char *s2) {
 	return (s1 && s2) ? Q_stricmpn(s1, s2, 99999) : -1;
 }
 
-char *Q_stristr(char *str, char *charset) {
+char *Q_stristr(const char *str, char *charset) {
 	int i;
 
 	while (*str) {
 		for (i = 0; charset[i] && str[i]; i++) {
 			if (toupper(charset[i]) != toupper(str[i])) break;
 		}
-		if (!charset[i]) return str;
+		if (!charset[i]) {
+			return (char *) str;
+		}
 		str++;
 	}
 	return NULL;
@@ -947,13 +930,12 @@ char *Q_CleanStr(char *string, qboolean use102color) {
 }
 
 
-#ifdef _MSC_VER
+#if defined(_MSC_VER) && _MSC_VER < 1900
 /*
 =============
 Q_vsnprintf
 
 Special wrapper function for Microsoft's broken _vsnprintf() function.
-MinGW comes with its own snprintf() which is not broken.
 =============
 */
 
@@ -972,25 +954,19 @@ size_t Q_vsnprintf(char *str, size_t size, const char *format, va_list ap) {
 	}
 	return retval;
 }
-#else
-#define Q_vsnprintf vsnprintf
 #endif
 
 void QDECL Com_sprintf(char *dest, size_t size, const char *fmt, ...) {
 	int		len;
 	va_list		argptr;
-	char	bigbuffer[32000];	// big, but small enough to fit in PPC stack
 
 	va_start(argptr, fmt);
-	len = vsprintf(bigbuffer, fmt, argptr);
+	len = Q_vsnprintf(dest, size, fmt, argptr);
 	va_end(argptr);
-	if (len >= sizeof(bigbuffer)) {
-		Com_Error(ERR_FATAL, "Com_sprintf: overflowed bigbuffer");
-	}
+
 	if (len >= size) {
 		Com_Printf("Com_sprintf: overflow of %i in %i\n", len, size);
 	}
-	Q_strncpyz(dest, bigbuffer, size);
 }
 
 
@@ -1014,7 +990,7 @@ char * QDECL va(const char *format, ...) {
 
 	va_start(argptr, format);
 	buf = (char *)&string[index++ & 3];
-	Q_vsnprintf(buf, MAX_VA_STRING - 1, format, argptr);
+	Q_vsnprintf(buf, MAX_VA_STRING, format, argptr);
 	va_end(argptr);
 
 	return buf;
@@ -1279,7 +1255,8 @@ qboolean Info_SetValueForKey(char *s, const char *key, const char *value) {
 	}
 
 	Info_RemoveKey(s, key);
-	if (!value || !strlen(value))
+
+	if (!strlen(value))
 		return qfalse;
 
 	Com_sprintf(newi, sizeof(newi), "\\%s\\%s", key, value);
@@ -1325,7 +1302,8 @@ void Info_SetValueForKey_Big(char *s, const char *key, const char *value) {
 	}
 
 	Info_RemoveKey_Big(s, key);
-	if (!value || !strlen(value))
+
+	if (!strlen(value))
 		return;
 
 	Com_sprintf(newi, sizeof(newi), "\\%s\\%s", key, value);
@@ -1376,40 +1354,6 @@ void Com_TruncateLongString(char *buffer, const char *s) {
 
 /*
 ==================
-Com_CharIsOneOfCharset
-==================
-*/
-static qboolean Com_CharIsOneOfCharset(char c, char *set) {
-	size_t i;
-
-	for (i = 0; i<strlen(set); i++) {
-		if (set[i] == c)
-			return qtrue;
-	}
-
-	return qfalse;
-}
-
-/*
-==================
-Com_SkipCharset
-==================
-*/
-char *Com_SkipCharset(char *s, char *sep) {
-	char *p = s;
-
-	while (p) {
-		if (Com_CharIsOneOfCharset(*p, sep))
-			p++;
-		else
-			break;
-	}
-
-	return p;
-}
-
-/*
-==================
 Com_SkipTokens
 ==================
 */
@@ -1418,9 +1362,9 @@ char *Com_SkipTokens(char *s, int numTokens, char *sep) {
 	char *p = s;
 
 	while (sepCount < numTokens) {
-		if (Com_CharIsOneOfCharset(*p++, sep)) {
+		if (strchr(sep, *p++)) {
 			sepCount++;
-			while (Com_CharIsOneOfCharset(*p, sep))
+			while (strchr(sep, *p))
 				p++;
 		} else if (*p == '\0')
 			break;
@@ -1430,41 +1374,4 @@ char *Com_SkipTokens(char *s, int numTokens, char *sep) {
 		return p;
 	else
 		return s;
-}
-
-/*
-===================
-Com_HexStrToInt
-===================
-*/
-int Com_HexStrToInt(const char *str) {
-	if (!str || !str[0])
-		return -1;
-
-	// check for hex code
-	if (str[0] == '0' && str[1] == 'x') {
-		int  n = 0;
-		size_t i;
-
-		for (i = 2; i < strlen(str); i++) {
-			char digit;
-
-			n *= 16;
-
-			digit = tolower(str[i]);
-
-			if (digit >= '0' && digit <= '9')
-				digit -= '0';
-			else if (digit >= 'a' && digit <= 'f')
-				digit = digit - 'a' + 10;
-			else
-				return -1;
-
-			n += digit;
-		}
-
-		return n;
-	}
-
-	return -1;
 }

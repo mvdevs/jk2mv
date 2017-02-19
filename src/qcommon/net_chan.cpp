@@ -523,7 +523,7 @@ void NET_SendLoopPacket(netsrc_t sock, int length, const void *data, netadr_t to
 void NET_SendPacket(netsrc_t sock, int length, const void *data, netadr_t to) {
 
 	// sequenced packets are shown in netchan, so just show oob
-	if (showpackets->integer && *(int *)data == -1) {
+	if (showpackets->integer && *(const int *)data == -1) {
 		Com_Printf("send packet %4i\n", length);
 	}
 
@@ -560,7 +560,7 @@ void QDECL NET_OutOfBandPrint(netsrc_t sock, netadr_t adr, const char *format, .
 	string[3] = -1;
 
 	va_start(argptr, format);
-	vsnprintf(string + 4, sizeof(string) - 4, format, argptr);
+	Q_vsnprintf(string + 4, sizeof(string) - 4, format, argptr);
 	va_end(argptr);
 
 	// send the datagram

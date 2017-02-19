@@ -22,11 +22,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "vm_local.h"
 #include <stdint.h>
 
-#define PAD(base, alignment)	(((base)+(alignment)-1) & ~((alignment)-1))
-#define PADLEN(base, alignment)	(PAD((base), (alignment)) - (base))
-
-#define PADP(base, alignment)	((void *) PAD((intptr_t) (base), (alignment)))
-
 //#define	DEBUG_VM
 #ifdef DEBUG_VM
 static char	*opnames[256] = {
@@ -408,7 +403,9 @@ nextInstruction2:
 		if ( vm_debugLevel > 1 ) {
 			Com_Printf( "%s %s\n", DEBUGSTR, opnames[opcode] );
 		}
-		profileSymbol->profileCount++;
+
+		for (vmSymbol_t *sym = profileSymbol; sym != NULL; sym = sym->caller)
+			sym->profileCount++;
 #endif
 		switch ( opcode ) {
 #ifdef DEBUG_VM
@@ -555,7 +552,25 @@ nextInstruction2:
 
 		case OP_ENTER:
 #ifdef DEBUG_VM
-			profileSymbol = VM_ValueToFunctionSymbol( vm, programCounter );
+			if ( vm_profileInclusive ) {
+				vmSymbol_t	*newSym = VM_ValueToFunctionSymbol( vm, programCounter );
+				qboolean	link = qtrue;
+
+				newSym->callCount++;
+
+				// deal with recursion
+				for ( vmSymbol_t *sym = profileSymbol; sym; sym = sym->caller )
+					if (sym == newSym)
+						link = qfalse;
+
+				if (link) {
+					newSym->caller = profileSymbol;
+					profileSymbol = newSym;
+				}
+			} else {
+				profileSymbol = VM_ValueToFunctionSymbol( vm, programCounter );
+				profileSymbol->callCount++;
+			}
 #endif
 			// get size of stack frame
 			v1 = r2;
@@ -586,6 +601,7 @@ nextInstruction2:
 			// grab the saved program counter
 			programCounter = *(int *)&image[ programStack ];
 #ifdef DEBUG_VM
+			profileSymbol->caller = NULL;
 			profileSymbol = VM_ValueToFunctionSymbol( vm, programCounter );
 			if ( vm_debugLevel ) {
 //				vm->callLevel--;
@@ -883,7 +899,7 @@ nextInstruction2:
 			((float *) opStack)[opStackOfs] = (float) opStack[opStackOfs];
 			goto nextInstruction;
 		case OP_CVFI:
-			opStack[opStackOfs] = Q_ftol(((float *) opStack)[opStackOfs]);
+			opStack[opStackOfs] = (int) ((float *) opStack)[opStackOfs];
 			goto nextInstruction;
 		case OP_SEX8:
 			opStack[opStackOfs] = (signed char) opStack[opStackOfs];

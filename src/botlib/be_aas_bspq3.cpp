@@ -127,7 +127,7 @@ void PrintContents(int contents)
 // Returns:					-
 // Changes Globals:		-
 //===========================================================================
-bsp_trace_t AAS_Trace(vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, int passent, int contentmask)
+bsp_trace_t AAS_Trace(const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, int passent, int contentmask)
 {
 	bsp_trace_t bsptrace;
 	botimport.Trace(&bsptrace, start, mins, maxs, end, passent, contentmask);
@@ -173,7 +173,7 @@ qboolean AAS_EntityCollision(int entnum,
 //===========================================================================
 qboolean AAS_inPVS(vec3_t p1, vec3_t p2)
 {
-	return (qboolean)botimport.inPVS(p1, p2);
+	return (qboolean)!!botimport.inPVS(p1, p2);
 } //end of the function AAS_InPVS
 //===========================================================================
 // returns true if in Potentially Visible Set
@@ -291,7 +291,7 @@ int AAS_VectorForBSPEpairKey(int ent, char *key, vec3_t v)
 	if (!AAS_ValueForBSPEpairKey(ent, key, buf, MAX_EPAIRKEY)) return qfalse;
 	//scanf into doubles, then assign, so it is vec_t size independent
 	v1 = v2 = v3 = 0;
-	sscanf(buf, "%lf %lf %lf", &v1, &v2, &v3);
+	if ( sscanf(buf, "%lf %lf %lf", &v1, &v2, &v3) != 3 ) return qfalse;
 	v[0] = v1;
 	v[1] = v2;
 	v[2] = v3;

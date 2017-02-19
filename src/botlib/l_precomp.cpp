@@ -120,7 +120,7 @@ void QDECL SourceError(source_t *source, char *str, ...)
 	va_list ap;
 
 	va_start(ap, str);
-	vsprintf(text, str, ap);
+	Q_vsnprintf(text, sizeof(text), str, ap);
 	va_end(ap);
 #ifdef BOTLIB
 	botimport.Print(PRT_ERROR, "file %s, line %d: %s\n", source->scriptstack->filename, source->scriptstack->line, text);
@@ -144,7 +144,7 @@ void QDECL SourceWarning(source_t *source, char *str, ...)
 	va_list ap;
 
 	va_start(ap, str);
-	vsprintf(text, str, ap);
+	Q_vsnprintf(text, sizeof(text), str, ap);
 	va_end(ap);
 #ifdef BOTLIB
 	botimport.Print(PRT_WARNING, "file %s, line %d: %s\n", source->scriptstack->filename, source->scriptstack->line, text);
@@ -258,9 +258,9 @@ token_t *PC_CopyToken(token_t *token)
 	if (!t)
 	{
 #ifdef BSPC
-		Error("out of token space\n");
+		Error("out of token space");
 #else
-		Com_Error(ERR_FATAL, "out of token space\n");
+		Com_Error(ERR_FATAL, "out of token space");
 #endif
 		return NULL;
 	} //end if
@@ -2138,6 +2138,7 @@ int PC_EvaluateTokens(source_t *source, token_t *tokens, signed long int *intval
 			//remove the second value if not question mark operator
 			if (o->mOperator != P_QUESTIONMARK) v = v->next;
 			//
+			assert(v);
 			if (v->prev) v->prev->next = v->next;
 			else firstvalue = v->next;
 			if (v->next) v->next->prev = v->prev;

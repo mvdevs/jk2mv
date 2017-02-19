@@ -95,6 +95,8 @@ typedef struct {
 	void (*SetLightStyle)(int style, int color);
 
 	void	(*GetBModelVerts)( int bmodelIndex, vec3_t *vec, vec3_t normal );
+
+	void (*TakeVideoFrame)( int h, int w, qboolean motionJpeg, int motionJpegQuality );
 } refexport_t;
 
 //
@@ -105,7 +107,7 @@ typedef struct {
 	void	(QDECL *Printf)( int printLevel, const char *fmt, ...);
 
 	// abort the game
-	void	(QDECL *Error)( int errorLevel, const char *fmt, ...);
+	Q_PTR_NORETURN void	(QDECL *Error)( int errorLevel, const char *fmt, ...);
 
 	// milliseconds should only be used for profiling, never
 	// for anything game related.  Get time from the refdef
@@ -156,6 +158,8 @@ typedef struct {
 	int		(*CIN_PlayCinematic)( const char *arg0, int xpos, int ypos, int width, int height, int bits);
 	e_status (*CIN_RunCinematic) (int handle);
 
+	void	(*CL_WriteAVIVideoFrame)( const byte *buffer, int size );
+
 	int (*CM_PointContents)( const vec3_t p, clipHandle_t model );
 
 } refimport_t;
@@ -165,5 +169,11 @@ typedef struct {
 // If the module can't init to a valid rendering state, NULL will be
 // returned.
 refexport_t*GetRefAPI( int apiVersion, refimport_t *rimp );
+
+typedef enum {
+	GAMMA_NONE,
+	GAMMA_HARDWARE,
+	GAMMA_POSTPROCESSING
+} gammamethod_t;
 
 #endif	// __TR_PUBLIC_H

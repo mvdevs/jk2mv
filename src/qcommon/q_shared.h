@@ -31,9 +31,6 @@
 
 #define assert(exp)     ((void)0)
 
-#define min(x,y) ((x)<(y)?(x):(y))
-#define max(x,y) ((x)>(y)?(x):(y))
-
 #else
 
 #include <assert.h>
@@ -46,6 +43,11 @@
 #include <ctype.h>
 #include <limits.h>
 #include <stdint.h>
+#include <sys/stat.h>
+
+#ifdef __cplusplus
+#	include <cstddef>
+#endif
 
 #endif
 
@@ -56,13 +58,13 @@
 #endif
 
 // this is the define for determining if we have an asm version of a C function
-#if (defined _M_IX86 || defined __i386__) && !defined __sun__  && !defined __LCC__
+#if (defined ARCH_X86)  && !defined __LCC__
 #define id386	1
 #else
 #define id386	0
 #endif
 
-#if (defined _M_X64 || defined __amd64__)  && !defined __LCC__
+#if defined(ARCH_X86_64)  && !defined __LCC__
 #define idx64	1
 #else
 #define idx64	0
@@ -72,6 +74,11 @@
 #define idppc	1
 #else
 #define idppc	0
+#endif
+
+// Enable SSE
+#if id386 || idx64
+#include <emmintrin.h>
 #endif
 
 // for windows fastcall option
@@ -84,17 +91,45 @@ float	FloatSwap (const float *f);
 
 //================= COMPILER-SPECIFIC DEFINES ===========================
 #ifdef _MSC_VER
+#define ID_INLINE __inline
 #define Q_NORETURN __declspec(noreturn)
+#define Q_PTR_NORETURN // MSVC doesn't support noreturn function pointers
 #define q_unreachable() abort()
-#elif defined __GNUC__
+#ifndef __alignof_is_defined
+#define alignof(x) __alignof(x)
+#define __alignof_is_defined 1
+#endif
+#ifndef __alignas_is_defined
+#define alignas(x) __declspec(align(x))
+#define __alignas_is_defined 1
+#endif
+#define Q_MAX_ALIGN std::max_align_t
+#elif defined __GNUC__ && !defined __clang__
+#define GCC_VERSION (__GNUC__ * 10000 \
+    + __GNUC_MINOR__ * 100 \
+    + __GNUC_PATCHLEVEL__)
+
+#define ID_INLINE inline
 #define Q_NORETURN __attribute__((noreturn))
+#define Q_PTR_NORETURN Q_NORETURN
 #define q_unreachable() __builtin_unreachable()
-#elif defined __clang__
-#define Q_NORETURN __attribute__((noreturn))
-#define q_unreachable() __builtin_unreachable()
+#if GCC_VERSION >= 40900 /* >= 4.9.0 */
+#	define Q_MAX_ALIGN std::max_align_t
 #else
+#	define Q_MAX_ALIGN max_align_t
+#endif
+#elif defined __clang__
+#define ID_INLINE inline
+#define Q_NORETURN __attribute__((noreturn))
+#define Q_PTR_NORETURN Q_NORETURN
+#define q_unreachable() __builtin_unreachable()
+#define Q_MAX_ALIGN std::max_align_t
+#else
+#define ID_INLINE inline
 #define Q_NORETURN
+#define Q_PTR_NORETURN
 #define q_unreachable() abort()
+#define Q_MAX_ALIGN std::max_align_t
 #endif
 
 //======================= WIN32 DEFINES =================================
@@ -108,38 +143,34 @@ float	FloatSwap (const float *f);
 
 // buildstring will be incorporated into the version string
 #ifdef NDEBUG
-#ifdef _M_IX86
+
+#ifdef ARCH_X86
+#define ARCH_STRING "x86"
 #define	CPUSTRING	"win-x86"
-#elif defined _M_X64
+#elif defined ARCH_X86_64
+#define ARCH_STRING "x64"
 #define	CPUSTRING	"win-x64"
-#elif defined _M_ALPHA
-#define	CPUSTRING	"win-AXP"
-#endif
-#else
-#ifdef _M_IX86
-#define	CPUSTRING	"win-x86-debug"
-#elif defined _M_X64
-#define	CPUSTRING	"win-x64-debug"
-#elif defined _M_ALPHA
-#define	CPUSTRING	"win-AXP-debug"
-#endif
 #endif
 
-#ifdef _M_IX86
-#	define ARCH_STRING "x86"
 #else
-#	define ARCH_STRING "x64"
+
+#ifdef ARCH_X86
+#define ARCH_STRING "x86"
+#define	CPUSTRING	"win-x86-debug"
+#elif defined ARCH_X86_64
+#define ARCH_STRING "x64"
+#define	CPUSTRING	"win-x64-debug"
+#endif
+
 #endif
 
 #define LIBRARY_EXTENSION "dll"
-
-#define ID_INLINE __inline
 
 static ID_INLINE short BigShort( short l) { return ShortSwap(l); }
 #define LittleShort
 static ID_INLINE int BigLong(int l) { return LongSwap(l); }
 #define LittleLong
-static ID_INLINE float BigFloat(const float *l) { FloatSwap(l); }
+static ID_INLINE float BigFloat(const float *l) { return FloatSwap(l); }
 #define LittleFloat
 
 #define	PATH_SEP '\\'
@@ -159,7 +190,6 @@ static ID_INLINE float BigFloat(const float *l) { FloatSwap(l); }
 #define MAC_STATIC
 #define __cdecl
 #define __declspec(x)
-#define ID_INLINE inline
 
 #define stricmp strcasecmp
 #define strnicmp strncasecmp
@@ -213,7 +243,6 @@ inline static float LittleFloat (const float *l) { return FloatSwap(l); }
 #define strnicmp strncasecmp
 
 #define	MAC_STATIC // bk: FIXME
-#define ID_INLINE inline
 
 #ifdef __i386__
 #define	CPUSTRING	"linux-i386"
@@ -332,6 +361,8 @@ typedef enum {
 	EXEC_APPEND			// add to end of the command buffer (normal case)
 } cbufExec_t;
 
+#define MIN(x,y) ((x)<(y)?(x):(y))
+#define MAX(x,y) ((x)>(y)?(x):(y))
 
 #define PAD(base, alignment)	(((base)+(alignment)-1) & ~((alignment)-1))
 #define PADLEN(base, alignment)	(PAD((base), (alignment)) - (base))
@@ -494,8 +525,23 @@ void *Hunk_AllocDebug( int size, ha_pref preference, char *label, char *file, in
 void *Hunk_Alloc( int size, ha_pref preference );
 #endif
 
-void Com_Memset (void* dest, const int val, const size_t count);
-void Com_Memcpy (void* dest, const void* src, const size_t count);
+static ID_INLINE void Com_Memset (void* dest, const int val, const size_t count) {
+	memset( dest, val, count );
+}
+static ID_INLINE void Com_Memcpy (void* dest, const void* src, const size_t count) {
+	memcpy( dest, src, count );
+}
+
+static ID_INLINE float Com_Clamp( float min, float max, float value ) {
+	value = value > max ? max : value;
+	value = value < min ? min : value;
+	return value;
+}
+static ID_INLINE int Com_Clampi( int min, int max, int value ) {
+	value = value > max ? max : value;
+	value = value < min ? min : value;
+	return value;
+}
 
 #define CIN_system	1
 #define CIN_loop	2
@@ -528,7 +574,7 @@ typedef	int	fixed16_t;
 #endif
 
 #define NUMVERTEXNORMALS	162
-extern	vec3_t	bytedirs[NUMVERTEXNORMALS];
+extern const vec3_t	bytedirs[NUMVERTEXNORMALS];
 
 // all drawing is done to a 640*480 virtual screen size
 // and will be automatically scaled to the real resolution
@@ -632,30 +678,31 @@ CT_HUD_ORANGE,
 CT_MAX
 } ct_table_t;
 
-extern vec4_t colorTable[CT_MAX];
+extern const vec4_t colorTable[CT_MAX];
 
-extern	vec4_t		colorBlack;
-extern	vec4_t		colorRed;
-extern	vec4_t		colorGreen;
-extern	vec4_t		colorBlue;
-extern	vec4_t		colorYellow;
-extern	vec4_t		colorMagenta;
-extern	vec4_t		colorCyan;
-extern	vec4_t		colorWhite;
-extern	vec4_t		colorLtGrey;
-extern	vec4_t		colorMdGrey;
-extern	vec4_t		colorDkGrey;
-extern	vec4_t		colorLtBlue;
-extern	vec4_t		colorDkBlue;
+extern const vec4_t		colorBlack;
+extern const vec4_t		colorRed;
+extern const vec4_t		colorGreen;
+extern const vec4_t		colorBlue;
+extern const vec4_t		colorYellow;
+extern const vec4_t		colorMagenta;
+extern const vec4_t		colorCyan;
+extern const vec4_t		colorWhite;
+extern const vec4_t		colorLtGrey;
+extern const vec4_t		colorMdGrey;
+extern const vec4_t		colorDkGrey;
+extern const vec4_t		colorLtBlue;
+extern const vec4_t		colorDkBlue;
 
 #define Q_COLOR_ESCAPE	'^'
 #define Q_COLOR_BITS 0x7
+
 // you MUST have the last bit on here about colour strings being less than 7 or taiwanese strings register as colour!!!!
-#define Q_IsColorString(p)	( p && *(p) == Q_COLOR_ESCAPE && *((p)+1) && *((p)+1) != Q_COLOR_ESCAPE && *((p)+1) <= '7' && *((p)+1) >= '0' )
+#define Q_IsColorString(p)	( p && *(p) == Q_COLOR_ESCAPE && *((p)+1) <= '7' && *((p)+1) >= '0' )
 #define Q_IsColorString_1_02(p)	( p && *(p) == Q_COLOR_ESCAPE && *((p)+1) && *((p)+1) != Q_COLOR_ESCAPE ) // 1.02 ColorStrings
+#define Q_IsColorString_Extended(p) Q_IsColorString_1_02(p)
 
-#define Q_IsColorStringExt(p)	((p) && *(p) == Q_COLOR_ESCAPE && *((p)+1) && *((p)+1) >= '0' && *((p)+1) <= '7') // ^[0-7]
-
+// Default Colors
 #define COLOR_BLACK		'0'
 #define COLOR_RED		'1'
 #define COLOR_GREEN		'2'
@@ -664,8 +711,28 @@ extern	vec4_t		colorDkBlue;
 #define COLOR_CYAN		'5'
 #define COLOR_MAGENTA	'6'
 #define COLOR_WHITE		'7'
-#define ColorIndex(c)	( ( (c) - '0' ) & 7 )
 
+// Extended Colors
+#define COLOR_ORANGE    '8'
+#define COLOR_MD_GREY   '9'
+#define COLOR_LT_GREY   'j'
+#define COLOR_DK_GREY   'k'
+#define COLOR_LT_BLUE   'l'
+#define COLOR_DK_BLUE   'm'
+#define COLOR_JK2MV     'n' // Different in Debug/Release
+#define COLOR_LT_TRANSPARENT 'o'
+
+#if _DEBUG
+	#define COLOR_JK2MV_FALLBACK 1 // If the extended colors are not supported use this as fallback
+#else
+	#define COLOR_JK2MV_FALLBACK 5 // If the extended colors are not supported use this as fallback
+#endif
+
+#define COLOR_EXT_AMOUNT 16 // can be safely raised only to 32
+#define ColorIndex(c)	( ( (c) - '0' ) & 7 )
+#define ColorIndex_Extended(c) ( ( (c) - '0' ) & (COLOR_EXT_AMOUNT - 1) ) // compatible with 1.02, 'a' & 15 = 1
+
+// Default Colors
 #define S_COLOR_BLACK	"^0"
 #define S_COLOR_RED		"^1"
 #define S_COLOR_GREEN	"^2"
@@ -675,18 +742,28 @@ extern	vec4_t		colorDkBlue;
 #define S_COLOR_MAGENTA	"^6"
 #define S_COLOR_WHITE	"^7"
 
-extern vec4_t	g_color_table[8];
+// Extended Colors
+#define S_COLOR_ORANGE	"^8"
+#define S_COLOR_GREY	"^9"
+#define S_COLOR_LT_GREY "^j"
+#define S_COLOR_DK_GREY "^k"
+#define S_COLOR_LT_BLUE "^l"
+#define S_COLOR_DK_BLUE "^m"
+#define S_COLOR_JK2MV   "^n" // Different in Debug/Release
+#define S_COLOR_LT_TRANSPARENT "^o"
+
+extern const vec4_t	g_color_table[COLOR_EXT_AMOUNT];
 
 #define	MAKERGB( v, r, g, b ) v[0]=r;v[1]=g;v[2]=b
 #define	MAKERGBA( v, r, g, b, a ) v[0]=r;v[1]=g;v[2]=b;v[3]=a
 
-#define DEG2RAD( a ) ( ( (a) * M_PI ) / 180.0F )
-#define RAD2DEG( a ) ( ( (a) * 180.0f ) / M_PI )
+#define DEG2RAD( a ) ( (a) * (float) ( M_PI / 180.0 ) )
+#define RAD2DEG( a ) ( (a) * (float) ( 180.0 / M_PI ) )
 
 struct cplane_s;
 
-extern	vec3_t	vec3_origin;
-extern	vec3_t	axisDefault[3];
+extern const vec3_t	vec3_origin;
+extern const vec3_t	axisDefault[3];
 
 #define	nanmask (255<<23)
 
@@ -875,8 +952,8 @@ int		Q_rand( int *seed );
 float	Q_random( int *seed );
 float	Q_crandom( int *seed );
 
-#define random()	((rand () & 0x7fff) / ((float)0x7fff))
-#define crandom()	(2.0 * (random() - 0.5))
+#define qrandom()	((rand () & 0x7fff) * (1.0f / 0x7fff))
+#define qcrandom()	(2.0f * (qrandom() - 0.5f))
 
 void vectoangles( const vec3_t value1, vec3_t angles);
 void AnglesToAxis( const vec3_t angles, vec3_t axis[3] );
@@ -912,12 +989,9 @@ void PerpendicularVector( vec3_t dst, const vec3_t src );
 
 //=============================================
 
-float Com_Clamp( float min, float max, float value );
-int Com_Clampi(int min, int max, int value);
-
 char	*COM_SkipPath( char *pathname );
-void	COM_StripExtension(const char *in, char *out, int destsize);
-void	COM_DefaultExtension( char *path, int maxSize, const char *extension );
+void	COM_StripExtension(const char *in, char *out, size_t destsize);
+void	COM_DefaultExtension( char *path, size_t maxSize, const char *extension );
 
 void	COM_BeginParseSession( const char *name );
 int		COM_GetCurrentParseLine( void );
@@ -966,11 +1040,16 @@ void Parse3DMatrix (const char **buf_p, int z, int y, int x, float *m);
 
 void	QDECL Com_sprintf (char *dest, size_t size, const char *fmt, ...);
 
+#if defined(_MSC_VER) && _MSC_VER < 1900
+size_t Q_vsnprintf(char *str, size_t size, const char *format, va_list ap);
+#else
+#define Q_vsnprintf vsnprintf
+#endif
+
 // for auto-complete (copied from OpenJK)
 #define TRUNCATE_LENGTH	64
 void Com_TruncateLongString( char *buffer, const char *s );
 char *Com_SkipTokens( char *s, int numTokens, char *sep );
-char *Com_SkipCharset( char *s, char *sep );
 
 
 // mode parm for FS_FOpenFile
@@ -993,12 +1072,15 @@ int Q_isprint( int c );
 int Q_islower( int c );
 int Q_isupper( int c );
 int Q_isalpha( int c );
+int Q_isdigit( int c );
+int Q_isalnum( int c );
+
 
 // portable case insensitive compare
 int		Q_stricmp (const char *s1, const char *s2);
 int		Q_strncmp (const char *s1, const char *s2, int n);
 int		Q_stricmpn (const char *s1, const char *s2, int n);
-char	*Q_stristr(char *str, char *charset);
+char	*Q_stristr(const char *str, char *charset);
 char	*Q_strlwr( char *s1 );
 char	*Q_strupr( char *s1 );
 char	*Q_strrchr( const char* string, int c );
@@ -1060,8 +1142,6 @@ void Info_NextPair( const char **s, char *key, char *value );
 Q_NORETURN void	QDECL  Com_Error( int level, const char *error, ... );
 void	QDECL Com_Printf( const char *msg, ... );
 
-int Com_HexStrToInt(const char *str);
-
 /*
 ==========================================================
 
@@ -1094,6 +1174,8 @@ default values.
 #define CVAR_INTERNAL		0x00000800		// cvar won't be displayed, ever (for passwords and such)
 #define	CVAR_PARENTAL		0x00001000		// lets cvar system know that parental stuff needs to be updated
 #define	CVAR_GLOBAL			0x00002000		// the cvar is going to be written into jk2mvglobal.cfg rather then jk2mvconfig.cfg
+#define CVAR_VM_NOREAD		0x00004000		// the cvar can NOT be read-accessed by the vm modules
+#define CVAR_VM_NOWRITE		0x00008000		// the cvar can NOT be write-accessed by the vm modules
 
 // nothing outside the Cvar_*() functions should modify these fields!
 typedef struct cvar_s {
@@ -1148,7 +1230,7 @@ PlaneTypeForNormal
 =================
 */
 
-#define PlaneTypeForNormal(x) (x[0] == 1.0 ? PLANE_X : (x[1] == 1.0 ? PLANE_Y : (x[2] == 1.0 ? PLANE_Z : PLANE_NON_AXIAL) ) )
+#define PlaneTypeForNormal(x) (x[0] == 1 ? PLANE_X : (x[1] == 1 ? PLANE_Y : (x[2] == 1 ? PLANE_Z : PLANE_NON_AXIAL) ) )
 
 // plane_t structure
 // !!! if this is changed, it must be changed in asm code too !!!
@@ -1257,8 +1339,8 @@ typedef enum {
 ========================================================================
 */
 
-#define	ANGLE2SHORT(x)	((int)((x)*65536/360) & 65535)
-#define	SHORT2ANGLE(x)	((x)*(360.0/65536))
+#define	ANGLE2SHORT(x)	((int)((x)*(65536.0f/360.0f)) & 65535)
+#define	SHORT2ANGLE(x)	((x)*(360.0f/65536))
 
 #define	SNAPFLAG_RATE_DELAYED	1
 #define	SNAPFLAG_NOT_ACTIVE		2	// snapshot used during connection and for zombies

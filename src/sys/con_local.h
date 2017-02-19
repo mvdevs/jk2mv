@@ -6,7 +6,7 @@
 void CON_Shutdown( void );
 void CON_Init( void );
 char *CON_Input( void );
-void CON_Print( const char *msg );
+void CON_Print( const char *msg, bool extendedColors );
 
 /* con_log.cpp */
 void ConsoleLogAppend( const char *string );

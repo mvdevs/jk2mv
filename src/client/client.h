@@ -10,14 +10,6 @@
 #include "../game/bg_public.h"
 #include "../api/mvapi.h"
 
-#ifndef DEDICATED
-#ifdef INTERNAL_CURL
-#	include <curl.h>
-#else
-#	include <curl/curl.h>
-#endif
-#endif
-
 #define	RETRANSMIT_TIMEOUT	3000	// time between connection packet retransmits
 
 // Wind
@@ -88,8 +80,6 @@ typedef struct {
 // entities, so that when a delta compressed message arives from the server
 // it can be un-deltad from the original
 #define	MAX_PARSE_ENTITIES	2048
-
-extern int g_console_field_width;
 
 typedef struct {
 	int			timeoutcount;		// it requres several frames in a timeout condition
@@ -218,6 +208,7 @@ typedef struct {
 	int			downloadIndex;	// current index in downloadChksums
 	int			downloadChksums[64]; // contains checksums of the currently requested paks
 	qboolean	downloadRestart;	// if true, we need to do another FS_Restart because we downloaded a pak
+	dlHandle_t	httpHandle;
 
 	char httpdl[128];
 	qboolean httpdlvalid;
@@ -343,38 +334,51 @@ typedef struct {
 	// rendering info
 	glconfig_t	glconfig;
 	qhandle_t	charSetShader;
-	qhandle_t	font_ocr_a;
 	qhandle_t	whiteShader;
 	qhandle_t	consoleShader;
 
 	qhandle_t	recordingShader;
 	float		ratioFix;
+	float		xadjust;
+	float		yadjust;
 
 	blacklistentry_t *downloadBlacklist;
 	size_t downloadBlacklistLen;
 	qboolean ignoreNextDownloadList;
 
-#ifndef DEDICATED
-	CURL *curl;
-	CURLM *curlm;
-#endif
-
-	mvfix_t fixes;
+	int			fixes;
 } clientStatic_t;
 
 #define	CON_TEXTSIZE	131072 // increased in jk2mv
 #define	NUM_CON_TIMES	4
 
+typedef union {
+	struct {
+		unsigned char	color;
+		char			character;
+	} f;
+	unsigned short	compare;
+} conChar_t;
+
 typedef struct {
 	qboolean	initialized;
 
-	short	text[CON_TEXTSIZE];
+	// Text buffer is divided into `totallines' lines of `rowwidth'
+	// length. Line's first `CON_TIMESTAMP_LEN' characters are
+	// reserved for timestamp and last character is either blank
+	// or contains `CON_WRAP_CHAR' indicating a line wrap.
+	conChar_t	text[CON_TEXTSIZE];
+
 	int		current;		// line where next message will be printed
 	int		x;				// offset in current line for next print
 	int		display;		// bottom of console displays this line
 
 	int 	linewidth;		// characters across screen
+	int		rowwidth;		// timestamp, text and line wrap character
 	int		totallines;		// total lines in console scrollback
+
+	int		charWidth;		// Scaled console character width
+	int		charHeight;		// Scaled console character height
 
 	float	xadjust;		// for wide aspect screens
 	float	yadjust;		// for wide aspect screens
@@ -433,6 +437,9 @@ extern	cvar_t	*m_side;
 extern	cvar_t	*m_filter;
 
 extern	cvar_t	*cl_timedemo;
+extern	cvar_t	*cl_aviFrameRate;
+extern	cvar_t	*cl_aviMotionJpeg;
+extern  cvar_t  *cl_aviMotionJpegQuality;
 
 extern	cvar_t	*cl_activeAction;
 
@@ -440,6 +447,7 @@ extern	cvar_t	*mv_allowDownload;
 extern	cvar_t	*cl_conXOffset;
 extern	cvar_t	*cl_inGameVideo;
 extern	cvar_t	*mv_consoleShiftRequirement;
+extern	cvar_t	*mv_menuOverride;
 
 extern	cvar_t	*cl_autoDemo;
 extern	cvar_t	*cl_autoDemoFormat;
@@ -507,10 +515,6 @@ typedef struct {
 	qboolean	wasPressed;		// set when down, not cleared when up
 } kbutton_t;
 
-extern	kbutton_t	in_mlook, in_klook;
-extern 	kbutton_t 	in_strafe;
-extern 	kbutton_t 	in_speed;
-
 void CL_InitInput (void);
 void CL_SendCmd (void);
 void CL_ClearState (void);
@@ -536,9 +540,11 @@ void CL_SystemInfoChanged( void );
 void CL_ParseServerMessage( msg_t *msg );
 void CL_SP_Print(const word ID, byte *Data);
 
-size_t CL_ParseHTTPDownload(char *ptr, size_t size, size_t nmemb, void *dummy);
-void CL_EndHTTPDownload(qboolean abort);
-int CL_ProgressHTTPDownload(void *clientp, double dltotal, double dlnow, double ultotal, double ulnow);
+void CL_EndHTTPDownload(dlHandle_t handle, qboolean success, const char *err_msg);
+void CL_ProcessHTTPDownload(size_t dltotal, size_t dlnow);
+
+qboolean CL_DownloadRunning();
+void CL_KillDownload();
 
 //====================================================================
 
@@ -553,8 +559,6 @@ qboolean CL_UpdateVisiblePings_f( int source );
 //
 // console
 //
-void Con_DrawCharacter (int cx, int line, int num);
-
 void Con_CheckResize (void);
 void Con_Init (void);
 void Con_Clear_f (void);
@@ -586,8 +590,8 @@ void	SCR_DrawPic( float x, float y, float width, float height, qhandle_t hShader
 void	SCR_DrawNamedPic( float x, float y, float width, float height, const char *picname );
 
 void	SCR_DrawBigString( int x, int y, const char *s, float alpha );			// draws a string with embedded color control characters with fade
-void	SCR_DrawBigStringColor( int x, int y, const char *s, vec4_t color );	// ignores embedded color control characters
-void	SCR_DrawSmallStringExt( int x, int y, const char *string, float *setColor, qboolean forceColor );
+void	SCR_DrawBigStringColor( int x, int y, const char *s, const vec4_t color );	// ignores embedded color control characters
+void	SCR_DrawSmallStringExt( int x, int y, const char *string, const vec4_t setColor, qboolean forceColor );
 void	SCR_DrawSmallChar( int x, int y, int ch );
 
 
@@ -619,7 +623,7 @@ void CL_SetCGameTime( void );
 void CL_FirstSnapshot( void );
 void CL_ShaderStateChanged(void);
 
-qboolean CL_MVAPI_ControlFixes(mvfix_t fixes);
+qboolean CL_MVAPI_ControlFixes(int fixes);
 
 //
 // cl_ui.c
@@ -648,3 +652,13 @@ extern void demoAutoSaveLast_f(void);
 extern void demoAutoComplete(void);
 extern void demoAutoRecord(void);
 extern void demoAutoInit(void);
+
+//
+// cl_avi.c
+//
+qboolean CL_OpenAVIForWriting( const char *filename );
+void CL_TakeVideoFrame( void );
+void CL_WriteAVIVideoFrame( const byte *imageBuffer, int size );
+void CL_WriteAVIAudioFrame( const byte *pcmBuffer, int size );
+qboolean CL_CloseAVI( void );
+qboolean CL_VideoRecording( void );

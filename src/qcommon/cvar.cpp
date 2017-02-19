@@ -83,13 +83,23 @@ cvar_t *Cvar_FindVar( const char *var_name ) {
 Cvar_VariableValue
 ============
 */
-float Cvar_VariableValue( const char *var_name ) {
+float Cvar_VariableValue( const char *var_name, qboolean isVmCall ) {
 	cvar_t	*var;
 
 	var = Cvar_FindVar (var_name);
 	if (!var)
+	{
 		return 0;
+	}
+	else if ( isVmCall && var->flags & CVAR_VM_NOREAD )
+	{
+		Com_DPrintf("Cvar_VariableValue: VM tried to read CVAR_VM_NOREAD %s\n", var_name);
+		return 0; // No access to CVAR_VM_NOREAD
+	}
 	return var->value;
+}
+float Cvar_VariableValue( const char *var_name ) {
+	return Cvar_VariableValue( var_name, qfalse );
 }
 
 
@@ -98,13 +108,21 @@ float Cvar_VariableValue( const char *var_name ) {
 Cvar_VariableIntegerValue
 ============
 */
-int Cvar_VariableIntegerValue( const char *var_name ) {
+int Cvar_VariableIntegerValue( const char *var_name, qboolean isVmCall ) {
 	cvar_t	*var;
 
 	var = Cvar_FindVar (var_name);
 	if (!var)
 		return 0;
+	else if ( isVmCall && var->flags & CVAR_VM_NOREAD )
+	{
+		Com_DPrintf("Cvar_VariableIntegerValue: VM tried to read CVAR_VM_NOREAD %s\n", var_name);
+		return 0; // No access to CVAR_VM_NOREAD
+	}
 	return var->integer;
+}
+int Cvar_VariableIntegerValue( const char *var_name ) {
+	return Cvar_VariableIntegerValue( var_name, qfalse );
 }
 
 
@@ -128,16 +146,25 @@ char *Cvar_VariableString( const char *var_name ) {
 Cvar_VariableStringBuffer
 ============
 */
-void Cvar_VariableStringBuffer( const char *var_name, char *buffer, int bufsize ) {
+void Cvar_VariableStringBuffer( const char *var_name, char *buffer, int bufsize, qboolean isVmCall ) {
 	cvar_t *var;
 
 	var = Cvar_FindVar (var_name);
 	if (!var) {
 		*buffer = 0;
 	}
+	else if ( isVmCall && var->flags & CVAR_VM_NOREAD )
+	{
+		Com_DPrintf("Cvar_VariableStringBuffer: VM tried to read CVAR_VM_NOREAD %s\n", var_name);
+		*buffer = 0; // No access to CVAR_VM_NOREAD
+	}
 	else {
 		Q_strncpyz( buffer, var->string, bufsize );
 	}
+}
+
+void Cvar_VariableStringBuffer( const char *var_name, char *buffer, int bufsize ) {
+	Cvar_VariableStringBuffer( var_name, buffer, bufsize, qfalse );
 }
 
 
@@ -168,7 +195,7 @@ If the variable already exists, the value will not be set unless CVAR_ROM
 The flags will be or'ed in if the variable exists.
 ============
 */
-cvar_t *Cvar_Get( const char *var_name, const char *var_value, int flags ) {
+cvar_t *Cvar_Get( const char *var_name, const char *var_value, int flags, qboolean isVmCall ) {
 	cvar_t	*var;
 	int	hash;
 
@@ -188,8 +215,21 @@ cvar_t *Cvar_Get( const char *var_name, const char *var_value, int flags ) {
 	}
 #endif
 
+
 	var = Cvar_FindVar (var_name);
+
+	if ( !var && flags & CVAR_VM_NOWRITE )
+	{
+		assert(((flags & CVAR_ROM) || (flags & CVAR_INIT)));
+	}
+
 	if ( var ) {
+		if ( isVmCall && var->flags & CVAR_VM_NOWRITE )
+		{
+			Com_DPrintf("Cvar_Get: attempt to re-create existing CVAR_VM_NOWRITE %s\n", var_name);
+			return var; // Return the var. Other functions make sure the VM can't alter it
+		}
+
 		// if the C code is now specifying a variable that the user already
 		// set a value for, take the new value as the reset value
 		if ( ( var->flags & CVAR_USER_CREATED ) && !( flags & CVAR_USER_CREATED )
@@ -245,8 +285,13 @@ cvar_t *Cvar_Get( const char *var_name, const char *var_value, int flags ) {
 	var->string = CopyString (var_value);
 	var->modified = qtrue;
 	var->modificationCount = 1;
+#if defined (_MSC_VER) && (_MSC_VER < 1800)
 	var->value = atof (var->string);
 	var->integer = atoi(var->string);
+#else
+	var->value = strtof(var->string, NULL);
+	var->integer = var->value;
+#endif
 	var->resetString = CopyString( var_value );
 
 	// link the variable in
@@ -261,13 +306,16 @@ cvar_t *Cvar_Get( const char *var_name, const char *var_value, int flags ) {
 
 	return var;
 }
+cvar_t *Cvar_Get( const char *var_name, const char *var_value, int flags ) {
+	return Cvar_Get( var_name, var_value, flags, qfalse );
+}
 
 /*
 ============
-Cvar_Set2
+Cvar_Set
 ============
 */
-cvar_t *Cvar_Set2( const char *var_name, const char *value, qboolean force ) {
+cvar_t *Cvar_Set2( const char *var_name, const char *value, qboolean force, qboolean isVmCall ) {
 	cvar_t	*var;
 
 	if ( !Cvar_ValidateString( var_name ) ) {
@@ -293,6 +341,12 @@ cvar_t *Cvar_Set2( const char *var_name, const char *value, qboolean force ) {
 		} else {
 			return Cvar_Get (var_name, value, 0);
 		}
+	}
+
+	if ( isVmCall && var->flags & CVAR_VM_NOWRITE )
+	{
+		Com_DPrintf("Cvar_Set2: attempt to modify CVAR_VM_NOWRITE %s\n", var_name);
+		return NULL; // We can return NULL here, cause the VM never gets the return value
 	}
 
 	// Dont display the update when its internal
@@ -384,10 +438,25 @@ cvar_t *Cvar_Set2( const char *var_name, const char *value, qboolean force ) {
 	Z_Free (var->string);	// free the old value string
 
 	var->string = CopyString(value);
+#if defined (_MSC_VER) && (_MSC_VER < 1800)
 	var->value = atof (var->string);
 	var->integer = atoi (var->string);
+#else
+	var->value = strtof(var->string, NULL);
+	var->integer = var->value;
+#endif
 
 	return var;
+}
+
+/*
+============
+Cvar_Set2
+============
+*/
+cvar_t *Cvar_Set2( const char *var_name, const char *value, qboolean force )
+{
+	return Cvar_Set2( var_name, value, force, qfalse );
 }
 
 /*
@@ -413,7 +482,7 @@ void Cvar_SetLatched( const char *var_name, const char *value) {
 Cvar_SetValue
 ============
 */
-void Cvar_SetValue( const char *var_name, float value) {
+void Cvar_SetValue( const char *var_name, float value, qboolean isVmCall ) {
 	char	val[32];
 
 	if ( value == (int)value ) {
@@ -421,7 +490,10 @@ void Cvar_SetValue( const char *var_name, float value) {
 	} else {
 		Com_sprintf (val, sizeof(val), "%f",value);
 	}
-	Cvar_Set (var_name, val);
+	Cvar_Set2 (var_name, val, qtrue, isVmCall);
+}
+void Cvar_SetValue( const char *var_name, float value ) {
+	Cvar_SetValue( var_name, value, qfalse );
 }
 
 
@@ -430,8 +502,11 @@ void Cvar_SetValue( const char *var_name, float value) {
 Cvar_Reset
 ============
 */
+void Cvar_Reset( const char *var_name, qboolean isVmCall ) {
+	Cvar_Set2( var_name, NULL, qfalse, isVmCall );
+}
 void Cvar_Reset( const char *var_name ) {
-	Cvar_Set2( var_name, NULL, qfalse );
+	Cvar_Reset( var_name, qfalse );
 }
 
 
@@ -727,8 +802,8 @@ with the archive flag set to qtrue.
 */
 
 static int Cvar_CvarCmp(const void *p1, const void *p2) {
-    const cvar_t **e1 = (const cvar_t **)p1;
-    const cvar_t **e2 = (const cvar_t **)p2;
+    const cvar_t * const *e1 = (const cvar_t * const *)p1;
+    const cvar_t * const *e2 = (const cvar_t * const *)p2;
 
 	return strcmp( (*e1)->name, (*e2)->name );
 }
@@ -906,18 +981,21 @@ void Cvar_Restart_f( void ) {
 Cvar_InfoString
 =====================
 */
-char	*Cvar_InfoString( int bit ) {
+char	*Cvar_InfoString( int bit, qboolean isVmCall ) {
 	static char	info[MAX_INFO_STRING];
 	cvar_t	*var;
 
 	info[0] = 0;
 
 	for (var = cvar_vars ; var ; var = var->next) {
-		if (var->flags & bit) {
+		if (var->flags & bit && !(isVmCall && var->flags & CVAR_VM_NOREAD)) {
 			Info_SetValueForKey (info, var->name, var->string);
 		}
 	}
 	return info;
+}
+char	*Cvar_InfoString( int bit ) {
+	return Cvar_InfoString( bit, qfalse );
 }
 
 /*
@@ -948,8 +1026,11 @@ char	*Cvar_InfoString_Big( int bit ) {
 Cvar_InfoStringBuffer
 =====================
 */
-void Cvar_InfoStringBuffer( int bit, char* buff, int buffsize ) {
+void Cvar_InfoStringBuffer( int bit, char* buff, int buffsize, qboolean isVmCall ) {
 	Q_strncpyz(buff,Cvar_InfoString(bit),buffsize);
+}
+void Cvar_InfoStringBuffer( int bit, char* buff, int buffsize ) {
+	Cvar_InfoStringBuffer( bit, buff, buffsize, qfalse );
 }
 
 /*
@@ -962,7 +1043,19 @@ basically a slightly modified Cvar_Get for the interpreted modules
 void	Cvar_Register( vmCvar_t *vmCvar, const char *varName, const char *defaultValue, int flags ) {
 	cvar_t	*cv;
 
-	cv = Cvar_Get( varName, defaultValue, flags );
+	// Warn if the VM tries to register a CVAR_VM_* cvar.
+	cv = Cvar_FindVar(varName);
+	if ( cv )
+	{
+		if ( cv->flags & CVAR_VM_NOREAD ) Com_DPrintf("Cvar_Register: attempt to register CVAR_VM_NOREAD %s\n", varName);
+		if ( cv->flags & CVAR_VM_NOWRITE ) Com_DPrintf("Cvar_Register: attempt to register CVAR_VM_NOWRITE %s\n", varName);
+	}
+
+	// The VM should never set CVAR_VM_* flags itself
+	flags &= ~CVAR_VM_NOREAD;
+	flags &= ~CVAR_VM_NOWRITE;
+
+	cv = Cvar_Get( varName, defaultValue, flags, qtrue );
 	if ( !vmCvar ) {
 		return;
 	}
@@ -988,6 +1081,8 @@ void	Cvar_Update( vmCvar_t *vmCvar ) {
 	}
 
 	cv = cvar_indexes + vmCvar->handle;
+
+	if ( cv->flags & CVAR_VM_NOREAD ) return; // Never update vmCvar_t for CVAR_VM_NOREAD
 
 	if ( cv->modificationCount == vmCvar->modificationCount ) {
 		return;

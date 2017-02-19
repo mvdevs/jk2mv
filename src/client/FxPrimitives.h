@@ -187,8 +187,8 @@ public:
 
 	inline void SetSTScale(float s,float t)	{ mRefEnt.shaderTexCoord[0]=s;mRefEnt.shaderTexCoord[1]=t;}
 
-	inline void SetMin( vec3_t min )		{ if(min){VectorCopy(min,mMin);}else{VectorClear(mMin);}			}
-	inline void SetMax( vec3_t max )		{ if(max){VectorCopy(max,mMax);}else{VectorClear(mMax);}			}
+	inline void SetMin( const vec3_t min )	{ if(min){VectorCopy(min,mMin);}else{VectorClear(mMin);}			}
+	inline void SetMax( const vec3_t max )	{ if(max){VectorCopy(max,mMax);}else{VectorClear(mMax);}			}
 	inline void SetFlags( int flags )		{ mFlags = flags;				}
 	inline void AddFlags( int flags )		{ mFlags |= flags;				}
 	inline void ClearFlags( int flags )		{ mFlags &= ~flags;				}

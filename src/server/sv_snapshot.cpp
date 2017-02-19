@@ -216,10 +216,10 @@ SV_QsortEntityNumbers
 =======================
 */
 static int QDECL SV_QsortEntityNumbers( const void *a, const void *b ) {
-	int	*ea, *eb;
+	const int	*ea, *eb;
 
-	ea = (int *)a;
-	eb = (int *)b;
+	ea = (const int *)a;
+	eb = (const int *)b;
 
 	if ( *ea == *eb ) {
 		Com_Error( ERR_DROP, "SV_QsortEntityStates: duplicated entity" );
@@ -308,6 +308,24 @@ static void SV_AddEntitiesVisibleFromPoint( vec3_t origin, clientSnapshot_t *fra
 		{
 			mvsharedEntity_t *mvEnt = MV_EntityNum(e);
 
+			if ( VM_MVAPILevel( gvm ) >= 2 ) {
+				// MV entities can be flagged to be sent only to
+				// spectators or non-spectators
+				if ( frame->ps.persistant[PERS_TEAM] == TEAM_SPECTATOR ||
+					(frame->ps.pm_flags & PMF_FOLLOW) )
+				{
+					if ( mvEnt->mvFlags & MVF_NOSPEC )
+						continue;
+				}
+				else
+				{
+					if ( mvEnt->mvFlags & MVF_SPECONLY )
+						continue;
+				}
+			}
+
+			// MV entities can be flagged to be sent only to specific
+			// clients (can't filter following spectators this way)
 			if ( mvEnt->snapshotIgnore[frame->ps.clientNum] ) continue;
 			else if ( mvEnt->snapshotEnforce[frame->ps.clientNum] )
 			{

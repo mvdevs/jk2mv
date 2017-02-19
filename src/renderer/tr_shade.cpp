@@ -266,7 +266,7 @@ static void DrawTris (shaderCommands_t *input) {
 	qglDisableClientState (GL_COLOR_ARRAY);
 	qglDisableClientState (GL_TEXTURE_COORD_ARRAY);
 
-	qglVertexPointer (3, GL_FLOAT, 16, input->xyz);	// padded for SIMD
+	qglVertexPointer (3, GL_FLOAT, sizeof( input->xyz[0] ), input->xyz);	// padded for SIMD
 
 	if (qglLockArraysEXT) {
 		qglLockArraysEXT(0, input->numVertexes);
@@ -1005,34 +1005,19 @@ static void ComputeTexCoords( shaderStage_t *pStage ) {
 			Com_Memset( tess.svars.texcoords[b], 0, sizeof( float ) * 2 * tess.numVertexes );
 			break;
 		case TCGEN_TEXTURE:
-			for ( i = 0 ; i < tess.numVertexes ; i++ ) {
-				tess.svars.texcoords[b][i][0] = tess.texCoords[i][0][0];
-				tess.svars.texcoords[b][i][1] = tess.texCoords[i][0][1];
-			}
+			Com_Memcpy( texcoords, tess.texCoords[0], tess.numVertexes * sizeof( tess.texCoords[0][0] ) );
 			break;
 		case TCGEN_LIGHTMAP:
-			for ( i = 0 ; i < tess.numVertexes ; i++,texcoords+=2 ) {
-				texcoords[0] = tess.texCoords[i][1][0];
-				texcoords[1] = tess.texCoords[i][1][1];
-			}
+			Com_Memcpy( texcoords, tess.texCoords[1], tess.numVertexes * sizeof( tess.texCoords[0][0] ) );
 			break;
 		case TCGEN_LIGHTMAP1:
-			for ( i = 0 ; i < tess.numVertexes ; i++,texcoords+=2 ) {
-				texcoords[0] = tess.texCoords[i][2][0];
-				texcoords[1] = tess.texCoords[i][2][1];
-			}
+			Com_Memcpy( texcoords, tess.texCoords[2], tess.numVertexes * sizeof( tess.texCoords[0][0] ) );
 			break;
 		case TCGEN_LIGHTMAP2:
-			for ( i = 0 ; i < tess.numVertexes ; i++,texcoords+=2 ) {
-				texcoords[0] = tess.texCoords[i][3][0];
-				texcoords[1] = tess.texCoords[i][3][1];
-			}
+			Com_Memcpy( texcoords, tess.texCoords[3], tess.numVertexes * sizeof( tess.texCoords[0][0] ) );
 			break;
 		case TCGEN_LIGHTMAP3:
-			for ( i = 0 ; i < tess.numVertexes ; i++,texcoords+=2 ) {
-				texcoords[0] = tess.texCoords[i][4][0];
-				texcoords[1] = tess.texCoords[i][4][1];
-			}
+			Com_Memcpy( texcoords, tess.texCoords[4], tess.numVertexes * sizeof( tess.texCoords[0][0] ) );
 			break;
 		case TCGEN_VECTOR:
 			for ( i = 0 ; i < tess.numVertexes ; i++ ) {
@@ -1096,7 +1081,7 @@ static void ComputeTexCoords( shaderStage_t *pStage ) {
 				break;
 
 			default:
-				ri.Error( ERR_DROP, "ERROR: unknown texmod '%d' in shader '%s'\n", pStage->bundle[b].texMods[tm].type, tess.shader->name );
+				ri.Error( ERR_DROP, "ERROR: unknown texmod '%d' in shader '%s'", pStage->bundle[b].texMods[tm].type, tess.shader->name );
 				break;
 			}
 		}
@@ -1278,7 +1263,7 @@ void RB_StageIteratorGeneric( void )
 	//
 	// lock XYZ
 	//
-	qglVertexPointer (3, GL_FLOAT, 16, input->xyz);	// padded for SIMD
+	qglVertexPointer (3, GL_FLOAT, sizeof( input->xyz[0] ), input->xyz);	// padded for SIMD
 	if (qglLockArraysEXT)
 	{
 		qglLockArraysEXT(0, input->numVertexes);
@@ -1389,8 +1374,8 @@ void RB_StageIteratorVertexLitTexture( void )
 	qglEnableClientState( GL_TEXTURE_COORD_ARRAY);
 
 	qglColorPointer( 4, GL_UNSIGNED_BYTE, 0, tess.svars.colors );
-	qglTexCoordPointer( 2, GL_FLOAT, 16, tess.texCoords[0][0] );
-	qglVertexPointer (3, GL_FLOAT, 16, input->xyz);
+	qglTexCoordPointer( 2, GL_FLOAT, 0, input->texCoords[0][0] );
+	qglVertexPointer (3, GL_FLOAT, sizeof( input->xyz[0] ), input->xyz);
 
 	if ( qglLockArraysEXT )
 	{
@@ -1471,7 +1456,7 @@ void RB_StageIteratorLightmappedMultitexture( void ) {
 	// set color, pointers, and lock
 	//
 	GL_State( GLS_DEFAULT );
-	qglVertexPointer( 3, GL_FLOAT, 16, input->xyz );
+	qglVertexPointer( 3, GL_FLOAT, sizeof( input->xyz[0] ), input->xyz );
 
 #ifdef REPLACE_MODE
 	qglDisableClientState( GL_COLOR_ARRAY );
@@ -1489,7 +1474,7 @@ void RB_StageIteratorLightmappedMultitexture( void ) {
 
 	qglEnableClientState( GL_TEXTURE_COORD_ARRAY );
 	R_BindAnimatedImage( &tess.xstages[0]->bundle[0] );
-	qglTexCoordPointer( 2, GL_FLOAT, 16, tess.texCoords[0][0] );
+	qglTexCoordPointer( 2, GL_FLOAT, 0, input->texCoords[0][0] );
 
 	//
 	// configure second stage
@@ -1503,7 +1488,7 @@ void RB_StageIteratorLightmappedMultitexture( void ) {
 	}
 	R_BindAnimatedImage( &tess.xstages[0]->bundle[1] );
 	qglEnableClientState( GL_TEXTURE_COORD_ARRAY );
-	qglTexCoordPointer( 2, GL_FLOAT, 16, tess.texCoords[0][1] );
+	qglTexCoordPointer( 2, GL_FLOAT, 0, tess.texCoords[1][0] );
 
 	//
 	// lock arrays

@@ -2,14 +2,8 @@
 
 #include "server.h"
 #include "../qcommon/strip.h"
-#include "../meerkat/meerkat.h"
 
 #include "mv_setup.h"
-
-mvmutex_t m_webreq;
-qboolean m_reqpending;
-char m_reqpath[MAX_QPATH];
-int m_reqreturn = -1;
 
 static void SV_CloseDownload( client_t *cl );
 
@@ -111,7 +105,6 @@ void SV_AuthorizeIpPacket( netadr_t from ) {
 	int		i;
 	char	*s;
 	char	*r;
-	char	ret[1024];
 
 	if ( !NET_CompareBaseAdr( from, svs.authorizeAddress ) ) {
 		Com_Printf( "SV_AuthorizeIpPacket: not from authorize server\n" );
@@ -157,8 +150,7 @@ void SV_AuthorizeIpPacket( netadr_t from ) {
 		if (!r) {
 			NET_OutOfBandPrint( NS_SERVER, svs.challenges[i].adr, "print\nAwaiting CD key authorization\n" );
 		} else {
-			sprintf(ret, "print\n%s\n", r);
-			NET_OutOfBandPrint( NS_SERVER, svs.challenges[i].adr, ret );
+			NET_OutOfBandPrint( NS_SERVER, svs.challenges[i].adr, "print\n%s\n", r );
 		}
 		// clear the challenge record so it won't timeout and let them through
 		Com_Memset( &svs.challenges[i], 0, sizeof( svs.challenges[i] ) );
@@ -169,8 +161,7 @@ void SV_AuthorizeIpPacket( netadr_t from ) {
 	if (!r) {
 		NET_OutOfBandPrint( NS_SERVER, svs.challenges[i].adr, "print\nSomeone is using this CD Key\n" );
 	} else {
-		sprintf(ret, "print\n%s\n", r);
-		NET_OutOfBandPrint( NS_SERVER, svs.challenges[i].adr, ret );
+		NET_OutOfBandPrint( NS_SERVER, svs.challenges[i].adr, "print\n%s\n", r );
 	}
 
 	// clear the challenge record so it won't timeout and let them through
@@ -198,7 +189,7 @@ void SV_DirectConnect( netadr_t from ) {
 	int			startIndex;
 	char		*denied;
 	int			count;
-	char		*ip;
+	const char	*ip;
 
 	Com_DPrintf ("SVC_DirectConnect ()\n");
 
@@ -235,7 +226,7 @@ void SV_DirectConnect( netadr_t from ) {
 	if ( NET_IsLocalAddress (from) )
 		ip = "localhost";
 	else
-		ip = (char *)NET_AdrToString( from );
+		ip = NET_AdrToString( from );
 
 	if ( !Info_SetValueForKey( userinfo, "ip", ip ) )
 	{
@@ -341,7 +332,7 @@ void SV_DirectConnect( netadr_t from ) {
 
 	// check for privateClient password
 	password = Info_ValueForKey( userinfo, "password" );
-	if ( !strcmp( password, sv_privatePassword->string ) ) {
+	if ( *password && !strcmp( password, sv_privatePassword->string ) ) {
 		startIndex = 0;
 	} else {
 		// skip past the reserved slots
@@ -372,13 +363,13 @@ void SV_DirectConnect( netadr_t from ) {
 				newcl = &svs.clients[sv_maxclients->integer - 1];
 			}
 			else {
-				Com_Error( ERR_FATAL, "server is full on local connect\n" );
+				Com_Error( ERR_FATAL, "server is full on local connect" );
 				return;
 			}
 		}
 		else {
 			const char *SV_GetStripEdString(char *refSection, char *refName);
-			NET_OutOfBandPrint( NS_SERVER, from, va("print\n%s\n", SV_GetStripEdString("SVINGAME","SERVER_IS_FULL")));
+			NET_OutOfBandPrint( NS_SERVER, from, "print\n%s\n", SV_GetStripEdString("SVINGAME","SERVER_IS_FULL"));
 			Com_DPrintf ("Rejected a connection.\n");
 			return;
 		}
@@ -781,70 +772,6 @@ SV_BeginDownload_f
 ==================
 */
 
-void SV_MV_Websrv_Request_MainThread() {
-	MV_LockMutex(m_webreq);
-
-	if (m_reqpending) {
-		m_reqreturn = (int)FS_MV_VerifyDownloadPath(m_reqpath);
-	}
-
-	MV_ReleaseMutex(m_webreq);
-}
-
-// this is ugly but it syncs everything correctly
-// THIS FUNCTION IS NOT CALLED ON THE MAIN THREAD
-int SV_MV_Websrv_Request_ExtThread(struct mg_connection *conn, enum mg_event ev) {
-	if (ev == MG_REQUEST) {
-		qboolean res;
-
-		// wait till the main thread is ready to take the request
-		while (1) {
-			MV_LockMutex(m_webreq);
-
-			if (!m_reqpending)
-				break;
-
-			MV_ReleaseMutex(m_webreq);
-			MV_MSleep(20);
-		}
-
-		// copy over request path
-		m_reqpending = qtrue;
-		Q_strncpyz(m_reqpath, &conn->uri[1], sizeof(m_reqpath));
-
-		MV_ReleaseMutex(m_webreq);
-
-		// wait for the result
-		while (1) {
-			MV_LockMutex(m_webreq);
-
-			if (m_reqreturn != -1)
-				break;
-
-			MV_ReleaseMutex(m_webreq);
-			MV_MSleep(20);
-		}
-
-		res = (qboolean)m_reqreturn;
-		m_reqreturn = -1;
-		m_reqpending = qfalse;
-		MV_ReleaseMutex(m_webreq);
-
-		if (res) {
-			return MG_FALSE;
-		} else {
-			mg_send_status(conn, 403);
-			mg_send_header(conn, "Content-Type", "text/plain");
-			mg_printf_data(conn, "403 forbidden");
-			return MG_TRUE;
-		}
-	} else if (ev == MG_AUTH) {
-		return MG_TRUE;
-	} else {
-		return MG_FALSE;
-	}
-}
-
 void SV_BeginDownload_f( client_t *cl ) {
 
 	// Kill any existing download
@@ -879,7 +806,7 @@ void SV_WriteDownloadToClient( client_t *cl , msg_t *msg )
 
 		Com_Printf( "clientDownload: %d : begining \"%s\"\n", cl - svs.clients, cl->downloadName );
 
-		legalPacket = FS_MV_VerifyDownloadPath(va("%s", cl->downloadName));
+		legalPacket = FS_MV_VerifyDownloadPath(va("%s", cl->downloadName)) ? qtrue : qfalse;
 
 		if (!sv_allowDownload->integer || !legalPacket ||
 			( cl->downloadSize = FS_SV_FOpenFileRead( cl->downloadName, &cl->download ) ) <= 0 ) {
@@ -1061,7 +988,6 @@ static void SV_VerifyPaks_f( client_t *cl ) {
 	//
 	if ( sv_pure->integer != 0 ) {
 
-		bGood = qtrue;
 		nChkSum1 = nChkSum2 = 0;
 		// we run the game, so determine which cgame and ui the client "should" be running
 		bGood = (qboolean)(FS_FileIsInPAK("vm/cgame.qvm", &nChkSum1) == 1);
@@ -1198,8 +1124,9 @@ into a more C friendly form.
 =================
 */
 void SV_UserinfoChanged( client_t *cl ) {
-	char	*val, *ip;
-	int		i;
+	const char	*ip;
+	char		*val;
+	int			i;
 
 	// name for C code
 	Q_strncpyz( cl->name, Info_ValueForKey (cl->userinfo, "name"), sizeof(cl->name) );
@@ -1246,8 +1173,6 @@ void SV_UserinfoChanged( client_t *cl ) {
 		cl->snapshotMsec = 50;
 	}
 
-	// namecrash fix
-#define VALIDNAMECHARS " aäbcdefghijklmnoöpqrstuüvwxyzßAÄBCDEFGHIJKLMNOÖPQRSTUÜVWXYZ1234567890^$&/()=?!´`'+#*.,:<>|{[]}-_~@%§\x0B\x7F"
 	if (mv_fixnamecrash->integer && !(sv.fixes & MVFIX_NAMECRASH)) {
 		char name[61], cleanedName[61]; // 60 because some mods increased this
 		Q_strncpyz(name, Info_ValueForKey(cl->userinfo, "name"), sizeof(name));
@@ -1256,7 +1181,19 @@ void SV_UserinfoChanged( client_t *cl ) {
 		for (int i = 0; i < (int)strlen(name); i++) {
 			char ch = name[i];
 
-			if (strchr(VALIDNAMECHARS, ch)) {
+			if (isascii(ch) ||
+				ch == '\x0A' || // underscore cursor (console only)
+				ch == '\x0B' || // block cursor (console only)
+				ch == '\xB7' || // section sign (§)
+				ch == '\xB4' || // accute accent (´)
+				ch == '\xC4' || // A umlaut (Ä)
+				ch == '\xD6' || // O umlaut (Ö)
+				ch == '\xDC' || // U umlaut (Ü)
+				ch == '\xDF' || // sharp S (ß)
+				ch == '\xE4' || // a umlaut (ä)
+				ch == '\xF6' || // o umlaut (ö)
+				ch == '\xFC')   // u umlaut (ü)
+			{
 				cleanedName[count++] = ch;
 			}
 		}
@@ -1362,7 +1299,7 @@ void SV_UserinfoChanged( client_t *cl ) {
 	if( NET_IsLocalAddress(cl->netchan.remoteAddress) )
 		ip = "localhost";
 	else
-		ip = (char*)NET_AdrToString( cl->netchan.remoteAddress );
+		ip = NET_AdrToString( cl->netchan.remoteAddress );
 
 	if ( !Info_SetValueForKey(cl->userinfo, "ip", ip) )
 		SV_DropClient( cl, "userinfo string length exceeded" );

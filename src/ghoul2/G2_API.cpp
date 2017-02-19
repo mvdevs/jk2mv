@@ -22,10 +22,10 @@
 #include <set>
 #include <algorithm>
 
-#ifdef assert
-#	undef assert
-#	define assert(x) ((void)0)
-#endif
+// #ifdef assert
+// #	undef assert
+// #	define assert(x) ((void)0)
+// #endif
 
 extern mdxaBone_t		worldMatrix;
 extern mdxaBone_t		worldMatrixInv;
@@ -92,7 +92,7 @@ void FixGhoul2InfoLeaks(bool clearClient,bool clearServer)
 	if (clearClient && ghoultable[0].size())
 	{
 		set<ghoul2entry_t>::iterator i;
-		for (i = ghoultable[0].begin(); i != ghoultable[0].end(); i++) {
+		for (i = ghoultable[0].begin(); i != ghoultable[0].end(); ++i) {
 			delete i->ghoul2info;
 		}
 		ghoultable[0].clear();
@@ -101,7 +101,7 @@ void FixGhoul2InfoLeaks(bool clearClient,bool clearServer)
 	if (clearServer && ghoultable[1].size())
 	{
 		set<ghoul2entry_t>::iterator i;
-		for (i = ghoultable[1].begin(); i != ghoultable[1].end(); i++) {
+		for (i = ghoultable[1].begin(); i != ghoultable[1].end(); ++i) {
 			delete i->ghoul2info;
 		}
 		ghoultable[1].clear();
@@ -150,7 +150,7 @@ void G2API_CleanGhoul2Models(CGhoul2Info_v **ghoul2Ptr) {
 
 qhandle_t G2API_PrecacheGhoul2Model(const char *fileName)
 {
-	return RE_RegisterModel((char *)fileName);
+	return RE_RegisterModel(fileName);
 }
 
 void CL_InitRef( void );
@@ -206,7 +206,7 @@ int G2API_InitGhoul2Model(CGhoul2Info_v **ghoul2Ptr, const char *fileName, int m
 			// this is only valid and used on the game side. Client side ignores this
 			ghoul2[model].mModelindex = modelIndex;
 				// on the game side this is valid. On the client side it is valid only after it has been filled in by trap_G2_SetGhoul2ModelIndexes
-			ghoul2[model].mModel = RE_RegisterModel((char *)fileName);
+			ghoul2[model].mModel = RE_RegisterModel(fileName);
 			model_t		*mod_m = R_GetModelByHandle(ghoul2[model].mModel);
 			if (mod_m->type == MOD_BAD)
 			{
@@ -214,6 +214,7 @@ int G2API_InitGhoul2Model(CGhoul2Info_v **ghoul2Ptr, const char *fileName, int m
 			}
 
 			// init what is necessary for this ghoul2 model
+			// fau - what about remaining fields?
 			G2_Init_Bone_List(ghoul2[model].mBlist);
 			G2_Init_Bolt_List(ghoul2[model].mBltlist);
 			ghoul2[model].mCustomShader = customShader;
@@ -223,6 +224,9 @@ int G2API_InitGhoul2Model(CGhoul2Info_v **ghoul2Ptr, const char *fileName, int m
 			ghoul2[model].mLodBias = lodBias;
 			ghoul2[model].mAnimFrameDefault = 0;
 			ghoul2[model].mFlags = 0;
+
+			ghoul2[model].mSkelFrameNum = -1;
+			ghoul2[model].mMeshFrameNum = -1;
 
 			// we aren't attached to anyone upfront
 			ghoul2[model].mModelBoltLink = -1;
@@ -235,12 +239,12 @@ int G2API_InitGhoul2Model(CGhoul2Info_v **ghoul2Ptr, const char *fileName, int m
 	// on the game side this is valid. On the client side it is valid only after it has been filled in by trap_G2_SetGhoul2ModelIndexes
 	if (customShader <= -20)
 	{ //This means the server is making the function call. And the server does not like registering models.
-		newModel.mModel = RE_RegisterServerModel((char *)fileName);
+		newModel.mModel = RE_RegisterServerModel(fileName);
 		customShader = 0;
 	}
 	else
 	{
-		newModel.mModel = RE_RegisterModel((char *)fileName);
+		newModel.mModel = RE_RegisterModel(fileName);
 	}
 	model_t		*mod_m = R_GetModelByHandle(newModel.mModel);
 	if (mod_m->type == MOD_BAD)
@@ -401,6 +405,7 @@ qboolean G2API_VM_RemoveGhoul2Model(qhandle_t *ghlRemove, const int modelIndex) 
 
 qboolean G2API_RemoveGhoul2Model(CGhoul2Info_v **ghlRemove, const int modelIndex)
 {
+	assert(ghlRemove && *ghlRemove);
 	CGhoul2Info_v &ghlInfo = **ghlRemove;
 
 	// sanity check
@@ -770,6 +775,8 @@ qboolean G2API_RemoveBolt(CGhoul2Info *ghlInfo, const int index)
 {
 	if (ghlInfo)
 	{
+		// ensure we flush the cache
+		ghlInfo->mSkelFrameNum = 0;
  		return G2_Remove_Bolt( ghlInfo->mBltlist, index);
 	}
 	return qfalse;
@@ -777,13 +784,13 @@ qboolean G2API_RemoveBolt(CGhoul2Info *ghlInfo, const int index)
 
 int G2API_AddBolt(CGhoul2Info_v *ghoul2, const int modelIndex, const char *boneName)
 {
-	assert(ghoul2.size()>modelIndex);
-
 	if (ghoul2 && ghoul2->size() > modelIndex)
 	{
 		CGhoul2Info *ghlInfo = &ghoul2->at(modelIndex);
 		if (ghlInfo)
 		{
+			// ensure we flush the cache
+			ghlInfo->mSkelFrameNum = 0;
 			return G2_Add_Bolt(ghlInfo->mFileName, ghlInfo->mBltlist, ghlInfo->mSlist, boneName);
 		}
 	}
@@ -794,6 +801,8 @@ int G2API_AddBoltSurfNum(CGhoul2Info *ghlInfo, const int surfIndex)
 {
 	if (ghlInfo)
 	{
+		// ensure we flush the cache
+		ghlInfo->mSkelFrameNum = 0;
 		return G2_Add_Bolt_Surf_Num(ghlInfo->mFileName, ghlInfo->mBltlist, ghlInfo->mSlist, surfIndex);
 	}
 	return -1;
@@ -818,6 +827,8 @@ qboolean G2API_AttachG2Model(CGhoul2Info_v *ghoul2From, int modelFrom, CGhoul2In
 	   toModel &= MODEL_AND;
 	   toBoltIndex &= BOLT_AND;
 	   ghoul2From->at(modelFrom).mModelBoltLink = (toModel << MODEL_SHIFT)  | (toBoltIndex << BOLT_SHIFT);
+	   // ensure we flush the cache
+	   ghoul2From->at(modelFrom).mSkelFrameNum = 0;
 	   return qtrue;
 	}
 	return qfalse;
@@ -830,6 +841,8 @@ void G2API_SetBoltInfo(CGhoul2Info_v *ghoul2, int modelIndex, int boltInfo)
 		if (ghoul2->size() > modelIndex)
 		{
 			ghoul2->at(modelIndex).mModelBoltLink = boltInfo;
+			// ensure we flush the cache
+			ghoul2->at(modelIndex).mSkelFrameNum = 0;
 		}
 	}
 }
@@ -839,6 +852,8 @@ qboolean G2API_DetachG2Model(CGhoul2Info *ghlInfo)
 	if (ghlInfo)
 	{
 	   ghlInfo->mModelBoltLink = -1;
+	   // ensure we flush the cache
+	   ghlInfo->mSkelFrameNum = 0;
 	   return qtrue;
 	}
 	return qfalse;
@@ -880,9 +895,13 @@ qboolean G2API_GetBoltMatrix_SPMethod(CGhoul2Info_v *ghoul2, const int modelInde
 		if (ghlInfo && (boltIndex < ghlInfo->mBltlist.size()) && boltIndex >= 0 )
 		{
 			// make sure we have transformed the skeleton
-			if (!gG2_GBMNoReconstruct)
+			if (ghlInfo->mSkelFrameNum != frameNum)
 			{
-				G2_ConstructGhoulSkeleton(*ghoul2, frameNum, modelList, true, angles, position, scale, false);
+				// make sure it's initialized even if noreconstruct is on
+				if (!gG2_GBMNoReconstruct || ghlInfo->mSkelFrameNum == -1)
+				{
+					G2_ConstructGhoulSkeleton(*ghoul2, frameNum, modelList, true, angles, position, scale, false);
+				}
 			}
 
 			gG2_GBMNoReconstruct = qfalse;
@@ -926,8 +945,6 @@ qboolean G2API_GetBoltMatrix_SPMethod(CGhoul2Info_v *ghoul2, const int modelInde
 
 qboolean G2API_GetBoltMatrix(CGhoul2Info_v *ghoul2, const int modelIndex, const int boltIndex, mdxaBone_t *matrix, const vec3_t angles, const vec3_t position, const int frameNum, qhandle_t *modelList, vec3_t scale )
 {
-	assert(ghoul2.size() > modelIndex);
-
 	if (gG2_GBMUseSPMethod)
 	{
 		gG2_GBMUseSPMethod = qfalse;
@@ -943,9 +960,13 @@ qboolean G2API_GetBoltMatrix(CGhoul2Info_v *ghoul2, const int modelIndex, const 
 		if (ghlInfo && (boltIndex < ghlInfo->mBltlist.size()) && boltIndex >= 0 )
 		{
 			// make sure we have transformed the skeleton
-			if (!gG2_GBMNoReconstruct)
+			if (ghlInfo->mSkelFrameNum != frameNum)
 			{
-				G2_ConstructGhoulSkeleton(*ghoul2, frameNum, modelList, true, angles, position, scale, false);
+				// make sure it's initialized even if noreconstruct is on
+				if (!gG2_GBMNoReconstruct || ghlInfo->mSkelFrameNum == -1)
+				{
+					G2_ConstructGhoulSkeleton(*ghoul2, frameNum, modelList, true, angles, position, scale, false);
+				}
 			}
 
 			gG2_GBMNoReconstruct = qfalse;
@@ -1072,8 +1093,8 @@ SV_QsortEntityNumbers
 =======================
 */
 static int QDECL QsortDistance( const void *a, const void *b ) {
-	const float	&ea = ((CCollisionRecord*)a)->mDistance;
-	const float	&eb = ((CCollisionRecord*)b)->mDistance;
+	const float	&ea = ((const CCollisionRecord*)a)->mDistance;
+	const float	&eb = ((const CCollisionRecord*)b)->mDistance;
 
 	if ( ea < eb ) {
 		return -1;
@@ -1236,6 +1257,7 @@ int G2API_CopyGhoul2Instance(CGhoul2Info_v *g2From, CGhoul2Info_v *g2To, int mod
 		}
 	}
 
+	// fau - perhaps needs forcereconstruct like G2API_CopyGhoul2Instance
 	if (i < to)
 	{	// add in any other ones to the end
 		model = (int)g2To->size();
@@ -1274,7 +1296,11 @@ void G2API_CopySpecificG2Model(CGhoul2Info_v *ghoul2From, int modelFrom, CGhoul2
 			{ //rww - we should really do this shouldn't we? If we don't mark a reconstruct after this,
 			  //and we do a GetBoltMatrix in the same frame, it doesn't reconstruct the skeleton and returns
 			  //a completely invalid matrix
-				ghoul2To->at(0).mSkelFrameNum = 0;
+
+				// really all of them? stay safe
+				for (int i = 0; i < ghoul2To->size(); i++) {
+					ghoul2To->at(i).mSkelFrameNum = 0;
+				}
 			}
 		}
 	}
@@ -1362,6 +1388,8 @@ qboolean G2API_SetNewOrigin(CGhoul2Info_v *ghoul2, const int boltIndex)
 	{
 		ghlInfo->mNewOrigin = boltIndex;
 		ghlInfo->mFlags |= GHOUL2_NEWORIGIN;
+		// ensure we flush the cache
+		ghlInfo->mSkelFrameNum = 0;
 		return qtrue;
 	}
 	return qfalse;

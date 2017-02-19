@@ -17,7 +17,7 @@ float ProjectRadius( float r, vec3_t location )
 		return 0;
 
 	p[0] = 0;
-	p[1] = fabs( r );
+	p[1] = fabsf( r );
 	p[2] = -dist;
 
 	projected[0] = p[0] * tr.viewParms.projectionMatrix[0] +

@@ -21,7 +21,7 @@
 ; MASM ftol conversion functions using SSE or FPU
 ; assume __cdecl calling convention is being used for x86, __fastcall for x64
 
-IFNDEF _M_X64
+IFNDEF ARCH_X86_64
 .686p
 .xmm
 .model flat, c
@@ -34,14 +34,14 @@ ssemask DWORD 0FFFFFFFFh, 0FFFFFFFFh, 0FFFFFFFFh, 00000000h
 .code
 
 ; dummy
-IFNDEF _M_X64
+IFNDEF ARCH_X86_64
 	.safeseh SEH_handler
 	SEH_handler   proc
 		ret
 	SEH_handler   endp
 ENDIF
 
-IFDEF _M_X64
+IFDEF ARCH_X86_64
 	Sys_SnapVector PROC
 		movaps xmm1, ssemask		; initialize the mask register
 		movups xmm0, [rcx]			; here is stored our vector. Read 4 values in one go
@@ -54,11 +54,6 @@ IFDEF _M_X64
 		movups [rcx], xmm0			; write 3 rounded and 1 unchanged values back to memory
 		ret
 	Sys_SnapVector ENDP
-
-	Q_ftol PROC
-		cvttss2si eax, xmm0
-		ret
-	Q_ftol ENDP
 
 	Q_VMftol PROC
 		movss xmm0, dword ptr [rdi + rbx * 4]
@@ -104,12 +99,6 @@ ELSE
 		movups [eax], xmm0			; write 3 rounded and 1 unchanged values back to memory
 		ret
 	Sys_SnapVector ENDP
-
-	Q_ftol PROC
-		movss xmm0, dword ptr [esp + 4]
-		cvttss2si eax, xmm0
-		ret
-	Q_ftol ENDP
 
 	Q_VMftol PROC
 		movss xmm0, dword ptr [edi + ebx * 4]

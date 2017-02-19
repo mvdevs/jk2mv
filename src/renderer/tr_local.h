@@ -28,15 +28,6 @@ typedef unsigned int glIndex_t;
 #define MAX_STATES_PER_SHADER 32
 #define MAX_STATE_NAME 32
 
-// gamma correction
-#define GAMMA_DEFAULT "2" /* GAMMA_POSTPROCESSING */
-
-typedef enum {
-	GAMMA_NONE,
-	GAMMA_HARDWARE,
-	GAMMA_POSTPROCESSING
-} gammamethod_t;
-
 // can't be increased without changing bit packing for drawsurfs
 typedef enum
 {
@@ -100,6 +91,26 @@ typedef struct {
 	float		modelMatrix[16];
 } orientationr_t;
 
+typedef struct {
+	const char *name;
+	int	minimize, maximize;
+} textureMode_t;
+
+extern	int				gl_filter_min, gl_filter_max;
+extern	const textureMode_t	modes[];
+
+const textureMode_t *GetTextureMode( const char *name );
+
+#define MAX_MIP_LEVELS 10
+
+typedef struct {
+	qboolean		noMipMaps;			// don't load or generate mipmaps
+	qboolean		noPicMip;			// for images that must always be full resolution
+	qboolean		noLightScale;		// don't scale gamma/intensity. Included in noMipMaps
+	qboolean		noTC;				// for images that don't want to be texture compressed (eg skies)
+	const textureMode_t	*textureMode;		// NULL = follow r_texturemode
+} upload_t;
+
 typedef struct image_s {
 	char		imgName[MAX_QPATH];		// game path, including extension
 	int			width, height;				// source image
@@ -111,8 +122,7 @@ typedef struct image_s {
 	int			internalFormat;
 	int			TMU;				// only needed for voodoo2
 
-	qboolean	mipmap;
-	qboolean	allowPicmip;
+	upload_t	upload;
 	int			wrapClampMode;		// GL_CLAMP or GL_REPEAT
 
 	int			iLastLevelUsedOn;
@@ -376,7 +386,7 @@ typedef struct {
 	surfaceSprite_t	ss;
 
 	// Whether this object emits a glow or not.
-	bool			glow;
+	qboolean		glow;
 } shaderStage_t;
 
 struct shaderCommands_s;
@@ -408,7 +418,6 @@ typedef struct {
 	vec3_t	color;
 	float	depthForOpaque;
 } fogParms_t;
-
 
 typedef struct shader_s {
 	char		name[MAX_QPATH];		// game path, including extension
@@ -446,9 +455,8 @@ typedef struct shader_s {
 
 	cullType_t	cullType;				// CT_FRONT_SIDED, CT_BACK_SIDED, or CT_TWO_SIDED
 	qboolean	polygonOffset;			// set for decals and other items that must be offset
-	qboolean	noMipMaps;				// for console fonts, 2D elements, etc.
-	qboolean	noPicMip;				// for images that must always be full resolution
-	qboolean	noTC;					// for images that don't wnt to be texture compressed (eg skies)
+
+	upload_t	upload;
 
 	fogPass_t	fogPass;				// draw a blended pass, possibly with depth test equals
 
@@ -483,7 +491,7 @@ Ghoul2 Insert End
 	int expireTime;                                  // time in milliseconds this expires
 	
 	// True if this shader has a stage with glow in it (just an optimization).
-	bool hasGlow;
+	qboolean hasGlow;
 
 	struct shader_s *remappedShader;                  // current shader this one is remapped too
 
@@ -855,7 +863,7 @@ typedef struct {
 	byte		*novis;			// clusterBytes of 0xff
 
 	char		*entityString;
-	char		*entityParsePoint;
+	const char	*entityParsePoint;
 } world_t;
 
 //======================================================================
@@ -940,8 +948,6 @@ the bits are allocated as follows:
 #define	QSORT_SHADERNUM_SHIFT	21
 #define	QSORT_ENTITYNUM_SHIFT	11
 #define	QSORT_FOGNUM_SHIFT		2
-
-extern	int			gl_filter_min, gl_filter_max;
 
 /*
 ** performanceCounters_t
@@ -1287,7 +1293,10 @@ extern	cvar_t	*r_noServerGhoul2;
 Ghoul2 Insert End
 */
 
+extern	cvar_t *r_consoleFont;
 extern	cvar_t *r_fontSharpness;
+extern	cvar_t *r_textureLODBias;
+extern	cvar_t *r_saberGlow;
 //====================================================================
 
 float R_NoiseGet4f( float x, float y, float z, float t );
@@ -1406,9 +1415,12 @@ model_t		*R_AllocModel( void );
 void		R_Init( void );
 void R_LoadImage( const char *name, byte **pic, int *width, int *height );
 image_t		*R_FindImageFile( const char *name, qboolean mipmap, qboolean allowPicmip, qboolean allowTC, int glWrapClampMode );
+image_t		*R_FindImageFileNew( const char *name, upload_t *upload, int glWrapClampMode );
 
-image_t		*R_CreateImage( const char *name, const byte *pic, int width, int height, qboolean mipmap
+image_t		*R_CreateImage( const char *name, byte *data, int width, int height, qboolean mipmap
 					, qboolean allowPicmip, qboolean allowTC, int wrapClampMode );
+image_t *R_CreateImageNew( const char *name, byte * const *mipmaps, qboolean customMip, int width, int height,
+	upload_t *upload, int glWrapClampMode );
 qboolean	R_GetModeInfo( int *width, int *height, float *windowAspect, int mode );
 
 void		R_SetColorMappings( void );
@@ -1426,6 +1438,7 @@ float	R_SumOfUsedImages( qboolean bUseFormat );
 void	R_InitSkins( void );
 skin_t	*R_GetSkinByHandle( qhandle_t hSkin );
 
+byte *RB_ReadPixels(int x, int y, int width, int height, size_t *offset, qboolean swapRB, int packAlign);
 
 //
 // tr_shader.c
@@ -1443,7 +1456,7 @@ qhandle_t RE_RegisterShaderFromImage(const char *name, int *lightmapIndex, byte 
 
 shader_t	*R_FindShader( const char *name, const int *lightmapIndex, const byte *styles, qboolean mipRawImage );
 shader_t	*R_GetShaderByHandle( qhandle_t hShader );
-shader_t	*R_GetShaderByState( int index, int *cycleTime );
+// shader_t	*R_GetShaderByState( int index, int *cycleTime );
 shader_t *R_FindShaderByName( const char *name );
 void		R_InitShaders( void );
 void		R_ShaderList_f( void );
@@ -1482,9 +1495,9 @@ typedef struct stageVars
 struct shaderCommands_s
 {
 	glIndex_t	indexes[SHADER_MAX_INDEXES];
-	vec4_t		xyz[SHADER_MAX_VERTEXES];
-	vec4_t		normal[SHADER_MAX_VERTEXES];
-	vec2_t		texCoords[SHADER_MAX_VERTEXES][NUM_TEX_COORDS];
+	alignas(16) vec4_t		xyz[SHADER_MAX_VERTEXES];
+	alignas(16) vec4_t		normal[SHADER_MAX_VERTEXES];
+	vec2_t		texCoords[NUM_TEX_COORDS][SHADER_MAX_VERTEXES];
 	union {
 		color4ub_t	vertexColors[SHADER_MAX_VERTEXES];
 		uint32_t	vertexColorsui[SHADER_MAX_VERTEXES];
@@ -1535,6 +1548,8 @@ void RB_AddQuadStampExt( vec3_t origin, vec3_t left, vec3_t up, byte *color, flo
 
 void RB_ShowImages( void );
 
+void RB_TakeScreenshot(int x, int y, int width, int height, const char *fileName);
+void RB_TakeScreenshotJPEG(int x, int y, int width, int height, const char *fileName);
 
 /*
 ============================================================
@@ -1801,6 +1816,24 @@ typedef struct {
 	int		numDrawSurfs;
 } drawSurfsCommand_t;
 
+typedef struct {
+	int		commandId;
+	int		width;
+	int		height;
+	qboolean	motionJpeg;
+	int		motionJpegQuality;
+} videoFrameCommand_t;
+
+typedef struct {
+	int		commandId;
+	int		x;
+	int		y;
+	int		width;
+	int		height;
+	char	fileName[MAX_OSPATH]; // large but we don't take screenshots too often
+	qboolean	jpeg;
+} screenshotCommand_t;
+
 typedef enum {
 	RC_END_OF_LIST,
 	RC_SET_COLOR,
@@ -1809,7 +1842,9 @@ typedef enum {
 	RC_ROTATE_PIC2,
 	RC_DRAW_SURFS,
 	RC_DRAW_BUFFER,
-	RC_SWAP_BUFFERS
+	RC_SWAP_BUFFERS,
+	RC_VIDEOFRAME,
+	RC_SCREENSHOT,
 } renderCommand_t;
 
 
@@ -1859,13 +1894,16 @@ void RE_RotatePic2 ( float x, float y, float w, float h,
 void RE_BeginFrame( stereoFrame_t stereoFrame );
 void RE_EndFrame( int *frontEndMsec, int *backEndMsec );
 void SaveJPG(const char * filename, int quality, int image_width, int image_height, byte *image_buffer, int padding);
+size_t SaveJPGToBuffer(byte *buffer, size_t bufSize, int quality, int image_width,
+	int image_height, byte *image_buffer, int padding);
+void RE_TakeVideoFrame( int width, int height, qboolean motionJpeg, int motionJpegQuality );
 
 /*
 Ghoul2 Insert Start
 */
 // tr_ghoul2.cpp
 void		Create_Matrix(const float *angle, mdxaBone_t *matrix);
-void		Multiply_3x4Matrix(mdxaBone_t *out, mdxaBone_t *in2, mdxaBone_t *in);
+void		Multiply_3x4Matrix(mdxaBone_t *out, const mdxaBone_t *in2, const mdxaBone_t *in);
 extern qboolean R_LoadMDXM (model_t *mod, void *buffer, const char *name, qboolean bAlreadyCached );
 extern qboolean R_LoadMDXA (model_t *mod, void *buffer, const char *name, qboolean bAlreadyCached );
 bool LoadTGAPalletteImage ( const char *name, byte **pic, int *width, int *height);
@@ -1877,4 +1915,13 @@ Ghoul2 Insert End
 // tr_surfacesprites
 void RB_DrawSurfaceSprites( shaderStage_t *stage, shaderCommands_t *input);
 #endif
+
+static inline int Q_ftol( float f ) {
+#if 0 // original win32 client
+	return lrintf( f );
+#else // original mac client, jk2mv so far
+	return (int) f;
+#endif
+}
+
 #endif //TR_LOCAL_H

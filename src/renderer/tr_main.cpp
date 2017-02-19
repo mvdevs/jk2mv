@@ -264,8 +264,8 @@ void R_TransformClipToWindow( const vec4_t clip, const viewParms_t *view, vec4_t
 	window[1] = 0.5f * ( 1.0f + normalized[1] ) * view->viewportHeight;
 	window[2] = normalized[2];
 
-	window[0] = (int) ( window[0] + 0.5 );
-	window[1] = (int) ( window[1] + 0.5 );
+	window[0] = (int) ( window[0] + 0.5f );
+	window[1] = (int) ( window[1] + 0.5f );
 }
 
 
@@ -468,7 +468,7 @@ static void SetFarClip( void )
 			farthestCornerDistance = distance;
 		}
 	}
-	tr.viewParms.zFar = sqrt( farthestCornerDistance );
+	tr.viewParms.zFar = sqrtf( farthestCornerDistance );
 }
 
 
@@ -491,10 +491,10 @@ void R_SetupProjection( void ) {
 	zNear	= r_znear->value;
 	zFar	= tr.viewParms.zFar;
 
-	ymax = zNear * tan( tr.refdef.fov_y * M_PI / 360.0f );
+	ymax = zNear * tanf( DEG2RAD( tr.refdef.fov_y * 0.5f ) );
 	ymin = -ymax;
 
-	xmax = zNear * tan( tr.refdef.fov_x * M_PI / 360.0f );
+	xmax = zNear * tanf( DEG2RAD( tr.refdef.fov_x * 0.5f ) );
 	xmin = -xmax;
 
 	width = xmax - xmin;
@@ -534,9 +534,9 @@ void R_SetupFrustum (void) {
 	float	xs, xc;
 	float	ang;
 
-	ang = tr.viewParms.fovX / 180 * M_PI * 0.5f;
-	xs = sin( ang );
-	xc = cos( ang );
+	ang = DEG2RAD( tr.viewParms.fovX * 0.5f );
+	xs = sinf( ang );
+	xc = cosf( ang );
 
 	VectorScale( tr.viewParms.ori.axis[0], xs, tr.viewParms.frustum[0].normal );
 	VectorMA( tr.viewParms.frustum[0].normal, xc, tr.viewParms.ori.axis[1], tr.viewParms.frustum[0].normal );
@@ -544,9 +544,9 @@ void R_SetupFrustum (void) {
 	VectorScale( tr.viewParms.ori.axis[0], xs, tr.viewParms.frustum[1].normal );
 	VectorMA( tr.viewParms.frustum[1].normal, -xc, tr.viewParms.ori.axis[1], tr.viewParms.frustum[1].normal );
 
-	ang = tr.viewParms.fovY / 180 * M_PI * 0.5f;
-	xs = sin( ang );
-	xc = cos( ang );
+	ang = DEG2RAD( tr.viewParms.fovY * 0.5f );
+	xs = sinf( ang );
+	xc = cosf( ang );
 
 	VectorScale( tr.viewParms.ori.axis[0], xs, tr.viewParms.frustum[2].normal );
 	VectorMA( tr.viewParms.frustum[2].normal, xc, tr.viewParms.ori.axis[2], tr.viewParms.frustum[2].normal );
@@ -736,7 +736,7 @@ qboolean R_GetPortalOrientations( drawSurf_t *drawSurf, int entityNum,
 				CrossProduct( camera->axis[0], camera->axis[1], camera->axis[2] );
 			} else {
 				// bobbing rotate, with skinNum being the rotation offset
-				d = sin( tr.refdef.time * 0.003f );
+				d = sinf( tr.refdef.time * 0.003f );
 				d = e->e.skinNum + d * 4;
 				VectorCopy( camera->axis[1], transformed );
 				RotatePointAroundVector( camera->axis[1], camera->axis[0], transformed, d );

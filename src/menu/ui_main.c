@@ -36,7 +36,7 @@ void _UI_Refresh( int realtime );
 int MVAPI_Init(int apilevel);
 
 qboolean _UI_IsFullscreen( void );
-LIBEXPORT int QDECL vmMain(int command, int arg0, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7, int arg8, int arg9, int arg10, int arg11) {
+LIBEXPORT intptr_t QDECL vmMain(int command, int arg0, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7, int arg8, int arg9, int arg10, int arg11) {
   switch ( command ) {
 	  case UI_GETAPIVERSION:
 		  return UI_API_16_VERSION;
@@ -92,7 +92,6 @@ int MVAPI_Init(int apilevel) {
 	return MV_APILEVEL;
 }
 
-menuDef_t *Menus_FindByName(const char *p);
 void Menu_ShowItemByName(menuDef_t *menu, const char *p, qboolean bShow);
 void UpdateForceUsed();
 
@@ -319,7 +318,7 @@ int Text_Height(const char *text, float scale, int iMenuFont)
 	return trap_R_Font_HeightPixels(iFontIndex, scale);
 }
 
-void Text_Paint(float x, float y, float scale, vec4_t color, const char *text, float adjust, int limit, int style, int iMenuFont)
+static void Text_Paint(float x, float y, float scale, const vec4_t color, const char *text, float adjust, int limit, int style, int iMenuFont)
 {
 	int iStyleOR = 0;
 
@@ -348,11 +347,6 @@ void Text_Paint(float x, float y, float scale, vec4_t color, const char *text, f
 							);
 }
 
-
-#ifndef WIN32
-#define min(x,y) ((x)<(y)?(x):(y))
-#endif
-
 void Text_PaintWithCursor(float x, float y, float scale, vec4_t color, const char *text, int cursorPos, char cursor, int limit, int style, int iMenuFont)
 {
 	Text_Paint(x, y, scale, color, text, 0, limit, style, iMenuFont);
@@ -361,14 +355,13 @@ void Text_PaintWithCursor(float x, float y, float scale, vec4_t color, const cha
 	//
 	{
 		char sTemp[1024];
-		size_t iCopyCount = limit ? min(strlen(text), limit) : strlen(text);
-			iCopyCount = min(iCopyCount,cursorPos);
-			iCopyCount = min(iCopyCount,sizeof(sTemp));
+		size_t iCopyCount = limit ? MIN(strlen(text), limit) : strlen(text);
+			iCopyCount = MIN(iCopyCount,cursorPos);
+			iCopyCount = MIN(iCopyCount,sizeof(sTemp) - 1);
 
 			// copy text into temp buffer for pixel measure...
 			//
-			strncpy(sTemp,text,iCopyCount);
-					sTemp[iCopyCount] = '\0';
+			Q_strncpyz(sTemp, text, iCopyCount + 1);
 
 			{
 				int iFontIndex = MenuFontToHandle( iMenuFont );
@@ -463,7 +456,7 @@ vmCvar_t	ui_rankChange;
 static void UI_BuildPlayerList();
 char parsedFPMessage[1024];
 extern int FPMessageTime;
-void Text_PaintCenter(float x, float y, float scale, vec4_t color, const char *text, float adjust, int iMenuFont);
+static void Text_PaintCenter(float x, float y, float scale, const vec4_t color, const char *text, float adjust, int iMenuFont);
 
 const char *UI_GetStripEdString(const char *refSection, const char *refName)
 {
@@ -645,7 +638,7 @@ void _UI_Shutdown( void ) {
 
 char *defaultMenu = NULL;
 
-char *GetMenuBuffer(const char *filename) {
+const char *GetMenuBuffer(const char *filename) {
 	int	len;
 	fileHandle_t	f;
 	static char buf[MAX_MENUFILE];
@@ -727,7 +720,7 @@ qboolean Asset_Parse(int handle) {
 		{
 			if (!PC_String_Parse(handle, &tempStr))
 			{
-				Com_Printf(S_COLOR_YELLOW,"Bad 1st parameter for keyword 'stripedFile'");
+				Com_Printf(S_COLOR_YELLOW "Bad 1st parameter for keyword 'stripedFile'");
 				return qfalse;
 			}
 			Q_strncpyz( stripedFile, tempStr,  sizeof(stripedFile) );
@@ -739,7 +732,7 @@ qboolean Asset_Parse(int handle) {
 		{
 			if (!PC_String_Parse(handle, &uiInfo.uiDC.Assets.cursorStr))
 			{
-				Com_Printf(S_COLOR_YELLOW,"Bad 1st parameter for keyword 'cursor'");
+				Com_Printf(S_COLOR_YELLOW "Bad 1st parameter for keyword 'cursor'");
 				return qfalse;
 			}
 			uiInfo.uiDC.Assets.cursor = trap_R_RegisterShaderNoMip( uiInfo.uiDC.Assets.cursorStr);
@@ -1075,7 +1068,7 @@ static void UI_DrawAutoSwitch(rectDef_t *rect, float scale, vec4_t color, int te
 		break;
 	}
 
-	stripString = UI_GetStripEdString("INGAMETEXT", (char *)switchString);
+	stripString = UI_GetStripEdString("INGAMETEXT", switchString);
 
 	if (stripString)
 	{
@@ -1173,7 +1166,7 @@ static void UI_DrawSkill(rectDef_t *rect, float scale, vec4_t color, int textSty
   if (i < 1 || i > numSkillLevels) {
     i = 1;
   }
-  Text_Paint(rect->x, rect->y, scale, color, (char *)UI_GetStripEdString("INGAMETEXT", (char *)skillLevels[i-1]),0, 0, textStyle, iMenuFont);
+  Text_Paint(rect->x, rect->y, scale, color, UI_GetStripEdString("INGAMETEXT", skillLevels[i-1]),0, 0, textStyle, iMenuFont);
 }
 
 
@@ -1195,7 +1188,7 @@ static void UI_DrawGenericNum(rectDef_t *rect, float scale, vec4_t color, int te
 static void UI_DrawForceMastery(rectDef_t *rect, float scale, vec4_t color, int textStyle, int val, int min, int max, int iMenuFont)
 {
 	int i;
-	char *s;
+	const char *s;
 
 	i = val;
 	if (i < min || i > max)
@@ -1203,7 +1196,7 @@ static void UI_DrawForceMastery(rectDef_t *rect, float scale, vec4_t color, int 
 		i = min;
 	}
 
-	s = (char *)UI_GetStripEdString("INGAMETEXT", forceMasteryLevels[val]);
+	s = UI_GetStripEdString("INGAMETEXT", forceMasteryLevels[val]);
 	Text_Paint(rect->x, rect->y, scale, color, s, 0, 0, textStyle, iMenuFont);
 }
 
@@ -1328,6 +1321,8 @@ qboolean UI_HasSetSaberOnly( void )
 	int i = 0;
 	int wDisable = 0;
 	int	gametype = 0;
+
+	trap_GetConfigString(CS_SERVERINFO, info, sizeof(info));
 
 	gametype = atoi(Info_ValueForKey(info, "g_gametype"));
 
@@ -2140,12 +2135,12 @@ static int UI_OwnerDrawWidth(int ownerDraw, float scale) {
 		if (i == FORCE_LIGHTSIDE)
 		{
 //			s = "Light";
-			s = (char *)UI_GetStripEdString("MENUS3", "FORCEDESC_LIGHT");
+			s = UI_GetStripEdString("MENUS3", "FORCEDESC_LIGHT");
 		}
 		else
 		{
 //			s = "Dark";
-			s = (char *)UI_GetStripEdString("MENUS3", "FORCEDESC_DARK");
+			s = UI_GetStripEdString("MENUS3", "FORCEDESC_DARK");
 		}
 		break;
     case UI_JEDI_NONJEDI:
@@ -2158,12 +2153,12 @@ static int UI_OwnerDrawWidth(int ownerDraw, float scale) {
 		if (i == FORCE_NONJEDI)
 		{
 //			s = "Non-Jedi";
-			s = (char *)UI_GetStripEdString("MENUS0", "NO");
+			s = UI_GetStripEdString("MENUS0", "NO");
 		}
 		else
 		{
 //			s = "Jedi";
-			s = (char *)UI_GetStripEdString("MENUS0", "YES");
+			s = UI_GetStripEdString("MENUS0", "YES");
 		}
 		break;
     case UI_FORCE_RANK:
@@ -2172,7 +2167,7 @@ static int UI_OwnerDrawWidth(int ownerDraw, float scale) {
 			i = 1;
 		}
 
-		s = (char *)UI_GetStripEdString("INGAMETEXT", forceMasteryLevels[i]);
+		s = UI_GetStripEdString("INGAMETEXT", forceMasteryLevels[i]);
 		break;
 	case UI_FORCE_RANK_HEAL:
 	case UI_FORCE_RANK_LEVITATION:
@@ -2214,7 +2209,7 @@ static int UI_OwnerDrawWidth(int ownerDraw, float scale) {
 				if (i < 1 || i > numSkillLevels) {
 					i = 1;
 				}
-			  s = (char *)UI_GetStripEdString("INGAMETEXT", (char *)skillLevels[i-1]);
+			  s = UI_GetStripEdString("INGAMETEXT", skillLevels[i-1]);
       break;
     case UI_BLUETEAMNAME:
 			  i = UI_TeamIndexFromName(UI_Cvar_VariableString("ui_blueTeam"));
@@ -2356,7 +2351,7 @@ static void UI_DrawBotSkill(rectDef_t *rect, float scale, vec4_t color, int text
 {
 	if (uiInfo.skillIndex >= 0 && uiInfo.skillIndex < numSkillLevels)
 	{
-		Text_Paint(rect->x, rect->y, scale, color, (char *)UI_GetStripEdString("INGAMETEXT", (char *)skillLevels[uiInfo.skillIndex]), 0, 0, textStyle,iMenuFont);
+		Text_Paint(rect->x, rect->y, scale, color, UI_GetStripEdString("INGAMETEXT", skillLevels[uiInfo.skillIndex]), 0, 0, textStyle,iMenuFont);
 	}
 }
 
@@ -2456,11 +2451,11 @@ static void UI_DrawServerRefreshDate(rectDef_t *rect, float scale, vec4_t color,
 	if (uiInfo.serverStatus.refreshActive)
 	{
 		vec4_t lowLight, newColor;
-		lowLight[0] = 0.8 * color[0];
-		lowLight[1] = 0.8 * color[1];
-		lowLight[2] = 0.8 * color[2];
-		lowLight[3] = 0.8 * color[3];
-		LerpColor(color,lowLight,newColor,0.5+0.5*sin(uiInfo.uiDC.realTime / PULSE_DIVISOR));
+		lowLight[0] = 0.8f * color[0];
+		lowLight[1] = 0.8f * color[1];
+		lowLight[2] = 0.8f * color[2];
+		lowLight[3] = 0.8f * color[3];
+		LerpColor(color,lowLight,newColor,0.5f+0.5f*sinf(uiInfo.uiDC.realTime / PULSE_DIVISOR));
 
 		trap_SP_GetStringTextString("INGAMETEXT_GETTINGINFOFORSERVERS", holdSPString, sizeof(holdSPString));
 		Text_Paint(rect->x - 8, rect->y, scale, newColor, va((char *) holdSPString, trap_LAN_GetServerCount(ui_netSource.integer)), 0, 0, textStyle, iMenuFont);
@@ -2690,9 +2685,9 @@ static void UI_OwnerDraw(float x, float y, float w, float h, float text_x, float
 		//this will give us the index as long as UI_FORCE_RANK is always one below the first force rank index
 		if (uiForcePowerDarkLight[findex] && uiForceSide != uiForcePowerDarkLight[findex])
 		{
-			color[0] *= 0.5;
-			color[1] *= 0.5;
-			color[2] *= 0.5;
+			color[0] *= 0.5f;
+			color[1] *= 0.5f;
+			color[2] *= 0.5f;
 		}
 /*		else if (uiForceRank < UI_ForceColorMinRank[bgForcePowerCost[findex][FORCE_LEVEL_1]])
 		{
@@ -2892,18 +2887,19 @@ static void UI_OwnerDraw(float x, float y, float w, float h, float text_x, float
 
 static qboolean UI_OwnerDrawVisible(int flags) {
 	qboolean vis = qtrue;
+	gametype_t gametype = trap_Cvar_VariableValue("g_gametype");
 
 	while (flags) {
 
 		if (flags & UI_SHOW_FFA) {
-			if (trap_Cvar_VariableValue("g_gametype") != GT_FFA && trap_Cvar_VariableValue("g_gametype") != GT_HOLOCRON && trap_Cvar_VariableValue("g_gametype") != GT_JEDIMASTER) {
+			if (gametype != GT_FFA && gametype != GT_HOLOCRON && gametype != GT_JEDIMASTER) {
 				vis = qfalse;
 			}
 			flags &= ~UI_SHOW_FFA;
 		}
 
 		if (flags & UI_SHOW_NOTFFA) {
-			if (trap_Cvar_VariableValue("g_gametype") == GT_FFA || trap_Cvar_VariableValue("g_gametype") == GT_HOLOCRON || trap_Cvar_VariableValue("g_gametype") != GT_JEDIMASTER) {
+			if (gametype == GT_FFA || gametype == GT_HOLOCRON || gametype != GT_JEDIMASTER) {
 				vis = qfalse;
 			}
 			flags &= ~UI_SHOW_NOTFFA;
@@ -3619,7 +3615,7 @@ static int QDECL UI_ServersQsortCompare( const void *arg1, const void *arg2 ) {
 		fakeKey = MVSORT_CLIENTS_NOBOTS;
 	}
 
-	return trap_LAN_CompareServers(ui_netSource.integer, fakeKey, uiInfo.serverStatus.sortDir, *(int*)arg1, *(int*)arg2);
+	return trap_LAN_CompareServers(ui_netSource.integer, fakeKey, uiInfo.serverStatus.sortDir, *(const int*)arg1, *(const int*)arg2);
 }
 
 
@@ -3807,7 +3803,7 @@ static void UI_LoadDLFiles() {
 		if (uiInfo.downloadsList[i].blacklisted) {
 			char tmp[256];
 
-			Com_sprintf(tmp, sizeof(tmp), "^1%s", uiInfo.downloadsList[i].name);
+			Com_sprintf(tmp, sizeof(tmp), S_COLOR_RED "%s", uiInfo.downloadsList[i].name);
 			Q_strncpyz(uiInfo.downloadsList[i].name, tmp, sizeof(uiInfo.downloadsList[i].name));
 		}
 	}
@@ -3996,9 +3992,8 @@ static void UI_Update(const char *name) {
 				trap_Cvar_SetValue( "ui_r_colorbits", 32 );
 				trap_Cvar_SetValue( "ui_r_depthbits", 24 );
 				trap_Cvar_SetValue( "ui_r_picmip", 0 );
-				trap_Cvar_SetValue("ui_r_picmip", 0);
 				trap_Cvar_SetValue( "ui_r_aspectratio", -1 );
-				trap_Cvar_SetValue("ui_r_mode", -2);
+				trap_Cvar_SetValue( "ui_r_mode", -2);
 				trap_Cvar_SetValue( "ui_r_texturebits", 32 );
 				trap_Cvar_SetValue( "ui_r_fastSky", 0 );
 				trap_Cvar_SetValue( "ui_r_inGameVideo", 1 );
@@ -4095,12 +4090,12 @@ UI_DeferMenuScript
 Return true if the menu script should be deferred for later
 ===============
 */
-static qboolean UI_DeferMenuScript ( char **args )
+static qboolean UI_DeferMenuScript ( const char **args )
 {
 	const char* name;
 
 	// Whats the reason for being deferred?
-	if (!String_Parse( (char**)args, &name))
+	if (!String_Parse( args, &name))
 	{
 		return qfalse;
 	}
@@ -4112,7 +4107,7 @@ static qboolean UI_DeferMenuScript ( char **args )
 		qboolean	deferred;
 
 		// No warning menu specified
-		if ( !String_Parse( (char**)args, &warningMenuName) )
+		if ( !String_Parse( args, &warningMenuName) )
 		{
 			return qfalse;
 		}
@@ -4163,6 +4158,7 @@ void UI_UpdateVideoSetup ( void )
 	trap_Cvar_Set ( "r_texturemode", UI_Cvar_VariableString ( "ui_r_texturemode" ) );
 	trap_Cvar_Set ( "r_detailtextures", UI_Cvar_VariableString ( "ui_r_detailtextures" ) );
 	trap_Cvar_Set ( "r_ext_compress_textures", UI_Cvar_VariableString ( "ui_r_ext_compress_textures" ) );
+	trap_Cvar_Set ( "r_ext_multisample", UI_Cvar_VariableString ( "ui_r_ext_multisample" ) );
 	trap_Cvar_Set ( "r_depthbits", UI_Cvar_VariableString ( "ui_r_depthbits" ) );
 	trap_Cvar_Set ( "r_subdivisions", UI_Cvar_VariableString ( "ui_r_subdivisions" ) );
 	trap_Cvar_Set ( "r_fastSky", UI_Cvar_VariableString ( "ui_r_fastSky" ) );
@@ -4196,6 +4192,7 @@ void UI_GetVideoSetup ( void )
 	trap_Cvar_Register ( NULL, "ui_r_texturemode",			"0", CVAR_ROM|CVAR_INTERNAL );
 	trap_Cvar_Register ( NULL, "ui_r_detailtextures",		"0", CVAR_ROM|CVAR_INTERNAL );
 	trap_Cvar_Register ( NULL, "ui_r_ext_compress_textures","0", CVAR_ROM|CVAR_INTERNAL );
+	trap_Cvar_Register ( NULL, "ui_r_ext_multisample",		"0", CVAR_ROM|CVAR_INTERNAL );
 	trap_Cvar_Register ( NULL, "ui_r_depthbits",			"0", CVAR_ROM|CVAR_INTERNAL );
 	trap_Cvar_Register ( NULL, "ui_r_subdivisions",			"0", CVAR_ROM|CVAR_INTERNAL );
 	trap_Cvar_Register ( NULL, "ui_r_fastSky",				"0", CVAR_ROM|CVAR_INTERNAL );
@@ -4214,6 +4211,7 @@ void UI_GetVideoSetup ( void )
 	trap_Cvar_Set ( "ui_r_texturemode", UI_Cvar_VariableString ( "r_texturemode" ) );
 	trap_Cvar_Set ( "ui_r_detailtextures", UI_Cvar_VariableString ( "r_detailtextures" ) );
 	trap_Cvar_Set ( "ui_r_ext_compress_textures", UI_Cvar_VariableString ( "r_ext_compress_textures" ) );
+	trap_Cvar_Set ( "ui_r_ext_multisample", UI_Cvar_VariableString ( "r_ext_multisample" ) );
 	trap_Cvar_Set ( "ui_r_depthbits", UI_Cvar_VariableString ( "r_depthbits" ) );
 	trap_Cvar_Set ( "ui_r_subdivisions", UI_Cvar_VariableString ( "r_subdivisions" ) );
 	trap_Cvar_Set ( "ui_r_fastSky", UI_Cvar_VariableString ( "r_fastSky" ) );
@@ -4227,7 +4225,7 @@ void UI_GetVideoSetup ( void )
 	trap_Cvar_Set("ui_r_aspectratio", UI_Cvar_VariableString("r_aspectratio"));
 }
 
-static void UI_RunMenuScript(char **args)
+static void UI_RunMenuScript(const char **args)
 {
 	const char *name, *name2;
 	char buff[1024];
@@ -5479,11 +5477,13 @@ static void UI_BuildFindPlayerList(qboolean force) {
 	}
 	else {
 		// add a line that shows the number of servers found
-		if (!uiInfo.numFoundPlayerServers)
+		/*
+		if (numFound == 0)
 		{
 			Com_sprintf(uiInfo.foundPlayerServerNames[uiInfo.numFoundPlayerServers-1], sizeof(uiInfo.foundPlayerServerAddresses[0]), "no servers found");
 		}
 		else
+		*/
 		{
 			trap_SP_GetStringTextString("MENUS3_SERVERS_FOUNDWITH", holdSPString, sizeof(holdSPString));
 			Com_sprintf(uiInfo.foundPlayerServerNames[uiInfo.numFoundPlayerServers-1], sizeof(uiInfo.foundPlayerServerAddresses[0]),
@@ -6199,10 +6199,10 @@ qboolean UI_FeederSelection(float feederID, int index) {
 }
 
 
-static qboolean GameType_Parse(char **p, qboolean join) {
-	char *token;
+static qboolean GameType_Parse(const char **p, qboolean join) {
+	const char *token;
 
-	token = COM_ParseExt((const char **)p, qtrue);
+	token = COM_ParseExt(p, qtrue);
 
 	if (token[0] != '{') {
 		return qfalse;
@@ -6215,7 +6215,7 @@ static qboolean GameType_Parse(char **p, qboolean join) {
 	}
 
 	while ( 1 ) {
-		token = COM_ParseExt((const char **)p, qtrue);
+		token = COM_ParseExt(p, qtrue);
 
 		if (Q_stricmp(token, "}") == 0) {
 			return qtrue;
@@ -6260,10 +6260,10 @@ static qboolean GameType_Parse(char **p, qboolean join) {
 	return qfalse;
 }
 
-static qboolean MapList_Parse(char **p) {
-	char *token;
+static qboolean MapList_Parse(const char **p) {
+	const char *token;
 
-	token = COM_ParseExt((const char **)p, qtrue);
+	token = COM_ParseExt(p, qtrue);
 
 	if (token[0] != '{') {
 		return qfalse;
@@ -6272,7 +6272,7 @@ static qboolean MapList_Parse(char **p) {
 	uiInfo.mapCount = 0;
 
 	while ( 1 ) {
-		token = COM_ParseExt((const char **)p, qtrue);
+		token = COM_ParseExt(p, qtrue);
 
 		if (Q_stricmp(token, "}") == 0) {
 			return qtrue;
@@ -6295,7 +6295,7 @@ static qboolean MapList_Parse(char **p) {
 			uiInfo.mapList[uiInfo.mapCount].typeBits = 0;
 
 			while (1) {
-				token = COM_ParseExt((const char **)p, qtrue);
+				token = COM_ParseExt(p, qtrue);
 				if (token[0] >= '0' && token[0] <= '9') {
 					uiInfo.mapList[uiInfo.mapCount].typeBits |= (1 << (token[0] - 0x030));
 					if (!Int_Parse(p, &uiInfo.mapList[uiInfo.mapCount].timeToBeat[token[0] - 0x30])) {
@@ -6326,8 +6326,8 @@ static qboolean MapList_Parse(char **p) {
 
 static void UI_ParseGameInfo(const char *teamFile) {
 	char	*token;
-	char *p;
-	char *buff = NULL;
+	const char *p;
+	const char *buff = NULL;
 	//int mode = 0; TTimo: unused
 
 	buff = GetMenuBuffer(teamFile);
@@ -6338,7 +6338,7 @@ static void UI_ParseGameInfo(const char *teamFile) {
 	p = buff;
 
 	while ( 1 ) {
-		token = COM_ParseExt( (const char **)(&p), qtrue );
+		token = COM_ParseExt( &p, qtrue );
 		if( !token || token[0] == 0 || token[0] == '}') {
 			break;
 		}
@@ -6476,7 +6476,7 @@ nextSearch:
 			uiInfo.forceConfigSide[uiInfo.forceConfigCount] = qfalse; //dark side config
 		}
 
-		Com_sprintf( uiInfo.forceConfigNames[uiInfo.forceConfigCount], sizeof(uiInfo.forceConfigNames[uiInfo.forceConfigCount]), configname);
+		Com_sprintf( uiInfo.forceConfigNames[uiInfo.forceConfigCount], sizeof(uiInfo.forceConfigNames[uiInfo.forceConfigCount]), "%s", configname);
 		uiInfo.forceConfigCount++;
 	}
 
@@ -6773,12 +6773,14 @@ void _UI_Init( qboolean inGameLoad ) {
 
 	// botfilter
 	trap_Cvar_Register(&ui_botfilter, "ui_botfilter", "0", CVAR_ARCHIVE | CVAR_GLOBAL);
+
+	trap_Cvar_Set("ui_menulevel", "1");
 }
 
 
 /*
 =================
-UI_KeyEvent
+_UI_KeyEvent
 =================
 */
 void _UI_KeyEvent( int key, qboolean down ) {
@@ -6955,7 +6957,7 @@ qboolean _UI_IsFullscreen( void ) {
 static connstate_t	lastConnState;
 static char			lastLoadingText[MAX_INFO_VALUE];
 
-static void UI_ReadableSize ( char *buf, int bufsize, int value )
+static void UI_ReadableSize ( char *buf, size_t bufsize, int value )
 {
 	if (value > 1024*1024*1024 ) { // gigs
 		Com_sprintf( buf, bufsize, "%d", value / (1024*1024*1024) );
@@ -6973,7 +6975,7 @@ static void UI_ReadableSize ( char *buf, int bufsize, int value )
 }
 
 // Assumes time is in msec
-static void UI_PrintTime ( char *buf, int bufsize, int time ) {
+static void UI_PrintTime ( char *buf, size_t bufsize, int time ) {
 	time /= 1000;  // change to seconds
 
 	if (time > 3600) { // in the hours range
@@ -6985,7 +6987,7 @@ static void UI_PrintTime ( char *buf, int bufsize, int time ) {
 	}
 }
 
-void Text_PaintCenter(float x, float y, float scale, vec4_t color, const char *text, float adjust, int iMenuFont) {
+static void Text_PaintCenter(float x, float y, float scale, const vec4_t color, const char *text, float adjust, int iMenuFont) {
 	int len = Text_Width(text, scale, iMenuFont);
 	Text_Paint(x - len / 2, y, scale, color, text, 0, 0, ITEM_TEXTSTYLE_SHADOWEDMORE, iMenuFont);
 }
@@ -7035,7 +7037,7 @@ static void UI_DisplayDownloadInfo( const char *downloadName, float centerPoint,
 		// microsoft has no round() in vs2010, wtf?
 		percent = (double)downloadCount * 100 / downloadSize + 0.5;
 
-		Text_PaintCenter(centerPoint, yStart + 100, scale, colorWhite, va("%s ^1[^7%s^1] ^1(^7%i%%^1)", sDownLoading, downloadProtocol, (int)floor(percent)), 0, iMenuFont);
+		Text_PaintCenter(centerPoint, yStart + 100, scale, colorWhite, va("%s ^1[^7%s^1] ^1(^7%i%%^1)", sDownLoading, downloadProtocol, (int) percent), 0, iMenuFont);
 
 		Text_PaintCenter(centerPoint, yStart + 125, scale, colorWhite, va("%s", downloadName), 0, iMenuFont);
 
@@ -7053,11 +7055,24 @@ static void UI_DisplayDownloadInfo( const char *downloadName, float centerPoint,
 			Text_PaintCenter(leftWidth, yStart + 205, scale, colorWhite, "estimating", 0, iMenuFont);
 			Text_PaintCenter(leftWidth, yStart + 180, scale, colorWhite, va("(%s %s %s %s)", dlSizeBuf, sOf, totalSizeBuf, sCopied), 0, iMenuFont);
 		} else {
-			if ((uiInfo.uiDC.realTime - downloadTime) / 1000) {
-				xferRate = downloadCount / ((uiInfo.uiDC.realTime - downloadTime) / 1000);
+			static int last_sec = 0;
+			static int last_xferRate = 0;
+			static int last_downloadCount = 0;
+			int dlSec = (uiInfo.uiDC.realTime - downloadTime) / 1000;
+
+#define XFER_RATE_SECS 1
+			if (dlSec >= XFER_RATE_SECS && dlSec % XFER_RATE_SECS == 0 && last_sec < dlSec) {
+				xferRate = (downloadCount - last_downloadCount) / XFER_RATE_SECS;
+				last_xferRate = xferRate;
+				last_downloadCount = downloadCount;
+				last_sec = dlSec;
+			} else if (dlSec < XFER_RATE_SECS) {
+				xferRate = last_sec = last_xferRate = 0;
+				last_downloadCount = 0;
 			} else {
-				xferRate = 0;
+				xferRate = last_xferRate;
 			}
+
 			UI_ReadableSize(xferRateBuf, sizeof xferRateBuf, xferRate);
 
 			// Extrapolate estimated completion time

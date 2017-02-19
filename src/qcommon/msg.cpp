@@ -4,6 +4,12 @@
 #include "INetProfile.h"
 #endif
 
+typedef struct {
+	char	*name;
+	size_t	offset;
+	int		bits;		// 0 = float
+} netField_t;
+
 //#define _NEWHUFFTABLE_		// Build "c:\\netchan.bin"
 //#define _USINGNEWHUFFTABLE_		// Build a new frequency table to cut and paste.
 
@@ -25,10 +31,15 @@ Handles byte ordering and avoids alignment errors
 ==============================================================================
 */
 
-#ifndef FINAL_BUILD
-int gLastBitIndex = 0;
-#endif
+netField_t statsField = { "stats" };
+netField_t persistantField = { "persistant" };
+netField_t ammoField = { "ammo" };
+netField_t powerupsField = { "powerups" };
 
+netField_t noField = { "<none>" };
+netField_t *gLastField = &noField;
+
+int	fieldIndex;
 int oldsize = 0;
 
 void MSG_initHuffman();
@@ -107,20 +118,18 @@ void MSG_WriteBits(msg_t *msg, int value, int bits) {
 		if (bits > 0) {
 			if (value > ((1 << bits) - 1) || value < 0) {
 				overflows++;
-#ifndef FINAL_BUILD
-				//				Com_Printf ("MSG_WriteBits: overflow writing %d in %d bits [index %i]\n", value, bits, gLastBitIndex);
-#endif
+				Com_DPrintf ("MSG_WriteBits: overflow writing %d in %d bits [field %s offset %d]\n", value, bits, gLastField->name, fieldIndex);
+				assert (gLastField != &noField); // this means engine bug
 			}
 		} else {
 			int	r;
 
-			r = 1 << (bits - 1);
+			r = 1 << (- bits - 1);
 
 			if (value >  r - 1 || value < -r) {
 				overflows++;
-#ifndef FINAL_BUILD
-				//				Com_Printf ("MSG_WriteBits: overflow writing %d in %d bits [index %i]\n", value, bits, gLastBitIndex);
-#endif
+				Com_DPrintf ("MSG_WriteBits: overflow writing %d in %d bits [field %s offset %d]\n", value, bits, gLastField->name, fieldIndex);
+				assert (gLastField != &noField);  // this means engine bug
 			}
 		}
 	}
@@ -143,7 +152,7 @@ void MSG_WriteBits(msg_t *msg, int value, int bits) {
 			msg->cursize += 4;
 			msg->bit += 8;
 		} else {
-			Com_Error(ERR_DROP, "can't read %d bits\n", bits);
+			Com_Error(ERR_DROP, "can't read %d bits", bits);
 		}
 	} else {
 		value &= (0xffffffff >> (32 - bits));
@@ -199,7 +208,7 @@ int MSG_ReadBits(msg_t *msg, int bits) {
 			msg->readcount += 4;
 			msg->bit += 32;
 		} else {
-			Com_Error(ERR_DROP, "can't read %d bits\n", bits);
+			Com_Error(ERR_DROP, "can't read %d bits", bits);
 		}
 	} else {
 		nbits = 0;
@@ -222,6 +231,7 @@ int MSG_ReadBits(msg_t *msg, int bits) {
 		msg->readcount = (msg->bit >> 3) + 1;
 	}
 	if (sgn) {
+		assert(bits > 0 && bits < 32); // can't fit 32 bit unsigned integer
 		if (value & (1 << (bits - 1))) {
 			value |= -1 ^ ((1 << bits) - 1);
 		}
@@ -259,7 +269,7 @@ void MSG_WriteByte(msg_t *sb, int c) {
 void MSG_WriteData(msg_t *buf, const void *data, int length) {
 	int i;
 	for (i = 0; i<length; i++) {
-		MSG_WriteByte(buf, ((byte *)data)[i]);
+		MSG_WriteByte(buf, ((const byte *)data)[i]);
 	}
 }
 
@@ -695,7 +705,11 @@ MSG_WriteDeltaUsercmd
 =====================
 */
 void MSG_WriteDeltaUsercmdKey(msg_t *msg, int key, usercmd_t *from, usercmd_t *to) {
-	if (to->serverTime - from->serverTime < 256) {
+	if (to->serverTime < from->serverTime) {
+		Com_Printf(S_COLOR_YELLOW "WARNING: Command time went backwards\n");
+		MSG_WriteBits(msg, 0, 1);
+		MSG_WriteBits(msg, to->serverTime, 32);
+	} else if (to->serverTime - from->serverTime < 256) {
 		MSG_WriteBits(msg, 1, 1);
 		MSG_WriteBits(msg, to->serverTime - from->serverTime, 8);
 	} else {
@@ -801,12 +815,6 @@ void MSG_ReportChangeVectors_f(void) {
 		}
 	}
 }
-
-typedef struct {
-	char	*name;
-	size_t	offset;
-	int		bits;		// 0 = float
-} netField_t;
 
 // using the stringizing operator to save typing...
 #define	NETF(x) #x,(size_t)&((entityState_t*)0)->x
@@ -1057,6 +1065,7 @@ void MSG_WriteDeltaEntity(msg_t *msg, struct entityState_s *from, struct entityS
 		field = entityStateFields16;
 
 	for (i = 0; i < lc; i++, field++) {
+		gLastField = field;
 		fromF = (int *)((byte *)from + field->offset);
 		toF = (int *)((byte *)to + field->offset);
 
@@ -1098,6 +1107,8 @@ void MSG_WriteDeltaEntity(msg_t *msg, struct entityState_s *from, struct entityS
 			}
 		}
 	}
+
+	gLastField = &noField;
 }
 
 /*
@@ -1552,10 +1563,6 @@ void MSG_WriteDeltaPlayerstate(msg_t *msg, struct playerState_s *from, struct pl
 
 	MSG_WriteByte(msg, lc);	// # of changes
 
-#ifndef FINAL_BUILD
-	gLastBitIndex = lc;
-#endif
-
 	oldsize += numFields - lc;
 
 	if (MV_GetCurrentGameversion() == VERSION_1_02)
@@ -1564,6 +1571,7 @@ void MSG_WriteDeltaPlayerstate(msg_t *msg, struct playerState_s *from, struct pl
 		field = playerStateFields16;
 
 	for (i = 0; i < lc; i++, field++) {
+		gLastField = field;
 		fromF = (int *)((byte *)from + field->offset);
 		toF = (int *)((byte *)to + field->offset);
 
@@ -1596,7 +1604,7 @@ void MSG_WriteDeltaPlayerstate(msg_t *msg, struct playerState_s *from, struct pl
 		}
 	}
 	c = msg->cursize - c;
-
+	gLastField = &noField;
 
 	//
 	// send the arrays
@@ -1636,9 +1644,12 @@ void MSG_WriteDeltaPlayerstate(msg_t *msg, struct playerState_s *from, struct pl
 	if (statsbits) {
 		MSG_WriteBits(msg, 1, 1);	// changed
 		MSG_WriteShort(msg, statsbits);
-		for (i = 0; i<16; i++)
-			if (statsbits & (1 << i))
-				MSG_WriteShort(msg, to->stats[i]);
+		gLastField = &statsField;
+		for (fieldIndex = 0; fieldIndex < 16; fieldIndex++)
+			if (statsbits & (1 << fieldIndex))
+				MSG_WriteShort(msg, to->stats[fieldIndex]);
+		gLastField = &noField;
+		fieldIndex = 0;
 	} else {
 		MSG_WriteBits(msg, 0, 1);	// no change
 	}
@@ -1647,9 +1658,12 @@ void MSG_WriteDeltaPlayerstate(msg_t *msg, struct playerState_s *from, struct pl
 	if (persistantbits) {
 		MSG_WriteBits(msg, 1, 1);	// changed
 		MSG_WriteShort(msg, persistantbits);
-		for (i = 0; i<16; i++)
-			if (persistantbits & (1 << i))
-				MSG_WriteShort(msg, to->persistant[i]);
+		gLastField = &persistantField;
+		for (fieldIndex = 0; fieldIndex < 16; fieldIndex++)
+			if (persistantbits & (1 << fieldIndex))
+				MSG_WriteShort(msg, to->persistant[fieldIndex]);
+		gLastField = &noField;
+		fieldIndex = 0;
 	} else {
 		MSG_WriteBits(msg, 0, 1);	// no change
 	}
@@ -1658,9 +1672,12 @@ void MSG_WriteDeltaPlayerstate(msg_t *msg, struct playerState_s *from, struct pl
 	if (ammobits) {
 		MSG_WriteBits(msg, 1, 1);	// changed
 		MSG_WriteShort(msg, ammobits);
-		for (i = 0; i<16; i++)
-			if (ammobits & (1 << i))
-				MSG_WriteShort(msg, to->ammo[i]);
+		gLastField = &ammoField;
+		for (fieldIndex = 0; fieldIndex < 16; fieldIndex++)
+			if (ammobits & (1 << fieldIndex))
+				MSG_WriteShort(msg, to->ammo[fieldIndex]);
+		gLastField = &noField;
+		fieldIndex = 0;
 	} else {
 		MSG_WriteBits(msg, 0, 1);	// no change
 	}
@@ -1669,9 +1686,12 @@ void MSG_WriteDeltaPlayerstate(msg_t *msg, struct playerState_s *from, struct pl
 	if (powerupbits) {
 		MSG_WriteBits(msg, 1, 1);	// changed
 		MSG_WriteShort(msg, powerupbits);
-		for (i = 0; i<16; i++)
-			if (powerupbits & (1 << i))
-				MSG_WriteLong(msg, to->powerups[i]);
+		gLastField = &powerupsField;
+		for (fieldIndex = 0; fieldIndex < 16; fieldIndex++)
+			if (powerupbits & (1 << fieldIndex))
+				MSG_WriteLong(msg, to->powerups[fieldIndex]);
+		gLastField = &noField;
+		fieldIndex = 0;
 	} else {
 		MSG_WriteBits(msg, 0, 1);	// no change
 	}

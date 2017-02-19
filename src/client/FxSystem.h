@@ -100,7 +100,7 @@ public:
 	}
 
 	// Physics/collision
-	inline	void	Trace( trace_t &tr, vec3_t start, vec3_t min, vec3_t max, vec3_t end, int skipEntNum, int flags )
+	inline	void	Trace( trace_t &tr, const vec3_t start, const vec3_t min, const vec3_t max, const vec3_t end, int skipEntNum, int flags )
 	{
 		//VM_Call( cgvm, CG_TRACE, tr, start, min, max, end, skipEntNum, flags );
 		TCGTrace		*td = (TCGTrace *)cl.mSharedMemory;

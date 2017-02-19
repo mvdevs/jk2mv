@@ -646,6 +646,7 @@ bot_synonymlist_t *BotLoadSynonyms(char *filename)
 					size += sizeof(bot_synonymlist_t);
 					if (pass)
 					{
+						assert(ptr);
 						syn = (bot_synonymlist_t *) ptr;
 						ptr += sizeof(bot_synonymlist_t);
 						syn->context = context;
@@ -772,7 +773,7 @@ void BotReplaceWeightedSynonyms(char *string, unsigned long int context)
 	{
 		if (!(syn->context & context)) continue;
 		//choose a weighted random replacement synonym
-		weight = random() * syn->totalweight;
+		weight = qrandom() * syn->totalweight;
 		if (!weight) continue;
 		curweight = 0;
 		for (replacement = syn->firstsynonym; replacement; replacement = replacement->next)
@@ -972,6 +973,7 @@ bot_randomlist_t *BotLoadRandomStrings(char *filename)
 			size += sizeof(bot_randomlist_t) + strlen(token.string) + 1;
 			if (pass)
 			{
+				assert(ptr);
 				random = (bot_randomlist_t *) ptr;
 				ptr += sizeof(bot_randomlist_t);
 				random->string = ptr;
@@ -1040,7 +1042,7 @@ char *RandomString(char *name)
 	{
 		if (!strcmp(random->string, name))
 		{
-			i = random() * random->numstrings;
+			i = qrandom() * random->numstrings;
 			for (rs = random->firstrandomstring; rs; rs = rs->next)
 			{
 				if (--i < 0) break;
@@ -2271,7 +2273,7 @@ int BotExpandChatMessage(char *outmessage, char *message, unsigned long mcontext
 					} //end while
 					//step over the trailing escape char
 					if (*msgptr) msgptr++;
-					if (num > MAX_MATCHVARIABLES)
+					if (num >= MAX_MATCHVARIABLES)
 					{
 						botimport.Print(PRT_ERROR, "BotConstructChat: message %s variable %d out of range\n", message, num);
 						return qfalse;
@@ -2427,7 +2429,7 @@ char *BotChooseInitialChatMessage(bot_chatstate_t *cs, char *type)
 			} //end if
 			else //choose a chat message randomly
 			{
-				n = random() * numchatmessages;
+				n = qrandom() * numchatmessages;
 				for (m = t->firstchatmessage; m; m = m->next)
 				{
 					if (m->time > AAS_Time()) continue;
@@ -2664,7 +2666,7 @@ int BotReplyChat(int chatstate, char *message, int mcontext, int vcontext, char 
 					if (m->time > AAS_Time()) continue;
 					numchatmessages++;
 				} //end if
-				num = random() * numchatmessages;
+				num = qrandom() * numchatmessages;
 				for (m = rchat->firstchatmessage; m; m = m->next)
 				{
 					if (--num < 0) break;

@@ -6,6 +6,7 @@
 #else
 	typedef unsigned char uint8_t;
 	typedef unsigned short uint16_t;
+	typedef unsigned int uint32_t;
 #endif
 
 // -------------------------------------- API Version -------------------------------------- //
@@ -30,6 +31,7 @@ typedef enum {
 	MVFIX_TURRETCRASH         = (1 << 4),
 	MVFIX_CHARGEJUMP          = (1 << 5),
 	MVFIX_SPEEDHACK           = (1 << 6),
+	MVFIX_SABERSTEALING	      = (1 << 7),
 
 	/* CGAME */
 	MVFIX_WPGLOWING           = (1 << 16),
@@ -44,7 +46,7 @@ typedef enum {
 
 // ******** SYSCALLS ******** //
 
-// qboolean trap_MVAPI_ControlFixes(mvfix_t fixes);
+// qboolean trap_MVAPI_ControlFixes(int fixes);
 #define MVAPI_CONTROL_FIXES 703                  /* asm: -704 */
 
 // mvversion_t trap_MVAPI_GetVersion(void);
@@ -73,9 +75,13 @@ typedef struct {
 	uint16_t port;
 } mvaddr_t;
 
+#define MVF_NOSPEC		0x01
+#define MVF_SPECONLY	0x02
+
 typedef struct {
-	uint8_t snapshotIgnore[32];
-	uint8_t snapshotEnforce[32];
+	uint8_t 	snapshotIgnore[32];
+	uint8_t 	snapshotEnforce[32];
+	uint32_t	mvFlags;
 } mvsharedEntity_t;
 
 // ******** SYSCALLS ******** //

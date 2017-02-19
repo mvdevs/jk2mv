@@ -317,10 +317,10 @@ typedef struct {
 } vmglconfig_t;
 
 typedef struct {
-	char					*renderer_string;
-	char					*vendor_string;
-	char					*version_string;
-	char					*extensions_string;
+	const char				*renderer_string;
+	const char				*vendor_string;
+	const char				*version_string;
+	const char				*extensions_string;
 
 	int						maxTextureSize;			// queried from GL
 	int						maxActiveTextures;		// multitexture ability
@@ -331,6 +331,7 @@ typedef struct {
 	textureCompression_t	textureCompression;
 	qboolean				textureEnvAddAvailable;
 	float					textureFilterAnisotropicMax;
+	qboolean				textureLODBiasAvailable;
 	qboolean				clampToEdgeAvailable;
 
 	int						vidWidth, vidHeight;
@@ -339,12 +340,13 @@ typedef struct {
 	// normal screens should be 4/3, but wide aspect monitors may be 16/9
 	float					windowAspect;
 
+	float					displayDPI;
 	int						displayFrequency;
 
 	// synonymous with "does rendering consume the entire screen?", therefore
 	// a Voodoo or Voodoo2 will have this set to TRUE, as will a Win32 ICD that
 	// used CDS.
-	qboolean				isFullscreen;
+	qboolean				isFullscreen;	// correct only on initialization; see WIN_Present
 	qboolean				stereoEnabled;
 	qboolean				smpActive;		// dual processor
 

@@ -478,51 +478,6 @@ char *Sys_GetCurrentUser( void )
 	return p->pw_name;
 }
 
-typedef struct {
-    pthread_mutex_t mutex;
-} mv_unix_mutex;
-
-mvmutex_t MV_CreateMutex() {
-    mv_unix_mutex *mut = (mv_unix_mutex *)malloc(sizeof(mv_unix_mutex));
-    pthread_mutex_init(&mut->mutex, NULL);
-
-    return (mvmutex_t)mut;
-}
-
-void MV_DestroyMutex(mvmutex_t mutex) {
-    if (!mutex) {
-        return;
-    }
-
-    pthread_mutex_destroy(&((mv_unix_mutex *)mutex)->mutex);
-	free(mutex);
-}
-
-void MV_LockMutex(mvmutex_t mutex) {
-    if (!mutex) {
-        return;
-    }
-
-	pthread_mutex_lock(&((mv_unix_mutex *)mutex)->mutex);
-}
-
-void MV_ReleaseMutex(mvmutex_t mutex) {
-    if (!mutex) {
-        return;
-    }
-
-	pthread_mutex_unlock(&((mv_unix_mutex *)mutex)->mutex);
-}
-
-void MV_StartThread(void *addr) {
-    pthread_t th;
-    pthread_create(&th, NULL, (void*(*)(void*))addr, NULL);
-}
-
-void MV_MSleep(unsigned int msec) {
-	usleep(msec);
-}
-
 // from ioq3 requires sse
 // i do not care about processors without sse
 #if defined(__i386__) || defined(__amd64__)
@@ -537,18 +492,6 @@ void MV_MSleep(unsigned int msec) {
   #define ESP "%%esp"
   #define EDI "%%edi"
 #endif
-
-long Q_ftol(float f) {
-    long retval;
-
-    __asm__ volatile (
-        "cvttss2si %1, %0\n"
-        : "=r" (retval)
-        : "x" (f)
-    );
-
-    return retval;
-}
 
 int Q_VMftol() {
     int retval;
@@ -587,10 +530,6 @@ void Sys_SnapVector(vec3_t vec) {
 
 }
 #else
-long Q_ftol(float f) {
-    return (long)f;
-}
-
 void Sys_SnapVector(float *v) {
     v[0] = nearbyintf(v[0]);
     v[1] = nearbyintf(v[1]);
@@ -699,7 +638,7 @@ void *Sys_LoadModuleLibrary(const char *name, qboolean mvOverride, intptr_t(QDEC
 		Com_sprintf(lpath, sizeof(lpath), "%s/%s", path, filename);
 #endif
 
-		Com_DPrintf("Loading module: %s...", filePath);
+		Com_DPrintf("Loading module: %s...", lpath);
 		libHandle = dlopen(lpath, RTLD_NOW);
 		if (!libHandle) {
 			Com_DPrintf(" failed: %s\n", dlerror());

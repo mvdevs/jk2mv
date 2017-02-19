@@ -226,7 +226,7 @@ void QDECL ScriptError(script_t *script, char *str, ...)
 	if (script->flags & SCFL_NOERRORS) return;
 
 	va_start(ap, str);
-	vsprintf(text, str, ap);
+	Q_vsnprintf(text, sizeof(text), str, ap);
 	va_end(ap);
 #ifdef BOTLIB
 	botimport.Print(PRT_ERROR, "file %s, line %d: %s\n", script->filename, script->line, text);
@@ -252,7 +252,7 @@ void QDECL ScriptWarning(script_t *script, char *str, ...)
 	if (script->flags & SCFL_NOWARNINGS) return;
 
 	va_start(ap, str);
-	vsprintf(text, str, ap);
+	Q_vsnprintf(text, sizeof(text), str, ap);
 	va_end(ap);
 #ifdef BOTLIB
 	botimport.Print(PRT_WARNING, "file %s, line %d: %s\n", script->filename, script->line, text);
@@ -1369,7 +1369,7 @@ int MV_MenuPatchFile(const char *in, unsigned long inhash, const char *patch, ch
 					currline.vline = 0;
 					*it = currline;
 
-					it++;
+					++it;
 					currline = patchfile.at(++i);
 				}
 			} else {
@@ -1480,6 +1480,17 @@ script_t *LoadScriptFile(const char *filename) {
 		}
 
 		FreeMemory(pbuffer);
+
+		// uncomment to dump patched file with _patched suffix; menu_patch
+
+		/*
+		char patchedName[MAX_QPATH];
+		fileHandle_t patchedFile;
+		Com_sprintf(patchedName, sizeof(patchedName), "%s_patched", pathname);
+		botimport.FS_FOpenFile(patchedName, &patchedFile, FS_WRITE);
+		botimport.FS_Write(outbuffer, outlength, patchedFile);
+		botimport.FS_FCloseFile(patchedFile);
+		*/
 	} else {
 		outbuffer = inbuffer;
 		outlength = inlength;
@@ -1566,8 +1577,8 @@ void FreeScript(script_t *script)
 void PS_SetBaseFolder(char *path)
 {
 #ifdef BSPC
-	sprintf(basefolder, path);
+	sprintf(basefolder, "%s", path);
 #else
-	Com_sprintf(basefolder, sizeof(basefolder), path);
+	Com_sprintf(basefolder, sizeof(basefolder), "%s", path);
 #endif
 } //end of the function PS_SetBaseFolder

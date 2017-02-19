@@ -56,6 +56,48 @@ void SCR_DrawPic( float x, float y, float width, float height, qhandle_t hShader
 	re.DrawStretchPic( x, y, width, height, 0, 0, 1, 1, hShader );
 }
 
+
+
+/*
+** SCR_DrawChar
+** chars are drawn at 640*480 virtual screen size
+*/
+static void SCR_DrawChar( int x, int y, float size, int ch ) {
+	int row, col;
+	float frow, fcol;
+	float	ax, ay, aw, ah;
+
+	ch &= 255;
+
+	if ( ch == ' ' ) {
+		return;
+	}
+
+	if ( y < -size ) {
+		return;
+	}
+
+	ax = x;
+	ay = y;
+	aw = size;
+	ah = size;
+
+	row = ch>>4;
+	col = ch&15;
+
+	float size2;
+
+	frow = row*0.0625;
+	fcol = col*0.0625;
+	size = 0.03125;
+	size2 = 0.0625;
+
+	re.DrawStretchPic( ax, ay, aw, ah,
+					   fcol, frow,
+					   fcol + size, frow + size2,
+					   cls.charSetShader );
+}
+
 /*
 ** SCR_DrawSmallChar
 ** small chars are drawn at native screen resolution
@@ -71,7 +113,7 @@ void SCR_DrawSmallChar( int x, int y, int ch ) {
 		return;
 	}
 
-	if ( y < -SMALLCHAR_HEIGHT ) {
+	if ( y < -con.charHeight ) {
 		return;
 	}
 
@@ -90,8 +132,8 @@ void SCR_DrawSmallChar( int x, int y, int ch ) {
 #endif
 	size2 = 0.0625;
 
-	re.DrawStretchPic( x * con.xadjust, y * con.yadjust,
-						SMALLCHAR_WIDTH * con.xadjust, SMALLCHAR_HEIGHT * con.yadjust,
+	re.DrawStretchPic( x * cls.xadjust, y * cls.yadjust,
+					   con.charWidth * cls.xadjust, con.charHeight * cls.yadjust,
 					   fcol, frow,
 					   fcol + size, frow + size2,
 					   cls.charSetShader );
@@ -108,8 +150,49 @@ to a fixed color.
 Coordinates are at 640 by 480 virtual resolution
 ==================
 */
-void SCR_DrawStringExt( int x, int y, float size, const char *string, float *setColor, qboolean forceColor ) {
-	re.Font_DrawString(x, y, string, setColor, cls.font_ocr_a, -1, size * 0.1f);
+static void SCR_DrawStringExt( int x, int y, float size, const char *string, const float *setColor, qboolean forceColor ) {
+	vec4_t		color;
+	const char	*s;
+	int			xx;
+
+	const bool use102color = MV_USE102COLOR;
+
+	// draw the drop shadow
+	color[0] = color[1] = color[2] = 0;
+	color[3] = setColor[3];
+	re.SetColor( color );
+	s = string;
+	xx = x;
+	while ( *s ) {
+		if ( Q_IsColorString( s ) || (use102color && Q_IsColorString_1_02( s ))) {
+			s += 2;
+			continue;
+		}
+		SCR_DrawChar( xx+2, y+2, size, *s );
+		xx += size;
+		s++;
+	}
+
+
+	// draw the colored text
+	s = string;
+	xx = x;
+	re.SetColor( setColor );
+	while ( *s ) {
+		if ( Q_IsColorString( s ) || (use102color && Q_IsColorString_1_02( s ))) {
+			if ( !forceColor ) {
+				Com_Memcpy( color, g_color_table[ColorIndex(*(s+1))], sizeof( color ) );
+				color[3] = setColor[3];
+				re.SetColor( color );
+			}
+			s += 2;
+			continue;
+		}
+		SCR_DrawChar( xx, y, size, *s );
+		xx += size;
+		s++;
+	}
+	re.SetColor( NULL );
 }
 
 
@@ -121,7 +204,7 @@ void SCR_DrawBigString( int x, int y, const char *s, float alpha ) {
 	SCR_DrawStringExt( x, y, BIGCHAR_WIDTH, s, color, qfalse );
 }
 
-void SCR_DrawBigStringColor( int x, int y, const char *s, vec4_t color ) {
+void SCR_DrawBigStringColor( int x, int y, const char *s, const vec4_t color ) {
 	SCR_DrawStringExt( x, y, BIGCHAR_WIDTH, s, color, qtrue );
 }
 
@@ -136,7 +219,7 @@ to a fixed color.
 Coordinates are at 640 by 480 virtual resolution
 ==================
 */
-void SCR_DrawSmallStringExt( int x, int y, const char *string, float *setColor, qboolean forceColor ) {
+void SCR_DrawSmallStringExt( int x, int y, const char *string, const vec4_t setColor, qboolean forceColor ) {
 	vec4_t		color;
 	const char	*s;
 	int			xx;
@@ -158,7 +241,7 @@ void SCR_DrawSmallStringExt( int x, int y, const char *string, float *setColor, 
 			continue;
 		}
 		SCR_DrawSmallChar( xx, y, *s );
-		xx += SMALLCHAR_WIDTH;
+		xx += con.charWidth;
 		s++;
 	}
 	re.SetColor( NULL );

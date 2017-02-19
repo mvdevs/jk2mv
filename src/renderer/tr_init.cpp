@@ -165,8 +165,6 @@ int		max_polyverts;
 cvar_t	*r_modelpoolmegs;
 cvar_t *r_screenshotJpegQuality;
 
-// gamma correction
-cvar_t *r_gammamethod;
 cvar_t *r_convertModelBones;
 cvar_t *r_loadSkinsJKA;
 
@@ -187,7 +185,10 @@ cvar_t	*r_Ghoul2UnSqashAfterSmooth=0;
 Ghoul2 Insert End
 */
 
+cvar_t *r_consoleFont;
 cvar_t *r_fontSharpness;
+cvar_t *r_textureLODBias;
+cvar_t *r_saberGlow;
 
 #ifndef DEDICATED
 PFNGLACTIVETEXTUREARBPROC qglActiveTextureARB;
@@ -396,7 +397,7 @@ static void GLimp_InitExtensions(void) {
 		qglGetFloatv( GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &glConfig.textureFilterAnisotropicMax );
 		Com_Printf ("...GL_EXT_texture_filter_anisotropic available\n" );
 
-		if ( r_ext_texture_filter_anisotropic->value > 0.0f )
+		if ( r_ext_texture_filter_anisotropic->value > 1.0f )
 		{
 			Com_Printf ("...using GL_EXT_texture_filter_anisotropic\n" );
 		}
@@ -605,6 +606,15 @@ static void GLimp_InitExtensions(void) {
 	} else {
 		glConfig.deviceSupportsPostprocessingGamma = qfalse;
 	}
+
+	// GL_EXT_texture_lod_bias
+	glConfig.textureLODBiasAvailable = qfalse;
+	if (GL_CheckForExtension("EXT_texture_lod_bias")) {
+		glConfig.textureLODBiasAvailable = qtrue;
+		Com_Printf ("...GL_EXT_texture_lod_bias available\n" );
+	} else {
+		Com_Printf("...GL_EXT_texture_lod_bias not found\n");
+	}
 }
 
 /*
@@ -622,13 +632,13 @@ static void InitOpenGL(void) {
 
         glWindow = WIN_Init(&windowDesc, &glConfig);
 
-		Com_Printf("GL_RENDERER: %s\n", (char *)qglGetString(GL_RENDERER));
+		Com_Printf("GL_RENDERER: %s\n", (const char *)qglGetString(GL_RENDERER));
 
 		// get our config strings
-		glConfig.vendor_string = (char *)qglGetString(GL_VENDOR);
-		glConfig.renderer_string = (char *)qglGetString(GL_RENDERER);
-		glConfig.version_string = (char *)qglGetString(GL_VERSION);
-		glConfig.extensions_string = (char *)qglGetString(GL_EXTENSIONS);
+		glConfig.vendor_string = (const char *)qglGetString(GL_VENDOR);
+		glConfig.renderer_string = (const char *)qglGetString(GL_RENDERER);
+		glConfig.version_string = (const char *)qglGetString(GL_VERSION);
+		glConfig.extensions_string = (const char *)qglGetString(GL_EXTENSIONS);
 
 		// OpenGL driver constants
 		qglGetIntegerv(GL_MAX_TEXTURE_SIZE, &glConfig.maxTextureSize);
@@ -638,6 +648,8 @@ static void InitOpenGL(void) {
 
 		// initialize extensions
 		GLimp_InitExtensions();
+
+		WIN_InitGammaMethod(&glConfig);
 
 		// set default state
 		GL_SetDefaultState();
@@ -656,11 +668,11 @@ void GL_CheckErrors( void ) {
 	int		err;
 	char	s[64];
 
-	err = qglGetError();
-	if ( err == GL_NO_ERROR ) {
+	if ( r_ignoreGLErrors->integer ) {
 		return;
 	}
-	if ( r_ignoreGLErrors->integer ) {
+	err = qglGetError();
+	if ( err == GL_NO_ERROR ) {
 		return;
 	}
 	switch( err ) {
@@ -683,109 +695,11 @@ void GL_CheckErrors( void ) {
 			strcpy( s, "GL_OUT_OF_MEMORY" );
 			break;
 		default:
-			Com_sprintf( s, sizeof(s), "%i", err);
+			Com_sprintf( s, sizeof(s), "0x%x", err);
 			break;
 	}
 
 	ri.Error( ERR_FATAL, "GL_CheckErrors: %s", s );
-}
-
-/*
-** R_GetModeInfo
-*/
-typedef struct vidmode_s
-{
-	const char *description;
-	int		 width, height;
-	float		pixelAspect;		// pixel width / height
-} vidmode_t;
-
-// screen resolutions
-vidmode_t r_vidModes[] = {
-	// 4:3
-	{ "Mode  0:  320x240",	320,  240,  1 },
-	{ "Mode  1:  400x300",	400,  300,  1 },
-	{ "Mode  2:  512x384",	512,  384,  1 },
-	{ "Mode  3:  640x480",	640,  480,  1 },
-	{ "Mode  4:  800x600",	800,  600,  1 },
-	{ "Mode  5:  960x720",	960,  720,  1 },
-	{ "Mode  6:  1024x768",   1024, 768,  1 },
-	{ "Mode  7:  1152x864",   1152, 864,  1 },
-	{ "Mode  8:  1280x1024",  1280, 1024, 1 },
-	{ "Mode  9:  1600x1200",  1600, 1200, 1 },
-	{ "Mode  10: 2048x1536",  2048, 1536, 1 },
-
-	// 16:9
-	{ "Mode  11: 960x540",	960,  540,  1 },
-	{ "Mode  12: 960x544",	960,  544,  1 },
-	{ "Mode  13: 1024x576",   1024, 576,  1 },
-	{ "Mode  14: 1024x600",   1024, 600,  1 },
-	{ "Mode  15: 1136x640",   1136, 640,  1 },
-	{ "Mode  16: 1280x720",   1280, 720,  1 },
-	{ "Mode  17: 1366x768",   1366, 768,  1 },
-	{ "Mode  18: 1600x900",   1600, 900,  1 },
-	{ "Mode  19: 1920x1080",  1920, 1080, 1 },
-	{ "Mode  20: 2048x1152",  2048, 1152, 1 },
-	{ "Mode  21: 2560x1440",  2560, 1440, 1 },
-	{ "Mode  22: 2880x1620",  2880, 1620, 1 },
-	{ "Mode  23: 3200x1800",  3200, 1800, 1 },
-	{ "Mode  24: 3840x2160",  3840, 2160, 1 },
-	{ "Mode  25: 4096x2304",  4096, 2304, 1 },
-	{ "Mode  26: 5120x2880",  5120, 2880, 1 },
-
-	// 16:10
-	{ "Mode  27: 1280x800",   1280, 800,  1 },
-	{ "Mode  28: 1440x900",   1440, 900,  1 },
-	{ "Mode  29: 1680x1050",  1680, 1050, 1 },
-	{ "Mode  30: 1920x1200",  1920, 1200, 1 },
-	{ "Mode  31: 2560x1600",  2560, 1600, 1 },
-};
-static int	s_numVidModes = ( sizeof( r_vidModes ) / sizeof( r_vidModes[0] ) );
-
-qboolean R_GetModeInfo( int *width, int *height, float *windowAspect, int mode ) {
-	vidmode_t	*vm;
-
-	if ( mode < -2 ) {
-		return qfalse;
-	}
-	if ( mode >= s_numVidModes ) {
-		return qfalse;
-	}
-
-	if ( mode == -1 ) {
-		*width = r_customwidth->integer;
-		*height = r_customheight->integer;
-		*windowAspect = r_customaspect->value;
-		return qtrue;
-	}
-
-	// native resolution
-	if (mode == -2) {
-		return qtrue;
-	}
-
-	vm = &r_vidModes[mode];
-
-	*width  = vm->width;
-	*height = vm->height;
-	*windowAspect = (float)vm->width / ( vm->height * vm->pixelAspect );
-
-	return qtrue;
-}
-
-/*
-** R_ModeList_f
-*/
-static void R_ModeList_f( void )
-{
-	int i;
-
-	ri.Printf( PRINT_ALL, "\n" );
-	for ( i = 0; i < s_numVidModes; i++ )
-	{
-		ri.Printf( PRINT_ALL, "%s\n", r_vidModes[i].description );
-	}
-	ri.Printf( PRINT_ALL, "\n" );
 }
 
 #endif //!DEDICATED
@@ -798,45 +712,65 @@ static void R_ModeList_f( void )
 ==============================================================================
 */
 #ifndef DEDICATED
+
 /*
-==================
-R_TakeScreenshot
-==================
+===============
+RB_ReadPixels
+===============
 */
-
-byte *RB_ReadPixels(int x, int y, int width, int height, size_t *offset, int *padlen)
+byte *RB_ReadPixels(int x, int y, int width, int height, size_t *offset, qboolean swapRB, int packAlign)
 {
-	byte *buffer, *bufstart;
-	int padwidth, linelen;
-	GLint packAlign;
+	byte	*buffer, *bufstart;
+	int		padwidth, linelen;
 
-	qglGetIntegerv(GL_PACK_ALIGNMENT, &packAlign);
+	qglPixelStorei(GL_PACK_ALIGNMENT, packAlign);
 
 	linelen = width * 3;
 	padwidth = PAD(linelen, packAlign);
 
 	// Allocate a few more bytes so that we can choose an alignment we like
-	buffer = (byte *)Hunk_AllocateTempMemory((int)(padwidth * height + *offset + packAlign - 1));
-
+	buffer = (byte *)ri.Hunk_AllocateTempMemory(padwidth * height + *offset + packAlign - 1);
 	bufstart = (byte *)PADP((intptr_t)buffer + *offset, packAlign);
-	qglReadPixels(x, y, width, height, GL_RGB, GL_UNSIGNED_BYTE, bufstart);
+
+	qglReadPixels(x, y, width, height, swapRB ? GL_BGR : GL_RGB, GL_UNSIGNED_BYTE, bufstart);
+
+	// gamma correct
+	if (r_gammamethod->integer == GAMMA_HARDWARE)
+		R_GammaCorrect(bufstart, padwidth * height);
 
 	*offset = bufstart - buffer;
-	*padlen = padwidth - linelen;
 
 	return buffer;
 }
 
-void R_TakeScreenshot(int x, int y, int width, int height, char *fileName) {
-	byte *allbuf, *buffer;
-	byte *srcptr, *destptr;
-	byte *endline, *endmem;
-	byte temp;
+/*
+==================
+R_TakeScreenshot
+==================
+*/
+static void R_TakeScreenshot(int x, int y, int width, int height, const char *fileName, qboolean jpeg) {
+	screenshotCommand_t	*cmd;
 
-	int linelen, padlen;
-	size_t offset = 18, memcount;
+	cmd = (screenshotCommand_t *)R_GetCommandBuffer( sizeof( *cmd ) );
+	if ( !cmd ) {
+		return;
+	}
+	cmd->commandId = RC_SCREENSHOT;
 
-	allbuf = RB_ReadPixels(x, y, width, height, &offset, &padlen);
+	cmd->x = x;
+	cmd->y = y;
+	cmd->width = width;
+	cmd->height = height;
+	Q_strncpyz( cmd->fileName, fileName, sizeof( cmd->fileName ) );
+	cmd->jpeg = jpeg;
+}
+
+void RB_TakeScreenshot(int x, int y, int width, int height, const char *fileName) {
+	byte	*allbuf, *buffer;
+	size_t	offset = 18;
+
+	// tga does not use line padding
+	allbuf = RB_ReadPixels(x, y, width, height, &offset, qtrue, 1);
 	buffer = allbuf + offset - 18;
 
 	Com_Memset(buffer, 0, 18);
@@ -847,54 +781,18 @@ void R_TakeScreenshot(int x, int y, int width, int height, char *fileName) {
 	buffer[15] = height >> 8;
 	buffer[16] = 24;	// pixel size
 
-	// swap rgb to bgr and remove padding from line endings
-	linelen = width * 3;
-
-	srcptr = destptr = allbuf + offset;
-	endmem = srcptr + (linelen + padlen) * height;
-
-	while (srcptr < endmem)
-	{
-		endline = srcptr + linelen;
-
-		while (srcptr < endline)
-		{
-			temp = srcptr[0];
-			*destptr++ = srcptr[2];
-			*destptr++ = srcptr[1];
-			*destptr++ = temp;
-
-			srcptr += 3;
-		}
-
-		// Skip the pad
-		srcptr += padlen;
-	}
-
-	memcount = linelen * height;
-
-	// gamma correct
-	if (r_gammamethod->integer == GAMMA_HARDWARE)
-		R_GammaCorrect(allbuf + offset, (int)memcount);
-
-	ri.FS_WriteFile(fileName, buffer, (int)memcount + 18);
+	ri.FS_WriteFile(fileName, buffer, 18 + width * 3 * height);
 
 	ri.Hunk_FreeTempMemory(allbuf);
 }
 
-void R_TakeScreenshotJPEG(int x, int y, int width, int height, char *fileName) {
-	byte *buffer;
-	size_t offset = 0, memcount;
-	int padlen;
+void RB_TakeScreenshotJPEG(int x, int y, int width, int height, const char *fileName) {
+	byte	*buffer;
+	size_t	offset = 0;
 
-	buffer = RB_ReadPixels(x, y, width, height, &offset, &padlen);
-	memcount = (width * 3 + padlen) * height;
+	buffer = RB_ReadPixels(x, y, width, height, &offset, qfalse, 1);
 
-	// gamma correct
-	if (r_gammamethod->integer == GAMMA_HARDWARE)
-		R_GammaCorrect(buffer + offset, (int)memcount);
-
-	SaveJPG(fileName, r_screenshotJpegQuality->integer, width, height, buffer + offset, padlen);
+	SaveJPG(fileName, r_screenshotJpegQuality->integer, width, height, buffer + offset, 0);
 	ri.Hunk_FreeTempMemory(buffer);
 }
 
@@ -1050,7 +948,7 @@ void R_ScreenShotTGA_f (void) {
 	}
 
 
-	R_TakeScreenshot( 0, 0, glConfig.vidWidth, glConfig.vidHeight, checkname );
+	R_TakeScreenshot( 0, 0, glConfig.vidWidth, glConfig.vidHeight, checkname, qfalse );
 
 	if ( !silent ) {
 		ri.Printf (PRINT_ALL, "Wrote %s\n", checkname);
@@ -1104,7 +1002,7 @@ void R_ScreenShot_f (void) {
 	}
 
 
-	R_TakeScreenshotJPEG( 0, 0, glConfig.vidWidth, glConfig.vidHeight, checkname );
+	R_TakeScreenshot( 0, 0, glConfig.vidWidth, glConfig.vidHeight, checkname, qtrue );
 
 	if ( !silent ) {
 		ri.Printf (PRINT_ALL, "Wrote %s\n", checkname);
@@ -1202,12 +1100,15 @@ void GfxInfo_f( void )
 		ri.Printf( PRINT_ALL, "N/A\n" );
 	}
 
+	ri.Printf(PRINT_ALL, "Display DPI: %f\n", glConfig.displayDPI);
+
 	// gamma correction
-	if (glConfig.deviceSupportsPostprocessingGamma) {
-		ri.Printf(PRINT_ALL, "GAMMA_METHOD: postprocessing\n");
-	}
-	if (glConfig.deviceSupportsGamma) {
-		ri.Printf(PRINT_ALL, "GAMMA_METHOD: hardware\n");
+	if (r_gammamethod->integer == GAMMA_POSTPROCESSING) {
+		ri.Printf(PRINT_ALL, "gamma method: postprocessing\n");
+	} else if (r_gammamethod->integer == GAMMA_HARDWARE) {
+		ri.Printf(PRINT_ALL, "gamma method: hardware\n");
+	} else {
+		ri.Printf(PRINT_ALL, "gamma method: none\n");
 	}
 
 	// rendering primitives
@@ -1245,9 +1146,9 @@ void GfxInfo_f( void )
 	ri.Printf( PRINT_ALL, "compressed textures: %s\n", enablestrings[glConfig.textureCompression != TC_NONE] );
 	ri.Printf( PRINT_ALL, "compressed lightmaps: %s\n", enablestrings[(r_ext_compressed_lightmaps->integer != 0 && glConfig.textureCompression != TC_NONE)] );
 	ri.Printf( PRINT_ALL, "texture compression method: %s\n", tc_table[glConfig.textureCompression] );
-	if (glConfig.textureFilterAnisotropicMax > 1.0f && r_ext_texture_filter_anisotropic->value > 0.0f) {
+	if (glConfig.textureFilterAnisotropicMax >= 2.0f && r_ext_texture_filter_anisotropic->value > 1.0f) {
 		float aniso = r_ext_texture_filter_anisotropic->value;
-		aniso = Com_Clamp(2.0f, glConfig.textureFilterAnisotropicMax, aniso);
+		aniso = Com_Clamp(1.0f, glConfig.textureFilterAnisotropicMax, aniso);
 		ri.Printf( PRINT_ALL, "anisotropic filtering: %s (level: %.1f)\n", enablestrings[1], aniso );
 	} else {
 		ri.Printf( PRINT_ALL, "anisotropic filtering: %s\n", enablestrings[0] );
@@ -1282,14 +1183,14 @@ void R_Register( void )
 	// latched and archived variables
 	//
 	r_allowExtensions = ri.Cvar_Get("r_allowExtensions", "1", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);
-	r_ext_compressed_textures = ri.Cvar_Get("r_ext_compress_textures", "1", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);
+	r_ext_compressed_textures = ri.Cvar_Get("r_ext_compress_textures", "0", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);
 	r_ext_compressed_lightmaps = ri.Cvar_Get("r_ext_compress_lightmaps", "0", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);
 	r_ext_preferred_tc_method = ri.Cvar_Get("r_ext_preferred_tc_method", "0", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);
 	r_ext_gamma_control = ri.Cvar_Get("r_ext_gamma_control", "1", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);
 	r_ext_multitexture = ri.Cvar_Get("r_ext_multitexture", "1", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);
 	r_ext_compiled_vertex_array = ri.Cvar_Get("r_ext_compiled_vertex_array", "1", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);
 	r_ext_texture_env_add = ri.Cvar_Get("r_ext_texture_env_add", "1", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);
-	r_ext_texture_filter_anisotropic = ri.Cvar_Get("r_ext_texture_filter_anisotropic", "1", CVAR_ARCHIVE | CVAR_GLOBAL);
+	r_ext_texture_filter_anisotropic = ri.Cvar_Get("r_ext_texture_filter_anisotropic", "2", CVAR_ARCHIVE | CVAR_GLOBAL);
 
 	r_DynamicGlow = ri.Cvar_Get( "r_DynamicGlow", "0", CVAR_ARCHIVE | CVAR_GLOBAL );
 	r_DynamicGlowPasses = ri.Cvar_Get("r_DynamicGlowPasses", "5", CVAR_ARCHIVE | CVAR_GLOBAL);
@@ -1342,7 +1243,6 @@ void R_Register( void )
 
 	// gamma correction
 	r_gamma = ri.Cvar_Get("r_gamma", "1", CVAR_ARCHIVE | CVAR_GLOBAL);
-	r_gammamethod = ri.Cvar_Get("r_gammamethod", GAMMA_DEFAULT, CVAR_ARCHIVE | CVAR_LATCH | CVAR_GLOBAL);
 
 	r_facePlaneCull = ri.Cvar_Get("r_facePlaneCull", "1", CVAR_ARCHIVE | CVAR_GLOBAL);
 
@@ -1423,7 +1323,7 @@ Ghoul2 Insert Start
 Ghoul2 Insert End
 */
 
-	r_modelpoolmegs = Cvar_Get("r_modelpoolmegs", "10", CVAR_ARCHIVE | CVAR_GLOBAL);
+	r_modelpoolmegs = Cvar_Get("r_modelpoolmegs", "20", CVAR_ARCHIVE | CVAR_GLOBAL);
 
 	// make sure all the commands added here are also
 	// removed in R_Shutdown
@@ -1436,14 +1336,17 @@ Ghoul2 Insert End
 	ri.Cmd_AddCommand( "gfxinfo", GfxInfo_f );
 	ri.Cmd_AddCommand("r_we", R_WorldEffect_f);
 	ri.Cmd_AddCommand( "imagecacheinfo", RE_RegisterImages_Info_f);
-	ri.Cmd_AddCommand( "modelist", R_ModeList_f );
 #endif
 	ri.Cmd_AddCommand("modellist", R_Modellist_f);
 	ri.Cmd_AddCommand( "modelcacheinfo", RE_RegisterModels_Info_f);
 
 	r_screenshotJpegQuality = ri.Cvar_Get("r_screenshotJpegQuality", "95", CVAR_ARCHIVE | CVAR_GLOBAL);
 
-	r_fontSharpness = ri.Cvar_Get("r_fontSharpness", "1.0", CVAR_ARCHIVE | CVAR_GLOBAL);
+	r_consoleFont = ri.Cvar_Get("r_consoleFont", "1", CVAR_ARCHIVE | CVAR_GLOBAL);
+	r_consoleFont->modified = qtrue;
+	r_fontSharpness = ri.Cvar_Get("r_fontSharpness", "1", CVAR_ARCHIVE | CVAR_GLOBAL);
+	r_textureLODBias = ri.Cvar_Get("r_textureLODBias", "0", CVAR_ARCHIVE | CVAR_GLOBAL);
+	r_saberGlow = ri.Cvar_Get("r_saberGlow", "1", CVAR_ARCHIVE | CVAR_LATCH);
 }
 
 #ifdef G2_COLLISION_ENABLED
@@ -1478,7 +1381,7 @@ void R_Init( void ) {
 	//
 	for ( i = 0; i < FUNCTABLE_SIZE; i++ )
 	{
-		tr.sinTable[i]		= sin( DEG2RAD( i * 360.0f / ( ( float ) ( FUNCTABLE_SIZE - 1 ) ) ) );
+		tr.sinTable[i]		= sinf( DEG2RAD( i * 360.0f / ( ( float ) ( FUNCTABLE_SIZE - 1 ) ) ) );
 		tr.squareTable[i]	= ( i < FUNCTABLE_SIZE/2 ) ? 1.0f : -1.0f;
 		tr.sawToothTable[i] = (float)i / FUNCTABLE_SIZE;
 		tr.inverseSawToothTable[i] = 1.0f - tr.sawToothTable[i];
@@ -1528,11 +1431,6 @@ void R_Init( void ) {
 	}
 	InitOpenGL();
 
-	// gamma correction
-	if (r_gammamethod->integer == GAMMA_POSTPROCESSING && !glConfig.deviceSupportsPostprocessingGamma) {
-		r_gammamethod->integer = GAMMA_HARDWARE; // temporary fallback to hardware gamma
-	}
-
 	R_InitImages();
 	R_InitShaders();
 	R_InitSkins();
@@ -1548,9 +1446,7 @@ void R_Init( void ) {
 	}
 #endif
 
-	int	err = qglGetError();
-	if ( err != GL_NO_ERROR )
-		ri.Printf (PRINT_ALL, "glGetError() = 0x%x\n", err);
+	GL_CheckErrors();
 #endif
 	ri.Printf( PRINT_ALL, "----- finished R_Init -----\n" );
 }
@@ -1564,18 +1460,19 @@ void RE_Shutdown( qboolean destroyWindow ) {
 
 	ri.Printf( PRINT_ALL, "RE_Shutdown( %i )\n", destroyWindow );
 
-	ri.Cmd_RemoveCommand ("modellist");
-	ri.Cmd_RemoveCommand ("screenshotJPEG");
-	ri.Cmd_RemoveCommand ("screenshot");
+
 	ri.Cmd_RemoveCommand ("imagelist");
 	ri.Cmd_RemoveCommand ("shaderlist");
 	ri.Cmd_RemoveCommand ("skinlist");
+	ri.Cmd_RemoveCommand ("screenshot");
+	ri.Cmd_RemoveCommand ("screenshot_tga");
 	ri.Cmd_RemoveCommand ("gfxinfo");
-	ri.Cmd_RemoveCommand ("modelist");
-	ri.Cmd_RemoveCommand ("shaderstate");
 	ri.Cmd_RemoveCommand ("r_we");
-	ri.Cmd_RemoveCommand ("modelcacheinfo");
 	ri.Cmd_RemoveCommand ("imagecacheinfo");
+
+	ri.Cmd_RemoveCommand ("modellist");
+	ri.Cmd_RemoveCommand ("modelcacheinfo");
+
 
 #ifndef DEDICATED
 	if ( r_DynamicGlow && r_DynamicGlow->integer )
@@ -1761,6 +1658,8 @@ refexport_t *GetRefAPI ( int apiVersion, refimport_t *rimp ) {
 	re.SetLightStyle = RE_SetLightStyle;
 
 	re.GetBModelVerts = RE_GetBModelVerts;
+
+	re.TakeVideoFrame = RE_TakeVideoFrame;
 #endif //!DEDICATED
 	return &re;
 }

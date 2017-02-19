@@ -1,6 +1,6 @@
 /*
 */
-#ifdef _WINDOWS
+#ifdef WIN32
 #ifndef __EAXMANH
 #define __EAXMANH
 

@@ -41,10 +41,10 @@ void AAS_PrintFreeBSPLinks(char *str);
 #define MAX_EPAIRKEY		128
 
 //trace through the world
-bsp_trace_t AAS_Trace(	vec3_t start,
-								vec3_t mins,
-								vec3_t maxs,
-								vec3_t end,
+bsp_trace_t AAS_Trace(	const vec3_t start,
+								const vec3_t mins,
+								const vec3_t maxs,
+								const vec3_t end,
 								int passent,
 								int contentmask);
 //returns the contents at the given point

@@ -13,8 +13,14 @@
 
 // Open AL Specific
 #ifdef USE_OPENAL
-#	include <al.h>
-#	include <alc.h>
+#ifdef MACOS_X
+#	include <OpenAL/al.h>
+#	include <OpenAL/alc.h>
+#else
+#	include <AL/al.h>
+#	include <AL/alc.h>
+#endif
+
 #	include <eax.h>
 #	include <EaxMan.h>
 #endif
@@ -202,9 +208,6 @@ extern	int		numLoopChannels;
 
 extern	int		s_paintedtime;
 extern	int		s_rawend;
-extern	vec3_t	listener_forward;
-extern	vec3_t	listener_right;
-extern	vec3_t	listener_up;
 extern	dma_t	dma;
 
 #define	MAX_RAW_SAMPLES	16384

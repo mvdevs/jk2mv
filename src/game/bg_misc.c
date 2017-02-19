@@ -1264,7 +1264,7 @@ float vectoyaw( const vec3_t vec ) {
 		yaw = 0;
 	} else {
 		if (vec[PITCH]) {
-			yaw = ( atan2( vec[YAW], vec[PITCH]) * 180 / M_PI );
+			yaw = RAD2DEG( atan2f( vec[YAW], vec[PITCH] ) );
 		} else if (vec[YAW] > 0) {
 			yaw = 90;
 		} else {
@@ -1457,7 +1457,7 @@ void BG_CycleForce(playerState_t *ps, int direction)
 {
 	int i = ps->fd.forcePowerSelected;
 	int x = i;
-	int presel = i;
+	int presel;
 	int foundnext = -1;
 
 	if (!(ps->fd.forcePowersKnown & (1 << x)) ||
@@ -1766,7 +1766,7 @@ void BG_EvaluateTrajectory( const trajectory_t *tr, int atTime, vec3_t result ) 
 		break;
 	case TR_SINE:
 		deltaTime = ( atTime - tr->trTime ) / (float) tr->trDuration;
-		phase = sin( deltaTime * M_PI * 2 );
+		phase = sinf( deltaTime * (float) M_PI * 2 );
 		VectorMA( tr->trBase, phase, tr->trDelta, result );
 		break;
 	case TR_LINEAR_STOP:
@@ -1782,7 +1782,7 @@ void BG_EvaluateTrajectory( const trajectory_t *tr, int atTime, vec3_t result ) 
 	case TR_GRAVITY:
 		deltaTime = ( atTime - tr->trTime ) * 0.001;	// milliseconds to seconds
 		VectorMA( tr->trBase, deltaTime, tr->trDelta, result );
-		result[2] -= 0.5 * DEFAULT_GRAVITY * deltaTime * deltaTime;		// FIXME: local gravity...
+		result[2] -= 0.5f * DEFAULT_GRAVITY * deltaTime * deltaTime;		// FIXME: local gravity...
 		break;
 	default:
 #ifdef QAGAME
@@ -1815,8 +1815,8 @@ void BG_EvaluateTrajectoryDelta( const trajectory_t *tr, int atTime, vec3_t resu
 		break;
 	case TR_SINE:
 		deltaTime = ( atTime - tr->trTime ) / (float) tr->trDuration;
-		phase = cos( deltaTime * M_PI * 2 );	// derivative of sin = cos
-		phase *= 0.5;
+		phase = cosf( deltaTime * (float) M_PI * 2 );	// derivative of sin = cos
+		phase *= 0.5f;
 		VectorScale( tr->trDelta, phase, result );
 		break;
 	case TR_LINEAR_STOP:

@@ -192,7 +192,7 @@ protected:
 
 public:
 					cStringPackage(const char *in, unsigned char initID = 0, char *initDescription = NULL, char *initReference = NULL);
-					~cStringPackage(void);
+					virtual ~cStringPackage(void);
 
 	void			Register(unsigned char newRegistration) { Registration |= newRegistration; }
 	bool			UnRegister(unsigned char oldRegistration) { Registration &= ~oldRegistration; return (Registration == 0); }
@@ -269,8 +269,8 @@ typedef struct sFlagPair
 	unsigned int	Value;
 } tFlagPair;
 
-extern sFlagPair FlagPairs[];
-extern sFlagPair LanguagePairs[];
+extern const sFlagPair FlagPairs[];
+extern const sFlagPair LanguagePairs[];
 
 #ifdef _STRIPED_
 

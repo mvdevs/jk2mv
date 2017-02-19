@@ -18,12 +18,6 @@ Ghoul2 Insert Start
 #endif
 
 #include "../qcommon/strip.h"
-#include "../meerkat/meerkat.h"
-
-#define HTTPSRV_STDPORT 18200
-struct mg_server *mgsrv;
-mvmutex_t m_srv;
-qboolean m_end;
 
 /*
 ===============
@@ -37,7 +31,7 @@ void SV_SetConfigstring (int index, const char *val) {
 	client_t	*client;
 
 	if ( index < 0 || index >= MAX_CONFIGSTRINGS ) {
-		Com_Error (ERR_DROP, "SV_SetConfigstring: bad index %i\n", index);
+		Com_Error (ERR_DROP, "SV_SetConfigstring: bad index %i", index);
 	}
 
 	if ( !val ) {
@@ -112,7 +106,7 @@ void SV_GetConfigstring( int index, char *buffer, int bufferSize ) {
 		Com_Error( ERR_DROP, "SV_GetConfigstring: bufferSize == %i", bufferSize );
 	}
 	if ( index < 0 || index >= MAX_CONFIGSTRINGS ) {
-		Com_Error (ERR_DROP, "SV_GetConfigstring: bad index %i\n", index);
+		Com_Error (ERR_DROP, "SV_GetConfigstring: bad index %i", index);
 	}
 	if ( !sv.configstrings[index] ) {
 		buffer[0] = 0;
@@ -176,7 +170,7 @@ SV_SetUserinfo
 */
 void SV_SetUserinfo( int index, const char *val ) {
 	if ( index < 0 || index >= sv_maxclients->integer ) {
-		Com_Error (ERR_DROP, "SV_SetUserinfo: bad index %i\n", index);
+		Com_Error (ERR_DROP, "SV_SetUserinfo: bad index %i", index);
 	}
 
 	if ( !val ) {
@@ -200,7 +194,7 @@ void SV_GetUserinfo( int index, char *buffer, int bufferSize ) {
 		Com_Error( ERR_DROP, "SV_GetUserinfo: bufferSize == %i", bufferSize );
 	}
 	if ( index < 0 || index >= sv_maxclients->integer ) {
-		Com_Error (ERR_DROP, "SV_GetUserinfo: bad index %i\n", index);
+		Com_Error (ERR_DROP, "SV_GetUserinfo: bad index %i", index);
 	}
 	Q_strncpyz( buffer, svs.clients[ index ].userinfo, bufferSize );
 }
@@ -402,17 +396,20 @@ Ghoul2 Insert End
 ================
 SV_TouchCGame
 
-  touch the cgame.vm so that a pure client can load it if it's in a seperate pk3
+Touch the cgame.vm and ui.qvm so that a client can load it if it's in a seperate pk3
 ================
 */
 void SV_TouchCGame(void) {
 	fileHandle_t	f;
-	char filename[MAX_QPATH];
 
-	Com_sprintf( filename, sizeof(filename), "vm/%s.qvm", "cgame" );
-	FS_FOpenFileRead( filename, &f, qfalse );
+	FS_FOpenFileRead( "vm/cgame.qvm", &f, qfalse );
 	if ( f ) {
 		FS_FCloseFile( f );
+	}
+
+	FS_FOpenFileRead( "vm/ui.qvm", &f, qfalse);
+	if (f) {
+		FS_FCloseFile(f);
 	}
 }
 
@@ -452,47 +449,6 @@ extern void FixGhoul2InfoLeaks(bool,bool);
 extern CMiniHeap *G2VertSpaceServer;
 #define G2_VERT_SPACE_SERVER_SIZE 256
 #endif
-
-// THIS FUNCTION IS NOT CALLED ON THE MAIN THREAD
-void *SV_MV_Websrv_Loop_ExtThread(void *server) {
-	while (1) {
-		MV_LockMutex(m_srv);
-		if (m_end) {
-			mg_destroy_server((struct mg_server **)&mgsrv);
-
-			m_end = qfalse;
-			MV_ReleaseMutex(m_srv);
-			return NULL;
-		}
-		MV_ReleaseMutex(m_srv);
-
-		mg_poll_server((struct mg_server *)mgsrv, 500);
-	}
-
-	return NULL;
-}
-
-void SV_MV_Websrv_Shutdown() {
-	Com_Printf("HTTP Downloads: shutting down webserver...\n");
-
-	MV_LockMutex(m_srv);
-	m_end = qtrue;
-	MV_ReleaseMutex(m_srv);
-
-	// wait till it's closed
-	while (1) {
-		MV_LockMutex(m_srv);
-		SV_MV_Websrv_Request_MainThread();
-
-		if (!m_end)
-			break;
-
-		MV_ReleaseMutex(m_srv);
-		MV_MSleep(20);
-	}
-
-	MV_ReleaseMutex(m_srv);
-}
 
 extern void RE_RegisterMedia_LevelLoadBegin(const char *psMapName, ForceReload_e eForceReload);
 void SV_SpawnServer( char *server, qboolean killBots, ForceReload_e eForceReload ) {
@@ -734,6 +690,12 @@ Ghoul2 Insert End
 	SV_BotFrame( svs.time );
 	svs.time += 100;
 
+	// if a dedicated server we need to touch the cgame and ui because it could be in a
+	// seperate pk3 file and the client will need to load the latest cgame.qvm
+	if (com_dedicated->integer) {
+		SV_TouchCGame();
+	}
+
 	if ( sv_pure->integer ) {
 		// the server sends these to the clients so they will only
 		// load pk3s also loaded at the server
@@ -744,12 +706,6 @@ Ghoul2 Insert End
 		}
 		p = FS_LoadedPakNames();
 		Cvar_Set( "sv_pakNames", p );
-
-		// if a dedicated pure server we need to touch the cgame because it could be in a
-		// seperate pk3 file and the client will need to load the latest cgame.qvm
-		if ( com_dedicated->integer ) {
-			SV_TouchCGame();
-		}
 	}
 	else {
 		Cvar_Set( "sv_paks", "" );
@@ -791,45 +747,22 @@ Ghoul2 Insert End
 	*/
 
 	// shutdown webserver
-	if (mgsrv && ((mv_httpdownloads->latchedString && !atoi(mv_httpdownloads->latchedString)) || mv_httpserverport->latchedString)) {
-		SV_MV_Websrv_Shutdown();
+	if (sv.http_port && ((mv_httpdownloads->latchedString && !atoi(mv_httpdownloads->latchedString)) || mv_httpserverport->latchedString)) {
+		NET_HTTP_StopServer();
+		sv.http_port = 0;
 	}
 
 	// here because latched
 	mv_httpdownloads = Cvar_Get("mv_httpdownloads", "0", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_LATCH);
 	mv_httpserverport = Cvar_Get("mv_httpserverport", "0", CVAR_ARCHIVE | CVAR_LATCH);
 
-	// start webserver
 	if (mv_httpdownloads->integer) {
 		if (Q_stristr(mv_httpserverport->string, "http://")) {
 			Com_Printf("HTTP Downloads: redirecting to %s\n", mv_httpserverport->string);
-		} else if (!mgsrv) {
-			const char *err = NULL;
-			int port;
-
-			mgsrv = mg_create_server(NULL, SV_MV_Websrv_Request_ExtThread);
-			mg_set_option(mgsrv, "document_root", Cvar_Get("fs_basepath", "", 0)->string);
-
-			if (mv_httpserverport->integer) {
-				port = mv_httpserverport->integer;
-				err = mg_set_option(mgsrv, "listening_port", va("%i", port));
-			} else {
-				for (port = HTTPSRV_STDPORT; port <= HTTPSRV_STDPORT + 15; port++) {
-					err = mg_set_option(mgsrv, "listening_port", va("%i", port));
-					if (!err) {
-						break;
-					}
-				}
+		} else {
+			if (!sv.http_port) {
+				sv.http_port = NET_HTTP_StartServer(mv_httpserverport->integer);
 			}
-
-			if (!err) {
-				sv.http_port = port;
-				Com_Printf("HTTP Downloads: webserver running on port %i...\n", port);
-			} else {
-				Com_Error(ERR_DROP, "HTTP Downloads: webserver startup failed: %s", err);
-			}
-
-			mg_start_thread(SV_MV_Websrv_Loop_ExtThread, mgsrv);
 		}
 	}
 }
@@ -858,6 +791,7 @@ void SV_Init (void) {
 	mv_fixturretcrash = Cvar_Get("mv_fixturretcrash", "1", CVAR_ARCHIVE);
 	mv_blockchargejump = Cvar_Get("mv_blockchargejump", "1", CVAR_ARCHIVE);
 	mv_blockspeedhack = Cvar_Get("mv_blockspeedhack", "1", CVAR_ARCHIVE);
+	mv_fixsaberstealing = Cvar_Get("mv_fixsaberstealing", "1", CVAR_ARCHIVE);
 
 	// serverinfo vars
 	Cvar_Get ("dmflags", "0", CVAR_SERVERINFO);
@@ -934,9 +868,6 @@ void SV_Init (void) {
 
 	// init the botlib here because we need the pre-compiler in the UI
 	SV_BotInitBotLib();
-
-	m_webreq = MV_CreateMutex();
-	m_srv = MV_CreateMutex();
 }
 
 
@@ -1031,9 +962,7 @@ Ghoul2 Insert Start
 	// disconnect any local clients
 	CL_Disconnect( qfalse );
 
-	// shutdown webserver
-	if (mgsrv) {
-		SV_MV_Websrv_Shutdown();
-	}
+	NET_HTTP_StopServer();
+	sv.http_port = 0;
 }
 

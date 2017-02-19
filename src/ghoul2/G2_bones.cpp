@@ -21,10 +21,10 @@
 #endif
 	#include "G2_local.h"
 
-#ifdef assert
-#	undef assert
-#	define assert(x)
-#endif
+// #ifdef assert
+// #	undef assert
+// #	define assert(x)
+// #endif
 
 //=====================================================================================================================
 // Bone List handling routines - so entities can override bone info on a bone by bone level, and also interrogate this info
@@ -52,7 +52,7 @@ int G2_Find_Bone(const model_t *mod, boneInfo_v &blist, const char *boneName)
 		skel = (mdxaSkel_t *)((byte *)mod->mdxa + sizeof(mdxaHeader_t) + offsets->offsets[blist[i].boneNumber]);
 
 		// if name is the same, we found it
-		if (!stricmp(skel->name, boneName))
+		if (!Q_stricmp(skel->name, boneName))
 		{
 			return i;
 		}
@@ -77,7 +77,7 @@ int G2_Add_Bone (const model_t *mod, boneInfo_v &blist, const char *boneName)
  	{
  		skel = (mdxaSkel_t *)((byte *)mod->mdxa + sizeof(mdxaHeader_t) + offsets->offsets[x]);
  		// if name is the same, we found it
- 		if (!stricmp(skel->name, boneName))
+ 		if (!Q_stricmp(skel->name, boneName))
 		{
 			break;
 		}
@@ -99,7 +99,7 @@ int G2_Add_Bone (const model_t *mod, boneInfo_v &blist, const char *boneName)
 		{
 			skel = (mdxaSkel_t *)((byte *)mod->mdxa + sizeof(mdxaHeader_t) + offsets->offsets[blist[i].boneNumber]);
 			// if name is the same, we found it
-			if (!stricmp(skel->name, boneName))
+			if (!Q_stricmp(skel->name, boneName))
 			{
 				return i;
 			}
@@ -233,6 +233,10 @@ void G2_Generate_Matrix(const model_t *mod, boneInfo_v &blist, int index, const 
 		case POSITIVE_Z:
 			newAngles[1] = angles[1];
 			break;
+		default:
+			assert(0);
+			newAngles[1] = 0;
+			break;
 		}
 
 		// determine what axis newAngles pitch should revolve around
@@ -256,6 +260,10 @@ void G2_Generate_Matrix(const model_t *mod, boneInfo_v &blist, int index, const 
 		case POSITIVE_Z:
 			newAngles[0] = angles[1];
 			break;
+		default:
+			assert(0);
+			newAngles[0] = 0;
+			break;
 		}
 
 		// determine what axis newAngles Roll should revolve around
@@ -278,6 +286,10 @@ void G2_Generate_Matrix(const model_t *mod, boneInfo_v &blist, int index, const 
 			break;
 		case POSITIVE_Z:
 			newAngles[2] = angles[1] + 180;
+			break;
+		default:
+			assert(0);
+			newAngles[2] = 0;
 			break;
 		}
 
@@ -328,6 +340,9 @@ void G2_Generate_Matrix(const model_t *mod, boneInfo_v &blist, int index, const 
 		case POSITIVE_Z:
 			permutation.matrix[2][0] = 1;
 			break;
+		default:
+			assert(0);
+			break;
 		}
 
 		// determine what axis newAngles pitch should revolve around
@@ -351,6 +366,9 @@ void G2_Generate_Matrix(const model_t *mod, boneInfo_v &blist, int index, const 
 		case POSITIVE_Z:
 			permutation.matrix[2][1] = 1;
 			break;
+		default:
+			assert(0);
+			break;
 		}
 
 		// determine what axis newAngles Roll should revolve around
@@ -373,6 +391,9 @@ void G2_Generate_Matrix(const model_t *mod, boneInfo_v &blist, int index, const 
 			break;
 		case POSITIVE_Z:
 			permutation.matrix[2][2] = 1;		// works
+			break;
+		default:
+			assert(0);
 			break;
 		}
 
@@ -610,8 +631,8 @@ qboolean G2_Set_Bone_Anim_Index(
 			{
 				if (animSpeed<0.0f)
 				{
-					blist[index].blendFrame = floor(currentFrame);
-					blist[index].blendLerpFrame = floor(currentFrame);
+					blist[index].blendFrame = floorf(currentFrame);
+					blist[index].blendLerpFrame = floorf(currentFrame);
 				}
 				else
 				{
@@ -693,7 +714,7 @@ qboolean G2_Set_Bone_Anim_Index(
 	// start up the animation:)
 	if (setFrame != -1)
 	{
-		blist[index].lastTime = blist[index].startTime = (currentTime - (((setFrame - (float)startFrame) * 50.0)/ animSpeed));
+		blist[index].lastTime = blist[index].startTime = (currentTime - (((setFrame - startFrame) * 50.0f)/ animSpeed));
 	}
 	else
 	{
@@ -835,14 +856,14 @@ qboolean G2_Get_Bone_Anim_Index( boneInfo_v &blist, const int index, const int c
 						{
 							if (newFrame_g <= mendFrame+1)
 							{
-								newFrame_g=mendFrame+fmod(newFrame_g-mendFrame,animSize)-animSize;
+								newFrame_g=mendFrame+fmodf(newFrame_g-mendFrame,animSize)-animSize;
 							}
 						}
 						else
 						{
 							if (newFrame_g >= mendFrame)
 							{
-								newFrame_g=mendFrame+fmod(newFrame_g-mendFrame,animSize)-animSize;
+								newFrame_g=mendFrame+fmodf(newFrame_g-mendFrame,animSize)-animSize;
 							}
 						}
 
@@ -897,6 +918,7 @@ qboolean G2_Get_Bone_Anim(const char *fileName, boneInfo_v &blist, const char *b
   	model_t		*mod_m;
 	if (!fileName[0])
 	{
+		assert(modelList);
 		mod_m = R_GetModelByHandle(modelList[modelIndex]);
 	}
 	else
@@ -949,14 +971,14 @@ qboolean G2_Get_Bone_Anim(const char *fileName, boneInfo_v &blist, const char *b
 						{
 							if (newFrame_g <= mendFrame+1)
 							{
-								newFrame_g=mendFrame+fmod(newFrame_g-mendFrame,animSize)-animSize;
+								newFrame_g=mendFrame+fmodf(newFrame_g-mendFrame,animSize)-animSize;
 							}
 						}
 						else
 						{
 							if (newFrame_g >= mendFrame)
 							{
-								newFrame_g=mendFrame+fmod(newFrame_g-mendFrame,animSize)-animSize;
+								newFrame_g=mendFrame+fmodf(newFrame_g-mendFrame,animSize)-animSize;
 							}
 						}
 
@@ -1178,14 +1200,14 @@ void G2_Animate_Bone_List(CGhoul2Info_v &ghoul2, const int currentTime, const in
 							{
 								if (newFrame_g <= endFrame+1)
 								{
-									newFrame_g=endFrame+fmod(newFrame_g-endFrame,animSize)-animSize;
+									newFrame_g=endFrame+fmodf(newFrame_g-endFrame,animSize)-animSize;
 								}
 							}
 							else
 							{
 								if (newFrame_g >= endFrame)
 								{
-									newFrame_g=endFrame+fmod(newFrame_g-endFrame,animSize)-animSize;
+									newFrame_g=endFrame+fmodf(newFrame_g-endFrame,animSize)-animSize;
 								}
 							}
 							// figure out new start time

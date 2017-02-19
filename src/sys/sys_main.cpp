@@ -4,10 +4,15 @@
 #include <cstdio>
 #include <sys/stat.h>
 #define __STDC_FORMAT_MACROS
+#if (defined(_MSC_VER) && _MSC_VER < 1800)
+#include <stdint.h>
+#else
 #include <inttypes.h>
+#endif
 #ifndef DEDICATED
 #ifdef WIN32
-#define SDL_MAIN_HANDLED
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 #endif
 #include "SDL.h"
 #endif
@@ -56,7 +61,7 @@ char *Sys_ConsoleInput(void) {
 	return CON_Input();
 }
 
-void Sys_Print(const char *msg) {
+void Sys_Print(const char *msg, qboolean extendedColors) {
 	// TTimo - prefix for text that shows up in console but not in notify
 	// backported from RTCW
 	if (!Q_strncmp(msg, "[skipnotify]", 12)) {
@@ -66,7 +71,7 @@ void Sys_Print(const char *msg) {
 		msg += 1;
 	}
 	ConsoleLogAppend(msg);
-	CON_Print(msg);
+	CON_Print(msg, (extendedColors ? true : false));
 }
 
 /*
@@ -149,10 +154,10 @@ void Q_NORETURN QDECL Sys_Error(const char *error, ...) {
 	char    string[1024];
 
 	va_start(argptr, error);
-	vsnprintf(string, sizeof(string), error, argptr);
+	Q_vsnprintf(string, sizeof(string), error, argptr);
 	va_end(argptr);
 
-	Sys_Print(string);
+	Sys_Print(string,qfalse);
 
 	// Only print Sys_ErrorDialog for client binary. The dedicated
 	// server binary is meant to be a command line program so you would
@@ -212,18 +217,15 @@ void Sys_SigHandler(int signal) {
 		Sys_Exit(2);
 }
 
-#if defined(_MSC_VER) && !defined(DEDICATED)
-#    pragma comment(linker, "/subsystem:windows /ENTRY:mainCRTStartup")
-#endif
 int main(int argc, char* argv[]) {
 	int		i;
 	char	commandLine[MAX_STRING_CHARS] = { 0 };
 
-#if !defined(DEDICATED) && defined(WIN32)
-	SDL_SetMainReady();
-#endif
-
 	Sys_PlatformInit();
+
+#if defined(_DEBUG) && !defined(DEDICATED)
+	CON_CreateConsoleWindow();
+#endif
 	CON_Init();
 
 	// get the initial time base
@@ -270,9 +272,6 @@ int main(int argc, char* argv[]) {
 				Sys_Sleep(5);
 			}
 		}
-
-		// make sure mouse and joystick are only called once a frame
-		IN_Frame();
 
 		// run the game
 		Com_Frame();

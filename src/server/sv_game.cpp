@@ -225,7 +225,7 @@ void SV_AdjustAreaPortalState( sharedEntity_t *ent, qboolean open ) {
 SV_GameAreaEntities
 ==================
 */
-qboolean	SV_EntityContact( const vec3_t mins, const vec3_t maxs, const sharedEntity_t *gEnt, int capsule ) {
+qboolean	SV_EntityContact( const vec3_t mins, const vec3_t maxs, const sharedEntity_t *gEnt, qboolean capsule ) {
 	const float	*origin, *angles;
 	clipHandle_t	ch;
 	trace_t			trace;
@@ -347,12 +347,12 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 		Cvar_Update( (vmCvar_t *)VMA(1) );
 		return 0;
 	case G_CVAR_SET:
-		Cvar_Set( (const char *)VMA(1), (const char *)VMA(2) );
+		Cvar_Set2( (const char *)VMA(1), (const char *)VMA(2), qtrue, qtrue );
 		return 0;
 	case G_CVAR_VARIABLE_INTEGER_VALUE:
-		return Cvar_VariableIntegerValue( (const char *)VMA(1) );
+		return Cvar_VariableIntegerValue( (const char *)VMA(1), qtrue );
 	case G_CVAR_VARIABLE_STRING_BUFFER:
-		Cvar_VariableStringBuffer( (const char *)VMA(1), (char *)VMA(2), args[3] );
+		Cvar_VariableStringBuffer( (const char *)VMA(1), (char *)VMA(2), args[3], qtrue );
 		return 0;
 	case G_ARGC:
 		return Cmd_Argc();
@@ -397,14 +397,14 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 	case G_ENTITIES_IN_BOX:
 		return SV_AreaEntities( (const float *)VMA(1), (const float *)VMA(2), (int *)VMA(3), args[4] );
 	case G_ENTITY_CONTACT:
-		return SV_EntityContact( (const float *)VMA(1), (const float *)VMA(2), (const sharedEntity_t *)VMA(3), /*int capsule*/ qfalse );
+		return SV_EntityContact( (const float *)VMA(1), (const float *)VMA(2), (const sharedEntity_t *)VMA(3), qfalse );
 	case G_ENTITY_CONTACTCAPSULE:
-		return SV_EntityContact( (const float *)VMA(1), (const float *)VMA(2), (const sharedEntity_t *)VMA(3), /*int capsule*/ qtrue );
+		return SV_EntityContact( (const float *)VMA(1), (const float *)VMA(2), (const sharedEntity_t *)VMA(3), qtrue );
 	case G_TRACE:
-		SV_Trace( (trace_t *)VMA(1), (const float *)VMA(2), (const float *)VMA(3), (const float *)VMA(4), (const float *)VMA(5), args[6], args[7], /*int capsule*/ qfalse, args[8], args[9] );
+		SV_Trace( (trace_t *)VMA(1), (const float *)VMA(2), (const float *)VMA(3), (const float *)VMA(4), (const float *)VMA(5), args[6], args[7], qfalse, args[8], args[9] );
 		return 0;
 	case G_TRACECAPSULE:
-		SV_Trace( (trace_t *)VMA(1), (const float *)VMA(2), (const float *)VMA(3), (const float *)VMA(4), (const float *)VMA(5), args[6], args[7], /*int capsule*/ qtrue, args[8], args[9]  );
+		SV_Trace( (trace_t *)VMA(1), (const float *)VMA(2), (const float *)VMA(3), (const float *)VMA(4), (const float *)VMA(5), args[6], args[7], qtrue, args[8], args[9]  );
 		return 0;
 	case G_POINT_CONTENTS:
 		return SV_PointContents( (const float *)VMA(1), args[2] );
@@ -432,7 +432,7 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 		SV_GetServerinfo( (char *)VMA(1), args[2] );
 		return 0;
 	case G_ADJUST_AREA_PORTAL_STATE:
-		SV_AdjustAreaPortalState( (sharedEntity_t *)VMA(1), (qboolean)args[2] );
+		SV_AdjustAreaPortalState( (sharedEntity_t *)VMA(1), (qboolean)!!args[2] );
 		return 0;
 	case G_AREAS_CONNECTED:
 		return CM_AreasConnected( args[1], args[2] );
@@ -450,7 +450,7 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 		{
 			const char	*s;
 
-			s = COM_Parse( (const char **) &sv.entityParsePoint );
+			s = COM_Parse( &sv.entityParsePoint );
 			Q_strncpyz( (char *)VMA(1), s, args[2] );
 			if ( !sv.entityParsePoint && !s[0] ) {
 				return qfalse;
@@ -520,7 +520,7 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 		return theROFFSystem.Cache( (char *)VMA(1), qfalse );
 
 	case G_ROFF_PLAY:
-		return theROFFSystem.Play(args[1], args[2], (qboolean)args[3], qfalse );
+		return theROFFSystem.Play(args[1], args[2], (qboolean)!!args[3], qfalse );
 
 	case G_ROFF_PURGE_ENT:
 		return theROFFSystem.PurgeEnt( args[1], qfalse );
@@ -908,19 +908,20 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 		return 0;
 
 	case TRAP_STRNCPY:
-		return (intptr_t)strncpy( (char *)VMA(1), (const char *)VMA(2), args[3] );
+		strncpy( (char *)VMA(1), (const char *)VMA(2), args[3] );
+		return args[1];
 
 	case TRAP_SIN:
-		return FloatAsInt( sin( VMF(1) ) );
+		return FloatAsInt( sinf( VMF(1) ) );
 
 	case TRAP_COS:
-		return FloatAsInt( cos( VMF(1) ) );
+		return FloatAsInt( cosf( VMF(1) ) );
 
 	case TRAP_ATAN2:
-		return FloatAsInt( atan2( VMF(1), VMF(2) ) );
+		return FloatAsInt( atan2f( VMF(1), VMF(2) ) );
 
 	case TRAP_SQRT:
-		return FloatAsInt( sqrt( VMF(1) ) );
+		return FloatAsInt( sqrtf( VMF(1) ) );
 
 	case TRAP_MATRIXMULTIPLY:
 		MatrixMultiply( (vec3_t *)VMA(1), (vec3_t *)VMA(2), (vec3_t *)VMA(3) );
@@ -935,10 +936,10 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 		return 0;
 
 	case TRAP_FLOOR:
-		return FloatAsInt( floor( VMF(1) ) );
+		return FloatAsInt( floorf( VMF(1) ) );
 
 	case TRAP_CEIL:
-		return FloatAsInt( ceil( VMF(1) ) );
+		return FloatAsInt( ceilf( VMF(1) ) );
 
 	case G_G2_LISTBONES:
 		G2API_ListBones( (CGhoul2Info *) VMA(1), args[2]);
@@ -1071,13 +1072,13 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 		return (int)MVAPI_SendConnectionlessPacket((const mvaddr_t *)VMA(1), (const char*)VMA(2));
 
 	case MVAPI_CONTROL_FIXES:
-		return (int)SV_MVAPI_ControlFixes((mvfix_t)args[1]);
+		return (int)SV_MVAPI_ControlFixes(args[1]);
 
 	case MVAPI_GET_VERSION:
 		return (int)MV_GetCurrentGameversion();
 
 	case MVAPI_DISABLE_STRUCT_CONVERSION:
-		return (int)MVAPI_DisableStructConversion((qboolean)args[1]);
+		return (int)MVAPI_DisableStructConversion((qboolean)!!args[1]);
 
 	default:
 		Com_Error( ERR_DROP, "Bad game system trap: %i", args[0] );
@@ -1114,10 +1115,13 @@ static void SV_InitGameVM( qboolean restart ) {
 	int apireq;
 
 	// start the entity parsing at the beginning
-	sv.entityParsePoint = CM_EntityString();
+	sv.entityParsePoint = (const char *) CM_EntityString();
 
 	// use the current msec count for a random seed
 	// init for this gamestate
+
+	mvStructConversionDisabled = qfalse;
+
 	apireq = VM_Call(gvm, GAME_INIT, svs.time, Com_Milliseconds(), restart, 0, 0, 0, 0, 0, 0, 0, 0, MV_APILEVEL);
 	VM_SetMVAPILevel(gvm, apireq);
 	Com_DPrintf("GameVM uses MVAPI level %i.\n", apireq);
@@ -1200,7 +1204,7 @@ qboolean SV_GameCommand( void ) {
 		return qfalse;
 	}
 
-	return (qboolean)VM_Call( gvm, GAME_CONSOLE_COMMAND );
+	return (qboolean)!!VM_Call( gvm, GAME_CONSOLE_COMMAND );
 }
 
 /*
@@ -1210,7 +1214,7 @@ SV_MVAPI_ControlFixes
 disable / enable toggleable fixes from the gvm
 ====================
 */
-qboolean SV_MVAPI_ControlFixes(mvfix_t fixes) {
+qboolean SV_MVAPI_ControlFixes(int fixes) {
 	if (VM_MVAPILevel(gvm) < 1) {
 		return qtrue;
 	}

@@ -163,7 +163,7 @@ void ResampleSfx (sfx_t *sfx, int iInRate, int iInWidth, byte *pData)
 	int		iSrcSample;
 	float	fStepScale;
 	int		i;
-	int		iSample;
+	short	iSample;
 	unsigned int uiSampleFrac, uiFracStep;	// uiSampleFrac MUST be unsigned, or large samples (eg music tracks) crash
 
 	fStepScale = (float)iInRate / dma.speed;	// this is usually 0.5, 1, or 2
@@ -186,10 +186,11 @@ void ResampleSfx (sfx_t *sfx, int iInRate, int iInWidth, byte *pData)
 		if (iInWidth == 2) {
 			iSample = LittleShort ( ((short *)pData)[iSrcSample] );
 		} else {
-			iSample = (int)( (unsigned char)(pData[iSrcSample]) - 128) << 8;
+			// from [0,255] to [-32768,32767] range
+			iSample = ( (int) pData[iSrcSample] << 8 ) - 0x8000;
 		}
 
-		sfx->pSoundData[i] = (short)iSample;
+		sfx->pSoundData[i] = iSample;
 
 		// work out max vol for this sample...
 		//
@@ -281,15 +282,15 @@ static qboolean S_LoadSound_FileLoadAndNameAdjuster(char *psFilename, byte **pDa
 		// account for foreign voices...
 		//
 		extern cvar_t* s_language;
-		if (s_language && stricmp("DEUTSCH",s_language->string)==0)
+		if (s_language && Q_stricmp("DEUTSCH",s_language->string)==0)
 		{
 			strncpy(psVoice,"chr_d",5);	// same number of letters as "chars"
 		}
-		else if (s_language && stricmp("FRANCAIS",s_language->string)==0)
+		else if (s_language && Q_stricmp("FRANCAIS",s_language->string)==0)
 		{
 			strncpy(psVoice,"chr_f",5);	// same number of letters as "chars"
 		}
-		else if (s_language && stricmp("ESPANOL",s_language->string)==0)
+		else if (s_language && Q_stricmp("ESPANOL",s_language->string)==0)
 		{
 			strncpy(psVoice,"chr_e",5);	// same number of letters as "chars"
 		}
@@ -393,7 +394,7 @@ static qboolean S_LoadSound_Actual( sfx_t *sfx )
 	sfx->iLastTimeUsed = Com_Milliseconds()+1;	// why +1? Hmmm, leave it for now I guess
 
 //=========
-	if (strnicmp(psExt,".mp3",4)==0)
+	if (Q_stricmpn(psExt,".mp3",4)==0)
 	{
 		// load MP3 file instead...
 		//

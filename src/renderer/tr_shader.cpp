@@ -9,7 +9,7 @@
 // unusual thing it does is add the inputed texel offsets to all four texture units (this allows
 // nearest neighbor pixel peeking).
 #ifndef DEDICATED
-const unsigned char g_strGlowVShaderARB[] =
+const char g_strGlowVShaderARB[] =
 {
 	"!!ARBvp1.0\
 	\
@@ -53,7 +53,7 @@ const unsigned char g_strGlowVShaderARB[] =
 
 // This Pixel Shader loads four texture units and adds them all together (with a modifier
 // multiplied to each in the process). The final output is r0 = t0 + t1 + t2 + t3.
-const unsigned char g_strGlowPShaderARB[] =
+const char g_strGlowPShaderARB[] =
 {
 	"!!ARBfp1.0\
 	\
@@ -105,7 +105,7 @@ static	qboolean		deferLoad;
 static	shader_t*		hashTable[FILE_HASH_SIZE];
 
 #define MAX_SHADERTEXT_HASH		2048
-static char **shaderTextHashTable[MAX_SHADERTEXT_HASH];
+static const char **shaderTextHashTable[MAX_SHADERTEXT_HASH];
 
 const int lightmapsNone[MAXLIGHTMAPS] =
 {
@@ -161,7 +161,7 @@ int R_FindHitMat(const char *fname)
 	// simple linear search, this should only be called during precache anyway
 	for (i=1; i<hitMatCount; i++)
 	{
-		if (!stricmp(hitMatReg[i].name, fname))
+		if (!Q_stricmp(hitMatReg[i].name, fname))
 		{
 			return i;
 		}
@@ -505,7 +505,7 @@ static void ParseTexMod( const char *_text, shaderStage_t *stage )
 	texModInfo_t *tmi;
 
 	if ( stage->bundle[0].numTexMods == TR_MAX_TEXMODS ) {
-		ri.Error( ERR_DROP, "ERROR: too many tcMod stages in shader '%s'\n", shader.name );
+		ri.Error( ERR_DROP, "ERROR: too many tcMod stages in shader '%s'", shader.name );
 		return;
 	}
 
@@ -842,7 +842,7 @@ static void ParseSurfaceSprites( const char *_text, shaderStage_t *stage )
 	stage->ss.fadeDist = fadedist;
 
 	// These are defaults that can be overwritten.
-	stage->ss.fadeMax = fadedist*1.33;
+	stage->ss.fadeMax = fadedist*1.33f;
 	stage->ss.fadeScale = 0.0;
 	stage->ss.wind = 0.0;
 	stage->ss.windIdle = 0.0;
@@ -1018,7 +1018,7 @@ static void ParseSurfaceSpritesOptional( const char *param, const char *_text, s
 			return;
 		}
 		value = atof(token);
-		if (value < 0.0)
+		if (value < 0.0f)
 		{
 			ri.Printf( PRINT_WARNING, "WARNING: invalid surfacesprite wind in shader '%s'\n", shader.name );
 			return;
@@ -1043,7 +1043,7 @@ static void ParseSurfaceSpritesOptional( const char *param, const char *_text, s
 			return;
 		}
 		value = atof(token);
-		if (value < 0.0)
+		if (value < 0.0f)
 		{
 			ri.Printf( PRINT_WARNING, "WARNING: invalid surfacesprite windidle in shader '%s'\n", shader.name );
 			return;
@@ -1064,7 +1064,7 @@ static void ParseSurfaceSpritesOptional( const char *param, const char *_text, s
 			return;
 		}
 		value = atof(token);
-		if (value < 0.0)
+		if (value < 0.0f)
 		{
 			ri.Printf( PRINT_WARNING, "WARNING: invalid surfacesprite vertskew in shader '%s'\n", shader.name );
 			return;
@@ -1141,7 +1141,7 @@ static void ParseSurfaceSpritesOptional( const char *param, const char *_text, s
 			return;
 		}
 		value = atof(token);
-		if (value < 0 || value > 1.0)
+		if (value < 0 || value > 1.0f)
 		{
 			ri.Printf( PRINT_WARNING, "WARNING: invalid surfacesprite fxalpha start in shader '%s'\n", shader.name );
 			return;
@@ -1155,7 +1155,7 @@ static void ParseSurfaceSpritesOptional( const char *param, const char *_text, s
 			return;
 		}
 		value = atof(token);
-		if (value < 0 || value > 1.0)
+		if (value < 0 || value > 1.0f)
 		{
 			ri.Printf( PRINT_WARNING, "WARNING: invalid surfacesprite fxalpha end in shader '%s'\n", shader.name );
 			return;
@@ -1245,7 +1245,7 @@ static qboolean ParseStage( shaderStage_t *stage, const char **text )
 				stage->bundle[0].image[0] = NULL;
 				return qfalse;
 #else
-				stage->bundle[0].image[0] = R_FindImageFile( token, (qboolean)!shader.noMipMaps, (qboolean)!shader.noPicMip, (qboolean)!shader.noTC, GL_REPEAT );
+				stage->bundle[0].image[0] = R_FindImageFileNew( token, &shader.upload, GL_REPEAT );
 				if ( !stage->bundle[0].image[0] )
 				{
 					ri.Printf( PRINT_WARNING, "WARNING: R_FindImageFile could not find '%s' in shader '%s'\n", token, shader.name );
@@ -1269,7 +1269,7 @@ static qboolean ParseStage( shaderStage_t *stage, const char **text )
 			stage->bundle[0].image[0] = NULL;
 			return qfalse;
 #else
-			stage->bundle[0].image[0] = R_FindImageFile( token, (qboolean)!shader.noMipMaps, (qboolean)!shader.noPicMip, (qboolean)!shader.noTC, GL_CLAMP );
+			stage->bundle[0].image[0] = R_FindImageFileNew( token, &shader.upload, GL_CLAMP );
 			if ( !stage->bundle[0].image[0] )
 			{
 				ri.Printf( PRINT_WARNING, "WARNING: R_FindImageFile could not find '%s' in shader '%s'\n", token, shader.name );
@@ -1308,7 +1308,7 @@ static qboolean ParseStage( shaderStage_t *stage, const char **text )
 					stage->bundle[0].image[num] = NULL;
 					return qfalse;
 #else
-					stage->bundle[0].image[num] = R_FindImageFile( token, (qboolean)!shader.noMipMaps, (qboolean)!shader.noPicMip, (qboolean)!shader.noTC, bClamp?GL_CLAMP:GL_REPEAT );
+					stage->bundle[0].image[num] = R_FindImageFileNew( token, &shader.upload, bClamp?GL_CLAMP:GL_REPEAT );
 					if ( !stage->bundle[0].image[num] )
 					{
 						ri.Printf( PRINT_WARNING, "WARNING: R_FindImageFile could not find '%s' in shader '%s'\n", token, shader.name );
@@ -1632,7 +1632,7 @@ static qboolean ParseStage( shaderStage_t *stage, const char **text )
 		// If this stage has glow...	GLOWXXX
 		else if ( Q_stricmp( token, "glow" ) == 0 )
 		{
-			stage->glow = true;
+			stage->glow = qtrue;
 
 			continue;
 		}
@@ -1838,7 +1838,7 @@ static void ParseDeform( const char **text ) {
 
 		if ( atof( token ) != 0 )
 		{
-			ds->deformationSpread = 1.0f / atof( token );
+			ds->deformationSpread = 1.0 / atof( token );
 		}
 		else
 		{
@@ -1919,7 +1919,7 @@ static void ParseSkyParms( const char **text ) {
 #ifdef DEDICATED
 			shader.sky.outerbox[i] = NULL;
 #else
-			shader.sky.outerbox[i] = R_FindImageFile( ( char * ) pathname, qtrue, qtrue, (qboolean)!shader.noTC, GL_CLAMP );
+			shader.sky.outerbox[i] = R_FindImageFile( ( char * ) pathname, qtrue, qtrue, (qboolean)!shader.upload.noTC, GL_CLAMP );
 			if ( !shader.sky.outerbox[i] ) {
 				if (i) {
 					shader.sky.outerbox[i] = shader.sky.outerbox[i-1];//not found, so let's use the previous image
@@ -1957,13 +1957,9 @@ static void ParseSkyParms( const char **text ) {
 #ifdef DEDICATED
 			shader.sky.innerbox[i] = NULL;
 #else
-			shader.sky.innerbox[i] = R_FindImageFile( ( char * ) pathname, qtrue, qtrue, (qboolean)!shader.noTC, GL_CLAMP );
+			shader.sky.innerbox[i] = R_FindImageFile( ( char * ) pathname, qtrue, qtrue, (qboolean)!shader.upload.noTC, GL_CLAMP );
 			if ( !shader.sky.innerbox[i] ) {
-				if (i) {
-					shader.sky.innerbox[i] = shader.sky.innerbox[i];//not found, so let's use the previous
-				}else{
-					shader.sky.innerbox[i] = tr.defaultImage;
-				}
+				shader.sky.innerbox[i] = tr.defaultImage;
 			}
 #endif // !DEDICATED
 		}
@@ -2170,7 +2166,7 @@ static qboolean ParseShader( const char **text )
 
 			if ( stages[s].glow )
 			{
-				shader.hasGlow = true;
+				shader.hasGlow = qtrue;
 			}
 
 			s++;
@@ -2205,15 +2201,15 @@ static qboolean ParseShader( const char **text )
 
 			token = COM_ParseExt( text, qfalse );
 			a = atof( token );
-			a = a / 180 * M_PI;
+			a = DEG2RAD( a );
 
 			token = COM_ParseExt( text, qfalse );
 			float b = atof( token );
-			b = b / 180 * M_PI;
+			b = DEG2RAD( b );
 
-			tr.sunDirection[0] = cos( a ) * cos( b );
-			tr.sunDirection[1] = sin( a ) * cos( b );
-			tr.sunDirection[2] = sin( b );
+			tr.sunDirection[0] = cosf( a ) * cosf( b );
+			tr.sunDirection[1] = sinf( a ) * cosf( b );
+			tr.sunDirection[2] = sinf( b );
 		}
 		// q3map_surfacelight deprecated as of 16 Jul 01
 		else if ( !Q_stricmp( token, "surfacelight" ) || !Q_stricmp( token, "q3map_surfacelight" ) )
@@ -2252,17 +2248,45 @@ static qboolean ParseShader( const char **text )
 			ParseSurfaceParm( text );
 			continue;
 		}
-		// no mip maps
-		else if ( !Q_stricmp( token, "nomipmaps" ) )
+		// for low-res UI elements
+		else if ( !Q_stricmp( token, "uielement" ) || !Q_stricmp( token, "nomipmaps" ) )
 		{
-			shader.noMipMaps = qtrue;
-			shader.noPicMip = qtrue;
+			shader.upload.noMipMaps = qtrue;
+			shader.upload.noPicMip = qtrue;
+			shader.upload.noLightScale = qtrue;
+			shader.upload.textureMode = GetTextureMode("GL_LINEAR");
+			continue;
+		}
+		// for high resolution UI elements
+		else if ( !Q_stricmp( token, "uielementhd" ) )
+		{
+			shader.upload.noPicMip = qtrue;
+			shader.upload.noLightScale = qtrue;
+			continue;
+		}
+		// no gamma / intensity correction
+		else if ( !Q_stricmp( token, "nolightscale" ) )
+		{
+			shader.upload.noLightScale = qtrue;
 			continue;
 		}
 		// no picmip adjustment
 		else if ( !Q_stricmp( token, "nopicmip" ) )
 		{
-			shader.noPicMip = qtrue;
+			shader.upload.noPicMip = qtrue;
+			continue;
+		}
+		// no texture compression
+		else if ( !Q_stricmp( token, "noTC" ) )
+		{
+			shader.upload.noTC = qtrue;
+			continue;
+		}
+		// force texturemode, regardless of r_texturemode cvar value
+		else if ( !Q_stricmp( token, "texturemode" ) )
+		{
+			token = COM_ParseExt( text, qfalse );
+			shader.upload.textureMode = GetTextureMode(token);
 			continue;
 		}
 		else if ( !Q_stricmp( token, "noglfog" ) )
@@ -2274,11 +2298,6 @@ static qboolean ParseShader( const char **text )
 		else if ( !Q_stricmp( token, "polygonOffset" ) )
 		{
 			shader.polygonOffset = qtrue;
-			continue;
-		}
-		else if ( !Q_stricmp( token, "noTC" ) )
-		{
-			shader.noTC = qtrue;
 			continue;
 		}
 		// entityMergable, allowing sprite surfaces from multiple entities
@@ -2377,13 +2396,13 @@ Ghoul2 Insert Start
 			// nope, better load it in and register it
 			if (!shader.hitLocation)
 			{
+				// find us a new spot in the material list - and make sure we avoid the 0 spot in the list
+				hitMatCount++;
 				// sanity check
 				if (hitMatCount == MAX_HITMAT_ENTRIES)
 				{
-					ri.Error(ERR_DROP, "Not enough entry space for hit location file %s\n", token);
+					ri.Error(ERR_DROP, "Not enough entry space for hit location file %s", token);
 				}
-				// find us a new spot in the material list - and make sure we avoid the 0 spot in the list
-				hitMatCount++;
 
 				// now load that file in
 				LoadTGAPalletteImage(token, &buffer, &hitMatReg[hitMatCount].width, &hitMatReg[hitMatCount].height);
@@ -2428,13 +2447,13 @@ Ghoul2 Insert Start
 			// nope, better load it in and register it
 			if (!shader.hitMaterial)
 			{
+				// find us a new spot in the material list - and make sure we avoid the 0 spot in the list
+				hitMatCount++;
 				// sanity check
 				if (hitMatCount == MAX_HITMAT_ENTRIES)
 				{
-					ri.Error(ERR_DROP, "Not enough entry space for hit Material file %s\n", token);
+					ri.Error(ERR_DROP, "Not enough entry space for hit Material file %s", token);
 				}
-				// find us a new spot in the material list - and make sure we avoid the 0 spot in the list
-				hitMatCount++;
 
 				// now load that file in
 				LoadTGAPalletteImage(token, &buffer, &hitMatReg[hitMatCount].width, &hitMatReg[hitMatCount].height);
@@ -2828,8 +2847,10 @@ static shader_t *GeneratePermanentShader( void ) {
 
 		for ( b = 0 ; b < NUM_TEXTURE_BUNDLES ; b++ ) {
 			size = newShader->stages[i]->bundle[b].numTexMods * sizeof( texModInfo_t );
-			newShader->stages[i]->bundle[b].texMods = (texModInfo_t *)ri.Hunk_Alloc( size, h_low );
-			Com_Memcpy( newShader->stages[i]->bundle[b].texMods, stages[i].bundle[b].texMods, size );
+			if ( size > 0 ) {
+				newShader->stages[i]->bundle[b].texMods = (texModInfo_t *)ri.Hunk_Alloc( size, h_low );
+				Com_Memcpy( newShader->stages[i]->bundle[b].texMods, stages[i].bundle[b].texMods, size );
+			}
 		}
 	}
 
@@ -3003,15 +3024,20 @@ static shader_t *FinishShader( void ) {
 	{
 		if (shader.lightmapIndex[0] == LIGHTMAP_BY_VERTEX)
 		{
-			if (lmStage < MAX_SHADER_STAGES - 1)
-			{
-				memmove(&stages[lmStage], &stages[lmStage + 1], sizeof(shaderStage_t) * (MAX_SHADER_STAGES - lmStage - 1));
+			if (lmStage == 0)	//< MAX_SHADER_STAGES-1)
+			{//copy the rest down over the lightmap slot
+				memmove(&stages[lmStage], &stages[lmStage+1], sizeof(shaderStage_t) * (MAX_SHADER_STAGES-lmStage-1));
+				memset(&stages[MAX_SHADER_STAGES-1], 0, sizeof(shaderStage_t));
+				//change blending on the moved down stage
+				stages[lmStage].stateBits = GLS_DEFAULT;
 			}
-			memset(&stages[MAX_SHADER_STAGES - 1], 0, sizeof(shaderStage_t));
-			stages[lmStage].rgbGen = CGEN_VERTEX;
+			//if lmStage == 0 change anything that was moved down to use vertex color
+			//otherwise use *white shaded with vertex color as lightmap
+			//assumptions: 1 shader has no lightmaps loaded (so lightmap stage uses *white shader)
+			//2 alphaGen was identity or skip 3 typical lightmap usage if lmStage == 0
+			stages[lmStage].rgbGen = CGEN_EXACT_VERTEX;
 			stages[lmStage].alphaGen = AGEN_SKIP;
-			stages[lmStage].stateBits = GLS_DEFAULT;
-			lmStage = MAX_SHADER_STAGES;
+			lmStage = MAX_SHADER_STAGES;	//skip the style checking below
 		}
 	}
 
@@ -3287,28 +3313,6 @@ static const char *FindShaderInShaderText( const char *shadername ) {
 		}
 	}
 
-	p = s_shaderText;
-
-	if ( !p ) {
-		return NULL;
-	}
-
-	// look for label
-	while ( 1 ) {
-		token = COM_ParseExt( &p, qtrue );
-		if ( token[0] == 0 ) {
-			break;
-		}
-
-		if ( !Q_stricmp( token, shadername ) ) {
-			return p;
-		}
-		else {
-			// skip the definition
-			SkipBracedSection( &p );
-		}
-	}
-
 	return NULL;
 }
 
@@ -3380,7 +3384,7 @@ inline qboolean IsShader(shader_t *sh, const char *name, const int *lightmapInde
 }
 
 // Dynamic Glow
-qboolean MV_IsGlowStage( shader_t *shader, shaderStage_t *stage )
+static qboolean MV_IsGlowStage( shader_t *shader, shaderStage_t *stage )
 {
 	int i;
 
@@ -3585,7 +3589,7 @@ shader_t *R_FindShader( const char *name, const int *lightmapIndex, const byte *
 #endif //!DEDICATED
 }
 
-
+#if 0
 qhandle_t RE_RegisterShaderFromImage(const char *name, int *lightmapIndex, byte *styles, image_t *image, qboolean mipRawImage) {
 	int			i, hash;
 	shader_t	*sh;
@@ -3677,7 +3681,7 @@ qhandle_t RE_RegisterShaderFromImage(const char *name, int *lightmapIndex, byte 
 	sh = FinishShader();
   return sh->index;
 }
-
+#endif // 0
 
 /*
 ====================
@@ -3879,126 +3883,91 @@ a single large text block that can be scanned for shader names
 #define	MAX_SHADER_FILES	4096
 static void ScanAndLoadShaderFiles( const char *path )
 {
-	char **shaderFiles;
+	char **shaderFiles[2];
 	char *buffers[MAX_SHADER_FILES];
-	char *p;
-	int numShaders;
-	int i;
-	char *oldp, *token, *hashMem;
+	const char *p;
+	char *pw;
+	int numShaderFiles;
+	int numShaderFilesType[2];
+	int i, j, type;
+	const char *oldp, *token;
+	char *hashMem;
 	int shaderTextHashTableSizes[MAX_SHADERTEXT_HASH], hash, size;
-	int numDynGlowShaders;
-	char *dynGlowBuffers[MAX_SHADER_FILES];
+	int sum;
 
-	int sum = 0;
 	// scan for shader files
-	shaderFiles = ri.FS_ListFiles( path, ".shader", &numShaders );
+	shaderFiles[0] = ri.FS_ListFiles( path, ".shader_mv", &numShaderFilesType[0] );
+	shaderFiles[1] = ri.FS_ListFiles( path, ".shader", &numShaderFilesType[1] );
 
-	if ( !shaderFiles || !numShaders )
+	if ( !shaderFiles[0] )
 	{
-		ri.Printf( PRINT_WARNING, "WARNING: no shader files found\n" );
-		return;
+		numShaderFilesType[0] = 0;
+	}
+	if ( !shaderFiles[1] )
+	{
+		numShaderFilesType[1] = 0;
 	}
 
-	if ( numShaders > MAX_SHADER_FILES ) {
-		numShaders = MAX_SHADER_FILES;
+	if ( numShaderFilesType[0] + numShaderFilesType[1] > MAX_SHADER_FILES ) {
+		ri.Printf( PRINT_WARNING, "WARNING: too many shader files, truncating...\n" );
+		numShaderFilesType[0] = MIN(numShaderFilesType[0], MAX_SHADER_FILES);
+		numShaderFilesType[1] = MAX_SHADER_FILES - numShaderFilesType[0];
 	}
 
+	numShaderFiles = numShaderFilesType[0] + numShaderFilesType[1];
+
+	if (numShaderFiles == 0) {
+			ri.Error( ERR_FATAL, "ERROR: no shader files found" );
+	}
+
+	assert(numShaderFilesType[0] > 0 || numShaderFilesType[1] > 0);
+	sum = 0;
 	// load and parse shader files
-	for ( i = 0; i < numShaders; i++ )
-	{
-		char filename[MAX_QPATH];
+	for ( type = 0, j = 0; type < 2; type++ ) {
+		for ( i = 0; i < numShaderFilesType[type]; i++, j++ )
+		{
+			char filename[MAX_QPATH];
 
-		Com_sprintf( filename, sizeof( filename ), "%s/%s", path, shaderFiles[i] );
-		ri.Printf( PRINT_ALL, "...loading '%s'\n", filename );
-		sum += ri.FS_ReadFile( filename, (void **)&buffers[i] );
-		if ( !buffers[i] ) {
-			ri.Error( ERR_DROP, "Couldn't load %s", filename );
+			Com_sprintf( filename, sizeof( filename ), "%s/%s", path, shaderFiles[type][i] );
+			ri.Printf( PRINT_ALL, "...loading '%s'\n", filename );
+			ri.FS_ReadFile( filename, (void **)&buffers[j] );
+			if ( !buffers[j] ) {
+				ri.Error( ERR_DROP, "Couldn't load %s", filename );
+			}
+			sum += COM_Compress(buffers[j]);
 		}
 	}
 
 	// build single large buffer
-	s_shaderText = (char *)ri.Hunk_Alloc( sum + numShaders*2, h_low );
-
-	// free in reverse order, so the temp files are all dumped
-	for ( i = numShaders - 1; i >= 0 ; i-- ) {
-		strcat( s_shaderText, "\n" );
-		p = &s_shaderText[strlen(s_shaderText)];
-		strcat( s_shaderText, buffers[i] );
+	s_shaderText = (char *)ri.Hunk_Alloc( sum + numShaderFiles + 1, h_low );
+	pw = s_shaderText;
+	for ( i = 0; i < numShaderFiles ; i++ ) {
+		strcat( pw, buffers[i] );
+		strcat( pw, "\n" );
+		pw += strlen( pw );
 		ri.FS_FreeFile( (void*) buffers[i] );
-		buffers[i] = p;
-		COM_Compress(p);
 	}
+	assert(strlen(s_shaderText) == sum + numShaderFiles);
 
 	// free up memory
-	ri.FS_FreeFileList( shaderFiles );
-
-	shaderFiles = ri.FS_ListFiles( path, ".dynGlow", &numDynGlowShaders );
-
-	if ( !shaderFiles || !numDynGlowShaders )
-	{
-		ri.Printf( PRINT_WARNING, "WARNING: no dynGlowShader files found\n" );
-	}
-	else
-	{
-		if ( numDynGlowShaders > MAX_SHADER_FILES ) {
-			numDynGlowShaders = MAX_SHADER_FILES;
-		}
-
-		// load and parse shader files
-		for ( i = 0; i < numDynGlowShaders; i++ )
-		{
-			char filename[MAX_QPATH];
-
-			Com_sprintf( filename, sizeof( filename ), "%s/%s", path, shaderFiles[i] );
-			ri.Printf( PRINT_ALL, "...loading '%s'\n", filename );
-			sum += ri.FS_ReadFile( filename, (void **)&dynGlowBuffers[i] );
-			if ( !dynGlowBuffers[i] ) {
-				ri.Error( ERR_DROP, "Couldn't load %s", filename );
-			}
-		}
-
-		// build single large buffer
-		mv_dynGlowShaders = (char *)ri.Hunk_Alloc( sum + numDynGlowShaders*2 + 2, h_low );
-
-		// free in reverse order, so the temp files are all dumped
-		for ( i = numDynGlowShaders - 1; i >= 0 ; i-- ) {
-			strcat( mv_dynGlowShaders, "\n" );
-			p = &mv_dynGlowShaders[strlen(mv_dynGlowShaders)];
-			strcat( mv_dynGlowShaders, dynGlowBuffers[i] );
-			ri.FS_FreeFile( (void*) dynGlowBuffers[i] );
-			dynGlowBuffers[i] = p;
-			COM_Compress(p);
-		}
-		strcat( mv_dynGlowShaders, "\n" );
-
-		// free up memory
-		ri.FS_FreeFileList( shaderFiles );
-	}
+	ri.FS_FreeFileList( shaderFiles[0] );
+	ri.FS_FreeFileList( shaderFiles[1] );
 
 	Com_Memset(shaderTextHashTableSizes, 0, sizeof(shaderTextHashTableSizes));
 	size = 0;
-	//
-	for ( i = 0; i < numShaders; i++ ) {
-		// pointer to the first shader file
-		p = buffers[i];
-		// look for label
-		while ( 1 ) {
-			token = COM_ParseExt( (const char **)&p, qtrue );
-			if ( token[0] == 0 ) {
-				break;
-			}
+	p = s_shaderText;
 
-			hash = generateHashValue(token, MAX_SHADERTEXT_HASH);
-			shaderTextHashTableSizes[hash]++;
-			size++;
-			SkipBracedSection((const char **)&p);
-			// if we passed the pointer to the next shader file
-			if ( i < numShaders - 1 ) {
-				if ( p > buffers[i+1] ) {
-					break;
-				}
-			}
+	while ( 1 ) {
+		// look for label
+		token = COM_ParseExt( &p, qtrue );
+		if ( token[0] == 0 ) {
+			break;
 		}
+
+		hash = generateHashValue(token, MAX_SHADERTEXT_HASH);
+		shaderTextHashTableSizes[hash]++;
+		size++;
+		SkipBracedSection(&p);
 	}
 
 	size += MAX_SHADERTEXT_HASH;
@@ -4006,38 +3975,89 @@ static void ScanAndLoadShaderFiles( const char *path )
 	hashMem = (char *)ri.Hunk_Alloc( size * sizeof(char *), h_low );
 
 	for (i = 0; i < MAX_SHADERTEXT_HASH; i++) {
-		shaderTextHashTable[i] = (char **) hashMem;
+		shaderTextHashTable[i] = (const char **) hashMem;
 		hashMem = ((char *) hashMem) + ((shaderTextHashTableSizes[i] + 1) * sizeof(char *));
 	}
 
 	Com_Memset(shaderTextHashTableSizes, 0, sizeof(shaderTextHashTableSizes));
-	//
-	for ( i = 0; i < numShaders; i++ ) {
-		// pointer to the first shader file
-		p = buffers[i];
-		// look for label
-		while ( 1 ) {
-			oldp = p;
-			token = COM_ParseExt( (const char **)&p, qtrue );
-			if ( token[0] == 0 ) {
-				break;
-			}
 
-			hash = generateHashValue(token, MAX_SHADERTEXT_HASH);
-			shaderTextHashTable[hash][shaderTextHashTableSizes[hash]++] = oldp;
-
-			SkipBracedSection((const char **)&p);
-			// if we passed the pointer to the next shader file
-			if ( i < numShaders - 1 ) {
-				if ( p > buffers[i+1] ) {
-					break;
-				}
-			}
+	// look for label
+	p = s_shaderText;
+	while ( 1 ) {
+		oldp = p;
+		token = COM_ParseExt( &p, qtrue );
+		if ( token[0] == 0 ) {
+			break;
 		}
+
+		hash = generateHashValue(token, MAX_SHADERTEXT_HASH);
+		shaderTextHashTable[hash][shaderTextHashTableSizes[hash]++] = oldp;
+
+		SkipBracedSection(&p);
+	}
+}
+
+/*
+====================
+ScanAndLoadDynGlowFiles
+====================
+*/
+static void ScanAndLoadDynGlowFiles( const char *path )
+{
+	char	**shaderFiles;
+	char	*dynGlowBuffers[MAX_SHADER_FILES];
+	char	*p;
+	int		numDynGlowShaders;
+	int		sum, i;
+
+	shaderFiles = ri.FS_ListFiles( path, ".dynGlow", &numDynGlowShaders );
+	assert(numDynGlowShaders >= 0);
+	mv_dynGlowShaders = NULL;
+
+	if ( !shaderFiles || !numDynGlowShaders )
+	{
+		ri.Printf( PRINT_WARNING, "WARNING: no dynGlow shader files found\n" );
+		return;
 	}
 
-	return;
+	if ( numDynGlowShaders > MAX_SHADER_FILES ) {
+		ri.Printf( PRINT_WARNING, "WARNING: too many dynGlow shader files, truncating...\n" );
+		numDynGlowShaders = MAX_SHADER_FILES;
+	}
 
+	sum = 0;
+	// load and parse shader files
+	for ( i = 0; i < numDynGlowShaders; i++ )
+	{
+		char filename[MAX_QPATH];
+
+		Com_sprintf( filename, sizeof( filename ), "%s/%s", path, shaderFiles[i] );
+		ri.Printf( PRINT_ALL, "...loading '%s'\n", filename );
+		ri.FS_ReadFile( filename, (void **)&dynGlowBuffers[i] );
+		if ( !dynGlowBuffers[i] ) {
+			ri.Error( ERR_DROP, "Couldn't load %s", filename );
+		}
+		sum += COM_Compress(dynGlowBuffers[i]);
+	}
+
+	// build single large buffer
+	mv_dynGlowShaders = (char *)ri.Hunk_Alloc( sum + numDynGlowShaders + 1, h_low );
+
+	p = mv_dynGlowShaders;
+	for ( i = numDynGlowShaders - 1; i >= 0 ; i-- ) {
+		if (!r_saberGlow->integer && !Q_stricmp(shaderFiles[i], "sabers.dynglow")) {
+			ri.FS_FreeFile( (void*) dynGlowBuffers[i] );
+			continue;
+		}
+
+		strcat( p, dynGlowBuffers[i] );
+		strcat( p, "\n" );
+		p += strlen(p);
+		ri.FS_FreeFile( (void*) dynGlowBuffers[i] );
+	}
+
+	// free up memory
+	ri.FS_FreeFileList( shaderFiles );
 }
 
 /*
@@ -4064,11 +4084,12 @@ const char *g_GammaPixelShaderARB = {
 
 qboolean MV_GammaGenerateProgram() {
 	int err = 0;
+	assert(qglGenProgramsARB);
 
 	// vertex shader
 	qglGenProgramsARB(1, &tr.gammaVertexShader);
 	qglBindProgramARB(GL_VERTEX_PROGRAM_ARB, tr.gammaVertexShader);
-	qglProgramStringARB(GL_VERTEX_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, (int)strlen((char *)g_GammaVertexShaderARB), g_GammaVertexShaderARB);
+	qglProgramStringARB(GL_VERTEX_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, (int)strlen(g_GammaVertexShaderARB), g_GammaVertexShaderARB);
 	qglGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &err);
 	if (err != -1) {
 		return qtrue;
@@ -4077,7 +4098,7 @@ qboolean MV_GammaGenerateProgram() {
 	// pixel shader
 	qglGenProgramsARB(1, &tr.gammaPixelShader);
 	qglBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, tr.gammaPixelShader);
-	qglProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, (int)strlen((char *)g_GammaPixelShaderARB), g_GammaPixelShaderARB);
+	qglProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, (int)strlen(g_GammaPixelShaderARB), g_GammaPixelShaderARB);
 	qglGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &err);
 	if (err != -1) {
 		return qtrue;
@@ -4120,7 +4141,7 @@ static void CreateInternalShaders( void ) {
 	{
 		qglGenProgramsARB( 1, &tr.glowVShader );
 		qglBindProgramARB( GL_VERTEX_PROGRAM_ARB, tr.glowVShader );
-		qglProgramStringARB(GL_VERTEX_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, (int)strlen((char *)g_strGlowVShaderARB), g_strGlowVShaderARB);
+		qglProgramStringARB(GL_VERTEX_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, (int)strlen(g_strGlowVShaderARB), g_strGlowVShaderARB);
 
 //		const GLubyte *strErr = qglGetString( GL_PROGRAM_ERROR_STRING_ARB );
 		int iErrPos = 0;
@@ -4184,7 +4205,7 @@ static void CreateInternalShaders( void ) {
 	{
 		qglGenProgramsARB( 1, &tr.glowPShader );
 		qglBindProgramARB( GL_FRAGMENT_PROGRAM_ARB, tr.glowPShader );
-		qglProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, (int)strlen((char *)g_strGlowPShaderARB), g_strGlowPShaderARB);
+		qglProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, (int)strlen(g_strGlowPShaderARB), g_strGlowPShaderARB);
 
 //		const GLubyte *strErr = qglGetString( GL_PROGRAM_ERROR_STRING_ARB );
 		int iErrPos = 0;
@@ -4196,7 +4217,7 @@ static void CreateInternalShaders( void ) {
 
 #ifndef DEDICATED
 	// gamma correction
-	if (glConfig.deviceSupportsPostprocessingGamma && r_gammamethod->integer == GAMMA_POSTPROCESSING) {
+	if (r_gammamethod->integer == GAMMA_POSTPROCESSING) {
 		if (MV_GammaGenerateProgram()) {
 			ri.Printf(PRINT_WARNING, "WARNING: failed initializing gamma program... falling back to hardware gamma correction\n");
 			glConfig.deviceSupportsPostprocessingGamma = qfalse;
@@ -4235,6 +4256,7 @@ Ghoul2 Insert End
 	CreateInternalShaders();
 
 	ScanAndLoadShaderFiles("shaders");
+	ScanAndLoadDynGlowFiles("shaders");
 
 	CreateExternalShaders();
 

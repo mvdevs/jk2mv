@@ -43,7 +43,9 @@ cvar_t	*cl_drawRecording;
 cvar_t	*cl_shownet;
 cvar_t	*cl_showSend;
 cvar_t	*cl_timedemo;
-cvar_t	*cl_avidemo;
+cvar_t	*cl_aviFrameRate;
+cvar_t	*cl_aviMotionJpeg;
+cvar_t	*cl_aviMotionJpegQuality;
 cvar_t	*cl_forceavidemo;
 
 cvar_t	*cl_freelook;
@@ -75,6 +77,7 @@ cvar_t	*cl_autolodscale;
 cvar_t	*mv_slowrefresh;
 cvar_t	*mv_coloredTextShadows;
 cvar_t	*mv_consoleShiftRequirement;
+cvar_t	*mv_menuOverride;
 
 cvar_t	*cl_downloadName;
 cvar_t	*cl_downloadLocalName;
@@ -125,6 +128,74 @@ void CL_ServerStatus_f(void);
 void CL_ServerStatusResponse( netadr_t from, msg_t *msg );
 
 /*
+===============
+CL_Video_f
+
+video
+video [filename]
+===============
+*/
+void CL_Video_f( void )
+{
+	char  filename[ MAX_OSPATH ];
+	int   i, last;
+
+	if( !clc.demoplaying )
+		{
+			Com_Printf( "The video command can only be used when playing back demos\n" );
+			return;
+		}
+
+	if( Cmd_Argc( ) == 2 )
+		{
+			// explicit filename
+			Com_sprintf( filename, MAX_OSPATH, "videos/%s.avi", Cmd_Argv( 1 ) );
+		}
+	else
+		{
+			// scan for a free filename
+			for( i = 0; i <= 9999; i++ )
+				{
+					int a, b, c, d;
+
+					last = i;
+
+					a = last / 1000;
+					last -= a * 1000;
+					b = last / 100;
+					last -= b * 100;
+					c = last / 10;
+					last -= c * 10;
+					d = last;
+
+					Com_sprintf( filename, MAX_OSPATH, "videos/video%d%d%d%d.avi",
+						     a, b, c, d );
+
+					if( !FS_FileExists( filename ) )
+						break; // file doesn't exist
+				}
+
+			if( i > 9999 )
+				{
+					Com_Printf( S_COLOR_RED "ERROR: no free file names to create video\n" );
+					return;
+				}
+		}
+
+	CL_OpenAVIForWriting( filename );
+}
+
+/*
+===============
+CL_StopVideo_f
+===============
+*/
+void CL_StopVideo_f( void )
+{
+	CL_CloseAVI( );
+}
+
+/*
 =======================================================================
 
 CLIENT RELIABLE COMMAND COMMUNICATION
@@ -161,7 +232,7 @@ CL_ChangeReliableCommand
 void CL_ChangeReliableCommand( void ) {
 	int r, index, l;
 
-	r = clc.reliableSequence - ((int)(random()) * 5);
+	r = clc.reliableSequence - ((int)(qrandom()) * 5);
 	index = clc.reliableSequence & ( MAX_RELIABLE_COMMANDS - 1 );
 	l = (int)strlen(clc.reliableCommands[index]);
 	if ( l >= MAX_STRING_CHARS - 1 ) {
@@ -417,19 +488,9 @@ void CL_DemoCompleted( void ) {
 		}
 	}
 
-/*	CL_Disconnect( qtrue );
 	CL_NextDemo();
-	*/
-
-	//rww - The above code seems to just stick you in a no-menu state and you can't do anything there.
-	//I'm not sure why it ever worked in TA, but whatever. This code will bring us back to the main menu
-	//after a demo is finished playing instead.
 	CL_Disconnect_f();
-	MV_SetCurrentGameversion(VERSION_UNDEF); // Set the protocol to undefined after completing the demo.
-	S_StopAllSounds();
-	VM_Call( uivm, UI_SET_ACTIVE_MENU, UIMENU_MAIN );
-
-	CL_NextDemo();
+	// disconnect here does long jump, don't put anything after
 }
 
 /*
@@ -530,7 +591,7 @@ void CL_PlayDemo_f( void ) {
 		{
 			if (!Q_stricmp(arg, "(null)"))
 			{
-				Com_Error( ERR_DROP, SP_GetStringTextString("CON_TEXT_NO_DEMO_SELECTED") );
+				Com_Error( ERR_DROP, "%s", SP_GetStringTextString("CON_TEXT_NO_DEMO_SELECTED") );
 			}
 			else
 			{
@@ -552,7 +613,7 @@ void CL_PlayDemo_f( void ) {
 			{
 				if (!Q_stricmp(arg, "(null)"))
 				{
-					Com_Error( ERR_DROP, SP_GetStringTextString("CON_TEXT_NO_DEMO_SELECTED") );
+					Com_Error( ERR_DROP, "%s", SP_GetStringTextString("CON_TEXT_NO_DEMO_SELECTED") );
 				}
 				else
 				{
@@ -637,11 +698,10 @@ CL_ShutdownAll
 =====================
 */
 void CL_ShutdownAll(void) {
-	// so the download aborts when the server changes map while downloading something
-	if (cls.curl) {
-		curl_multi_remove_handle(cls.curlm, cls.curl);
-	}
+	CL_KillDownload();
 
+	// stop recording
+	CL_CloseAVI();
 	// clear sounds
 	S_DisableSounds();
 	// shutdown CGame
@@ -782,17 +842,7 @@ void CL_Disconnect( qboolean showMainMenu ) {
 
 	com_demoplaying = qfalse;
 
-	if (clc.download) {
-		FS_FCloseFile( clc.download );
-		clc.download = 0;
-	}
-	*clc.downloadTempName = *clc.downloadName = 0;
-	Cvar_Set("cl_downloadName", "");
-
-	// if a HTTP download is running, kill it
-	if (cls.curl) {
-		curl_multi_remove_handle(cls.curlm, cls.curl);
-	}
+	CL_KillDownload();
 
 	if ( clc.demofile ) {
 		FS_FCloseFile( clc.demofile );
@@ -835,6 +885,12 @@ void CL_Disconnect( qboolean showMainMenu ) {
 
 	// not connected to a pure server anymore
 	cl_connectedToPureServer = qfalse;
+
+	if( CL_VideoRecording( ) ) {
+		// Finish rendering current frame
+		SCR_UpdateScreen( );
+		CL_CloseAVI( );
+	}
 }
 
 
@@ -997,7 +1053,7 @@ void CL_RequestAuthorization( void ) {
 	}
 
 	fs = Cvar_Get ("cl_anonymous", "0", CVAR_INIT|CVAR_SYSTEMINFO );
-	NET_OutOfBandPrint(NS_CLIENT, cls.authorizeServer, va("getKeyAuthorize %i %s", fs->integer, nums) );
+	NET_OutOfBandPrint(NS_CLIENT, cls.authorizeServer, "getKeyAuthorize %i %s", fs->integer, nums);
 }
 
 #endif // USE_CD_KEY
@@ -1049,7 +1105,8 @@ void CL_Setenv_f( void ) {
 			strcat( buffer, " " );
 		}
 
-		putenv( buffer );
+		if ( putenv( buffer ) != 0 )
+			Com_Printf( "Unable to set environment variable\n" );
 	} else if ( argc == 2 ) {
 		char *env = getenv( Cmd_Argv(1) );
 
@@ -1274,7 +1331,7 @@ CL_ResetPureClientAtServer
 =================
 */
 void CL_ResetPureClientAtServer( void ) {
-	CL_AddReliableCommand( va("vdr") );
+	CL_AddReliableCommand( "vdr" );
 }
 
 /*
@@ -1289,6 +1346,8 @@ doesn't know what graphics to reload
 */
 void CL_Vid_Restart_f( void ) {
 
+	// Settings may have changed so stop recording now
+	CL_CloseAVI( );
 	// don't let them loop during the restart
 	S_StopAllSounds();
 	// shutdown the UI
@@ -1669,28 +1728,12 @@ void CL_ContinueCurrentDownload(dldecision_t decision) {
 		if (!Q_stricmp(cl_downloadProtocol->string, "HTTP")) {
 			char remotepath[MAX_STRING_CHARS];
 
-			Q_strncpyz(remotepath, va("%s/%s", clc.httpdl, cl_downloadName->string), sizeof(remotepath));
+			Com_sprintf(remotepath, sizeof(remotepath), "%s/%s", clc.httpdl, cl_downloadName->string);
 			Com_DPrintf("HTTP URL: %s\n", remotepath);
 
-			cls.curl = curl_easy_init();
-			if (cls.curl) {
-				curl_easy_setopt(cls.curl, CURLOPT_URL, remotepath);
-				curl_easy_setopt(cls.curl, CURLOPT_WRITEFUNCTION, CL_ParseHTTPDownload);
-				curl_easy_setopt(cls.curl, CURLOPT_PROGRESSFUNCTION, CL_ProgressHTTPDownload);
-				curl_easy_setopt(cls.curl, CURLOPT_NOPROGRESS, 0);
-				curl_easy_setopt(cls.curl, CURLOPT_CONNECTTIMEOUT, 5);
-				curl_easy_setopt(cls.curl, CURLOPT_BUFFERSIZE, 16384);
-				curl_easy_setopt(cls.curl, CURLOPT_FAILONERROR, 1);
-				curl_easy_setopt(cls.curl, CURLOPT_USERAGENT, Q3_VERSION);
-				curl_easy_setopt(cls.curl, CURLOPT_REFERER, va("jk2://%s", NET_AdrToString(clc.serverAddress)));
-#ifdef _DEBUG
-				curl_easy_setopt(cls.curl, CURLOPT_MAX_RECV_SPEED_LARGE, (curl_off_t)(2.5 * 1024 * 1024)); // my eyes aren't fast enough for this (limit to max. 2.5MB/s)
-#endif
-				curl_multi_add_handle(cls.curlm, cls.curl);
-			} else {
-				Com_DPrintf("failed initializing curl handle\n");
-				CL_NextDownload();
-			}
+			char *tmp_os_path = FS_BuildOSPath(Cvar_VariableString("fs_homepath"), clc.downloadTempName);
+			
+			clc.httpHandle = NET_HTTP_StartDownload(remotepath, tmp_os_path, CL_EndHTTPDownload, CL_ProcessHTTPDownload, Q3_VERSION, va("jk2://%s", NET_AdrToString(clc.serverAddress)));
 		} else {
 			clc.downloadBlock = 0; // Starting new file
 			clc.downloadCount = 0;
@@ -2323,7 +2366,9 @@ void CL_ConnectionlessPacket( netadr_t from, msg_t *msg ) {
 
 #ifdef MV_MFDOWNLOADS
 	if (strtol(c, NULL, 10) && cls.state == CA_CONNECTING && NET_CompareAdr(from, clc.serverAddress)) {
-		Q_strncpyz(clc.httpdl, va("http://%i.%i.%i.%i:%s", clc.serverAddress.ip[0], clc.serverAddress.ip[1], clc.serverAddress.ip[2], clc.serverAddress.ip[3], c), sizeof(clc.httpdl));
+		Com_sprintf(clc.httpdl, sizeof(clc.httpdl), "http://%i.%i.%i.%i:%s",
+			clc.serverAddress.ip[0], clc.serverAddress.ip[1],
+			clc.serverAddress.ip[2], clc.serverAddress.ip[3], c);
 
 		return;
 	}
@@ -2409,7 +2454,7 @@ void CL_CheckTimeout( void ) {
 		if (++cl.timeoutcount > 5) {	// timeoutcount saves debugger
 			const char *psTimedOut = SP_GetStringTextString("SVINGAME_SERVER_CONNECTION_TIMED_OUT");
 			Com_Printf ("\n%s\n",psTimedOut);
-			Com_Error(ERR_DROP, psTimedOut);
+			Com_Error(ERR_DROP, "%s", psTimedOut);
 			//CL_Disconnect( qtrue );
 			return;
 		}
@@ -2458,8 +2503,6 @@ static unsigned int frameCount;
 static float avgFrametime=0.0;
 extern void SP_CheckForLanguageUpdates(void);
 void CL_Frame ( int msec ) {
-	int runningcurls;
-
 	if ( !com_cl_running->integer ) {
 		return;
 	}
@@ -2475,19 +2518,22 @@ void CL_Frame ( int msec ) {
 	}
 
 	// if recording an avi, lock to a fixed fps
-	if ( cl_avidemo->integer && msec) {
+	if ( CL_VideoRecording() && cl_aviFrameRate->integer && msec) {
 		// save the current screen
 		if ( cls.state == CA_ACTIVE || cl_forceavidemo->integer) {
-			if (cl_avidemo->integer > 0) {
-				Cbuf_ExecuteText( EXEC_NOW, "screenshot silent\n" );
-			} else {
-				Cbuf_ExecuteText( EXEC_NOW, "screenshot_tga silent\n" );
-			}
-		}
-		// fixed time for next frame'
-		msec = (1000 / abs(cl_avidemo->integer)) * com_timescale->value;
-		if (msec == 0) {
-			msec = 1;
+			static double	overflow = 0.0;
+			double			frameTime;
+
+			CL_TakeVideoFrame();
+
+			frameTime = (1000.0 / abs(cl_aviFrameRate->integer)) * com_timescale->value;
+			frameTime += overflow;
+
+			msec = floor(frameTime);
+			if (msec == 0)
+				msec = 1;
+
+			overflow = frameTime - msec;
 		}
 	}
 
@@ -2511,41 +2557,10 @@ void CL_Frame ( int msec ) {
 		{
 			sprintf(mess,"Frame rate=%f\n\n",1000.0f*(1.0/(avgFrametime/32.0f)));
 	//		OutputDebugString(mess);
-			Com_Printf(mess);
+			Com_Printf("%s", mess);
 			avgFrametime=0.0f;
 		}
 		frameCount++;
-	}
-
-	// progress http downloads
-	for (int i = 0; i < 10; i++) {
-		curl_multi_perform(cls.curlm, &runningcurls);
-		if (runningcurls == 0 && cls.curl) {
-			int msgs;
-			CURLMsg *msg;
-
-			msg = curl_multi_info_read(cls.curlm, &msgs);
-			if (msg) {
-				if (msg->data.result == CURLE_OK) {
-					CL_EndHTTPDownload(qfalse);
-				} else {
-					CL_EndHTTPDownload(qtrue);
-					Com_Error(ERR_DROP, "^3JK2MV: HTTP Download of %s failed with error %s\n", cl_downloadLocalName->string, curl_easy_strerror(msg->data.result));
-				}
-			} else {
-				// this case means it has been aborted by the user
-				Com_DPrintf("HTTP Download aborted by user\n");
-				CL_EndHTTPDownload(qtrue);
-			}
-
-			curl_easy_cleanup(cls.curl);
-			cls.curl = NULL;
-
-			if (cls.state > CA_DISCONNECTED) {
-				CL_NextDownload();
-				break;
-			}
-		}
 	}
 
 	cls.realtime += cls.frametime;
@@ -2614,7 +2629,7 @@ void QDECL CL_RefPrintf( int print_level, const char *fmt, ...) {
 	char		msg[MAXPRINTMSG];
 
 	va_start (argptr,fmt);
-	vsprintf (msg,fmt,argptr);
+	Q_vsnprintf (msg, sizeof(msg), fmt, argptr);
 	va_end (argptr);
 
 	if ( print_level == PRINT_ALL ) {
@@ -2657,14 +2672,14 @@ void CL_InitRenderer( void ) {
 	cls.charSetShader = re.RegisterShaderNoMip( "gfx/2d/bigchars" );
 #endif
 
-	cls.font_ocr_a = re.RegisterFont("ocr_a");
-
 	cls.whiteShader = re.RegisterShader( "white" );
 	cls.consoleShader = re.RegisterShader( "console" );
 	cls.recordingShader = re.RegisterShaderNoMip("gfx/2d/demorec");
 	cls.ratioFix = (float)(SCREEN_WIDTH * cls.glconfig.vidHeight) / (float)(SCREEN_HEIGHT * cls.glconfig.vidWidth);
-	g_console_field_width = cls.glconfig.vidWidth / SMALLCHAR_WIDTH - 2;
-	kg.g_consoleField.widthInChars = g_console_field_width;
+	cls.xadjust = (float) SCREEN_WIDTH / cls.glconfig.vidWidth;
+	cls.yadjust = (float) SCREEN_HEIGHT / cls.glconfig.vidHeight;
+
+	kg.yankIndex = -1;
 }
 
 /*
@@ -2765,6 +2780,8 @@ void CL_InitRef( void ) {
 	ri.CIN_PlayCinematic = CIN_PlayCinematic;
 	ri.CIN_RunCinematic = CIN_RunCinematic;
 
+	ri.CL_WriteAVIVideoFrame = CL_WriteAVIVideoFrame;
+
 	ri.CM_PointContents = CM_PointContents;
 
 	ret = GetRefAPI( REF_API_VERSION, &ri );
@@ -2847,7 +2864,9 @@ void CL_Init( void ) {
 	cl_drawRecording = Cvar_Get ("cl_drawRecording", "1", CVAR_ARCHIVE | CVAR_GLOBAL );
 
 	cl_timedemo = Cvar_Get ("timedemo", "0", 0);
-	cl_avidemo = Cvar_Get ("cl_avidemo", "0", 0);
+	cl_aviFrameRate = Cvar_Get ("cl_aviFrameRate", "30", CVAR_ARCHIVE);
+	cl_aviMotionJpeg = Cvar_Get ("cl_aviMotionJpeg", "1", CVAR_ARCHIVE);
+	cl_aviMotionJpegQuality = Cvar_Get("cl_aviMotionJpegQuality", "90", CVAR_ARCHIVE);
 	cl_forceavidemo = Cvar_Get ("cl_forceavidemo", "0", 0);
 
 	rconAddress = Cvar_Get ("rconAddress", "", 0);
@@ -2924,13 +2943,12 @@ void CL_Init( void ) {
 	// autorecord
 	cl_autoDemo = Cvar_Get ("cl_autoDemo", "0", CVAR_ARCHIVE | CVAR_GLOBAL );
 	cl_autoDemoFormat = Cvar_Get ("cl_autoDemoFormat", "%t_%m", CVAR_ARCHIVE | CVAR_GLOBAL );
-	Cmd_AddCommand ("saveDemo", demoAutoSave_f);
-	Cmd_AddCommand ("saveDemoLast", demoAutoSaveLast_f);
 
 	// mv cvars
 	mv_slowrefresh = Cvar_Get("mv_slowrefresh", "3", CVAR_ARCHIVE | CVAR_GLOBAL);
 	mv_coloredTextShadows	= Cvar_Get("mv_coloredTextShadows"	, "2", CVAR_ARCHIVE | CVAR_GLOBAL);
 	mv_consoleShiftRequirement = Cvar_Get("mv_consoleShiftRequirement", "1", CVAR_ARCHIVE | CVAR_GLOBAL);
+	mv_menuOverride = Cvar_Get("mv_menuOverride", "0", CVAR_INIT | CVAR_VM_NOWRITE);
 
 	cl_downloadName = Cvar_Get("cl_downloadName", "", CVAR_INTERNAL);
 	cl_downloadLocalName = Cvar_Get("cl_downloadLocalName", "", CVAR_INTERNAL);
@@ -2967,6 +2985,10 @@ void CL_Init( void ) {
 	Cmd_AddCommand ("fs_referencedList", CL_ReferencedPK3List_f );
 	Cmd_AddCommand ("model", CL_SetModel_f );
 	Cmd_AddCommand ("forcepowers", CL_SetForcePowers_f );
+	Cmd_AddCommand ("saveDemo", demoAutoSave_f);
+	Cmd_AddCommand ("saveDemoLast", demoAutoSaveLast_f);
+	Cmd_AddCommand ("video", CL_Video_f);
+	Cmd_AddCommand ("stopvideo", CL_StopVideo_f);
 
 	CL_InitRef();
 
@@ -2979,9 +3001,6 @@ void CL_Init( void ) {
 #ifdef G2_COLLISION_ENABLED
 	G2VertSpaceClient = new CMiniHeap(G2_VERT_SPACE_CLIENT_SIZE * 1024);
 #endif
-
-	curl_global_init(CURL_GLOBAL_ALL);
-	cls.curlm = curl_multi_init();
 
 	Com_Printf( "----- Client Initialization Complete -----\n" );
 }
@@ -3024,7 +3043,7 @@ void CL_Shutdown( void ) {
 
 	Cmd_RemoveCommand ("cmd");
 	Cmd_RemoveCommand ("configstrings");
-	Cmd_RemoveCommand ("userinfo");
+	Cmd_RemoveCommand ("clientinfo");
 	Cmd_RemoveCommand ("snd_restart");
 	Cmd_RemoveCommand ("vid_restart");
 	Cmd_RemoveCommand ("disconnect");
@@ -3033,6 +3052,7 @@ void CL_Shutdown( void ) {
 	Cmd_RemoveCommand ("cinematic");
 	Cmd_RemoveCommand ("stoprecord");
 	Cmd_RemoveCommand ("connect");
+	Cmd_RemoveCommand ("reconnect");
 	Cmd_RemoveCommand ("localservers");
 	Cmd_RemoveCommand ("globalservers");
 	Cmd_RemoveCommand ("rcon");
@@ -3040,17 +3060,20 @@ void CL_Shutdown( void ) {
 	Cmd_RemoveCommand ("ping");
 	Cmd_RemoveCommand ("serverstatus");
 	Cmd_RemoveCommand ("showip");
+	Cmd_RemoveCommand ("fs_openedList");
+	Cmd_RemoveCommand ("fs_referencedList");
 	Cmd_RemoveCommand ("model");
 	Cmd_RemoveCommand ("forcepowers");
+	Cmd_RemoveCommand ("saveDemo");
+	Cmd_RemoveCommand ("saveDemoLast");
+	Cmd_RemoveCommand ("video");
+	Cmd_RemoveCommand ("stopvideo");
 
 	Cvar_Set( "cl_running", "0" );
 
 	recursive = qfalse;
 
 	Com_Memset( &cls, 0, sizeof( cls ) );
-
-	curl_multi_cleanup(cls.curlm);
-	curl_global_cleanup();
 
 	Com_Printf( "-----------------------\n" );
 
@@ -3069,12 +3092,12 @@ static void CL_SetServerInfo(serverInfo_t *server, const char *info, int ping) {
 			server->minPing = atoi(Info_ValueForKey(info, "minping"));
 			server->maxPing = atoi(Info_ValueForKey(info, "maxping"));
 //			server->allowAnonymous = atoi(Info_ValueForKey(info, "sv_allowAnonymous"));
-			server->needPassword = (qboolean)atoi(Info_ValueForKey(info, "needpass" ));
+			server->needPassword = (qboolean)!!atoi(Info_ValueForKey(info, "needpass" ));
 			server->trueJedi = atoi(Info_ValueForKey(info, "truejedi" ));
 			server->weaponDisable = atoi(Info_ValueForKey(info, "wdisable" ));
 			server->forceDisable = atoi(Info_ValueForKey(info, "fdisable" ));
 			server->protocol = atoi(Info_ValueForKey(info, "protocol"));
-//			server->pure = (qboolean)atoi(Info_ValueForKey(info, "pure" ));
+//			server->pure = (qboolean)!!atoi(Info_ValueForKey(info, "pure" ));
 		}
 		server->ping = ping;
 	}
@@ -3208,7 +3231,9 @@ void CL_ServerInfoPacket( netadr_t from, msg_t *msg ) {
 			
 			val = Info_ValueForKey(infoString, "mvhttp");
 			if (strtol(val, NULL, 10)) {
-				Q_strncpyz(clc.httpdl, va("http://%i.%i.%i.%i:%s", clc.serverAddress.ip[0], clc.serverAddress.ip[1], clc.serverAddress.ip[2], clc.serverAddress.ip[3], val), sizeof(clc.httpdl));
+				Com_sprintf(clc.httpdl, sizeof(clc.httpdl), "http://%i.%i.%i.%i:%s",
+					clc.serverAddress.ip[0], clc.serverAddress.ip[1],
+					clc.serverAddress.ip[2], clc.serverAddress.ip[3], val);
 			} else if ((val = Info_ValueForKey(infoString, "mvhttpurl")) && Q_stristr(val, "http://")) {
 				Q_strncpyz(clc.httpdl, val, sizeof(clc.httpdl));
 
@@ -4129,7 +4154,7 @@ void CL_GetVMGLConfig(vmglconfig_t *vmglconfig) {
 	vmglconfig->depthBits = cls.glconfig.depthBits;
 	vmglconfig->stencilBits = cls.glconfig.stencilBits;
 
-	vmglconfig->deviceSupportsGamma = cls.glconfig.deviceSupportsGamma;
+	vmglconfig->deviceSupportsGamma = (qboolean)(cls.glconfig.deviceSupportsGamma || cls.glconfig.deviceSupportsPostprocessingGamma);
 	vmglconfig->textureCompression = cls.glconfig.textureCompression;
 	vmglconfig->textureEnvAddAvailable = cls.glconfig.textureEnvAddAvailable;
 	vmglconfig->textureFilterAnisotropicAvailable = cls.glconfig.textureFilterAnisotropicMax == 0.0f ? qfalse : qtrue;

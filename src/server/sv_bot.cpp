@@ -118,7 +118,7 @@ void QDECL BotImport_Print(int type, char *fmt, ...)
 	va_list ap;
 
 	va_start(ap, fmt);
-	vsprintf(str, fmt, ap);
+	Q_vsnprintf(str, sizeof(str), fmt, ap);
 	va_end(ap);
 
 	switch(type) {
@@ -154,7 +154,9 @@ void QDECL BotImport_Print(int type, char *fmt, ...)
 BotImport_Trace
 ==================
 */
-void BotImport_Trace(bsp_trace_t *bsptrace, vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, int passent, int contentmask) {
+void BotImport_Trace(bsp_trace_t *bsptrace, const vec3_t start, const vec3_t mins,
+					 const vec3_t maxs, const vec3_t end, int passent, int contentmask)
+{
 	trace_t trace;
 
 	SV_Trace(&trace, start, mins, maxs, end, passent, contentmask, qfalse, 0, 10);
@@ -305,7 +307,7 @@ BotImport_HunkAlloc
 */
 void *BotImport_HunkAlloc( int size ) {
 	if( Hunk_CheckMark() ) {
-		Com_Error( ERR_DROP, "SV_Bot_HunkAlloc: Alloc with marks already set\n" );
+		Com_Error( ERR_DROP, "SV_Bot_HunkAlloc: Alloc with marks already set" );
 	}
 	return Hunk_Alloc( size, h_high );
 }
@@ -403,7 +405,7 @@ void BotImport_DebugLineShow(int line, vec3_t start, vec3_t end, int color) {
 	VectorSubtract(end, start, dir);
 	VectorNormalize(dir);
 	dot = DotProduct(dir, up);
-	if (dot > 0.99 || dot < -0.99) VectorSet(cross, 1, 0, 0);
+	if (dot > 0.99f || dot < -0.99f) VectorSet(cross, 1, 0, 0);
 	else CrossProduct(dir, up, cross);
 
 	VectorNormalize(cross);

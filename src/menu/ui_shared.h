@@ -80,11 +80,11 @@
 #define ASSET_SCROLL_THUMB		  "gfx/menus/scrollbar_thumb.tga"
 #define ASSET_SLIDER_BAR			"menu/new/slider"
 #define ASSET_SLIDER_THUMB			"menu/new/sliderthumb"
-#define SCROLLBAR_SIZE 16.0
-#define SLIDER_WIDTH 96.0
-#define SLIDER_HEIGHT 16.0
-#define SLIDER_THUMB_WIDTH 12.0
-#define SLIDER_THUMB_HEIGHT 20.0
+#define SCROLLBAR_SIZE 16.0f
+#define SLIDER_WIDTH 96.0f
+#define SLIDER_HEIGHT 16.0f
+#define SLIDER_THUMB_WIDTH 12.0f
+#define SLIDER_THUMB_HEIGHT 20.0f
 #define	NUM_CROSSHAIRS			10
 
 typedef struct {
@@ -329,7 +329,7 @@ typedef struct {
 typedef struct
 {
 	const char *name;
-	qboolean (*handler) (itemDef_t *item, char** args);
+	qboolean (*handler) (itemDef_t *item, const char** args);
 } commandDef_t;
 
 typedef struct {
@@ -337,7 +337,7 @@ typedef struct {
   void (*setColor) (const vec4_t v);
   void (*drawHandlePic) (float x, float y, float w, float h, qhandle_t asset);
   void (*drawStretchPic) (float x, float y, float w, float h, float s1, float t1, float s2, float t2, qhandle_t hShader );
-  void (*drawText) (float x, float y, float scale, vec4_t color, const char *text, float adjust, int limit, int style, int iMenuFont);
+  void (*drawText) (float x, float y, float scale, const vec4_t color, const char *text, float adjust, int limit, int style, int iMenuFont);
   int (*textWidth) (const char *text, float scale, int iMenuFont);
   int (*textHeight) (const char *text, float scale, int iMenuFont);
   qhandle_t (*registerModel) (const char *p);
@@ -361,8 +361,8 @@ typedef struct {
   void (*ownerDrawItem) (float x, float y, float w, float h, float text_x, float text_y, int ownerDraw, int ownerDrawFlags, int align, float special, float scale, vec4_t color, qhandle_t shader, int textStyle,int iMenuFont);
 	float (*getValue) (int ownerDraw);
 	qboolean (*ownerDrawVisible) (int flags);
-  void (*runScript)(char **p);
-  qboolean (*deferScript)(char **p);
+  void (*runScript)(const char **p);
+  qboolean (*deferScript)(const char **p);
   void (*getTeamColor)(vec4_t *color);
   void (*getCVarString)(const char *cvar, char *buffer, int bufsize);
   float (*getCVarValue)(const char *cvar);
@@ -380,7 +380,7 @@ typedef struct {
 	void (*getBindingBuf)( int keynum, char *buf, int buflen );
 	void (*setBinding)( int keynum, const char *binding );
 	void (*executeText)(int exec_when, const char *text );
-	void (*Error)(int level, const char *error, ...);
+	Q_PTR_NORETURN void (*Error)(int level, const char *error, ...);
 	void (*Print)(const char *msg, ...);
 	void (*Pause)(qboolean b);
 	int (*ownerDrawWidth)(int ownerDraw, float scale);
@@ -423,12 +423,11 @@ menuDef_t *Menu_GetFocused();
 void Menu_HandleKey(menuDef_t *menu, int key, qboolean down);
 void Menu_HandleMouseMove(menuDef_t *menu, float x, float y);
 void Menu_ScrollFeeder(menuDef_t *menu, int feeder, qboolean down);
-qboolean Float_Parse(char **p, float *f);
-qboolean Color_Parse(char **p, vec4_t *c);
-qboolean Int_Parse(char **p, int *i);
-qboolean Rect_Parse(char **p, rectDef_t *r);
-qboolean String_Parse(char **p, const char **out);
-qboolean Script_Parse(char **p, const char **out);
+qboolean Float_Parse(const char **p, float *f);
+qboolean Color_Parse(const char **p, vec4_t *c);
+qboolean Int_Parse(const char **p, int *i);
+qboolean Rect_Parse(const char **p, rectDef_t *r);
+qboolean String_Parse(const char **p, const char **out);
 qboolean PC_Float_Parse(int handle, float *f);
 qboolean PC_Color_Parse(int handle, vec4_t *c);
 qboolean PC_Int_Parse(int handle, int *i);
@@ -473,14 +472,6 @@ int			trap_PC_ReadToken				( int handle, pc_token_t *pc_token );
 int			trap_PC_SourceFileAndLine		( int handle, char *filename, int *line );
 int			trap_PC_LoadGlobalDefines		( const char* filename );
 void		trap_PC_RemoveAllGlobalDefines	( void );
-
-int			trap_R_Font_StrLenPixels(const char *text, const int iFontIndex, const float scale);
-int			trap_R_Font_StrLenChars(const char *text);
-int			trap_R_Font_HeightPixels(const int iFontIndex, const float scale);
-void		trap_R_Font_DrawString(int ox, int oy, const char *text, const float *rgba, const int setIndex, int iCharLimit, const float scale);
-qboolean	trap_Language_IsAsian(void);
-qboolean	trap_Language_UsesSpaces(void);
-unsigned int trap_AnyLanguage_ReadCharFromString( const char *psText, int *piAdvanceCount, qboolean *pbIsTrailingPunctuation );
 
 qboolean	trap_SP_RegisterServer( const char *package );
 qboolean	trap_SP_Register(char *file );

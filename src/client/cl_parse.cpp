@@ -598,55 +598,61 @@ void CL_ParseUDPDownload ( msg_t *msg ) {
 
 /*
 =====================
-CL_ParseHTTPDownload
-
-A HTTP download chunk has been received from the server
-=====================
-*/
-size_t CL_ParseHTTPDownload(char *ptr, size_t size, size_t nmemb, void *dummy) {
-	// open the file if not opened yet
-	if (!clc.download) {
-		clc.download = FS_SV_FOpenFileWrite(clc.downloadTempName);
-	}
-
-	return (size_t)FS_Write(ptr, (int)(size * nmemb), clc.download);
-}
-
-/*
-=====================
 CL_EndHTTPDownload
 
-A HTTP download chunk has been received from the server
+HTTP download ended
 =====================
 */
-void CL_EndHTTPDownload(qboolean abort) {
-	if (clc.download) {
-		FS_FCloseFile(clc.download);
-		clc.download = 0;
-	}
-
-	if (!abort) {
+void CL_EndHTTPDownload(dlHandle_t handle, qboolean success, const char *err_msg) {
+	if (success) {
 		FS_SV_Rename(clc.downloadTempName, clc.downloadName);
+	} else {
+		Com_Error(ERR_DROP, "Download Error: %s", err_msg);
 	}
 
 	*clc.downloadTempName = *clc.downloadName = 0;
 	Cvar_Set("cl_downloadName", "");
+
+	CL_NextDownload();
 }
 
 /*
 =====================
-CL_ProgressHTTPDownload
+CL_ProcessHTTPDownload
 
 Current status of the HTTP download has changed
 =====================
 */
-int CL_ProgressHTTPDownload(void *clientp, double dltotal, double dlnow, double ultotal, double ulnow) {
+void CL_ProcessHTTPDownload(size_t dltotal, size_t dlnow) {
 	if (dltotal && dlnow) {
 		Cvar_SetValue("cl_downloadSize", (int)dltotal);
 		Cvar_SetValue("cl_downloadCount", (int)dlnow);
 	}
+}
 
-	return 0;
+/*
+=====================
+CL_DownloadRunning
+=====================
+*/
+qboolean CL_DownloadRunning() {
+	return (qboolean)(strlen(clc.downloadName) > 0);
+}
+
+/*
+=====================
+CL_KillDownload
+=====================
+*/
+void CL_KillDownload() {
+	NET_HTTP_StopDownload(clc.httpHandle);
+
+	if (clc.download) {
+		FS_FCloseFile(clc.download);
+		clc.download = 0;
+	}
+	*clc.downloadTempName = *clc.downloadName = 0;
+	Cvar_Set("cl_downloadName", "");
 }
 
 /*
@@ -733,7 +739,7 @@ void CL_ParseServerMessage( msg_t *msg ) {
 	// other commands
 		switch ( cmd ) {
 		default:
-			Com_Error (ERR_DROP,"CL_ParseServerMessage: Illegible server message\n");
+			Com_Error (ERR_DROP,"CL_ParseServerMessage: Illegible server message");
 			break;
 		case svc_nop:
 			break;
@@ -750,6 +756,8 @@ void CL_ParseServerMessage( msg_t *msg ) {
 			CL_ParseUDPDownload( msg );
 			break;
 		case svc_mapchange:
+			CL_KillDownload();
+
 			if (cgvm)
 			{
 				VM_Call( cgvm, CG_MAP_CHANGE );

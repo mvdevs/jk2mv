@@ -15,6 +15,8 @@
 #define CONSOLE_PROMPT_CHAR ']'
 #define	MAX_EDIT_LINE		256
 #define COMMAND_HISTORY		128 // increased in jk2mv
+#define FIELD_HISTORY_SIZE	32
+#define KILL_RING_SIZE		16
 
 //For determining whether to allow 1.02 color codes:
 #define MV_USE102COLOR (MV_GetCurrentGameversion() == VERSION_1_02 || MV_GetCurrentGameversion() == VERSION_1_03)
@@ -23,13 +25,24 @@ typedef struct {
 	int		cursor;
 	int		scroll;
 	int		widthInChars;
-	char	buffer[MAX_EDIT_LINE];
+	char	*buffer;
+
+	char	bufferHistory[FIELD_HISTORY_SIZE][MAX_EDIT_LINE];
+	int		cursorHistory[FIELD_HISTORY_SIZE];
+	int		scrollHistory[FIELD_HISTORY_SIZE];
+	int		historyTail;
+	int		historyHead;
+	int		currentTail;
+
+	qboolean	typing;
+	qboolean	mod;
 } field_t;
 
 typedef void ( *callbackFunc_t )( const char *s );
 typedef void (*completionFunc_t)( char *args, int argNum );
 
 // common.cpp
+void Field_CheckRep( field_t *edit );
 void Field_Clear( field_t *edit );
 void Field_AutoComplete( field_t *edit );
 void Field_AutoComplete2( field_t *field, qboolean doCommands, qboolean doCvars, qboolean doArguments );
@@ -161,9 +174,19 @@ typedef enum {
 
 void		NET_Init( void );
 void		NET_Shutdown( void );
-void		NET_Restart( void );
 void		NET_Config( qboolean enableNetworking );
 void		NET_Restart_f(void);
+
+typedef int dlHandle_t;
+typedef void(*dl_ended_callback)(dlHandle_t handle, qboolean success, const char *err_msg);
+typedef void(*dl_status_callback)(size_t total_bytes, size_t downloaded_bytes);
+
+void		NET_HTTP_Shutdown();
+void		NET_HTTP_ProcessEvents();
+int			NET_HTTP_StartServer(int port);
+void		NET_HTTP_StopServer();
+dlHandle_t	NET_HTTP_StartDownload(const char *url, const char *toPath, dl_ended_callback ended_callback, dl_status_callback status_callback, const char *userAgent, const char *referer);
+void		NET_HTTP_StopDownload(dlHandle_t handle);
 
 void		NET_SendPacket (netsrc_t sock, int length, const void *data, netadr_t to);
 void		QDECL NET_OutOfBandPrint( netsrc_t net_socket, netadr_t adr, const char *format, ...);
@@ -449,7 +472,8 @@ modules of the program.
 
 */
 
-cvar_t *Cvar_Get( const char *var_name, const char *value, int flags );
+cvar_t *Cvar_Get( const char *var_name, const char *var_value, int flags );
+cvar_t *Cvar_Get( const char *var_name, const char *var_value, int flags, qboolean isVmCall );
 // creates the variable if it doesn't exist, or returns the existing one
 // if it exists, the value will not be changed, but flags will be ORed in
 // that allows variables to be unarchived without needing bitflags
@@ -462,28 +486,35 @@ void	Cvar_Update( vmCvar_t *vmCvar );
 // updates an interpreted modules' version of a cvar
 
 void 	Cvar_Set( const char *var_name, const char *value );
+cvar_t *Cvar_Set2( const char *var_name, const char *value, qboolean force );
+cvar_t *Cvar_Set2( const char *var_name, const char *value, qboolean force, qboolean isVmCall );
 // will create the variable with no flags if it doesn't exist
 
 void Cvar_SetLatched( const char *var_name, const char *value);
 // don't set the cvar immediately
 
 void	Cvar_SetValue( const char *var_name, float value );
+void	Cvar_SetValue( const char *var_name, float value, qboolean isVmCall );
 // expands value to a string and calls Cvar_Set
 
 cvar_t *Cvar_FindVar(const char *var_name);
 
 float	Cvar_VariableValue( const char *var_name );
+float	Cvar_VariableValue( const char *var_name, qboolean isVmCall );
 int		Cvar_VariableIntegerValue( const char *var_name );
+int		Cvar_VariableIntegerValue( const char *var_name, qboolean isVmCall );
 // returns 0 if not defined or non numeric
 
 char	*Cvar_VariableString( const char *var_name );
 void	Cvar_VariableStringBuffer( const char *var_name, char *buffer, int bufsize );
+void	Cvar_VariableStringBuffer( const char *var_name, char *buffer, int bufsize, qboolean isVmCall );
 // returns an empty string if not defined
 
 void	Cvar_CommandCompletion( void(*callback)(const char *s) );
 // callback with each valid string
 
 void 	Cvar_Reset( const char *var_name );
+void	Cvar_Reset( const char *var_name, qboolean isVmCall );
 
 void	Cvar_SetCheatState( void );
 // reset all testing vars to a safe value
@@ -500,10 +531,12 @@ void Cvar_WriteVariables(fileHandle_t f, qboolean locals);
 void	Cvar_Init( void );
 
 char	*Cvar_InfoString( int bit );
+char	*Cvar_InfoString( int bit, qboolean isVmCall );
 char	*Cvar_InfoString_Big( int bit );
 // returns an info string containing all the cvars that have the given bit set
 // in their flags ( CVAR_USERINFO, CVAR_SERVERINFO, CVAR_SYSTEMINFO, etc )
 void	Cvar_InfoStringBuffer( int bit, char *buff, int buffsize );
+void	Cvar_InfoStringBuffer( int bit, char* buff, int buffsize, qboolean isVmCall );
 
 void	Cvar_Restart_f( void );
 
@@ -512,6 +545,9 @@ extern	int			cvar_modifiedFlags;
 // a single check can determine if any CVAR_USERINFO, CVAR_SERVERINFO,
 // etc, variables have been modified since the last check.  The bit
 // can then be cleared to allow another change detection.
+
+void FS_HomeRemove( const char *homePath );
+qboolean FS_IsFifo( const char *filename );
 
 /*
 ==============================================================
@@ -531,7 +567,6 @@ issues.
 #define FS_GENERAL_REF	0x01
 #define FS_UI_REF		0x02
 #define FS_CGAME_REF	0x04
-#define FS_QAGAME_REF	0x08
 // number of id paks that will never be autodownloaded from base
 #define NUM_ID_PAKS		9
 
@@ -613,6 +648,7 @@ int		FS_filelength( fileHandle_t f );
 // doesn't work for files that are opened from a pack file
 
 char	*FS_BuildOSPath(const char *base, const char *game, const char *qpath);
+char	*FS_BuildOSPath(const char *base, const char *path);
 
 int		FS_FTell( fileHandle_t f );
 // where are we?
@@ -629,10 +665,7 @@ int		FS_FOpenFileByModeHash( const char *qpath, fileHandle_t *f, fsMode_t mode, 
 int		FS_Seek( fileHandle_t f, int offset, int origin );
 // seek on a file (doesn't work for zip files!!!!!!!!)
 
-qboolean FS_FilenameCompare( const char *s1, const char *s2 );
-
-const char *FS_GamePureChecksum( void );
-// Returns the checksum of the pk3 from which the server loaded the qagame.qvm
+int		FS_FilenameCompare( const char *s1, const char *s2 );
 
 const char *FS_LoadedPakNames( void );
 const char *FS_LoadedPakChecksums( void );
@@ -657,12 +690,11 @@ void FS_PureServerSetLoadedPaks( const char *pakSums, const char *pakNames );
 // separated checksums will be checked for files, with the
 // sole exception of .cfg files.
 
-qboolean FS_idPak(const char *pak, const char *base);
 qboolean FS_CheckDirTraversal(const char *checkdir);
 qboolean FS_ComparePaks(char *neededpaks, int len, int *chksums, size_t maxchksums, qboolean dlstring);
 void FS_Rename( const char *from, const char *to );
 
-qboolean FS_MV_VerifyDownloadPath(const char *pk3file);
+const char *FS_MV_VerifyDownloadPath(const char *pk3file);
 
 int FS_GetDLList(dlfile_t *files, int maxfiles);
 qboolean FS_RMDLPrefix(const char *qpath);
@@ -705,6 +737,7 @@ void		Info_Print( const char *s );
 void		Com_BeginRedirect (char *buffer, int buffersize, void (*flush)(char *));
 void		Com_EndRedirect( void );
 void 		QDECL Com_Printf( const char *fmt, ... );
+void		QDECL Com_Printf_Ext( qboolean extendedColors, const char *msg, ... );
 void 		QDECL Com_DPrintf( const char *fmt, ... );
 void		QDECL Com_OPrintf( const char *fmt, ...); // Outputs to the VC / Windows Debug window (only in debug compile)
 Q_NORETURN void QDECL  Com_Error( int code, const char *fmt, ... );
@@ -714,7 +747,7 @@ int			Com_Milliseconds( void );	// will be journaled properly
 unsigned	Com_BlockChecksum( const void *buffer, int length );
 unsigned	Com_BlockChecksumKey (void *buffer, int length, int key);
 int			Com_HashKey(char *string, int maxlen);
-int			Com_Filter(char *filter, char *name, int casesensitive);
+int			Com_Filter(const char *filter, const char *name, int casesensitive);
 int			Com_FilterPath(char *filter, char *name, int casesensitive);
 int			Com_RealTime(qtime_t *qtime);
 qboolean	Com_SafeMode( void );
@@ -876,7 +909,7 @@ void CL_JoystickEvent( int axis, int value, int time );
 
 void CL_PacketEvent( netadr_t from, msg_t *msg );
 
-void CL_ConsolePrint( char *text );
+void CL_ConsolePrint( const char *text, qboolean extendedColors );
 
 void CL_MapLoading( void );
 // do a screen update before starting to load a map
@@ -906,6 +939,8 @@ void S_ClearSoundBuffer( void );
 
 void SCR_DebugGraph (float value, int color);	// FIXME: move logging to common?
 
+// AVI files have the start of pixel lines 4 byte-aligned
+#define AVI_LINE_PADDING 4
 
 //
 // server interface
@@ -992,18 +1027,5 @@ mvprotocol_t MV_GetCurrentProtocol();
 void MV_CopyStringWithColors( const char *src, char *dst, int dstSize, int nonColors );
 int MV_StrlenSkipColors( const char *str );
 
-typedef void* mvmutex_t;
-
-mvmutex_t MV_CreateMutex();
-void MV_DestroyMutex(mvmutex_t mutex);
-void MV_LockMutex(mvmutex_t mutex);
-void MV_ReleaseMutex(mvmutex_t mutex);
-
-void MV_StartThread(void *addr);
-
-void MV_MSleep(unsigned int msec);
-
-extern "C" long QDECL Q_ftol(float f);
 extern "C" int QDECL Q_VMftol();
-
 #endif // _QCOMMON_H_

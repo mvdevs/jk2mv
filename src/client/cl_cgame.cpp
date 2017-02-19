@@ -490,7 +490,7 @@ rescan:
 	cmd = Cmd_Argv(0);
 
 	if ( !strcmp( cmd, "disconnect" ) ) {
-		Com_Error (ERR_SERVERDISCONNECT, SP_GetStringTextString("SVINGAME_SERVER_DISCONNECTED"));//"Server disconnected\n");
+		Com_Error (ERR_SERVERDISCONNECT, "%s", SP_GetStringTextString("SVINGAME_SERVER_DISCONNECTED"));//"Server disconnected");
 	}
 
 	if ( !strcmp( cmd, "bcs0" ) ) {
@@ -662,10 +662,10 @@ intptr_t CL_CgameSystemCalls(intptr_t *args) {
 		Cvar_Update( (vmCvar_t *)VMA(1) );
 		return 0;
 	case CG_CVAR_SET:
-		Cvar_Set( (const char *)VMA(1), (const char *)VMA(2) );
+		Cvar_Set2( (const char *)VMA(1), (const char *)VMA(2), qtrue, qtrue );
 		return 0;
 	case CG_CVAR_VARIABLESTRINGBUFFER:
-		Cvar_VariableStringBuffer( (const char *)VMA(1), (char *)VMA(2), args[3] );
+		Cvar_VariableStringBuffer( (const char *)VMA(1), (char *)VMA(2), args[3], qtrue );
 		return 0;
 	case CG_ARGC:
 		return Cmd_Argc();
@@ -714,24 +714,24 @@ intptr_t CL_CgameSystemCalls(intptr_t *args) {
 	case CG_CM_INLINEMODEL:
 		return CM_InlineModel( args[1] );
 	case CG_CM_TEMPBOXMODEL:
-		return CM_TempBoxModel( (const float *)VMA(1), (const float *)VMA(2), /*int capsule*/ qfalse );
+		return CM_TempBoxModel( (const float *)VMA(1), (const float *)VMA(2), qfalse );
 	case CG_CM_TEMPCAPSULEMODEL:
-		return CM_TempBoxModel( (const float *)VMA(1), (const float *)VMA(2), /*int capsule*/ qtrue );
+		return CM_TempBoxModel( (const float *)VMA(1), (const float *)VMA(2), qtrue );
 	case CG_CM_POINTCONTENTS:
 		return CM_PointContents( (const float *)VMA(1), args[2] );
 	case CG_CM_TRANSFORMEDPOINTCONTENTS:
 		return CM_TransformedPointContents( (const float *)VMA(1), args[2], (const float *)VMA(3), (const float *)VMA(4) );
 	case CG_CM_BOXTRACE:
-		CM_BoxTrace( (trace_t *)VMA(1), (const float *)VMA(2), (const float *)VMA(3), (const float *)VMA(4), (const float *)VMA(5), args[6], args[7], /*int capsule*/ qfalse );
+		CM_BoxTrace( (trace_t *)VMA(1), (const float *)VMA(2), (const float *)VMA(3), (const float *)VMA(4), (const float *)VMA(5), args[6], args[7], qfalse );
 		return 0;
 	case CG_CM_CAPSULETRACE:
-		CM_BoxTrace( (trace_t *)VMA(1), (const float *)VMA(2), (const float *)VMA(3), (const float *)VMA(4), (const float *)VMA(5), args[6], args[7], /*int capsule*/ qtrue );
+		CM_BoxTrace( (trace_t *)VMA(1), (const float *)VMA(2), (const float *)VMA(3), (const float *)VMA(4), (const float *)VMA(5), args[6], args[7], qtrue );
 		return 0;
 	case CG_CM_TRANSFORMEDBOXTRACE:
-		CM_TransformedBoxTrace( (trace_t *)VMA(1), (const float *)VMA(2), (const float *)VMA(3), (const float *)VMA(4), (const float *)VMA(5), args[6], args[7], (const float *)VMA(8), (const float *)VMA(9), /*int capsule*/ qfalse );
+		CM_TransformedBoxTrace( (trace_t *)VMA(1), (const float *)VMA(2), (const float *)VMA(3), (const float *)VMA(4), (const float *)VMA(5), args[6], args[7], (const float *)VMA(8), (const float *)VMA(9), qfalse );
 		return 0;
 	case CG_CM_TRANSFORMEDCAPSULETRACE:
-		CM_TransformedBoxTrace( (trace_t *)VMA(1), (const float *)VMA(2), (const float *)VMA(3), (const float *)VMA(4), (const float *)VMA(5), args[6], args[7], (const float *)VMA(8), (const float *)VMA(9), /*int capsule*/ qtrue );
+		CM_TransformedBoxTrace( (trace_t *)VMA(1), (const float *)VMA(2), (const float *)VMA(3), (const float *)VMA(4), (const float *)VMA(5), args[6], args[7], (const float *)VMA(8), (const float *)VMA(9), qtrue );
 		return 0;
 	case CG_CM_MARKFRAGMENTS:
 		return re.MarkFragments( args[1], (const vec3_t *)VMA(2), (const float *)VMA(3), args[4], (float *)VMA(5), args[6], (markFragment_t *)VMA(7) );
@@ -745,7 +745,7 @@ intptr_t CL_CgameSystemCalls(intptr_t *args) {
 		S_StartLocalSound( args[1], args[2] );
 		return 0;
 	case CG_S_CLEARLOOPINGSOUNDS:
-		S_ClearLoopingSounds((qboolean)args[1]);
+		S_ClearLoopingSounds((qboolean)!!args[1]);
 		return 0;
 	case CG_S_ADDLOOPINGSOUND:
 		S_AddLoopingSound( args[1], (const float *)VMA(2), (const float *)VMA(3), args[4] );
@@ -891,19 +891,20 @@ intptr_t CL_CgameSystemCalls(intptr_t *args) {
 		Com_Memcpy( VMA(1), VMA(2), args[3] );
 		return 0;
 	case CGAME_STRNCPY:
-		return strncpy( (char *)VMA(1), (const char *)VMA(2), args[3] ) ? 1:0;
+		strncpy( (char *)VMA(1), (const char *)VMA(2), args[3] );
+		return args[1];
 	case CGAME_SIN:
-		return FloatAsInt( sin( VMF(1) ) );
+		return FloatAsInt( sinf( VMF(1) ) );
 	case CGAME_COS:
-		return FloatAsInt( cos( VMF(1) ) );
+		return FloatAsInt( cosf( VMF(1) ) );
 	case CGAME_ATAN2:
-		return FloatAsInt( atan2( VMF(1), VMF(2) ) );
+		return FloatAsInt( atan2f( VMF(1), VMF(2) ) );
 	case CGAME_SQRT:
-		return FloatAsInt( sqrt( VMF(1) ) );
+		return FloatAsInt( sqrtf( VMF(1) ) );
 	case CGAME_FLOOR:
-		return FloatAsInt( floor( VMF(1) ) );
+		return FloatAsInt( floorf( VMF(1) ) );
 	case CGAME_CEIL:
-		return FloatAsInt( ceil( VMF(1) ) );
+		return FloatAsInt( ceilf( VMF(1) ) );
 	case CGAME_ACOS:
 		return FloatAsInt( Q_acos( VMF(1) ) );
 
@@ -1129,7 +1130,7 @@ intptr_t CL_CgameSystemCalls(intptr_t *args) {
 		return theROFFSystem.Cache( (char *)VMA(1), qtrue );
 
 	case CG_ROFF_PLAY:
-		return theROFFSystem.Play(args[1], args[2], (qboolean)args[3], qtrue );
+		return theROFFSystem.Play(args[1], args[2], (qboolean)!!args[3], qtrue );
 
 	case CG_ROFF_PURGE_ENT:
 		return theROFFSystem.PurgeEnt( args[1], qtrue );
@@ -1317,7 +1318,7 @@ Ghoul2 Insert End
 		return 0;
 
 	case MVAPI_CONTROL_FIXES:
-		return (int)CL_MVAPI_ControlFixes((mvfix_t)args[1]);
+		return (int)CL_MVAPI_ControlFixes(args[1]);
 
 	case MVAPI_GET_VERSION:
 		return (int)MV_GetCurrentGameversion();
@@ -1419,7 +1420,7 @@ qboolean CL_GameCommand( void ) {
 		return qfalse;
 	}
 
-	return (qboolean)VM_Call( cgvm, CG_CONSOLE_COMMAND );
+	return (qboolean)!!VM_Call( cgvm, CG_CONSOLE_COMMAND );
 }
 
 
@@ -1680,7 +1681,7 @@ CL_MVAPI_ControlFixes
 disable / enable toggleable fixes from the cgvm
 ====================
 */
-qboolean CL_MVAPI_ControlFixes(mvfix_t fixes) {
+qboolean CL_MVAPI_ControlFixes(int fixes) {
 	if (VM_MVAPILevel(cgvm) < 1) {
 		return qtrue;
 	}

@@ -23,6 +23,8 @@ static SDL_Window *SDL_window = NULL;
 
 #define CTRL(a) ((a)-'a'+1)
 
+extern void GLimp_SaveWindowPosition( void );
+
 /*
 ===============
 IN_PrintKey
@@ -196,7 +198,7 @@ static fakeAscii_t IN_TranslateSDLToJKKey( SDL_Keysym *keysym, qboolean down ) {
 			case SDLK_LCTRL:
 			case SDLK_RCTRL:        key = A_CTRL;          break;
 
-			case SDLK_RALT:
+			case SDLK_RALT:			key = A_ALT2;          break;
 			case SDLK_LALT:         key = A_ALT;           break;
 
 			case SDLK_KP_5:         key = A_KP_5;          break;
@@ -294,7 +296,7 @@ static void IN_ActivateMouse( void )
 	}
 
 	// in_nograb makes no sense in fullscreen mode
-	if( !Cvar_VariableIntegerValue("r_fullscreen") )
+	if( !(SDL_GetWindowFlags( SDL_window ) & SDL_WINDOW_FULLSCREEN) )
 	{
 		if( in_nograb->modified || !mouseActive )
 		{
@@ -322,7 +324,7 @@ static void IN_DeactivateMouse( void )
 
 	// Always show the cursor when the mouse is disabled,
 	// but not when fullscreen
-	if( !Cvar_VariableIntegerValue("r_fullscreen") )
+	if( !(SDL_GetWindowFlags( SDL_window ) & SDL_WINDOW_FULLSCREEN) )
 		SDL_ShowCursor( 1 );
 
 	if( !mouseAvailable )
@@ -688,7 +690,9 @@ static void IN_ProcessEvents( void )
 {
 	SDL_Event e;
 	fakeAscii_t key = A_NULL;
-	static fakeAscii_t lastKeyDown = A_NULL;
+	 // not using SDL_StopTextInput for screen kbd and other
+	 // considerations
+	static qboolean textInput = qtrue;
 
 	if( !SDL_WasInit( SDL_INIT_VIDEO ) )
 			return;
@@ -698,6 +702,14 @@ static void IN_ProcessEvents( void )
 		switch( e.type )
 		{
 			case SDL_KEYDOWN:
+				if ((e.key.keysym.mod & KMOD_LALT) && !(e.key.keysym.mod & KMOD_CTRL))
+					textInput = qfalse;
+				else
+					textInput = qtrue;
+
+				if ((e.key.keysym.mod & KMOD_CTRL) && (e.key.keysym.mod & KMOD_LALT))
+					break;
+
 				if (e.key.keysym.scancode == SDL_SCANCODE_GRAVE) {
 					Sys_QueEvent(0, SE_KEY, A_CONSOLE, qtrue, 0, NULL);
 				} else {
@@ -705,30 +717,32 @@ static void IN_ProcessEvents( void )
 					if (key != A_NULL)
 						Sys_QueEvent(0, SE_KEY, key, qtrue, 0, NULL);
 
-					if (key == A_BACKSPACE)
+					if (key == A_BACKSPACE && !(e.key.keysym.mod & KMOD_ALT))
 						Sys_QueEvent(0, SE_CHAR, CTRL('h'), qfalse, 0, NULL);
-					else if (kg.keys[A_CTRL].down && key >= A_CAP_A && key <= A_CAP_Z)
+					else if ((e.key.keysym.mod & KMOD_CTRL) && key >= A_CAP_A && key <= A_CAP_Z)
 						Sys_QueEvent(0, SE_CHAR, CTRL(tolower(key)), qfalse, 0, NULL);
-
-					lastKeyDown = key;
 				}
 				break;
 
 			case SDL_KEYUP:
+				if ((e.key.keysym.mod & KMOD_LALT) && !(e.key.keysym.mod & KMOD_CTRL))
+					textInput = qfalse;
+				else
+					textInput = qtrue;
+
 				key = IN_TranslateSDLToJKKey( &e.key.keysym, qfalse );
 				if( key != A_NULL )
 					Sys_QueEvent( 0, SE_KEY, key, qfalse, 0, NULL );
 
 				if ((e.key.keysym.scancode == SDL_SCANCODE_LGUI || e.key.keysym.scancode == SDL_SCANCODE_RGUI) &&
-					Cvar_VariableIntegerValue("r_fullscreen")) {
+					(SDL_GetWindowFlags( SDL_window ) & SDL_WINDOW_FULLSCREEN)) {
 					GLimp_Minimize();
 				}
-
-				lastKeyDown = A_NULL;
 				break;
 
 			case SDL_TEXTINPUT:
-				if( lastKeyDown != A_CONSOLE )
+				// relies on receiving no more than 1 character
+				if( textInput )
 				{
 					char *c = e.text.text;
 
@@ -792,6 +806,14 @@ static void IN_ProcessEvents( void )
 			case SDL_WINDOWEVENT:
 				switch( e.window.event )
 				{
+					case SDL_WINDOWEVENT_MOVED:
+					case SDL_WINDOWEVENT_SIZE_CHANGED:
+					{
+						if ( !(SDL_GetWindowFlags( SDL_window ) & SDL_WINDOW_FULLSCREEN) )
+							GLimp_SaveWindowPosition();
+						break;
+					}
+
 					case SDL_WINDOWEVENT_MINIMIZED:    Cvar_SetValue( "com_minimized", 1 ); break;
 					case SDL_WINDOWEVENT_RESTORED:
 					case SDL_WINDOWEVENT_MAXIMIZED:    Cvar_SetValue( "com_minimized", 0 ); break;
@@ -1023,24 +1045,26 @@ static void IN_JoyMove( void )
 
 
 void IN_Frame (void) {
-	qboolean loading;
+	qboolean	loading;
+	Uint32		flags;
 
 	IN_JoyMove( );
 
 	// If not DISCONNECTED (main menu) or ACTIVE (in game), we're loading
 	loading = (qboolean)( cls.state != CA_DISCONNECTED && cls.state != CA_ACTIVE && !(Key_GetCatcher() & KEYCATCH_UI));
+	flags = SDL_GetWindowFlags( SDL_window );
 
-	if( !cls.glconfig.isFullscreen && ( Key_GetCatcher( ) & KEYCATCH_CONSOLE ) )
+	if( !(flags & SDL_WINDOW_FULLSCREEN) && ( Key_GetCatcher( ) & KEYCATCH_CONSOLE ) )
 	{
 		// Console is down in windowed mode
 		IN_DeactivateMouse( );
 	}
-	else if( !cls.glconfig.isFullscreen && loading )
+	else if( !(flags & SDL_WINDOW_FULLSCREEN) && loading )
 	{
 		// Loading in windowed mode
 		IN_DeactivateMouse( );
 	}
-	else if( !( SDL_GetWindowFlags( SDL_window ) & SDL_WINDOW_INPUT_FOCUS ) )
+	else if( !(flags & SDL_WINDOW_INPUT_FOCUS ) )
 	{
 		// Window not got focus
 		IN_DeactivateMouse( );

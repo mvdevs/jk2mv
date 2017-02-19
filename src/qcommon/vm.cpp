@@ -40,6 +40,9 @@ vm_t	*currentVM = NULL;
 vm_t	*lastVM	= NULL;
 int		vm_debugLevel;
 
+#define MAX_APINUM	1000
+qboolean vm_profileInclusive;
+
 // used by Com_Error to get rid of running vm's before longjmp
 static int forced_unload;
 
@@ -92,15 +95,11 @@ const char *VM_ValueToSymbol( vm_t *vm, int value ) {
 	vmSymbol_t	*sym;
 	static char		text[MAX_TOKEN_CHARS];
 
-	sym = vm->symbols;
-	if ( !sym ) {
+	if ( !vm->symbolTable ) {
 		return "NO SYMBOLS";
 	}
 
-	// find the symbol
-	while ( sym->next && sym->next->symValue <= value ) {
-		sym = sym->next;
-	}
+	sym = vm->symbolTable[value];
 
 	if ( value == sym->symValue ) {
 		return sym->symName;
@@ -119,19 +118,13 @@ For profiling, find the symbol behind this value
 ===============
 */
 vmSymbol_t *VM_ValueToFunctionSymbol( vm_t *vm, int value ) {
-	vmSymbol_t	*sym;
 	static vmSymbol_t	nullSym;
 
-	sym = vm->symbols;
-	if ( !sym ) {
+	if ( !vm->symbolTable ) {
 		return &nullSym;
 	}
 
-	while ( sym->next && sym->next->symValue <= value ) {
-		sym = sym->next;
-	}
-
-	return sym;
+	return vm->symbolTable[value];
 }
 
 
@@ -157,7 +150,7 @@ int VM_SymbolToValue( vm_t *vm, const char *symbol ) {
 VM_SymbolForCompiledPointer
 =====================
 */
-#if 0 // 64bit!
+#if 0 // VM_ValueToSymbol takes compiled pointer as an argument now
 const char *VM_SymbolForCompiledPointer( vm_t *vm, void *code ) {
 	int			i;
 
@@ -222,7 +215,7 @@ void VM_LoadSymbols( vm_t *vm ) {
 		void	*v;
 	} mapfile;
 	const char *text_p;
-	char *token;
+	const char *token;
 	char	name[MAX_QPATH];
 	char	symbols[MAX_QPATH];
 	vmSymbol_t	**prev, *sym;
@@ -231,11 +224,18 @@ void VM_LoadSymbols( vm_t *vm ) {
 	int		chars;
 	int		segment;
 	int		numInstructions;
+	int		i;
 
+	if ( vm->compiled ) {
+		return;
+	}
+
+#ifndef DEBUG_VM
 	// don't load symbols if not developer
 	if ( !com_developer->integer ) {
 		return;
 	}
+#endif
 
 	COM_StripExtension(vm->name, name, sizeof(name));
 	Com_sprintf( symbols, sizeof( symbols ), "vm/%s.map", name );
@@ -246,6 +246,9 @@ void VM_LoadSymbols( vm_t *vm ) {
 	}
 
 	numInstructions = vm->instructionCount;
+
+	// 1000 for negative system calls
+	vm->symbolTable = (vmSymbol_t **)Hunk_Alloc( (MAX_APINUM + vm->codeLength) * sizeof(*vm->symbolTable), h_high ) + MAX_APINUM;
 
 	// parse the symbols
 	text_p = mapfile.c;
@@ -290,7 +293,27 @@ void VM_LoadSymbols( vm_t *vm ) {
 		sym->symValue = value;
 		Q_strncpyz( sym->symName, token, chars + 1 );
 
+		// _stackStart and _stackEnd are marked as functions for some reason
+		if (value < vm->codeLength) {
+			vm->symbolTable[value] = sym;
+		}
+
 		count++;
+	}
+
+	// direct code to function who owns it
+	static vmSymbol_t invalidSym;
+	sym = &invalidSym;
+	for ( i = -MAX_APINUM; i < 0; i++ ) {
+		if ( vm->symbolTable[i] == NULL ) {
+			vm->symbolTable[i] = sym;
+		}
+	}
+	for ( i = 0; i < vm->codeLength; i++ ) {
+		if ( vm->symbolTable[i] ) {
+			sym = vm->symbolTable[i];
+		}
+		vm->symbolTable[i] = sym;
 	}
 
 	vm->numSymbols = count;
@@ -336,7 +359,7 @@ Dlls will call this directly
 
 ============
 */
-intptr_t QDECL VM_DllSyscall( intptr_t arg, ... ) {
+intptr_t QDECL __attribute__((no_sanitize_address)) VM_DllSyscall( intptr_t arg, ... ) {
 #if !id386 || defined __clang__
   // rcg010206 - see commentary above
   intptr_t args[MAX_VMSYSCALL_ARGS];
@@ -734,7 +757,7 @@ locals from sp
 ==============
 */
 
-intptr_t QDECL VM_Call( vm_t *vm, int callnum, ... )
+intptr_t QDECL  __attribute__((no_sanitize_address)) VM_Call( vm_t *vm, int callnum, ... )
 {
 	vm_t	*oldVM;
 	intptr_t r;
@@ -805,10 +828,10 @@ intptr_t QDECL VM_Call( vm_t *vm, int callnum, ... )
 //=================================================================
 
 static int QDECL VM_ProfileSort( const void *a, const void *b ) {
-	vmSymbol_t	*sa, *sb;
+	const vmSymbol_t	*sa, *sb;
 
-	sa = *(vmSymbol_t **)a;
-	sb = *(vmSymbol_t **)b;
+	sa = *(const vmSymbol_t * const *)a;
+	sb = *(const vmSymbol_t * const *)b;
 
 	if ( sa->profileCount < sb->profileCount ) {
 		return -1;
@@ -816,6 +839,7 @@ static int QDECL VM_ProfileSort( const void *a, const void *b ) {
 	if ( sa->profileCount > sb->profileCount ) {
 		return 1;
 	}
+
 	return 0;
 }
 
@@ -826,42 +850,121 @@ VM_VmProfile_f
 ==============
 */
 void VM_VmProfile_f( void ) {
-	vm_t		*vm;
+	vm_t		*vm = NULL;
 	vmSymbol_t	**sorted, *sym;
 	int			i;
-	double		total;
+	long		total;
+	int			totalCalls;
+	qboolean	printHelp = qfalse;
+	qboolean	resetCounts = qfalse;
+	qboolean	printAll = qfalse;
 
-	if ( !lastVM ) {
+	if ( Cmd_Argc() >= 2 ) {
+		const char *arg = Cmd_Argv(1);
+
+		if ( !Q_stricmp(arg, "exclusive") ) {
+			vm_profileInclusive = qfalse;
+			resetCounts = qtrue;
+			Com_Printf("Collecting exclusive function instruction counts...\n");
+		} else if ( !Q_stricmp(arg, "inclusive") ) {
+			vm_profileInclusive = qtrue;
+			resetCounts = qtrue;
+			Com_Printf("Collecting inclusive function instruction counts...\n");
+		} else if ( !Q_stricmp(arg, "print") ) {
+			if (Cmd_Argc() >= 3) {
+				for ( i = 0; i < MAX_VM; i++ ) {
+					if ( !Q_stricmp(Cmd_Argv(2), vmTable[i].name) ) {
+						vm = &vmTable[i];
+						break;
+					}
+				}
+			} else {
+				// pick first VM with symbols
+				for ( i = 0; i < MAX_VM; i++ ) {
+					if ( vmTable[i].numSymbols ) {
+						vm = &vmTable[i];
+						break;
+					}
+				}
+			}
+		} else {
+			printHelp = qtrue;
+		}
+	} else {
+		printHelp = qtrue;
+	}
+
+	if ( resetCounts ) {
+		for ( i = 0; i < MAX_VM; i++ ) {
+			for ( sym = vmTable[i].symbols ; sym ; sym = sym->next ) {
+				sym->profileCount = 0;
+				sym->callCount = 0;
+				sym->caller = NULL;
+			}
+		}
 		return;
 	}
 
-	vm = lastVM;
+	if ( printHelp ) {
+		Com_Printf("Usage: vmprofile exclusive        start collecting exclusive counts\n");
+		Com_Printf("       vmprofile inclusive        start collecting inclusive counts\n");
+		Com_Printf("       vmprofile print [vm]       print collected data\n");
+		return;
+	}
 
-	if ( !vm->numSymbols ) {
+	if ( vm == NULL || vm->numSymbols <= 0 ) {
+		Com_Printf("No symbols\n");
 		return;
 	}
 
 	sorted = (vmSymbol_t **)Z_Malloc( vm->numSymbols * sizeof( *sorted ), TAG_VM, qtrue);
 	sorted[0] = vm->symbols;
 	total = sorted[0]->profileCount;
+	totalCalls = sorted[0]->callCount;
 	for ( i = 1 ; i < vm->numSymbols ; i++ ) {
 		sorted[i] = sorted[i-1]->next;
 		total += sorted[i]->profileCount;
+		totalCalls += sorted[i]->callCount;
 	}
 
-	qsort( sorted, vm->numSymbols, sizeof( *sorted ), VM_ProfileSort );
+	// assume everything is called from vmMain
+	if ( vm_profileInclusive )
+		total = VM_ValueToFunctionSymbol( vm, 0 )->profileCount;
 
-	for ( i = 0 ; i < vm->numSymbols ; i++ ) {
-		int		perc;
+	if ( total > 0 ) {
+		qsort( sorted, vm->numSymbols, sizeof( *sorted ), VM_ProfileSort );
 
-		sym = sorted[i];
+		Com_Printf( "%4s %12s %9s Function Name\n",
+			vm_profileInclusive ? "Incl" : "Excl",
+			"Instructions", "Calls" );
 
-		perc = 100 * (float) sym->profileCount / total;
-		Com_Printf( "%2i%% %9i %s\n", perc, sym->profileCount, sym->symName );
-		sym->profileCount = 0;
+		// todo: collect associations for generating callgraphs
+		fileHandle_t callgrind = FS_FOpenFileWrite( va("callgrind.out.%s", vm->name) );
+		// callgrind header
+		FS_Printf( callgrind,
+			"events: VM_Instructions\n"
+			"fl=vm/%s.qvm\n\n", vm->name );
+
+		for ( i = 0 ; i < vm->numSymbols ; i++ ) {
+			int		perc;
+
+			sym = sorted[i];
+
+			if (printAll || sym->profileCount != 0 || sym->callCount != 0) {
+				perc = 100 * sym->profileCount / total;
+				Com_Printf( "%3i%% %12li %9i %s\n", perc, sym->profileCount, sym->callCount, sym->symName );
+			}
+
+			FS_Printf(callgrind,
+				"fn=%s\n"
+				"0 %li\n\n",
+				sym->symName, sym->profileCount);
+		}
+
+		FS_FCloseFile( callgrind );
 	}
 
-	Com_Printf("	%9.0f total\n", total );
+	Com_Printf("     %12li %9i total\n", total, totalCalls );
 
 	Z_Free( sorted );
 }

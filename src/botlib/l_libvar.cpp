@@ -51,7 +51,7 @@ float LibVarStringValue(char *string)
 		} //end if
 		else
 		{
-			value = value * 10.0 + (float) (*string - '0');
+			value = value * 10.0f + (float) (*string - '0');
 		} //end else
 		string++;
 	} //end while

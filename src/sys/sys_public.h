@@ -18,8 +18,8 @@ typedef struct netadr_s
 {
 	netadrtype_t	type;
 
-	byte	ip[4];
-	unsigned short	port;
+	byte			ip[4];
+	uint16_t		port;
 } netadr_t;
 
 /*
@@ -77,7 +77,10 @@ Q_NORETURN void Sys_Error( const char *error, ... );
 Q_NORETURN void Sys_Quit (void);
 char	*Sys_GetClipboardData( void );	// note that this isn't journaled...
 
-void	Sys_Print( const char *msg );
+void	Sys_Print( const char *msg, qboolean extendedColors );
+
+void CON_CreateConsoleWindow(void);
+void CON_DeleteConsoleWindow(void);
 
 // Sys_Milliseconds should only be used for profiling purposes,
 // any game related timing information should come from event timestamps
@@ -167,6 +170,7 @@ typedef struct windowDesc_s
 } windowDesc_t;
 
 window_t	WIN_Init( const windowDesc_t *desc, glconfig_t *glConfig );
+void		WIN_InitGammaMethod(glconfig_t *glConfig);
 void		WIN_Present( window_t *window );
 void		WIN_SetGamma( glconfig_t *glConfig, byte red[256], byte green[256], byte blue[256] );
 void		WIN_Shutdown( void );

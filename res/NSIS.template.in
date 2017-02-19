@@ -11,6 +11,7 @@
 Name "${APPNAME}"
 InstallDir "@CPACK_NSIS_INSTALL_ROOT@\${APPNAME}"
 SetCompressor /SOLID /FINAL LZMA
+ManifestDPIAware true
 outFile "@CPACK_TOPLEVEL_DIRECTORY@/@CPACK_OUTPUT_FILE_NAME@"
 
 !define MUI_ABORTWARNING
@@ -36,8 +37,9 @@ function .onInit
 
 	IfFileExists $R0\GameData\base\assets0.pk3 jkfound
 jknotfound:
-	MessageBox MB_ICONSTOP "Jedi Knight II installation not found, please make sure you have JK2 correctly installed, either from CD or from Steam.$\r$\n$\r$\n\
-							If you have no option installing JK2 you can try the portable/manual version from the website."
+	MessageBox MB_ICONSTOP "Jedi Knight II installation not found, please make sure you have JK2 correctly installed, either from CD or from Steam.$\r$\n\
+							You have to run JK2 at least once before installing JK2MV.$\r$\n$\r$\n\
+							If you have no option installing JK2, you can try the portable/manual version from the website."
 	Abort
 
 jkfound:

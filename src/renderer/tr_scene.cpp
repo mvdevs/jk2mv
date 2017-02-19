@@ -244,7 +244,7 @@ void RE_AddMiniRefEntityToScene( const miniRefEntity_t *ent )
 
 	if ( r_numminientities >= MAX_MINI_ENTITIES)
 	{
-		ri.Printf( PRINT_WARNING, S_COLOR_YELLOW "WARNING: Attempting to add too many miniRefEntity_t\n");
+		ri.Printf( PRINT_WARNING, "WARNING: Attempting to add too many miniRefEntity_t\n");
 		return;
 	}
 	if ( ent->reType < 0 || ent->reType >= RT_MAX_REF_ENTITY_TYPE )
@@ -422,8 +422,8 @@ void RE_RenderScene( const refdef_t *fd ) {
 		// compare the area bits
 		areaDiff = 0;
 		for (i = 0 ; i < MAX_MAP_AREA_BYTES/4 ; i++) {
-			areaDiff |= ((int *)tr.refdef.areamask)[i] ^ ((int *)fd->areamask)[i];
-			((int *)tr.refdef.areamask)[i] = ((int *)fd->areamask)[i];
+			areaDiff |= ((int *)tr.refdef.areamask)[i] ^ ((const int *)fd->areamask)[i];
+			((int *)tr.refdef.areamask)[i] = ((const int *)fd->areamask)[i];
 		}
 
 		if ( areaDiff ) {

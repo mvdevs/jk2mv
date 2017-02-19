@@ -16,6 +16,8 @@
 #include "copyright.h"
 
 
+static const char sKEY_MAXVOL[]="#MAXVOL";	// formerly #defines
+static const char sKEY_UNCOMP[]="#UNCOMP";	//    "        "
 
 // maybe I'm re-inventing the wheel, here, but I can't see any functions that already do this, so...
 //
@@ -142,7 +144,7 @@ void R_CheckMP3s( const char *psDir )
 							iActualUnpackedSize = MP3_UnpackRawPCM( sFilename, pbData, iSize, pbUnpackBuffer );
 							if (iActualUnpackedSize != iRawPCMDataSize)
 							{
-								Com_Error(ERR_DROP, "******* Whoah! MP3 %s unpacked to %d bytes, but size calc said %d!\n",sFilename,iActualUnpackedSize,iRawPCMDataSize);
+								Com_Error(ERR_DROP, "******* Whoah! MP3 %s unpacked to %d bytes, but size calc said %d!",sFilename,iActualUnpackedSize,iRawPCMDataSize);
 							}
 
 							// fake up a WAV structure so I can use the other post-load sound code such as volume calc for lip-synching
@@ -236,7 +238,7 @@ void R_CheckMP3s( const char *psDir )
 					}
 					else
 					{
-						Com_Error(ERR_DROP, "******* This MP3 should be deleted: %s\n",sFilename);
+						Com_Error(ERR_DROP, "******* This MP3 should be deleted: %s",sFilename);
 					}
 				}
 				else
@@ -306,7 +308,7 @@ void S_MP3_CalcVols_f( void )
 		strcpy(sStartDir,Cmd_Argv(i));
 	}
 
-	Com_Printf(va("Starting Scan for Updates in Dir: %s\n",sStartDir));
+	Com_Printf("Starting Scan for Updates in Dir: %s\n",sStartDir);
 	R_CheckMP3s( sStartDir );
 
 	Com_Printf("\n%d files found/scanned, %d files updated      ( %d errors total)\n",iFilesFound,iFilesUpdated,iErrors);
@@ -325,7 +327,7 @@ qboolean MP3_IsValid( const char *psLocalFilename, void *pvData, int iDataLen, q
 
 	if (psError)
 	{
-		Com_Printf(va(S_COLOR_RED"%s\n(File: %s)\n",psError, psLocalFilename));
+		Com_Printf(S_COLOR_RED"%s\n(File: %s)\n",psError, psLocalFilename);
 	}
 
 	return psError ? qfalse : qtrue;
@@ -349,7 +351,7 @@ int MP3_GetUnpackedSize( const char *psLocalFilename, void *pvData, int iDataLen
 
 		if (psError)
 		{
-			Com_Printf(va(S_COLOR_RED"%s\n(File: %s)\n",psError, psLocalFilename));
+			Com_Printf(S_COLOR_RED"%s\n(File: %s)\n",psError, psLocalFilename);
 			return 0;
 		}
 	}
@@ -370,7 +372,7 @@ int MP3_UnpackRawPCM( const char *psLocalFilename, void *pvData, int iDataLen, b
 
 	if (psError)
 	{
-		Com_Printf(va(S_COLOR_RED"%s\n(File: %s)\n",psError, psLocalFilename));
+		Com_Printf(S_COLOR_RED"%s\n(File: %s)\n",psError, psLocalFilename);
 		return 0;
 	}
 
@@ -389,7 +391,7 @@ qboolean MP3Stream_InitPlayingTimeFields( LP_MP3STREAM lpMP3Stream, const char *
 	char *psError = C_MP3_GetHeaderData(pvData, iDataLen, &iRate, &iWidth, &iChannels, bStereoDesired );
 	if (psError)
 	{
-		Com_Printf(va(S_COLOR_RED"MP3Stream_InitPlayingTimeFields(): %s\n(File: %s)\n",psError, psLocalFilename));
+		Com_Printf(S_COLOR_RED"MP3Stream_InitPlayingTimeFields(): %s\n(File: %s)\n",psError, psLocalFilename);
 	}
 	else
 	{
@@ -445,7 +447,7 @@ qboolean MP3_FakeUpWAVInfo( const char *psLocalFilename, void *pvData, int iData
 	char *psError = C_MP3_GetHeaderData(pvData, iDataLen, &rate, &width, &channels, bStereoDesired );
 	if (psError)
 	{
-		Com_Printf(va(S_COLOR_RED"%s\n(File: %s)\n",psError, psLocalFilename));
+		Com_Printf(S_COLOR_RED"%s\n(File: %s)\n",psError, psLocalFilename);
 	}
 
 	// and some stuff needs calculating...
@@ -454,11 +456,6 @@ qboolean MP3_FakeUpWAVInfo( const char *psLocalFilename, void *pvData, int iData
 
 	return psError ? qfalse : qtrue;
 }
-
-
-
-const char sKEY_MAXVOL[]="#MAXVOL";	// formerly #defines
-const char sKEY_UNCOMP[]="#UNCOMP";	//    "        "
 
 // returns qtrue for success...
 //
@@ -594,7 +591,7 @@ qboolean MP3Stream_InitFromFile( sfx_t* sfx, byte *pbSrcData, int iSrcDatalen, c
 			// This should never happen, since any errors or problems with the MP3 file would have stopped us getting
 			//	to this whole function, but just in case...
 			//
-			Com_Printf(va(S_COLOR_YELLOW"File \"%s\": %s\n",psSrcDataFilename,psError));
+			Com_Printf(S_COLOR_YELLOW"File \"%s\": %s\n",psSrcDataFilename,psError);
 
 			// This will leave iSrcDatalen bytes on the hunk stack (since you can't dealloc that), but MP3 files are
 			//	usually small, and like I say, it should never happen.

@@ -76,8 +76,7 @@ void R_IssueRenderCommands( qboolean runPerformanceCounters ) {
 	cmdList = &backEndData->commands;
 	assert(cmdList);
 	// add an end-of-list command
-	byteAlias_t *ba = (byteAlias_t *)&cmdList->cmds[cmdList->used];
-	ba->ui = RC_END_OF_LIST;
+	*(int *)(cmdList->cmds + cmdList->used) = RC_END_OF_LIST;
 
 	// clear it out, in case this is a sync and not a buffer flip
 	cmdList->used = 0;
@@ -123,10 +122,11 @@ void *R_GetCommandBuffer( int bytes ) {
 	renderCommandList_t	*cmdList;
 
 	cmdList = &backEndData->commands;
+	bytes = PAD( bytes, sizeof( void * ) );
 
 	// always leave room for the end of list command
-	if ( cmdList->used + bytes + 4 > MAX_RENDER_COMMANDS ) {
-		if ( bytes > MAX_RENDER_COMMANDS - 4 ) {
+	if ( cmdList->used + bytes + sizeof( int ) > MAX_RENDER_COMMANDS ) {
+		if ( bytes > MAX_RENDER_COMMANDS - sizeof( int ) ) {
 			ri.Error( ERR_FATAL, "R_GetCommandBuffer: bad size %i", bytes );
 		}
 		// if we run out of room, just start dropping commands
@@ -334,6 +334,11 @@ void RE_BeginFrame( stereoFrame_t stereoFrame ) {
 		r_ext_texture_filter_anisotropic->modified = qfalse;
 	}
 
+	if ( glConfig.textureLODBiasAvailable && r_textureLODBias->modified ) {
+		qglTexEnvf(GL_TEXTURE_FILTER_CONTROL_EXT, GL_TEXTURE_LOD_BIAS_EXT, r_textureLODBias->value );
+		r_textureLODBias->modified = qfalse;
+	}
+
 	//
 	// gamma stuff
 	//
@@ -344,13 +349,27 @@ void RE_BeginFrame( stereoFrame_t stereoFrame ) {
 		R_SetColorMappings();
 	}
 
+	//
+	// console font stuff
+	//
+	if ( r_consoleFont->modified ) {
+		r_consoleFont->modified = qfalse;
+
+		if ( r_consoleFont->integer == 1 )
+			R_RemapShader("gfx/2d/charsgrid_med", "gfx/2d/code_new_roman", 0);
+		else if ( r_consoleFont->integer == 2 )
+			R_RemapShader("gfx/2d/charsgrid_med", "gfx/2d/mplus_1m_bold", 0);
+		else
+			R_RemapShader("gfx/2d/charsgrid_med", "gfx/2d/charsgrid_med", 0);
+	}
+
 	// check for errors
 	if ( !r_ignoreGLErrors->integer ) {
 		int	err;
 
 		R_SyncRenderThread();
 		if ( ( err = qglGetError() ) != GL_NO_ERROR ) {
-			ri.Error( ERR_FATAL, "RE_BeginFrame() - glGetError() failed (0x%x)!\n", err );
+			ri.Error( ERR_FATAL, "RE_BeginFrame() - glGetError() failed (0x%x)!", err );
 		}
 	}
 
@@ -416,3 +435,29 @@ void RE_EndFrame( int *frontEndMsec, int *backEndMsec ) {
 	backEnd.pc.msec = 0;
 }
 
+
+/*
+=============
+RE_TakeVideoFrame
+=============
+*/
+void RE_TakeVideoFrame( int width, int height, qboolean motionJpeg, int motionJpegQuality )
+{
+	videoFrameCommand_t	*cmd;
+
+	if( !tr.registered ) {
+		return;
+	}
+
+	cmd = (videoFrameCommand_t *)R_GetCommandBuffer( sizeof( *cmd ) );
+	if( !cmd ) {
+		return;
+	}
+
+	cmd->commandId = RC_VIDEOFRAME;
+
+	cmd->width = width;
+	cmd->height = height;
+	cmd->motionJpeg = motionJpeg;
+	cmd->motionJpegQuality = motionJpegQuality;
+}

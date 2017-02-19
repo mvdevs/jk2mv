@@ -42,6 +42,7 @@ cvar_t	*mv_fixbrokenmodels;
 cvar_t	*mv_fixturretcrash;
 cvar_t	*mv_blockchargejump;
 cvar_t	*mv_blockspeedhack;
+cvar_t	*mv_fixsaberstealing;
 
 /*
 =============================================================================
@@ -91,8 +92,10 @@ int SV_ReplacePendingServerCommands( client_t *client, const char *cmd ) {
 		index = i & ( MAX_RELIABLE_COMMANDS - 1 );
 		//
 		if (!Q_strncmp(cmd, client->reliableCommands[index], (int)strlen("cs"))) {
-			sscanf(cmd, "cs %i", &csnum1);
-			sscanf(client->reliableCommands[ index ], "cs %i", &csnum2);
+			if ( sscanf(cmd, "cs %i", &csnum1) != 1 )
+				return qfalse;
+			if ( sscanf(client->reliableCommands[ index ], "cs %i", &csnum2) != 1 )
+				return qfalse;
 			if ( csnum1 == csnum2 ) {
 				Q_strncpyz( client->reliableCommands[ index ], cmd, sizeof( client->reliableCommands[ index ] ) );
 				/*
@@ -159,7 +162,7 @@ void QDECL SV_SendServerCommand(client_t *cl, const char *fmt, ...) {
 	int			j;
 
 	va_start (argptr,fmt);
-	vsprintf ((char *)message, fmt,argptr);
+	Q_vsnprintf ((char *)message, sizeof(message), fmt,argptr);
 	va_end (argptr);
 
 	// q3msgboom exploit
@@ -626,7 +629,8 @@ void SVC_RemoteCommand( netadr_t from, msg_t *msg ) {
 	qboolean	valid;
 	unsigned int	i;
 	char		remaining[1024];
-#define	SV_OUTPUTBUF_LENGTH	(MAX_MSGLEN - 16)
+// this is because remote command is parsed in CL_ConnectionlessPacket
+#define	SV_OUTPUTBUF_LENGTH MAX_TOKEN_CHARS
 	char		sv_outputbuf[SV_OUTPUTBUF_LENGTH];
 
 	// Prevent using rcon as an amplifier and make dictionary attacks impractical
@@ -719,7 +723,7 @@ qboolean MVAPI_SendConnectionlessPacket(const mvaddr_t *addr, const char *messag
 	nativeAdr.ip[3] = addr->ip.v4[3];
 	nativeAdr.port = addr->port;
 
-	NET_OutOfBandPrint(NS_SERVER, nativeAdr, message);
+	NET_OutOfBandPrint(NS_SERVER, nativeAdr, "%s", message);
 	return qfalse;
 }
 
@@ -1017,6 +1021,22 @@ int SV_FrameMsec() {
 		return 1;
 }
 
+static void MV_FixSaberStealing( void )
+{
+	if ( mv_fixsaberstealing->integer && !(sv.fixes & MVFIX_SABERSTEALING) ) {
+		playerState_t	*ps;
+		int				i;
+
+		for ( i = 0; i < sv_maxclients->integer; i++ ) {
+			ps = SV_GameClientNum( i );
+
+			if ( ps->persistant[PERS_TEAM] == TEAM_SPECTATOR ) {
+				ps->saberEntityNum = ENTITYNUM_NONE;
+			}
+		}
+	}
+}
+
 /*
 ==================
 SV_Frame
@@ -1110,6 +1130,7 @@ void SV_Frame( int msec ) {
 
 		// let everything in the world think and move
 		VM_Call( gvm, GAME_RUN_FRAME, svs.time );
+		MV_FixSaberStealing();
 	}
 
 	if ( com_speeds->integer ) {
@@ -1124,8 +1145,6 @@ void SV_Frame( int msec ) {
 
 	// send a heartbeat to the master if needed
 	SV_MasterHeartbeat();
-
-	SV_MV_Websrv_Request_MainThread();
 }
 
 //============================================================================

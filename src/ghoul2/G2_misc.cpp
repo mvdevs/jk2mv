@@ -227,14 +227,14 @@ void R_TransformEachSurface( mdxmSurface_t	*surface, vec3_t scale, CMiniHeap *G2
 	TransformedVertsArray[surface->thisSurfaceIndex] = (size_t)TransformedVerts;
 	if (!TransformedVerts)
 	{
-		Com_Error(ERR_DROP, "Ran out of transform space gameside for Ghoul2 Models.\n");
+		Com_Error(ERR_DROP, "Ran out of transform space gameside for Ghoul2 Models.");
 	}
 
 	// whip through and actually transform each vertex
 	int *piBoneRefs = (int*) ((byte*)surface + surface->ofsBoneReferences);
 
 	// optimisation issue
-	if ((scale[0] != 1.0) || (scale[1] != 1.0) || (scale[2] != 1.0))
+	if ((scale[0] != 1.0f) || (scale[1] != 1.0f) || (scale[2] != 1.0f))
 	{
 		for ( j = pos = 0; j < numVerts; j++ )
 		{
@@ -315,7 +315,7 @@ void R_TransformEachSurface( mdxmSurface_t	*surface, vec3_t scale, CMiniHeap *G2
 	TransformedVertsArray[surface->thisSurfaceIndex] = (int)TransformedVerts;
 	if (!TransformedVerts)
 	{
-		Com_Error(ERR_DROP, "Ran out of transform space gameside for Ghoul2 Models. Please See Jake to Make space larger\n");
+		Com_Error(ERR_DROP, "Ran out of transform space gameside for Ghoul2 Models. Please See Jake to Make space larger");
 	}
 
 	// whip through and actually transform each vertex
@@ -546,16 +546,16 @@ static void G2_BuildHitPointST( const vec3_t A, const float SA, const float TA,
 	*s = SA * i + SB * j + SC * k;
 	*t = TA * i + TB * j + TC * k;
 
-	*s=fmod(*s, 1);
+	*s=fmodf(*s, 1);
 	if (*s< 0)
 	{
-		*s+= 1.0;
+		*s+= 1.0f;
 	}
 
-	*t=fmod(*t, 1);
+	*t=fmodf(*t, 1);
 	if (*t< 0)
 	{
-		*t+= 1.0;
+		*t+= 1.0f;
 	}
 
 }
@@ -581,7 +581,7 @@ static qboolean G2_SegmentTriangleTest( const vec3_t start, const vec3_t end,
 
 	*denom=DotProduct(ray, returnedNormal);
 
-	if (fabs(*denom)<tiny||        // triangle parallel to ray
+	if (fabsf(*denom)<tiny||        // triangle parallel to ray
 		(!backFaces && *denom>0)||		// not accepting back faces
 		(!frontFaces && *denom<0))		//not accepting front faces
 	{
@@ -692,8 +692,8 @@ static bool G2_RadiusTracePolys( const mdxmSurface_t *surface, const vec3_t rayS
 	VectorNormalize(basis1);
 	VectorNormalize(basis2);
 
-	const float c=cos(0.0f);//theta
-	const float s=sin(0.0f);//theta
+	const float c=cosf(0.0f);//theta
+	const float s=sinf(0.0f);//theta
 
 	VectorScale(basis1, 0.5f * c / fRadius,taxis);
 	VectorMA(taxis,     0.5f * s / fRadius,basis2,taxis);
@@ -758,7 +758,7 @@ static bool G2_RadiusTracePolys( const mdxmSurface_t *surface, const vec3_t rayS
 		return false; // completely off the gore splotch  (so presumably hit nothing? -Ste)
 	}
 	const int numTris = surface->numTriangles;
-	const mdxmTriangle_t * const tris = (mdxmTriangle_t *) ((byte *)surface + surface->ofsTriangles);
+	const mdxmTriangle_t * const tris = (const mdxmTriangle_t *) ((const byte *)surface + surface->ofsTriangles);
 
 	for ( j = 0; j < numTris; j++ )
 	{
@@ -852,7 +852,7 @@ bool G2_TracePolys( const mdxmSurface_t *surface, const vec3_t rayStart, const v
 	int		j, numTris;
 
 	// whip through and actually transform each vertex
-	const mdxmTriangle_t *tris = (mdxmTriangle_t *) ((byte *)surface + surface->ofsTriangles);
+	const mdxmTriangle_t *tris = (const mdxmTriangle_t *) ((const byte *)surface + surface->ofsTriangles);
 	const float *verts = (float *)TransformedVertsArray[surface->thisSurfaceIndex];
 	numTris = surface->numTriangles;
 
@@ -867,6 +867,7 @@ bool G2_TracePolys( const mdxmSurface_t *surface, const vec3_t rayStart, const v
 		// did we hit it?
 		if (G2_SegmentTriangleTest(rayStart, rayEnd, point1, point2, point3, qtrue, qtrue, hitPoint, normal, &face))
 		{
+			assert(collRecMap);
 			// find space in the collision records for this record
 			for (int i=0; i<MAX_G2_COLLISIONS;i++)
 			{
@@ -978,9 +979,9 @@ void G2_TraceSurfaces(CTraceSurface &TS)
 {
 	int	i;
 	// back track and get the surfinfo struct for this surface
-	const mdxmSurface_t				*surface = (mdxmSurface_t *)G2_FindSurface((void *)TS.currentModel, TS.surfaceNum, TS.lod);
-	const mdxmHierarchyOffsets_t	*surfIndexes = (mdxmHierarchyOffsets_t *)((byte *)TS.currentModel->mdxm + sizeof(mdxmHeader_t));
-	const mdxmSurfHierarchy_t		*surfInfo = (mdxmSurfHierarchy_t *)((byte *)surfIndexes + surfIndexes->offsets[surface->thisSurfaceIndex]);
+	const mdxmSurface_t				*surface = (const mdxmSurface_t *)G2_FindSurface((void *)TS.currentModel, TS.surfaceNum, TS.lod);
+	const mdxmHierarchyOffsets_t	*surfIndexes = (const mdxmHierarchyOffsets_t *)((byte *)TS.currentModel->mdxm + sizeof(mdxmHeader_t));
+	const mdxmSurfHierarchy_t		*surfInfo = (const mdxmSurfHierarchy_t *)((const byte *)surfIndexes + surfIndexes->offsets[surface->thisSurfaceIndex]);
 
 	// see if we have an override surface in the surface list
 	const surfaceInfo_t	*surfOverride = G2_FindOverrideSurface(TS.surfaceNum, TS.rootSList);
@@ -1004,7 +1005,7 @@ void G2_TraceSurfaces(CTraceSurface &TS)
 	if (!offFlags)
 	{
 #ifdef G2_COLLISION_ENABLED
-		if (!(fabs(TS.m_fRadius) < 0.1))	// if not a point-trace
+		if (!(fabsf(TS.m_fRadius) < 0.1f))	// if not a point-trace
 		{
 			// .. then use radius check
 			//
@@ -1337,7 +1338,7 @@ int G2_FindConfigStringSpace(char *name, int start, int max)
 		{
 			break;
 		}
-		if ( !stricmp( s, name ) )
+		if ( !Q_stricmp( s, name ) )
 		{
 			return i;
 		}

@@ -130,11 +130,7 @@ void *UI_Alloc( size_t size ) {
 
 	if ( allocPoint + size > MEM_POOL_SIZE ) {
 		outOfMemory = qtrue;
-		if (DC->Print) {
-			DC->Print("UI_Alloc: Failure. Out of memory!\n");
-		}
-	//DC->trap_Print(S_COLOR_YELLOW"WARNING: UI Out of Memory!\n");
-		return NULL;
+		DC->Error( ERR_DROP, "UI_Alloc: Failure. Out of memory!");
 	}
 
 	p = &memoryPool[allocPoint];
@@ -294,7 +290,7 @@ void PC_SourceWarning(int handle, char *format, ...) {
 	static char string[4096];
 
 	va_start (argptr, format);
-	vsprintf (string, format, argptr);
+	Q_vsnprintf (string, sizeof(string), format, argptr);
 	va_end (argptr);
 
 	filename[0] = '\0';
@@ -316,7 +312,7 @@ void PC_SourceError(int handle, char *format, ...) {
 	static char string[4096];
 
 	va_start (argptr, format);
-	vsprintf (string, format, argptr);
+	Q_vsnprintf (string, sizeof(string), format, argptr);
 	va_end (argptr);
 
 	filename[0] = '\0';
@@ -341,8 +337,8 @@ void LerpColor(vec4_t a, vec4_t b, vec4_t c, float t)
 		c[i] = a[i] + t*(b[i]-a[i]);
 		if (c[i] < 0)
 			c[i] = 0;
-		else if (c[i] > 1.0)
-			c[i] = 1.0;
+		else if (c[i] > 1)
+			c[i] = 1;
 	}
 }
 
@@ -351,9 +347,9 @@ void LerpColor(vec4_t a, vec4_t b, vec4_t c, float t)
 Float_Parse
 =================
 */
-qboolean Float_Parse(char **p, float *f) {
-	char	*token;
-	token = COM_ParseExt((const char **)p, qfalse);
+qboolean Float_Parse(const char **p, float *f) {
+	const char	*token;
+	token = COM_ParseExt(p, qfalse);
 	if (token && token[0] != 0) {
 		*f = atof(token);
 		return qtrue;
@@ -394,7 +390,7 @@ qboolean PC_Float_Parse(int handle, float *f) {
 Color_Parse
 =================
 */
-qboolean Color_Parse(char **p, vec4_t *c) {
+qboolean Color_Parse(const char **p, vec4_t *c) {
 	int i;
 	float f;
 
@@ -430,9 +426,9 @@ qboolean PC_Color_Parse(int handle, vec4_t *c) {
 Int_Parse
 =================
 */
-qboolean Int_Parse(char **p, int *i) {
+qboolean Int_Parse(const char **p, int *i) {
 	char	*token;
-	token = COM_ParseExt((const char **)p, qfalse);
+	token = COM_ParseExt(p, qfalse);
 
 	if (token && token[0] != 0) {
 		*i = atoi(token);
@@ -473,7 +469,7 @@ qboolean PC_Int_Parse(int handle, int *i) {
 Rect_Parse
 =================
 */
-qboolean Rect_Parse(char **p, rectDef_t *r) {
+qboolean Rect_Parse(const char **p, rectDef_t *r) {
 	if (Float_Parse(p, &r->x)) {
 		if (Float_Parse(p, &r->y)) {
 			if (Float_Parse(p, &r->w)) {
@@ -509,10 +505,10 @@ qboolean PC_Rect_Parse(int handle, rectDef_t *r) {
 String_Parse
 =================
 */
-qboolean String_Parse(char **p, const char **out) {
+qboolean String_Parse(const char **p, const char **out) {
 	char *token;
 
-	token = COM_ParseExt((const char **)p, qfalse);
+	token = COM_ParseExt(p, qfalse);
 	if (token && token[0] != 0) {
 		*(out) = String_Alloc(token);
 		return qtrue;
@@ -552,7 +548,7 @@ qboolean PC_String_Parse(int handle, const char **out)
 
 		if (text[0] == 0)		// Couldn't find it
 		{
-			Com_Printf(va(S_COLOR_YELLOW "Unable to locate StripEd text '%s'\n", token.string));
+			Com_Printf(S_COLOR_YELLOW "Unable to locate StripEd text '%s'\n", token.string);
 			*(out) = String_Alloc( token.string );
 		}
 		else
@@ -661,7 +657,7 @@ void Fade(int *flags, float *f, float clamp, int *nextTime, int offsetTime, qboo
       *nextTime = DC->realTime + offsetTime;
       if (*flags & WINDOW_FADINGOUT) {
         *f -= fadeAmount;
-        if (bFlags && *f <= 0.0) {
+        if (bFlags && *f <= 0.0f) {
           *flags &= ~(WINDOW_FADINGOUT | WINDOW_VISIBLE);
         }
       } else {
@@ -966,7 +962,7 @@ itemDef_t *Menu_GetMatchingItemByNumber(menuDef_t *menu, int index, const char *
   return NULL;
 }
 
-qboolean Script_SetColor ( itemDef_t *item, char **args )
+qboolean Script_SetColor ( itemDef_t *item, const char **args )
 {
 	const char *name;
 	int i;
@@ -1008,7 +1004,7 @@ qboolean Script_SetColor ( itemDef_t *item, char **args )
 	return qtrue;
 }
 
-qboolean Script_SetAsset(itemDef_t *item, char **args)
+qboolean Script_SetAsset(itemDef_t *item, const char **args)
 {
 	const char *name;
 	// expecting name to set asset to
@@ -1022,7 +1018,7 @@ qboolean Script_SetAsset(itemDef_t *item, char **args)
 	return qtrue;
 }
 
-qboolean Script_SetBackground(itemDef_t *item, char **args)
+qboolean Script_SetBackground(itemDef_t *item, const char **args)
 {
 	const char *name;
 	// expecting name to set asset to
@@ -1049,7 +1045,7 @@ itemDef_t *Menu_FindItemByName(menuDef_t *menu, const char *p) {
   return NULL;
 }
 
-qboolean Script_SetTeamColor(itemDef_t *item, char **args)
+qboolean Script_SetTeamColor(itemDef_t *item, const char **args)
 {
 	if (DC->getTeamColor)
 	{
@@ -1064,7 +1060,7 @@ qboolean Script_SetTeamColor(itemDef_t *item, char **args)
 	return qtrue;
 }
 
-qboolean Script_SetItemColor(itemDef_t *item, char **args)
+qboolean Script_SetItemColor(itemDef_t *item, const char **args)
 {
 	const char *itemname;
 	const char *name;
@@ -1118,7 +1114,7 @@ qboolean Script_SetItemColor(itemDef_t *item, char **args)
 	return qtrue;
 }
 
-qboolean Script_SetItemRect(itemDef_t *item, char **args)
+qboolean Script_SetItemRect(itemDef_t *item, const char **args)
 {
 	const char *itemname;
 	rectDef_t *out;
@@ -1281,7 +1277,7 @@ void Menus_CloseAll()
 	FPMessageTime = 0;
 }
 
-qboolean Script_Show(itemDef_t *item, char **args)
+qboolean Script_Show(itemDef_t *item, const char **args)
 {
 	const char *name;
 	if (String_Parse(args, &name))
@@ -1291,7 +1287,7 @@ qboolean Script_Show(itemDef_t *item, char **args)
 	return qtrue;
 }
 
-qboolean Script_Hide(itemDef_t *item, char **args)
+qboolean Script_Hide(itemDef_t *item, const char **args)
 {
 	const char *name;
 	if (String_Parse(args, &name))
@@ -1301,7 +1297,7 @@ qboolean Script_Hide(itemDef_t *item, char **args)
 	return qtrue;
 }
 
-qboolean Script_FadeIn(itemDef_t *item, char **args)
+qboolean Script_FadeIn(itemDef_t *item, const char **args)
 {
 	const char *name;
 	if (String_Parse(args, &name))
@@ -1312,7 +1308,7 @@ qboolean Script_FadeIn(itemDef_t *item, char **args)
 	return qtrue;
 }
 
-qboolean Script_FadeOut(itemDef_t *item, char **args)
+qboolean Script_FadeOut(itemDef_t *item, const char **args)
 {
 	const char *name;
 	if (String_Parse(args, &name))
@@ -1322,7 +1318,7 @@ qboolean Script_FadeOut(itemDef_t *item, char **args)
 	return qtrue;
 }
 
-qboolean Script_Open(itemDef_t *item, char **args)
+qboolean Script_Open(itemDef_t *item, const char **args)
 {
 	const char *name;
 	if (String_Parse(args, &name))
@@ -1332,7 +1328,7 @@ qboolean Script_Open(itemDef_t *item, char **args)
 	return qtrue;
 }
 
-qboolean Script_Close(itemDef_t *item, char **args)
+qboolean Script_Close(itemDef_t *item, const char **args)
 {
 	const char *name;
 	if (String_Parse(args, &name))
@@ -1382,10 +1378,10 @@ Defers the rest of the script based on the defer condition.  The deferred
 portion of the script can later be run with the "rundeferred"
 =================
 */
-qboolean Script_Defer ( itemDef_t* item, char **args )
+qboolean Script_Defer ( itemDef_t* item, const char **args )
 {
 	// Should the script be deferred?
-	if ( DC->deferScript ( (char**)args ) )
+	if ( DC->deferScript ( args ) )
 	{
 		// Need the item the script was being run on
 		ui_deferredScriptItem = item;
@@ -1409,7 +1405,7 @@ Runs the last deferred script, there can only be one script deferred at a
 time so be careful of recursion
 =================
 */
-qboolean Script_RunDeferred ( itemDef_t* item, char **args )
+qboolean Script_RunDeferred ( itemDef_t* item, const char **args )
 {
 	// Make sure there is something to run.
 	if ( !ui_deferredScript[0] || !ui_deferredScriptItem )
@@ -1423,7 +1419,7 @@ qboolean Script_RunDeferred ( itemDef_t* item, char **args )
 	return qtrue;
 }
 
-qboolean Script_Transition(itemDef_t *item, char **args)
+qboolean Script_Transition(itemDef_t *item, const char **args)
 {
 	const char *name;
 	rectDef_t rectFrom, rectTo;
@@ -1460,7 +1456,7 @@ void Menu_OrbitItemByName(menuDef_t *menu, const char *p, float x, float y, floa
   }
 }
 
-qboolean Script_Orbit(itemDef_t *item, char **args)
+qboolean Script_Orbit(itemDef_t *item, const char **args)
 {
 	const char *name;
 	float cx, cy, x, y;
@@ -1477,7 +1473,7 @@ qboolean Script_Orbit(itemDef_t *item, char **args)
 	return qtrue;
 }
 
-qboolean Script_SetFocus(itemDef_t *item, char **args)
+qboolean Script_SetFocus(itemDef_t *item, const char **args)
 {
   const char *name;
   itemDef_t *focusItem;
@@ -1499,7 +1495,7 @@ qboolean Script_SetFocus(itemDef_t *item, char **args)
 	return qtrue;
 }
 
-qboolean Script_SetPlayerModel(itemDef_t *item, char **args)
+qboolean Script_SetPlayerModel(itemDef_t *item, const char **args)
 {
 	const char *name;
 	if (String_Parse(args, &name))
@@ -1510,7 +1506,7 @@ qboolean Script_SetPlayerModel(itemDef_t *item, char **args)
 	return qtrue;
 }
 
-qboolean Script_SetPlayerHead(itemDef_t *item, char **args)
+qboolean Script_SetPlayerHead(itemDef_t *item, const char **args)
 {
 	const char *name;
 	if (String_Parse(args, &name))
@@ -1520,7 +1516,7 @@ qboolean Script_SetPlayerHead(itemDef_t *item, char **args)
 	return qtrue;
 }
 
-qboolean Script_SetCvar(itemDef_t *item, char **args)
+qboolean Script_SetCvar(itemDef_t *item, const char **args)
 {
 	const char *cvar, *val;
 	if (String_Parse(args, &cvar) && String_Parse(args, &val))
@@ -1530,7 +1526,7 @@ qboolean Script_SetCvar(itemDef_t *item, char **args)
 	return qtrue;
 }
 
-qboolean Script_SetCvarToCvar(itemDef_t *item, char **args) {
+qboolean Script_SetCvarToCvar(itemDef_t *item, const char **args) {
 	const char *cvar, *val;
 	if (String_Parse(args, &cvar) && String_Parse(args, &val)) {
 		char cvarBuf[1024];
@@ -1540,7 +1536,7 @@ qboolean Script_SetCvarToCvar(itemDef_t *item, char **args) {
 	return qtrue;
 }
 
-qboolean Script_Exec(itemDef_t *item, char **args) {
+qboolean Script_Exec(itemDef_t *item, const char **args) {
 	const char *val;
 	if (String_Parse(args, &val)) {
 		DC->executeText(EXEC_APPEND, va("%s ; ", val));
@@ -1548,7 +1544,7 @@ qboolean Script_Exec(itemDef_t *item, char **args) {
 	return qtrue;
 }
 
-qboolean Script_Play(itemDef_t *item, char **args) {
+qboolean Script_Play(itemDef_t *item, const char **args) {
 	const char *val;
 	if (String_Parse(args, &val)) {
 		DC->startLocalSound(DC->registerSound(val), CHAN_AUTO);
@@ -1556,7 +1552,7 @@ qboolean Script_Play(itemDef_t *item, char **args) {
 	return qtrue;
 }
 
-qboolean Script_playLooped(itemDef_t *item, char **args) {
+qboolean Script_playLooped(itemDef_t *item, const char **args) {
 	const char *val;
 	if (String_Parse(args, &val)) {
 		DC->stopBackgroundTrack();
@@ -1599,7 +1595,8 @@ int scriptCommandCount = sizeof(commandList) / sizeof(commandDef_t);
 
 void Item_RunScript(itemDef_t *item, const char *s)
 {
-	char script[2048], *p;
+	char script[2048];
+	const char *p;
 	int i;
 	qboolean bRan;
 
@@ -1652,7 +1649,8 @@ void Item_RunScript(itemDef_t *item, const char *s)
 
 
 qboolean Item_EnableShowViaCvar(itemDef_t *item, int flag) {
-  char script[2048], *p;
+  char script[2048];
+  const char *p;
   if (item && item->enableCvar && *item->enableCvar && item->cvarTest && *item->cvarTest) {
 		char buff[2048];
 	  DC->getCVarString(item->cvarTest, buff, sizeof(buff));
@@ -2062,7 +2060,7 @@ float Item_Slider_ThumbPosition(itemDef_t *item) {
 		x = item->window.rect.x;
 	}
 
-	if (editDef == NULL && item->cvar) {
+	if (!editDef || !item->cvar) {
 		return x;
 	}
 
@@ -3563,17 +3561,17 @@ void Item_TextColor(itemDef_t *item, vec4_t *newColor) {
 	Fade(&item->window.flags, &item->window.foreColor[3], parent->fadeClamp, &item->window.nextTime, parent->fadeCycle, qtrue, parent->fadeAmount);
 
 	if (item->window.flags & WINDOW_HASFOCUS) {
-		lowLight[0] = 0.8 * parent->focusColor[0];
-		lowLight[1] = 0.8 * parent->focusColor[1];
-		lowLight[2] = 0.8 * parent->focusColor[2];
-		lowLight[3] = 0.8 * parent->focusColor[3];
-		LerpColor(parent->focusColor,lowLight,*newColor,0.5+0.5*sin(DC->realTime / PULSE_DIVISOR));
+		lowLight[0] = 0.8f * parent->focusColor[0];
+		lowLight[1] = 0.8f * parent->focusColor[1];
+		lowLight[2] = 0.8f * parent->focusColor[2];
+		lowLight[3] = 0.8f * parent->focusColor[3];
+		LerpColor(parent->focusColor,lowLight,*newColor,0.5f+0.5f*sinf(DC->realTime / PULSE_DIVISOR));
 	} else if (item->textStyle == ITEM_TEXTSTYLE_BLINK && !((DC->realTime/BLINK_DIVISOR) & 1)) {
-		lowLight[0] = 0.8 * item->window.foreColor[0];
-		lowLight[1] = 0.8 * item->window.foreColor[1];
-		lowLight[2] = 0.8 * item->window.foreColor[2];
-		lowLight[3] = 0.8 * item->window.foreColor[3];
-		LerpColor(item->window.foreColor,lowLight,*newColor,0.5+0.5*sin(DC->realTime / PULSE_DIVISOR));
+		lowLight[0] = 0.8f * item->window.foreColor[0];
+		lowLight[1] = 0.8f * item->window.foreColor[1];
+		lowLight[2] = 0.8f * item->window.foreColor[2];
+		lowLight[3] = 0.8f * item->window.foreColor[3];
+		LerpColor(item->window.foreColor,lowLight,*newColor,0.5f+0.5f*sinf(DC->realTime / PULSE_DIVISOR));
 	} else {
 		memcpy(newColor, &item->window.foreColor, sizeof(vec4_t));
 		// items can be enabled and disabled based on cvars
@@ -3792,7 +3790,7 @@ void Item_TextField_Paint(itemDef_t *item) {
 	char buff[1024];
 	vec4_t newColor, lowLight;
 	int offset;
-	menuDef_t *parent = (menuDef_t*)item->parent;
+	menuDef_t *parent;
 	editFieldDef_t *editPtr = (editFieldDef_t*)item->typeData;
 
 	Item_Text_Paint(item);
@@ -3997,7 +3995,8 @@ static bind_t g_bindings[] =
 	{"use_electrobinoculars",	-1,			-1,		-1,	-1},
 	{"use_sentry",		-1,					-1,		-1,	-1},
 	{"cg_thirdperson !",-1,					-1,		-1,	-1},
-
+	{"saveDemo",		-1,					-1,		-1,	-1},
+	{"saveDemoLast",	-1,					-1,		-1,	-1},
 };
 
 
@@ -4402,14 +4401,14 @@ void Item_Model_Paint(itemDef_t *item)
 
 	DC->modelBounds( item->asset, mins, maxs );
 
-	origin[2] = -0.5 * ( mins[2] + maxs[2] );
-	origin[1] = 0.5 * ( mins[1] + maxs[1] );
+	origin[2] = -0.5f * ( mins[2] + maxs[2] );
+	origin[1] = 0.5f * ( mins[1] + maxs[1] );
 
 	// calculate distance so the model nearly fills the box
 	if (qtrue)
 	{
-		float len = 0.5 * ( maxs[2] - mins[2] );
-		origin[0] = len / 0.268;	// len / tan( fov/2 )
+		float len = 0.5f * ( maxs[2] - mins[2] );
+		origin[0] = len / 0.268f;	// len / tan( fov/2 )
 		//origin[0] = len / tan(w/2);
 	}
 	else
@@ -4768,11 +4767,11 @@ void Item_OwnerDraw_Paint(itemDef_t *item) {
 		}
 
 		if (item->window.flags & WINDOW_HASFOCUS) {
-			lowLight[0] = 0.8 * parent->focusColor[0];
-			lowLight[1] = 0.8 * parent->focusColor[1];
-			lowLight[2] = 0.8 * parent->focusColor[2];
-			lowLight[3] = 0.8 * parent->focusColor[3];
-			LerpColor(parent->focusColor,lowLight,color,0.5+0.5*sin(DC->realTime / PULSE_DIVISOR));
+			lowLight[0] = 0.8f * parent->focusColor[0];
+			lowLight[1] = 0.8f * parent->focusColor[1];
+			lowLight[2] = 0.8f * parent->focusColor[2];
+			lowLight[3] = 0.8f * parent->focusColor[3];
+			LerpColor(parent->focusColor,lowLight,color,0.5f+0.5f*sinf(DC->realTime / PULSE_DIVISOR));
 		} else if (item->textStyle == ITEM_TEXTSTYLE_BLINK && !((DC->realTime/BLINK_DIVISOR) & 1)) {
 			lowLight[0] = 0.8 * item->window.foreColor[0];
 			lowLight[1] = 0.8 * item->window.foreColor[1];
@@ -5622,10 +5621,10 @@ ItemParse_flag
 */
 qboolean ItemParse_flag( itemDef_t *item, int handle)
 {
-	int		i;
-	char	*tempStr;
+	int			i;
+	const char	*tempStr;
 
-	if (!PC_String_Parse(handle, (const char **)&tempStr))
+	if (!PC_String_Parse(handle, &tempStr))
 	{
 		return qfalse;
 	}
@@ -5643,7 +5642,7 @@ qboolean ItemParse_flag( itemDef_t *item, int handle)
 
 	if (itemFlags[i].string == NULL)
 	{
-		Com_Printf(va( S_COLOR_YELLOW "Unknown item style value '%s'",tempStr));
+		Com_Printf(S_COLOR_YELLOW "Unknown item style value '%s'",tempStr);
 	}
 
 	return qtrue;
@@ -6184,13 +6183,13 @@ qboolean ItemParse_cvarStrList( itemDef_t *item, int handle ) {
 
 	pass = 0;
 	while ( 1 ) {
-		char* psString;
+		const char* psString;
 
 //		if (!trap_PC_ReadToken(handle, &token)) {
 //			PC_SourceError(handle, "end of file inside menu item\n");
 //			return qfalse;
 //		}
-		if (!PC_String_Parse(handle, (const char **)&psString)) {
+		if (!PC_String_Parse(handle, &psString)) {
 			PC_SourceError(handle, "end of file inside menu item\n");
 			return qfalse;
 		}
@@ -6250,9 +6249,9 @@ qboolean ItemParse_cvarFloatList( itemDef_t *item, int handle )
 
 	while ( 1 )
 	{
-		char* string;
+		const char* string;
 
-		if ( !PC_String_Parse ( handle, (const char **)&string ) )
+		if ( !PC_String_Parse ( handle, &string ) )
 		{
 			PC_SourceError(handle, "end of file inside menu item\n");
 			return qfalse;
@@ -6496,6 +6495,9 @@ qboolean Item_Parse(int handle, itemDef_t *item) {
 static void Item_TextScroll_BuildLines ( itemDef_t* item )
 {
 #if 1
+#if !defined(_MSC_VER) || (defined(_MSC_VER) && _MSC_VER >= 1800)
+	assert(item->typeData);
+#endif
 	// new asian-aware line breaker...  (pasted from elsewhere late @ night, hence aliasing-vars ;-)
 	//
 	textScrollDef_t* scrollPtr = (textScrollDef_t*) item->typeData;
