@@ -54,7 +54,7 @@ INDEX 5
    TEXT_LANGUAGE2 "Paramètes spécifiques de JK2MV"
    TEXT_LANGUAGE3 "JK2MV-spezifische Einstellungen."
    TEXT_LANGUAGE6 "JK2MV-specific options."
-   TEXT_LANGUAGE8 "JK2MV-opciones específicas."
+   TEXT_LANGUAGE8 "Opciones específicas de JK2MV."
 }
 INDEX 6
 {
@@ -357,118 +357,118 @@ INDEX 39
 {
    REFERENCE MULTISAMPLE_ANTIALIASING
    TEXT_LANGUAGE1 "Adjust multisample anti-aliasing level."
-   TEXT_LANGUAGE2 "Adjust multisample anti-aliasing level."
+   TEXT_LANGUAGE2 "Réglage du niveau d'anti-aliasing (échantillons multiples)."
    TEXT_LANGUAGE3 "Multisample und Anti-Aliasing Level anpassen."
    TEXT_LANGUAGE6 "Adjust multisample anti-aliasing level."
-   TEXT_LANGUAGE8 "Adjust multisample anti-aliasing level."
+   TEXT_LANGUAGE8 "Ajuste del nivel de anti-aliasing (muéstras multiples)."
 }
 INDEX 40
 {
    REFERENCE CONSOLE_FONT
    TEXT_LANGUAGE1 "Console Font:"
-   TEXT_LANGUAGE2 "Console Font:"
+   TEXT_LANGUAGE2 "Police de caract. console:"
    TEXT_LANGUAGE3 "Konsolen Schriftart:"
    TEXT_LANGUAGE6 "Console Font:"
-   TEXT_LANGUAGE8 "Console Font:"
+   TEXT_LANGUAGE8 "Fuente de la consola:"
 }
 INDEX 41
 {
    REFERENCE SELECT_CONSOLE_FONT
    TEXT_LANGUAGE1 "Select console font."
-   TEXT_LANGUAGE2 "Select console font."
+   TEXT_LANGUAGE2 "Sélectionner la police de caractères console."
    TEXT_LANGUAGE3 "Konsolen Schriftart auswählen."
    TEXT_LANGUAGE6 "Select console font."
-   TEXT_LANGUAGE8 "Select console font."
+   TEXT_LANGUAGE8 "Seleccione el tipo de fuente de la consola."
 }
 INDEX 42
 {
    REFERENCE FONT_SIZE
    TEXT_LANGUAGE1 "Console Font Size:"
-   TEXT_LANGUAGE2 "Console Font Size:"
+   TEXT_LANGUAGE2 "Taille police de caractères:"
    TEXT_LANGUAGE3 "Konsolen Schriftgröße:"
    TEXT_LANGUAGE6 "Console Font Size:"
-   TEXT_LANGUAGE8 "Console Font Size:"
+   TEXT_LANGUAGE8 "Tamaño Fuente Consola:"
 }
 INDEX 43
 {
    REFERENCE ADJUST_CONSOLE_FONT_SIZE
    TEXT_LANGUAGE1 "Adjust console font size."
-   TEXT_LANGUAGE2 "Adjust console font size."
+   TEXT_LANGUAGE2 "Adjuste taille la police de caractères console."
    TEXT_LANGUAGE3 "Konsolen Schriftgröße anpassen."
    TEXT_LANGUAGE6 "Adjust console font size."
-   TEXT_LANGUAGE8 "Adjust console font size."
+   TEXT_LANGUAGE8 "Ajusta el tamaño de la fuente de la consola."
 }
 INDEX 44
 {
    REFERENCE CONSOLE_TIMESTAMPS
    TEXT_LANGUAGE1 "Console Timestamps:"
-   TEXT_LANGUAGE2 "Console Timestamps:"
+   TEXT_LANGUAGE2 "Horodatage de la console:"
    TEXT_LANGUAGE3 "Konsolen Zeitstempel:"
    TEXT_LANGUAGE6 "Console Timestamps:"
-   TEXT_LANGUAGE8 "Console Timestamps:"
+   TEXT_LANGUAGE8 "Marca de Tiempo Consola:"
 }
 INDEX 45
 {
    REFERENCE PRINT_TIMESTAMPS
    TEXT_LANGUAGE1 "Print timestamps next to console messages."
-   TEXT_LANGUAGE2 "Print timestamps next to console messages."
+   TEXT_LANGUAGE2 "Affiche l'horodatage sur les messages de la console."
    TEXT_LANGUAGE3 "Neben jeder Ausgabe der Konsole einen Zeitstempel anzeigen."
    TEXT_LANGUAGE6 "Print timestamps next to console messages."
-   TEXT_LANGUAGE8 "Print timestamps next to console messages."
+   TEXT_LANGUAGE8 "Muestra la marca de tiempo en los mensajes de la consola."
 }
 INDEX 46
 {
    REFERENCE AUTO_DEMO
    TEXT_LANGUAGE1 "Auto Demo:"
-   TEXT_LANGUAGE2 "Auto Demo:"
+   TEXT_LANGUAGE2 "Démo automatique:"
    TEXT_LANGUAGE3 "Auto Demo:"
    TEXT_LANGUAGE6 "Auto Demo:"
-   TEXT_LANGUAGE8 "Auto Demo:"
+   TEXT_LANGUAGE8 "Demo Automático:"
 }
 INDEX 47
 {
    REFERENCE AUTO_DEMO_INFO
    TEXT_LANGUAGE1 "Automatically start recording demo."
-   TEXT_LANGUAGE2 "Automatically start recording demo."
+   TEXT_LANGUAGE2 "Démarrage automatique de la démo."
    TEXT_LANGUAGE3 "Demo Aufzeichnung automatisch starten."
    TEXT_LANGUAGE6 "Automatically start recording demo."
-   TEXT_LANGUAGE8 "Automatically start recording demo."
+   TEXT_LANGUAGE8 "Inicio automático de la grabación de la demo."
 }
 INDEX 48
 {
    REFERENCE DEMO_INDICATOR
    TEXT_LANGUAGE1 "Demo Indicator:"
-   TEXT_LANGUAGE2 "Demo Indicator:"
+   TEXT_LANGUAGE2 "Indicateur de démo:"
    TEXT_LANGUAGE3 "Demo Hinweis:"
    TEXT_LANGUAGE6 "Demo Indicator:"
-   TEXT_LANGUAGE8 "Demo Indicator:"
+   TEXT_LANGUAGE8 "Indicador Demo:"
 }
 INDEX 49
 {
    REFERENCE DEMO_INDICATOR_INFO
    TEXT_LANGUAGE1 "Select demo recording indicator style."
-   TEXT_LANGUAGE2 "Select demo recording indicator style."
+   TEXT_LANGUAGE2 "Sélectionnez le style d'indicateur d'enregistrement de démo."
    TEXT_LANGUAGE3 "Art des Demo Hinweises wählen."
    TEXT_LANGUAGE6 "Select demo recording indicator style."
-   TEXT_LANGUAGE8 "Select demo recording indicator style."
+   TEXT_LANGUAGE8 "Selecciona el estilo del indicador de grabación de la demo."
 }
 INDEX 50
 {
    REFERENCE DETAILED
    TEXT_LANGUAGE1 "Detailed"
-   TEXT_LANGUAGE2 "Detailed"
+   TEXT_LANGUAGE2 "Détaillé"
    TEXT_LANGUAGE3 "Detailiert"
    TEXT_LANGUAGE6 "Detailed"
-   TEXT_LANGUAGE8 "Detailed"
+   TEXT_LANGUAGE8 "Detallado"
 }
 INDEX 51
 {
    REFERENCE RED_DOT
    TEXT_LANGUAGE1 "Red Dot"
-   TEXT_LANGUAGE2 "Red Dot"
+   TEXT_LANGUAGE2 "Point rouge"
    TEXT_LANGUAGE3 "Roter Punkt"
    TEXT_LANGUAGE6 "Red Dot"
-   TEXT_LANGUAGE8 "Red Dot"
+   TEXT_LANGUAGE8 "Punto Rojo"
 }
 INDEX 52
 {
@@ -483,62 +483,62 @@ INDEX 53
 {
    REFERENCE SAVE_DEMO_KEY
    TEXT_LANGUAGE1 "Save Demo Key:"
-   TEXT_LANGUAGE2 "Save Demo Key:"
+   TEXT_LANGUAGE2 "La clé de démo:"
    TEXT_LANGUAGE3 "Demo Speichern:"
    TEXT_LANGUAGE6 "Save Demo Key:"
-   TEXT_LANGUAGE8 "Save Demo Key:"
+   TEXT_LANGUAGE8 "Tecla Guardar Demo:"
 }
 INDEX 54
 {
    REFERENCE SAVE_DEMO_KEY_INFO
    TEXT_LANGUAGE1 "Bind a key to save automatic demo."
-   TEXT_LANGUAGE2 "Bind a key to save automatic demo."
+   TEXT_LANGUAGE2 "Lier une clé pour enregistrer la démo automatique."
    TEXT_LANGUAGE3 "Taste binden um automatische Demo abzuspeichern."
    TEXT_LANGUAGE6 "Bind a key to save automatic demo."
-   TEXT_LANGUAGE8 "Bind a key to save automatic demo."
+   TEXT_LANGUAGE8 "Asigna una tecla para grabar automáticamente una demo."
 }
 INDEX 55
 {
    REFERENCE JK2MV_OPTIONS_INFO
    TEXT_LANGUAGE1 "Configure other JK2MV options."
-   TEXT_LANGUAGE2 "Configure other JK2MV options."
+   TEXT_LANGUAGE2 "Configurer les autres options de JK2MV."
    TEXT_LANGUAGE3 "Andere JK2MV Optionen konfigurieren."
    TEXT_LANGUAGE6 "Configure other JK2MV options."
-   TEXT_LANGUAGE8 "Configure other JK2MV options."
+   TEXT_LANGUAGE8 "Configurar otras opciones de JK2MV."
 }
 INDEX 56
 {
    REFERENCE SAVE_LAST_DEMO_KEY
    TEXT_LANGUAGE1 "Save Last Demo Key:"
-   TEXT_LANGUAGE2 "Save Last Demo Key:"
+   TEXT_LANGUAGE2 "La clé de démo dernière:"
    TEXT_LANGUAGE3 "Letzte Demo Speichern:"
    TEXT_LANGUAGE6 "Save Last Demo Key:"
-   TEXT_LANGUAGE8 "Save Last Demo Key:"
+   TEXT_LANGUAGE8 "Tecla Guardar Última Demo:"
 }
 INDEX 57
 {
    REFERENCE SAVE_LAST_DEMO_KEY_INFO
    TEXT_LANGUAGE1 "Bind a key to save previous automatic demo."
-   TEXT_LANGUAGE2 "Bind a key to save previous automatic demo."
+   TEXT_LANGUAGE2 "Lier une clé pour enregistrer la démo automatique précédente."
    TEXT_LANGUAGE3 "Taste binden um letzte automatische Demo abzuspeichern."
    TEXT_LANGUAGE6 "Bind a key to save previous automatic demo."
-   TEXT_LANGUAGE8 "Bind a key to save previous automatic demo."
+   TEXT_LANGUAGE8 "Asigna una tecla para guardar la demo automática previa."
 }
 INDEX 58
 {
    REFERENCE MOD_OPTIONS
    TEXT_LANGUAGE1 "Mod Options"
-   TEXT_LANGUAGE2 "Mod Options"
+   TEXT_LANGUAGE2 "Options de Mod"
    TEXT_LANGUAGE3 "Mod Optionen"
    TEXT_LANGUAGE6 "Mod Options"
-   TEXT_LANGUAGE8 "Mod Options"
+   TEXT_LANGUAGE8 "Opciones Mod"
 }
 INDEX 59
 {
    REFERENCE MOD_OPTIONS_INFO
    TEXT_LANGUAGE1 "Configure mod options."
-   TEXT_LANGUAGE2 "Configure mod options."
+   TEXT_LANGUAGE2 "Configurer les options de mod."
    TEXT_LANGUAGE3 "Mod Optionen konfigurieren."
    TEXT_LANGUAGE6 "Configure mod options."
-   TEXT_LANGUAGE8 "Configure mod options."
+   TEXT_LANGUAGE8 "Configurar las opciones de mod."
 }
