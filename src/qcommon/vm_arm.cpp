@@ -47,7 +47,7 @@ typedef struct {
 
 cpuFeatures_t cpu;
 byte *nativeCode;
-intptr_t nativeCodeSize, nativeCodeLength;
+size_t nativeCodeSize, nativeCodeLength;
 
 uint32_t localConstantPool[MAX_CONSTANTS_POOL_SIZE]; size_t localConstantPoolLength;
 byte **localConstantPoolPointers; size_t localConstantCurrentPool;
@@ -55,7 +55,7 @@ byte *firstLocalConstantPtr;
 
 #define Emit32(X) EmitInteger(0x##X)
 void EmitInteger(uint32_t num) {
-    if (nativeCodeLength >= nativeCodeSize - sizeof(uint32_t)) {
+	if (nativeCodeLength + sizeof(uint32_t) >= nativeCodeSize) {
         Com_Error(ERR_DROP, "native code too big for buffer");
     }
 
@@ -82,8 +82,6 @@ int CalculateConstant12(uint32_t *num) {
 }
 
 void EmitLocalConstantPool(qboolean endOfProcedure) {
-    int i;
-
     if (localConstantPoolLength) {
         if (!endOfProcedure) {
             byte *sourceAddr = &nativeCode[nativeCodeLength];
@@ -104,7 +102,7 @@ void EmitLocalConstantPool(qboolean endOfProcedure) {
         }
 
         localConstantPoolPointers[localConstantCurrentPool++] = &nativeCode[nativeCodeLength];
-        for (i = 0; i < localConstantPoolLength; i++) {
+        for (size_t i = 0; i < localConstantPoolLength; i++) {
             EmitInteger(localConstantPool[i]);
         }
 
@@ -222,13 +220,13 @@ void EmitRegisterLoadConst(r_t r, uint32_t constant) {
 }
 
 void EmitConstantJumpInstruction(vm_t *vm, opcode_t opCode, uint32_t destinationOpCodeNum) {
-    intptr_t sourceAddr = nativeCodeLength;
+    size_t sourceAddr = nativeCodeLength;
 
-    if (destinationOpCodeNum >= vm->instructionCount) {
+    if (destinationOpCodeNum >= (uint32_t)vm->instructionCount) {
         Com_Error(ERR_DROP, "jump violation detected.");
     }
 
-    intptr_t destAddr = vm->instructionPointers[destinationOpCodeNum];
+    size_t destAddr = vm->instructionPointers[destinationOpCodeNum];
     if (!destAddr) {
         // address is still unknown (first pass)
         Emit32(00000000);
@@ -379,7 +377,8 @@ void VM_CompiledErrorJump() {
 }
 
 void VM_Compile(vm_t *vm, vmHeader_t *header) {
-    size_t i, ic, pass;
+    size_t i, pass;
+	int ic;
 
 #ifdef __linux__
     FILE *cpuinfo = fopen("/proc/cpuinfo", "rb");
@@ -417,7 +416,7 @@ void VM_Compile(vm_t *vm, vmHeader_t *header) {
     // TODO
 #endif
 
-    nativeCodeSize = vm->codeLength * 10;
+    nativeCodeSize = (size_t)vm->codeLength * 10;
     nativeCode = (byte *)Z_Malloc(nativeCodeSize, TAG_VM, qfalse);
     localConstantPoolPointers = (byte **)Z_Malloc(vm->instructionCount * sizeof(byte *), TAG_VM, qtrue);
 
@@ -443,8 +442,8 @@ void VM_Compile(vm_t *vm, vmHeader_t *header) {
             byte *arg = instructionptr + 1;
 
             if (localConstantPoolLength) {
-                intptr_t constoffsetlen = (-8 + &nativeCode[nativeCodeLength] + sizeof(uint32_t) + localConstantPoolLength * sizeof(uint32_t)) - firstLocalConstantPtr;
-                if (constoffsetlen >= 4095 - (15 * sizeof(uint32_t))) {
+                ptrdiff_t constoffsetlen = ((ptrdiff_t)-8 + &nativeCode[nativeCodeLength] + sizeof(uint32_t) + localConstantPoolLength * sizeof(uint32_t)) - firstLocalConstantPtr;
+                if (constoffsetlen >= (ptrdiff_t)(4095 - 15 * sizeof(uint32_t))) {
                     EmitLocalConstantPool(qfalse);
                 }
             }
@@ -969,10 +968,10 @@ void VM_Compile(vm_t *vm, vmHeader_t *header) {
     Z_Free(nativeCode);
     Z_Free(localConstantPoolPointers);
 
-    Com_Printf( "VM file %s compiled to %u bytes of code\n", vm->name, nativeCodeLength );
+    Com_Printf( "VM file %s compiled to %zu bytes of code\n", vm->name, nativeCodeLength );
 
     // offset all the instruction pointers for the new location
-    for ( i = 0 ; i < header->instructionCount ; i++ ) {
+    for ( int i = 0 ; i < header->instructionCount ; i++ ) {
         vm->instructionPointers[i] += (intptr_t)vm->codeBase;
     }
 }
@@ -1008,7 +1007,7 @@ int __attribute__((optimize("O0"))) VM_CallCompiled(vm_t *vm, int *args) {
     programStackPtr = (int *)&image[ programStack ];
 
     // set up opStack
-    stack[0] = 0xDEADC0DE;
+    *(unsigned int *)stack = 0xDEADC0DEu;
     stackPtr = stack;
     stackIndex = 0;
 
@@ -1038,7 +1037,7 @@ int __attribute__((optimize("O0"))) VM_CallCompiled(vm_t *vm, int *args) {
         : "r0", "r6", "r7", "r9", "r10"
     );
 
-    if (stack[0] != 0xDEADC0DE || stackIndex != 1) {
+    if (*(unsigned int *)stack != 0xDEADC0DEu || stackIndex != 1) {
         Com_Error(ERR_DROP, "opStack corrupted in VM_CallCompiled");
     }
 
