@@ -3643,9 +3643,11 @@ CL_GlobalServers_f
 void CL_GlobalServers_f( void ) {
 	netadr_t	to;
 	int			i;
+	const char	*s;
+	const char	*keywords;
 
 	if ( Cmd_Argc() < 3) {
-		Com_Printf( "usage: globalservers <master# 0-1> <protocol> [keywords]\n");
+		Com_Printf( "usage: globalservers <master# 0-%d> <protocols> [keywords]\n", MAX_MASTER_SERVERS - 1);
 		return;
 	}
 
@@ -3653,9 +3655,12 @@ void CL_GlobalServers_f( void ) {
 	cls.numglobalservers = -1;
 	cls.pingUpdateSource = AS_GLOBAL;
 
+	keywords = Cmd_ArgsFrom(3);
+
 	// multimaster
 	for (i = 0; i < MAX_MASTER_SERVERS; i++) {
 		cvar_t *master = Cvar_FindVar(va("sv_master%i", i + 1));
+
 		if (master == NULL || !strlen(master->string))
 			continue;
 
@@ -3667,8 +3672,14 @@ void CL_GlobalServers_f( void ) {
 		to.type = NA_IP;
 		to.port = BigShort(PORT_MASTER);
 
-		NET_OutOfBandPrint(NS_SERVER, to, "getservers 15");
-		NET_OutOfBandPrint(NS_SERVER, to, "getservers 16");
+		s = Cmd_Argv(2);
+		while (Q_isdigit(*s)) {
+			NET_OutOfBandPrint(NS_SERVER, to, "getservers %d %s", atoi(s), keywords);
+
+			// skip to next protocol number, separated by anything other than digits
+			while (Q_isdigit(*s)) s++;
+			while (*s && !Q_isdigit(*s)) s++;
+		}
 	}
 
 	CL_RequestMotd();
