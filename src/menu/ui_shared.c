@@ -4659,8 +4659,8 @@ void Item_ListBox_Paint(itemDef_t *item) {
 
 					for (j = 0; j < listPtr->numColumns; j++)
 					{
-						int protocol;
-						int gameVersion;
+						mvprotocol_t protocol;
+						mvversion_t gameVersion;
 
 						int imageStartX = listPtr->columnInfo[j].pos;
 						text = DC->feederItemText(item->special, i, j, &optionalImage1, &optionalImage2, &optionalImage3, &optionalImage4, &protocol, &gameVersion);
@@ -4674,12 +4674,12 @@ void Item_ListBox_Paint(itemDef_t *item) {
 						// Mark 1.04 server BEFORE writing text (so the "box" is under the text, not over it)
 						if (optionalImage4 >= 0)
 						{
-							if (protocol == 16)
+							if (protocol == PROTOCOL16)
 							{
 								vec4_t color = { 0.00f, 0.00f, 0.00f, 0.30f };
 								DC->fillRect(x + 2, y + 2, item->window.rect.w - SCROLLBAR_SIZE - 4, listPtr->elementHeight, color);
 							}
-							else if ( gameVersion == 3 )
+							else if ( gameVersion == VERSION_1_03 )
 							{
 								vec4_t color = { 1.00f, 1.00f, 1.00f, 0.10f };
 								DC->fillRect(x + 2, y + 2, item->window.rect.w - SCROLLBAR_SIZE - 4, listPtr->elementHeight, color);

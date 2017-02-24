@@ -1015,13 +1015,6 @@ extern huffman_t clientHuffTables;
 #define	CL_ENCODE_START		12
 #define CL_DECODE_START		4
 
-// multiprotocol support
-typedef enum {
-	PROTOCOL_UNDEF = 0,
-	PROTOCOL15 = 15,
-	PROTOCOL16 = 16,
-} mvprotocol_t;
-
 void MV_SetCurrentGameversion(mvversion_t version);
 mvversion_t MV_GetCurrentGameversion();
 mvprotocol_t MV_GetCurrentProtocol();

@@ -1,7 +1,7 @@
 #ifndef __UI_SHARED_H
 #define __UI_SHARED_H
 
-
+#include "../api/mvapi.h"
 #include "../qcommon/q_shared.h"
 #include "../cgame/tr_types.h"
 #include "keycodes.h"
@@ -373,7 +373,7 @@ typedef struct {
   void (*startLocalSound)( sfxHandle_t sfx, int channelNum );
   qboolean (*ownerDrawHandleKey)(int ownerDraw, int flags, float *special, int key);
   int (*feederCount)(float feederID);
-  const char *(*feederItemText)(float feederID, int index, int column, qhandle_t *handle1, qhandle_t *handle2, qhandle_t *handle3, qhandle_t *handle4, int *protocol, int *gameVersion);
+  const char *(*feederItemText)(float feederID, int index, int column, qhandle_t *handle1, qhandle_t *handle2, qhandle_t *handle3, qhandle_t *handle4, mvprotocol_t *protocol, mvversion_t *gameVersion);
   qhandle_t (*feederItemImage)(float feederID, int index);
   qboolean (*feederSelection)(float feederID, int index);
 	void (*keynumToStringBuf)( int keynum, char *buf, int buflen );

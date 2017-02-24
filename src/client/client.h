@@ -269,7 +269,7 @@ typedef struct {
 	int			weaponDisable;
 	int			forceDisable;
 //	qboolean	pure;
-	int			gameVersion; // For 1.03 in the menu...
+	mvversion_t	gameVersion; // For 1.03 in the menu...
 	int			bots; // botfiltering
 } serverInfo_t;
 

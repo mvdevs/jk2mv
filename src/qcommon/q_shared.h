@@ -2335,4 +2335,11 @@ typedef union byteAlias_u {
 #define XSTRING( a ) STRING( a )
 #define ARRAY_LEN( x ) ( sizeof( x ) / sizeof( *(x) ) )
 
+// multiprotocol support
+typedef enum {
+	PROTOCOL_UNDEF = 0,
+	PROTOCOL15 = 15,
+	PROTOCOL16 = 16,
+} mvprotocol_t;
+
 #endif	// __Q_SHARED_H

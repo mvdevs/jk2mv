@@ -3464,6 +3464,9 @@ void CL_ServerStatusResponse( netadr_t from, msg_t *msg ) {
 		case PROTOCOL16:
 			MV_SetServerFakeInfoByAddress(from, VERSION_1_04, -1, -1);
 			break;
+		default:
+			MV_SetServerFakeInfoByAddress(from, VERSION_UNDEF, -1, -1);
+			break;
 		}
 	}
 
@@ -3490,6 +3493,9 @@ void CL_ServerStatusResponse( netadr_t from, msg_t *msg ) {
 					break;
 				case PROTOCOL16:
 					MV_SetCurrentGameversion(VERSION_1_04);
+					break;
+				default:
+					MV_SetCurrentGameversion(VERSION_UNDEF);
 					break;
 			}
 		}

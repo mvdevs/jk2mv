@@ -3758,17 +3758,17 @@ static void UI_LoadDemos() {
 	size_t len;
 
 	// Load "dm_15" and "dm_16" demos.
-	int		protocol;
+	mvprotocol_t	protocol;
 	int		oldCount = 0;
 	uiInfo.demoCount = 0;
 
-	for ( protocol = 15; protocol <= 16; protocol++ )
+	for ( protocol = PROTOCOL15; protocol <= PROTOCOL16; protocol++ )
 	{
-		Com_sprintf(demoExt, sizeof(demoExt), "dm_%d", protocol);
+		Com_sprintf(demoExt, sizeof(demoExt), "dm_%d", (int)protocol);
 
 		uiInfo.demoCount += trap_FS_GetFileList( "demos", demoExt, demolist, 4096 );
 
-		Com_sprintf(demoExt, sizeof(demoExt), ".dm_%d", protocol);
+		Com_sprintf(demoExt, sizeof(demoExt), ".dm_%d", (int)protocol);
 
 		if (uiInfo.demoCount - oldCount) {
 			if (uiInfo.demoCount > MAX_DEMOS) {
@@ -5145,16 +5145,16 @@ static void UI_BuildServerDisplayList(int force) {
 
 			// serverlist filtering
 			if (ui_serverFilterType.integer > 0) {
-				int gameVersion = 0; // Using the "gameVersion" now to support seperate lists for 1.02, 1.03 and 1.04
+				mvversion_t gameVersion; // Using the "gameVersion" now to support seperate lists for 1.02, 1.03 and 1.04
 
 				if (ui_serverFilterType.integer == 1)
-					gameVersion = 2;
+					gameVersion = VERSION_1_02;
 				else if (ui_serverFilterType.integer == 2)
-					gameVersion = 3;
+					gameVersion = VERSION_1_03;
 				else
-					gameVersion = 4;
+					gameVersion = VERSION_1_04;
 
-				if (atoi(Info_ValueForKey(info, "gameVersion")) != gameVersion) {
+				if (atoi(Info_ValueForKey(info, "gameVersion")) != (int)gameVersion) {
 					trap_LAN_MarkServerVisible(ui_netSource.integer, i, qfalse);
 					continue;
 				}
@@ -5702,13 +5702,14 @@ static void UI_UpdatePendingPings() {
 }
 
 static const char *UI_FeederItemText(float feederID, int index, int column,
-	qhandle_t *handle1, qhandle_t *handle2, qhandle_t *handle3, qhandle_t *handle4, int *protocol, int *gameVersion) {
+	qhandle_t *handle1, qhandle_t *handle2, qhandle_t *handle3, qhandle_t *handle4, mvprotocol_t *protocol, mvversion_t *gameVersion) {
 	static char info[MAX_STRING_CHARS];
 	static char hostname[1024];
 	static char clientBuff[32];
 	static char needPass[32];
 	static int lastColumn = -1;
 	int int_protocol;
+	int int_gameVersion;
 	static int lastTime = 0;
 	*handle1 = *handle2 = *handle3 = *handle4 = -1;
 	if (feederID == FEEDER_HEADS) {
@@ -5791,17 +5792,35 @@ static const char *UI_FeederItemText(float feederID, int index, int column,
 
 						// serverversion icon
 						int_protocol = atoi(Info_ValueForKey(info, "protocol"));
-						*protocol = int_protocol;
+						switch ((mvprotocol_t)int_protocol) {
+						case PROTOCOL15:
+						case PROTOCOL16:
+							*protocol = (mvprotocol_t)int_protocol;
+							break;
+						default:
+							*protocol = PROTOCOL_UNDEF;
+							break;
+						}
 
 						// 1.03
-						*gameVersion = atoi(Info_ValueForKey(info, "gameVersion"));
+						int_gameVersion = atoi(Info_ValueForKey(info, "gameVersion"));
+						switch((mvversion_t)int_gameVersion) {
+						case VERSION_1_02:
+						case VERSION_1_03:
+						case VERSION_1_04:
+							*gameVersion = (mvversion_t)int_gameVersion;
+							break;
+						default:
+							*gameVersion = VERSION_UNDEF;
+							break;
+						}
 
 						// do this only if no gameversion is selected
 						if (!ui_serverFilterType.integer) {
-							if (int_protocol == 16) {
+							if ( *protocol == PROTOCOL16 ) {
 								*handle4 = trap_R_RegisterShaderNoMip("gfx/menus/srv_104");
 							} else {
-								if ( *gameVersion == 3 )
+								if ( *gameVersion == VERSION_1_03 )
 									*handle4 = trap_R_RegisterShaderNoMip("gfx/menus/srv_103");
 								else
 									*handle4 = trap_R_RegisterShaderNoMip("gfx/menus/srv_102");
