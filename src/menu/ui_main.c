@@ -7610,7 +7610,7 @@ UI_StartServerRefresh
 static void UI_StartServerRefresh(qboolean full)
 {
 	int		i;
-	char	*ptr;
+	const char *ptr;
 	char cvarstr[64];
 
 	qtime_t q;
@@ -7650,12 +7650,22 @@ static void UI_StartServerRefresh(qboolean full)
 		}
 
 		ptr = UI_Cvar_VariableString("debug_protocol");
-		if (strlen(ptr)) {
-			trap_Cmd_ExecuteText( EXEC_NOW, va( "globalservers %d %s\n", i, ptr));
+		if (strlen(ptr) == 0) {
+			switch(ui_serverFilterType.integer) {
+			case 0:
+				ptr = "15+16";
+				break;
+			case 1:
+			case 2:
+				ptr = "15";
+				break;
+			default:
+				ptr = "16";
+				break;
+			}
 		}
-		else {
-			trap_Cmd_ExecuteText( EXEC_NOW, va( "globalservers %d 15+16\n", i ) );
-		}
+
+		trap_Cmd_ExecuteText( EXEC_NOW, va( "globalservers %d %s\n", i, ptr));
 	}
 }
 
