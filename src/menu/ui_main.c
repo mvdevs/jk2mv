@@ -5822,8 +5822,10 @@ static const char *UI_FeederItemText(float feederID, int index, int column,
 							} else {
 								if ( *gameVersion == VERSION_1_03 )
 									*handle4 = trap_R_RegisterShaderNoMip("gfx/menus/srv_103");
-								else
+								else if ( *gameVersion == VERSION_1_02 )
 									*handle4 = trap_R_RegisterShaderNoMip("gfx/menus/srv_102");
+								else
+									*handle4 = -1;
 							}
 						}
 

@@ -3200,9 +3200,7 @@ void CL_ServerInfoPacket( netadr_t from, msg_t *msg ) {
 	prot = (mvprotocol_t)atoi(Info_ValueForKey(infoString, "protocol"));
 	if (prot != PROTOCOL15 && prot != PROTOCOL16) {
 		Com_DPrintf( "Different protocol info packet: %s\n", infoString );
-		return;
 	}
-
 
 	// multiprotocol support
 	if (cls.state == CA_CONNECTING && NET_CompareAdr(from, clc.serverAddress)) {
@@ -3217,7 +3215,8 @@ void CL_ServerInfoPacket( netadr_t from, msg_t *msg ) {
 					MV_SetCurrentGameversion(VERSION_1_04);
 					break;
 				default:
-					q_unreachable();
+					MV_SetCurrentGameversion(VERSION_UNDEF);
+					break;
 			}
 		}
 
