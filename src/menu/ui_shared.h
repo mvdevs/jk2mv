@@ -379,7 +379,7 @@ typedef struct {
 	void (*keynumToStringBuf)( int keynum, char *buf, int buflen );
 	void (*getBindingBuf)( int keynum, char *buf, int buflen );
 	void (*setBinding)( int keynum, const char *binding );
-	void (*executeText)(int exec_when, const char *text );
+	void (*executeText)(cbufExec_t exec_when, const char *text );
 	Q_PTR_NORETURN void (*Error)(int level, const char *error, ...);
 	void (*Print)(const char *msg, ...);
 	void (*Pause)(qboolean b);

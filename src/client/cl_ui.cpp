@@ -821,7 +821,7 @@ intptr_t CL_UISystemCalls(intptr_t *args) {
 		return 0;
 
 	case UI_CMD_EXECUTETEXT:
-		Cbuf_ExecuteText( args[1], (const char *)VMA(2) );
+		Cbuf_ExecuteText( (cbufExec_t)args[1], (const char *)VMA(2) );
 		return 0;
 
 	case UI_FS_FOPENFILE:

@@ -929,7 +929,7 @@ void			trap_Cvar_Create( const char *var_name, const char *var_value, int flags 
 void			trap_Cvar_InfoStringBuffer( int bit, char *buffer, int bufsize );
 int				trap_Argc( void );
 void			trap_Argv( int n, char *buffer, int bufferLength );
-void			trap_Cmd_ExecuteText( int exec_when, const char *text );	// don't use EXEC_NOW!
+void			trap_Cmd_ExecuteText( cbufExec_t exec_when, const char *text );	// don't use EXEC_NOW!
 int				trap_FS_FOpenFile( const char *qpath, fileHandle_t *f, fsMode_t mode );
 void			trap_FS_Read( void *buffer, int len, fileHandle_t f );
 void			trap_FS_Write( const void *buffer, int len, fileHandle_t f );

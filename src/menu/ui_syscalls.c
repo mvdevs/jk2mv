@@ -77,7 +77,7 @@ void trap_Argv( int n, char *buffer, int bufferLength ) {
 	engine_syscall( UI_ARGV, n, buffer, bufferLength );
 }
 
-void trap_Cmd_ExecuteText( int exec_when, const char *text ) {
+void trap_Cmd_ExecuteText( cbufExec_t exec_when, const char *text ) {
 	engine_syscall( UI_CMD_EXECUTETEXT, exec_when, text );
 }
 

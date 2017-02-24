@@ -1513,6 +1513,7 @@ void CL_FirstSnapshot( void ) {
 	// after loading
 	if ( cl_activeAction->string[0] ) {
 		Cbuf_AddText( cl_activeAction->string );
+		Cbuf_AddText( "\n" );
 		Cvar_Set( "activeAction", "" );
 	}
 }

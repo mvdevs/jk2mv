@@ -7,14 +7,14 @@
 #define	MAX_CMD_LINE	1024
 
 typedef struct {
-	byte	*data;
+	char	*data;
 	int		maxsize;
 	int		cursize;
 } cmd_t;
 
 int			cmd_wait;
 cmd_t		cmd_text;
-byte		cmd_text_buf[MAX_CMD_BUFFER];
+char		cmd_text_buf[MAX_CMD_BUFFER];
 
 
 //=============================================================================
@@ -69,7 +69,7 @@ void Cbuf_AddText( const char *text ) {
 
 	l = (int)strlen (text);
 
-	if (cmd_text.cursize + l >= cmd_text.maxsize)
+	if (cmd_text.cursize + l > cmd_text.maxsize)
 	{
 		Com_Printf ("Cbuf_AddText: overflow\n");
 		return;
@@ -89,7 +89,6 @@ Adds a \n to the text
 */
 void Cbuf_InsertText( const char *text ) {
 	int		len;
-	int		i;
 
 	len = (int)strlen( text ) + 1;
 	if ( len + cmd_text.cursize > cmd_text.maxsize ) {
@@ -98,9 +97,7 @@ void Cbuf_InsertText( const char *text ) {
 	}
 
 	// move the existing command text
-	for ( i = cmd_text.cursize - 1 ; i >= 0 ; i-- ) {
-		cmd_text.data[ i + len ] = cmd_text.data[ i ];
-	}
+	memmove( &cmd_text.data[ len ], cmd_text.data, cmd_text.cursize );
 
 	// copy the new text in
 	Com_Memcpy( cmd_text.data, text, len - 1 );
@@ -117,7 +114,7 @@ void Cbuf_InsertText( const char *text ) {
 Cbuf_ExecuteText
 ============
 */
-void Cbuf_ExecuteText (int exec_when, const char *text)
+void Cbuf_ExecuteText (cbufExec_t exec_when, const char *text)
 {
 	switch (exec_when)
 	{
@@ -161,7 +158,7 @@ void Cbuf_Execute (void)
 		}
 
 		// find a \n or ; line break
-		text = (char *)cmd_text.data;
+		text = cmd_text.data;
 
 		quotes = 0;
 		for (i=0 ; i< cmd_text.cursize ; i++)
@@ -174,8 +171,9 @@ void Cbuf_Execute (void)
 				break;
 		}
 
-		if( i >= (MAX_CMD_LINE - 1)) {
+		if( i > MAX_CMD_LINE - 1) {
 			i = MAX_CMD_LINE - 1;
+			Com_Printf( "Cbuf_Execute: command line overflowed\n" );
 		}
 
 		Com_Memcpy (line, text, i);
