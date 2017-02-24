@@ -537,7 +537,7 @@ void CL_ParseUDPDownload ( msg_t *msg ) {
 	}
 
 	size = MSG_ReadShort(msg);
-	if (size < 0 || size > sizeof(data)) {
+	if ((unsigned)size > sizeof(data)) {
 		Com_Error(ERR_DROP, "CL_ParseDownload: Invalid size %d for download chunk", size);
 		return;
 	}

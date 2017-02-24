@@ -649,7 +649,7 @@ void cStringsED::Clear(void)
 	}
 }
 
-void cStringsED::SetText(int index, char *newText)
+void cStringsED::SetText(unsigned int index, char *newText)
 {
 	if (Text[index])
 	{
@@ -907,7 +907,7 @@ bool cStringsSingle::UnderstandToken(int token, char *data)
 					SetText(data);
 					return true;
 				}
-				else if (LanguagePair->Name == token && LanguagePair->Value == (int)sp_language->value)
+				else if (LanguagePair->Name == token && (int)LanguagePair->Value == sp_language->integer)
 				{
 					if (LanguagePair->Name == TK_TEXT_LANGUAGE1 ||
 						LanguagePair->Name == TK_TEXT_LANGUAGE2 ||
@@ -1406,14 +1406,14 @@ cStringsSingle *cStringPackageSingle::FindString(char *ReferenceLookup)
 int cStringPackageSingle::FindStringID(const char *ReferenceLookup)
 {
 	map<string, int>::iterator	i;
-	int							size;
+	size_t						size;
 
 	if (!Reference)
 	{
 		return -1;
 	}
 
-	size = (int)strlen(Reference);
+	size = strlen(Reference);
 	if (strlen(ReferenceLookup) < size+2)
 	{
 		return -1;

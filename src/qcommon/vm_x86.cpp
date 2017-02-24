@@ -416,7 +416,6 @@ static void DoSyscall(void)
 	{
 		int *data;
 #if idx64
-		int index;
 		intptr_t args[MAX_VMSYSCALL_ARGS];
 #endif
 
@@ -424,7 +423,7 @@ static void DoSyscall(void)
 
 #if idx64
 		args[0] = ~vm_syscallNum;
-		for(index = 1; index < ARRAY_LEN(args); index++)
+		for(size_t index = 1; index < ARRAY_LEN(args); index++)
 			args[index] = data[index];
 
 		vm_opStackBase[vm_opStackOfs + 1] = savedVM->systemCall(args);
@@ -1740,7 +1739,7 @@ int VM_CallCompiled(vm_t *vm, int *args)
 	// off we go into generated code...
 	entryPoint = vm->codeBase + vm->entryOfs;
 	opStack = (int *)PADP(stack, 16);
-	*opStack = 0xDEADBEEF;
+	*(unsigned *)opStack = 0xDEADBEEFu;
 	opStackOfs = 0;
 
 #ifdef _MSC_VER
@@ -1791,7 +1790,7 @@ int VM_CallCompiled(vm_t *vm, int *args)
 	);
 #endif
 
-	if(opStackOfs != 1 || *opStack != 0xDEADBEEF)
+	if(opStackOfs != 1 || *(unsigned *)opStack != 0xDEADBEEFu)
 	{
 		Com_Error(ERR_DROP, "opStack corrupted in compiled code");
 	}

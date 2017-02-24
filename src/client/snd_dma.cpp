@@ -2305,7 +2305,7 @@ void S_GetSoundtime(void)
 
 
 void S_Update_(void) {
-	unsigned        endtime;
+	int				endtime;
 	int				samps;
 	static			float	lastTime = 0.0f;
 	float			ma, op;
@@ -2514,8 +2514,7 @@ void S_Update_(void) {
 		endtime = s_soundtime + ma;
 
 		// mix to an even submission block size
-		endtime = (endtime + dma.submission_chunk-1)
-			& ~(dma.submission_chunk-1);
+		endtime = PAD(endtime, dma.submission_chunk);
 
 		// never mix more than the complete buffer
 		samps = dma.samples >> (dma.channels-1);
@@ -3405,7 +3404,7 @@ static qboolean S_UpdateBackgroundTrack_Actual( MusicInfo_t *pMusicInfo )
 
 		// our max buffer size
 		fileBytes = fileSamples * (pMusicInfo->s_backgroundInfo.width * pMusicInfo->s_backgroundInfo.channels);
-		if (fileBytes > RAWSIZE ) {
+		if (fileBytes > (int)RAWSIZE ) {
 			fileBytes = RAWSIZE;
 			fileSamples = fileBytes / (pMusicInfo->s_backgroundInfo.width * pMusicInfo->s_backgroundInfo.channels);
 		}

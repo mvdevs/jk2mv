@@ -343,7 +343,7 @@ typedef struct {
 	float		yadjust;
 
 	blacklistentry_t *downloadBlacklist;
-	size_t downloadBlacklistLen;
+	int downloadBlacklistLen;
 	qboolean ignoreNextDownloadList;
 
 	int			fixes;

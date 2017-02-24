@@ -958,7 +958,7 @@ size_t Q_vsnprintf(char *str, size_t size, const char *format, va_list ap) {
 #endif
 
 void QDECL Com_sprintf(char *dest, size_t size, const char *fmt, ...) {
-	int		len;
+	size_t		len;
 	va_list		argptr;
 
 	va_start(argptr, fmt);

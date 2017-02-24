@@ -588,7 +588,6 @@ qboolean CM_DeleteCachedMap(qboolean bGuaranteedOkToDelete)
 
 static void CM_LoadMap_Actual( const char *name, qboolean clientload, int *checksum ) {
 	int				*buf;
-	int				i;
 	dheader_t		header;
 	static unsigned	last_checksum;
 
@@ -661,7 +660,7 @@ static void CM_LoadMap_Actual( const char *name, qboolean clientload, int *check
 	*checksum = last_checksum;
 
 	header = *(dheader_t *)buf;
-	for (i=0 ; i<sizeof(dheader_t)/4 ; i++) {
+	for (size_t i = 0 ; i < sizeof(dheader_t) / 4 ; i++) {
 		((int *)&header)[i] = LittleLong ( ((int *)&header)[i]);
 	}
 

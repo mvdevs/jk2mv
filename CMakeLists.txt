@@ -179,11 +179,10 @@ set(ReleaseDefines "FINAL_BUILD" "NDEBUG")
 if(MSVC)
 	# Warnings
 	# 4244 = conversion' conversion from 'type1' to 'type2', possible loss of data
-	# 4018 = 'expression' : signed/unsigned mismatch
 	# 4996 = 'function': was declared deprecated
 	# 4267 = 'var' : conversion from 'size_t' to 'type', possible loss of data
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /wd4244 /wd4018 /wd4996 /wd4267")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4244 /wd4018 /wd4996 /wd4267")
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /wd4244 /wd4996 /wd4267")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4244 /wd4996 /wd4267")
 	
 	# Multithreaded
 	set(CMAKE_CXX_FLAGS_RELEASE "/MT" CACHE TYPE INTERNAL FORCE)
@@ -224,9 +223,8 @@ elseif ((${CMAKE_C_COMPILER_ID} STREQUAL GNU) OR (${CMAKE_C_COMPILER_ID} MATCHES
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden")
 
 	# Warnings
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wno-unknown-pragmas")
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wsign-compare -Wno-unknown-pragmas")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-unknown-pragmas -Wno-write-strings")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-sign-compare")
 
 	if(${CMAKE_C_COMPILER_ID} STREQUAL GNU)
 		if(ARCH_X86)

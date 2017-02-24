@@ -91,7 +91,7 @@ void GL_TextureMode( const char *string ) {
 
 	if ( mode == NULL ) {
 		ri.Printf (PRINT_ALL, "bad filter name\n");
-		for ( int i = 0 ; i < ARRAY_LEN(modes) ; i++ ) {
+		for ( size_t i = 0 ; i < ARRAY_LEN(modes) ; i++ ) {
 			ri.Printf( PRINT_ALL, "%s\n",modes[i].name);
 		}
 		return;
@@ -1075,7 +1075,7 @@ GetTextureMode
 const textureMode_t *GetTextureMode( const char *name )
 {
 #ifndef DEDICATED
-	for (int i = 0; i < ARRAY_LEN(modes); i++) {
+	for (size_t i = 0; i < ARRAY_LEN(modes); i++) {
 		if (!Q_stricmp(modes[i].name, name)) {
 			return &modes[i];
 		}
@@ -2213,7 +2213,6 @@ static int R_MipMapLevel(int ref_w, int ref_h, int w, int h)
 image_t	*R_FindImageFileNew( const char *name, upload_t *upload, int glWrapClampMode ) {
 	image_t		*image;
 	int			width, height;
-	int			n;
 	byte		*pic;
 	char		*pName;
 	byte		**mipmaps;
@@ -2262,7 +2261,7 @@ image_t	*R_FindImageFileNew( const char *name, upload_t *upload, int glWrapClamp
 		mipdata[minLevel] = pic;
 		pName = GenerateImageMappingName(name);
 
-		for (n = 1; n < MAX_MIP_LEVELS; n++) {
+		for (size_t n = 1; n < MAX_MIP_LEVELS; n++) {
 			char	mipName[MAX_QPATH];
 			int		w, h;
 			int		level;
@@ -2311,7 +2310,7 @@ image_t	*R_FindImageFileNew( const char *name, upload_t *upload, int glWrapClamp
 	image = R_CreateImageNew( name, mipmaps, customMip, width, height, upload, glWrapClampMode );
 
 	if (customMip) {
-		for (n = 0; n < ARRAY_LEN(mipdata); n++) {
+		for (size_t n = 0; n < ARRAY_LEN(mipdata); n++) {
 			if (mipdata[n]) {
 				ri.Free( mipdata[n] );
 				mipdata[n] = NULL;
@@ -2953,9 +2952,9 @@ qhandle_t RE_RegisterIndividualSkin( const char *name , qhandle_t hSkin)
 			}
 			surfName[strlen(surfName)-4] = 0;	//remove the "_off"
 		}
-		if ( sizeof( skin->surfaces) / sizeof( skin->surfaces[0] ) <= (unsigned)skin->numSurfaces )
+		if ( ARRAY_LEN(skin->surfaces) <= (unsigned)skin->numSurfaces )
 		{
-			assert( sizeof( skin->surfaces) / sizeof( skin->surfaces[0] ) > skin->numSurfaces );
+			assert( ARRAY_LEN(skin->surfaces) > (unsigned)skin->numSurfaces );
 			ri.Printf( PRINT_ALL, "WARNING: RE_RegisterSkin( '%s' ) more than %u surfaces!\n", name, (unsigned int )(sizeof(skin->surfaces) / sizeof(*(skin->surfaces))) );
 			break;
 		}

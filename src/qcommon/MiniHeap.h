@@ -7,7 +7,7 @@ class CMiniHeap
 private:
 	char	*mHeap;
 	char	*mCurrentHeap;
-	int		mSize;
+	size_t	mSize;
 public:
 
 // reset the heap back to the start
@@ -17,7 +17,7 @@ void ResetHeap()
 }
 
 // initialise the heap
-CMiniHeap(int size)
+CMiniHeap(size_t size)
 {
 	mHeap = (char *)malloc(size);
 	mSize = size;
@@ -37,9 +37,9 @@ CMiniHeap(int size)
 }
 
 // give me some space from the heap please
-char *MiniHeapAlloc(int size)
+char *MiniHeapAlloc(size_t size)
 {
-	if (size < (mSize - ((size_t)mCurrentHeap - (size_t)mHeap)))
+	if (mCurrentHeap + size <= mHeap + mSize)
 	{
 		char *tempAddress =  mCurrentHeap;
 		mCurrentHeap += size;

@@ -347,7 +347,7 @@ static void Text_Paint(float x, float y, float scale, const vec4_t color, const 
 							);
 }
 
-void Text_PaintWithCursor(float x, float y, float scale, vec4_t color, const char *text, int cursorPos, char cursor, int limit, int style, int iMenuFont)
+void Text_PaintWithCursor(float x, float y, float scale, vec4_t color, const char *text, unsigned cursorPos, char cursor, unsigned limit, int style, int iMenuFont)
 {
 	Text_Paint(x, y, scale, color, text, 0, limit, style, iMenuFont);
 
@@ -5046,7 +5046,7 @@ UI_BuildServerDisplayList
 */
 static void UI_BuildServerDisplayList(int force) {
 	int i, count, maxClients, ping, game, visible;
-	size_t len;
+	int len;
 	char info[MAX_STRING_CHARS];
 //	qboolean startRefresh = qtrue; TTimo: unused
 	static int numinvisible;
@@ -5061,13 +5061,13 @@ static void UI_BuildServerDisplayList(int force) {
 
 	// do motd updates here too
 	trap_Cvar_VariableStringBuffer( "cl_motdString", uiInfo.serverStatus.motd, sizeof(uiInfo.serverStatus.motd) );
-	len = strlen(uiInfo.serverStatus.motd);
+	len = (int)strlen(uiInfo.serverStatus.motd);
 	if (len == 0) {
 		strcpy(uiInfo.serverStatus.motd, "Welcome to JK2MP!");
-		len = strlen(uiInfo.serverStatus.motd);
+		len = (int)strlen(uiInfo.serverStatus.motd);
 	}
 	if (len != uiInfo.serverStatus.motdLen) {
-		uiInfo.serverStatus.motdLen = (int)len;
+		uiInfo.serverStatus.motdLen = len;
 		uiInfo.serverStatus.motdWidth = -1;
 	}
 
@@ -6529,13 +6529,13 @@ static void UI_BuildQ3Model_List( void )
 		fileptr  = filelist;
 		for (j=0; j<numfiles && uiInfo.q3HeadCount < MAX_PLAYERMODELS;j++,fileptr+=filelen+1)
 		{
-			size_t skinLen = 0;
+			int skinLen = 0;
 
 			filelen = strlen(fileptr);
 
 			COM_StripExtension(fileptr,skinname,sizeof(skinname));
 
-			skinLen = strlen(skinname);
+			skinLen = (int)strlen(skinname);
 			k = 0;
 			while (k < skinLen && skinname[k] && skinname[k] != '_')
 			{

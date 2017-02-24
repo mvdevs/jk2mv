@@ -1037,7 +1037,7 @@ qboolean	BG_PlayerTouchesItem( playerState_t *ps, entityState_t *item, int atTim
 
 qboolean	BG_ParseAnimationFile(const char *filename);
 
-int BG_GetItemIndexByTag(int tag, int type);
+int BG_GetItemIndexByTag(int tag, itemType_t type);
 
 qboolean BG_HasYsalamiri(int gametype, playerState_t *ps);
 qboolean BG_CanUseFPNow(int gametype, playerState_t *ps, int time, forcePowers_t power);

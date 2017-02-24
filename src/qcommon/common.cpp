@@ -87,11 +87,11 @@ void CIN_CloseAllVideos();
 
 //============================================================================
 
-static char	*rd_buffer;
-static int	rd_buffersize;
-static void	(*rd_flush)( char *buffer );
+static char		*rd_buffer;
+static size_t	rd_buffersize;
+static void		(*rd_flush)( char *buffer );
 
-void Com_BeginRedirect (char *buffer, int buffersize, void (*flush)( char *) )
+void Com_BeginRedirect (char *buffer, size_t buffersize, void (*flush)( char *) )
 {
 	if (!buffer || !buffersize || !flush)
 		return;
@@ -116,7 +116,7 @@ void Com_EndRedirect (void)
 static void Com_Puts_Ext( qboolean extendedColors, const char *msg )
 {
 	if ( rd_buffer ) {
-		if ((strlen (msg) + strlen(rd_buffer)) > (rd_buffersize - 1)) {
+		if (strlen (msg) + strlen(rd_buffer) + 1 > rd_buffersize) {
 			rd_flush(rd_buffer);
 			*rd_buffer = 0;
 		}
@@ -1329,12 +1329,12 @@ Goals:
 */
 
 
-#define	HUNK_MAGIC	0x89537892
-#define	HUNK_FREE_MAGIC	0x89537893
+#define	HUNK_MAGIC	0x89537892u
+#define	HUNK_FREE_MAGIC	0x89537893u
 
 typedef struct {
-	int		magic;
-	int		size;
+	unsigned	magic;
+	int			size;
 } hunkHeader_t;
 
 typedef struct {
@@ -1862,7 +1862,7 @@ void *Hunk_AllocateTempMemory( int size ) {
 
 	Hunk_SwapBanks();
 
-	size = ( (size+3)&~3 ) + sizeof( hunkHeader_t );
+	size = sizeof( hunkHeader_t ) + PAD(size, 4);
 
 	if ( hunk_temp->temp + hunk_permanent->permanent + size > s_hunkTotal ) {
 		Com_Error( ERR_DROP, "Hunk_AllocateTempMemory: failed on %i", size );
@@ -2920,10 +2920,10 @@ mvprotocol_t MV_GetCurrentProtocol() {
 	}
 }
 
-void MV_CopyStringWithColors( const char *src, char *dst, int dstSize, int nonColors )
+void MV_CopyStringWithColors( const char *src, char *dst, size_t dstSize, int nonColors )
 {
-	int i;
-	int nonColorCount = 0;
+	size_t	i;
+	int		nonColorCount = 0;
 
 	const bool use102color = MV_USE102COLOR;
 

@@ -61,7 +61,7 @@ Converts newlines to "\n" so a line prints nicer
 */
 char	*SV_ExpandNewlines( char *in ) {
 	static	char	string[1024];
-	int		l;
+	unsigned		l;
 
 	l = 0;
 	while ( *in && l < sizeof(string) - 3 ) {
@@ -460,8 +460,8 @@ void SVC_Status( netadr_t from ) {
 	int		i;
 	client_t	*cl;
 	playerState_t	*ps;
-	int		statusLength;
-	int		playerLength;
+	size_t	statusLength;
+	size_t	playerLength;
 	char	infostring[MAX_INFO_STRING];
 
 	// Prevent using getstatus as an amplifier
@@ -502,7 +502,7 @@ void SVC_Status( netadr_t from ) {
 			ps = SV_GameClientNum( i );
 			Com_sprintf (player, sizeof(player), "%i %i \"%s\"\n",
 				ps->persistant[PERS_SCORE], cl->ping, cl->name);
-			playerLength = (int)strlen(player);
+			playerLength = strlen(player);
 			if (statusLength + playerLength >= sizeof(status) ) {
 				break;		// can't hold any more
 			}

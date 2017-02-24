@@ -367,7 +367,7 @@ typedef struct {
   void (*getCVarString)(const char *cvar, char *buffer, int bufsize);
   float (*getCVarValue)(const char *cvar);
   void (*setCVar)(const char *cvar, const char *value);
-  void (*drawTextWithCursor)(float x, float y, float scale, vec4_t color, const char *text, int cursorPos, char cursor, int limit, int style, int iFontIndex);
+  void (*drawTextWithCursor)(float x, float y, float scale, vec4_t color, const char *text, unsigned cursorPos, char cursor, unsigned limit, int style, int iFontIndex);
   void (*setOverstrikeMode)(qboolean b);
   qboolean (*getOverstrikeMode)();
   void (*startLocalSound)( sfxHandle_t sfx, int channelNum );

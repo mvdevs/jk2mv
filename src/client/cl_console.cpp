@@ -130,6 +130,7 @@ Save the console contents out to a file
 */
 void Con_Dump_f (void)
 {
+	qboolean		empty;
 	int				l, i, j;
 	int				line;
 	int				lineLen;
@@ -150,26 +151,23 @@ void Con_Dump_f (void)
 	}
 
 	// skip empty lines
-	for (l = 0 ; l < con.totallines - 1 ; l++)
+	for (l = 1, empty = qtrue ; l < con.totallines && empty ; l++)
 	{
-		line = ((con.current + 1 + l) % con.totallines) * con.rowwidth;
+		line = ((con.current + l) % con.totallines) * con.rowwidth;
 
 		for (j = CON_TIMESTAMP_LEN ; j < con.rowwidth - 1 ; j++)
 			if (con.text[line + j].f.character != CON_BLANK_CHAR)
-				break;
-
-		if (j != con.rowwidth - 1)
-			break;
+				empty = qfalse;
 	}
 
-	while (l < con.totallines - 1)
+	for ( ; l < con.totallines ; l++)
 	{
 		lineLen = 0;
 		i = 0;
 
 		// Print timestamp
 		if (con_timestamps->integer) {
-			line = ((con.current + 1 + l) % con.totallines) * con.rowwidth;
+			line = ((con.current + l) % con.totallines) * con.rowwidth;
 
 			for (i = 0; i < CON_TIMESTAMP_LEN; i++)
 				buffer[i] = con.text[line + i].f.character;
@@ -178,11 +176,11 @@ void Con_Dump_f (void)
 		}
 
 		// Concatenate wrapped lines
-		for (; l < con.totallines - 1; l++)
+		for ( ; l < con.totallines ; l++)
 		{
-			line = ((con.current + 1 + l) % con.totallines) * con.rowwidth;
+			line = ((con.current + l) % con.totallines) * con.rowwidth;
 
-			for (j = CON_TIMESTAMP_LEN; j < con.rowwidth - 1 && i < sizeof(buffer) - 1; j++, i++) {
+			for (j = CON_TIMESTAMP_LEN; j < con.rowwidth - 1 && i < (int)sizeof(buffer) - 1; j++, i++) {
 				buffer[i] = con.text[line + j].f.character;
 
 				if (con.text[line + j].f.character != CON_BLANK_CHAR)
@@ -195,8 +193,6 @@ void Con_Dump_f (void)
 			if (con.text[line + j].compare != CON_WRAP.compare)
 				break;
 		}
-
-		l++;
 
 		buffer[lineLen] = '\n';
 		FS_Write(buffer, lineLen + 1, f);
@@ -317,7 +313,7 @@ void Con_CheckResize (void)
 			{
 				oldline = ((con.current + oi) % oldtotallines) * oldrowwidth;
 
-				for (j = CON_TIMESTAMP_LEN; j < oldrowwidth - 1 && i < ARRAY_LEN(line); j++, i++) {
+				for (j = CON_TIMESTAMP_LEN; j < oldrowwidth - 1 && i < (int)ARRAY_LEN(line); j++, i++) {
 					line[i] = tbuf[oldline + j];
 
 					if (line[i].f.character != CON_BLANK_CHAR)

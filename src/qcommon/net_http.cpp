@@ -190,7 +190,7 @@ static struct clientDL_t {
 static void NET_HTTP_DownloadProcessEvent() {
 	std::lock_guard<std::mutex> lk(m_cldls);
 
-	for (int i = 0; i < ARRAY_LEN(cldls); i++) {
+	for (size_t i = 0; i < ARRAY_LEN(cldls); i++) {
 		clientDL_t *cldl = &cldls[i];
 
 		if (cldl->inuse) {
@@ -311,7 +311,7 @@ dlHandle_t NET_HTTP_StartDownload(const char *url, const char *toPath, dl_ended_
 
 	// search for free dl slot
 	clientDL_t *cldl = NULL;
-	for (int i = 0; i < ARRAY_LEN(cldls); i++) {
+	for (size_t i = 0; i < ARRAY_LEN(cldls); i++) {
 		cldl = &cldls[i];
 
 		if (!cldl->inuse) {
@@ -356,7 +356,7 @@ NET_HTTP_StopDownload
 */
 void NET_HTTP_StopDownload(dlHandle_t handle) {
 	assert(handle >= 0);
-	assert(handle < ARRAY_LEN(cldls));
+	assert(handle < (dlHandle_t)ARRAY_LEN(cldls));
 
 	clientDL_t *cldl = &cldls[handle];
 	if (!cldl->inuse) {
@@ -405,7 +405,7 @@ void NET_HTTP_Shutdown() {
 	NET_HTTP_StopServer();
 
 #ifndef DEDICATED
-	for (int i = 0; i < ARRAY_LEN(cldls); i++) {
+	for (size_t i = 0; i < ARRAY_LEN(cldls); i++) {
 		NET_HTTP_StopDownload((dlHandle_t)i);
 	}
 #endif

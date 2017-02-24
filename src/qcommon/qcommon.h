@@ -736,7 +736,7 @@ MISC
 const char	*CopyString( const char *in );
 void		Info_Print( const char *s );
 
-void		Com_BeginRedirect (char *buffer, int buffersize, void (*flush)(char *));
+void		Com_BeginRedirect (char *buffer, size_t buffersize, void (*flush)(char *));
 void		Com_EndRedirect( void );
 void 		QDECL Com_Printf( const char *fmt, ... );
 void		QDECL Com_Printf_Ext( qboolean extendedColors, const char *msg, ... );
@@ -1026,7 +1026,7 @@ void MV_SetCurrentGameversion(mvversion_t version);
 mvversion_t MV_GetCurrentGameversion();
 mvprotocol_t MV_GetCurrentProtocol();
 
-void MV_CopyStringWithColors( const char *src, char *dst, int dstSize, int nonColors );
+void MV_CopyStringWithColors( const char *src, char *dst, size_t dstSize, int nonColors );
 int MV_StrlenSkipColors( const char *str );
 
 extern "C" int QDECL Q_VMftol();

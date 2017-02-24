@@ -363,7 +363,7 @@ intptr_t QDECL __attribute__((no_sanitize_address)) VM_DllSyscall( intptr_t arg,
 #if !id386 || defined __clang__
   // rcg010206 - see commentary above
   intptr_t args[MAX_VMSYSCALL_ARGS];
-  int i;
+  size_t i;
   va_list ap;
 
   args[0] = arg;
@@ -418,7 +418,7 @@ vmHeader_t *VM_LoadQVM( vm_t *vm, qboolean alloc)
 	if( LittleLong( header.h->vmMagic ) == VM_MAGIC ) {
 		// byte swap the header
 		// sizeof( vmHeader_t ) - sizeof( int ) is the 1.32b vm header size
-		for ( i = 0 ; i < ( sizeof( vmHeader_t ) - sizeof( int ) ) / 4 ; i++ ) {
+		for ( size_t i = 0 ; i < ( sizeof( vmHeader_t ) - sizeof( int ) ) / 4 ; i++ ) {
 			((int *)header.h)[i] = LittleLong( ((int *)header.h)[i] );
 		}
 
@@ -761,7 +761,7 @@ intptr_t QDECL  __attribute__((no_sanitize_address)) VM_Call( vm_t *vm, int call
 {
 	vm_t	*oldVM;
 	intptr_t r;
-	int i;
+	size_t i;
 
 	if(!vm || !vm->name[0])
 		Com_Error(ERR_FATAL, "VM_Call with NULL vm");

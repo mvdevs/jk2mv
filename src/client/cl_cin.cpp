@@ -66,7 +66,8 @@ typedef struct {
 	int					mcomp[256];
 	byte				*qStatus[2][32768];
 
-	int				oldXOff, oldYOff, oldysize, oldxsize;
+	int					oldXOff, oldYOff;
+	unsigned int		oldysize, oldxsize;
 
 	int					currentHandle;
 } cinematics_t;
@@ -78,8 +79,8 @@ typedef struct {
 	qboolean			looping, holdAtEnd, dirty, alterGameState, silent, shader;
 	fileHandle_t		iFile;
 	e_status			status;
-	unsigned int		startTime;
-	unsigned int		lastTime;
+	int				startTime;
+	int				lastTime;
 	int				tfps;
 	int				RoQPlayed;
 	int				ROQSize;

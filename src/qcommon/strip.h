@@ -132,7 +132,7 @@ public:
 	virtual void	Clear(void);
 
 	void			SetUsed(bool newUsed = true) { Used = newUsed; }
-	void			SetText(int index, char *newText);
+	void			SetText(unsigned int index, char *newText);
 	void			SetNotes(char *newNotes);
 
 	bool			GetUsed(void) { return Used; }

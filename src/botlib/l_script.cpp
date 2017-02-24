@@ -1379,12 +1379,12 @@ int MV_MenuPatchFile(const char *in, unsigned long inhash, const char *patch, ch
 	}
 
 	int outlen = 0;
-	for (int i = 0; i < menufile.size(); i++) {
+	for (size_t i = 0; i < menufile.size(); i++) {
 		outlen += (int)menufile.at(i).str.length() + 1; // text + ( \n or 0x00 )
 	}
 
 	*out = (char *)GetMemory(outlen + 1);
-	for (int i = 0; i < menufile.size(); i++) {
+	for (size_t i = 0; i < menufile.size(); i++) {
 		strcat(*out, menufile.at(i).str.c_str());
 		strcat(*out, "\n");
 	}

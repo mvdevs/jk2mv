@@ -37,7 +37,7 @@ void CMediaHandles::operator=(const CMediaHandles &that )
 {
 	mMediaList.clear();
 
-	for ( int i = 0; i < that.mMediaList.size(); i++ )
+	for ( size_t i = 0; i < that.mMediaList.size(); i++ )
 	{
 		mMediaList.push_back( that.mMediaList[i] );
 	}
@@ -274,7 +274,7 @@ int CFxScheduler::RegisterEffect( const char *file, bool bHasCorrectPath /*= fal
 	}
 
 	// If we'll overflow our buffer, bail out--not a particularly elegant solution
-	if (len >= sizeof(data) - 1 )
+	if (len >= (int)sizeof(data) - 1 )
 	{
 		theFxHelper.CloseFile( fh );
 		return 0;

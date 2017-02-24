@@ -630,7 +630,7 @@ static void Field_KillWord( field_t *edit ) {
 	int		end;
 	int		len;
 
-	if ( edit->cursor == strlen(edit->buffer) )
+	if ( edit->cursor == (int)strlen(edit->buffer) )
 		return;
 
 	Field_SaveHistory( edit );

@@ -1873,7 +1873,7 @@ extern	volatile renderCommandList_t	*renderCommandList;
 extern	volatile qboolean	renderThreadActive;
 
 
-void *R_GetCommandBuffer( int bytes );
+void *R_GetCommandBuffer( unsigned int bytes );
 void R_SyncRenderThread(void);
 void RB_ExecuteRenderCommands( const void *data );
 

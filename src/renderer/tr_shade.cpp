@@ -46,7 +46,7 @@ static int		c_vertexes;		// for seeing how long our average strips are
 static int		c_begins;
 static void R_DrawStripElements( int numIndexes, const glIndex_t *indexes, void ( APIENTRY *element )(GLint) ) {
 	int i;
-	int last[3] = { -1, -1, -1 };
+	glIndex_t last[3];
 	qboolean even;
 
 	c_begins++;
@@ -79,7 +79,7 @@ static void R_DrawStripElements( int numIndexes, const glIndex_t *indexes, void 
 			{
 				element( indexes[i+2] );
 				c_vertexes++;
-				assert( indexes[i+2] < tess.numVertexes );
+				assert( (int)indexes[i+2] < tess.numVertexes );
 				even = qtrue;
 			}
 			// otherwise we're done with this strip so finish it and start

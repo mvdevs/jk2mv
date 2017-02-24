@@ -628,7 +628,7 @@ static void Cvar_PrintFlags (cvar_t* cv) {
 		//discard CVAR_TEMP flag because it is useless /not used for anything
 		Q_strcat(buf, sizeof(buf), "none");
 	else {
-		for (int i = 0; i < numCvarFlags; ++i) {
+		for (size_t i = 0; i < numCvarFlags; ++i) {
 			if (cv->flags & cvarflags[i].i)
 				Q_strcat(buf, sizeof(buf), va("%s, ", cvarflags[i].s));
 		}
@@ -814,7 +814,7 @@ void Cvar_WriteVariables( fileHandle_t f, qboolean locals ) {
 	cvar_t *sortedCvars[MAX_CVARS];
 
 	int i;
-	size_t numSorted = 0;
+	int numSorted = 0;
 	for (var = cvar_vars ; var ; var = var->next) {
 		if((var->flags & CVAR_ARCHIVE) &&
 				( ( locals && !(var->flags & CVAR_GLOBAL) ) || ( !locals && (var->flags & CVAR_GLOBAL) ) ) ) {
@@ -858,7 +858,7 @@ void Cvar_List_f( void ) {
 
 	cvar_t *sortedCvars[MAX_CVARS];
 
-	size_t numSorted = 0;
+	int numSorted = 0;
 	for (var = cvar_vars ; var ; var = var->next) {
 		// Dont show internal cvars
 		if ( var->flags & CVAR_INTERNAL )
@@ -1076,7 +1076,7 @@ void	Cvar_Update( vmCvar_t *vmCvar ) {
 	cvar_t	*cv = NULL; // bk001129
 	assert(vmCvar); // bk
 
-	if ( (unsigned)vmCvar->handle >= cvar_numIndexes ) {
+	if ( (unsigned)vmCvar->handle >= (unsigned)cvar_numIndexes ) {
 		Com_Error( ERR_DROP, "Cvar_Update: handle out of range" );
 	}
 

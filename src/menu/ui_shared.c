@@ -2648,7 +2648,7 @@ qboolean Item_Multi_HandleKey(itemDef_t *item, int key) {
 
 qboolean Item_TextField_HandleKey(itemDef_t *item, int key) {
 	char buff[2048];
-	size_t len;
+	int len;
 	itemDef_t *newItem = NULL;
 	editFieldDef_t *editPtr = (editFieldDef_t*)item->typeData;
 
@@ -2656,7 +2656,7 @@ qboolean Item_TextField_HandleKey(itemDef_t *item, int key) {
 
 		buff[0] = 0;
 		DC->getCVarString(item->cvar, buff, sizeof(buff));
-		len = strlen(buff);
+		len = (int)strlen(buff);
 		if (editPtr->maxChars && len > editPtr->maxChars) {
 			len = editPtr->maxChars;
 		}

@@ -508,7 +508,7 @@ Copy a fully specified file from one place to another
 */
 qboolean FS_CopyFile( char *fromOSPath, char *toOSPath, char *newOSPath, const int newSize ) {
 	FILE	*f;
-	int		len;
+	long	len;
 	byte	*buf;
 	int		fileCount = 1;
 	char	*lExt, nExt[MAX_OSPATH];
@@ -531,12 +531,14 @@ qboolean FS_CopyFile( char *fromOSPath, char *toOSPath, char *newOSPath, const i
 	}
 	fseek (f, 0, SEEK_END);
 	len = ftell (f);
+	if (len < 0)
+		Com_Error( ERR_FATAL, "ftell() error in FS_Copyfiles()" );
 	fseek (f, 0, SEEK_SET);
 
 	// we are using direct malloc instead of Z_Malloc here, so it
 	// probably won't work on a mac... Its only for developers anyway...
 	buf = (byte *)Z_Malloc( len, TAG_FILESYS, qfalse );
-	if (fread( buf, 1, len, f ) != len)
+	if (fread( buf, 1, len, f ) != (size_t)len)
 		Com_Error( ERR_FATAL, "Short read in FS_Copyfiles()" );
 	fclose( f );
 
@@ -603,7 +605,7 @@ qboolean FS_CopyFile( char *fromOSPath, char *toOSPath, char *newOSPath, const i
 		Z_Free(buf);
 		return qfalse;
 	}
-	if (fwrite( buf, 1, len, f ) != len)
+	if (fwrite( buf, 1, len, f ) != (size_t)len)
 		Com_Error( ERR_FATAL, "Short write in FS_Copyfiles()" );
 	fclose( f );
 	Z_Free( buf );
@@ -1467,10 +1469,6 @@ int FS_Read( void *buffer, int len, fileHandle_t f ) {
 				}
 			}
 
-			if (read == -1) {
-				Com_Error (ERR_FATAL, "FS_Read: -1 bytes read");
-			}
-
 			remaining -= read;
 			buf += read;
 		}
@@ -1880,7 +1878,7 @@ static pack_t *FS_LoadZipFile( char *zipfile, const char *basename )
 	unz_global_info gi;
 	char			filename_inzip[MAX_ZPATH];
 	unz_file_info	file_info;
-	int				i;
+	ZPOS64_T		i;
 	size_t			len;
 	int			hash;
 	int				fs_numHeaderLongs;
@@ -1924,7 +1922,7 @@ static pack_t *FS_LoadZipFile( char *zipfile, const char *basename )
 	pack = (pack_t *)Z_Malloc( sizeof( pack_t ) + i * sizeof(fileInPack_t *), TAG_FILESYS, qtrue );
 	pack->hashSize = i;
 	pack->hashTable = (fileInPack_t **) (((char *) pack) + sizeof( pack_t ));
-	for(i = 0; i < pack->hashSize; i++) {
+	for(int i = 0; i < pack->hashSize; i++) {
 		pack->hashTable[i] = NULL;
 	}
 
@@ -2996,7 +2994,7 @@ qboolean FS_ComparePaks( char *neededpaks, int len, int *chksums, size_t maxchks
 					Q_strcat(neededpaks, len, st);
 				}
 
-				if (chksums && i < maxchksums) {
+				if (chksums && i < (int)maxchksums) {
 					chksums[i] = fs_serverReferencedPaks[i];
 				}
 			} else {

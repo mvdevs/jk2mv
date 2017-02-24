@@ -1616,12 +1616,12 @@ R_LoadFogs
 =================
 */
 static	void R_LoadFogs( lump_t *l, lump_t *brushesLump, lump_t *sidesLump ) {
-	int			i;
+	unsigned	i;
 	fog_t		*out;
 	dfog_t		*fogs;
 	dbrush_t 	*brushes, *brush;
 	dbrushside_t	*sides;
-	int			count, brushesCount, sidesCount;
+	unsigned	count, brushesCount, sidesCount;
 	int			sideNum;
 	int			planeNum;
 	shader_t	*shader;
@@ -1630,7 +1630,7 @@ static	void R_LoadFogs( lump_t *l, lump_t *brushesLump, lump_t *sidesLump ) {
 	const int	lightmaps[MAXLIGHTMAPS] = { LIGHTMAP_NONE } ;
 
 	fogs = (dfog_t *)(fileBase + l->fileofs);
-	if (l->filelen % sizeof(*fogs)) {
+	if (l->filelen < 0 || l->filelen % sizeof(*fogs)) {
 		ri.Error (ERR_DROP, "LoadMap: funny lump size in %s",s_worldData.name);
 	}
 	count = l->filelen / sizeof(*fogs);
@@ -1646,13 +1646,13 @@ static	void R_LoadFogs( lump_t *l, lump_t *brushesLump, lump_t *sidesLump ) {
 	}
 
 	brushes = (dbrush_t *)(fileBase + brushesLump->fileofs);
-	if (brushesLump->filelen % sizeof(*brushes)) {
+	if (brushesLump->filelen < 0 || brushesLump->filelen % sizeof(*brushes)) {
 		ri.Error (ERR_DROP, "LoadMap: funny lump size in %s",s_worldData.name);
 	}
 	brushesCount = brushesLump->filelen / sizeof(*brushes);
 
 	sides = (dbrushside_t *)(fileBase + sidesLump->fileofs);
-	if (sidesLump->filelen % sizeof(*sides)) {
+	if (sidesLump->filelen < 0 || sidesLump->filelen % sizeof(*sides)) {
 		ri.Error (ERR_DROP, "LoadMap: funny lump size in %s",s_worldData.name);
 	}
 	sidesCount = sidesLump->filelen / sizeof(*sides);
@@ -1819,7 +1819,7 @@ void R_LoadLightGridArray( lump_t *l ) {
 
 	w->numGridArrayElements = w->lightGridBounds[0] * w->lightGridBounds[1] * w->lightGridBounds[2];
 
-	if ( l->filelen != w->numGridArrayElements * sizeof(*w->lightGridArray) ) {
+	if ( l->filelen != w->numGridArrayElements * (int)sizeof(*w->lightGridArray) ) {
 		ri.Printf( PRINT_WARNING, "WARNING: light grid array mismatch\n" );
 		w->lightGridData = NULL;
 		return;
@@ -2002,7 +2002,7 @@ static void RE_LoadWorldMap_Actual( const char *name ) {
 	}
 
 	// swap all the lumps
-	for (i=0 ; i<sizeof(dheader_t)/4 ; i++) {
+	for (size_t i=0 ; i<sizeof(dheader_t)/4 ; i++) {
 		((int *)header)[i] = LittleLong ( ((int *)header)[i]);
 	}
 

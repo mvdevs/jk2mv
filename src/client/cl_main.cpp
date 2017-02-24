@@ -1521,16 +1521,16 @@ void CL_ReadBlacklistFile() {
 
 	cls.downloadBlacklistLen = 0;
 	len = FS_SV_FOpenFileRead("dlblacklist.dat", &fblacklist);
-	if (len >= sizeof(uint8_t)) {
+	if (len >= (int)sizeof(uint8_t)) {
 		uint8_t version;
 
 		FS_Read(&version, sizeof(uint8_t), fblacklist);
 		if (version == BLACKLIST_FILE_VERSION) {
-			size_t entryslen = len - sizeof(uint8_t);
+			int entryslen = len - sizeof(uint8_t);
 			if (entryslen) {
 				cls.downloadBlacklist = (blacklistentry_t *)Z_Malloc((int)entryslen, TAG_DOWNLOADBLACKLIST, qtrue);
-				FS_Read(cls.downloadBlacklist, (int)entryslen, fblacklist);
-				cls.downloadBlacklistLen = entryslen / sizeof(blacklistentry_t);
+				FS_Read(cls.downloadBlacklist, entryslen, fblacklist);
+				cls.downloadBlacklistLen = entryslen / (int)sizeof(blacklistentry_t);
 			}
 		} else {
 			Com_Printf("blacklist file version mismatch\n");

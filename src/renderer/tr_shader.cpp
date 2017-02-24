@@ -2104,10 +2104,9 @@ surfaceparm <name>
 */
 static void ParseSurfaceParm( const char **text ) {
 	char	*token;
-	int		i;
 
 	token = COM_ParseExt( text, qfalse );
-	for ( i = 0 ; i < ARRAY_LEN(infoParms) ; i++ ) {
+	for ( size_t i = 0 ; i < ARRAY_LEN(infoParms) ; i++ ) {
 		if ( !Q_stricmp( token, infoParms[i].name ) ) {
 			shader.surfaceFlags |= infoParms[i].surfaceFlags;
 			shader.contentFlags |= infoParms[i].contents;
@@ -3946,7 +3945,7 @@ static void ScanAndLoadShaderFiles( const char *path )
 		pw += strlen( pw );
 		ri.FS_FreeFile( (void*) buffers[i] );
 	}
-	assert(strlen(s_shaderText) == sum + numShaderFiles);
+	assert((int)strlen(s_shaderText) == sum + numShaderFiles);
 
 	// free up memory
 	ri.FS_FreeFileList( shaderFiles[0] );
