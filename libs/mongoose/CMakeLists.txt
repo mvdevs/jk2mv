@@ -12,7 +12,7 @@
 include_directories(include/)
 
 if(MSVC)
-	add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+	# add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 endif(MSVC)
 
 add_library(mongoose STATIC mongoose.c)
