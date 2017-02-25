@@ -3824,6 +3824,11 @@ bool LoadEALFile(char *szEALFilename)
 
 	// Load EAL file from PAK file
 	result = FS_ReadFile(szEALFilename, (void **)&ealData);
+	if (result == -1)
+	{
+		Com_DPrintf("LoadEALFile: Couldn't open %s\n", szEALFilename);
+	}
+
 	if ((ealData) && (result != -1))
 	{
 		hr = s_lpEAXManager->LoadDataSet(ealData, EMFLAG_LOADFROMMEMORY);

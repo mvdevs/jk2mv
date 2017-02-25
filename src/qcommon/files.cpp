@@ -1412,7 +1412,9 @@ int FS_FOpenFileReadHash(const char *filename, fileHandle_t *file, qboolean uniq
 		}
 	}
 
-	Com_DPrintf ("Can't find %s\n", filename);
+	if ( fs_debug->integer ) {
+		Com_DPrintf ("FS_FOpenFileReadHash: Can't find %s\n", filename);
+	}
 	*file = 0;
 	return -1;
 }

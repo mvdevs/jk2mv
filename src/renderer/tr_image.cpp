@@ -2240,7 +2240,7 @@ image_t	*R_FindImageFileNew( const char *name, upload_t *upload, int glWrapClamp
 	//
 	R_LoadImage( name, &pic, &width, &height );
 	if ( pic == NULL ) {                                    // if we dont get a successful load
-      return NULL;                                        // bail
+		return NULL;                                        // bail
 	}
 
 
@@ -3089,6 +3089,9 @@ qhandle_t RE_RegisterSkin( const char *name ) {
 		// load and parse the skin file
 		ri.FS_ReadFile( name, (void **)&text );
 		if ( !text ) {
+#ifndef FINAL_BUILD
+			ri.Printf( PRINT_ALL, "WARNING: RE_RegisterSkin( '%s' ) failed to load!\n", name );
+#endif
 			return 0;
 		}
 
