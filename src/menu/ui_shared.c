@@ -2762,13 +2762,17 @@ qboolean Item_TextField_HandleKey(itemDef_t *item, int key) {
 				return qtrue;
 			}
 
-			if ( key == A_HOME || key == A_KP_7) {// || ( tolower(key) == 'a' && trap_Key_IsDown( K_CTRL ) ) ) {
+			if ( key == A_HOME || key == A_KP_7 ||
+				( tolower(key) == 'a' && DC->isDown( A_CTRL ) ) )
+			{
 				item->cursorPos = 0;
 				editPtr->paintOffset = 0;
 				return qtrue;
 			}
 
-			if ( key == A_END || key == A_KP_1)  {// ( tolower(key) == 'e' && trap_Key_IsDown( K_CTRL ) ) ) {
+			if ( key == A_END || key == A_KP_1 ||
+				( tolower(key) == 'e' && DC->isDown( A_CTRL ) ) )
+			{
 				item->cursorPos = (int)len;
 				if(item->cursorPos > editPtr->maxPaintChars) {
 					editPtr->paintOffset = (int)(len - editPtr->maxPaintChars);
