@@ -21,8 +21,6 @@ static cvar_t *in_joystickUseAnalog = NULL;
 
 static SDL_Window *SDL_window = NULL;
 
-#define CTRL(a) ((a)-'a'+1)
-
 extern void GLimp_SaveWindowPosition( void );
 
 /*

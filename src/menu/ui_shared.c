@@ -2657,14 +2657,25 @@ qboolean Item_TextField_HandleKey(itemDef_t *item, int key) {
 		buff[0] = 0;
 		DC->getCVarString(item->cvar, buff, sizeof(buff));
 		len = (int)strlen(buff);
-		if (editPtr->maxChars && len > editPtr->maxChars) {
-			len = editPtr->maxChars;
+
+		// just sanitize everything here. better safe than sorry
+		if (editPtr->maxChars <= 0 || editPtr->maxChars > (int)sizeof(buff) - 1) {
+			editPtr->maxChars = sizeof(buff) - 1;
 		}
+		if (len > editPtr->maxChars) {
+			len = editPtr->maxChars;
+			buff[len] = '\0';
+		}
+		if (item->cursorPos < 0) {
+			item->cursorPos = 0;
+		} else if (item->cursorPos > len) {
+			item->cursorPos = len;
+		}
+
 		if ( key & K_CHAR_FLAG ) {
 			key &= ~K_CHAR_FLAG;
 
-
-			if (key == 'h' - 'a' + 1 )	{	// ctrl-h is backspace
+			if (key == CTRL('h') )	{	// ctrl-h is backspace
 				if ( item->cursorPos > 0 ) {
 					memmove( &buff[item->cursorPos - 1], &buff[item->cursorPos], len + 1 - item->cursorPos);
 					item->cursorPos--;
@@ -2690,36 +2701,31 @@ qboolean Item_TextField_HandleKey(itemDef_t *item, int key) {
 				}
 			}
 
+			if (item->cursorPos >= editPtr->maxChars) {
+				return qtrue;
+			}
+
 			if (!DC->getOverstrikeMode()) {
-				if (( len == MAX_EDITFIELD - 1 ) || (editPtr->maxChars && len >= editPtr->maxChars)) {
+				if (len >= editPtr->maxChars) {
 					return qtrue;
 				}
+
+				// fau - move at least one byte to keep '\0'
 				memmove( &buff[item->cursorPos + 1], &buff[item->cursorPos], len + 1 - item->cursorPos );
 			} else {
-				if (editPtr->maxChars && item->cursorPos >= editPtr->maxChars) {
-					return qtrue;
+				// fau - nul-terminate!
+				if (item->cursorPos >= len) {
+					buff[len + 1] = '\0';
 				}
 			}
 
 			buff[item->cursorPos] = key;
 
-			//rww - nul-terminate!
-			if (item->cursorPos+1 < 2048)
-			{
-				buff[item->cursorPos+1] = 0;
-			}
-			else
-			{
-				buff[item->cursorPos] = 0;
-			}
-
 			DC->setCVar(item->cvar, buff);
 
-			if (item->cursorPos < len + 1) {
-				item->cursorPos++;
-				if (editPtr->maxPaintChars && item->cursorPos > editPtr->maxPaintChars) {
-					editPtr->paintOffset++;
-				}
+			item->cursorPos++;
+			if (editPtr->maxPaintChars && item->cursorPos > editPtr->maxPaintChars) {
+				editPtr->paintOffset++;
 			}
 
 		} else {
