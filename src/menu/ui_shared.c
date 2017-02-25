@@ -2776,6 +2776,21 @@ qboolean Item_TextField_HandleKey(itemDef_t *item, int key) {
 				return qtrue;
 			}
 
+			if ((key == A_INSERT && DC->isDown( A_SHIFT )) ||
+				(tolower(key) == 'v' && DC->isDown( A_CTRL )))
+			{
+				char		clipboard[2048];
+				const char	*c = clipboard;
+
+				DC->getClipboardData(clipboard, sizeof(clipboard));
+
+				while(*c) {
+					Item_TextField_HandleKey(item, (int)(*c) | K_CHAR_FLAG);
+					c++;
+				}
+				return qtrue;
+			}
+
 			if ( key == A_INSERT || key == A_KP_0 ) {
 				DC->setOverstrikeMode(!DC->getOverstrikeMode());
 				return qtrue;

@@ -391,6 +391,8 @@ typedef struct {
 	void (*stopCinematic)(int handle);
 	void (*drawCinematic)(int handle, float x, float y, float w, float h);
 	void (*runCinematicFrame)(int handle);
+	void (*getClipboardData)(char *buf, int bufsize);
+	qboolean (*isDown)(int keynum);
 
   float			yscale;
   float			xscale;

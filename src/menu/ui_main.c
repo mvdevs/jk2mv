@@ -6714,6 +6714,8 @@ void _UI_Init( qboolean inGameLoad ) {
 	uiInfo.uiDC.stopCinematic = &UI_StopCinematic;
 	uiInfo.uiDC.drawCinematic = &UI_DrawCinematic;
 	uiInfo.uiDC.runCinematicFrame = &UI_RunCinematicFrame;
+	uiInfo.uiDC.getClipboardData = &trap_GetClipboardData;
+	uiInfo.uiDC.isDown = &trap_Key_IsDown;
 
 	for (i=0; i<10; i++)
 	{
