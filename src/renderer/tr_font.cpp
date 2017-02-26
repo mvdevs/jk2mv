@@ -357,6 +357,8 @@ CFontInfo::CFontInfo(const char *fontName)
 	void		*buff;
 	dfontdat_t	*fontdat;
 
+	COM_StripExtension(fontName, m_sFontName, sizeof(m_sFontName));	// so we get better error printing if failed to load shader (ie lose ".fontdat")
+
 	len = ri.FS_ReadFile(fontName, NULL);
 	if (len == sizeof(dfontdat_t))
 	{
@@ -375,16 +377,18 @@ CFontInfo::CFontInfo(const char *fontName)
 		mbRoundCalcs = !!strstr(fontName,"ergo");
 
 		ri.FS_FreeFile(buff);
+
+		mShader = RE_RegisterShaderNoMip(m_sFontName);
 	}
 	else
 	{
+		if (len >= 0)
+			ri.Printf( PRINT_WARNING, "CFontInfo: Invalid font data %s\n", fontName );
+
 		mHeight = 0;
 		mShader = 0;
 		mPointSize = 0;
 	}
-
-	COM_StripExtension(fontName, m_sFontName, sizeof(m_sFontName));	// so we get better error printing if failed to load shader (ie lose ".fontdat")
-	mShader = RE_RegisterShaderNoMip(m_sFontName);
 
 	FlagNoAsianGlyphs();
 	UpdateAsianIfNeeded(true);
@@ -1019,6 +1023,8 @@ int RE_RegisterFont(const char *psName) {
 				}
 			}
 		}
+	} else {
+		ri.Printf( PRINT_WARNING, "RE_RegisterFont: Couldn't find font %s\n", psName );
 	}
 
 	return oriFontHandle;
