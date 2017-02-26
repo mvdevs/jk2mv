@@ -2,7 +2,6 @@
 // string allocation/managment
 
 #include "ui_shared.h"
-#include "ui_local.h"
 
 #define SCROLL_TIME_START					500
 #define SCROLL_TIME_ADJUST				150
@@ -3810,7 +3809,6 @@ void Item_Text_Paint(itemDef_t *item) {
 
 
 //float			trap_Cvar_VariableValue( const char *var_name );
-//void			trap_Cvar_VariableStringBuffer( const char *var_name, char *buffer, int bufsize );
 
 void Item_TextField_Paint(itemDef_t *item) {
 	char buff[1024];
@@ -7329,7 +7327,7 @@ void Menu_PaintAll() {
 	}
 
 	// motd
-	trap_Cvar_VariableStringBuffer("cl_motdString", motd, sizeof(motd));
+	DC->getCVarString("cl_motdString", motd, sizeof(motd));
 	if (strlen(motd)) {
 		DC->drawText(10, 465, 0.6f, v, motd, 0, 0, 0, 0);
 	}
