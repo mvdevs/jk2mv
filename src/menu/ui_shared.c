@@ -2646,7 +2646,7 @@ qboolean Item_Multi_HandleKey(itemDef_t *item, int key) {
 }
 
 qboolean Item_TextField_HandleKey(itemDef_t *item, int key) {
-	char buff[2048];
+	char buff[MAX_EDITFIELD];
 	int len;
 	itemDef_t *newItem = NULL;
 	editFieldDef_t *editPtr = (editFieldDef_t*)item->typeData;
@@ -2657,20 +2657,6 @@ qboolean Item_TextField_HandleKey(itemDef_t *item, int key) {
 		DC->getCVarString(item->cvar, buff, sizeof(buff));
 		len = (int)strlen(buff);
 
-		// just sanitize everything here. better safe than sorry
-		if (editPtr->maxChars <= 0 || editPtr->maxChars > (int)sizeof(buff) - 1) {
-			editPtr->maxChars = sizeof(buff) - 1;
-		}
-		if (len > editPtr->maxChars) {
-			len = editPtr->maxChars;
-			buff[len] = '\0';
-		}
-		if (item->cursorPos < 0) {
-			item->cursorPos = 0;
-		} else if (item->cursorPos > len) {
-			item->cursorPos = len;
-		}
-
 		if ( key & K_CHAR_FLAG ) {
 			key &= ~K_CHAR_FLAG;
 
@@ -2678,14 +2664,22 @@ qboolean Item_TextField_HandleKey(itemDef_t *item, int key) {
 				if ( item->cursorPos > 0 ) {
 					memmove( &buff[item->cursorPos - 1], &buff[item->cursorPos], len + 1 - item->cursorPos);
 					item->cursorPos--;
-					if (item->cursorPos < editPtr->paintOffset) {
-						editPtr->paintOffset--;
-					}
 				}
 				DC->setCVar(item->cvar, buff);
 	    		return qtrue;
 			}
 
+			if ( key == CTRL('a') )
+			{
+				item->cursorPos = 0;
+				return qtrue;
+			}
+
+			if ( key == CTRL('e') )
+			{
+				item->cursorPos = (int)len;
+				return qtrue;
+			}
 
 			//
 			// ignore any non printable chars
@@ -2723,9 +2717,6 @@ qboolean Item_TextField_HandleKey(itemDef_t *item, int key) {
 			DC->setCVar(item->cvar, buff);
 
 			item->cursorPos++;
-			if (editPtr->maxPaintChars && item->cursorPos > editPtr->maxPaintChars) {
-				editPtr->paintOffset++;
-			}
 
 		} else {
 
@@ -2739,11 +2730,6 @@ qboolean Item_TextField_HandleKey(itemDef_t *item, int key) {
 
 			if ( key == A_CURSOR_RIGHT || key == A_KP_6 )
 			{
-				if (editPtr->maxPaintChars && item->cursorPos >= editPtr->maxPaintChars && item->cursorPos < len) {
-					item->cursorPos++;
-					editPtr->paintOffset++;
-					return qtrue;
-				}
 				if (item->cursorPos < len) {
 					item->cursorPos++;
 				}
@@ -2755,34 +2741,25 @@ qboolean Item_TextField_HandleKey(itemDef_t *item, int key) {
 				if ( item->cursorPos > 0 ) {
 					item->cursorPos--;
 				}
-				if (item->cursorPos < editPtr->paintOffset) {
-					editPtr->paintOffset--;
-				}
 				return qtrue;
 			}
 
-			if ( key == A_HOME || key == A_KP_7 ||
-				( tolower(key) == 'a' && DC->isDown( A_CTRL ) ) )
+			if ( key == A_HOME || key == A_KP_7 )
 			{
 				item->cursorPos = 0;
-				editPtr->paintOffset = 0;
 				return qtrue;
 			}
 
-			if ( key == A_END || key == A_KP_1 ||
-				( tolower(key) == 'e' && DC->isDown( A_CTRL ) ) )
+			if ( key == A_END || key == A_KP_1 )
 			{
 				item->cursorPos = (int)len;
-				if(item->cursorPos > editPtr->maxPaintChars) {
-					editPtr->paintOffset = (int)(len - editPtr->maxPaintChars);
-				}
 				return qtrue;
 			}
 
 			if ((key == A_INSERT && DC->isDown( A_SHIFT )) ||
 				(tolower(key) == 'v' && DC->isDown( A_CTRL )))
 			{
-				char		clipboard[2048];
+				char		clipboard[MAX_EDITFIELD];
 				const char	*c = clipboard;
 
 				DC->getClipboardData(clipboard, sizeof(clipboard));
@@ -3153,13 +3130,7 @@ qboolean Item_HandleKey(itemDef_t *item, int key, qboolean down) {
     case ITEM_TYPE_NUMERICFIELD:
 		if (key == A_MOUSE1 || key == A_MOUSE2 || key == A_ENTER)
 		{
-			editFieldDef_t *editPtr = (editFieldDef_t*)item->typeData;
-
-			if (item->cvar && editPtr)
-			{
-				editPtr->paintOffset = 0;
-			}
-
+			item->cursorPos = 0;
       //return Item_TextField_HandleKey(item, key);
 		}
       return qfalse;
@@ -3811,9 +3782,10 @@ void Item_Text_Paint(itemDef_t *item) {
 //float			trap_Cvar_VariableValue( const char *var_name );
 
 void Item_TextField_Paint(itemDef_t *item) {
-	char buff[1024];
+	char buff[MAX_EDITFIELD];
 	vec4_t newColor, lowLight;
 	int offset;
+	size_t len;
 	menuDef_t *parent;
 	editFieldDef_t *editPtr = (editFieldDef_t*)item->typeData;
 
@@ -3824,6 +3796,12 @@ void Item_TextField_Paint(itemDef_t *item) {
 	if (item->cvar) {
 		DC->getCVarString(item->cvar, buff, sizeof(buff));
 	}
+
+	// fau - what if the cvar has been changed in console? sanitize here.
+	len = strlen(buff);
+	item->cursorPos = Com_Clampi(0, len, item->cursorPos);
+	editPtr->paintOffset = Com_Clampi(item->cursorPos - editPtr->maxPaintChars, item->cursorPos, editPtr->paintOffset);
+	editPtr->paintOffset = Com_Clampi(0, len, editPtr->paintOffset);
 
 	parent = (menuDef_t*)item->parent;
 
@@ -5354,15 +5332,14 @@ void Item_ValidateTypeData(itemDef_t *item)
 	}
 	else if (item->type == ITEM_TYPE_EDITFIELD || item->type == ITEM_TYPE_NUMERICFIELD || item->type == ITEM_TYPE_YESNO || item->type == ITEM_TYPE_BIND || item->type == ITEM_TYPE_SLIDER || item->type == ITEM_TYPE_TEXT)
 	{
+		editFieldDef_t *editPtr;
+
 		item->typeData = UI_Alloc(sizeof(editFieldDef_t));
 		memset(item->typeData, 0, sizeof(editFieldDef_t));
-		if (item->type == ITEM_TYPE_EDITFIELD)
-		{
-			if (!((editFieldDef_t *) item->typeData)->maxPaintChars)
-			{
-				((editFieldDef_t *) item->typeData)->maxPaintChars = MAX_EDITFIELD;
-			}
-		}
+
+		editPtr = (editFieldDef_t*)item->typeData;
+		editPtr->maxChars = MAX_EDITFIELD - 1;
+		editPtr->maxPaintChars = MAX_EDITFIELD - 1;
 	}
 	else if (item->type == ITEM_TYPE_MULTI)
 	{
@@ -6110,6 +6087,11 @@ qboolean ItemParse_maxChars( itemDef_t *item, int handle ) {
 	if (!PC_Int_Parse(handle, &maxChars)) {
 		return qfalse;
 	}
+	if (item->type == ITEM_TYPE_EDITFIELD || item->type == ITEM_TYPE_NUMERICFIELD) {
+		if (maxChars <= 0 || MAX_EDITFIELD - 1 < maxChars) {
+			maxChars = MAX_EDITFIELD - 1;
+		}
+	}
 	editPtr = (editFieldDef_t*)item->typeData;
 	editPtr->maxChars = maxChars;
 	return qtrue;
@@ -6125,6 +6107,11 @@ qboolean ItemParse_maxPaintChars( itemDef_t *item, int handle ) {
 
 	if (!PC_Int_Parse(handle, &maxChars)) {
 		return qfalse;
+	}
+	if (item->type == ITEM_TYPE_EDITFIELD || item->type == ITEM_TYPE_NUMERICFIELD) {
+		if (maxChars <= 0 || MAX_EDITFIELD - 1 < maxChars) {
+			maxChars = MAX_EDITFIELD - 1;
+		}
 	}
 	editPtr = (editFieldDef_t*)item->typeData;
 	editPtr->maxPaintChars = maxChars;
