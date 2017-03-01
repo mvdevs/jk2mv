@@ -3430,11 +3430,11 @@ const char *FS_ReferencedPakNames( void ) {
 			if (MV_GetCurrentGameversion() == VERSION_1_03 && (!Q_stricmp(search->pack->pakBasename, "assets5")))
 				continue;
 
-			if (*info) {
-				Q_strcat(info, sizeof( info ), " " );
-			}
-
 			if (search->pack->referenced) {
+				if (*info) {
+					Q_strcat(info, sizeof( info ), " " );
+				}
+
 				Q_strcat(info, sizeof(info), search->pack->pakGamename);
 				Q_strcat(info, sizeof(info), "/");
 				Q_strcat(info, sizeof(info), search->pack->pakBasename);
