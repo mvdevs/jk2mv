@@ -349,7 +349,13 @@ else()
 		set(CPACK_RPM_PACKAGE_URL ${ProjectURL})
 		set(CPACK_RPM_PACKAGE_LICENSE "GPLv2")
 		set(CPACK_RPM_PACKAGE_GROUP "Amusements/Games")
-		set(CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION /usr/share/applications /usr/share/pixmaps)
+		set(CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION
+			/usr/share/applications
+			/usr/share/metainfo
+			/usr/share/icons /usr/share/icons/hicolor
+			/usr/share/icons/hicolor/256x256 /usr/share/icons/hicolor/256x256/apps
+			/usr/share/icons/hicolor/48x48 /usr/share/icons/hicolor/48x48/apps
+		)
 		
 		set(CPACK_RPM_PACKAGE_REQUIRES "glibc, libgcc, libstdc++, SDL2, openal-soft")
 		if(NOT UseInternalZLIB)

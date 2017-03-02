@@ -6,5 +6,5 @@ Name=JK2MV
 Comment=Play Jedi Knight II
 Categories=Game;Shooter;
 Exec=jk2mvmp
-Icon=jk2mv.png
+Icon=org.mvdevs.jk2mv
 Terminal=false

@@ -1,0 +1,48 @@
+​<?xml version="1.0" encoding="UTF-8"?>
+​<component type="desktop-application">
+	<id>org.mvdevs.jk2mv</id>
+	<metadata_license>CC0</metadata_license>
+	<project_license>GPL-2.0</project_license>
+	<name>JK2MV</name>
+	<developer_name>The JK2MV developers</developer_name>
+	<summary>improved, modernized JK2 client and server</summary>
+​
+	​<categories>
+		<category>Game</category>
+		<category>Shooter</category>
+	​</categories>
+
+	<url type="homepage">https://jk2mv.org</url>
+	<url type="faq">https://jk2mv.org/Q&amp;A</url>
+
+	<description>
+		<p>
+			JK2MV (Multi Version) is a modification for Jedi Knight II: Jedi Outcast.
+			It supports all three game versions and comes with various features and optimizations.
+		</p>
+		<p>Main Features:</p>
+		<ul>
+			<li>Supports 1.02, 1.03 and 1.04</li>
+			<li>Supports most mods made for JK2 (maps, skins, (code)mods etc.)</li>
+			<li>Fast ingame HTTP-Downloads with a dialogue asking you for permission before downloading files to your computer</li>
+			<li>Dynamic glow: Better looking lightsabers with the dynamic glow feature from JKA</li>
+			<li>EAX/OpenAL sound fixed</li>
+			<li>Support for modern screen resolutions</li>
+			<li>Fixes for all known security bugs</li>
+			<li>Improved gamma correction</li>
+			<li>Tons of other fixes and improvements in the engine, see the changelog for detailed information</li>
+	​    </ul>
+	</description>
+​
+	<screenshots>
+	​    <screenshot type="default">
+			<caption>ingame, dynamic glow enabled</caption>
+			<image>https://jk2mv.org/screens/screen1.png</image>
+	​    </screenshot>
+	</screenshots>
+​
+	<provides>
+		<binary>jk2mvmp</binary>
+		<binary>jk2mvded</binary>
+	</provides>
+​</component>
