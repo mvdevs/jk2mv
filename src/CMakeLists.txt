@@ -530,7 +530,7 @@ if (BuildMVMP)
 		install(FILES ${RESDir}/org.mvdevs.jk2mv.desktop DESTINATION "share/applications")
 		install(FILES ${RESDir}/org.mvdevs.jk2mv.48.png RENAME org.mvdevs.jk2mv.png DESTINATION "share/icons/hicolor/48x48/apps")
 		install(FILES ${RESDir}/org.mvdevs.jk2mv.256.png RENAME org.mvdevs.jk2mv.png DESTINATION "share/icons/hicolor/256x256/apps")
-		install(FILES ${RESDir}/org.mvdevs.jk2mv.appdata.xml DESTINATION "/usr/share/metainfo")
+		install(FILES ${RESDir}/org.mvdevs.jk2mv.appdata.xml DESTINATION "share/metainfo")
 	endif()
 
 	# jk2mvmenu and assetsmv are required to run JK2MV
