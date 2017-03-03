@@ -1,16 +1,16 @@
-​<?xml version="1.0" encoding="UTF-8"?>
-​<component type="desktop-application">
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
 	<id>org.mvdevs.jk2mv</id>
 	<metadata_license>CC0</metadata_license>
 	<project_license>GPL-2.0</project_license>
 	<name>JK2MV</name>
 	<developer_name>The JK2MV developers</developer_name>
 	<summary>improved, modernized JK2 client and server</summary>
-​
-	​<categories>
+
+	<categories>
 		<category>Game</category>
 		<category>Shooter</category>
-	​</categories>
+	</categories>
 
 	<url type="homepage">https://jk2mv.org</url>
 	<url type="faq">https://jk2mv.org/Q&amp;A</url>
@@ -31,18 +31,18 @@
 			<li>Fixes for all known security bugs</li>
 			<li>Improved gamma correction</li>
 			<li>Tons of other fixes and improvements in the engine, see the changelog for detailed information</li>
-	​    </ul>
+		</ul>
 	</description>
-​
+
 	<screenshots>
-	​    <screenshot type="default">
+		<screenshot type="default">
 			<caption>ingame, dynamic glow enabled</caption>
 			<image>https://jk2mv.org/screens/screen1.png</image>
-	​    </screenshot>
+		</screenshot>
 	</screenshots>
-​
+
 	<provides>
 		<binary>jk2mvmp</binary>
 		<binary>jk2mvded</binary>
 	</provides>
-​</component>
+</component>
