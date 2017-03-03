@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop">
-	<id>org.mvdevs.jk2mv</id>
+	<id>org.mvdevs.jk2mv.desktop</id>
 	<metadata_license>CC0</metadata_license>
 	<project_license>GPL-2.0</project_license>
 	<name>JK2MV</name>
