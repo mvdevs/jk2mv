@@ -1,0 +1,43 @@
+{
+	"app-id": "org.mvdevs.jk2mv",
+	"runtime": "org.freedesktop.Platform",
+	"runtime-version": "1.4",
+	"sdk": "org.freedesktop.Sdk",
+	"command": "jk2mvmp",
+	"finish-args": [
+		"--share=ipc", "--socket=x11",
+		"--socket=pulseaudio",
+		"--share=network",
+		"--filesystem=~/.jk2mv"
+	],
+
+	"modules": [
+		{
+			"name": "libopenal-soft",
+			"cmake": true,
+			"sources": [
+				{
+					"type": "archive",
+					"url": "https://github.com/kcat/openal-soft/archive/openal-soft-1.17.2.tar.gz",
+					"sha256": "11ea176f6cbf9763dbce0953dd77ab72d032b4ad95f07afffb91844abb174033"
+				}
+			]
+		},
+		{
+			"name": "jk2mv",
+			"cmake": true,
+			"config-opts": [
+				"-DBuildPortableVersion=OFF",
+				"-DUseInternalLibs=ON",
+				"-DCMAKE_INSTALL_PREFIX=/app"
+			],
+			"sources": [
+				{
+					"type": "git",
+					"url": ".."
+				}
+			]
+		}
+	]
+}
+
