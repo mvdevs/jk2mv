@@ -481,7 +481,7 @@ Ghoul2 Insert End
 	void		(*optimalStageIteratorFunc)( void );
 
 	double		clampTime;                                  // time this shader is clamped to
-	float		timeOffset;                                 // current time offset for this shader
+	double		timeOffset;                                 // current time offset for this shader
 
 	int numStates;                                    // if non-zero this is a state shader
 	struct shader_s *currentShader;                   // current state if this is a state shader
