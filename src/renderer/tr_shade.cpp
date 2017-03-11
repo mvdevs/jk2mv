@@ -205,7 +205,7 @@ R_BindAnimatedImage
 */
 // de-static'd because tr_quicksprite wants it
 void R_BindAnimatedImage( textureBundle_t *bundle ) {
-	int		index;
+	int64_t		index;
 
 	if ( bundle->isVideoMap ) {
 		ri.CIN_RunCinematic(bundle->videoMapHandle);
@@ -226,7 +226,7 @@ void R_BindAnimatedImage( textureBundle_t *bundle ) {
 
 	// it is necessary to do this messy calc to make sure animations line up
 	// exactly with waveforms of the same frequency
-	index = Q_ftol(tess.shaderTime * bundle->imageAnimationSpeed * FUNCTABLE_SIZE);
+	index = Q_dtol(tess.shaderTime * bundle->imageAnimationSpeed * FUNCTABLE_SIZE);
 	index >>= FUNCTABLE_SIZE2;
 
 	if ( index < 0 ) {
