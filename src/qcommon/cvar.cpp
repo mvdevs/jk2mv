@@ -289,8 +289,9 @@ cvar_t *Cvar_Get( const char *var_name, const char *var_value, int flags, qboole
 	var->value = atof (var->string);
 	var->integer = atoi(var->string);
 #else
-	var->value = strtof(var->string, NULL);
-	var->integer = var->value;
+	double strValue = strtod(var->string, NULL);
+	var->value = strValue;
+	var->integer = strValue;
 #endif
 	var->resetString = CopyString( var_value );
 
@@ -442,8 +443,9 @@ cvar_t *Cvar_Set2( const char *var_name, const char *value, qboolean force, qboo
 	var->value = atof (var->string);
 	var->integer = atoi (var->string);
 #else
-	var->value = strtof(var->string, NULL);
-	var->integer = var->value;
+	double strValue = strtod(var->string, NULL);
+	var->value = strValue;
+	var->integer = strValue;
 #endif
 
 	return var;
