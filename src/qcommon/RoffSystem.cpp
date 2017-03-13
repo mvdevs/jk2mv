@@ -153,7 +153,7 @@ qboolean CROFFSystem::InitROFF( unsigned char *data, CROFF *obj )
 		TROFFEntry *roff_data = ( TROFFEntry *)&hdr[1];
 
 		// Copy all of the goods into our ROFF cache
-		for ( i = 0; i < hdr->mCount; i++ )
+		for ( i = 0; i < (int)hdr->mCount; i++ )
 		{
 			VectorCopy( roff_data[i].mOriginOffset, obj->mMoveRotateList[i].mOriginOffset );
 			VectorCopy( roff_data[i].mRotateOffset, obj->mMoveRotateList[i].mRotateOffset );
@@ -199,7 +199,7 @@ qboolean CROFFSystem::InitROFF2( unsigned char *data, CROFF *obj )
 		TROFF2Entry *roff_data = ( TROFF2Entry *)&hdr[1];
 
 		// Copy all of the goods into our ROFF cache
-		for ( i = 0; i < hdr->mCount; i++ )
+		for ( i = 0; i < (int)hdr->mCount; i++ )
 		{
 			VectorCopy( roff_data[i].mOriginOffset, obj->mMoveRotateList[i].mOriginOffset );
 			VectorCopy( roff_data[i].mRotateOffset, obj->mMoveRotateList[i].mRotateOffset );
