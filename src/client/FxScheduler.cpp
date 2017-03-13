@@ -1962,7 +1962,7 @@ void CFxScheduler::AddScheduledEffects( void )
 					// go away and get me the bolt position for this frame please
 					g2handle_t g2h = *(g2handle_t *)VM_Call( cgvm, CG_GET_GHOUL2, (*itr)->mEntNum);
 					qhandle_t *modelList = (qhandle_t *)VM_Call( cgvm, CG_GET_MODEL_LIST, (*itr)->mEntNum);
-					doesBoltExist = G2API_GetBoltMatrix(g2h, (*itr)->mModelNum, (*itr)->mBoltNum, &boltMatrix, lerpAngles, lerpOrigin, cls.realtime, modelList, modelScale);
+					doesBoltExist = G2API_GetBoltMatrix(g2h, (*itr)->mModelNum, (*itr)->mBoltNum, &boltMatrix, lerpAngles, lerpOrigin, theFxHelper.mTime, modelList, modelScale);
 
 					if (doesBoltExist)
 					{	// set up the axis and origin we need for the actual effect spawning
