@@ -298,11 +298,11 @@ protected:
 
 	float		mSizeStart;
 	float		mSizeEnd;
-	float		mSizeParm;
+	double		mSizeParm;
 
 	vec3_t		mRGBStart;
 	vec3_t		mRGBEnd;
-	float		mRGBParm;
+	double		mRGBParm;
 
 
 	void		UpdateSize();
@@ -319,11 +319,11 @@ public:
 
 	inline void SetSizeStart( float sz )	{ mSizeStart = sz;			}
 	inline void SetSizeEnd( float sz )		{ mSizeEnd = sz;			}
-	inline void SetSizeParm( float parm )	{ mSizeParm = parm;			}
+	inline void SetSizeParm( double parm )	{ mSizeParm = parm;			}
 
 	inline void SetRGBStart( const vec3_t rgb )	{ if(rgb){VectorCopy(rgb,mRGBStart);}else{VectorClear(mRGBStart);}	}
-	inline void SetRGBEnd( const vec3_t rgb )		{ if(rgb){VectorCopy(rgb,mRGBEnd);}else{VectorClear(mRGBEnd);}		}
-	inline void SetRGBParm( float parm )	{ mRGBParm = parm;			}
+	inline void SetRGBEnd( const vec3_t rgb )	{ if(rgb){VectorCopy(rgb,mRGBEnd);}else{VectorClear(mRGBEnd);}		}
+	inline void SetRGBParm( double parm )	{ mRGBParm = parm;			}
 };
 
 //------------------------------
@@ -353,15 +353,15 @@ protected:
 
 	float		mSizeStart;
 	float		mSizeEnd;
-	float		mSizeParm;
+	double		mSizeParm;
 
 	vec3_t		mRGBStart;
 	vec3_t		mRGBEnd;
-	float		mRGBParm;
+	double		mRGBParm;
 
 	float		mAlphaStart;
 	float		mAlphaEnd;
-	float		mAlphaParm;
+	double		mAlphaParm;
 
 	float		mRotationDelta;
 	float		mElasticity;
@@ -399,15 +399,15 @@ public:
 
 	inline void SetSizeStart( float sz )	{ mSizeStart = sz;			}
 	inline void SetSizeEnd( float sz )		{ mSizeEnd = sz;			}
-	inline void SetSizeParm( float parm )	{ mSizeParm = parm;			}
+	inline void SetSizeParm( double parm )	{ mSizeParm = parm;			}
 
 	inline void SetRGBStart( const vec3_t rgb )	{ if(rgb){VectorCopy(rgb,mRGBStart);}else{VectorClear(mRGBStart);}	}
-	inline void SetRGBEnd( const vec3_t rgb )		{ if(rgb){VectorCopy(rgb,mRGBEnd);}else{VectorClear(mRGBEnd);}		}
-	inline void SetRGBParm( float parm )	{ mRGBParm = parm;			}
+	inline void SetRGBEnd( const vec3_t rgb )	{ if(rgb){VectorCopy(rgb,mRGBEnd);}else{VectorClear(mRGBEnd);}		}
+	inline void SetRGBParm( double parm )	{ mRGBParm = parm;			}
 
 	inline void SetAlphaStart( float al )	{ mAlphaStart = al;			}
 	inline void SetAlphaEnd( float al )		{ mAlphaEnd = al;			}
-	inline void SetAlphaParm( float parm )	{ mAlphaParm = parm;		}
+	inline void SetAlphaParm( double parm )	{ mAlphaParm = parm;		}
 
 	inline void SetRotation( float rot )		{ mRefEnt.rotation = rot;	}
 	inline void SetRotationDelta( float rot )	{ mRotationDelta = rot;		}
@@ -547,7 +547,7 @@ protected:
 
 	float	mLengthStart;
 	float	mLengthEnd;
-	float	mLengthParm;
+	double	mLengthParm;
 
 	float	mLength;
 
@@ -565,7 +565,7 @@ public:
 
 	inline void SetLengthStart( float len )	{ mLengthStart = len;	}
 	inline void SetLengthEnd( float len )	{ mLengthEnd = len;	}
-	inline void SetLengthParm( float len )	{ mLengthParm = len;	}
+	inline void SetLengthParm( double len )	{ mLengthParm = len;	}
 };
 
 
@@ -576,7 +576,7 @@ protected:
 
 	float		mSize2Start;
 	float		mSize2End;
-	float		mSize2Parm;
+	double		mSize2Parm;
 
 	void	UpdateSize2();
 
@@ -592,7 +592,7 @@ public:
 
 	inline void SetSize2Start( float sz )	{ mSize2Start = sz;			}
 	inline void SetSize2End( float sz )		{ mSize2End = sz;			}
-	inline void SetSize2Parm( float parm )	{ mSize2Parm = parm;		}
+	inline void SetSize2Parm( double parm )	{ mSize2Parm = parm;		}
 
 	inline void SetNormal( vec3_t norm )	{ VectorCopy( norm, mRefEnt.axis[0] ); }
 };
