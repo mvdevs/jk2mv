@@ -1245,6 +1245,7 @@ int FS_FOpenFileRead(const char *filename, fileHandle_t *file, qboolean uniqueFI
 }
 
 int FS_FOpenFileReadHash(const char *filename, fileHandle_t *file, qboolean uniqueFILE, unsigned long *filehash) {
+	bool			isLocalConfig;
 	searchpath_t	*search;
 	char			*netpath;
 	pack_t			*pak;
@@ -1282,6 +1283,11 @@ int FS_FOpenFileReadHash(const char *filename, fileHandle_t *file, qboolean uniq
 		return -1;
 	}
 
+	isLocalConfig = ( !strcmp( filename, "autoexec.cfg" ) ||
+		!strcmp( filename, "jk2mvconfig.cfg" ) ||
+		!strcmp( filename, "jk2mvserver.cfg" ) ||
+		!strcmp( filename, "jk2mvglobal.cfg" ) );
+
 	//
 	// search through the path, one element at a time
 	//
@@ -1290,6 +1296,10 @@ int FS_FOpenFileReadHash(const char *filename, fileHandle_t *file, qboolean uniq
 	fsh[*file].handleFiles.unique = uniqueFILE;
 
 	for ( search = fs_searchpaths ; search ; search = search->next ) {
+		//
+		if ( isLocalConfig && search->pack ) {
+			continue;
+		}
 		//
 		if ( search->pack ) {
 			hash = FS_HashFileName(filename, search->pack->hashSize);
