@@ -374,6 +374,10 @@ char *Cmd_ArgsFrom( int arg ) {
 	return cmd_args;
 }
 
+const char *Cmd_Cmd( void ) {
+	return cmd_cmd;
+}
+
 /*
 ============
 Cmd_ArgsBuffer

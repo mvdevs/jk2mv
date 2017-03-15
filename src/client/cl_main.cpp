@@ -1248,7 +1248,7 @@ void CL_Rcon_f( void ) {
 	Q_strcat(message, MAX_RCON_MESSAGE, " ");
 
 	// https://zerowing.idsoftware.com/bugzilla/show_bug.cgi?id=543
-	Q_strcat(message, MAX_RCON_MESSAGE, Cmd_Args());
+	Q_strcat(message, MAX_RCON_MESSAGE, Cmd_Cmd() + 5);
 
 	if (cls.state >= CA_CONNECTED) {
 		rcon_address = clc.netchan.remoteAddress;

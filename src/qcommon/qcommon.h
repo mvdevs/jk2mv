@@ -431,6 +431,7 @@ char	*Cmd_Argv (int arg);
 void	Cmd_ArgvBuffer( int arg, char *buffer, int bufferLength );
 char	*Cmd_Args (void);
 char	*Cmd_ArgsFrom( int arg );
+const char	*Cmd_Cmd( void );
 void	Cmd_ArgsBuffer( char *buffer, int bufferLength );
 void	Cmd_DropArg( int arg );
 // The functions that execute commands get their parameters with these
