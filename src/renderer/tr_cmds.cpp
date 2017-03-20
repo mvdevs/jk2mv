@@ -88,7 +88,7 @@ void R_IssueRenderCommands( qboolean runPerformanceCounters ) {
 	}
 
 	// actually start the commands going
-	if (!r_skipBackEnd->integer) {
+	if (!r_skipBackEnd->integer && !com_minimized->integer) {
 		// let it start on the new batch
 		RB_ExecuteRenderCommands(cmdList->cmds);
 	}
