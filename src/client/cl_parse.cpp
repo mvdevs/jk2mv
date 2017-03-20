@@ -572,6 +572,7 @@ void CL_ParseUDPDownload ( msg_t *msg ) {
 
 	// So UI gets access to it
 	Cvar_SetValue( "cl_downloadCount", clc.downloadCount );
+	WIN_SetTaskbarState(TBS_PROGRESS, clc.downloadCount, clc.downloadSize);
 
 	if (!size) { // A zero length block means EOF
 		if (clc.download) {
@@ -613,6 +614,8 @@ void CL_EndHTTPDownload(dlHandle_t handle, qboolean success, const char *err_msg
 	*clc.downloadTempName = *clc.downloadName = 0;
 	Cvar_Set("cl_downloadName", "");
 
+	WIN_SetTaskbarState(TBS_NORMAL, 0, 0);
+
 	CL_NextDownload();
 }
 
@@ -627,6 +630,8 @@ void CL_ProcessHTTPDownload(size_t dltotal, size_t dlnow) {
 	if (dltotal && dlnow) {
 		Cvar_SetValue("cl_downloadSize", (int)dltotal);
 		Cvar_SetValue("cl_downloadCount", (int)dlnow);
+
+		WIN_SetTaskbarState(TBS_PROGRESS, dlnow, dltotal);
 	}
 }
 
@@ -653,6 +658,8 @@ void CL_KillDownload() {
 	}
 	*clc.downloadTempName = *clc.downloadName = 0;
 	Cvar_Set("cl_downloadName", "");
+
+	WIN_SetTaskbarState(TBS_NORMAL, 0, 0);
 }
 
 /*

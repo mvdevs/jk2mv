@@ -1683,6 +1683,7 @@ void CL_BeginDownload( const char *localName, const char *remoteName ) {
 	}
 
 	VM_Call(uivm, UI_SET_ACTIVE_MENU, UIMENU_MV_DOWNLOAD_POPUP);
+	WIN_SetTaskbarState(TBS_NOTIFY, 0, 0);
 }
 
 /*

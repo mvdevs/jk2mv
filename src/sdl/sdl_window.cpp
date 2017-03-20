@@ -1105,3 +1105,13 @@ void *WIN_GL_GetProcAddress( const char *proc )
 {
 	return SDL_GL_GetProcAddress( proc );
 }
+
+void WIN_SetTaskbarState(tbstate_t state, uint64_t current, uint64_t total) {
+	SDL_SysWMinfo info;
+
+	SDL_VERSION(&info.version);
+	if (!SDL_GetWindowWMInfo(screen, &info))
+		return;
+
+	Sys_SetTaskbarState(info.info.win.window, state, current, total);
+}

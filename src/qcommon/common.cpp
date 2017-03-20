@@ -291,6 +291,7 @@ Q_NORETURN void QDECL Com_Error( int code, const char *fmt, ... ) {
 		CL_FlushMemory( );
 		VM_Forced_Unload_Done();
 		com_errorEntered = qfalse;
+		WIN_SetTaskbarState(TBS_NOTIFY, 0, 0);
 		longjmp(abortframe, -1);
 	} else if ( code == ERR_DROP || code == ERR_DISCONNECT ) {
 		Com_Printf ("********************\nERROR: %s\n********************\n", com_errorMessage);
@@ -300,21 +301,7 @@ Q_NORETURN void QDECL Com_Error( int code, const char *fmt, ... ) {
 		CL_FlushMemory( );
 		VM_Forced_Unload_Done();
 		com_errorEntered = qfalse;
-		longjmp(abortframe, -1);
-	} else if ( code == ERR_NEED_CD ) {
-		VM_Forced_Unload_Start();
-		SV_Shutdown( "Server didn't have CD\n" );
-		if ( com_cl_running && com_cl_running->integer ) {
-			CL_Disconnect( qtrue );
-			CL_FlushMemory( );
-			VM_Forced_Unload_Done();
-			com_errorEntered = qfalse;
-		} else {
-			Com_Printf("Server didn't have CD\n" );
-			VM_Forced_Unload_Done();
-		}
-
-		com_errorEntered = qfalse;
+		WIN_SetTaskbarState(TBS_NOTIFY, 0, 0);
 		longjmp(abortframe, -1);
 	} else {
 		VM_Forced_Unload_Start();

@@ -1501,6 +1501,8 @@ void CL_FirstSnapshot( void ) {
 
 	cls.state = CA_ACTIVE;
 
+	WIN_SetTaskbarState(TBS_NOTIFY, 0, 0);
+
 	// set the timedelta so we are exactly on this first frame
 	cl.serverTimeDelta = cl.snap.serverTime - cls.realtime;
 	cl.oldServerTime = cl.snap.serverTime;

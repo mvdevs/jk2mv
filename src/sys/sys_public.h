@@ -169,10 +169,19 @@ typedef struct windowDesc_s
 	} gl;
 } windowDesc_t;
 
+typedef enum {
+	TBS_NORMAL,
+	TBS_ERROR,
+	TBS_NOTIFY,
+	TBS_INDETERMINATE,
+	TBS_PROGRESS
+} tbstate_t;
+
 window_t	WIN_Init( const windowDesc_t *desc, glconfig_t *glConfig );
 void		WIN_InitGammaMethod(glconfig_t *glConfig);
 void		WIN_Present( window_t *window );
 void		WIN_SetGamma( glconfig_t *glConfig, byte red[256], byte green[256], byte blue[256] );
+void		WIN_SetTaskbarState(tbstate_t state, uint64_t current, uint64_t total);
 void		WIN_Shutdown( void );
 void *		WIN_GL_GetProcAddress( const char *proc );
 void		GLimp_Minimize(void);

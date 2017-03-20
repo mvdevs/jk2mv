@@ -3,6 +3,7 @@
 #include <float.h>
 #include <io.h>
 #include <shlobj.h>
+#include <Shobjidl.h>
 #include "../qcommon/q_shared.h"
 #include "../qcommon/qcommon.h"
 
@@ -410,6 +411,8 @@ int Sys_Milliseconds2(void) {
 
 static UINT timerResolution = 0;
 
+ITaskbarList3 *win_taskbar;
+
 void Sys_PlatformInit(void) {
 	TIMECAPS ptc;
 	if (timeGetDevCaps(&ptc, sizeof(ptc)) == MMSYSERR_NOERROR)
@@ -425,6 +428,38 @@ void Sys_PlatformInit(void) {
 		timeBeginPeriod(timerResolution);
 	} else
 		timerResolution = 0;
+
+#ifndef DEDICATED
+	// Win7+ Taskbar features
+	CoInitialize(NULL);
+	CoCreateInstance(CLSID_TaskbarList, NULL, CLSCTX_INPROC_SERVER, IID_ITaskbarList3, (void **)&win_taskbar);
+#endif
+}
+
+void Sys_SetTaskbarState(void *win_handle, tbstate_t state, uint64_t current, uint64_t total) {
+	if (!win_taskbar) return;
+
+	HWND hwnd = (HWND)win_handle;
+
+	switch (state) {
+	case TBS_NORMAL:
+		win_taskbar->SetProgressState(hwnd, TBPF_NOPROGRESS);
+		break;
+	case TBS_ERROR:
+		win_taskbar->SetProgressValue(hwnd, 100, 100);
+		win_taskbar->SetProgressState(hwnd, TBPF_ERROR);
+		break;
+	case TBS_INDETERMINATE:
+		win_taskbar->SetProgressState(hwnd, TBPF_INDETERMINATE);
+		break;
+	case TBS_PROGRESS:
+		win_taskbar->SetProgressState(hwnd, TBPF_NORMAL);
+		win_taskbar->SetProgressValue(hwnd, current, total);
+		break;
+	case TBS_NOTIFY:
+		FlashWindow(hwnd, FALSE);
+		break;
+	}
 }
 
 void Sys_PlatformExit(void)
