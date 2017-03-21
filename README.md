@@ -22,37 +22,38 @@ Main Features:
 | Windows | Linux / OSX |
 |---------|-------------|
 | [![Windows Build Status](https://ci.appveyor.com/api/projects/status/bwkb8nfl5w6s53u4?svg=true)](https://ci.appveyor.com/project/ouned/jk2mv/history) | [![Linux/OSX Build Status](https://api.travis-ci.org/mvdevs/jk2mv.svg)](https://travis-ci.org/mvdevs/jk2mv/builds)
+
 [Download Automated Builds](https://jk2mv.org/builds)
 
 1. Get CMake from either https://cmake.org or, in case of Linux, from the repositories of your distribution.
 2. Dependencies
-  * Windows: Requires at least Visual Studio 2013, required libraries are shipped with JK2MV in the `libs` directory.
-    * If you plan to build the installer package get NSIS from http://nsis.sourceforge.net
-  * Linux: OpenGL, OpenAL, SDL2 and depending on your configuration libjpeg, libpng, libminizip, zlib.
-    * Ubuntu/Debian: `apt-get install git debhelper devscripts libsdl2-dev libgl1-mesa-dev libopenal-dev libjpeg8-dev libpng12-dev zlib1g-dev libminizip-dev`
-	* Fedora: `dnf install git SDL2-devel mesa-libGL-devel openal-soft-devel libjpeg-turbo-devel libpng-devel zlib-devel minizip-devel`
-  * MacOSX: XCode on MacOSX >= 10.6
-    * Configure / Build SDL2:
-      1. `curl -O https://www.libsdl.org/release/SDL2-2.0.5.tar.gz`
-      2. `tar xzf SDL2-2.0.5.tar.gz && cd SDL2-2.0.5/Xcode/SDL`
-      4. `sed -i -e 's/@rpath//g' SDL.xcodeproj/project.pbxproj` (packaging fails otherwise)
-      5. `xcodebuild -configuration Release`
-      6. `mkdir -p ~/Library/Frameworks/`
-      7. ``ln -s `pwd`/build/Release/SDL2.framework ~/Library/Frameworks``
+ 	* Windows: Requires at least Visual Studio 2013, required libraries are shipped with JK2MV in the `libs` directory.
+		* If you plan to build the installer package get NSIS from http://nsis.sourceforge.net
+	* Linux: OpenGL, OpenAL, SDL2 and depending on your configuration libjpeg, libpng, libminizip, zlib.
+		* Ubuntu/Debian: `apt-get install git debhelper devscripts libsdl2-dev libgl1-mesa-dev libopenal-dev libjpeg8-dev libpng12-dev zlib1g-dev libminizip-dev`
+		* Fedora: `dnf install git SDL2-devel mesa-libGL-devel openal-soft-devel libjpeg-turbo-devel libpng-devel zlib-devel minizip-devel`
+	* MacOSX: XCode on MacOSX >= 10.6
+		* Configure / Build SDL2:
+			1. `curl -O https://www.libsdl.org/release/SDL2-2.0.5.tar.gz`
+			2. `tar xzf SDL2-2.0.5.tar.gz && cd SDL2-2.0.5/Xcode/SDL`
+			4. `sed -i -e 's/@rpath//g' SDL.xcodeproj/project.pbxproj` (packaging fails otherwise)
+			5. `xcodebuild -configuration Release`
+			6. `mkdir -p ~/Library/Frameworks/`
+			7. ``ln -s `pwd`/build/Release/SDL2.framework ~/Library/Frameworks``
 3. Configuration
-  * Either
-    * Use the CMake GUI to configure JK2MV
-    * Generate the default configuration by using the build scripts in the `build` directory.
-  * Important Options
-    * `BuildPortableVersion` Build portable version (does not read or write files from your user/home directory)
-    * `BuildMVMP` Whether to create targets for the client (jk2mvmp & jk2mvmenu)
-    * `BuildMVDED` Whether to create targets for the dedicated server (jk2mvded)
-    * `CMAKE_BUILD_TYPE=Debug/Release` Build for development/release.
+	* Either
+		* Use the CMake GUI to configure JK2MV
+		* Generate the default configuration by using the build scripts in the `build` directory.
+	* Important Options
+		* `BuildPortableVersion` Build portable version (does not read or write files from your user/home directory)
+		* `BuildMVMP` Whether to create targets for the client (jk2mvmp & jk2mvmenu)
+		* `BuildMVDED` Whether to create targets for the dedicated server (jk2mvded)
+		* `CMAKE_BUILD_TYPE=Debug/Release` Build for development/release.
 4. Building
-  * Unix-Makefiles
-    * `make` Build all previously selected binaries.
-    * `make install` Installs JK2MV to `/usr` on Linux. On MacOSX it finishes the App-Package.
-    * `make package` Generates rpm/deb packages on Linux and a dmg image on MacOSX.
+	* Unix-Makefiles
+		* `make` Build all previously selected binaries.
+		* `make install` Installs JK2MV to `/usr` on Linux. On MacOSX it finishes the App-Package.
+		* `make package` Generates rpm/deb packages on Linux and a dmg image on MacOSX.
 
 # License
 JK2MV is licensed under GPLv2 as free software. You are free to use, modify and redistribute JK2MV following the terms in the LICENSE file. Please be aware of the implications of the GPLv2 licence. In short, be prepared to share your code under the same GPLv2 licence.
