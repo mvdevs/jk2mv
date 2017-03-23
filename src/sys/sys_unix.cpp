@@ -665,3 +665,7 @@ void *Sys_LoadModuleLibrary(const char *name, qboolean mvOverride, intptr_t(QDEC
 	dllEntry(systemcalls);
 	return libHandle;
 }
+
+void Sys_SetTaskbarState(void *win_handle, tbstate_t state, uint64_t current, uint64_t total) {
+	// TODO: OSX Dock support
+}
