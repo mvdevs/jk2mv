@@ -891,6 +891,8 @@ void CL_Disconnect( qboolean showMainMenu ) {
 		SCR_UpdateScreen( );
 		CL_CloseAVI( );
 	}
+
+	WIN_SetTaskbarState(TBS_NOTIFY, 0, 0);
 }
 
 
