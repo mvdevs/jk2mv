@@ -1113,5 +1113,7 @@ void WIN_SetTaskbarState(tbstate_t state, uint64_t current, uint64_t total) {
 	if (!SDL_GetWindowWMInfo(screen, &info))
 		return;
 
+#ifdef SDL_VIDEO_DRIVER_WINDOWS
 	Sys_SetTaskbarState(info.info.win.window, state, current, total);
+#endif
 }
