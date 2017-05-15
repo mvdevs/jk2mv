@@ -27,6 +27,8 @@
 #define SVF_OWNERNOTSHARED		0x00001000	// If it's owned by something and another thing owned by that something
 											// hits it, it will still touch
 
+#define SVF_ANTI_WALLHACK		0x00002000  // only render Clients inside the broadcast clients array
+
 #define SVF_GLASS_BRUSH			0x08000000	// Ent is a glass brush
 
 //===============================================================
