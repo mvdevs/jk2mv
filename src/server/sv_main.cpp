@@ -294,10 +294,11 @@ CONNECTIONLESS COMMANDS
 */
 
 // This is deliberately quite large to make it more of an effort to DoS
-#define MAX_BUCKETS			16384
-#define MAX_HASHES			1024
+#define MAX_BUCKETS			(2 << 14)
+#define MAX_HASHES			(2 * MAX_BUCKETS)
 
 static leakyBucket_t buckets[MAX_BUCKETS];
+static leakyBucket_t *freeBuckets;
 static leakyBucket_t *bucketHashes[MAX_HASHES];
 leakyBucket_t outboundLeakyBucket;
 
@@ -335,6 +336,7 @@ Find or allocate a bucket for an address
 */
 static leakyBucket_t *SVC_BucketForAddress(netadr_t address, int burst, int period) {
 	leakyBucket_t	*bucket = NULL;
+	static int				lastCleanup = 0;
 	int						i;
 	int						hash = SVC_HashForAddress(address);
 	int						now = Sys_Milliseconds();
@@ -352,50 +354,69 @@ static leakyBucket_t *SVC_BucketForAddress(netadr_t address, int burst, int peri
 		}
 	}
 
-	for (i = 0; i < MAX_BUCKETS; i++) {
-		int interval;
-
-		bucket = &buckets[i];
-		interval = now - bucket->lastTime;
+	if (now - lastCleanup > burst * period) {
+		lastCleanup = now;
 
 		// Reclaim expired buckets
-		if (bucket->lastTime > 0 && (interval > (burst * period) ||
-			interval < 0)) {
-			if (bucket->prev != NULL) {
-				bucket->prev->next = bucket->next;
-			} else {
-				bucketHashes[bucket->hash] = bucket->next;
-			}
+		for (i = 0; i < MAX_BUCKETS; i++) {
+			int interval;
 
-			if (bucket->next != NULL) {
-				bucket->next->prev = bucket->prev;
-			}
+			bucket = &buckets[i];
+			interval = now - bucket->lastTime;
 
-			Com_Memset(bucket, 0, sizeof(leakyBucket_t));
+			// Reclaim expired buckets
+			if (bucket->type == NA_BAD) {
+				Com_Memset(bucket, 0, sizeof(leakyBucket_t));
+
+				bucket->next = freeBuckets;
+				freeBuckets = bucket;
+			} else if (bucket->lastTime > 0 && (interval > (burst * period) ||
+												interval < 0)) {
+				if (bucket->prev != NULL) {
+					bucket->prev->next = bucket->next;
+				} else {
+					bucketHashes[bucket->hash] = bucket->next;
+				}
+
+				if (bucket->next != NULL) {
+					bucket->next->prev = bucket->prev;
+				}
+
+				Com_Memset(bucket, 0, sizeof(leakyBucket_t));
+
+				bucket->next = freeBuckets;
+				freeBuckets = bucket;
+			}
+		}
+	}
+
+	if (freeBuckets != NULL) {
+		bucket = freeBuckets;
+		freeBuckets = bucket->next;
+
+		bucket->type = address.type;
+		switch (address.type) {
+		case NA_IP:
+			Com_Memcpy(bucket->ipv._4, address.ip, 4);
+			break;
+		default:
+			return NULL;
 		}
 
-		if (bucket->type == NA_BAD) {
-			bucket->type = address.type;
-			switch (address.type) {
-			case NA_IP:  Com_Memcpy(bucket->ipv._4, address.ip, 4);   break;
-			default: break;
-			}
+		bucket->lastTime = now;
+		bucket->burst = 0;
+		bucket->hash = hash;
 
-			bucket->lastTime = now;
-			bucket->burst = 0;
-			bucket->hash = hash;
-
-			// Add to the head of the relevant hash chain
-			bucket->next = bucketHashes[hash];
-			if (bucketHashes[hash] != NULL) {
-				bucketHashes[hash]->prev = bucket;
-			}
-
-			bucket->prev = NULL;
-			bucketHashes[hash] = bucket;
-
-			return bucket;
+		// Add to the head of the relevant hash chain
+		bucket->next = bucketHashes[hash];
+		if (bucketHashes[hash] != NULL) {
+			bucketHashes[hash]->prev = bucket;
 		}
+
+		bucket->prev = NULL;
+		bucketHashes[hash] = bucket;
+
+		return bucket;
 	}
 
 	// Couldn't allocate a bucket for this address
