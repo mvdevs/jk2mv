@@ -1185,7 +1185,7 @@ void SV_UserinfoChanged( client_t *cl ) {
 				ch == '\x0A' || // underscore cursor (console only)
 				ch == '\x0B' || // block cursor (console only)
 				ch == '\xB7' || // section sign (§)
-				ch == '\xB4' || // accute accent (Ž)
+				ch == '\xB4' || // accute accent (´)
 				ch == '\xC4' || // A umlaut (Ä)
 				ch == '\xD6' || // O umlaut (Ö)
 				ch == '\xDC' || // U umlaut (Ü)
