@@ -1184,15 +1184,15 @@ void SV_UserinfoChanged( client_t *cl ) {
 			if (isascii(ch) ||
 				ch == '\x0A' || // underscore cursor (console only)
 				ch == '\x0B' || // block cursor (console only)
-				ch == '\xB7' || // section sign (§)
-				ch == '\xB4' || // accute accent (´)
-				ch == '\xC4' || // A umlaut (Ä)
-				ch == '\xD6' || // O umlaut (Ö)
-				ch == '\xDC' || // U umlaut (Ü)
-				ch == '\xDF' || // sharp S (ß)
-				ch == '\xE4' || // a umlaut (ä)
-				ch == '\xF6' || // o umlaut (ö)
-				ch == '\xFC')   // u umlaut (ü)
+				ch == '\xB7' || // section sign (Â§)
+				ch == '\xB4' || // accute accent (Å½)
+				ch == '\xC4' || // A umlaut (Ã„)
+				ch == '\xD6' || // O umlaut (Ã–)
+				ch == '\xDC' || // U umlaut (Ãœ)
+				ch == '\xDF' || // sharp S (ÃŸ)
+				ch == '\xE4' || // a umlaut (Ã¤)
+				ch == '\xF6' || // o umlaut (Ã¶)
+				ch == '\xFC')   // u umlaut (Ã¼)
 			{
 				cleanedName[count++] = ch;
 			}
