@@ -1,7 +1,7 @@
 VERSION 1
 ID 128
 REFERENCE MV
-COUNT 60
+COUNT 61
 INDEX 0
 {
    REFERENCE GAME_VERSION
@@ -541,4 +541,14 @@ INDEX 59
    TEXT_LANGUAGE3 "Mod Optionen konfigurieren."
    TEXT_LANGUAGE6 "Configure mod options."
    TEXT_LANGUAGE8 "Configurar las opciones de mod."
+}
+INDEX 60
+{
+   REFERENCE MOD_OPTIONS_EMPTY
+   NOTES "You may use newline (\n) here if a message doesn't fit"
+   TEXT_LANGUAGE1 "Mods may use this menu for custom options."
+   TEXT_LANGUAGE2 "Mods may use this menu for custom options."
+   TEXT_LANGUAGE3 "Mods may use this menu for custom options."
+   TEXT_LANGUAGE6 "Mods may use this menu for custom options."
+   TEXT_LANGUAGE8 "Mods may use this menu for custom options."
 }
