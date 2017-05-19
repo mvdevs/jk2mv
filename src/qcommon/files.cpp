@@ -2713,8 +2713,9 @@ FS_Which_f
 ============
 */
 static void FS_Which_f( void ) {
+	fileHandle_t	f;
 	searchpath_t	*search;
-	char		*filename;
+	char			*filename;
 
 	filename = Cmd_Argv(1);
 
@@ -2735,29 +2736,35 @@ static void FS_Which_f( void ) {
 		return;
 	}
 
-	// just wants to see if file is there
-	for ( search=fs_searchpaths; search; search=search->next ) {
-		if ( search->pack ) {
-			long hash = FS_HashFileName( filename, search->pack->hashSize );
+	FS_FOpenFileRead( filename, &f, qfalse );
 
-			// is the element a pak file?
-			if ( search->pack->hashTable[hash]) {
-				// look through all the pak file elements
+	if ( !f ) {
+		Com_Printf( "File not found: \"%s\"\n", filename );
+		return;
+	}
+
+	// find file that would be opened by FS_FOpenFileRead taking all
+	// its quirks and special cases into account
+	if ( fsh[f].zipFile ) {
+		for ( search=fs_searchpaths; search; search=search->next ) {
+			if ( search->pack ) {
 				pack_t* pak = search->pack;
-				fileInPack_t* pakFile = pak->hashTable[hash];
 
-				do {
-					// case and separator insensitive comparisons
-					if ( !FS_FilenameCompare( pakFile->name, filename ) ) {
-						// found it!
-						Com_Printf( "File \"%s\" found in \"%s\"\n", filename, pak->pakFilename );
-						return;
-					}
-
-					pakFile = pakFile->next;
-				} while ( pakFile != NULL );
+				if ( fsh[f].handleFiles.file.z == pak->handle ) {
+					// found it!
+					Com_Printf( "File \"%s\" found in \"%s\"\n", filename, pak->pakFilename );
+					return;
+				}
 			}
-		} else if (search->dir) {
+		}
+		assert( 0 );
+	}
+
+	FS_FCloseFile( f );
+
+	// if it's not in pack, find any match outside of it
+	for ( search=fs_searchpaths; search; search=search->next ) {
+		if (search->dir) {
 			directory_t* dir = search->dir;
 
 			char* netpath = FS_BuildOSPath( dir->path, dir->gamedir, filename );
@@ -2775,6 +2782,7 @@ static void FS_Which_f( void ) {
 		}
 	}
 
+	assert( 0 );
 	Com_Printf( "File not found: \"%s\"\n", filename );
 }
 
