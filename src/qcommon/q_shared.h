@@ -994,6 +994,7 @@ void PerpendicularVector( vec3_t dst, const vec3_t src );
 char	*COM_SkipPath( char *pathname );
 void	COM_StripExtension(const char *in, char *out, size_t destsize);
 void	COM_DefaultExtension( char *path, size_t maxSize, const char *extension );
+void	COM_SanitizeExtension(char *path, size_t maxSize, const char *extension);
 
 void	COM_BeginParseSession( const char *name );
 int		COM_GetCurrentParseLine( void );

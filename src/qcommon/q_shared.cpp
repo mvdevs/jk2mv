@@ -112,6 +112,34 @@ void COM_DefaultExtension(char *path, size_t maxSize, const char *extension) {
 }
 
 /*
+==================
+COM_DefaultExtension
+
+Append extension if it's missing or existing extension doesn't match
+==================
+*/
+void COM_SanitizeExtension(char *path, size_t maxSize, const char *extension) {
+	int			ext;
+	char		*s;
+
+	s = strrchr(path, '.');
+
+	if (s != NULL && s > path && s[-1] != '/' && s[-1] != '\\') {
+		if (!strcmp(s, extension)) {
+			// path already has correct extension
+			return;
+		}
+	}
+
+	ext = (int)maxSize - (int)strlen(extension) - 1;
+	if (ext < 0) {
+		Com_Error(ERR_FATAL, "COM_SanitizeExtension: Extension would overflow");
+	}
+	path[ext] = '\0';
+	Q_strcat(path, maxSize, extension);
+}
+
+/*
 ============================================================================
 
 BYTE ORDER FUNCTIONS
