@@ -130,6 +130,7 @@ Save the console contents out to a file
 */
 void Con_Dump_f (void)
 {
+	char			fileName[MAX_QPATH];
 	qboolean		empty;
 	int				l, i, j;
 	int				line;
@@ -143,10 +144,13 @@ void Con_Dump_f (void)
 		return;
 	}
 
-	f = FS_FOpenFileWrite( Cmd_Argv( 1 ) );
+	Q_strncpyz( fileName, Cmd_Argv( 1 ), sizeof( fileName ) );
+	COM_SanitizeExtension( fileName, sizeof( fileName ), ".txt" );
+
+	f = FS_FOpenFileWrite( fileName );
 	if (!f)
 	{
-		Com_Printf (S_COLOR_RED"ERROR: couldn't open %s.\n", Cmd_Argv(1));
+		Com_Printf (S_COLOR_RED"ERROR: couldn't open %s.\n", fileName);
 		return;
 	}
 
@@ -200,7 +204,7 @@ void Con_Dump_f (void)
 
 	FS_FCloseFile( f );
 
-	Com_Printf ("Dumped console text to %s.\n", Cmd_Argv(1) );
+	Com_Printf ("Dumped console text to %s.\n", fileName );
 }
 
 
