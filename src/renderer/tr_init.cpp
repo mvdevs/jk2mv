@@ -1036,6 +1036,10 @@ void GL_SetDefaultState( void )
 	GL_TextureMode( r_textureMode->string );
 	GL_TexEnv( GL_MODULATE );
 
+	if ( glConfig.textureLODBiasAvailable ) {
+		qglTexEnvf(GL_TEXTURE_FILTER_CONTROL_EXT, GL_TEXTURE_LOD_BIAS_EXT, r_textureLODBias->value );
+	}
+
 	qglShadeModel( GL_SMOOTH );
 	qglDepthFunc( GL_LEQUAL );
 
