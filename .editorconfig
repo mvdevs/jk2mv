@@ -12,5 +12,9 @@ indent_size = 4
 indent_style = space
 indent_size = 2
 
+[*.rst]
+indent_style = space
+indent_size = 3
+
 [*.{txt,rst,md}]
 charset = utf-8
