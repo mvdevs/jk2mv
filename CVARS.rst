@@ -342,6 +342,26 @@ Server-Side
 :Description:
    Prevents spectators from stealing saber.
 
+..
+
+:Name: sv_hibernateTime
+:Values: Integer >= 0
+:Default: "0"
+:Description:
+   Switches the server to a hibernation mode in which it
+   uses less CPU power when no player is connected.
+   The value is the time in milliseconds after which it automatically
+   switches to the said state when the last player disconnected from the server.
+   The value zero disables hibernation mode.
+
+..
+
+:Name: sv_hibernateFps
+:Values: Integer >= 1
+:Default: "5"
+:Description:
+   The fps to use while the server is in hibernation mode.
+
 ==================
 Undocumented Cvars
 ==================
