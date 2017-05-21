@@ -10,6 +10,7 @@
 #include "../sys/sys_local.h"
 #include "qcommon.h"
 #include "../client/client.h"
+#include "../server/server.h"
 #include "strip.h"
 #include "mv_setup.h"
 #ifdef WIN32
@@ -2584,7 +2585,9 @@ int Com_ModifyMsec( int msec ) {
 		// period, because it would mess up all the client's views
 		// of time.
 		if ( msec > 500 ) {
-			Com_Printf( "Hitch warning: %i msec frame time\n", msec );
+			if ( !sv_hibernateTime->integer || !svs.hibernation.enabled ) { // Hibernation mode causes this
+				Com_Printf("Hitch warning: %i msec frame time\n", msec);
+			}
 		}
 		clampTime = 5000;
 	} else

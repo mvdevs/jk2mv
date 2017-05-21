@@ -280,14 +280,15 @@ void SV_DirectConnect( netadr_t from ) {
 
 		// never reject a LAN client based on ping
 		if ( !Sys_IsLANAddress( from ) ) {
-			if ( sv_minPing->value && ping < sv_minPing->value ) {
+			if ( ( sv_minPing->value && ping < sv_minPing->value ) && !svs.hibernation.enabled ) {
 				// don't let them keep trying until they get a big delay
 				NET_OutOfBandPrint( NS_SERVER, from, "print\nServer is for high pings only\n" );
 				Com_DPrintf ("Client %i rejected on a too low ping\n", i);
 				challengeptr->wasrefused = qtrue;
 				return;
 			}
-			if ( sv_maxPing->value && ping > sv_maxPing->value ) {
+
+			if ( ( sv_maxPing->value && ping > sv_maxPing->value ) && !svs.hibernation.enabled ) {
 				NET_OutOfBandPrint( NS_SERVER, from, "print\nServer is for low pings only\n" );
 				Com_DPrintf ("Client %i rejected on a too high ping\n", i);
 				challengeptr->wasrefused = qtrue;
@@ -409,6 +410,11 @@ gotnewcl:
 		return;
 	}
 
+	if ( svs.hibernation.enabled ) {
+		svs.hibernation.enabled = false;
+		Com_Printf("Server restored from hibernation\n");
+	}
+
 	SV_UserinfoChanged( newcl );
 
 	// send the connect packet to the client
@@ -516,6 +522,17 @@ void SV_DropClient( client_t *drop, const char *reason ) {
 	// to the master so it is known the server is empty
 	// send a heartbeat now so the master will get up to date info
 	// if there is already a slot for this ip, reuse it
+	int players = 0;
+	for (i = 0; i < sv_maxclients->integer; i++) {
+		if (svs.clients[i].state >= CS_CONNECTED && svs.clients[i].netchan.remoteAddress.type != NA_BOT) {
+			players++;
+		}
+	}
+
+	if (players == 0) {
+		svs.hibernation.lastTimeDisconnected = Sys_Milliseconds();
+	}
+
 	for (i=0 ; i < sv_maxclients->integer ; i++ ) {
 		if ( svs.clients[i].state >= CS_CONNECTED ) {
 			break;

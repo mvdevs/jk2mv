@@ -861,6 +861,9 @@ void SV_Init (void) {
 
 //	sv_debugserver = Cvar_Get ("sv_debugserver", "0", 0);
 
+	sv_hibernateTime = Cvar_Get("sv_hibernateTime", "0", CVAR_ARCHIVE | CVAR_GLOBAL);
+	sv_hibernateFps = Cvar_Get("sv_hibernateFps", "5", CVAR_ARCHIVE | CVAR_GLOBAL);
+
 	SP_Register("str_server",SP_REGISTER_REQUIRED);
 
 	// initialize bot cvars so they are listed and can be set before loading the botlib

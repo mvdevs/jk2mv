@@ -206,6 +206,11 @@ typedef struct {
 	netadr_t	redirectAddress;			// for rcon return messages
 
 	netadr_t	authorizeAddress;			// for rcon return messages
+
+	struct {
+		bool enabled;
+		int lastTimeDisconnected;
+	} hibernation;							// handle hibernation mode data
 } serverStatic_t;
 
 //=============================================================================
@@ -242,6 +247,8 @@ extern	cvar_t	*sv_floodProtect;
 extern	cvar_t	*sv_allowAnonymous;
 extern	cvar_t	*sv_needpass;
 extern	cvar_t	*mv_serverversion;
+extern	cvar_t	*sv_hibernateTime;
+extern	cvar_t	*sv_hibernateFps;
 
 // toggleable fixes
 extern	cvar_t	*mv_fixnamecrash;
