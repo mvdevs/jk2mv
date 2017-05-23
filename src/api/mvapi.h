@@ -14,8 +14,8 @@
 // MV_MIN_VERSION is the minimum required JK2MV version which implements this API-Level.
 // All future JK2MV versions are guaranteed to implement this API-Level.
 // ----------------------------------------------------------------------------------------- //
-#define MV_APILEVEL 2
-#define MV_MIN_VERSION "1.2"
+#define MV_APILEVEL 3
+#define MV_MIN_VERSION "1.4"
 // ----------------------------------------------------------------------------------------- //
 
 // ----------------------------------------- SHARED ---------------------------------------- //
