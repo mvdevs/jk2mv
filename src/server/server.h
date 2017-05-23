@@ -259,6 +259,7 @@ extern	cvar_t	*mv_fixturretcrash;
 extern	cvar_t	*mv_blockchargejump;
 extern	cvar_t	*mv_blockspeedhack;
 extern	cvar_t	*mv_fixsaberstealing;
+extern	cvar_t	*mv_fixplayerghosting;
 
 //===========================================================
 

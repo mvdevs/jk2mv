@@ -344,6 +344,15 @@ Server-Side
 
 ..
 
+:Name: mv_fixplayerghosting
+:Valid: "0", "1"
+:Default: "1"
+:Description:
+   Prevents "player ghosting" bug, where players can freely walk
+   through affected player.
+
+..
+
 :Name: sv_hibernateTime
 :Values: Integer >= 0
 :Default: "0"
