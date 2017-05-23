@@ -300,7 +300,6 @@ CONNECTIONLESS COMMANDS
 static leakyBucket_t buckets[MAX_BUCKETS];
 static leakyBucket_t *freeBuckets;
 static leakyBucket_t *bucketHashes[MAX_HASHES];
-leakyBucket_t outboundLeakyBucket;
 
 /*
 ================
@@ -426,9 +425,11 @@ static leakyBucket_t *SVC_BucketForAddress(netadr_t address, int burst, int peri
 /*
 ================
 SVC_RateLimit
+
+Allows one packet per period msec with bucket size of burst
 ================
 */
-qboolean SVC_RateLimit(leakyBucket_t *bucket, int burst, int period) {
+static qboolean SVC_RateLimit(leakyBucket_t *bucket, int burst, int period) {
 	if (bucket != NULL) {
 		int now = Sys_Milliseconds();
 		int interval = now - bucket->lastTime;
@@ -460,7 +461,7 @@ SVC_RateLimitAddress
 Rate limit for a particular address
 ================
 */
-qboolean SVC_RateLimitAddress(netadr_t from, int burst, int period) {
+static qboolean SVC_RateLimitAddress(netadr_t from, int burst, int period) {
 	leakyBucket_t *bucket = SVC_BucketForAddress(from, burst, period);
 
 	return SVC_RateLimit(bucket, burst, period);
@@ -484,20 +485,6 @@ void SVC_Status( netadr_t from ) {
 	size_t	statusLength;
 	size_t	playerLength;
 	char	infostring[MAX_INFO_STRING];
-
-	// Prevent using getstatus as an amplifier
-	if (SVC_RateLimitAddress(from, 30, 1000)) {
-		Com_DPrintf("SVC_Status: rate limit from %s exceeded, dropping request\n",
-			NET_AdrToString(from));
-		return;
-	}
-
-	// Allow getstatus to be DoSed relatively easily, but prevent
-	// excess outbound bandwidth usage when being flooded inbound
-	if (SVC_RateLimit(&outboundLeakyBucket, 30, 100)) {
-		Com_DPrintf("SVC_Status: rate limit exceeded, dropping request\n");
-		return;
-	}
 
 	strcpy( infostring, Cvar_InfoString( CVAR_SERVERINFO ) );
 
@@ -549,20 +536,6 @@ void SVC_Info( netadr_t from ) {
 	int		i, count, wDisable;
 	const char *gamedir;
 	char	infostring[MAX_INFO_STRING];
-
-	// Prevent using getinfo as an amplifier
-	if (SVC_RateLimitAddress(from, 30, 1000)) {
-		Com_DPrintf("SVC_Info: rate limit from %s exceeded, dropping request\n",
-			NET_AdrToString(from));
-		return;
-	}
-
-	// Allow getinfo to be DoSed relatively easily, but prevent
-	// excess outbound bandwidth usage when being flooded inbound
-	if (SVC_RateLimit(&outboundLeakyBucket, 30, 100)) {
-		Com_DPrintf("SVC_Info: rate limit exceeded, dropping request\n");
-		return;
-	}
 
 	// q3infoboom exploit
 	if (strlen(Cmd_Argv(1)) > 128)
@@ -651,13 +624,6 @@ void SVC_RemoteCommand( netadr_t from, msg_t *msg ) {
 // max length that MSG_ReadString in CL_ConnectionlessPacket can read
 #define	SV_OUTPUTBUF_LENGTH MAX_STRING_CHARS
 	char		sv_outputbuf[SV_OUTPUTBUF_LENGTH];
-
-	// Prevent using rcon as an amplifier and make dictionary attacks impractical
-	if (SVC_RateLimitAddress(from, 30, 1000)) {
-		Com_DPrintf("SVC_RemoteCommand: rate limit from %s exceeded, dropping request\n",
-			NET_AdrToString(from));
-		return;
-	}
 
 	if ( !strlen( sv_rconPassword->string ) ||
 		strcmp (Cmd_Argv(1), sv_rconPassword->string) ) {
@@ -764,8 +730,30 @@ connectionless packets.
 =================
 */
 void SV_ConnectionlessPacket( netadr_t from, msg_t *msg ) {
+	static int dropped = 0;
+	static leakyBucket_t globalBucket;
+
 	char	*s;
 	char	*c;
+
+	if (SVC_RateLimitAddress(from, 10, 1000)) {
+		if (com_developer->integer) {
+			Com_Printf("SVC_ConnectionlessPacket: rate limit from %s exceeded, dropping request\n",
+				NET_AdrToString(from));
+		}
+		return;
+	}
+
+	if (SVC_RateLimit(&globalBucket, 30, 100)) {
+		dropped++;
+		return;
+	}
+
+	// this will print every 'period' msec
+	if (dropped > 0) {
+		Com_DPrintf("SV_ConnectionlessPacket: global rate limit exceeded, dropped %d requests\n", dropped);
+		dropped = 0;
+	}
 
 	MSG_BeginReadingOOB( msg );
 	MSG_ReadLong( msg );		// skip the -1 marker
