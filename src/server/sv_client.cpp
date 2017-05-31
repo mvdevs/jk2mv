@@ -395,6 +395,8 @@ gotnewcl:
 		return;
 	}
 
+	SVC_WhitelistAdr( from );
+
 	SV_UserinfoChanged( newcl );
 
 	// send the connect packet to the client

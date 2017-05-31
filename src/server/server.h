@@ -290,6 +290,8 @@ qboolean MVAPI_SendConnectionlessPacket(const mvaddr_t *addr, const char *messag
 qboolean MVAPI_DisableStructConversion(qboolean disable);
 extern qboolean mvStructConversionDisabled;
 
+void SVC_WhitelistAdr( netadr_t adr );
+
 //
 // sv_init.c
 //

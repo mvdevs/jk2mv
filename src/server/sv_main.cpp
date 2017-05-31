@@ -254,8 +254,9 @@ void SV_MasterHeartbeat( void ) {
 			Com_Printf( "%s resolved to %i.%i.%i.%i:%i\n", sv_master[i]->string,
 				adr[i].ip[0], adr[i].ip[1], adr[i].ip[2], adr[i].ip[3],
 				BigShort( adr[i].port ) );
-		}
 
+			SVC_WhitelistAdr( adr[i] );
+		}
 
 		Com_Printf ("Sending heartbeat to %s\n", sv_master[i]->string );
 		// this command should be changed if the server info / status format
@@ -650,6 +651,8 @@ void SVC_RemoteCommand( netadr_t from, msg_t *msg ) {
 	} else if ( !valid ) {
 		Com_Printf ("Bad rconpassword.\n");
 	} else {
+		SVC_WhitelistAdr( from );
+
 		Cmd_DropArg (1);
 		Cmd_DropArg (0);
 		Cmd_Execute ();
@@ -718,6 +721,22 @@ qboolean MVAPI_DisableStructConversion(qboolean disable)
 	return qfalse;
 }
 
+// ddos protection whitelist
+
+#include <unordered_set>
+
+static std::unordered_set<int32_t>	svc_whitelist;
+
+void SVC_WhitelistAdr( netadr_t adr ) {
+	svc_whitelist.insert(adr.ipi);
+}
+
+static bool SVC_IsWhitelisted( netadr_t adr ) {
+	return svc_whitelist.find(adr.ipi) != svc_whitelist.end();
+}
+
+//
+
 /*
 =================
 SV_ConnectionlessPacket
@@ -743,9 +762,11 @@ void SV_ConnectionlessPacket( netadr_t from, msg_t *msg ) {
 		return;
 	}
 
-	if (SVC_RateLimit(&globalBucket, 30, 100)) {
-		dropped++;
-		return;
+	if (!SVC_IsWhitelisted(from)) {
+		if (SVC_RateLimit(&globalBucket, 30, 100)) {
+			dropped++;
+			return;
+		}
 	}
 
 	// this will print every 'period' msec

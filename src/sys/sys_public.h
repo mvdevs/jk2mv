@@ -18,7 +18,10 @@ typedef struct netadr_s
 {
 	netadrtype_t	type;
 
-	byte			ip[4];
+	union {
+		byte			ip[4];
+		int32_t			ipi;
+	};
 	uint16_t		port;
 } netadr_t;
 
