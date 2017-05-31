@@ -624,17 +624,16 @@ void SVC_RemoteCommand( netadr_t from, msg_t *msg ) {
 // max length that MSG_ReadString in CL_ConnectionlessPacket can read
 #define	SV_OUTPUTBUF_LENGTH MAX_STRING_CHARS
 	char		sv_outputbuf[SV_OUTPUTBUF_LENGTH];
+	static leakyBucket_t bucket;
+
+	// make distributed password cracking impractical
+	if (SVC_RateLimit(&bucket, 10, 1000)) {
+		Com_DPrintf("SVC_RemoteCommand: rate limit exceeded, dropping request\n");
+		return;
+	}
 
 	if ( !strlen( sv_rconPassword->string ) ||
 		strcmp (Cmd_Argv(1), sv_rconPassword->string) ) {
-		static leakyBucket_t bucket;
-
-		// Make DoS via rcon impractical
-		if (SVC_RateLimit(&bucket, 10, 1000)) {
-			Com_DPrintf("SVC_RemoteCommand: rate limit exceeded, dropping request\n");
-			return;
-		}
-
 		valid = qfalse;
 		Com_DPrintf ("Bad rcon from %s:\n%s\n", NET_AdrToString (from), Cmd_Argv(2) );
 	} else {
