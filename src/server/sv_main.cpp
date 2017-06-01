@@ -294,39 +294,6 @@ CONNECTIONLESS COMMANDS
 ==============================================================================
 */
 
-// This is deliberately quite large to make it more of an effort to DoS
-#define MAX_BUCKETS			(2 << 14)
-#define MAX_HASHES			(2 * MAX_BUCKETS)
-
-static leakyBucket_t buckets[MAX_BUCKETS];
-static leakyBucket_t *freeBuckets;
-static leakyBucket_t *bucketHashes[MAX_HASHES];
-
-/*
-================
-SVC_HashForAddress
-================
-*/
-static int SVC_HashForAddress(netadr_t address) {
-	byte 		*ip = NULL;
-	size_t	size = 0;
-	int		hash = 0;
-
-	switch (address.type) {
-	case NA_IP:  ip = address.ip;  size = 4; break;
-	default: break;
-	}
-
-	for (size_t i = 0; i < size; i++) {
-		hash += (int)((ip[i]) * (i + 119));
-	}
-
-	hash = (hash ^ (hash >> 10) ^ (hash >> 20));
-	hash &= (MAX_HASHES - 1);
-
-	return hash;
-}
-
 /*
 ================
 SVC_BucketForAddress
@@ -334,93 +301,34 @@ SVC_BucketForAddress
 Find or allocate a bucket for an address
 ================
 */
+#include <unordered_map>
+
 static leakyBucket_t *SVC_BucketForAddress(netadr_t address, int burst, int period) {
-	leakyBucket_t	*bucket = NULL;
-	static int				lastCleanup = 0;
-	int						i;
-	int						hash = SVC_HashForAddress(address);
-	int						now = Sys_Milliseconds();
+	static std::unordered_map<int, leakyBucket_t> bucketMap;
+	static unsigned int	callCounter = 0;
 
-	for (bucket = bucketHashes[hash]; bucket; bucket = bucket->next) {
-		switch (bucket->type) {
-		case NA_IP:
-			if (memcmp(bucket->ipv._4, address.ip, 4) == 0) {
-				return bucket;
-			}
-			break;
-
-		default:
-			break;
-		}
+	if (address.type != NA_IP) {
+		return NULL;
 	}
 
-	if (now - lastCleanup > burst * period) {
-		lastCleanup = now;
+	callCounter++;
 
-		// Reclaim expired buckets
-		for (i = 0; i < MAX_BUCKETS; i++) {
-			int interval;
+	if ((callCounter & 0xffffu) == 0) {
+		int now = Sys_Milliseconds();
+		auto it = bucketMap.begin();
 
-			bucket = &buckets[i];
-			interval = now - bucket->lastTime;
+		while (it != bucketMap.end()) {
+			int interval = now - it->second.lastTime;
 
-			// Reclaim expired buckets
-			if (bucket->type == NA_BAD) {
-				Com_Memset(bucket, 0, sizeof(leakyBucket_t));
-
-				bucket->next = freeBuckets;
-				freeBuckets = bucket;
-			} else if (bucket->lastTime > 0 && (interval > (burst * period) ||
-												interval < 0)) {
-				if (bucket->prev != NULL) {
-					bucket->prev->next = bucket->next;
-				} else {
-					bucketHashes[bucket->hash] = bucket->next;
-				}
-
-				if (bucket->next != NULL) {
-					bucket->next->prev = bucket->prev;
-				}
-
-				Com_Memset(bucket, 0, sizeof(leakyBucket_t));
-
-				bucket->next = freeBuckets;
-				freeBuckets = bucket;
+			if (interval > burst * period) {
+				it = bucketMap.erase(it);
+			} else {
+				++it;
 			}
 		}
 	}
 
-	if (freeBuckets != NULL) {
-		bucket = freeBuckets;
-		freeBuckets = bucket->next;
-
-		bucket->type = address.type;
-		switch (address.type) {
-		case NA_IP:
-			Com_Memcpy(bucket->ipv._4, address.ip, 4);
-			break;
-		default:
-			return NULL;
-		}
-
-		bucket->lastTime = now;
-		bucket->burst = 0;
-		bucket->hash = hash;
-
-		// Add to the head of the relevant hash chain
-		bucket->next = bucketHashes[hash];
-		if (bucketHashes[hash] != NULL) {
-			bucketHashes[hash]->prev = bucket;
-		}
-
-		bucket->prev = NULL;
-		bucketHashes[hash] = bucket;
-
-		return bucket;
-	}
-
-	// Couldn't allocate a bucket for this address
-	return NULL;
+	return &bucketMap[address.ipi];
 }
 
 /*
@@ -450,9 +358,11 @@ static qboolean SVC_RateLimit(leakyBucket_t *bucket, int burst, int period) {
 
 			return qfalse;
 		}
-	}
 
-	return qtrue;
+		return qtrue;
+	} else {
+		return qfalse;
+	}
 }
 
 /*
