@@ -260,18 +260,8 @@ extern	cvar_t	*mv_fixsaberstealing;
 //
 typedef struct leakyBucket_s leakyBucket_t;
 struct leakyBucket_s {
-	netadrtype_t	type;
-
-	union {
-		byte	_4[4];
-	} ipv;
-
 	int					lastTime;
-	signed char			burst;
-
-	int					hash;
-
-	leakyBucket_t *prev, *next;
+	unsigned char		burst;
 };
 
 void SV_FinalMessage (char *message);
