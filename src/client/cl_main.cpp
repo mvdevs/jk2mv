@@ -1297,7 +1297,7 @@ CL_CompleteDemoName
 static void CL_CompleteDemoName( char *args, int argNum )
 {
 	if( argNum == 2 )
-		Field_CompleteFilename( "demos", "dm_15|dm_16", qfalse );
+		Field_CompleteFilename( "demos", ".dm_15|.dm_16", qfalse );
 }
 
 /*

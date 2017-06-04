@@ -605,7 +605,7 @@ Cmd_CompleteCfgName
 */
 void Cmd_CompleteCfgName( char *args, int argNum ) { // for auto-complete (copied from OpenJK)
 	if( argNum == 2 ) {
-		Field_CompleteFilename( "", "cfg", qfalse );
+		Field_CompleteFilename( "", ".cfg", qfalse );
 	}
 }
 
@@ -775,7 +775,7 @@ Cmd_CompleteTxtName
 */
 void Cmd_CompleteTxtName( char *args, int argNum ) {
 	if ( argNum == 2 )
-		Field_CompleteFilename( "", "txt", qfalse );
+		Field_CompleteFilename( "", ".txt", qfalse );
 }
 
 /*

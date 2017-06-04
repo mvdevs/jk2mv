@@ -836,7 +836,7 @@ SV_CompleteMapName
 */
 static void SV_CompleteMapName( char *args, int argNum ) { // for auto-complete (copied from OpenJK)
 	if ( argNum == 2 )
-		Field_CompleteFilename( "maps", "bsp", qtrue );
+		Field_CompleteFilename( "maps", ".bsp", qtrue );
 }
 
 /*
