@@ -3912,7 +3912,7 @@ int FS_GetDLList(dlfile_t *files, int maxfiles) {
 	int ret = 0;
 
 	// get all fs_game dirs
-	dirs = Sys_ListFiles(fs_homepath->string, "*", NULL, &dirnum, qtrue);
+	dirs = Sys_ListFiles(fs_homepath->string, "/", NULL, &dirnum, qtrue);
 	if (!dirs) {
 		return qfalse;
 	}
