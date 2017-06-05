@@ -17,12 +17,6 @@ in a subsequent connectResponse command.
 We do this to prevent denial of service attacks that
 flood the server with invalid connection IPs.  With a
 challenge, they must give a valid IP address.
-
-If we are authorizing, a challenge request will cause a packet
-to be sent to the authorize server.
-
-When an authorizeip is returned, a challenge response will be
-sent to that ip.
 =================
 */
 void SV_GetChallenge( netadr_t from ) {
@@ -79,7 +73,6 @@ void SV_GetChallenge( netadr_t from ) {
 		challenge = &svs.challenges[oldest];
 		challenge->clientChallenge = clientChallenge;
 		challenge->adr = from;
-		challenge->firstTime = svs.time;
 		challenge->connected = qfalse;
 	}
 
@@ -89,83 +82,6 @@ void SV_GetChallenge( netadr_t from ) {
 	challenge->time = svs.time;
 	challenge->pingTime = svs.time;
 	NET_OutOfBandPrint(NS_SERVER, challenge->adr, "challengeResponse %i %i", challenge->challenge, clientChallenge);
-}
-
-/*
-====================
-SV_AuthorizeIpPacket
-
-A packet has been returned from the authorize server.
-If we have a challenge adr for that ip, send the
-challengeResponse to it
-====================
-*/
-void SV_AuthorizeIpPacket( netadr_t from ) {
-	int		challenge;
-	int		i;
-	char	*s;
-	char	*r;
-
-	if ( !NET_CompareBaseAdr( from, svs.authorizeAddress ) ) {
-		Com_Printf( "SV_AuthorizeIpPacket: not from authorize server\n" );
-		return;
-	}
-
-	challenge = atoi( Cmd_Argv( 1 ) );
-
-	for (i = 0 ; i < MAX_CHALLENGES ; i++) {
-		if ( svs.challenges[i].challenge == challenge ) {
-			break;
-		}
-	}
-	if ( i == MAX_CHALLENGES ) {
-		Com_Printf( "SV_AuthorizeIpPacket: challenge not found\n" );
-		return;
-	}
-
-	// send a packet back to the original client
-	svs.challenges[i].pingTime = svs.time;
-	s = Cmd_Argv( 2 );
-	r = Cmd_Argv( 3 );			// reason
-
-	if ( !Q_stricmp( s, "demo" ) ) {
-		if ( Cvar_VariableValue( "fs_restrict" ) ) {
-			// a demo client connecting to a demo server
-			NET_OutOfBandPrint( NS_SERVER, svs.challenges[i].adr,
-				"challengeResponse %i", svs.challenges[i].challenge );
-			return;
-		}
-		// they are a demo client trying to connect to a real server
-		NET_OutOfBandPrint( NS_SERVER, svs.challenges[i].adr, "print\nServer is not a demo server\n" );
-		// clear the challenge record so it won't timeout and let them through
-		Com_Memset( &svs.challenges[i], 0, sizeof( svs.challenges[i] ) );
-		return;
-	}
-	if ( !Q_stricmp( s, "accept" ) ) {
-		NET_OutOfBandPrint( NS_SERVER, svs.challenges[i].adr,
-			"challengeResponse %i", svs.challenges[i].challenge );
-		return;
-	}
-	if ( !Q_stricmp( s, "unknown" ) ) {
-		if (!r) {
-			NET_OutOfBandPrint( NS_SERVER, svs.challenges[i].adr, "print\nAwaiting CD key authorization\n" );
-		} else {
-			NET_OutOfBandPrint( NS_SERVER, svs.challenges[i].adr, "print\n%s\n", r );
-		}
-		// clear the challenge record so it won't timeout and let them through
-		Com_Memset( &svs.challenges[i], 0, sizeof( svs.challenges[i] ) );
-		return;
-	}
-
-	// authorization failed
-	if (!r) {
-		NET_OutOfBandPrint( NS_SERVER, svs.challenges[i].adr, "print\nSomeone is using this CD Key\n" );
-	} else {
-		NET_OutOfBandPrint( NS_SERVER, svs.challenges[i].adr, "print\n%s\n", r );
-	}
-
-	// clear the challenge record so it won't timeout and let them through
-	Com_Memset( &svs.challenges[i], 0, sizeof( svs.challenges[i] ) );
 }
 
 /*

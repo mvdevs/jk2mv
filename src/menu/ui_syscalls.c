@@ -329,22 +329,6 @@ int trap_MemoryRemaining( void ) {
 	return engine_syscall( UI_MEMORY_REMAINING );
 }
 
-#ifdef USE_CD_KEY
-
-void trap_GetCDKey( char *buf, int buflen ) {
-	engine_syscall( UI_GET_CDKEY, buf, buflen );
-}
-
-void trap_SetCDKey( char *buf ) {
-	engine_syscall( UI_SET_CDKEY, buf );
-}
-
-qboolean trap_VerifyCDKey( const char *key, const char *chksum) {
-	return engine_syscall( UI_VERIFY_CDKEY, key, chksum);
-}
-
-#endif // USE_CD_KEY
-
 int trap_PC_AddGlobalDefine( char *define ) {
 	return engine_syscall( UI_PC_ADD_GLOBAL_DEFINE, define );
 }

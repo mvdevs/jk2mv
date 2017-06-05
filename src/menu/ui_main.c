@@ -8,9 +8,6 @@ USER INTERFACE MAIN
 =======================================================================
 */
 
-// use this to get a demo build without an explicit demo build, i.e. to get the demo ui files to build
-//#define PRE_RELEASE_TADEMO
-
 #include "ui_local.h"
 #include "../qcommon/qfiles.h"
 #include "mv_setup.h"
@@ -991,11 +988,7 @@ void UI_Load() {
 
 	String_Init();
 
-#ifdef PRE_RELEASE_TADEMO
-	UI_ParseGameInfo("demogameinfo.txt");
-#else
 	UI_ParseGameInfo("ui/jk2mp/gameinfo.txt");
-#endif
 	UI_LoadArenas();
 	UI_LoadBots();
 
@@ -4331,39 +4324,6 @@ static void UI_RunMenuScript(const char **args)
 			trap_Cmd_ExecuteText( EXEC_APPEND, "exec mpdefault.cfg\n");
 			trap_Cmd_ExecuteText( EXEC_APPEND, "vid_restart\n" );
 			trap_Cvar_Set("com_introPlayed", "1" );
-#ifdef USE_CD_KEY
-		} else if (Q_stricmp(name, "getCDKey") == 0) {
-			char out[17];
-			trap_GetCDKey(buff, 17);
-			trap_Cvar_Set("cdkey1", "");
-			trap_Cvar_Set("cdkey2", "");
-			trap_Cvar_Set("cdkey3", "");
-			trap_Cvar_Set("cdkey4", "");
-			if (strlen(buff) == CDKEY_LEN) {
-				Q_strncpyz(out, buff, 5);
-				trap_Cvar_Set("cdkey1", out);
-				Q_strncpyz(out, buff + 4, 5);
-				trap_Cvar_Set("cdkey2", out);
-				Q_strncpyz(out, buff + 8, 5);
-				trap_Cvar_Set("cdkey3", out);
-				Q_strncpyz(out, buff + 12, 5);
-				trap_Cvar_Set("cdkey4", out);
-			}
-
-		} else if (Q_stricmp(name, "verifyCDKey") == 0) {
-			buff[0] = '\0';
-			Q_strcat(buff, 1024, UI_Cvar_VariableString("cdkey1"));
-			Q_strcat(buff, 1024, UI_Cvar_VariableString("cdkey2"));
-			Q_strcat(buff, 1024, UI_Cvar_VariableString("cdkey3"));
-			Q_strcat(buff, 1024, UI_Cvar_VariableString("cdkey4"));
-			trap_Cvar_Set("cdkey", buff);
-			if (trap_VerifyCDKey(buff, UI_Cvar_VariableString("cdkeychecksum"))) {
-				trap_Cvar_Set("ui_cdkeyvalid", "CD Key Appears to be valid.");
-				trap_SetCDKey(buff);
-			} else {
-				trap_Cvar_Set("ui_cdkeyvalid", "CD Key does not appear to be valid.");
-			}
-#endif // USE_CD_KEY
 		} else if (Q_stricmp(name, "loadArenas") == 0) {
 			UI_LoadArenas();
 			UI_MapCountByGameType(qfalse);
@@ -4376,11 +4336,7 @@ static void UI_RunMenuScript(const char **args)
 		} else if (Q_stricmp(name, "clearError") == 0) {
 			trap_Cvar_Set("com_errorMessage", "");
 		} else if (Q_stricmp(name, "loadGameInfo") == 0) {
-#ifdef PRE_RELEASE_TADEMO
-			UI_ParseGameInfo("demogameinfo.txt");
-#else
 			UI_ParseGameInfo("ui/jk2mp/gameinfo.txt");
-#endif
 			UI_LoadBestScores(uiInfo.mapList[ui_currentMap.integer].mapLoadName, uiInfo.gameTypes[ui_gameType.integer].gtEnum);
 		} else if (Q_stricmp(name, "resetScores") == 0) {
 			UI_ClearScores();
@@ -6734,19 +6690,13 @@ void _UI_Init( qboolean inGameLoad ) {
 
 	AssetCache();
 
-  uiInfo.teamCount = 0;
-  uiInfo.characterCount = 0;
-  uiInfo.aliasCount = 0;
+	uiInfo.teamCount = 0;
+	uiInfo.characterCount = 0;
+	uiInfo.aliasCount = 0;
 
-#ifdef PRE_RELEASE_TADEMO
-//	UI_ParseTeamInfo("demoteaminfo.txt");
-	UI_ParseGameInfo("demogameinfo.txt");
-#else
 //	UI_ParseTeamInfo("ui/jk2mp/teaminfo.txt");
 //	UI_LoadTeams();
 	UI_ParseGameInfo("ui/jk2mp/gameinfo.txt");
-#endif
-
 
 	menuSet = UI_Cvar_VariableString("ui_menuFilesMP");
 	if (menuSet == NULL || menuSet[0] == '\0') {

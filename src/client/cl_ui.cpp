@@ -1013,16 +1013,6 @@ intptr_t CL_UISystemCalls(intptr_t *args) {
 	case UI_MEMORY_REMAINING:
 		return Hunk_MemoryRemaining();
 
-#ifdef USE_CD_KEY
-	case UI_GET_CDKEY:
-		CLUI_GetCDKey( (char *)VMA(1), args[2] );
-		return 0;
-
-	case UI_SET_CDKEY:
-		CLUI_SetCDKey( (char *)VMA(1) );
-		return 0;
-#endif	// USE_CD_KEY
-
 	case UI_R_REGISTERFONT:
 		return re.RegisterFont( (const char *)VMA(1) );
 
@@ -1125,11 +1115,6 @@ intptr_t CL_UISystemCalls(intptr_t *args) {
 	case UI_R_REMAP_SHADER:
 		re.RemapShader( (const char *)VMA(1), (const char *)VMA(2), (const char *)VMA(3) );
 		return 0;
-
-#ifdef USE_CD_KEY
-	case UI_VERIFY_CDKEY:
-		return CL_CDKeyValidate((const char *)VMA(1), (const char *)VMA(2));
-#endif // USE_CD_KEY
 
 	case UI_SP_REGISTER:
 		return !!SP_Register((const char *)VMA(1),SP_REGISTER_MENU);

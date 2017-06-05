@@ -863,7 +863,6 @@ void SV_AddOperatorCommands( void ) {
 	Cmd_AddCommand ("sectorlist", SV_SectorList_f);
 	Cmd_AddCommand ("map", SV_Map_f);
 	Cmd_SetCommandCompletionFunc( "map", SV_CompleteMapName );
-#ifndef PRE_RELEASE_DEMO
 	Cmd_AddCommand ("devmap", SV_Map_f);
 	Cmd_SetCommandCompletionFunc( "devmap", SV_CompleteMapName );
 	Cmd_AddCommand ("spmap", SV_Map_f);
@@ -873,13 +872,8 @@ void SV_AddOperatorCommands( void ) {
 	Cmd_SetCommandCompletionFunc( "devmapmdl", SV_CompleteMapName );
 	Cmd_AddCommand ("devmapall", SV_Map_f);
 	Cmd_SetCommandCompletionFunc( "devmapall", SV_CompleteMapName );
-#endif
 	Cmd_AddCommand ("killserver", SV_KillServer_f);
-//	if( com_dedicated->integer )
-	{
-		Cmd_AddCommand ("svsay", SV_ConSay_f);
-	}
-
+	Cmd_AddCommand ("svsay", SV_ConSay_f);
 	Cmd_AddCommand ("forcetoggle", SV_ForceToggle_f);
 }
 
