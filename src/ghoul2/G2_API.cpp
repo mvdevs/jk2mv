@@ -325,8 +325,8 @@ qboolean G2API_RemoveGhoul2Model(g2handle_t *g2hPtr, const int modelIndex)
 	CGhoul2Info_v::reverse_iterator it = ghoul2.rbegin();
 	while(it != ghoul2.rend() && it->mModelindex == -1)
 	{
-		++it;
 		ghoul2.pop_back();
+		it = ghoul2.rbegin();
 	}
 
 	// if we are not using any space, just delete the ghoul2 vector entirely
