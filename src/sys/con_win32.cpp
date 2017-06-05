@@ -22,6 +22,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "../qcommon/q_shared.h"
 #include "../qcommon/qcommon.h"
+#include "../server/server.h"
 #include "con_local.h"
 #include "sys_local.h"
 #define WIN32_LEAN_AND_MEAN
@@ -412,6 +413,9 @@ char *CON_Input( void )
 
 	if( events < 1 )
 		return NULL;
+
+	// disable hibernation for two seconds to workaround console input lagg
+	svs.hibernation.disableUntil = svs.time + 2000;
 
 	// if we have overflowed, start dropping oldest input events
 	if( events >= MAX_EDIT_LINE )

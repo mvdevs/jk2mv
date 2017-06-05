@@ -445,10 +445,6 @@ void SV_DropClient( client_t *drop, const char *reason ) {
 		}
 	}
 
-	if (players == 0) {
-		svs.hibernation.lastTimeDisconnected = Sys_Milliseconds();
-	}
-
 	for (i=0 ; i < sv_maxclients->integer ; i++ ) {
 		if ( svs.clients[i].state >= CS_CONNECTED ) {
 			break;

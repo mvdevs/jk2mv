@@ -33,7 +33,6 @@ cvar_t	*sv_floodProtect;
 cvar_t	*sv_allowAnonymous;
 cvar_t	*sv_needpass;
 cvar_t	*mv_serverversion;
-cvar_t  *sv_hibernateTime;
 cvar_t  *sv_hibernateFps;
 
 // jk2mv's toggleable fixes
@@ -1005,8 +1004,8 @@ int SV_FrameMsec() {
 	if (sv_fps) {
 		int frameMsec;
 
-		if ( svs.hibernation.enabled && sv_hibernateTime->integer ) { // Hibernation mode
-			frameMsec = 1000.0f / (sv_hibernateFps->integer > 0 ? sv_hibernateFps->integer : 2);
+		if ( svs.hibernation.enabled && svs.hibernation.disableUntil <= svs.time ) { // Hibernation mode
+			frameMsec = 1000.0f / (sv_hibernateFps->integer > 0 ? sv_hibernateFps->integer : 5);
 		} else {
 			frameMsec = 1000.0f / sv_fps->value;
 		}
@@ -1071,6 +1070,7 @@ void SV_Frame( int msec ) {
 
 	sv.timeResidual += msec;
 
+	// Check for hibernation mode
 	int players = 0;
 	for (int i = 0; i < sv_maxclients->integer; i++) {
 		if (svs.clients[i].state >= CS_CONNECTED && svs.clients[i].netchan.remoteAddress.type != NA_BOT) {
@@ -1078,16 +1078,12 @@ void SV_Frame( int msec ) {
 		}
 	}
 
-	// Check for hibernation mode
-	if ( sv_hibernateTime->integer && !svs.hibernation.enabled && !players ) {
-		int elapsed_time = Sys_Milliseconds() - svs.hibernation.lastTimeDisconnected;
-
-		if ( elapsed_time >= sv_hibernateTime->integer ) {
-			svs.hibernation.enabled = true;
-
-			if ( sv_hibernateTime->integer )
-				Com_Printf("Server switched to hibernation mode\n");
-		}
+	if ( sv_hibernateFps->integer && !svs.hibernation.enabled && !players ) {
+		svs.hibernation.enabled = true;
+		Com_Printf("Server switched to hibernation mode\n");
+	} else if  (!sv_hibernateFps->integer && svs.hibernation.enabled ) {
+		svs.hibernation.enabled = false;
+		Com_Printf("Server restored from hibernation\n");
 	}
 
 	if (!com_dedicated->integer) SV_BotFrame( svs.time + sv.timeResidual );

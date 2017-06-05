@@ -22,6 +22,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "../qcommon/q_shared.h"
 #include "../qcommon/qcommon.h"
+#include "../server/server.h"
 #include "sys_local.h"
 #include "con_local.h"
 
@@ -365,6 +366,10 @@ char *CON_Input( void )
 		if (avail != -1)
 		{
 			// we have something
+
+			// disable hibernation for two seconds to workaround console input lagg
+			svs.hibernation.disableUntil = svs.time + 2000;
+
 			// backspace?
 			// NOTE TTimo testing a lot of values .. seems it's the only way to get it to work everywhere
 			if ((key == TTY_erase) || (key == 127) || (key == 8))
