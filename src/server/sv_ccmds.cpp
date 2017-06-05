@@ -807,12 +807,16 @@ static void SV_DumpUser_f( void ) {
 		return;
 	}
 
-	cl = SV_GetPlayerByName();
+	//cl = SV_GetPlayerByName();
+	//don't try to identify by exact player name, but by client number (much easier to input)
+	cl = SV_GetPlayerByNum();
+	
 	if ( !cl ) {
 		return;
 	}
 
 	Com_Printf( "userinfo\n" );
+	Com_Printf("\"%s\"\n", cl->userinfo)	//also print the raw userinfo string in case Info_Print bugs
 	Com_Printf( "--------\n" );
 	Info_Print( cl->userinfo );
 }
