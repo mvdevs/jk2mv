@@ -414,8 +414,8 @@ char *CON_Input( void )
 	if( events < 1 )
 		return NULL;
 
-	// disable hibernation for two seconds to workaround console input lagg
-	svs.hibernation.disableUntil = svs.time + 2000;
+	// disable hibernation for ten seconds to workaround console input lagg
+	svs.hibernation.disableUntil = svs.time + 10000;
 
 	// if we have overflowed, start dropping oldest input events
 	if( events >= MAX_EDIT_LINE )

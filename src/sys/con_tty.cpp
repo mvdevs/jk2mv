@@ -367,8 +367,8 @@ char *CON_Input( void )
 		{
 			// we have something
 
-			// disable hibernation for two seconds to workaround console input lagg
-			svs.hibernation.disableUntil = svs.time + 2000;
+			// disable hibernation for ten seconds to workaround console input lagg
+			svs.hibernation.disableUntil = svs.time + 10000;
 
 			// backspace?
 			// NOTE TTimo testing a lot of values .. seems it's the only way to get it to work everywhere
