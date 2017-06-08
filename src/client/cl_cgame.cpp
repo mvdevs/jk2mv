@@ -41,7 +41,7 @@ extern qboolean loadCamera(const char *name);
 extern void startCamera(int time);
 extern qboolean getCameraInfo(int time, vec3_t *origin, vec3_t *angles);
 
-void FX_FeedTrail(effectTrailArgStruct_t *a);
+void FX_FeedTrail(const effectTrailArgStruct_t *a);
 
 /*
 ====================

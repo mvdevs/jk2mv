@@ -2246,7 +2246,7 @@ void CFlash::Draw( void )
 	theFxHelper.AddFxToScene( &mRefEnt );
 }
 
-void FX_FeedTrail(effectTrailArgStruct_t *a)
+void FX_FeedTrail(const effectTrailArgStruct_t *a)
 {
 	CTrail *fx = new CTrail;
 	int i = 0;

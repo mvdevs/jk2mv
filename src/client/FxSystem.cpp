@@ -45,7 +45,7 @@ void SFxHelper::Print( const char *msg, ... )
 }
 
 //------------------------------------------------------
-void SFxHelper::AdjustTime_Pos( int time, vec3_t refdef_vieworg, vec3_t refdef_viewaxis[3] )
+void SFxHelper::AdjustTime_Pos( int time, const vec3_t refdef_vieworg, const vec3_t refdef_viewaxis[3] )
 {
 	if ( fx_freeze.integer )
 	{

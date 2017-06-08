@@ -26,7 +26,7 @@ inline void Vector2Set(vec2_t a,float b,float c)
 	a[1] = c;
 }
 
-inline void Vector2Copy(vec2_t src,vec2_t dst)
+inline void Vector2Copy(const vec2_t src,vec2_t dst)
 {
 	dst[0] = src[0];
 	dst[1] = src[1];
@@ -69,7 +69,7 @@ public:
 	inline	int	GetFrameTime(void) { return mFrameTime; }
 
 	void	ReInit(void);
-	void	AdjustTime_Pos( int time, vec3_t refdef_vieworg, vec3_t refdef_viewaxis[3] );
+	void	AdjustTime_Pos( int time, const vec3_t refdef_vieworg, const vec3_t refdef_viewaxis[3] );
 
 	// These functions are wrapped and used by the fx system in case it makes things a bit more portable
 	void	Print( const char *msg, ... );
