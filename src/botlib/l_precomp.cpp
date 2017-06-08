@@ -3284,7 +3284,7 @@ int PC_SourceFileAndLine(int handle, char *filename, int *line)
 	if (!sourceFiles[handle])
 		return qfalse;
 
-	strcpy(filename, sourceFiles[handle]->filename);
+	strncpy(filename, sourceFiles[handle]->filename, MAX_QPATH);
 	if (sourceFiles[handle]->scriptstack)
 		*line = sourceFiles[handle]->scriptstack->line;
 	else

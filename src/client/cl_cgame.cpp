@@ -918,7 +918,7 @@ intptr_t CL_CgameSystemCalls(intptr_t *args) {
 	case CG_PC_READ_TOKEN:
 		return botlib_export->PC_ReadTokenHandle( args[1], VMAA(2, pc_token_t, 1) );
 	case CG_PC_SOURCE_FILE_AND_LINE:
-		return botlib_export->PC_SourceFileAndLine( args[1], (char *)VMA(2), VMAA(3, int, 1) );
+		return botlib_export->PC_SourceFileAndLine( args[1], VMAA(2, char, MAX_QPATH), VMAA(3, int, 1) );
 	case CG_PC_LOAD_GLOBAL_DEFINES:
 		return botlib_export->PC_LoadGlobalDefines ( VMAS(1) );
 	case CG_PC_REMOVE_ALL_GLOBAL_DEFINES:
