@@ -831,7 +831,7 @@ qboolean G2API_GetBoltMatrix_SPMethod(g2handle_t g2h, const int modelIndex, cons
 	return qfalse;
 }
 
-qboolean G2API_GetBoltMatrix(g2handle_t g2h, const int modelIndex, const int boltIndex, mdxaBone_t *matrix, const vec3_t angles, const vec3_t position, const int frameNum, qhandle_t *modelList, vec3_t scale )
+qboolean G2API_GetBoltMatrix(g2handle_t g2h, const int modelIndex, const int boltIndex, mdxaBone_t *matrix, const vec3_t angles, const vec3_t position, const int frameNum, qhandle_t *modelList, const vec3_t scale )
 {
 	if (gG2_GBMUseSPMethod)
 	{
@@ -998,8 +998,7 @@ static int QDECL QsortDistance( const void *a, const void *b ) {
 }
 
 
-void G2API_CollisionDetect(CollisionRecord_t *collRecMap, g2handle_t g2h, const vec3_t angles, const vec3_t position,
-										  int frameNumber, int entNum, vec3_t rayStart, vec3_t rayEnd, vec3_t scale, CMiniHeap *G2VertSpace, int traceFlags, int useLod, float fRadius)
+void G2API_CollisionDetect(CollisionRecord_t *collRecMap, g2handle_t g2h, const vec3_t angles, const vec3_t position, int frameNumber, int entNum, const vec3_t rayStart, const vec3_t rayEnd, const vec3_t scale, CMiniHeap *G2VertSpace, int traceFlags, int useLod, float fRadius)
 {
 
 	CGhoul2Info_v *ghoul2 = G2API_GetGhoul2Model(g2h);
@@ -1066,7 +1065,7 @@ int G2API_GetGhoul2ModelFlags(CGhoul2Info *ghlInfo)
 }
 
 // given a boltmatrix, return in vec a normalised vector for the axis requested in flags
-void G2API_GiveMeVectorFromMatrix(mdxaBone_t *boltMatrix, Eorientations flags, vec3_t vec)
+void G2API_GiveMeVectorFromMatrix(const mdxaBone_t *boltMatrix, Eorientations flags, vec3_t vec)
 {
 	switch (flags)
 	{
