@@ -344,6 +344,7 @@ void	VM_Debug( int level );
 
 void	*VM_ArgPtr( intptr_t intValue );
 void	*VM_ArgArray( intptr_t intValue, intptr_t size, intptr_t num );
+char	*VM_ArgString( intptr_t intValue );
 
 static ID_INLINE float _vmf(intptr_t x)
 {
@@ -354,6 +355,7 @@ static ID_INLINE float _vmf(intptr_t x)
 #define	VMF(x)				_vmf(args[x])
 #define VMA(x)				VM_ArgPtr(args[x])
 #define VMAA(x, type, num)	((type *) VM_ArgArray(args[x], sizeof(type), num))
+#define VMAS(x)				VM_ArgString(args[x])
 
 void	*VM_ExplicitArgPtr(vm_t *vm, intptr_t intValue);
 

@@ -740,6 +740,35 @@ void *VM_ArgArray( intptr_t intValue, intptr_t size, intptr_t num ) {
 	return (void *)(currentVM->dataBase + intValue);
 }
 
+char *VM_ArgString( intptr_t intValue ) {
+	// currentVM is missing on reconnect
+	if ( !currentVM ) {
+		return NULL;
+	}
+	if ( currentVM->entryPoint ) {
+		return (char *) intValue;
+	}
+	if ( !intValue ) {
+		return NULL;
+	}
+
+	intptr_t	len;
+	char		*p;
+	const int	dataMask = currentVM->dataMask;
+
+	// don't drop on overflow for compatibility reasons
+	intValue &= dataMask;
+
+	p = (char *) currentVM->dataBase + intValue;
+	len = (intptr_t) strnlen(p, dataMask + 1 - intValue);
+
+	if ( intValue + len > dataMask ) {
+		Com_Error( ERR_DROP, "VM_ArgString: memory overflow" );
+	}
+
+	return p;
+}
+
 void *VM_ExplicitArgPtr( vm_t *vm, intptr_t intValue ) {
 	if ( !intValue ) {
 		return NULL;
