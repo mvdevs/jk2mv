@@ -342,7 +342,8 @@ intptr_t QDECL VM_Call(vm_t *vm, int callnum, ...);
 
 void	VM_Debug( int level );
 
-void	*VM_ArgPtr(intptr_t intValue);
+void	*VM_ArgPtr( intptr_t intValue );
+void	*VM_ArgArray( intptr_t intValue, intptr_t size, intptr_t num );
 
 static ID_INLINE float _vmf(intptr_t x)
 {
@@ -350,7 +351,9 @@ static ID_INLINE float _vmf(intptr_t x)
 	fi.i = (int)x;
 	return fi.f;
 }
-#define	VMF(x)	_vmf(args[x])
+#define	VMF(x)				_vmf(args[x])
+#define VMA(x)				VM_ArgPtr(args[x])
+#define VMAA(x, type, num)	((type *) VM_ArgArray(args[x], sizeof(type), num))
 
 void	*VM_ExplicitArgPtr(vm_t *vm, intptr_t intValue);
 

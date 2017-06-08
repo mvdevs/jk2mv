@@ -742,9 +742,6 @@ static int GetConfigString(int index, char *buf, int size)
 	return qtrue;
 }
 
-void *VM_ArgPtr( int intValue );
-#define	VMA(x) VM_ArgPtr(args[x])
-
 /*
 ====================
 CL_UISystemCalls

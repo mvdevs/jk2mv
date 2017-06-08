@@ -714,6 +714,32 @@ void *VM_ArgPtr( intptr_t intValue ) {
 	}
 }
 
+void *VM_ArgArray( intptr_t intValue, intptr_t size, intptr_t num ) {
+	// currentVM is missing on reconnect
+	if ( !currentVM ) {
+		return NULL;
+	}
+	if ( currentVM->entryPoint ) {
+		return (void *) intValue;
+	}
+	if ( !intValue ) {
+		return NULL;
+	}
+
+	// don't drop on overflow for compatibility reasons
+	intValue &= currentVM->dataMask;
+
+	// coming from a module so should be within int32_t
+	// range. SysCalls need to handle negative values.
+	assert( size <= INT32_MAX && num <= INT32_MAX );
+
+	if ( (int64_t) num * size > currentVM->dataMask - intValue + 1 ) {
+		Com_Error( ERR_DROP, "VM_ArgArray: memory overflow" );
+	}
+
+	return (void *)(currentVM->dataBase + intValue);
+}
+
 void *VM_ExplicitArgPtr( vm_t *vm, intptr_t intValue ) {
 	if ( !intValue ) {
 		return NULL;

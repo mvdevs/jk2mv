@@ -317,13 +317,6 @@ SV_GameSystemCalls
 The module is making a system call
 ====================
 */
-//rcg010207 - see my comments in VM_DllSyscall(), in qcommon/vm.c ...
-#if ((defined __linux__) && (defined __powerpc__))
-#define VMA(x) ((void *) args[x])
-#else
-#define	VMA(x) VM_ArgPtr(args[x])
-#endif
-
 extern bool RicksCrazyOnServer;
 intptr_t SV_GameSystemCalls( intptr_t *args ) {
 	// fix syscalls from 1.02 to match 1.04
