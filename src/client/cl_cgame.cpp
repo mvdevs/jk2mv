@@ -1121,7 +1121,7 @@ intptr_t CL_CgameSystemCalls(intptr_t *args) {
 		return 0;
 
 	case CG_ROFF_CACHE:
-		return theROFFSystem.Cache( (char *)VMA(1), qtrue );
+		return theROFFSystem.Cache( VMAS(1), qtrue );
 
 	case CG_ROFF_PLAY:
 		return theROFFSystem.Play(args[1], args[2], (qboolean)!!args[3], qtrue );

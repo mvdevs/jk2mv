@@ -110,7 +110,7 @@ private:
 		{
 			mUsedByClient = mUsedByServer = qfalse;
 		}
-		CROFF( char *file, int id );
+		CROFF( const char *file, int id );
 		~CROFF();
 
 	}; // class CROFF
@@ -162,8 +162,8 @@ public:
 
 	qboolean		Restart();						// Free up all system resources and reset the ID counter
 
-	int			Cache( char *file, qboolean isClient );			// roffs should be precached at the start of each level
-	int			GetID( char *file );			// find the roff id by filename
+	int			Cache( const char *file, qboolean isClient );			// roffs should be precached at the start of each level
+	int			GetID( const char *file );			// find the roff id by filename
 	qboolean		Unload( int id );				// when a roff is done, it can be removed to free up resources
 	qboolean	Clean(qboolean isClient);					// should be called when level is done, frees all roff resources
 	void		List(void);						// dumps a list of all cached roff files to the console
