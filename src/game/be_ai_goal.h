@@ -40,7 +40,7 @@ void BotResetAvoidGoals(int goalstate);
 //remove the goal with the given number from the avoid goals
 void BotRemoveFromAvoidGoals(int goalstate, int number);
 //push a goal onto the goal stack
-void BotPushGoal(int goalstate, bot_goal_t *goal);
+void BotPushGoal(int goalstate, const bot_goal_t *goal);
 //pop a goal from the goal stack
 void BotPopGoal(int goalstate);
 //empty the bot's goal stack
@@ -56,24 +56,24 @@ int BotGetTopGoal(int goalstate, bot_goal_t *goal);
 //get the second goal on the stack
 int BotGetSecondGoal(int goalstate, bot_goal_t *goal);
 //choose the best long term goal item for the bot
-int BotChooseLTGItem(int goalstate, vec3_t origin, int *inventory, int travelflags);
+int BotChooseLTGItem(int goalstate, const vec3_t origin, const int *inventory, int travelflags);
 //choose the best nearby goal item for the bot
 //the item may not be further away from the current bot position than maxtime
 //also the travel time from the nearby goal towards the long term goal may not
 //be larger than the travel time towards the long term goal from the current bot position
-int BotChooseNBGItem(int goalstate, vec3_t origin, int *inventory, int travelflags,
-							bot_goal_t *ltg, float maxtime);
+int BotChooseNBGItem(int goalstate, const vec3_t origin, const int *inventory, int travelflags,
+							const bot_goal_t *ltg, float maxtime);
 //returns true if the bot touches the goal
-int BotTouchingGoal(vec3_t origin, bot_goal_t *goal);
+int BotTouchingGoal(const vec3_t origin, const bot_goal_t *goal);
 //returns true if the goal should be visible but isn't
-int BotItemGoalInVisButNotVisible(int viewer, vec3_t eye, vec3_t viewangles, bot_goal_t *goal);
+int BotItemGoalInVisButNotVisible(int viewer, const vec3_t eye, const vec3_t viewangles, const bot_goal_t *goal);
 //search for a goal for the given classname, the index can be used
 //as a start point for the search when multiple goals are available with that same classname
-int BotGetLevelItemGoal(int index, char *classname, bot_goal_t *goal);
+int BotGetLevelItemGoal(int index, const char *classname, bot_goal_t *goal);
 //get the next camp spot in the map
 int BotGetNextCampSpotGoal(int num, bot_goal_t *goal);
 //get the map location with the given name
-int BotGetMapLocationGoal(char *name, bot_goal_t *goal);
+int BotGetMapLocationGoal(const char *name, bot_goal_t *goal);
 //returns the avoid goal time
 float BotAvoidGoalTime(int goalstate, int number);
 //set the avoid goal time
@@ -85,11 +85,11 @@ void BotUpdateEntityItems(void);
 //interbreed the goal fuzzy logic
 void BotInterbreedGoalFuzzyLogic(int parent1, int parent2, int child);
 //save the goal fuzzy logic to disk
-void BotSaveGoalFuzzyLogic(int goalstate, char *filename);
+void BotSaveGoalFuzzyLogic(int goalstate, const char *filename);
 //mutate the goal fuzzy logic
 void BotMutateGoalFuzzyLogic(int goalstate, float range);
 //loads item weights for the bot
-int BotLoadItemWeights(int goalstate, char *filename);
+int BotLoadItemWeights(int goalstate, const char *filename);
 //frees the item weights of the bot
 void BotFreeItemWeights(int goalstate);
 //returns the handle of a newly allocated goal state

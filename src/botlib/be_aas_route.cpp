@@ -454,7 +454,7 @@ void AAS_CreateReversedReachability(void)
 // Returns:				-
 // Changes Globals:		-
 //===========================================================================
-unsigned short int AAS_AreaTravelTime(int areanum, vec3_t start, vec3_t end)
+unsigned short int AAS_AreaTravelTime(int areanum, const vec3_t start, const vec3_t end)
 {
 	int intdist;
 	float dist;
@@ -1565,7 +1565,7 @@ aas_routingcache_t *AAS_GetPortalRoutingCache(int clusternum, int areanum, int t
 // Returns:				-
 // Changes Globals:		-
 //===========================================================================
-int AAS_AreaRouteToGoalArea(int areanum, vec3_t origin, int goalareanum, int travelflags, int *traveltime, int *reachnum)
+int AAS_AreaRouteToGoalArea(int areanum, const vec3_t origin, int goalareanum, int travelflags, int *traveltime, int *reachnum)
 {
 	int clusternum, goalclusternum, portalnum, i, clusterareanum, bestreachnum;
 	unsigned short int t, besttime;
@@ -1751,7 +1751,7 @@ int AAS_AreaRouteToGoalArea(int areanum, vec3_t origin, int goalareanum, int tra
 // Returns:				-
 // Changes Globals:		-
 //===========================================================================
-int AAS_AreaTravelTimeToGoalArea(int areanum, vec3_t origin, int goalareanum, int travelflags)
+int AAS_AreaTravelTimeToGoalArea(int areanum, const vec3_t origin, int goalareanum, int travelflags)
 {
 	int traveltime, reachnum;
 
@@ -1767,7 +1767,7 @@ int AAS_AreaTravelTimeToGoalArea(int areanum, vec3_t origin, int goalareanum, in
 // Returns:				-
 // Changes Globals:		-
 //===========================================================================
-int AAS_AreaReachabilityToGoalArea(int areanum, vec3_t origin, int goalareanum, int travelflags)
+int AAS_AreaReachabilityToGoalArea(int areanum, const vec3_t origin, int goalareanum, int travelflags)
 {
 	int traveltime, reachnum;
 
@@ -1784,7 +1784,7 @@ int AAS_AreaReachabilityToGoalArea(int areanum, vec3_t origin, int goalareanum, 
 // Returns:				-
 // Changes Globals:		-
 //===========================================================================
-int AAS_PredictRoute(struct aas_predictroute_s *route, int areanum, vec3_t origin,
+int AAS_PredictRoute(struct aas_predictroute_s *route, int areanum, const vec3_t origin,
 							int goalareanum, int travelflags, int maxareas, int maxtime,
 							int stopevent, int stopcontents, int stoptfl, int stopareanum)
 {
@@ -2050,7 +2050,7 @@ int AAS_AreaVisible(int srcarea, int destarea)
 // Returns:				-
 // Changes Globals:		-
 //===========================================================================
-float DistancePointToLine(vec3_t v1, vec3_t v2, vec3_t point)
+float DistancePointToLine(const vec3_t v1, const vec3_t v2, const vec3_t point)
 {
 	vec3_t vec, p2;
 

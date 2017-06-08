@@ -1319,7 +1319,7 @@ int PC_Directive_define(source_t *source)
 // Returns:					-
 // Changes Globals:		-
 //============================================================================
-define_t *PC_DefineFromString(char *string)
+static define_t *PC_DefineFromString(const char *string)
 {
 	script_t *script;
 	source_t src;
@@ -1377,7 +1377,7 @@ define_t *PC_DefineFromString(char *string)
 // Returns:					-
 // Changes Globals:		-
 //============================================================================
-int PC_AddDefine(source_t *source, char *string)
+int PC_AddDefine(source_t *source, const char *string)
 {
 	define_t *define;
 
@@ -1403,7 +1403,7 @@ int PC_AddDefine(source_t *source, char *string)
 // Returns:					-
 // Changes Globals:		-
 //============================================================================
-int PC_AddGlobalDefine(char *string)
+int PC_AddGlobalDefine(const char *string)
 {
 #if !DEFINEHASHING
 	define_t *define;
@@ -3077,7 +3077,7 @@ source_t *LoadSourceFile(const char *filename)
 // Returns:					-
 // Changes Globals:		-
 //============================================================================
-source_t *LoadSourceMemory(char *ptr, int length, char *name)
+source_t *LoadSourceMemory(const char *ptr, int length, const char *name)
 {
 	source_t *source;
 	script_t *script;

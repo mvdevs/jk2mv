@@ -115,9 +115,9 @@ int PC_ReadLine(source_t *source, token_t *token);
 //returns true if there was a white space in front of the token
 int PC_WhiteSpaceBeforeToken(token_t *token);
 //add a define to the source
-int PC_AddDefine(source_t *source, char *string);
+int PC_AddDefine(source_t *source, const char *string);
 //add a globals define that will be added to all opened sources
-int PC_AddGlobalDefine(char *string);
+int PC_AddGlobalDefine(const char *string);
 //remove the given global define
 int PC_RemoveGlobalDefine(char *name);
 //remove all globals defines
@@ -133,7 +133,7 @@ void PC_SetBaseFolder(char *path);
 //load a source file
 source_t *LoadSourceFile(const char *filename);
 //load a source from memory
-source_t *LoadSourceMemory(char *ptr, int length, char *name);
+source_t *LoadSourceMemory(const char *ptr, int length, const char *name);
 //free the given source
 void FreeSource(source_t *source);
 //print a source error

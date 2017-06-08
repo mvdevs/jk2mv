@@ -259,7 +259,7 @@ fuzzyseperator_t *ReadFuzzySeperators_r(source_t *source)
 // Returns:					-
 // Changes Globals:		-
 //===========================================================================
-weightconfig_t *ReadWeightConfig(char *filename)
+weightconfig_t *ReadWeightConfig(const char *filename)
 {
 	int newindent, avail = 0, n;
 	token_t token;
@@ -502,7 +502,7 @@ qboolean WriteFuzzySeperators_r(FILE *fp, fuzzyseperator_t *fs, int indent)
 // Returns:					-
 // Changes Globals:		-
 //===========================================================================
-qboolean WriteWeightConfig(char *filename, weightconfig_t *config)
+qboolean WriteWeightConfig(const char *filename, const weightconfig_t *config)
 {
 	int i;
 	FILE *fp;
@@ -556,7 +556,7 @@ int FindFuzzyWeight(weightconfig_t *wc, char *name)
 // Returns:					-
 // Changes Globals:		-
 //===========================================================================
-float FuzzyWeight_r(int *inventory, fuzzyseperator_t *fs)
+float FuzzyWeight_r(const int *inventory, const fuzzyseperator_t *fs)
 {
 	float scale, w1, w2;
 
@@ -590,7 +590,7 @@ float FuzzyWeight_r(int *inventory, fuzzyseperator_t *fs)
 // Returns:					-
 // Changes Globals:		-
 //===========================================================================
-float FuzzyWeightUndecided_r(int *inventory, fuzzyseperator_t *fs)
+float FuzzyWeightUndecided_r(const int *inventory, const fuzzyseperator_t *fs)
 {
 	float scale, w1, w2;
 
@@ -624,7 +624,7 @@ float FuzzyWeightUndecided_r(int *inventory, fuzzyseperator_t *fs)
 // Returns:					-
 // Changes Globals:		-
 //===========================================================================
-float FuzzyWeight(int *inventory, weightconfig_t *wc, int weightnum)
+float FuzzyWeight(const int *inventory, const weightconfig_t *wc, int weightnum)
 {
 #ifdef EVALUATERECURSIVELY
 	return FuzzyWeight_r(inventory, wc->weights[weightnum].firstseperator);
@@ -655,7 +655,7 @@ float FuzzyWeight(int *inventory, weightconfig_t *wc, int weightnum)
 // Returns:					-
 // Changes Globals:		-
 //===========================================================================
-float FuzzyWeightUndecided(int *inventory, weightconfig_t *wc, int weightnum)
+float FuzzyWeightUndecided(const int *inventory, const weightconfig_t *wc, int weightnum)
 {
 #ifdef EVALUATERECURSIVELY
 	return FuzzyWeightUndecided_r(inventory, wc->weights[weightnum].firstseperator);

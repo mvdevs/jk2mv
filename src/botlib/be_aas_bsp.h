@@ -48,7 +48,7 @@ bsp_trace_t AAS_Trace(	const vec3_t start,
 								int passent,
 								int contentmask);
 //returns the contents at the given point
-int AAS_PointContents(vec3_t point);
+int AAS_PointContents(const vec3_t point);
 //returns true when p2 is in the PVS of p1
 qboolean AAS_inPVS(vec3_t p1, vec3_t p2);
 //returns true when p2 is in the PHS of p1
@@ -62,11 +62,11 @@ void AAS_BSPModelMinsMaxsOrigin(int modelnum, vec3_t angles, vec3_t mins, vec3_t
 //handle to the next bsp entity
 int AAS_NextBSPEntity(int ent);
 //return the value of the BSP epair key
-int AAS_ValueForBSPEpairKey(int ent, char *key, char *value, int size);
+int AAS_ValueForBSPEpairKey(int ent, const char *key, char *value, int size);
 //get a vector for the BSP epair key
-int AAS_VectorForBSPEpairKey(int ent, char *key, vec3_t v);
+int AAS_VectorForBSPEpairKey(int ent, const char *key, vec3_t v);
 //get a float for the BSP epair key
-int AAS_FloatForBSPEpairKey(int ent, char *key, float *value);
+int AAS_FloatForBSPEpairKey(int ent, const char *key, float *value);
 //get an integer for the BSP epair key
-int AAS_IntForBSPEpairKey(int ent, char *key, int *value);
+int AAS_IntForBSPEpairKey(int ent, const char *key, int *value);
 
