@@ -49,7 +49,7 @@ typedef struct {
 	void	(*AddAdditiveLightToScene)( const vec3_t org, float intensity, float r, float g, float b );
 	void	(*RenderScene)( const refdef_t *fd );
 
-	void	(*SetColor)( const float *rgba );	// NULL = 1,1,1,1
+	void	(*SetColor)( const vec4_t rgba );	// NULL = 1,1,1,1
 	void	(*DrawStretchPic) ( float x, float y, float w, float h,
 		float s1, float t1, float s2, float t2, qhandle_t hShader );	// 0 = white
 	void	(*DrawRotatePic) ( float x, float y, float w, float h,
@@ -82,7 +82,7 @@ typedef struct {
 	int		(*Font_StrLenPixels) (const char *text, const int iFontIndex, const float scale);
 	int		(*Font_StrLenChars) (const char *text);
 	int		(*Font_HeightPixels)(const int iFontIndex, const float scale);
-	void	(*Font_DrawString)(int ox, int oy, const char *text, const float *rgba, const int setIndex, int iCharLimit, const float scale);
+	void	(*Font_DrawString)(int ox, int oy, const char *text, const vec4_t rgba, const int setIndex, int iCharLimit, const float scale);
 	qboolean (*Language_IsAsian)(void);
 	qboolean (*Language_UsesSpaces)(void);
 	unsigned int (*AnyLanguage_ReadCharFromString)( const char *psText, int *piAdvanceCount, qboolean *pbIsTrailingPunctuation/* = NULL*/ );

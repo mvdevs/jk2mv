@@ -1879,7 +1879,7 @@ void RB_ExecuteRenderCommands( const void *data );
 
 void R_AddDrawSurfCmd( drawSurf_t *drawSurfs, int numDrawSurfs );
 
-void RE_SetColor( const float *rgba );
+void RE_SetColor( const vec4_t rgba );
 void RE_StretchPic ( float x, float y, float w, float h,
 					  float s1, float t1, float s2, float t2, qhandle_t hShader );
 void RE_RotatePic ( float x, float y, float w, float h,

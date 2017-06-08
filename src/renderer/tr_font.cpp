@@ -818,7 +818,7 @@ int RE_Font_HeightPixels(const int iFontHandle, float fScale)
 //
 qboolean gbInShadow = qfalse;	// MUST default to this
 extern cvar_t	*mv_coloredTextShadows;
-void RE_Font_DrawString(int ox, int oy, const char *psText, const float *rgba, int iFontHandle, int iCharLimit, float fScale)
+void RE_Font_DrawString(int ox, int oy, const char *psText, const vec4_t rgba, int iFontHandle, int iCharLimit, float fScale)
 {
 	int					colour, offset;
 	float				fox, foy, fx, fy;
