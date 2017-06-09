@@ -730,7 +730,7 @@ ways a client gets into a game
 Also called by Com_Error
 =================
 */
-extern void FixGhoul2InfoLeaks(bool,bool);
+extern void FixGhoul2InfoLeaks(bool);
 
 void CL_FlushMemory( void ) {
 
@@ -740,7 +740,7 @@ void CL_FlushMemory( void ) {
 	// if not running a server clear the whole hunk
 	if ( !com_sv_running->integer ) {
 		// clear collision map data
-		FixGhoul2InfoLeaks(true,false);
+		FixGhoul2InfoLeaks(false);
 		CM_ClearMap();
 		// clear the whole hunk
 		Hunk_Clear();

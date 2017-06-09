@@ -76,6 +76,7 @@ void		G2_RemoveRedundantBolts(boltInfo_v &bltlist, surfaceInfo_v &slist, int *ac
 
 
 // API calls - G2_API.cpp
+int			G2API_GetMaxModelIndex(bool ricksCrazyOnServer);
 qhandle_t	G2API_PrecacheGhoul2Model(const char *fileName);
 CGhoul2Info_v *G2API_GetGhoul2Model(g2handle_t g2h);
 
@@ -118,7 +119,7 @@ qboolean	G2API_AttachEnt(int *boltInfo, CGhoul2Info *ghlInfoTo, int toBoltIndex,
 void		G2API_DetachEnt(int *boltInfo);
 
 qboolean	G2API_GetBoltMatrix(g2handle_t g2h, const int modelIndex, const int boltIndex, mdxaBone_t *matrix,
-								const vec3_t angles, const vec3_t position, const int frameNum, qhandle_t *modelList, const vec3_t scale);
+								const vec3_t angles, const vec3_t position, const int frameNum, const qhandle_t *modelList, const vec3_t scale);
 
 void		G2API_ListSurfaces(g2handle_t g2h, int modelIndex);
 void		G2API_ListBones(g2handle_t g2h, int modelIndex, int frame);
@@ -161,4 +162,4 @@ void		G2API_DuplicateGhoul2Instance(g2handle_t g2hFrom, g2handle_t *g2hToPtr);
 extern qboolean gG2_GBMNoReconstruct;
 extern qboolean gG2_GBMUseSPMethod;
 // From tr_ghoul2.cpp
-void		G2_ConstructGhoulSkeleton( CGhoul2Info_v &ghoul2, const int frameNum, qhandle_t *modelList, bool checkForNewOrigin, const vec3_t angles, const vec3_t position, const vec3_t scale, bool modelSet);
+void		G2_ConstructGhoulSkeleton( CGhoul2Info_v &ghoul2, const int frameNum, const qhandle_t *modelList, bool checkForNewOrigin, const vec3_t angles, const vec3_t position, const vec3_t scale, bool modelSet);
