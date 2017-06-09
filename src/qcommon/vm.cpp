@@ -698,20 +698,26 @@ void VM_Forced_Unload_Done(void) {
 	forced_unload = 0;
 }
 
-void *VM_ArgPtr( intptr_t intValue ) {
+void *VM_ArgPtr( intptr_t intValue, intptr_t size ) {
+	// currentVM is missing on reconnect
+	if ( !currentVM ) {
+		return NULL;
+	}
+	if ( currentVM->entryPoint ) {
+		return (void *) intValue;
+	}
 	if ( !intValue ) {
 		return NULL;
 	}
-	// currentVM is missing on reconnect
-	if ( currentVM==NULL )
-	  return NULL;
 
-	if ( currentVM->entryPoint ) {
-		return (void *)(currentVM->dataBase + intValue);
+	// don't drop on overflow for compatibility reasons
+	intValue &= currentVM->dataMask;
+
+	if ( size > currentVM->dataMask - intValue + 1 ) {
+		Com_Error( ERR_DROP, "VM_ArgPtr: memory overflow" );
 	}
-	else {
-		return (void *)(currentVM->dataBase + (intValue & currentVM->dataMask));
-	}
+
+	return (void *)(currentVM->dataBase + intValue);
 }
 
 void *VM_ArgArray( intptr_t intValue, intptr_t size, intptr_t num ) {
