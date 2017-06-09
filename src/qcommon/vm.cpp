@@ -787,6 +787,36 @@ void *VM_ExplicitArgPtr( vm_t *vm, intptr_t intValue ) {
 	}
 }
 
+intptr_t VM_strncpy( intptr_t dest, intptr_t src, intptr_t size ) {
+	// currentVM is missing on reconnect here as well?
+	if ( currentVM==NULL )
+	  return 0;
+
+	if ( currentVM->entryPoint ) {
+		return (intptr_t) strncpy( (char *)dest, (const char *)src, size );
+	}
+	else {
+		char *dataBase = (char *)currentVM->dataBase;
+		int dataMask = currentVM->dataMask;
+
+		// don't drop on overflow for compatibility reasons
+		dest &= dataMask;
+		src &= dataMask;
+
+		size_t destSize = dataMask - dest;
+		size_t srcSize = dataMask - src;
+		destSize = MIN((size_t) size, destSize);
+		size_t n = MIN(destSize, srcSize);
+
+		strncpy( dataBase + dest, dataBase + src, n );
+
+		if ( n < destSize ) {
+			memset( dataBase + dest + n, 0, destSize - n );
+		}
+
+		return dest;
+	}
+}
 
 /*
 ==============

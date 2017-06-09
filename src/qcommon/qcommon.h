@@ -345,6 +345,7 @@ void	VM_Debug( int level );
 void	*VM_ArgPtr( intptr_t intValue );
 void	*VM_ArgArray( intptr_t intValue, intptr_t size, intptr_t num );
 char	*VM_ArgString( intptr_t intValue );
+intptr_t	VM_strncpy( intptr_t dest, intptr_t src, intptr_t size );
 
 static ID_INLINE float _vmf(intptr_t x)
 {
