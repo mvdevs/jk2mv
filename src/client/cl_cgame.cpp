@@ -657,10 +657,10 @@ intptr_t CL_CgameSystemCalls(intptr_t *args) {
 	case CG_MILLISECONDS:
 		return Sys_Milliseconds();
 	case CG_CVAR_REGISTER:
-		Cvar_Register( VMAA(1, vmCvar_t, 1), VMAS(2), VMAS(3), args[4] );
+		Cvar_Register( VMAV(1, vmCvar_t), VMAS(2), VMAS(3), args[4] );
 		return 0;
 	case CG_CVAR_UPDATE:
-		Cvar_Update( VMAA(1, vmCvar_t, 1) );
+		Cvar_Update( VMAV(1, vmCvar_t) );
 		return 0;
 	case CG_CVAR_SET:
 		Cvar_Set2( VMAS(1), VMAS(2), qtrue, qtrue );
@@ -677,7 +677,7 @@ intptr_t CL_CgameSystemCalls(intptr_t *args) {
 		Cmd_ArgsBuffer( VMAA(1, char, args[2]), args[2] );
 		return 0;
 	case CG_FS_FOPENFILE:
-		return FS_FOpenFileByMode( VMAS(1), VMAA(2, int, 1), (fsMode_t)args[3] );
+		return FS_FOpenFileByMode( VMAS(1), VMAV(2, int), (fsMode_t)args[3] );
 	case CG_FS_READ:
 		FS_Read2( VMAA(1, char, args[2]), args[2], args[3] );
 		return 0;
@@ -723,16 +723,16 @@ intptr_t CL_CgameSystemCalls(intptr_t *args) {
 	case CG_CM_TRANSFORMEDPOINTCONTENTS:
 		return CM_TransformedPointContents( VMAA(1, const vec_t, 3), args[2], VMAA(3, const vec_t, 3), VMAA(4, const vec_t, 3) );
 	case CG_CM_BOXTRACE:
-		CM_BoxTrace( VMAA(1, trace_t, 1), VMAA(2, const vec_t, 3), VMAA(3, const vec_t, 3), VMAA(4, const vec_t, 3), VMAA(5, const vec_t, 3), args[6], args[7], qfalse );
+		CM_BoxTrace( VMAV(1, trace_t), VMAA(2, const vec_t, 3), VMAA(3, const vec_t, 3), VMAA(4, const vec_t, 3), VMAA(5, const vec_t, 3), args[6], args[7], qfalse );
 		return 0;
 	case CG_CM_CAPSULETRACE:
-		CM_BoxTrace( VMAA(1, trace_t, 1), VMAA(2, const vec_t, 3), VMAA(3, const vec_t, 3), VMAA(4, const vec_t, 3), VMAA(5, const vec_t, 3), args[6], args[7], qtrue );
+		CM_BoxTrace( VMAV(1, trace_t), VMAA(2, const vec_t, 3), VMAA(3, const vec_t, 3), VMAA(4, const vec_t, 3), VMAA(5, const vec_t, 3), args[6], args[7], qtrue );
 		return 0;
 	case CG_CM_TRANSFORMEDBOXTRACE:
-		CM_TransformedBoxTrace( VMAA(1, trace_t, 1), VMAA(2, const vec_t, 3), VMAA(3, const vec_t, 3), VMAA(4, const vec_t, 3), VMAA(5, const vec_t, 3), args[6], args[7], VMAA(8, const vec_t, 3), VMAA(9, const vec_t, 3), qfalse );
+		CM_TransformedBoxTrace( VMAV(1, trace_t), VMAA(2, const vec_t, 3), VMAA(3, const vec_t, 3), VMAA(4, const vec_t, 3), VMAA(5, const vec_t, 3), args[6], args[7], VMAA(8, const vec_t, 3), VMAA(9, const vec_t, 3), qfalse );
 		return 0;
 	case CG_CM_TRANSFORMEDCAPSULETRACE:
-		CM_TransformedBoxTrace( VMAA(1, trace_t, 1), VMAA(2, const vec_t, 3), VMAA(3, const vec_t, 3), VMAA(4, const vec_t, 3), VMAA(5, const vec_t, 3), args[6], args[7], VMAA(8, const vec_t, 3), VMAA(9, const vec_t, 3), qtrue );
+		CM_TransformedBoxTrace( VMAV(1, trace_t), VMAA(2, const vec_t, 3), VMAA(3, const vec_t, 3), VMAA(4, const vec_t, 3), VMAA(5, const vec_t, 3), args[6], args[7], VMAA(8, const vec_t, 3), VMAA(9, const vec_t, 3), qtrue );
 		return 0;
 	case CG_CM_MARKFRAGMENTS:
 		return re.MarkFragments( args[1], VMAA(2, const vec3_t, args[1]), VMAA(3, const vec_t, 3), args[4], VMAA(5, vec3_t, args[4]), args[6], VMAA(7, markFragment_t, args[6]) );
@@ -795,12 +795,12 @@ intptr_t CL_CgameSystemCalls(intptr_t *args) {
 	case CG_LANGUAGE_USESSPACES:
 		return re.Language_UsesSpaces();
 	case CG_ANYLANGUAGE_READCHARFROMSTRING:
-		return re.AnyLanguage_ReadCharFromString( VMAS(1), VMAA(2, int, 1), VMAA(3, qboolean, 1) );
+		return re.AnyLanguage_ReadCharFromString( VMAS(1), VMAV(2, int), VMAV(3, qboolean) );
 	case CG_R_CLEARSCENE:
 		re.ClearScene();
 		return 0;
 	case CG_R_ADDREFENTITYTOSCENE:
-		re.AddRefEntityToScene(VMAA(1, const refEntity_t, 1));
+		re.AddRefEntityToScene(VMAV(1, const refEntity_t));
 		return 0;
 	case CG_R_ADDPOLYTOSCENE:
 		re.AddPolyToScene( args[1], args[2], VMAA(3, const polyVert_t, args[2]), 1 );
@@ -821,7 +821,7 @@ intptr_t CL_CgameSystemCalls(intptr_t *args) {
 		re.AddAdditiveLightToScene( VMAA(1, const vec_t, 3), VMF(2), VMF(3), VMF(4), VMF(5) );
 		return 0;
 	case CG_R_RENDERSCENE:
-		re.RenderScene( VMAA(1, const refdef_t, 1) );
+		re.RenderScene( VMAV(1, const refdef_t) );
 		return 0;
 	case CG_R_SETCOLOR:
 		re.SetColor( VMAA(1, vec_t, 4) );
@@ -833,7 +833,7 @@ intptr_t CL_CgameSystemCalls(intptr_t *args) {
 		re.ModelBounds( args[1], VMAA(2, vec_t, 3), VMAA(3, vec_t, 3) );
 		return 0;
 	case CG_R_LERPTAG:
-		return re.LerpTag( VMAA(1, orientation_t, 1), args[2], args[3], args[4], VMF(5), VMAS(6) );
+		return re.LerpTag( VMAV(1, orientation_t), args[2], args[3], args[4], VMF(5), VMAS(6) );
 	case CG_R_DRAWROTATEPIC:
 		re.DrawRotatePic( VMF(1), VMF(2), VMF(3), VMF(4), VMF(5), VMF(6), VMF(7), VMF(8), VMF(9), args[10] );
 		return 0;
@@ -841,22 +841,22 @@ intptr_t CL_CgameSystemCalls(intptr_t *args) {
 		re.DrawRotatePic2( VMF(1), VMF(2), VMF(3), VMF(4), VMF(5), VMF(6), VMF(7), VMF(8), VMF(9), args[10] );
 		return 0;
 	case CG_GETGLCONFIG:
-		CL_GetVMGLConfig(VMAA(1, vmglconfig_t, 1));
+		CL_GetVMGLConfig(VMAV(1, vmglconfig_t));
 		return 0;
 	case CG_GETGAMESTATE:
-		CL_GetGameState( VMAA(1, gameState_t, 1) );
+		CL_GetGameState( VMAV(1, gameState_t) );
 		return 0;
 	case CG_GETCURRENTSNAPSHOTNUMBER:
-		CL_GetCurrentSnapshotNumber( VMAA(1, int, 1), VMAA(2, int, 1) );
+		CL_GetCurrentSnapshotNumber( VMAV(1, int), VMAV(2, int) );
 		return 0;
 	case CG_GETSNAPSHOT:
-		return CL_GetSnapshot( args[1], VMAA(2, snapshot_t, 1) );
+		return CL_GetSnapshot( args[1], VMAV(2, snapshot_t) );
 	case CG_GETSERVERCOMMAND:
 		return CL_GetServerCommand( args[1] );
 	case CG_GETCURRENTCMDNUMBER:
 		return CL_GetCurrentCmdNumber();
 	case CG_GETUSERCMD:
-		return CL_GetUserCmd( args[1], VMAA(2, usercmd_t, 1) );
+		return CL_GetUserCmd( args[1], VMAV(2, usercmd_t) );
 	case CG_SETUSERCMDVALUE:
 		CL_SetUserCmdValue( args[1], VMF(2), args[3], args[4] );
 		return 0;
@@ -915,9 +915,9 @@ intptr_t CL_CgameSystemCalls(intptr_t *args) {
 	case CG_PC_FREE_SOURCE:
 		return botlib_export->PC_FreeSourceHandle( args[1] );
 	case CG_PC_READ_TOKEN:
-		return botlib_export->PC_ReadTokenHandle( args[1], VMAA(2, pc_token_t, 1) );
+		return botlib_export->PC_ReadTokenHandle( args[1], VMAV(2, pc_token_t) );
 	case CG_PC_SOURCE_FILE_AND_LINE:
-		return botlib_export->PC_SourceFileAndLine( args[1], VMAA(2, char, MAX_QPATH), VMAA(3, int, 1) );
+		return botlib_export->PC_SourceFileAndLine( args[1], VMAA(2, char, MAX_QPATH), VMAV(3, int) );
 	case CG_PC_LOAD_GLOBAL_DEFINES:
 		return botlib_export->PC_LoadGlobalDefines ( VMAS(1) );
 	case CG_PC_REMOVE_ALL_GLOBAL_DEFINES:
@@ -929,7 +929,7 @@ intptr_t CL_CgameSystemCalls(intptr_t *args) {
 		return 0;
 
 	case CG_REAL_TIME:
-		return Com_RealTime( VMAA(1, qtime_t, 1) );
+		return Com_RealTime( VMAV(1, qtime_t) );
 	case CG_SNAPVECTOR:
 		Sys_SnapVector(VMAA(1, vec_t, 3));
 		return 0;
@@ -1019,7 +1019,7 @@ intptr_t CL_CgameSystemCalls(intptr_t *args) {
 		return 0;
 
 	case CG_FX_PLAY_BOLTED_EFFECT_ID:
-		FX_PlayBoltedEffectID(args[1], VMAA(2, sharedBoltInterface_t, 1));
+		FX_PlayBoltedEffectID(args[1], VMAV(2, sharedBoltInterface_t));
 		return 0;
 
 	case CG_FX_ADD_SCHEDULED_EFFECTS:
@@ -1039,7 +1039,7 @@ intptr_t CL_CgameSystemCalls(intptr_t *args) {
 	case CG_FX_ADDPOLY:
 		const addpolyArgStruct_t *p;
 
-		p = VMAA(1, const addpolyArgStruct_t, 1);
+		p = VMAV(1, const addpolyArgStruct_t);
 
 		if (p)
 		{
@@ -1052,7 +1052,7 @@ intptr_t CL_CgameSystemCalls(intptr_t *args) {
 	case CG_FX_ADDBEZIER:
 		const addbezierArgStruct_t *b;
 
-		b = VMAA(1, const addbezierArgStruct_t, 1);
+		b = VMAV(1, const addbezierArgStruct_t);
 
 		if (b)
 		{
@@ -1065,7 +1065,7 @@ intptr_t CL_CgameSystemCalls(intptr_t *args) {
 	case CG_FX_ADDPRIMITIVE:
 		const effectTrailArgStruct_t *a;
 
-		a = VMAA(1, const effectTrailArgStruct_t, 1);
+		a = VMAV(1, const effectTrailArgStruct_t);
 
 		if (a)
 		{
@@ -1076,7 +1076,7 @@ intptr_t CL_CgameSystemCalls(intptr_t *args) {
 	case CG_FX_ADDSPRITE:
 		const addspriteArgStruct_t *s;
 
-		s = VMAA(1, const addspriteArgStruct_t, 1);
+		s = VMAV(1, const addspriteArgStruct_t);
 
 		if (s)
 		{
@@ -1150,19 +1150,19 @@ Ghoul2 Insert Start
 		return 0;
 
 	case CG_G2_GETBOLT:
-		return G2API_GetBoltMatrix((g2handle_t)args[1], args[2], args[3], VMAA(4, mdxaBone_t, 1), VMAA(5, const vec_t, 3), VMAA(6, const vec_t, 3), args[7], (qhandle_t *)VMA(8), VMAA(9, const vec_t, 3));
+		return G2API_GetBoltMatrix((g2handle_t)args[1], args[2], args[3], VMAV(4, mdxaBone_t), VMAA(5, const vec_t, 3), VMAA(6, const vec_t, 3), args[7], (qhandle_t *)VMA(8), VMAA(9, const vec_t, 3));
 
 	case CG_G2_GETBOLT_NOREC:
 		gG2_GBMNoReconstruct = qtrue;
-		return G2API_GetBoltMatrix((g2handle_t)args[1], args[2], args[3], VMAA(4, mdxaBone_t, 1), VMAA(5, const vec_t, 3), VMAA(6, const vec_t, 3), args[7], (qhandle_t *)VMA(8), VMAA(9, const vec_t, 3));
+		return G2API_GetBoltMatrix((g2handle_t)args[1], args[2], args[3], VMAV(4, mdxaBone_t), VMAA(5, const vec_t, 3), VMAA(6, const vec_t, 3), args[7], (qhandle_t *)VMA(8), VMAA(9, const vec_t, 3));
 
 	case CG_G2_GETBOLT_NOREC_NOROT:
 		gG2_GBMNoReconstruct = qtrue;
 		gG2_GBMUseSPMethod = qtrue;
-		return G2API_GetBoltMatrix((g2handle_t)args[1], args[2], args[3], VMAA(4, mdxaBone_t, 1), VMAA(5, const vec_t, 3), VMAA(6, const vec_t, 3), args[7], (qhandle_t *)VMA(8), VMAA(9, const vec_t, 3));
+		return G2API_GetBoltMatrix((g2handle_t)args[1], args[2], args[3], VMAV(4, mdxaBone_t), VMAA(5, const vec_t, 3), VMAA(6, const vec_t, 3), args[7], (qhandle_t *)VMA(8), VMAA(9, const vec_t, 3));
 
 	case CG_G2_INITGHOUL2MODEL:
-		return	G2API_InitGhoul2Model(VMAA(1, g2handle_t, 1), VMAS(2), args[3], (qhandle_t) args[4],
+		return	G2API_InitGhoul2Model(VMAV(1, g2handle_t), VMAS(2), args[3], (qhandle_t) args[4],
 			(qhandle_t) args[5], args[6], args[7]);
 
 	case CG_G2_COLLISIONDETECT:
@@ -1189,7 +1189,7 @@ Ghoul2 Insert Start
 							 VMAA(9, qhandle_t, args[2] + 1), args[10], args[11] );
 
 	case CG_G2_CLEANMODELS:
-		G2API_CleanGhoul2Models(VMAA(1, g2handle_t, 1));
+		G2API_CleanGhoul2Models(VMAV(1, g2handle_t));
 		return 0;
 
 	case CG_G2_PLAYANIM:
@@ -1216,14 +1216,14 @@ Ghoul2 Insert Start
 		return 0;
 
 	case CG_G2_DUPLICATEGHOUL2INSTANCE:
-		G2API_DuplicateGhoul2Instance((g2handle_t)args[1], VMAA(2, g2handle_t, 1));
+		G2API_DuplicateGhoul2Instance((g2handle_t)args[1], VMAV(2, g2handle_t));
 		return 0;
 
 	case CG_G2_HASGHOUL2MODELONINDEX:
-		return G2API_HasGhoul2ModelOnIndex(VMAA(1, const g2handle_t, 1), args[2]);
+		return G2API_HasGhoul2ModelOnIndex(VMAV(1, const g2handle_t), args[2]);
 
 	case CG_G2_REMOVEGHOUL2MODEL:
-		return G2API_RemoveGhoul2Model(VMAA(1, g2handle_t, 1), args[2]);
+		return G2API_RemoveGhoul2Model(VMAV(1, g2handle_t), args[2]);
 
 	case CG_G2_ADDBOLT:
 		return G2API_AddBolt((g2handle_t)args[1], args[2], VMAS(3));
@@ -1238,7 +1238,7 @@ Ghoul2 Insert Start
 Ghoul2 Insert End
 */
 	case CG_G2_GIVEMEVECTORFROMMATRIX:
-		G2API_GiveMeVectorFromMatrix(VMAA(1, const mdxaBone_t, 1), (Eorientations)(args[2]), VMAA(3, vec_t, 3));
+		G2API_GiveMeVectorFromMatrix(VMAV(1, const mdxaBone_t), (Eorientations)(args[2]), VMAA(3, vec_t, 3));
 		return 0;
 
 	case CG_G2_SETROOTSURFACE:
