@@ -353,9 +353,11 @@ static ID_INLINE float _vmf(intptr_t x)
 	fi.i = (int)x;
 	return fi.f;
 }
+
 #define	VMF(x)				_vmf(args[x])
 #define VMA(x)				VM_ArgPtr(args[x], 1)
 #define VMAV(x, type)		((type *) VM_ArgPtr(args[x], sizeof(type)))
+#define VMAP(x, type, num)	((type *) VM_ArgPtr(args[x], sizeof(type) * num))
 #define VMAA(x, type, num)	((type *) VM_ArgArray(args[x], sizeof(type), num))
 #define VMAS(x)				VM_ArgString(args[x])
 
