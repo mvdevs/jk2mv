@@ -27,6 +27,18 @@ struct bot_moveresult_s;
 struct bot_initmove_s;
 struct weaponinfo_s;
 
+extern const size_t aas_clientmove_size;
+extern const size_t aas_entityinfo_size;
+extern const size_t aas_areainfo_size;
+extern const size_t aas_altroutegoal_size;
+extern const size_t aas_predictroute_size;
+extern const size_t bot_consolemessage_size;
+extern const size_t bot_match_size;
+extern const size_t bot_goal_size;
+extern const size_t bot_moveresult_size;
+extern const size_t bot_initmove_size;
+extern const size_t weaponinfo_size;
+
 #define BOTFILESBASEFOLDER		"botfiles"
 //debug line colors
 #define LINECOLOR_NONE			-1

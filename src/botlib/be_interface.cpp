@@ -45,6 +45,19 @@ int bot_developer;
 //qtrue if the library is setup
 int botlibsetup = qfalse;
 
+//
+const size_t aas_clientmove_size = sizeof(aas_clientmove_t);
+const size_t aas_entityinfo_size = sizeof(aas_entityinfo_t);
+const size_t aas_areainfo_size = sizeof(aas_areainfo_t);
+const size_t aas_altroutegoal_size = sizeof(aas_altroutegoal_t);
+const size_t aas_predictroute_size = sizeof(aas_predictroute_t);
+const size_t bot_consolemessage_size = sizeof(bot_consolemessage_t);
+const size_t bot_match_size = sizeof(bot_match_t);
+const size_t bot_goal_size = sizeof(bot_goal_t);
+const size_t bot_moveresult_size = sizeof(bot_moveresult_t);
+const size_t bot_initmove_size = sizeof(bot_initmove_t);
+const size_t weaponinfo_size = sizeof(weaponinfo_t);
+
 //===========================================================================
 //
 // several functions used by the exported functions
