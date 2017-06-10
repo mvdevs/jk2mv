@@ -1110,7 +1110,7 @@ intptr_t CL_CgameSystemCalls(intptr_t *args) {
 #endif
 
 	case CG_SP_PRINT:
-		CL_SP_Print(args[1], (byte *)VMA(2));
+		CL_SP_Print(args[1], (const byte *)VMA(2));
 		return 0;
 
 	case CG_ROFF_CLEAN:

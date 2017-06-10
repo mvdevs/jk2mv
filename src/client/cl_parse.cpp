@@ -26,7 +26,7 @@ static void SHOWNET( const msg_t *msg, const char *s) {
 	}
 }
 
-void CL_SP_Print(const word ID, byte *Data); //, char* color)
+void CL_SP_Print(const word ID, const byte *Data); //, char* color)
 
 /*
 =========================================================================
@@ -778,7 +778,7 @@ void CL_ParseServerMessage( msg_t *msg ) {
 extern int			scr_center_y;
 void SCR_CenterPrint (char *str);//, PalIdx_t colour)
 
-void CL_SP_Print(const word ID, byte *Data) //, char* color)
+void CL_SP_Print(const word ID, const byte *Data) //, char* color)
 {
 	cStringsSingle	*String;
 	unsigned int	Flags;

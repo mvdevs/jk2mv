@@ -317,7 +317,7 @@ void *BotImport_HunkAlloc( int size ) {
 BotImport_DebugPolygonCreate
 ==================
 */
-int BotImport_DebugPolygonCreate(int color, int numPoints, vec3_t *points) {
+int BotImport_DebugPolygonCreate(int color, int numPoints, const vec3_t *points) {
 	bot_debugpoly_t *poly;
 	int i;
 

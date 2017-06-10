@@ -327,7 +327,7 @@ void SV_ClientEnterWorld( client_t *client, usercmd_t *cmd );
 void SV_DropClient( client_t *drop, const char *reason );
 
 void SV_ExecuteClientCommand( client_t *cl, const char *s, qboolean clientOK );
-void SV_ClientThink (client_t *cl, usercmd_t *cmd);
+void SV_ClientThink (client_t *cl, const usercmd_t *cmd);
 
 void SV_WriteDownloadToClient( client_t *cl , msg_t *msg );
 
@@ -378,7 +378,7 @@ int			SV_BotGetConsoleMessage( int client, char *buf, int size );
 void *Bot_GetMemoryGame(int size);
 void Bot_FreeMemoryGame(void *ptr);
 
-int BotImport_DebugPolygonCreate(int color, int numPoints, vec3_t *points);
+int BotImport_DebugPolygonCreate(int color, int numPoints, const vec3_t *points);
 void BotImport_DebugPolygonDelete(int id);
 
 //============================================================

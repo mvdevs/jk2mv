@@ -189,7 +189,7 @@ typedef struct botlib_import_s
 	void		(*DebugLineDelete)(int line);
 	void		(*DebugLineShow)(int line, vec3_t start, vec3_t end, int color);
 	//
-	int			(*DebugPolygonCreate)(int color, int numPoints, vec3_t *points);
+	int			(*DebugPolygonCreate)(int color, int numPoints, const vec3_t *points);
 	void		(*DebugPolygonDelete)(int id);
 } botlib_import_t;
 
@@ -417,7 +417,7 @@ typedef struct botlib_export_s
 	//load a new map in the bot library
 	int (*BotLibLoadMap)(const char *mapname);
 	//entity updates
-	int (*BotLibUpdateEntity)(int ent, bot_entitystate_t *state);
+	int (*BotLibUpdateEntity)(int ent, const bot_entitystate_t *state);
 	//just for testing
 	int (*Test)(int parm0, char *parm1, vec3_t parm2, vec3_t parm3);
 } botlib_export_t;

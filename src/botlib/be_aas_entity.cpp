@@ -43,7 +43,7 @@ enum {
 // Returns:					-
 // Changes Globals:		-
 //===========================================================================
-int AAS_UpdateEntity(int entnum, bot_entitystate_t *state)
+int AAS_UpdateEntity(int entnum, const bot_entitystate_t *state)
 {
 	int relink;
 	aas_entity_t *ent;
