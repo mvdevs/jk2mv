@@ -142,6 +142,9 @@ int AAS_AlternativeRouteGoals(const vec3_t start, int startareanum, const vec3_t
 	//
 	for (i = 1; i < aasworld.numareas; i++)
 	{
+		//don't return more than the maximum alternative route goals
+		if (numaltroutegoals >= maxaltroutegoals) break;
+
 		if (!midrangeareas[i].valid) continue;
 		//get the areas in one cluster
 		numclusterareas = 0;
@@ -181,8 +184,6 @@ int AAS_AlternativeRouteGoals(const vec3_t start, int startareanum, const vec3_t
 #ifdef ALTROUTE_DEBUG
 		AAS_ShowAreaPolygons(bestareanum, 1, qtrue);
 #endif
-		//don't return more than the maximum alternative route goals
-		if (numaltroutegoals >= maxaltroutegoals) break;
 	} //end for
 #ifdef ALTROUTE_DEBUG
 	botimport.Print(PRT_MESSAGE, "alternative route goals in %d msec\n", Sys_MilliSeconds() - startmillisecs);
