@@ -1146,7 +1146,7 @@ Ghoul2 Insert Start
 		return G2API_HaveWeGhoul2Models((g2handle_t)args[1]);
 
 	case CG_G2_SETMODELS:
-		G2API_SetGhoul2ModelIndexes((g2handle_t)args[1], (qhandle_t *)VMA(2), (qhandle_t *)VMA(3));
+		// G2API_SetGhoul2ModelIndexes((g2handle_t)args[1], (qhandle_t *)VMA(2), (qhandle_t *)VMA(3));
 		return 0;
 
 	case CG_G2_GETBOLT:

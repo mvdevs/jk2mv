@@ -557,7 +557,7 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 	case BOTLIB_UPDATENTITY:
 		return botlib_export->BotLibUpdateEntity( args[1], VMAV(2, const bot_entitystate_t) );
 	case BOTLIB_TEST:
-		return botlib_export->Test( args[1], (char *)VMA(2), (float *)VMA(3), (float *)VMA(4) );
+		return botlib_export->Test( args[1], NULL, VMAP(3, vec_t, 3), VMAP(4, vec_t, 3) );
 
 	case BOTLIB_GET_SNAPSHOT_ENTITY:
 		return SV_BotGetSnapshotEntity( args[1], args[2] );
@@ -954,7 +954,7 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 		return G2API_HaveWeGhoul2Models((g2handle_t)args[1]);
 
 	case G_G2_SETMODELS:
-		G2API_SetGhoul2ModelIndexes((g2handle_t)args[1], (qhandle_t *)VMA(2), (qhandle_t *)VMA(3));
+		// G2API_SetGhoul2ModelIndexes((g2handle_t)args[1], (qhandle_t *)VMA(2), (qhandle_t *)VMA(3));
 		return 0;
 
 	case G_G2_GETBOLT:
