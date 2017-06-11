@@ -824,6 +824,33 @@ intptr_t VM_strncpy( intptr_t dest, intptr_t src, intptr_t size ) {
 	}
 }
 
+// needed because G_LOCATE_GAME_DATA and MVAPI_LOCATE_GAME_DATA update
+// the same sv.num_entities variable
+void VM_LocateGameDataCheck( const void *data, int entitySize, int num_entities ) {
+	// currentVM is missing on reconnect here as well?
+	if ( currentVM==NULL ) {
+		return;
+	}
+
+	if ( !data ) {
+		return;
+	}
+
+	if ( !currentVM->entryPoint ) {
+		assert( data > currentVM->dataBase );
+		uintptr_t dataEnd = (uintptr_t) currentVM->dataBase + (uintptr_t)currentVM->dataMask + 1;
+		uintptr_t maxSize = dataEnd - (uintptr_t)data;
+
+		// coming from a module so should be int32_t
+		assert( 0 < entitySize && entitySize <= INT32_MAX );
+		assert( 0 < num_entities && num_entities <= INT32_MAX );
+
+		if ( (uint64_t) entitySize * (uint64_t) num_entities > maxSize ) {
+			Com_Error( ERR_DROP, "LOCATE_GAME_DATA: memory overflow" );
+		}
+	}
+}
+
 /*
 ==============
 VM_Call

@@ -266,6 +266,14 @@ SV_LocateGameData
 */
 void SV_LocateGameData( sharedEntity_t *gEnts, int numGEntities, int sizeofGEntity_t,
 					   playerState_t *clients, int sizeofGameClient ) {
+	if ( gEnts && ( sizeofGEntity_t <= (int)sizeof(sharedEntity_t) || numGEntities <= 0 ) ) {
+		Com_Error( ERR_DROP, "SV_LocateGameData: incorrect game entity data" );
+	}
+
+	if ( clients && sizeofGameClient <= (int)sizeof(playerState_t) ) {
+		Com_Error( ERR_DROP, "SV_LocateGameData: incorrect player state data" );
+	}
+
 	sv.gentities = gEnts;
 	sv.gentitySize = sizeofGEntity_t;
 	sv.num_entities = numGEntities;
@@ -282,6 +290,10 @@ MVAPI_LocateGameData
 qboolean MVAPI_LocateGameData(mvsharedEntity_t *mvEnts, int numGEntities, int sizeofmvsharedEntity_t) {
 	if (VM_MVAPILevel(gvm) < 1) {
 		return qtrue;
+	}
+
+	if ( mvEnts && ( numGEntities <= 0 || sizeofmvsharedEntity_t <= 0 ) ) {
+		Com_Error( ERR_DROP, "MVAPI_LocateGameData: incorrect shared game entity data" );
 	}
 
 	sv.gentitiesMV = mvEnts;
@@ -377,15 +389,15 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 		return FS_GetFileList( VMAS(1), VMAS(2), VMAA(3, char, args[4]), args[4] );
 
 	case G_LOCATE_GAME_DATA:
-		if ( (uintptr_t) args[2] >= INT16_MAX || (uintptr_t) args[3] >= INT16_MAX ||
-			 (uintptr_t) args[5] >= INT_MAX / MAX_CLIENTS )
-		{
-			Com_Error( ERR_DROP, "G_LOCATE_GAME_DATA: overflow" );
-		}
-		SV_LocateGameData( (sharedEntity_t *)VMAA(1, char, args[2] * args[3]), args[2], args[3], (playerState_t *)VMAA(4, char, args[5] * MAX_CLIENTS ), args[5] );
+		SV_LocateGameData( (sharedEntity_t *)VM_ArgArray(args[1], args[3], args[2]), args[2], args[3], (playerState_t *)VM_ArgArray(args[4], args[5], MAX_CLIENTS), args[5] );
+		VM_LocateGameDataCheck( sv.gentitiesMV, sv.gentitySizeMV, sv.num_entities );
 		return 0;
 	case MVAPI_LOCATE_GAME_DATA:
-		return MVAPI_LocateGameData((mvsharedEntity_t *)VMA(1), args[2], args[3]);
+		{
+			qboolean ret = MVAPI_LocateGameData((mvsharedEntity_t *)VM_ArgArray(args[1], args[3], args[2]), args[2], args[3]);
+			VM_LocateGameDataCheck( sv.gentitiesMV, sv.gentitySizeMV, sv.num_entities );
+			return ret;
+		}
 	case G_DROP_CLIENT:
 		SV_GameDropClient( args[1], VMAS(2) );
 		return 0;
