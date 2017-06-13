@@ -393,7 +393,7 @@ void SV_AreaEntities_r( worldSector_t *node, areaParms_t *ap ) {
 			continue;
 		}
 
-		if ( ap->count == ap->maxcount ) {
+		if ( ap->count >= ap->maxcount ) {
 			Com_Printf ("SV_AreaEntities: MAXCOUNT\n");
 			return;
 		}
