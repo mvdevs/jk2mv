@@ -327,7 +327,7 @@ void SV_ClientEnterWorld( client_t *client, usercmd_t *cmd );
 void SV_DropClient( client_t *drop, const char *reason );
 
 void SV_ExecuteClientCommand( client_t *cl, const char *s, qboolean clientOK );
-void SV_ClientThink (client_t *cl, const usercmd_t *cmd);
+void SV_ClientThink (int client, const usercmd_t *cmd);
 
 void SV_WriteDownloadToClient( client_t *cl , msg_t *msg );
 
@@ -373,7 +373,7 @@ void		SV_BotInitCvars(void);
 int			SV_BotLibSetup( void );
 int			SV_BotLibShutdown( void );
 int			SV_BotGetSnapshotEntity( int client, int ent );
-int			SV_BotGetConsoleMessage( int client, char *buf, int size );
+qboolean	SV_BotGetConsoleMessage( int client, char *buf, int size );
 
 void *Bot_GetMemoryGame(int size);
 void Bot_FreeMemoryGame(void *ptr);

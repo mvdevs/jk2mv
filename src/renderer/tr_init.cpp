@@ -1568,7 +1568,7 @@ void RE_EndRegistration( void ) {
 
 void RE_GetLightStyle(int style, color4ub_t color)
 {
-	if (style >= MAX_LIGHT_STYLES)
+	if ((unsigned)style >= (unsigned)MAX_LIGHT_STYLES)
 	{
 		ri.Error( ERR_FATAL, "RE_GetLightStyle: %d is out of range", (int)style );
 		return;
@@ -1579,7 +1579,7 @@ void RE_GetLightStyle(int style, color4ub_t color)
 
 void RE_SetLightStyle(int style, int color)
 {
-	if (style >= MAX_LIGHT_STYLES)
+	if ((unsigned)style >= (unsigned)MAX_LIGHT_STYLES)
 	{
 		ri.Error( ERR_FATAL, "RE_SetLightStyle: %d is out of range", (int)style );
 		return;

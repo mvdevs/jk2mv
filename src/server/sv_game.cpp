@@ -576,7 +576,7 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 	case BOTLIB_GET_CONSOLE_MESSAGE:
 		return SV_BotGetConsoleMessage( args[1], VMAA(2, char, args[3]), args[3] );
 	case BOTLIB_USER_COMMAND:
-		SV_ClientThink( &svs.clients[args[1]], VMAV(2, const usercmd_t) );
+		SV_ClientThink( args[1], VMAV(2, const usercmd_t) );
 		return 0;
 
 	case BOTLIB_AAS_BBOX_AREAS:
