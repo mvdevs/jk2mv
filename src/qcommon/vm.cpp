@@ -775,63 +775,72 @@ char *VM_ArgString( intptr_t intValue ) {
 	return p;
 }
 
-void *VM_ExplicitArgPtr( vm_t *vm, intptr_t intValue ) {
+char *VM_ExplicitArgString( vm_t *vm, intptr_t intValue ) {
+	// vm is missing on reconnect here as well?
+	if ( !vm ) {
+		return NULL;
+	}
+	if ( vm->entryPoint ) {
+		return (char *) intValue;
+	}
 	if ( !intValue ) {
 		return NULL;
 	}
 
-	// currentVM is missing on reconnect here as well?
-	if ( currentVM==NULL )
-	  return NULL;
+	intptr_t	len;
+	char		*p;
+	const int	dataMask = vm->dataMask;
 
-	//
-	if ( vm->entryPoint ) {
-		return (void *)(vm->dataBase + intValue);
+	// don't drop on overflow for compatibility reasons
+	intValue &= dataMask;
+
+	p = (char *) vm->dataBase + intValue;
+	len = (intptr_t) strnlen(p, dataMask + 1 - intValue);
+
+	if ( intValue + len > dataMask ) {
+		Com_Error( ERR_DROP, "VM_ExplicitArgString: memory overflow" );
 	}
-	else {
-		return (void *)(vm->dataBase + (intValue & vm->dataMask));
-	}
+
+	return p;
 }
 
 intptr_t VM_strncpy( intptr_t dest, intptr_t src, intptr_t size ) {
-	// currentVM is missing on reconnect here as well?
-	if ( currentVM==NULL )
-	  return 0;
-
+	// currentVM is missing on reconnect
+	if ( !currentVM ) {
+		return 0;
+	}
 	if ( currentVM->entryPoint ) {
 		return (intptr_t) strncpy( (char *)dest, (const char *)src, size );
 	}
-	else {
-		char *dataBase = (char *)currentVM->dataBase;
-		int dataMask = currentVM->dataMask;
 
-		// don't drop on overflow for compatibility reasons
-		dest &= dataMask;
-		src &= dataMask;
+	char *dataBase = (char *)currentVM->dataBase;
+	int dataMask = currentVM->dataMask;
 
-		size_t destSize = dataMask - dest;
-		size_t srcSize = dataMask - src;
-		destSize = MIN((size_t) size, destSize);
-		size_t n = MIN(destSize, srcSize);
+	// don't drop on overflow for compatibility reasons
+	dest &= dataMask;
+	src &= dataMask;
 
-		strncpy( dataBase + dest, dataBase + src, n );
+	size_t destSize = dataMask - dest;
+	size_t srcSize = dataMask - src;
+	destSize = MIN((size_t) size, destSize);
+	size_t n = MIN(destSize, srcSize);
 
-		if ( n < destSize ) {
-			memset( dataBase + dest + n, 0, destSize - n );
-		}
+	strncpy( dataBase + dest, dataBase + src, n );
 
-		return dest;
+	if ( n < destSize ) {
+		memset( dataBase + dest + n, 0, destSize - n );
 	}
+
+	return dest;
 }
 
 // needed because G_LOCATE_GAME_DATA and MVAPI_LOCATE_GAME_DATA update
 // the same sv.num_entities variable
 void VM_LocateGameDataCheck( const void *data, int entitySize, int num_entities ) {
-	// currentVM is missing on reconnect here as well?
-	if ( currentVM==NULL ) {
+	// currentVM is missing on reconnect
+	if ( !currentVM ) {
 		return;
 	}
-
 	if ( !data ) {
 		return;
 	}

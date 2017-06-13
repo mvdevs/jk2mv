@@ -363,7 +363,7 @@ static ID_INLINE float _vmf(intptr_t x)
 #define VMAA(x, type, num)	((type *) VM_ArgArray(args[x], sizeof(type), num))
 #define VMAS(x)				VM_ArgString(args[x])
 
-void	*VM_ExplicitArgPtr(vm_t *vm, intptr_t intValue);
+char	*VM_ExplicitArgString(vm_t *vm, intptr_t intValue);
 
 void	VM_Forced_Unload_Start(void);
 void	VM_Forced_Unload_Done(void);
