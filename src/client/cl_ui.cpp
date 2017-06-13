@@ -19,7 +19,7 @@ Ghoul2 Insert End
 extern	botlib_export_t	*botlib_export;
 void SP_Register(const char *Package);
 
-int UI_ConcatDLList(dlfile_t *files, int maxfiles);
+int UI_ConcatDLList(dlfile_t *files, const int maxfiles);
 qboolean UI_DeleteDLFile(const dlfile_t *file);
 
 vm_t *uivm;
@@ -1274,21 +1274,21 @@ Load the blacklist entrys first so they have a better chance
 to fit in the buffer
 ====================
 */
-int UI_ConcatDLList(dlfile_t *files, int maxfiles) {
+int UI_ConcatDLList(dlfile_t *files, const int maxfiles) {
 	int i, c = 0;
 
 	CL_ReadBlacklistFile();
-	for (i = 0; i < cls.downloadBlacklistLen && maxfiles; i++, maxfiles--) {
+	for (i = 0; i < cls.downloadBlacklistLen && c < maxfiles; i++, c++) {
 		Q_strncpyz(files->name, cls.downloadBlacklist[i].name, sizeof(files->name));
 		files->time = cls.downloadBlacklist[i].time;
 		files->checkksum = cls.downloadBlacklist[i].checksum;
 		files->blacklisted = qtrue;
 
-		c++; files++;
+		files++;
 	}
 	CL_BlacklistWriteCloseFile();
 
-	return c + FS_GetDLList(files, maxfiles);
+	return c + FS_GetDLList(files, c);
 }
 
 qboolean UI_DeleteDLFile(const dlfile_t *file) {
