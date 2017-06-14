@@ -1652,7 +1652,8 @@ void R_AddGhoulSurfaces( trRefEntity_t *ent ) {
 	{
 		if (ghoul2[i].mModelindex != -1)
 		{
-			if (ghoul2[i].mFlags & GHOUL2_NEWORIGIN)
+			if ((ghoul2[i].mFlags & GHOUL2_NEWORIGIN) &&
+				(unsigned)ghoul2[i].mNewOrigin < ghoul2[i].mBltlist.size())
 			{
 				// yes. ooooookkkkkk - now we have to do a GetBoltMatrix for that bone on that model, so we can get it's data into the root matrix for this pass
 				// this will call this same function recursively, so we set checkForNewOrigin to false on the GetBoltMatrixCall so we don't do this loop
@@ -1939,7 +1940,8 @@ void G2_ConstructGhoulSkeleton( CGhoul2Info_v &ghoul2, const int frameNum, const
 		{
 			if (ghoul2[i].mModelindex != -1)
 			{
-				if (ghoul2[i].mFlags & GHOUL2_NEWORIGIN)
+				if ((ghoul2[i].mFlags & GHOUL2_NEWORIGIN) &&
+					(unsigned)ghoul2[i].mNewOrigin < ghoul2[i].mBltlist.size())
 				{
 					// yes. ooooookkkkkk - now we have to do a GetBoltMatrix for that bone on that model, so we can get it's data into the root matrix for this pass
 					// this will call this same function recursively, so we set checkForNewOrigin to false on the GetBoltMatrixCall so we don't do this loop

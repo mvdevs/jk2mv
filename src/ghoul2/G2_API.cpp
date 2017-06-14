@@ -229,7 +229,7 @@ qboolean G2API_SetRootSurface(g2handle_t g2h, const int modelIndex, const char *
 {
 	CGhoul2Info_v *ghoul2 = G2API_GetGhoul2Model(g2h);
 
-	if (!ghoul2) {
+	if (!ghoul2 || ghoul2->size() <= (unsigned)modelIndex) {
 		return qfalse;
 	}
 
