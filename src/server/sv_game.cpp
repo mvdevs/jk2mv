@@ -69,14 +69,16 @@ playerState_t *SV_GameClientNum( int num ) {
 }
 
 svEntity_t	*SV_SvEntityForGentity( sharedEntity_t *gEnt ) {
-	int	num;
+	int	num = -1;
 
 	if ( !gEnt ) {
 		Com_Error( ERR_DROP, "SV_SvEntityForGentity: null gEnt" );
 	}
 	if ( mv_fixplayerghosting->integer && !(sv.fixes & MVFIX_PLAYERGHOSTING) ) {
 		num = SV_NumForGentity( gEnt );
-	} else {
+	}
+	// fallback to s.number if gEnt is not an element of gentities array
+	if ( (unsigned)num >= (unsigned)MAX_GENTITIES ) {
 		num = gEnt->s.number;
 	}
 	if ( (unsigned)num >= (unsigned)MAX_GENTITIES ) {
