@@ -710,6 +710,7 @@ static void IN_ProcessEvents( void )
 
 				if (e.key.keysym.scancode == SDL_SCANCODE_GRAVE) {
 					Sys_QueEvent(0, SE_KEY, A_CONSOLE, qtrue, 0, NULL);
+					textInput = qfalse;
 				} else {
 					key = IN_TranslateSDLToJKKey(&e.key.keysym, qtrue);
 					if (key != A_NULL)
