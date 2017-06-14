@@ -42,6 +42,10 @@ int	SV_NumForGentity( sharedEntity_t *ent ) {
 sharedEntity_t *SV_GentityNum( int num ) {
 	sharedEntity_t *ent;
 
+	if ( (unsigned)num >= (unsigned)sv.num_entities ) {
+		Com_Error( ERR_DROP, "SV_GentityNum: bad num" );
+	}
+
 	ent = (sharedEntity_t *)((byte *)sv.gentities + sv.gentitySize*(num));
 
 	return ent;
@@ -49,8 +53,11 @@ sharedEntity_t *SV_GentityNum( int num ) {
 
 mvsharedEntity_t *MV_EntityNum( int num )
 {
-	mvsharedEntity_t *mvEnt = (mvsharedEntity_t *)( (byte *)sv.gentitiesMV + (sv.gentitySizeMV*num) );
-	return mvEnt;
+	if ( (unsigned)num >= (unsigned)sv.num_entities ) {
+		Com_Error( ERR_DROP, "MV_EntityNum: bad num" );
+	}
+
+	return (mvsharedEntity_t *)( (byte *)sv.gentitiesMV + (sv.gentitySizeMV*num) );
 }
 
 playerState_t *SV_GameClientNum( int num ) {
@@ -62,14 +69,21 @@ playerState_t *SV_GameClientNum( int num ) {
 }
 
 svEntity_t	*SV_SvEntityForGentity( sharedEntity_t *gEnt ) {
-	if ( !gEnt || gEnt->s.number < 0 || gEnt->s.number >= MAX_GENTITIES ) {
-		Com_Error( ERR_DROP, "SV_SvEntityForGentity: bad gEnt" );
+	int	num;
+
+	if ( !gEnt ) {
+		Com_Error( ERR_DROP, "SV_SvEntityForGentity: null gEnt" );
 	}
 	if ( mv_fixplayerghosting->integer && !(sv.fixes & MVFIX_PLAYERGHOSTING) ) {
-		return &sv.svEntities[ SV_NumForGentity( gEnt ) ];
+		num = SV_NumForGentity( gEnt );
 	} else {
-		return &sv.svEntities[ gEnt->s.number ];
+		num = gEnt->s.number;
 	}
+	if ( (unsigned)num >= (unsigned)MAX_GENTITIES ) {
+		Com_Error( ERR_DROP, "SV_SvEntityForGentity: bad gEnt" );
+	}
+
+	return &sv.svEntities[ num ];
 }
 
 sharedEntity_t *SV_GEntityForSvEntity( svEntity_t *svEnt ) {
