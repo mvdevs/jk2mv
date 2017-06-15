@@ -26,8 +26,6 @@ static void SHOWNET( const msg_t *msg, const char *s) {
 	}
 }
 
-void CL_SP_Print(const word ID, const byte *Data); //, char* color)
-
 /*
 =========================================================================
 
@@ -778,7 +776,7 @@ void CL_ParseServerMessage( msg_t *msg ) {
 extern int			scr_center_y;
 void SCR_CenterPrint (char *str);//, PalIdx_t colour)
 
-void CL_SP_Print(const word ID, const byte *Data) //, char* color)
+void CL_SP_Print(const word ID, intptr_t Data) //, char* color)
 {
 	cStringsSingle	*String;
 	unsigned int	Flags;
@@ -789,8 +787,38 @@ void CL_SP_Print(const word ID, const byte *Data) //, char* color)
 	{
 		Text = String->GetText();
 		if (Data)
-		{
-			Com_sprintf(temp, sizeof(temp), Text, Data);
+		{	// replacement for unsafe printf - supports %d, %i and %s
+			const char	*p, *tail;
+			char		head[1024];
+			qboolean	done = qfalse;
+
+			Q_strncpyz(head, Text, sizeof(head));
+			Q_strncpyz(temp, Text, sizeof(head));
+
+			while((p = strchr(Text, '%')) && !done) {
+				switch(p[1]) {
+				case 's':
+					head[p - Text] = '\0';
+					tail = p + 2;
+					Com_sprintf(temp, sizeof(temp), "%s%s%s", head, (char *)VM_ArgString(Data), tail);
+					done = qtrue;
+					break;
+				case 'd':
+				case 'i':
+					head[p - Text] = '\0';
+					tail = p + 2;
+					Com_sprintf(temp, sizeof(temp), "%s%d%s", head, *(int *)VM_ArgPtr(Data, sizeof(int)), tail);
+					done = qtrue;
+					break;
+				case '\0':
+					done = qtrue;
+					break;
+				default:
+					p += 2;
+					break;
+				}
+			}
+
 			Text = temp;
 		}
 
