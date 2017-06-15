@@ -666,23 +666,23 @@ intptr_t CL_CgameSystemCalls(intptr_t *args) {
 		Cvar_Set2( VMAS(1), VMAS(2), qtrue, qtrue );
 		return 0;
 	case CG_CVAR_VARIABLESTRINGBUFFER:
-		Cvar_VariableStringBuffer( VMAS(1), VMAA(2, char, args[3]), args[3], qtrue );
+		Cvar_VariableStringBuffer( VMAS(1), VMAP(2, char, args[3]), args[3], qtrue );
 		return 0;
 	case CG_ARGC:
 		return Cmd_Argc();
 	case CG_ARGV:
-		Cmd_ArgvBuffer( args[1], VMAA(2, char, args[3]), args[3] );
+		Cmd_ArgvBuffer( args[1], VMAP(2, char, args[3]), args[3] );
 		return 0;
 	case CG_ARGS:
-		Cmd_ArgsBuffer( VMAA(1, char, args[2]), args[2] );
+		Cmd_ArgsBuffer( VMAP(1, char, args[2]), args[2] );
 		return 0;
 	case CG_FS_FOPENFILE:
 		return FS_FOpenFileByMode( VMAS(1), VMAV(2, int), (fsMode_t)args[3] );
 	case CG_FS_READ:
-		FS_Read2( VMAA(1, char, args[2]), args[2], args[3] );
+		FS_Read2( VMAP(1, char, args[2]), args[2], args[3] );
 		return 0;
 	case CG_FS_WRITE:
-		FS_Write( VMAA(1, const char, args[2]), args[2], args[3] );
+		FS_Write( VMAP(1, const char, args[2]), args[2], args[3] );
 		return 0;
 	case CG_FS_FCLOSEFILE:
 		FS_FCloseFile( args[1] );
@@ -886,10 +886,10 @@ intptr_t CL_CgameSystemCalls(intptr_t *args) {
 
 
 	case CGAME_MEMSET:
-		Com_Memset( VMAA(1, char, args[3]), args[2], args[3] );
+		Com_Memset( VMAP(1, char, args[3]), args[2], args[3] );
 		return 0;
 	case CGAME_MEMCPY:
-		Com_Memcpy( VMAA(1, char, args[3]), VMAA(2, char, args[3]), args[3] );
+		Com_Memcpy( VMAP(1, char, args[3]), VMAP(2, char, args[3]), args[3] );
 		return 0;
 	case CGAME_STRNCPY:
 		return VM_strncpy( args[1], args[2], args[3] );
@@ -917,7 +917,7 @@ intptr_t CL_CgameSystemCalls(intptr_t *args) {
 	case CG_PC_READ_TOKEN:
 		return botlib_export->PC_ReadTokenHandle( args[1], VMAV(2, pc_token_t) );
 	case CG_PC_SOURCE_FILE_AND_LINE:
-		return botlib_export->PC_SourceFileAndLine( args[1], VMAA(2, char, MAX_QPATH), VMAV(3, int) );
+		return botlib_export->PC_SourceFileAndLine( args[1], VMAP(2, char, MAX_QPATH), VMAV(3, int) );
 	case CG_PC_LOAD_GLOBAL_DEFINES:
 		return botlib_export->PC_LoadGlobalDefines ( VMAS(1) );
 	case CG_PC_REMOVE_ALL_GLOBAL_DEFINES:
@@ -986,7 +986,7 @@ intptr_t CL_CgameSystemCalls(intptr_t *args) {
 		return getCameraInfo(args[1], VMA(2), VMA(3));
 */
 	case CG_GET_ENTITY_TOKEN:
-		return re.GetEntityToken( VMAA(1, char, args[2]), args[2] );
+		return re.GetEntityToken( VMAP(1, char, args[2]), args[2] );
 	case CG_R_INPVS:
 		return re.inPVS( VMAP(1, const vec_t, 3), VMAP(2, const vec_t, 3) );
 
@@ -1202,7 +1202,7 @@ Ghoul2 Insert Start
 			local = G2API_GetGLAName((g2handle_t)args[1], args[2]);
 			if (local)
 			{
-				char *point = VMAA(3, char, strlen(local) + 1);
+				char *point = VMAP(3, char, strlen(local) + 1);
 				strcpy(point, local);
 			}
 		}
@@ -1265,12 +1265,12 @@ Ghoul2 Insert End
 
 		if ( text[0] )
 		{
-			Q_strncpyz( VMAA(2, char, args[3]), text, args[3] );
+			Q_strncpyz( VMAP(2, char, args[3]), text, args[3] );
 			return qtrue;
 		}
 		else
 		{
-			Q_strncpyz( VMAA(2, char, args[3]), "??", args[3] );
+			Q_strncpyz( VMAP(2, char, args[3]), "??", args[3] );
 			return qfalse;
 		}
 		break;
@@ -1279,7 +1279,7 @@ Ghoul2 Insert End
 		return !!SP_Register(VMAS(1), SP_REGISTER_CLIENT);
 
 	case CG_SET_SHARED_BUFFER:
-		cl.mSharedMemory = VMAA(1, char, MAX_CG_SHARED_BUFFER_SIZE);
+		cl.mSharedMemory = VMAP(1, char, MAX_CG_SHARED_BUFFER_SIZE);
 		return 0;
 
 	case MVAPI_CONTROL_FIXES:

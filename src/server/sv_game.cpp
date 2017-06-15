@@ -379,12 +379,12 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 	case G_CVAR_VARIABLE_INTEGER_VALUE:
 		return Cvar_VariableIntegerValue( VMAS(1), qtrue );
 	case G_CVAR_VARIABLE_STRING_BUFFER:
-		Cvar_VariableStringBuffer( VMAS(1), VMAA(2, char, args[3]), args[3], qtrue );
+		Cvar_VariableStringBuffer( VMAS(1), VMAP(2, char, args[3]), args[3], qtrue );
 		return 0;
 	case G_ARGC:
 		return Cmd_Argc();
 	case G_ARGV:
-		Cmd_ArgvBuffer( args[1], VMAA(2, char, args[3]), args[3] );
+		Cmd_ArgvBuffer( args[1], VMAP(2, char, args[3]), args[3] );
 		return 0;
 	case G_SEND_CONSOLE_COMMAND:
 		Cbuf_ExecuteText( (cbufExec_t)args[1], VMAS(2) );
@@ -393,16 +393,16 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 	case G_FS_FOPEN_FILE:
 		return FS_FOpenFileByMode( VMAS(1), VMAV(2, int), (fsMode_t)args[3] );
 	case G_FS_READ:
-		FS_Read2( VMAA(1, char, args[2]), args[2], args[3] );
+		FS_Read2( VMAP(1, char, args[2]), args[2], args[3] );
 		return 0;
 	case G_FS_WRITE:
-		FS_Write( VMAA(1, char, args[2]), args[2], args[3] );
+		FS_Write( VMAP(1, char, args[2]), args[2], args[3] );
 		return 0;
 	case G_FS_FCLOSE_FILE:
 		FS_FCloseFile( args[1] );
 		return 0;
 	case G_FS_GETFILELIST:
-		return FS_GetFileList( VMAS(1), VMAS(2), VMAA(3, char, args[4]), args[4] );
+		return FS_GetFileList( VMAS(1), VMAS(2), VMAP(3, char, args[4]), args[4] );
 
 	case G_LOCATE_GAME_DATA:
 		SV_LocateGameData( (sharedEntity_t *)VM_ArgArray(args[1], args[3], args[2]), args[2], args[3], (playerState_t *)VM_ArgArray(args[4], args[5], MAX_CLIENTS), args[5] );
@@ -451,16 +451,16 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 		SV_SetConfigstring( args[1], VMAS(2) );
 		return 0;
 	case G_GET_CONFIGSTRING:
-		SV_GetConfigstring( args[1], VMAA(2, char, args[3]), args[3] );
+		SV_GetConfigstring( args[1], VMAP(2, char, args[3]), args[3] );
 		return 0;
 	case G_SET_USERINFO:
 		SV_SetUserinfo( args[1], VMAS(2) );
 		return 0;
 	case G_GET_USERINFO:
-		SV_GetUserinfo( args[1], VMAA(2, char, args[3]), args[3] );
+		SV_GetUserinfo( args[1], VMAP(2, char, args[3]), args[3] );
 		return 0;
 	case G_GET_SERVERINFO:
-		SV_GetServerinfo( VMAA(1, char, args[2]), args[2] );
+		SV_GetServerinfo( VMAP(1, char, args[2]), args[2] );
 		return 0;
 	case G_ADJUST_AREA_PORTAL_STATE:
 		SV_AdjustAreaPortalState( VMAV(1, sharedEntity_t), (qboolean)!!args[2] );
@@ -482,7 +482,7 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 			const char	*s;
 
 			s = COM_Parse( &sv.entityParsePoint );
-			Q_strncpyz( VMAA(1, char, args[2]), s, args[2] );
+			Q_strncpyz( VMAP(1, char, args[2]), s, args[2] );
 			if ( !sv.entityParsePoint && !s[0] ) {
 				return qfalse;
 			} else {
@@ -527,12 +527,12 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 
 		if ( text[0] )
 		{
-			Q_strncpyz( VMAA(2, char, args[3]), text, args[3] );
+			Q_strncpyz( VMAP(2, char, args[3]), text, args[3] );
 			return qtrue;
 		}
 		else
 		{
-			Q_strncpyz( VMAA(2, char, args[3]), "??", args[3] );
+			Q_strncpyz( VMAP(2, char, args[3]), "??", args[3] );
 			return qfalse;
 		}
 		break;
@@ -565,7 +565,7 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 	case BOTLIB_LIBVAR_SET:
 		return botlib_export->BotLibVarSet( VMAS(1), VMAS(2) );
 	case BOTLIB_LIBVAR_GET:
-		return botlib_export->BotLibVarGet( VMAS(1), VMAA(2, char, args[3]), args[3] );
+		return botlib_export->BotLibVarGet( VMAS(1), VMAP(2, char, args[3]), args[3] );
 
 	case BOTLIB_PC_ADD_GLOBAL_DEFINE:
 		return botlib_export->PC_AddGlobalDefine( VMAS(1) );
@@ -576,7 +576,7 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 	case BOTLIB_PC_READ_TOKEN:
 		return botlib_export->PC_ReadTokenHandle( args[1], VMAV(2, pc_token_t) );
 	case BOTLIB_PC_SOURCE_FILE_AND_LINE:
-		return botlib_export->PC_SourceFileAndLine( args[1], VMAA(2, char, MAX_QPATH), VMAV(3, int) );
+		return botlib_export->PC_SourceFileAndLine( args[1], VMAP(2, char, MAX_QPATH), VMAV(3, int) );
 
 	case BOTLIB_START_FRAME:
 		return botlib_export->BotLibStartFrame( VMF(1) );
@@ -590,7 +590,7 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 	case BOTLIB_GET_SNAPSHOT_ENTITY:
 		return SV_BotGetSnapshotEntity( args[1], args[2] );
 	case BOTLIB_GET_CONSOLE_MESSAGE:
-		return SV_BotGetConsoleMessage( args[1], VMAA(2, char, args[3]), args[3] );
+		return SV_BotGetConsoleMessage( args[1], VMAP(2, char, args[3]), args[3] );
 	case BOTLIB_USER_COMMAND:
 		SV_ClientThink( args[1], VMAV(2, const usercmd_t) );
 		return 0;
@@ -625,7 +625,7 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 	case BOTLIB_AAS_NEXT_BSP_ENTITY:
 		return botlib_export->aas.AAS_NextBSPEntity( args[1] );
 	case BOTLIB_AAS_VALUE_FOR_BSP_EPAIR_KEY:
-		return botlib_export->aas.AAS_ValueForBSPEpairKey( args[1], VMAS(2), VMAA(3, char, args[4]), args[4] );
+		return botlib_export->aas.AAS_ValueForBSPEpairKey( args[1], VMAS(2), VMAP(3, char, args[4]), args[4] );
 	case BOTLIB_AAS_VECTOR_FOR_BSP_EPAIR_KEY:
 		return botlib_export->aas.AAS_VectorForBSPEpairKey( args[1], VMAS(2), VMAP(3, vec_t, 3) );
 	case BOTLIB_AAS_FLOAT_FOR_BSP_EPAIR_KEY:
@@ -745,7 +745,7 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 	case BOTLIB_AI_CHARACTERISTIC_BINTEGER:
 		return botlib_export->ai.Characteristic_BInteger( args[1], args[2], args[3], args[4] );
 	case BOTLIB_AI_CHARACTERISTIC_STRING:
-		botlib_export->ai.Characteristic_String( args[1], args[2], VMAA(3, char, args[4]), args[4] );
+		botlib_export->ai.Characteristic_String( args[1], args[2], VMAP(3, char, args[4]), args[4] );
 		return 0;
 
 	case BOTLIB_AI_ALLOC_CHAT_STATE:
@@ -776,14 +776,14 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 		botlib_export->ai.BotEnterChat( args[1], args[2], args[3] );
 		return 0;
 	case BOTLIB_AI_GET_CHAT_MESSAGE:
-		botlib_export->ai.BotGetChatMessage( args[1], VMAA(2, char, args[3]), args[3] );
+		botlib_export->ai.BotGetChatMessage( args[1], VMAP(2, char, args[3]), args[3] );
 		return 0;
 	case BOTLIB_AI_STRING_CONTAINS:
 		return botlib_export->ai.StringContains( VMAS(1), VMAS(2), args[3] );
 	case BOTLIB_AI_FIND_MATCH:
 		return botlib_export->ai.BotFindMatch( VMAS(1), (struct bot_match_s *)VM_ArgPtr(args[2], bot_match_size), args[3] );
 	case BOTLIB_AI_MATCH_VARIABLE:
-		botlib_export->ai.BotMatchVariable( (const struct bot_match_s *)VM_ArgPtr(args[1], bot_match_size), args[2], VMAA(3, char, args[4]), args[4] );
+		botlib_export->ai.BotMatchVariable( (const struct bot_match_s *)VM_ArgPtr(args[1], bot_match_size), args[2], VMAP(3, char, args[4]), args[4] );
 		return 0;
 	case BOTLIB_AI_UNIFY_WHITE_SPACES:
 		botlib_export->ai.UnifyWhiteSpaces( VMAS(1) );
@@ -825,7 +825,7 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 		botlib_export->ai.BotDumpGoalStack( args[1] );
 		return 0;
 	case BOTLIB_AI_GOAL_NAME:
-		botlib_export->ai.BotGoalName( args[1], VMAA(2, char, args[3]), args[3] );
+		botlib_export->ai.BotGoalName( args[1], VMAP(2, char, args[3]), args[3] );
 		return 0;
 	case BOTLIB_AI_GET_TOP_GOAL:
 		return botlib_export->ai.BotGetTopGoal( args[1], (struct bot_goal_s *)VM_ArgPtr(args[2], bot_goal_size) );
@@ -928,11 +928,11 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 		return botlib_export->ai.GeneticParentsAndChildSelection(args[1], VMAA(2, const float, args[1]), VMAV(3, int), VMAV(4, int), VMAV(5, int));
 
 	case TRAP_MEMSET:
-		Com_Memset( VMAA(1, char, args[3]), args[2], args[3] );
+		Com_Memset( VMAP(1, char, args[3]), args[2], args[3] );
 		return 0;
 
 	case TRAP_MEMCPY:
-		Com_Memcpy( VMAA(1, char, args[3]), VMAA(2, char, args[3]), args[3] );
+		Com_Memcpy( VMAP(1, char, args[3]), VMAP(2, char, args[3]), args[3] );
 		return 0;
 
 	case TRAP_STRNCPY:
@@ -1024,7 +1024,7 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 			local = G2API_GetGLAName((g2handle_t)args[1], args[2]);
 			if (local)
 			{
-				char *point = VMAA(3, char, strlen(local) + 1);
+				char *point = VMAP(3, char, strlen(local) + 1);
 				strcpy(point, local);
 			}
 		}
@@ -1071,7 +1071,7 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 		return 0;
 
 	case MVAPI_GET_CONNECTIONLESSPACKET:
-		return (int)MVAPI_GetConnectionlessPacket(VMAV(1, mvaddr_t), VMAA(2, char, (unsigned int)args[3]), (unsigned int)args[3]);
+		return (int)MVAPI_GetConnectionlessPacket(VMAV(1, mvaddr_t), VMAP(2, char, (unsigned int)args[3]), (unsigned int)args[3]);
 
 	case MVAPI_SEND_CONNECTIONLESSPACKET:
 		return (int)MVAPI_SendConnectionlessPacket(VMAV(1, const mvaddr_t), VMAS(2));

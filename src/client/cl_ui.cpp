@@ -791,7 +791,7 @@ intptr_t CL_UISystemCalls(intptr_t *args) {
 		return FloatAsInt( Cvar_VariableValue( VMAS(1), qtrue ) );
 
 	case UI_CVAR_VARIABLESTRINGBUFFER:
-		Cvar_VariableStringBuffer( VMAS(1), VMAA(2, char, args[3]), args[3], qtrue );
+		Cvar_VariableStringBuffer( VMAS(1), VMAP(2, char, args[3]), args[3], qtrue );
 		return 0;
 
 	case UI_CVAR_SETVALUE:
@@ -807,14 +807,14 @@ intptr_t CL_UISystemCalls(intptr_t *args) {
 		return 0;
 
 	case UI_CVAR_INFOSTRINGBUFFER:
-		Cvar_InfoStringBuffer( args[1], VMAA(2, char, args[3]), args[3], qtrue );
+		Cvar_InfoStringBuffer( args[1], VMAP(2, char, args[3]), args[3], qtrue );
 		return 0;
 
 	case UI_ARGC:
 		return Cmd_Argc();
 
 	case UI_ARGV:
-		Cmd_ArgvBuffer( args[1], VMAA(2, char, args[3]), args[3] );
+		Cmd_ArgvBuffer( args[1], VMAP(2, char, args[3]), args[3] );
 		return 0;
 
 	case UI_CMD_EXECUTETEXT:
@@ -825,11 +825,11 @@ intptr_t CL_UISystemCalls(intptr_t *args) {
 		return FS_FOpenFileByMode( VMAS(1), VMAV(2, int), (fsMode_t)args[3] );
 
 	case UI_FS_READ:
-		FS_Read2( VMAA(1, char, args[2]), args[2], args[3] );
+		FS_Read2( VMAP(1, char, args[2]), args[2], args[3] );
 		return 0;
 
 	case UI_FS_WRITE:
-		FS_Write( VMAA(1, char, args[2]), args[2], args[3] );
+		FS_Write( VMAP(1, char, args[2]), args[2], args[3] );
 		return 0;
 
 	case UI_FS_FCLOSEFILE:
@@ -837,7 +837,7 @@ intptr_t CL_UISystemCalls(intptr_t *args) {
 		return 0;
 
 	case UI_FS_GETFILELIST:
-		return FS_GetFileList( VMAS(1), VMAS(2), VMAA(3, char, args[4]), args[4] );
+		return FS_GetFileList( VMAS(1), VMAS(2), VMAP(3, char, args[4]), args[4] );
 
 	case UI_R_REGISTERMODEL:
 		return re.RegisterModel( VMAS(1) );
@@ -896,11 +896,11 @@ intptr_t CL_UISystemCalls(intptr_t *args) {
 		return 0;
 
 	case UI_KEY_KEYNUMTOSTRINGBUF:
-		Key_KeynumToStringBuf(Key_GetProtocolKey15(UI_GetCurrentGameversion(), args[1]), VMAA(2, char, args[3]), args[3]); // 1.02 keynums -> 1.04 keynums
+		Key_KeynumToStringBuf(Key_GetProtocolKey15(UI_GetCurrentGameversion(), args[1]), VMAP(2, char, args[3]), args[3]); // 1.02 keynums -> 1.04 keynums
 		return 0;
 
 	case UI_KEY_GETBINDINGBUF:
-		Key_GetBindingBuf(Key_GetProtocolKey15(UI_GetCurrentGameversion(), args[1]), VMAA(2, char, args[3]), args[3]); // 1.02 keynums -> 1.04 keynums
+		Key_GetBindingBuf(Key_GetProtocolKey15(UI_GetCurrentGameversion(), args[1]), VMAP(2, char, args[3]), args[3]); // 1.02 keynums -> 1.04 keynums
 		return 0;
 
 	case UI_KEY_SETBINDING:
@@ -929,7 +929,7 @@ intptr_t CL_UISystemCalls(intptr_t *args) {
 		return 0;
 
 	case UI_GETCLIPBOARDDATA:
-		GetClipboardData( VMAA(1, char, args[2]), args[2] );
+		GetClipboardData( VMAP(1, char, args[2]), args[2] );
 		return 0;
 
 	case UI_GETCLIENTSTATE:
@@ -941,7 +941,7 @@ intptr_t CL_UISystemCalls(intptr_t *args) {
 		return 0;
 
 	case UI_GETCONFIGSTRING:
-		return GetConfigString( args[1], VMAA(2, char, args[3]), args[3] );
+		return GetConfigString( args[1], VMAP(2, char, args[3]), args[3] );
 
 	case UI_LAN_LOADCACHEDSERVERS:
 		LAN_LoadCachedServers();
@@ -966,22 +966,22 @@ intptr_t CL_UISystemCalls(intptr_t *args) {
 		return 0;
 
 	case UI_LAN_GETPING:
-		LAN_GetPing( args[1], VMAA(2, char, args[3]), args[3], VMAV(4, int) );
+		LAN_GetPing( args[1], VMAP(2, char, args[3]), args[3], VMAV(4, int) );
 		return 0;
 
 	case UI_LAN_GETPINGINFO:
-		LAN_GetPingInfo( args[1], VMAA(2, char, args[3]), args[3] );
+		LAN_GetPingInfo( args[1], VMAP(2, char, args[3]), args[3] );
 		return 0;
 
 	case UI_LAN_GETSERVERCOUNT:
 		return LAN_GetServerCount(args[1]);
 
 	case UI_LAN_GETSERVERADDRESSSTRING:
-		LAN_GetServerAddressString( args[1], args[2], VMAA(3, char, args[4]), args[4] );
+		LAN_GetServerAddressString( args[1], args[2], VMAP(3, char, args[4]), args[4] );
 		return 0;
 
 	case UI_LAN_GETSERVERINFO:
-		LAN_GetServerInfo( args[1], args[2], VMAA(3, char, args[4]), args[4] );
+		LAN_GetServerInfo( args[1], args[2], VMAP(3, char, args[4]), args[4] );
 		return 0;
 
 	case UI_LAN_GETSERVERPING:
@@ -1002,7 +1002,7 @@ intptr_t CL_UISystemCalls(intptr_t *args) {
 		return 0;
 
 	case UI_LAN_SERVERSTATUS:
-		return LAN_GetServerStatus( VMAS(1), VMAA(2, char, args[3]), args[3] );
+		return LAN_GetServerStatus( VMAS(1), VMAP(2, char, args[3]), args[3] );
 
 	case UI_LAN_COMPARESERVERS:
 		return LAN_CompareServers( args[1], args[2], args[3], args[4], args[5] );
@@ -1036,11 +1036,11 @@ intptr_t CL_UISystemCalls(intptr_t *args) {
 		return re.AnyLanguage_ReadCharFromString( VMAS(1), VMAV(2, int), VMAV(3, qboolean) );
 
 	case UI_MEMSET:
-		Com_Memset( VMAA(1, char, args[3]), args[2], args[3] );
+		Com_Memset( VMAP(1, char, args[3]), args[2], args[3] );
 		return 0;
 
 	case UI_MEMCPY:
-		Com_Memcpy( VMAA(1, char, args[3]), VMAA(2, char, args[3]), args[3] );
+		Com_Memcpy( VMAP(1, char, args[3]), VMAP(2, char, args[3]), args[3] );
 		return 0;
 
 	case UI_STRNCPY:
@@ -1073,7 +1073,7 @@ intptr_t CL_UISystemCalls(intptr_t *args) {
 	case UI_PC_READ_TOKEN:
 		return botlib_export->PC_ReadTokenHandle( args[1], VMAV(2, pc_token_t) );
 	case UI_PC_SOURCE_FILE_AND_LINE:
-		return botlib_export->PC_SourceFileAndLine( args[1], VMAA(2, char, MAX_QPATH), VMAV(3, int) );
+		return botlib_export->PC_SourceFileAndLine( args[1], VMAP(2, char, MAX_QPATH), VMAV(3, int) );
 	case UI_PC_LOAD_GLOBAL_DEFINES:
 		return botlib_export->PC_LoadGlobalDefines ( VMAS(1) );
 	case UI_PC_REMOVE_ALL_GLOBAL_DEFINES:
@@ -1119,7 +1119,7 @@ intptr_t CL_UISystemCalls(intptr_t *args) {
 		const char* text;
 
 		text = SP_GetStringTextString(VMAS(1));
-		Q_strncpyz( VMAA(2, char, args[3]), text, args[3] );
+		Q_strncpyz( VMAP(2, char, args[3]), text, args[3] );
 		return qtrue;
 
 /*
