@@ -7,6 +7,10 @@ endif(NOT InMV)
 set(MVGLOBALIncludeDirs ${MVGLOBALIncludeDirs} ${CMAKE_BINARY_DIR})
 configure_file("mv_setup.h.in" "${CMAKE_BINARY_DIR}/mv_setup.h" @ONLY)
 
+if(BuildMVSDK)
+	add_subdirectory("mvsdk")
+endif()
+
 if (BuildMVMP OR BuildMVDED)
 	# Libraries
 	
@@ -479,7 +483,7 @@ if (BuildMVMP)
 			$<TARGET_FILE_DIR:${MVMP}>
 		)
 	endif()
-	
+
 	# add DPI awareness manifest
 	if(MSVC)
 		add_custom_command(TARGET ${MVMP} POST_BUILD
@@ -527,7 +531,12 @@ if (BuildMVMP)
 	endif()
 
 	# jk2mvmenu and assetsmv are required to run JK2MV
-	add_dependencies(${MVMP} ${MVMENU} assets)
+	add_dependencies(${MVMP} ${MVMENU} assetsmv)
+
+	if(BuildMVSDK)
+		add_dependencies(${MVMP} assetsmv2)
+	endif()
+
 	add_subdirectory("menu")
 endif()
 
@@ -563,6 +572,19 @@ if (BuildMVDED)
 	set_target_properties(${MVDED} PROPERTIES INCLUDE_DIRECTORIES "${MVDEDIncludeDirs}")
 	target_link_libraries(${MVDED} ${MVDEDLibraries} ${MINIZIP_LIBRARIES} ${ZLIB_LIBRARIES})
 	set_target_properties(${MVDED} PROPERTIES PROJECT_LABEL "jk2mvded")
+
+	if(BuildMVSDK)
+		add_dependencies(${MVDED} assetsmv2)
+	endif()
+
+	# Copy assets2 to the output directory (for debugging)
+	if(BuildMVSDK)
+		add_custom_command(TARGET ${MVDED} POST_BUILD
+			COMMAND ${CMAKE_COMMAND} -E copy_if_different
+			"${CMAKE_BINARY_DIR}/src/mvsdk/code/assetsmv2.pk3"
+			"$<TARGET_FILE_DIR:${MVDED}>/base/assetsmv2.pk3"
+		)
+	endif()
 
 	# installation
 	if(WIN32 OR APPLE)

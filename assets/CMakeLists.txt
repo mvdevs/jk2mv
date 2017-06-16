@@ -66,7 +66,7 @@ set(AssetsFiles
 	"ui/jk2mv/download_popup.menu"
 )
 
-source_group("assets" FILES ${AssetsFiles})
+source_group("assetsmv" FILES ${AssetsFiles})
 
 # generate assetsmv.pk3
 if(MultiConfigGenerator)
@@ -82,7 +82,7 @@ add_zip_command(${CMAKE_CURRENT_BINARY_DIR}/assetsmv.pk3 ${OUTFILE}
 	DEPENDS "${AssetsFiles}"
 )
 
-add_custom_target(assets DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/assetsmv.pk3 ${AssetsFiles})
+add_custom_target(assetsmv DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/assetsmv.pk3" ${AssetsFiles})
 
 if(WIN32)
 	install(FILES ${CMAKE_CURRENT_BINARY_DIR}/assetsmv.pk3 DESTINATION "base")
