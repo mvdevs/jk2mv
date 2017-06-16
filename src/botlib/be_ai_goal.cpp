@@ -583,7 +583,7 @@ void BotInitLevelItems(void)
 			{
 				VectorCopy(origin, end);
 				end[2] -= 32;
-				trace = AAS_Trace(origin, ic->iteminfo[i].mins, ic->iteminfo[i].maxs, end, -1, CONTENTS_SOLID|CONTENTS_PLAYERCLIP);
+				trace = AAS_Trace(origin, ic->iteminfo[i].mins, ic->iteminfo[i].maxs, end, ENTITYNUM_NONE, CONTENTS_SOLID|CONTENTS_PLAYERCLIP);
 				//if the item not near the ground
 				if (trace.fraction >= 1)
 				{
