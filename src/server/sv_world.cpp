@@ -523,18 +523,21 @@ void SV_ClipMoveToEntities( moveclip_t *clip ) {
 
 	num = SV_AreaEntities( clip->boxmins, clip->boxmaxs, touchlist, MAX_GENTITIES);
 
-	if ( clip->passEntityNum != ENTITYNUM_NONE ) {
-		passOwnerNum = ( SV_GentityNum( clip->passEntityNum ) )->r.ownerNum;
+	if ( clip->passEntityNum < 0 ) {
+		passOwnerNum = -1;	// common bad API usage in original modules
+	} if ( clip->passEntityNum != ENTITYNUM_NONE ) {
+		const sharedEntity_t *passEnt = SV_GentityNum( clip->passEntityNum );
+
+		passOwnerNum = passEnt->r.ownerNum;
 		if ( passOwnerNum == ENTITYNUM_NONE ) {
 			passOwnerNum = -1;
 		}
+		if ( passEnt->r.svFlags & SVF_OWNERNOTSHARED )
+		{
+			thisOwnerShared = 0;
+		}
 	} else {
 		passOwnerNum = -1;
-	}
-
-	if ( SV_GentityNum(clip->passEntityNum)->r.svFlags & SVF_OWNERNOTSHARED )
-	{
-		thisOwnerShared = 0;
 	}
 
 	for ( i=0 ; i<num ; i++ ) {
