@@ -855,6 +855,8 @@ void VM_VmProfile_f( void ) {
 	int			i;
 	long		total;
 	int			totalCalls;
+	int			time;
+	static int	profileTime;
 	qboolean	printHelp = qfalse;
 	qboolean	resetCounts = qfalse;
 	qboolean	printAll = qfalse;
@@ -895,6 +897,8 @@ void VM_VmProfile_f( void ) {
 	}
 
 	if ( resetCounts ) {
+		profileTime = Com_Milliseconds();
+
 		for ( i = 0; i < MAX_VM; i++ ) {
 			for ( sym = vmTable[i].symbols ; sym ; sym = sym->next ) {
 				sym->profileCount = 0;
@@ -964,7 +968,10 @@ void VM_VmProfile_f( void ) {
 		FS_FCloseFile( callgrind );
 	}
 
+	time = Com_Milliseconds() - profileTime;
+
 	Com_Printf("     %12li %9i total\n", total, totalCalls );
+	Com_Printf("     %12li %9i total per second\n", 1000 * total / time, 1000 * totalCalls / time );
 
 	Z_Free( sorted );
 }
