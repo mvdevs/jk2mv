@@ -68,7 +68,7 @@ typedef struct {
 
 
 	int		(*MarkFragments)( int numPoints, const vec3_t *points, const vec3_t projection,
-				   int maxPoints, vec3_t pointBuffer, int maxFragments, markFragment_t *fragmentBuffer );
+				   int maxPoints, vec3_t *pointBuffer, int maxFragments, markFragment_t *fragmentBuffer );
 
 	int		(*LerpTag)( orientation_t *tag,  qhandle_t model, int startFrame, int endFrame,
 					 float frac, const char *tagName );

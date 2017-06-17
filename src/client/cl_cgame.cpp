@@ -736,7 +736,7 @@ intptr_t CL_CgameSystemCalls(intptr_t *args) {
 		CM_TransformedBoxTrace( (trace_t *)VMA(1), (const float *)VMA(2), (const float *)VMA(3), (const float *)VMA(4), (const float *)VMA(5), args[6], args[7], (const float *)VMA(8), (const float *)VMA(9), qtrue );
 		return 0;
 	case CG_CM_MARKFRAGMENTS:
-		return re.MarkFragments( args[1], (const vec3_t *)VMA(2), (const float *)VMA(3), args[4], (float *)VMA(5), args[6], (markFragment_t *)VMA(7) );
+		return re.MarkFragments( args[1], (const vec3_t *)VMA(2), (const float *)VMA(3), args[4], (vec3_t *)VMA(5), args[6], (markFragment_t *)VMA(7) );
 	case CG_S_MUTESOUND:
 		S_MuteSound( args[1], args[2] );
 		return 0;
