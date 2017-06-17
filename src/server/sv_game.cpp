@@ -421,7 +421,7 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 		SV_GameSendServerCommand( args[1], VMAS(2) );
 		return 0;
 	case G_LINKENTITY:
-		SV_LinkEntity( VMAV(1, sharedEntity_t) );
+		SV_LinkEntity( (sharedEntity_t *)VM_ArgPtr(args[1], MAX((int)sizeof(sharedEntity_t), sv.gentitySize)) );
 		return 0;
 	case G_UNLINKENTITY:
 		SV_UnlinkEntity( VMAV(1, sharedEntity_t) );
