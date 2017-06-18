@@ -182,13 +182,7 @@ else()
 endif()
 
 # Compiler defines / settings
-set(GlobalDefines ${GlobalDefines} "BOTLIB")
-set(GlobalDefines ${GlobalDefines} "_JK2")
-
-if(NOT MSVC)
-	# CMake already defines _DEBUG for MSVC.
-	set(DebugDefines ${DebugDefines} "_DEBUG")
-endif()
+set(GlobalDefines ${GlobalDefines} "BOTLIB" "_JK2")
 set(DebugDefines ${DebugDefines} "DEBUG")
 set(ReleaseDefines "FINAL_BUILD" "NDEBUG")
 
