@@ -103,17 +103,18 @@ else()
 	endif()
 endif()
 
-function(add_zip_command output)
+function(add_zip_command tmp_output output)
 	set(MultiValueArgs DIR FILES DEPENDS)
 	cmake_parse_arguments(ARGS "" "" "${MultiValueArgs}" ${ARGN})
 
 	set(ZipCommand ${ZIP_COMMAND})
-	string(REPLACE <ARCHIVE> "${output}" ZipCommand "${ZipCommand}")
+	string(REPLACE <ARCHIVE> "${tmp_output}" ZipCommand "${ZipCommand}")
 	string(REPLACE <FILES> "${ARGS_FILES}" ZipCommand "${ZipCommand}")
-	add_custom_command(OUTPUT ${output}
+	add_custom_command(OUTPUT "${tmp_output}"
 		WORKING_DIRECTORY ${ARGS_DIR}
-		COMMAND ${CMAKE_COMMAND} -E remove "${output}"
+		COMMAND ${CMAKE_COMMAND} -E remove "${tmp_output}"
 		COMMAND ${ZipCommand}
+		COMMAND ${CMAKE_COMMAND} -E copy "${tmp_output}" "${output}"
 		DEPENDS ${ARGS_DEPENDS}
 	)
 endfunction(add_zip_command)

@@ -1,4 +1,4 @@
-# Make sure the user is not executing this script directly
+﻿# Make sure the user is not executing this script directly
 if(NOT InMV)
 	message(FATAL_ERROR "Use the top-level cmake script!")
 endif(NOT InMV)
@@ -69,14 +69,20 @@ set(AssetsFiles
 source_group("assets" FILES ${AssetsFiles})
 
 # generate assetsmv.pk3
+if(MultiConfigGenerator)
+	set(OUTFILE ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/$<CONFIG>/base/assetsmv.pk3)
+else()
+	set(OUTFILE ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/base/assetsmv.pk3)
+endif()
+
 include(InstallZIP)
-add_zip_command("${CMAKE_CURRENT_BINARY_DIR}/assetsmv.pk3"
+add_zip_command(${CMAKE_CURRENT_BINARY_DIR}/assetsmv.pk3 ${OUTFILE}
 	DIR "${CMAKE_SOURCE_DIR}/assets"
 	FILES "${AssetsFiles}"
 	DEPENDS "${AssetsFiles}"
 )
 
-add_custom_target(assets DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/assetsmv.pk3" ${AssetsFiles})
+add_custom_target(assets DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/assetsmv.pk3 ${AssetsFiles})
 
 if(WIN32)
 	install(FILES ${CMAKE_CURRENT_BINARY_DIR}/assetsmv.pk3 DESTINATION "base")

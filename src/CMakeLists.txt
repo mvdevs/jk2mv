@@ -1,4 +1,4 @@
-# Make sure the user is not executing this script directly
+﻿# Make sure the user is not executing this script directly
 if(NOT InMV)
 	message(FATAL_ERROR "Use the top-level cmake script!")
 endif(NOT InMV)
@@ -479,13 +479,6 @@ if (BuildMVMP)
 			$<TARGET_FILE_DIR:${MVMP}>
 		)
 	endif()
-	
-	# Copy assets to the output directory (for debugging)
-	add_custom_command(TARGET ${MVMP} POST_BUILD
-		COMMAND ${CMAKE_COMMAND} -E copy_if_different
-		"${CMAKE_BINARY_DIR}/assets/assetsmv.pk3"
-		"$<TARGET_FILE_DIR:${MVMP}>/base/assetsmv.pk3"
-	)
 	
 	# add DPI awareness manifest
 	if(MSVC)
