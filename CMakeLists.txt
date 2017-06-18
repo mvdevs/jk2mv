@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1.0)
+﻿cmake_minimum_required(VERSION 3.1.0)
 
 # For checks in subdirectories
 set(InMV TRUE)
@@ -12,7 +12,6 @@ list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_SOURCE_DIR}/tools")
 list(INSERT CMAKE_MODULE_PATH 0 "${RESDir}")
 
 # Project & Versioning
-set(CMAKE_CONFIGURATION_TYPES Debug Release CACHE TYPE INTERNAL FORCE)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 set(ProjectName "JK2MV" CACHE STRING "Project Name")
