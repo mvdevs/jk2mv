@@ -493,20 +493,6 @@ char *Sys_GetCurrentUser( void )
   #define EDI "%%edi"
 #endif
 
-int Q_VMftol() {
-    int retval;
-
-    __asm__ volatile (
-        "movss (" EDI ", " EBX ", 4), %%xmm0\n"
-        "cvttss2si %%xmm0, %0\n"
-        : "=r" (retval)
-        :
-        : "%xmm0"
-    );
-
-    return retval;
-}
-
 static unsigned char ssemask[16] __attribute__((aligned(16))) = {
 	"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"
 };

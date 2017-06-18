@@ -68,8 +68,6 @@ static	int		compiledOfs = 0;
 static	byte	*code = NULL;
 static	int		pc = 0;
 
-#define FTOL_PTR
-
 static	int	instruction, pass;
 static	int	lastConst = 0;
 static	int	oc0, oc1, pop0, pop1;
@@ -1550,50 +1548,41 @@ void VM_Compile(vm_t *vm, vmHeader_t *header)
 			EmitCommand(LAST_COMMAND_SUB_BL_1);		// sub bl, 1
 			break;
 		case OP_NEGF:
-			EmitString("D9 04 9F");				// fld dword ptr [edi + ebx * 4]
-			EmitString("D9 E0");				// fchs
-			EmitString("D9 1C 9F");				// fstp dword ptr [edi + ebx * 4]
+			EmitString("0F 57 C0");				// xorps xmm0, xmm0
+			EmitString("F3 0F 5C 04 9F");		// subss xmm0, dword ptr [edi + ebx * 4]
+			EmitString("F3 0F 11 04 9F");		// storess dword ptr [edi + ebx * 4], xmm0
 			break;
 		case OP_ADDF:
-			EmitString("D9 44 9F FC");			// fld dword ptr -4[edi + ebx * 4]
-			EmitString("D8 04 9F");				// fadd dword ptr [edi + ebx * 4]
-			EmitString("D9 5C 9F FC");			// fstp dword ptr -4[edi + ebx * 4]
 			EmitCommand(LAST_COMMAND_SUB_BL_1);		// sub bl, 1
+			EmitString("F3 0F 10 04 9F");		// movss xmm0, dword ptr [edi + ebx * 4]
+			EmitString("F3 0F 58 44 9F 04");	// addss xmm0, dword ptr 4[edi + ebx * 4]
+			EmitString("F3 0F 11 04 9F");		// movss dword ptr [edi + ebx * 4], xmm0
 			break;
 		case OP_SUBF:
 			EmitCommand(LAST_COMMAND_SUB_BL_1);		// sub bl, 1
-			EmitString("D9 04 9F");				// fld dword ptr [edi + ebx * 4]
-			EmitString("D8 64 9F 04");			// fsub dword ptr 4[edi + ebx * 4]
-			EmitString("D9 1C 9F");				// fstp dword ptr [edi + ebx * 4]
+			EmitString("F3 0F 10 04 9F");		// movss xmm0, dword ptr [edi + ebx * 4]
+			EmitString("F3 0F 5C 44 9F 04");	// subss xmm0, dword ptr 4[edi + ebx * 4]
+			EmitString("F3 0F 11 04 9F");		// movss dword ptr [edi + ebx * 4], xmm0
 			break;
 		case OP_DIVF:
 			EmitCommand(LAST_COMMAND_SUB_BL_1);		// sub bl, 1
-			EmitString("D9 04 9F");				// fld dword ptr [edi + ebx * 4]
-			EmitString("D8 74 9F 04");			// fdiv dword ptr 4[edi + ebx * 4]
-			EmitString("D9 1C 9F");				// fstp dword ptr [edi + ebx * 4]
+			EmitString("F3 0F 10 04 9F");		// movss xmm0, dword ptr [edi + ebx * 4]
+			EmitString("F3 0F 5E 44 9F 04");	// divss xmm0, dword ptr 4[edi + ebx * 4]
+			EmitString("F3 0F 11 04 9F");		// movss dword ptr [edi + ebx * 4], xmm0
 			break;
 		case OP_MULF:
 			EmitCommand(LAST_COMMAND_SUB_BL_1);		// sub bl, 1
-			EmitString("D9 04 9F");				// fld dword ptr [edi + ebx * 4]
-			EmitString("D8 4C 9F 04");			// fmul dword ptr 4[edi + ebx * 4]
-			EmitString("D9 1C 9F");				// fstp dword ptr [edi + ebx * 4]
+			EmitString("F3 0F 10 04 9F");		// movss xmm0, dword ptr [edi + ebx * 4]
+			EmitString("F3 0F 59 44 9F 04");	// mulss xmm0, dword ptr 4[edi + ebx * 4]
+			EmitString("F3 0F 11 04 9F");		// movss dword ptr [edi + ebx * 4], xmm0
 			break;
 		case OP_CVIF:
-			EmitString("DB 04 9F");				// fild dword ptr [edi + ebx * 4]
-			EmitString("D9 1C 9F");				// fstp dword ptr [edi + ebx * 4]
+			EmitString("F3 0F 2A 04 9F");		// cvtsi2ss xmm0, dword ptr [edi + ebx * 4]
+			EmitString("F3 0F 11 04 9F");		// movss dword ptr [edi + ebx * 4], xmm0
 			break;
 		case OP_CVFI:
-#ifndef FTOL_PTR // WHENHELLISFROZENOVER
-			// not IEEE complient, but simple and fast
-			EmitString("D9 04 9F");				// fld dword ptr [edi + ebx * 4]
-			EmitString("DB 1C 9F");				// fistp dword ptr [edi + ebx * 4]
-#else // FTOL_PTR
-			// call the library conversion function
-			EmitRexString(0x48, "BA");			// mov edx, Q_VMftol
-			EmitPtr((void *)Q_VMftol);
-			EmitRexString(0x48, "FF D2");			// call edx
+			EmitString("F3 0F 2C 04 9F");		// cvttss2si eax, dword ptr [edi + ebx *4]
 			EmitCommand(LAST_COMMAND_MOV_STACK_EAX);	// mov dword ptr [edi + ebx * 4], eax
-#endif
 			break;
 		case OP_SEX8:
 			EmitString("0F BE 04 9F");			// movsx eax, byte ptr [edi + ebx * 4]

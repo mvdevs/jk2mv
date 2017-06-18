@@ -1022,5 +1022,4 @@ mvprotocol_t MV_GetCurrentProtocol();
 void MV_CopyStringWithColors( const char *src, char *dst, size_t dstSize, int nonColors );
 int MV_StrlenSkipColors( const char *str );
 
-extern "C" int QDECL Q_VMftol();
 #endif // _QCOMMON_H_
