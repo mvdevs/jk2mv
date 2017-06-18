@@ -33,6 +33,10 @@ if(MSVC)
 	enable_language(ASM_MASM)
 endif()
 
+if(CMAKE_CONFIGURATION_TYPES)
+	set(MultiConfigGenerator TRUE)
+endif()
+
 # Customizable options
 option(BuildPortableVersion "Build portable version (does not read or write files from your user/home directory" ON)
 option(BuildMVMP "Whether to create targets for the client (jk2mvmp & jk2mvmenu)" ON)
@@ -149,22 +153,35 @@ set(MVMP "jk2mvmp")
 set(MVMENU "jk2mvmenu_${Architecture}")
 set(MVDED "jk2mvded")
 
-# OSX install target is more like a finalization step
-if(APPLE)
-	set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/out/bundle")
-endif()
+# Directories
+if(MultiConfigGenerator)
+	# Visual Studio, Xcode etc. support selecting build type in the IDE and automatically append
+	# the configuration type to the path
+	set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/out)
+	set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/out)
+	set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/out)
+	set(CPACK_PACKAGE_DIRECTORY ${CMAKE_BINARY_DIR}/out)
 
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/out)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/out)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/out)
-set(CPACK_PACKAGE_DIRECTORY ${CMAKE_BINARY_DIR}/out)
+	if(APPLE)
+		set(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR}/out/bundle)
+	endif()
+else()
+	if(NOT CMAKE_BUILD_TYPE)
+		message(STATUS "No build type selected, default to Release")
+		set(CMAKE_BUILD_TYPE "Release")
+	endif()
+
+	set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/out/${CMAKE_BUILD_TYPE})
+	set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/out/${CMAKE_BUILD_TYPE})
+	set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/out/${CMAKE_BUILD_TYPE})
+	set(CPACK_PACKAGE_DIRECTORY ${CMAKE_BINARY_DIR}/out)
+
+	if(APPLE)
+		set(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR}/out/bundle/${CMAKE_BUILD_TYPE})
+	endif()
+endif()
 
 # Compiler defines / settings
-if(NOT CMAKE_BUILD_TYPE)
-	message(STATUS "No build type selected, default to Release")
-	set(CMAKE_BUILD_TYPE "Release")
-endif()
-
 set(GlobalDefines ${GlobalDefines} "BOTLIB")
 set(GlobalDefines ${GlobalDefines} "_JK2")
 
