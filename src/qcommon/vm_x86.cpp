@@ -1421,44 +1421,46 @@ void VM_Compile(vm_t *vm, vmHeader_t *header)
 			EmitBranchConditions(vm, op);
 		break;
 		case OP_EQF:
+			EmitCommand(LAST_COMMAND_SUB_BL_2);		// sub bl, 2
+			EmitString("F3 0F 10 44 9F 04");		// movss xmm0, dword ptr 4[edi + ebx * 4]
+			EmitString("0F 2E 44 9F 08");			// ucomiss xmm0, dword ptr 8[edi + ebx * 4]
+			EmitString("7A 06");					// jp +0x6 (jump over next opcode)
+			EmitJumpIns(vm, "0F 84", Constant4());	// je 0x12345678
+			break;
 		case OP_NEF:
+			EmitCommand(LAST_COMMAND_SUB_BL_2);		// sub bl, 2
+			EmitString("F3 0F 10 44 9F 04");		// movss xmm0, dword ptr 4[edi + ebx * 4]
+			EmitString("0F 2E 44 9F 08");			// ucomiss xmm0, dword ptr 8[edi + ebx * 4]
+			{
+				int dest = Constant4();
+				EmitJumpIns(vm, "0F 8A", dest);		// jp 0x12345678
+				EmitJumpIns(vm, "0F 85", dest);		// jne 0x12345678
+			}
+			break;
 		case OP_LTF:
+			EmitCommand(LAST_COMMAND_SUB_BL_2);		// sub bl, 2
+			EmitString("F3 0F 10 44 9F 08");		// movss xmm0, dword ptr 8[edi + ebx * 4]
+			EmitString("0F 2E 44 9F 04");			// ucomiss xmm0, dword ptr 4[edi + ebx * 4]
+			EmitJumpIns(vm, "0F 87", Constant4());	// ja 0x12345678
+			break;
 		case OP_LEF:
+			EmitCommand(LAST_COMMAND_SUB_BL_2);		// sub bl, 2
+			EmitString("F3 0F 10 44 9F 08");		// movss xmm0, dword ptr 8[edi + ebx * 4]
+			EmitString("0F 2E 44 9F 04");			// ucomiss xmm0, dword ptr 4[edi + ebx * 4]
+			EmitJumpIns(vm, "0F 83", Constant4());	// jae 0x12345678
+			break;
 		case OP_GTF:
+			EmitCommand(LAST_COMMAND_SUB_BL_2);		// sub bl, 2
+			EmitString("F3 0F 10 44 9F 04");		// movss xmm0, dword ptr 4[edi + ebx * 4]
+			EmitString("0F 2E 44 9F 08");			// ucomiss xmm0, dword ptr 8[edi + ebx * 4]
+			EmitJumpIns(vm, "0F 87", Constant4());	// ja 0x12345678
+			break;
 		case OP_GEF:
 			EmitCommand(LAST_COMMAND_SUB_BL_2);		// sub bl, 2
-			EmitString("D9 44 9F 04");			// fld dword ptr 4[edi + ebx * 4]
-			EmitString("D8 5C 9F 08");			// fcomp dword ptr 8[edi + ebx * 4]
-			EmitString("DF E0");				// fnstsw ax
-
-			switch(op)
-			{
-			case OP_EQF:
-				EmitString("F6 C4 40");			// test	ah,0x40
-				EmitJumpIns(vm, "0F 85", Constant4());	// jne 0x12345678
+			EmitString("F3 0F 10 44 9F 04");		// movss xmm0, dword ptr 4[edi + ebx * 4]
+			EmitString("0F 2E 44 9F 08");			// ucomiss xmm0, dword ptr 8[edi + ebx * 4]
+			EmitJumpIns(vm, "0F 83", Constant4());	// jae 0x12345678
 			break;
-			case OP_NEF:
-				EmitString("F6 C4 40");			// test	ah,0x40
-				EmitJumpIns(vm, "0F 84", Constant4());	// je 0x12345678
-			break;
-			case OP_LTF:
-				EmitString("F6 C4 01");			// test	ah,0x01
-				EmitJumpIns(vm, "0F 85", Constant4());	// jne 0x12345678
-			break;
-			case OP_LEF:
-				EmitString("F6 C4 41");			// test	ah,0x41
-				EmitJumpIns(vm, "0F 85", Constant4());	// jne 0x12345678
-			break;
-			case OP_GTF:
-				EmitString("F6 C4 41");			// test	ah,0x41
-				EmitJumpIns(vm, "0F 84", Constant4());	// je 0x12345678
-			break;
-			case OP_GEF:
-				EmitString("F6 C4 01");			// test	ah,0x01
-				EmitJumpIns(vm, "0F 84", Constant4());	// je 0x12345678
-			break;
-			}
-		break;
 		case OP_NEGI:
 			EmitMovEAXStack(vm, 0);
 			EmitString("F7 D8");				// neg eax
