@@ -86,6 +86,8 @@ add_custom_target(assets DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/assetsmv.pk3 ${Asse
 
 if(WIN32)
 	install(FILES ${CMAKE_CURRENT_BINARY_DIR}/assetsmv.pk3 DESTINATION "base")
-elseif(NOT APPLE)
+elseif(APPLE)
+	install(FILES ${CMAKE_CURRENT_BINARY_DIR}/assetsmv.pk3 DESTINATION "jk2mvmp.app/Contents/MacOS/base")
+else()
 	install(FILES ${CMAKE_CURRENT_BINARY_DIR}/assetsmv.pk3 DESTINATION "share/jk2mv/base")
 endif()
