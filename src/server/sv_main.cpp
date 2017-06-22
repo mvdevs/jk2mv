@@ -729,6 +729,7 @@ void SV_ConnectionlessPacket( netadr_t from, msg_t *msg ) {
 	static int dropped = 0;
 	static leakyBucket_t globalBucket;
 
+	int		burst;
 	char	*s;
 	char	*c;
 
@@ -740,11 +741,17 @@ void SV_ConnectionlessPacket( netadr_t from, msg_t *msg ) {
 		return;
 	}
 
-	if (!SVC_IsWhitelisted(from)) {
-		if (SVC_RateLimit(&globalBucket, 30, 100)) {
-			dropped++;
-			return;
-		}
+	// Whitelisted IPs can still go through when not-whitelisted rate
+	// limit is expleted. If server is DDOSed from whitelisted ips,
+	// OOB packets from not-whitelisted IPs never go through.
+	burst = 20;
+	if (SVC_IsWhitelisted(from)) {
+		burst *= 2;
+	}
+
+	if (SVC_RateLimit(&globalBucket, burst, 100)) {
+		dropped++;
+		return;
 	}
 
 	// this will print every 'period' msec
