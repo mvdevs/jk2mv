@@ -385,7 +385,7 @@ nextInstruction2:
 		opcode = codeImage[ programCounter++ ];
 
 #ifdef DEBUG_VM
-		if ( (unsigned)programCounter >= vm->codeLength ) {
+		if ( (unsigned)programCounter >= (unsigned)vm->codeLength ) {
 			Com_Error( ERR_DROP, "VM pc out of range" );
 			return 0;
 		}
