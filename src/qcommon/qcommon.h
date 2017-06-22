@@ -356,11 +356,17 @@ static ID_INLINE float _vmf(intptr_t x)
 	return fi.f;
 }
 
+// macros for vm-safe translation of SysCall arguments
+
+// float
 #define	VMF(x)				_vmf(args[x])
-#define VMA(x)				VM_ArgPtr(args[x], 1)
+// single variable of type "type"
 #define VMAV(x, type)		((type *) VM_ArgPtr(args[x], sizeof(type)))
+// static-length array of "type" variables
 #define VMAP(x, type, num)	((type *) VM_ArgPtr(args[x], sizeof(type) * num))
+// dynamic-length array of "type" variables
 #define VMAA(x, type, num)	((type *) VM_ArgArray(args[x], sizeof(type), num))
+// NULL-terminated string (first char is always safe to use)
 #define VMAS(x)				VM_ArgString(args[x])
 
 char	*VM_ExplicitArgString(vm_t *vm, intptr_t intValue);
