@@ -698,40 +698,167 @@ void VM_Forced_Unload_Done(void) {
 	forced_unload = 0;
 }
 
-void *VM_ArgPtr( intptr_t intValue ) {
-	if ( !intValue ) {
-		return NULL;
-	}
+void *VM_ArgPtr( intptr_t intValue, intptr_t size ) {
 	// currentVM is missing on reconnect
-	if ( currentVM==NULL )
-	  return NULL;
-
+	if ( !currentVM ) {
+		return NULL;
+	}
 	if ( currentVM->entryPoint ) {
-		return (void *)(currentVM->dataBase + intValue);
+		return (void *) intValue;
 	}
-	else {
-		return (void *)(currentVM->dataBase + (intValue & currentVM->dataMask));
-	}
-}
-
-void *VM_ExplicitArgPtr( vm_t *vm, intptr_t intValue ) {
 	if ( !intValue ) {
 		return NULL;
 	}
 
-	// currentVM is missing on reconnect here as well?
-	if ( currentVM==NULL )
-	  return NULL;
+	// don't drop on overflow for compatibility reasons
+	intValue &= currentVM->dataMask;
 
-	//
-	if ( vm->entryPoint ) {
-		return (void *)(vm->dataBase + intValue);
+	if ( size > currentVM->dataMask - intValue + 1 ) {
+		Com_Error( ERR_DROP, "VM_ArgPtr: memory overflow" );
 	}
-	else {
-		return (void *)(vm->dataBase + (intValue & vm->dataMask));
-	}
+
+	return (void *)(currentVM->dataBase + intValue);
 }
 
+void *VM_ArgArray( intptr_t intValue, intptr_t size, intptr_t num ) {
+	// currentVM is missing on reconnect
+	if ( !currentVM ) {
+		return NULL;
+	}
+	if ( currentVM->entryPoint ) {
+		return (void *) intValue;
+	}
+	if ( !intValue ) {
+		return NULL;
+	}
+
+	// don't drop on overflow for compatibility reasons
+	intValue &= currentVM->dataMask;
+
+	// coming from a module so should be within int32_t
+	// range. SysCalls need to handle negative values.
+	assert( size <= INT32_MAX && num <= INT32_MAX );
+
+	if ( (int64_t) num * size > currentVM->dataMask - intValue + 1 ) {
+		Com_Error( ERR_DROP, "VM_ArgArray: memory overflow" );
+	}
+
+	return (void *)(currentVM->dataBase + intValue);
+}
+
+char *VM_ArgString( intptr_t intValue ) {
+	// currentVM is missing on reconnect
+	if ( !currentVM ) {
+		return NULL;
+	}
+	if ( currentVM->entryPoint ) {
+		return (char *) intValue;
+	}
+	if ( !intValue ) {
+		return NULL;
+	}
+
+	intptr_t	len;
+	char		*p;
+	const int	dataMask = currentVM->dataMask;
+
+	// don't drop on overflow for compatibility reasons
+	intValue &= dataMask;
+
+	p = (char *) currentVM->dataBase + intValue;
+	len = (intptr_t) strnlen(p, dataMask + 1 - intValue);
+
+	if ( intValue + len > dataMask ) {
+		Com_Error( ERR_DROP, "VM_ArgString: memory overflow" );
+	}
+
+	return p;
+}
+
+char *VM_ExplicitArgString( vm_t *vm, intptr_t intValue ) {
+	// vm is missing on reconnect here as well?
+	if ( !vm ) {
+		return NULL;
+	}
+	if ( vm->entryPoint ) {
+		return (char *) intValue;
+	}
+	if ( !intValue ) {
+		return NULL;
+	}
+
+	intptr_t	len;
+	char		*p;
+	const int	dataMask = vm->dataMask;
+
+	// don't drop on overflow for compatibility reasons
+	intValue &= dataMask;
+
+	p = (char *) vm->dataBase + intValue;
+	len = (intptr_t) strnlen(p, dataMask + 1 - intValue);
+
+	if ( intValue + len > dataMask ) {
+		Com_Error( ERR_DROP, "VM_ExplicitArgString: memory overflow" );
+	}
+
+	return p;
+}
+
+intptr_t VM_strncpy( intptr_t dest, intptr_t src, intptr_t size ) {
+	// currentVM is missing on reconnect
+	if ( !currentVM ) {
+		return 0;
+	}
+	if ( currentVM->entryPoint ) {
+		return (intptr_t) strncpy( (char *)dest, (const char *)src, size );
+	}
+
+	char *dataBase = (char *)currentVM->dataBase;
+	int dataMask = currentVM->dataMask;
+
+	// don't drop on overflow for compatibility reasons
+	dest &= dataMask;
+	src &= dataMask;
+
+	size_t destSize = dataMask - dest;
+	size_t srcSize = dataMask - src;
+	destSize = MIN((size_t) size, destSize);
+	size_t n = MIN(destSize, srcSize);
+
+	strncpy( dataBase + dest, dataBase + src, n );
+
+	if ( n < destSize ) {
+		memset( dataBase + dest + n, 0, destSize - n );
+	}
+
+	return dest;
+}
+
+// needed because G_LOCATE_GAME_DATA and MVAPI_LOCATE_GAME_DATA update
+// the same sv.num_entities variable
+void VM_LocateGameDataCheck( const void *data, int entitySize, int num_entities ) {
+	// currentVM is missing on reconnect
+	if ( !currentVM ) {
+		return;
+	}
+	if ( !data ) {
+		return;
+	}
+
+	if ( !currentVM->entryPoint ) {
+		assert( data > currentVM->dataBase );
+		uintptr_t dataEnd = (uintptr_t) currentVM->dataBase + (uintptr_t)currentVM->dataMask + 1;
+		uintptr_t maxSize = dataEnd - (uintptr_t)data;
+
+		// coming from a module so should be int32_t
+		assert( 0 < entitySize && entitySize <= INT32_MAX );
+		assert( 0 < num_entities && num_entities <= INT32_MAX );
+
+		if ( (uint64_t) entitySize * (uint64_t) num_entities > maxSize ) {
+			Com_Error( ERR_DROP, "LOCATE_GAME_DATA: memory overflow" );
+		}
+	}
+}
 
 /*
 ==============

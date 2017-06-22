@@ -193,7 +193,7 @@ void AAS_FreeAASLinkedEntities(void)
 // Returns:					-
 // Changes Globals:		-
 //===========================================================================
-int AAS_PointAreaNum(vec3_t point)
+int AAS_PointAreaNum(const vec3_t point)
 {
 	int nodenum;
 	vec_t	dist;
@@ -246,7 +246,7 @@ int AAS_PointAreaNum(vec3_t point)
 // Returns:				-
 // Changes Globals:		-
 //===========================================================================
-int AAS_PointReachabilityAreaIndex( vec3_t origin )
+int AAS_PointReachabilityAreaIndex( const vec3_t origin )
 {
 	int areanum, cluster, i, index;
 
@@ -321,7 +321,7 @@ int AAS_AreaPresenceType(int areanum)
 // Returns:					-
 // Changes Globals:		-
 //===========================================================================
-int AAS_PointPresenceType(vec3_t point)
+int AAS_PointPresenceType(const vec3_t point)
 {
 	int areanum;
 
@@ -429,7 +429,7 @@ qboolean AAS_AreaEntityCollision(int areanum, vec3_t start, vec3_t end,
 // Returns:					-
 // Changes Globals:		-
 //===========================================================================
-aas_trace_t AAS_TraceClientBBox(vec3_t start, vec3_t end, int presencetype,
+aas_trace_t AAS_TraceClientBBox(const vec3_t start, const vec3_t end, int presencetype,
 																				int passent)
 {
 	int side, nodenum, tmpplanenum;
@@ -706,7 +706,7 @@ aas_trace_t AAS_TraceClientBBox(vec3_t start, vec3_t end, int presencetype,
 // Returns:					-
 // Changes Globals:		-
 //===========================================================================
-int AAS_TraceAreas(vec3_t start, vec3_t end, int *areas, vec3_t *points, int maxareas)
+int AAS_TraceAreas(const vec3_t start, const vec3_t end, int *areas, vec3_t *points, int maxareas)
 {
 	int side, nodenum, tmpplanenum;
 	int numareas;
@@ -906,7 +906,7 @@ int AAS_TraceAreas(vec3_t start, vec3_t end, int *areas, vec3_t *points, int max
 // Returns:					qtrue if the point is within the face boundaries
 // Changes Globals:		-
 //===========================================================================
-qboolean AAS_InsideFace(aas_face_t *face, vec3_t pnormal, vec3_t point, float epsilon)
+qboolean AAS_InsideFace(const aas_face_t *face, const vec3_t pnormal, const vec3_t point, float epsilon)
 {
 	int i, firstvertex, edgenum;
 	vec3_t v0;
@@ -958,7 +958,7 @@ qboolean AAS_InsideFace(aas_face_t *face, vec3_t pnormal, vec3_t point, float ep
 // Returns:					-
 // Changes Globals:		-
 //===========================================================================
-qboolean AAS_PointInsideFace(int facenum, vec3_t point, float epsilon)
+qboolean AAS_PointInsideFace(int facenum, const vec3_t point, float epsilon)
 {
 	int i, firstvertex, edgenum;
 	vec_t *v1, *v2;
@@ -1047,7 +1047,7 @@ void AAS_FacePlane(int facenum, vec3_t normal, float *dist)
 // Returns:					-
 // Changes Globals:		-
 //===========================================================================
-aas_face_t *AAS_TraceEndFace(aas_trace_t *trace)
+aas_face_t *AAS_TraceEndFace(const aas_trace_t *trace)
 {
 	int i, facenum;
 	aas_area_t *area;
@@ -1107,7 +1107,7 @@ aas_face_t *AAS_TraceEndFace(aas_trace_t *trace)
 // Returns:					-
 // Changes Globals:		-
 //===========================================================================
-int AAS_BoxOnPlaneSide2(vec3_t absmins, vec3_t absmaxs, aas_plane_t *p)
+int AAS_BoxOnPlaneSide2(const vec3_t absmins, const vec3_t absmaxs, const aas_plane_t *p)
 {
 	int i, sides;
 	float dist1, dist2;
@@ -1203,7 +1203,7 @@ typedef struct
 	int nodenum;		//node found after splitting
 } aas_linkstack_t;
 
-aas_link_t *AAS_AASLinkEntity(vec3_t absmins, vec3_t absmaxs, int entnum)
+aas_link_t *AAS_AASLinkEntity(const vec3_t absmins, const vec3_t absmaxs, int entnum)
 {
 	int side, nodenum;
 	aas_linkstack_t linkstack[128];
@@ -1303,7 +1303,7 @@ aas_link_t *AAS_AASLinkEntity(vec3_t absmins, vec3_t absmaxs, int entnum)
 // Returns:					-
 // Changes Globals:		-
 //===========================================================================
-aas_link_t *AAS_LinkEntityClientBBox(vec3_t absmins, vec3_t absmaxs, int entnum, int presencetype)
+aas_link_t *AAS_LinkEntityClientBBox(const vec3_t absmins, const vec3_t absmaxs, int entnum, int presencetype)
 {
 	vec3_t mins, maxs;
 	vec3_t newabsmins, newabsmaxs;
@@ -1320,7 +1320,7 @@ aas_link_t *AAS_LinkEntityClientBBox(vec3_t absmins, vec3_t absmaxs, int entnum,
 // Returns:					-
 // Changes Globals:		-
 //===========================================================================
-int AAS_BBoxAreas(vec3_t absmins, vec3_t absmaxs, int *areas, int maxareas)
+int AAS_BBoxAreas(const vec3_t absmins, const vec3_t absmaxs, int *areas, int maxareas)
 {
 	aas_link_t *linkedareas, *link;
 	int num;

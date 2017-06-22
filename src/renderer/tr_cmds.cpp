@@ -169,7 +169,7 @@ RE_SetColor
 Passing NULL will set the color to white
 =============
 */
-void	RE_SetColor( const float *rgba ) {
+void	RE_SetColor( const vec4_t rgba ) {
 	setColorCommand_t	*cmd;
 
 	cmd = (setColorCommand_t *)R_GetCommandBuffer( sizeof( *cmd ) );

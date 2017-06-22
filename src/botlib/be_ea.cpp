@@ -32,7 +32,7 @@ bot_input_t *botinputs;
 // Returns:					-
 // Changes Globals:		-
 //===========================================================================
-void EA_Say(int client, char *str)
+void EA_Say(int client, const char *str)
 {
 	botimport.BotClientCommand(client, va("say %s", str) );
 } //end of the function EA_Say
@@ -42,7 +42,7 @@ void EA_Say(int client, char *str)
 // Returns:					-
 // Changes Globals:		-
 //===========================================================================
-void EA_SayTeam(int client, char *str)
+void EA_SayTeam(int client, const char *str)
 {
 	botimport.BotClientCommand(client, va("say_team %s", str));
 } //end of the function EA_SayTeam
@@ -116,7 +116,7 @@ void EA_Gesture(int client)
 // Returns:					-
 // Changes Globals:		-
 //===========================================================================
-void EA_Command(int client, char *command)
+void EA_Command(int client, const char *command)
 {
 	botimport.BotClientCommand(client, command);
 } //end of the function EA_Command
@@ -392,7 +392,7 @@ void EA_MoveRight(int client)
 // Returns:				-
 // Changes Globals:		-
 //===========================================================================
-void EA_Move(int client, vec3_t dir, float speed)
+void EA_Move(int client, const vec3_t dir, float speed)
 {
 	bot_input_t *bi;
 
@@ -410,7 +410,7 @@ void EA_Move(int client, vec3_t dir, float speed)
 // Returns:				-
 // Changes Globals:		-
 //===========================================================================
-void EA_View(int client, vec3_t viewangles)
+void EA_View(int client, const vec3_t viewangles)
 {
 	bot_input_t *bi;
 

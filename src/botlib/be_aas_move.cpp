@@ -43,7 +43,7 @@ int AAS_DropToFloor(vec3_t origin, const vec3_t mins, const vec3_t maxs)
 
 	VectorCopy(origin, end);
 	end[2] -= 100;
-	trace = AAS_Trace(origin, mins, maxs, end, 0, CONTENTS_SOLID);
+	trace = AAS_Trace(origin, mins, maxs, end, ENTITYNUM_NONE, CONTENTS_SOLID);
 	if (trace.startsolid) return qfalse;
 	VectorCopy(trace.endpos, origin);
 	return qtrue;
@@ -195,7 +195,7 @@ int AAS_OnGround(vec3_t origin, int presencetype, int passent)
 // Returns:					-
 // Changes Globals:		-
 //===========================================================================
-int AAS_Swimming(vec3_t origin)
+int AAS_Swimming(const vec3_t origin)
 {
 	vec3_t testorg;
 
@@ -293,7 +293,7 @@ float AAS_WeaponJumpZVelocity(vec3_t origin, float radiusdamage)
 	//end point of the trace
 	VectorMA(start, 500, forward, end);
 	//trace a line to get the impact point
-	bsptrace = AAS_Trace(start, NULL, NULL, end, 1, CONTENTS_SOLID);
+	bsptrace = AAS_Trace(start, NULL, NULL, end, ENTITYNUM_NONE, CONTENTS_SOLID);
 	//calculate the damage the bot will get from the rocket impact
 	VectorAdd(botmins, botmaxs, v);
 	VectorMA(origin, 0.5f, v, v);
@@ -488,7 +488,7 @@ int AAS_ClipToBBox(aas_trace_t *trace, vec3_t start, vec3_t end, int presencetyp
 int AAS_ClientMovementPrediction(struct aas_clientmove_s *move,
 								int entnum, const vec3_t origin,
 								int presencetype, int onground,
-								const vec3_t velocity, vec3_t cmdmove,
+								const vec3_t velocity, const vec3_t cmdmove,
 								int cmdframes,
 								int maxframes, float frametime,
 								int stopevent, int stopareanum,
@@ -977,7 +977,7 @@ int AAS_ClientMovementPrediction(struct aas_clientmove_s *move,
 int AAS_PredictClientMovement(struct aas_clientmove_s *move,
 								int entnum, const vec3_t origin,
 								int presencetype, int onground,
-								const vec3_t velocity, vec3_t cmdmove,
+								const vec3_t velocity, const vec3_t cmdmove,
 								int cmdframes,
 								int maxframes, float frametime,
 								int stopevent, int stopareanum, int visualize)
@@ -995,9 +995,9 @@ int AAS_PredictClientMovement(struct aas_clientmove_s *move,
 // Changes Globals:		-
 //===========================================================================
 int AAS_ClientMovementHitBBox(struct aas_clientmove_s *move,
-								int entnum, vec3_t origin,
+								int entnum, const vec3_t origin,
 								int presencetype, int onground,
-								vec3_t velocity, vec3_t cmdmove,
+								const vec3_t velocity, const vec3_t cmdmove,
 								int cmdframes,
 								int maxframes, float frametime,
 								vec3_t mins, vec3_t maxs, int visualize)

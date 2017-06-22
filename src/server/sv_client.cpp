@@ -319,7 +319,7 @@ gotnewcl:
 	denied = (const char *)VM_Call( gvm, GAME_CLIENT_CONNECT, clientNum, qtrue, qfalse ); // firstTime = qtrue
 	if ( denied ) {
 		// we can't just use VM_ArgPtr, because that is only valid inside a VM_Call
-		denied = (const char *)VM_ExplicitArgPtr( gvm, (intptr_t)denied );
+		denied = (const char *)VM_ExplicitArgString( gvm, (intptr_t)denied );
 
 		NET_OutOfBandPrint( NS_SERVER, from, "print\n%s\n", denied );
 		Com_DPrintf ("Game rejected a connection: %s.\n", denied);
@@ -1431,14 +1431,19 @@ SV_ClientThink
 Also called by bot code
 ==================
 */
-void SV_ClientThink (client_t *cl, usercmd_t *cmd) {
-	cl->lastUsercmd = *cmd;
+void SV_ClientThink (int client, const usercmd_t *cmd) {
+	if (client < 0 || sv_maxclients->integer < client) {
+		Com_DPrintf( S_COLOR_YELLOW "SV_ClientThink: bad clientNum %i\n", client );
+		return;
+	}
 
-	if ( cl->state != CS_ACTIVE ) {
+	svs.clients[client].lastUsercmd = *cmd;
+
+	if ( svs.clients[client].state != CS_ACTIVE ) {
 		return;		// may have been kicked during the last usercmd
 	}
 
-	VM_Call( gvm, GAME_CLIENT_THINK, cl - svs.clients );
+	VM_Call( gvm, GAME_CLIENT_THINK, client );
 }
 
 /*
@@ -1532,7 +1537,7 @@ static void SV_UserMove( client_t *cl, msg_t *msg, qboolean delta ) {
 		if ( cmds[i].serverTime <= cl->lastUsercmd.serverTime ) {
 			continue;
 		}
-		SV_ClientThink (cl, &cmds[ i ]);
+		SV_ClientThink (cl - svs.clients, &cmds[ i ]);
 	}
 }
 

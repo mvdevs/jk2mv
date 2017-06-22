@@ -935,6 +935,11 @@ void FS_FCloseFile( fileHandle_t f ) {
 		Com_Error( ERR_FATAL, "Filesystem call made without initialization" );
 	}
 
+	if ( f < 0 || f > MAX_FILE_HANDLES ) {
+		Com_DPrintf( "FS_FCloseFile: handle out of range\n" );
+		return;
+	}
+
 	if (fsh[f].zipFile == qtrue) {
 		unzCloseCurrentFile( fsh[f].handleFiles.file.z );
 		if ( fsh[f].handleFiles.unique ) {
@@ -1452,6 +1457,11 @@ int FS_Read( void *buffer, int len, fileHandle_t f ) {
 		return 0;
 	}
 
+	if ( f < 0 || f > MAX_FILE_HANDLES ) {
+		Com_DPrintf( "FS_Read: handle out of range\n" );
+		return 0;
+	}
+
 	buf = (byte *)buffer;
 	fs_readCount += len;
 
@@ -1552,6 +1562,11 @@ int FS_Seek( fileHandle_t f, int offset, int origin ) {
 
 	if ( !fs_searchpaths ) {
 		Com_Error( ERR_FATAL, "Filesystem call made without initialization" );
+		return -1;
+	}
+
+	if ( f < 0 || f > MAX_FILE_HANDLES ) {
+		Com_DPrintf( "FS_Seek: handle out of range\n" );
 		return -1;
 	}
 
@@ -3821,6 +3836,12 @@ int FS_FOpenFileByModeHash( const char *qpath, fileHandle_t *f, fsMode_t mode, u
 
 int	FS_FTell( fileHandle_t f ) {
 	int pos;
+
+	if ( f < 0 || f > MAX_FILE_HANDLES ) {
+		Com_DPrintf( "FS_FTell: handle out of range\n" );
+		return -1;
+	}
+
 	if (fsh[f].zipFile == qtrue) {
 		pos = unztell(fsh[f].handleFiles.file.z);
 	} else {
@@ -3830,7 +3851,7 @@ int	FS_FTell( fileHandle_t f ) {
 }
 
 void FS_Flush( fileHandle_t f ) {
-	fflush(fsh[f].handleFiles.file.o);
+	fflush(FS_FileForHandle(f));
 }
 
 // only referenced pk3 files can be downloaded
@@ -3905,9 +3926,9 @@ void FS_FilenameCompletion( const char *dir, const char *ext, qboolean stripExt,
 		FS_FilenameCompletion(dir, pch + 1, stripExt, callback);
 }
 
-int FS_GetDLList(dlfile_t *files, int maxfiles) {
+int FS_GetDLList(dlfile_t *files, const int maxfiles) {
 	const char **dirs, **pakfiles;
-	int c, d, paknum, dirnum;
+	int c, d, paknum, dirnum, filesnum;
 	char *gamepath;
 	int ret = 0;
 
@@ -3917,7 +3938,7 @@ int FS_GetDLList(dlfile_t *files, int maxfiles) {
 		return qfalse;
 	}
 
-	for (d = 0; d < dirnum; d++) {
+	for (filesnum = 0, d = 0; d < dirnum; d++) {
 		if (!strcmp(dirs[d], ".") || !strcmp(dirs[d], "..")) {
 			continue;
 		}
@@ -3928,7 +3949,7 @@ int FS_GetDLList(dlfile_t *files, int maxfiles) {
 			continue;
 		}
 
-		for (c = 0; c < paknum && maxfiles; c++) {
+		for (c = 0; c < paknum && filesnum < maxfiles; c++, filesnum++) {
 			if (Q_stricmpn(pakfiles[c], "dl_", 3)) {
 				continue;
 			}
@@ -3937,7 +3958,7 @@ int FS_GetDLList(dlfile_t *files, int maxfiles) {
 			files->blacklisted = qfalse;
 			files->time = 0;
 
-			files++; ret++; maxfiles--;
+			files++; ret++;
 		}
 
 		Sys_FreeFileList(pakfiles);

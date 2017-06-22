@@ -45,6 +45,19 @@ int bot_developer;
 //qtrue if the library is setup
 int botlibsetup = qfalse;
 
+//
+const size_t aas_clientmove_size = sizeof(aas_clientmove_t);
+const size_t aas_entityinfo_size = sizeof(aas_entityinfo_t);
+const size_t aas_areainfo_size = sizeof(aas_areainfo_t);
+const size_t aas_altroutegoal_size = sizeof(aas_altroutegoal_t);
+const size_t aas_predictroute_size = sizeof(aas_predictroute_t);
+const size_t bot_consolemessage_size = sizeof(bot_consolemessage_t);
+const size_t bot_match_size = sizeof(bot_match_t);
+const size_t bot_goal_size = sizeof(bot_goal_t);
+const size_t bot_moveresult_size = sizeof(bot_moveresult_t);
+const size_t bot_initmove_size = sizeof(bot_initmove_t);
+const size_t weaponinfo_size = sizeof(weaponinfo_t);
+
 //===========================================================================
 //
 // several functions used by the exported functions
@@ -266,7 +279,7 @@ int Export_BotLibLoadMap(const char *mapname)
 // Returns:					-
 // Changes Globals:		-
 //===========================================================================
-int Export_BotLibUpdateEntity(int ent, bot_entitystate_t *state)
+int Export_BotLibUpdateEntity(int ent, const bot_entitystate_t *state)
 {
 	if (!BotLibSetup("BotUpdateEntity")) return BLERR_LIBRARYNOTSETUP;
 	if (!ValidEntityNumber(ent, "BotUpdateEntity")) return BLERR_INVALIDENTITYNUMBER;
@@ -281,19 +294,19 @@ int Export_BotLibUpdateEntity(int ent, bot_entitystate_t *state)
 //===========================================================================
 void AAS_TestMovementPrediction(int entnum, vec3_t origin, vec3_t dir);
 void ElevatorBottomCenter(aas_reachability_t *reach, vec3_t bottomcenter);
-int BotGetReachabilityToGoal(vec3_t origin, int areanum,
+int BotGetReachabilityToGoal(const vec3_t origin, int areanum,
 									  int lastgoalareanum, int lastareanum,
-									  int *avoidreach, float *avoidreachtimes, int *avoidreachtries,
-									  bot_goal_t *goal, int travelflags, int movetravelflags,
-									  struct bot_avoidspot_s *avoidspots, int numavoidspots, int *flags);
+									  const int *avoidreach, const float *avoidreachtimes, const int *avoidreachtries,
+									  const bot_goal_t *goal, int travelflags, int movetravelflags,
+									  const struct bot_avoidspot_s *avoidspots, int numavoidspots, int *flags);
 
 int AAS_PointLight(vec3_t origin, int *red, int *green, int *blue);
 
-int AAS_TraceAreas(vec3_t start, vec3_t end, int *areas, vec3_t *points, int maxareas);
+int AAS_TraceAreas(const vec3_t start, const vec3_t end, int *areas, vec3_t *points, int maxareas);
 
 int AAS_Reachability_WeaponJump(int area1num, int area2num);
 
-int BotFuzzyPointReachabilityArea(vec3_t origin);
+int BotFuzzyPointReachabilityArea(const vec3_t origin);
 
 float BotGapDistance(vec3_t origin, vec3_t hordir, int entnum);
 

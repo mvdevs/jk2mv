@@ -443,7 +443,7 @@ clients along with it.
 This is NOT called for map_restart
 ================
 */
-extern void FixGhoul2InfoLeaks(bool,bool);
+extern void FixGhoul2InfoLeaks(bool);
 
 #ifdef G2_COLLISION_ENABLED
 extern CMiniHeap *G2VertSpaceServer;
@@ -468,7 +468,7 @@ void SV_SpawnServer( char *server, qboolean killBots, ForceReload_e eForceReload
 	// shut down the existing game if it is running
 	SV_ShutdownGameProgs();
 
-	FixGhoul2InfoLeaks(false,true);
+	FixGhoul2InfoLeaks(true);
 
 /*
 Ghoul2 Insert Start
@@ -641,7 +641,7 @@ Ghoul2 Insert End
 	for (i=0 ; i<sv_maxclients->integer ; i++) {
 		// send the new gamestate to all connected clients
 		if (svs.clients[i].state >= CS_CONNECTED) {
-			char	*denied;
+			const char	*denied;
 
 			if ( svs.clients[i].netchan.remoteAddress.type == NA_BOT ) {
 				if ( killBots ) {
@@ -655,7 +655,7 @@ Ghoul2 Insert End
 			}
 
 			// connect the client again
-			denied = (char *)VM_ExplicitArgPtr( gvm, VM_Call( gvm, GAME_CLIENT_CONNECT, i, qfalse, isBot ) );	// firstTime = qfalse
+			denied = (const char *)VM_ExplicitArgString( gvm, VM_Call( gvm, GAME_CLIENT_CONNECT, i, qfalse, isBot ) );	// firstTime = qfalse
 			if ( denied ) {
 				// this generally shouldn't happen, because the client
 				// was connected before the level change

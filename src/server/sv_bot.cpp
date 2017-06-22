@@ -207,7 +207,7 @@ void BotImport_EntityTrace(bsp_trace_t *bsptrace, vec3_t start, vec3_t mins, vec
 BotImport_PointContents
 ==================
 */
-int BotImport_PointContents(vec3_t point) {
+int BotImport_PointContents(const vec3_t point) {
 	return SV_PointContents(point, -1);
 }
 
@@ -317,7 +317,7 @@ void *BotImport_HunkAlloc( int size ) {
 BotImport_DebugPolygonCreate
 ==================
 */
-int BotImport_DebugPolygonCreate(int color, int numPoints, vec3_t *points) {
+int BotImport_DebugPolygonCreate(int color, int numPoints, const vec3_t *points) {
 	bot_debugpoly_t *poly;
 	int i;
 
@@ -363,6 +363,10 @@ BotImport_DebugPolygonDelete
 void BotImport_DebugPolygonDelete(int id)
 {
 	if (!debugpolygons) return;
+	if ( id < 0 || bot_maxdebugpolys <= id ) {
+		Com_DPrintf( S_COLOR_YELLOW "BotImport_DebugPlygonDelete: wrong id %d\n", id );
+		return;
+	}
 	debugpolygons[id].inuse = qfalse;
 }
 
@@ -423,7 +427,7 @@ void BotImport_DebugLineShow(int line, vec3_t start, vec3_t end, int color) {
 SV_BotClientCommand
 ==================
 */
-void BotClientCommand( int client, char *command ) {
+void BotClientCommand( int client, const char *command ) {
 	SV_ExecuteClientCommand( &svs.clients[client], command, qtrue );
 }
 
@@ -583,10 +587,15 @@ void SV_BotInitBotLib(void) {
 SV_BotGetConsoleMessage
 ==================
 */
-int SV_BotGetConsoleMessage( int client, char *buf, int size )
+qboolean SV_BotGetConsoleMessage( int client, char *buf, int size )
 {
 	client_t	*cl;
 	int			index;
+
+	if (client < 0 || sv_maxclients->integer < client) {
+		Com_DPrintf( S_COLOR_YELLOW "SV_BotGetSnapshotEntity: bad clientNum %i\n", client );
+		return qfalse;
+	}
 
 	cl = &svs.clients[client];
 	cl->lastPacketTime = svs.time;
@@ -636,6 +645,11 @@ SV_BotGetSnapshotEntity
 int SV_BotGetSnapshotEntity( int client, int sequence ) {
 	client_t			*cl;
 	clientSnapshot_t	*frame;
+
+	if (client < 0 || sv_maxclients->integer < client) {
+		Com_DPrintf( S_COLOR_YELLOW "SV_BotGetSnapshotEntity: bad clientNum %i\n", client );
+		return -1;
+	}
 
 	cl = &svs.clients[client];
 	frame = &cl->frames[cl->netchan.outgoingSequence & PACKET_MASK];

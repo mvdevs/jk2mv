@@ -730,7 +730,7 @@ ways a client gets into a game
 Also called by Com_Error
 =================
 */
-extern void FixGhoul2InfoLeaks(bool,bool);
+extern void FixGhoul2InfoLeaks(bool);
 
 void CL_FlushMemory( void ) {
 
@@ -740,7 +740,7 @@ void CL_FlushMemory( void ) {
 	// if not running a server clear the whole hunk
 	if ( !com_sv_running->integer ) {
 		// clear collision map data
-		FixGhoul2InfoLeaks(true,false);
+		FixGhoul2InfoLeaks(false);
 		CM_ClearMap();
 		// clear the whole hunk
 		Hunk_Clear();
@@ -3600,7 +3600,7 @@ void CL_GetPing( int n, char *buf, int buflen, int *pingtime )
 	int		time;
 	int		maxPing;
 
-	if (!cl_pinglist[n].adr.port)
+	if (n < 0 || n >= MAX_PINGREQUESTS || !cl_pinglist[n].adr.port)
 	{
 		// empty slot
 		buf[0]    = '\0';
@@ -3654,7 +3654,7 @@ CL_GetPingInfo
 */
 void CL_GetPingInfo( int n, char *buf, int buflen )
 {
-	if (!cl_pinglist[n].adr.port)
+	if (n < 0 || n >= MAX_PINGREQUESTS || !cl_pinglist[n].adr.port)
 	{
 		// empty slot
 		if (buflen)

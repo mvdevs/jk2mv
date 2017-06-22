@@ -56,8 +56,8 @@ public:
 	surfaceInfo_v		&initrootSList,
 	model_t				*initcurrentModel,
 	int					initlod,
-	vec3_t				initrayStart,
-	vec3_t				initrayEnd,
+	const vec3_t		initrayStart,
+	const vec3_t		initrayEnd,
 	CollisionRecord_t	*initcollRecMap,
 	int					initentNum,
 	int					initmodelIndex,
@@ -455,7 +455,7 @@ void G2_TransformSurfaces(int surfaceNum, surfaceInfo_v &rootSList,
 }
 
 // main calling point for the model transform for collision detection. At this point all of the skeleton has been transformed.
-void G2_TransformModel(CGhoul2Info_v &ghoul2, const int frameNum, vec3_t scale, CMiniHeap *G2VertSpace, int useLod)
+void G2_TransformModel(CGhoul2Info_v &ghoul2, const int frameNum, const vec3_t scale, CMiniHeap *G2VertSpace, int useLod)
 {
 	int				lod;
 	model_t			*currentModel;
@@ -1046,7 +1046,7 @@ void G2_TraceSurfaces(CTraceSurface &TS)
 
 }
 
-void G2_TraceModels(CGhoul2Info_v &ghoul2, vec3_t rayStart, vec3_t rayEnd, CollisionRecord_t *collRecMap, int entNum, int traceFlags, int useLod, float fRadius)
+void G2_TraceModels(CGhoul2Info_v &ghoul2, const vec3_t rayStart, const vec3_t rayEnd, CollisionRecord_t *collRecMap, int entNum, int traceFlags, int useLod, float fRadius)
 {
 	int				lod;
 	model_t			*currentModel;
@@ -1123,14 +1123,14 @@ void G2_TraceModels(CGhoul2Info_v &ghoul2, vec3_t rayStart, vec3_t rayEnd, Colli
 	}
 }
 
-void TransformPoint (vec3_t in, vec3_t out, mdxaBone_t *mat) {
+void TransformPoint (const vec3_t in, vec3_t out, const mdxaBone_t *mat) {
 	for (int i=0;i<3;i++)
 	{
 		out[i]= in[0]*mat->matrix[i][0] + in[1]*mat->matrix[i][1] + in[2]*mat->matrix[i][2];
 	}
 }
 
-void TransformAndTranslatePoint (vec3_t in, vec3_t out, mdxaBone_t *mat) {
+void TransformAndTranslatePoint (const vec3_t in, vec3_t out, const mdxaBone_t *mat) {
 
 	for (int i=0;i<3;i++)
 	{
@@ -1166,7 +1166,7 @@ void Create_Matrix(const float *angle, mdxaBone_t *matrix)
 }
 
 // given a matrix, generate the inverse of that matrix
-void Inverse_Matrix(mdxaBone_t *src, mdxaBone_t *dest)
+void Inverse_Matrix(const mdxaBone_t *src, mdxaBone_t *dest)
 {
 	int i, j;
 

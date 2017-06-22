@@ -342,7 +342,12 @@ intptr_t QDECL VM_Call(vm_t *vm, int callnum, ...);
 
 void	VM_Debug( int level );
 
-void	*VM_ArgPtr(intptr_t intValue);
+void	*VM_ArgPtr( intptr_t intValue, intptr_t size );
+void	*VM_ArgArray( intptr_t intValue, intptr_t size, intptr_t num );
+char	*VM_ArgString( intptr_t intValue );
+intptr_t	VM_strncpy( intptr_t dest, intptr_t src, intptr_t size );
+void	VM_LocateGameDataCheck( const void *data, int entitySize, int num_entities );
+
 
 static ID_INLINE float _vmf(intptr_t x)
 {
@@ -350,9 +355,21 @@ static ID_INLINE float _vmf(intptr_t x)
 	fi.i = (int)x;
 	return fi.f;
 }
-#define	VMF(x)	_vmf(args[x])
 
-void	*VM_ExplicitArgPtr(vm_t *vm, intptr_t intValue);
+// macros for vm-safe translation of SysCall arguments
+
+// float
+#define	VMF(x)				_vmf(args[x])
+// single variable of type "type"
+#define VMAV(x, type)		((type *) VM_ArgPtr(args[x], sizeof(type)))
+// static-length array of "type" variables
+#define VMAP(x, type, num)	((type *) VM_ArgPtr(args[x], sizeof(type) * num))
+// dynamic-length array of "type" variables
+#define VMAA(x, type, num)	((type *) VM_ArgArray(args[x], sizeof(type), num))
+// NULL-terminated string (first char is always safe to use)
+#define VMAS(x)				VM_ArgString(args[x])
+
+char	*VM_ExplicitArgString(vm_t *vm, intptr_t intValue);
 
 void	VM_Forced_Unload_Start(void);
 void	VM_Forced_Unload_Done(void);

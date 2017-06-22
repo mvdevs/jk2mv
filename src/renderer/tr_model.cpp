@@ -1586,10 +1586,8 @@ static md3Tag_t *R_GetTag( md3Header_t *mod, int frame, const char *tagName ) {
 	md3Tag_t		*tag;
 	int				i;
 
-	if ( frame >= mod->numFrames ) {
-		// it is possible to have a bad frame while changing models, so don't error
-		frame = mod->numFrames - 1;
-	}
+	// it is possible to have a bad frame while changing models, so don't error
+	frame = Com_Clampi( 0, mod->numFrames - 1, frame );
 
 	tag = (md3Tag_t *)((byte *)mod + mod->ofsTags) + frame * mod->numTags;
 	for ( i = 0 ; i < mod->numTags ; i++, tag++ ) {

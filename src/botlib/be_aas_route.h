@@ -18,7 +18,7 @@ void AAS_InitRouting(void);
 //free the AAS routing caches
 void AAS_FreeRoutingCaches(void);
 //returns the travel time from start to end in the given area
-unsigned short int AAS_AreaTravelTime(int areanum, vec3_t start, vec3_t end);
+unsigned short int AAS_AreaTravelTime(int areanum, const vec3_t start, const vec3_t end);
 //
 void AAS_CreateAllRoutingCache(void);
 void AAS_WriteRouteCache(void);
@@ -39,11 +39,11 @@ int AAS_RandomGoalArea(int areanum, int travelflags, int *goalareanum, vec3_t go
 //enable or disable an area for routing
 int AAS_EnableRoutingArea(int areanum, int enable);
 //returns the travel time within the given area from start to end
-unsigned short int AAS_AreaTravelTime(int areanum, vec3_t start, vec3_t end);
+unsigned short int AAS_AreaTravelTime(int areanum, const vec3_t start, const vec3_t end);
 //returns the travel time from the area to the goal area using the given travel flags
-int AAS_AreaTravelTimeToGoalArea(int areanum, vec3_t origin, int goalareanum, int travelflags);
+int AAS_AreaTravelTimeToGoalArea(int areanum, const vec3_t origin, int goalareanum, int travelflags);
 //predict a route up to a stop event
-int AAS_PredictRoute(struct aas_predictroute_s *route, int areanum, vec3_t origin,
+int AAS_PredictRoute(struct aas_predictroute_s *route, int areanum, const vec3_t origin,
 							int goalareanum, int travelflags, int maxareas, int maxtime,
 							int stopevent, int stopcontents, int stoptfl, int stopareanum);
 

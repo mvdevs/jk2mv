@@ -219,7 +219,7 @@ void BotInterbreedGoalFuzzyLogic(int parent1, int parent2, int child)
 // Returns:					-
 // Changes Globals:		-
 //===========================================================================
-void BotSaveGoalFuzzyLogic(int goalstate, char *filename)
+void BotSaveGoalFuzzyLogic(int goalstate, const char *filename)
 {
 	bot_goalstate_t *gs;
 
@@ -583,7 +583,7 @@ void BotInitLevelItems(void)
 			{
 				VectorCopy(origin, end);
 				end[2] -= 32;
-				trace = AAS_Trace(origin, ic->iteminfo[i].mins, ic->iteminfo[i].maxs, end, -1, CONTENTS_SOLID|CONTENTS_PLAYERCLIP);
+				trace = AAS_Trace(origin, ic->iteminfo[i].mins, ic->iteminfo[i].maxs, end, ENTITYNUM_NONE, CONTENTS_SOLID|CONTENTS_PLAYERCLIP);
 				//if the item not near the ground
 				if (trace.fraction >= 1)
 				{
@@ -839,7 +839,7 @@ void BotSetAvoidGoalTime(int goalstate, int number, float avoidtime)
 // Returns:				-
 // Changes Globals:		-
 //===========================================================================
-int BotGetLevelItemGoal(int index, char *name, bot_goal_t *goal)
+int BotGetLevelItemGoal(int index, const char *name, bot_goal_t *goal)
 {
 	levelitem_t *li;
 
@@ -892,7 +892,7 @@ int BotGetLevelItemGoal(int index, char *name, bot_goal_t *goal)
 // Returns:				-
 // Changes Globals:		-
 //===========================================================================
-int BotGetMapLocationGoal(char *name, bot_goal_t *goal)
+int BotGetMapLocationGoal(const char *name, bot_goal_t *goal)
 {
 	maplocation_t *ml;
 	vec3_t mins = {-8, -8, -8}, maxs = {8, 8, 8};
@@ -1182,7 +1182,7 @@ void BotDumpGoalStack(int goalstate)
 // Returns:					-
 // Changes Globals:		-
 //===========================================================================
-void BotPushGoal(int goalstate, bot_goal_t *goal)
+void BotPushGoal(int goalstate, const bot_goal_t *goal)
 {
 	bot_goalstate_t *gs;
 
@@ -1264,7 +1264,7 @@ int BotGetSecondGoal(int goalstate, bot_goal_t *goal)
 // Returns:					-
 // Changes Globals:		-
 //===========================================================================
-int BotChooseLTGItem(int goalstate, vec3_t origin, int *inventory, int travelflags)
+int BotChooseLTGItem(int goalstate, const vec3_t origin, const int *inventory, int travelflags)
 {
 	int areanum, t, weightnum;
 	float weight, bestweight, avoidtime;
@@ -1431,8 +1431,8 @@ int BotChooseLTGItem(int goalstate, vec3_t origin, int *inventory, int travelfla
 // Returns:					-
 // Changes Globals:		-
 //===========================================================================
-int BotChooseNBGItem(int goalstate, vec3_t origin, int *inventory, int travelflags,
-														bot_goal_t *ltg, float maxtime)
+int BotChooseNBGItem(int goalstate, const vec3_t origin, const int *inventory, int travelflags,
+														const bot_goal_t *ltg, float maxtime)
 {
 	int areanum, t, weightnum, ltg_time;
 	float weight, bestweight, avoidtime;
@@ -1588,7 +1588,7 @@ int BotChooseNBGItem(int goalstate, vec3_t origin, int *inventory, int travelfla
 // Returns:					-
 // Changes Globals:		-
 //===========================================================================
-int BotTouchingGoal(vec3_t origin, bot_goal_t *goal)
+int BotTouchingGoal(const vec3_t origin, const bot_goal_t *goal)
 {
 	int i;
 	vec3_t boxmins, boxmaxs;
@@ -1617,7 +1617,7 @@ int BotTouchingGoal(vec3_t origin, bot_goal_t *goal)
 // Returns:					-
 // Changes Globals:		-
 //===========================================================================
-int BotItemGoalInVisButNotVisible(int viewer, vec3_t eye, vec3_t viewangles, bot_goal_t *goal)
+int BotItemGoalInVisButNotVisible(int viewer, const vec3_t eye, const vec3_t viewangles, const bot_goal_t *goal)
 {
 	aas_entityinfo_t entinfo;
 	bsp_trace_t trace;
@@ -1670,7 +1670,7 @@ void BotResetGoalState(int goalstate)
 // Returns:					-
 // Changes Globals:		-
 //===========================================================================
-int BotLoadItemWeights(int goalstate, char *filename)
+int BotLoadItemWeights(int goalstate, const char *filename)
 {
 	bot_goalstate_t *gs;
 

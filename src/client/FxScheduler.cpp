@@ -946,13 +946,13 @@ static void ReportPlayEffectError(int id)
 // Return:
 //	none
 //------------------------------------------------------
-void CFxScheduler::PlayEffect( int id, vec3_t origin )
+void CFxScheduler::PlayEffect( int id, const vec3_t origin )
 {
-	vec3_t	axis[3];
-
-	VectorSet( axis[0], 0, 0, 1 );
-	VectorSet( axis[1], 1, 0, 0 );
-	VectorSet( axis[2], 0, 1, 0 );
+	static const vec3_t	axis[3] = {
+		{ 0, 0, 1 },
+		{ 1, 0, 0 },
+		{ 0, 1, 0 }
+	};
 
 	PlayEffect( id, origin, axis );
 }
@@ -969,7 +969,7 @@ void CFxScheduler::PlayEffect( int id, vec3_t origin )
 // Return:
 //	none
 //------------------------------------------------------
-void CFxScheduler::PlayEffect( int id, vec3_t origin, vec3_t forward )
+void CFxScheduler::PlayEffect( int id, const vec3_t origin, const vec3_t forward )
 {
 	vec3_t	axis[3];
 
@@ -1001,7 +1001,7 @@ void CFxScheduler::PlayEffect( int id, vec3_t origin, vec3_t forward )
 // Return:
 //	none
 //------------------------------------------------------
-void CFxScheduler::PlayEffect( const char *file, vec3_t origin, vec3_t axis[3], const int boltInfo, const int entNum )
+void CFxScheduler::PlayEffect( const char *file, const vec3_t origin, const vec3_t axis[3], const int boltInfo, const int entNum )
 {
 	char	sfile[MAX_QPATH];
 
@@ -1554,7 +1554,7 @@ void CFxScheduler::CreateEffect( CPrimitiveTemplate *fx, CFxBoltInterface *obj, 
 // Return:
 //	none
 //------------------------------------------------------
-void CFxScheduler::PlayEffect( int id, vec3_t origin, vec3_t axis[3], const int boltInfo, const int entNum )
+void CFxScheduler::PlayEffect( int id, const vec3_t origin, const vec3_t axis[3], const int boltInfo, const int entNum )
 {
 	SEffectTemplate			*fx;
 	CPrimitiveTemplate		*prim;
@@ -1768,7 +1768,7 @@ void CFxScheduler::PlayEffect( int id, vec3_t origin, vec3_t axis[3], const int 
 // Return:
 //	none
 //------------------------------------------------------
-void CFxScheduler::PlayEffect( const char *file, vec3_t origin )
+void CFxScheduler::PlayEffect( const char *file, const vec3_t origin )
 {
 	char	sfile[MAX_QPATH];
 
@@ -1790,7 +1790,7 @@ void CFxScheduler::PlayEffect( const char *file, vec3_t origin )
 // Return:
 //	none
 //------------------------------------------------------
-void CFxScheduler::PlayEffect( const char *file, vec3_t origin, vec3_t forward )
+void CFxScheduler::PlayEffect( const char *file, const vec3_t origin, const vec3_t forward )
 {
 	char	sfile[MAX_QPATH];
 
@@ -2035,7 +2035,7 @@ void CFxScheduler::AddScheduledEffects( void )
 // Return:
 //	none
 //------------------------------------------------------
-void CFxScheduler::CreateEffect( CPrimitiveTemplate *fx, vec3_t origin, vec3_t axis[3], int lateTime, CCloud *effectCloud )
+void CFxScheduler::CreateEffect( CPrimitiveTemplate *fx, const vec3_t origin, const vec3_t axis[3], int lateTime, CCloud *effectCloud )
 {
 	vec3_t	org, org2, temp,
 				vel, accel,

@@ -19,7 +19,7 @@ Ghoul2 Insert End
 extern	botlib_export_t	*botlib_export;
 void SP_Register(const char *Package);
 
-int UI_ConcatDLList(dlfile_t *files, int maxfiles);
+int UI_ConcatDLList(dlfile_t *files, const int maxfiles);
 qboolean UI_DeleteDLFile(const dlfile_t *file);
 
 vm_t *uivm;
@@ -638,7 +638,7 @@ qboolean LAN_UpdateVisiblePings(int source ) {
 LAN_GetServerStatus
 ====================
 */
-int LAN_GetServerStatus( char *serverAddress, char *serverStatus, int maxLen ) {
+static int LAN_GetServerStatus( const char *serverAddress, char *serverStatus, int maxLen ) {
 	return CL_ServerStatus( serverAddress, serverStatus, maxLen );
 }
 
@@ -742,9 +742,6 @@ static int GetConfigString(int index, char *buf, int size)
 	return qtrue;
 }
 
-void *VM_ArgPtr( int intValue );
-#define	VMA(x) VM_ArgPtr(args[x])
-
 /*
 ====================
 CL_UISystemCalls
@@ -768,71 +765,71 @@ intptr_t CL_UISystemCalls(intptr_t *args) {
 
 	switch( args[0] ) {
 	case UI_ERROR:
-		Com_Error( ERR_DROP, "%s", VMA(1) );
+		Com_Error( ERR_DROP, "%s", VMAS(1) );
 		return 0;
 
 	case UI_PRINT:
-		Com_Printf( "%s", VMA(1) );
+		Com_Printf( "%s", VMAS(1) );
 		return 0;
 
 	case UI_MILLISECONDS:
 		return Sys_Milliseconds();
 
 	case UI_CVAR_REGISTER:
-		Cvar_Register( (vmCvar_t *)VMA(1), (const char *)VMA(2), (const char *)VMA(3), args[4] );
+		Cvar_Register( VMAV(1, vmCvar_t), VMAS(2), VMAS(3), args[4] );
 		return 0;
 
 	case UI_CVAR_UPDATE:
-		Cvar_Update( (vmCvar_t *)VMA(1) );
+		Cvar_Update( VMAV(1, vmCvar_t) );
 		return 0;
 
 	case UI_CVAR_SET:
-		Cvar_Set2( (const char *)VMA(1), (const char *)VMA(2), qtrue, qtrue );
+		Cvar_Set2( VMAS(1), VMAS(2), qtrue, qtrue );
 		return 0;
 
 	case UI_CVAR_VARIABLEVALUE:
-		return FloatAsInt( Cvar_VariableValue( (const char *)VMA(1), qtrue ) );
+		return FloatAsInt( Cvar_VariableValue( VMAS(1), qtrue ) );
 
 	case UI_CVAR_VARIABLESTRINGBUFFER:
-		Cvar_VariableStringBuffer( (const char *)VMA(1), (char *)VMA(2), args[3], qtrue );
+		Cvar_VariableStringBuffer( VMAS(1), VMAP(2, char, args[3]), args[3], qtrue );
 		return 0;
 
 	case UI_CVAR_SETVALUE:
-		Cvar_SetValue( (const char *)VMA(1), VMF(2), qtrue );
+		Cvar_SetValue( VMAS(1), VMF(2), qtrue );
 		return 0;
 
 	case UI_CVAR_RESET:
-		Cvar_Reset( (const char *)VMA(1), qtrue );
+		Cvar_Reset( VMAS(1), qtrue );
 		return 0;
 
 	case UI_CVAR_CREATE:
-		Cvar_Get( (const char *)VMA(1), (const char *)VMA(2), args[3], qtrue );
+		Cvar_Get( VMAS(1), VMAS(2), args[3], qtrue );
 		return 0;
 
 	case UI_CVAR_INFOSTRINGBUFFER:
-		Cvar_InfoStringBuffer( args[1], (char *)VMA(2), args[3], qtrue );
+		Cvar_InfoStringBuffer( args[1], VMAP(2, char, args[3]), args[3], qtrue );
 		return 0;
 
 	case UI_ARGC:
 		return Cmd_Argc();
 
 	case UI_ARGV:
-		Cmd_ArgvBuffer( args[1], (char *)VMA(2), args[3] );
+		Cmd_ArgvBuffer( args[1], VMAP(2, char, args[3]), args[3] );
 		return 0;
 
 	case UI_CMD_EXECUTETEXT:
-		Cbuf_ExecuteText( (cbufExec_t)args[1], (const char *)VMA(2) );
+		Cbuf_ExecuteText( (cbufExec_t)args[1], VMAS(2) );
 		return 0;
 
 	case UI_FS_FOPENFILE:
-		return FS_FOpenFileByMode( (const char *)VMA(1), (int *)VMA(2), (fsMode_t)args[3] );
+		return FS_FOpenFileByMode( VMAS(1), VMAV(2, int), (fsMode_t)args[3] );
 
 	case UI_FS_READ:
-		FS_Read2( VMA(1), args[2], args[3] );
+		FS_Read2( VMAP(1, char, args[2]), args[2], args[3] );
 		return 0;
 
 	case UI_FS_WRITE:
-		FS_Write( VMA(1), args[2], args[3] );
+		FS_Write( VMAP(1, char, args[2]), args[2], args[3] );
 		return 0;
 
 	case UI_FS_FCLOSEFILE:
@@ -840,39 +837,39 @@ intptr_t CL_UISystemCalls(intptr_t *args) {
 		return 0;
 
 	case UI_FS_GETFILELIST:
-		return FS_GetFileList( (const char *)VMA(1), (const char *)VMA(2), (char *)VMA(3), args[4] );
+		return FS_GetFileList( VMAS(1), VMAS(2), VMAP(3, char, args[4]), args[4] );
 
 	case UI_R_REGISTERMODEL:
-		return re.RegisterModel( (const char *)VMA(1) );
+		return re.RegisterModel( VMAS(1) );
 
 	case UI_R_REGISTERSKIN:
-		return re.RegisterSkin( (const char *)VMA(1) );
+		return re.RegisterSkin( VMAS(1) );
 
 	case UI_R_REGISTERSHADERNOMIP:
-		return re.RegisterShaderNoMip( (const char *)VMA(1) );
+		return re.RegisterShaderNoMip( VMAS(1) );
 
 	case UI_R_CLEARSCENE:
 		re.ClearScene();
 		return 0;
 
 	case UI_R_ADDREFENTITYTOSCENE:
-		re.AddRefEntityToScene((const refEntity_t *)VMA(1));
+		re.AddRefEntityToScene( VMAV(1, const refEntity_t) );
 		return 0;
 
 	case UI_R_ADDPOLYTOSCENE:
-		re.AddPolyToScene( args[1], args[2], (const polyVert_t *)VMA(3), 1 );
+		re.AddPolyToScene( args[1], args[2], VMAA(3, const polyVert_t, args[2]), 1 );
 		return 0;
 
 	case UI_R_ADDLIGHTTOSCENE:
-		re.AddLightToScene( (const float *)VMA(1), VMF(2), VMF(3), VMF(4), VMF(5) );
+		re.AddLightToScene( VMAP(1, const vec_t, 3), VMF(2), VMF(3), VMF(4), VMF(5) );
 		return 0;
 
 	case UI_R_RENDERSCENE:
-		re.RenderScene( (const refdef_t *)VMA(1) );
+		re.RenderScene( VMAV(1, const refdef_t) );
 		return 0;
 
 	case UI_R_SETCOLOR:
-		re.SetColor( (const float *)VMA(1) );
+		re.SetColor( VMAP(1, const vec_t, 4) );
 		return 0;
 
 	case UI_R_DRAWSTRETCHPIC:
@@ -880,7 +877,7 @@ intptr_t CL_UISystemCalls(intptr_t *args) {
 		return 0;
 
 	case UI_R_MODELBOUNDS:
-		re.ModelBounds( args[1], (float *)VMA(2), (float *)VMA(3) );
+		re.ModelBounds( args[1], VMAP(2, vec_t, 3), VMAP(3, vec_t, 3) );
 		return 0;
 
 	case UI_UPDATESCREEN:
@@ -888,26 +885,26 @@ intptr_t CL_UISystemCalls(intptr_t *args) {
 		return 0;
 
 	case UI_CM_LERPTAG:
-		re.LerpTag( (orientation_t *)VMA(1), args[2], args[3], args[4], VMF(5), (const char *)VMA(6) );
+		re.LerpTag( VMAV(1, orientation_t), args[2], args[3], args[4], VMF(5), VMAS(6) );
 		return 0;
 
 	case UI_S_REGISTERSOUND:
-		return S_RegisterSound( (const char *)VMA(1) );
+		return S_RegisterSound( VMAS(1) );
 
 	case UI_S_STARTLOCALSOUND:
 		S_StartLocalSound( args[1], args[2] );
 		return 0;
 
 	case UI_KEY_KEYNUMTOSTRINGBUF:
-		Key_KeynumToStringBuf(Key_GetProtocolKey15(UI_GetCurrentGameversion(), args[1]), (char *)VMA(2), args[3]); // 1.02 keynums -> 1.04 keynums
+		Key_KeynumToStringBuf(Key_GetProtocolKey15(UI_GetCurrentGameversion(), args[1]), VMAP(2, char, args[3]), args[3]); // 1.02 keynums -> 1.04 keynums
 		return 0;
 
 	case UI_KEY_GETBINDINGBUF:
-		Key_GetBindingBuf(Key_GetProtocolKey15(UI_GetCurrentGameversion(), args[1]), (char *)VMA(2), args[3]); // 1.02 keynums -> 1.04 keynums
+		Key_GetBindingBuf(Key_GetProtocolKey15(UI_GetCurrentGameversion(), args[1]), VMAP(2, char, args[3]), args[3]); // 1.02 keynums -> 1.04 keynums
 		return 0;
 
 	case UI_KEY_SETBINDING:
-		Key_SetBinding(Key_GetProtocolKey15(UI_GetCurrentGameversion(), args[1]), (const char *)VMA(2)); // 1.02 keynums -> 1.04 keynums
+		Key_SetBinding(Key_GetProtocolKey15(UI_GetCurrentGameversion(), args[1]), VMAS(2)); // 1.02 keynums -> 1.04 keynums
 		return 0;
 
 	case UI_KEY_ISDOWN:
@@ -932,19 +929,19 @@ intptr_t CL_UISystemCalls(intptr_t *args) {
 		return 0;
 
 	case UI_GETCLIPBOARDDATA:
-		GetClipboardData( (char *)VMA(1), args[2] );
+		GetClipboardData( VMAP(1, char, args[2]), args[2] );
 		return 0;
 
 	case UI_GETCLIENTSTATE:
-		GetClientState( (uiClientState_t *)VMA(1) );
+		GetClientState( VMAV(1, uiClientState_t) );
 		return 0;
 
 	case UI_GETGLCONFIG:
-		CL_GetVMGLConfig((vmglconfig_t *)VMA(1));
+		CL_GetVMGLConfig( VMAV(1, vmglconfig_t) );
 		return 0;
 
 	case UI_GETCONFIGSTRING:
-		return GetConfigString( args[1], (char *)VMA(2), args[3] );
+		return GetConfigString( args[1], VMAP(2, char, args[3]), args[3] );
 
 	case UI_LAN_LOADCACHEDSERVERS:
 		LAN_LoadCachedServers();
@@ -955,10 +952,10 @@ intptr_t CL_UISystemCalls(intptr_t *args) {
 		return 0;
 
 	case UI_LAN_ADDSERVER:
-		return LAN_AddServer(args[1], (const char *)VMA(2), (const char *)VMA(3));
+		return LAN_AddServer( args[1], VMAS(2), VMAS(3) );
 
 	case UI_LAN_REMOVESERVER:
-		LAN_RemoveServer(args[1], (const char *)VMA(2));
+		LAN_RemoveServer( args[1], VMAS(2) );
 		return 0;
 
 	case UI_LAN_GETPINGQUEUECOUNT:
@@ -969,22 +966,22 @@ intptr_t CL_UISystemCalls(intptr_t *args) {
 		return 0;
 
 	case UI_LAN_GETPING:
-		LAN_GetPing( args[1], (char *)VMA(2), args[3], (int *)VMA(4) );
+		LAN_GetPing( args[1], VMAP(2, char, args[3]), args[3], VMAV(4, int) );
 		return 0;
 
 	case UI_LAN_GETPINGINFO:
-		LAN_GetPingInfo( args[1], (char *)VMA(2), args[3] );
+		LAN_GetPingInfo( args[1], VMAP(2, char, args[3]), args[3] );
 		return 0;
 
 	case UI_LAN_GETSERVERCOUNT:
 		return LAN_GetServerCount(args[1]);
 
 	case UI_LAN_GETSERVERADDRESSSTRING:
-		LAN_GetServerAddressString( args[1], args[2], (char *)VMA(3), args[4] );
+		LAN_GetServerAddressString( args[1], args[2], VMAP(3, char, args[4]), args[4] );
 		return 0;
 
 	case UI_LAN_GETSERVERINFO:
-		LAN_GetServerInfo( args[1], args[2], (char *)VMA(3), args[4] );
+		LAN_GetServerInfo( args[1], args[2], VMAP(3, char, args[4]), args[4] );
 		return 0;
 
 	case UI_LAN_GETSERVERPING:
@@ -1005,7 +1002,7 @@ intptr_t CL_UISystemCalls(intptr_t *args) {
 		return 0;
 
 	case UI_LAN_SERVERSTATUS:
-		return LAN_GetServerStatus( (char *)VMA(1), (char *)VMA(2), args[3] );
+		return LAN_GetServerStatus( VMAS(1), VMAP(2, char, args[3]), args[3] );
 
 	case UI_LAN_COMPARESERVERS:
 		return LAN_CompareServers( args[1], args[2], args[3], args[4], args[5] );
@@ -1014,19 +1011,19 @@ intptr_t CL_UISystemCalls(intptr_t *args) {
 		return Hunk_MemoryRemaining();
 
 	case UI_R_REGISTERFONT:
-		return re.RegisterFont( (const char *)VMA(1) );
+		return re.RegisterFont( VMAS(1) );
 
 	case UI_R_FONT_STRLENPIXELS:
-		return re.Font_StrLenPixels( (const char *)VMA(1), args[2], VMF(3) );
+		return re.Font_StrLenPixels( VMAS(1), args[2], VMF(3) );
 
 	case UI_R_FONT_STRLENCHARS:
-		return re.Font_StrLenChars( (const char *)VMA(1) );
+		return re.Font_StrLenChars( VMAS(1) );
 
 	case UI_R_FONT_STRHEIGHTPIXELS:
 		return re.Font_HeightPixels( args[1], VMF(2) );
 
 	case UI_R_FONT_DRAWSTRING:
-		re.Font_DrawString( args[1], args[2], (const char *)VMA(3), (const float *) VMA(4), args[5], args[6], VMF(7) );
+		re.Font_DrawString( args[1], args[2], VMAS(3), VMAP(4, const vec_t, 4), args[5], args[6], VMF(7) );
 		return 0;
 
 	case UI_LANGUAGE_ISASIAN:
@@ -1036,19 +1033,18 @@ intptr_t CL_UISystemCalls(intptr_t *args) {
 		return re.Language_UsesSpaces();
 
 	case UI_ANYLANGUAGE_READCHARFROMSTRING:
-		return re.AnyLanguage_ReadCharFromString( (const char *)VMA(1), (int *) VMA(2), (qboolean *) VMA(3) );
+		return re.AnyLanguage_ReadCharFromString( VMAS(1), VMAV(2, int), VMAV(3, qboolean) );
 
 	case UI_MEMSET:
-		Com_Memset( VMA(1), args[2], args[3] );
+		Com_Memset( VMAP(1, char, args[3]), args[2], args[3] );
 		return 0;
 
 	case UI_MEMCPY:
-		Com_Memcpy( VMA(1), VMA(2), args[3] );
+		Com_Memcpy( VMAP(1, char, args[3]), VMAP(2, char, args[3]), args[3] );
 		return 0;
 
 	case UI_STRNCPY:
-		strncpy( (char *)VMA(1), (const char *)VMA(2), args[3] );
-		return args[1];
+		return VM_strncpy( args[1], args[2], args[3] );
 
 	case UI_SIN:
 		return FloatAsInt( sinf( VMF(1) ) );
@@ -1069,17 +1065,17 @@ intptr_t CL_UISystemCalls(intptr_t *args) {
 		return FloatAsInt( ceilf( VMF(1) ) );
 
 	case UI_PC_ADD_GLOBAL_DEFINE:
-		return botlib_export->PC_AddGlobalDefine( (char *)VMA(1) );
+		return botlib_export->PC_AddGlobalDefine( VMAS(1) );
 	case UI_PC_LOAD_SOURCE:
-		return botlib_export->PC_LoadSourceHandle( (const char *)VMA(1) );
+		return botlib_export->PC_LoadSourceHandle( VMAS(1) );
 	case UI_PC_FREE_SOURCE:
 		return botlib_export->PC_FreeSourceHandle( args[1] );
 	case UI_PC_READ_TOKEN:
-		return botlib_export->PC_ReadTokenHandle( args[1], (struct pc_token_s *)VMA(2) );
+		return botlib_export->PC_ReadTokenHandle( args[1], VMAV(2, pc_token_t) );
 	case UI_PC_SOURCE_FILE_AND_LINE:
-		return botlib_export->PC_SourceFileAndLine( args[1], (char *)VMA(2), (int *)VMA(3) );
+		return botlib_export->PC_SourceFileAndLine( args[1], VMAP(2, char, MAX_QPATH), VMAV(3, int) );
 	case UI_PC_LOAD_GLOBAL_DEFINES:
-		return botlib_export->PC_LoadGlobalDefines ( (char *)VMA(1) );
+		return botlib_export->PC_LoadGlobalDefines ( VMAS(1) );
 	case UI_PC_REMOVE_ALL_GLOBAL_DEFINES:
 		botlib_export->PC_RemoveAllGlobalDefines ( );
 		return 0;
@@ -1088,15 +1084,15 @@ intptr_t CL_UISystemCalls(intptr_t *args) {
 		S_StopBackgroundTrack();
 		return 0;
 	case UI_S_STARTBACKGROUNDTRACK:
-		S_StartBackgroundTrack( (const char *)VMA(1), (const char *)VMA(2), qfalse);
+		S_StartBackgroundTrack( VMAS(1), VMAS(2), qfalse);
 		return 0;
 
 	case UI_REAL_TIME:
-		return Com_RealTime( (struct qtime_s *)VMA(1) );
+		return Com_RealTime( VMAV(1, qtime_t) );
 
 	case UI_CIN_PLAYCINEMATIC:
 	  Com_DPrintf("UI_CIN_PlayCinematic\n");
-	  return CIN_PlayCinematic((const char *)VMA(1), args[2], args[3], args[4], args[5], args[6]);
+	  return CIN_PlayCinematic(VMAS(1), args[2], args[3], args[4], args[5], args[6]);
 
 	case UI_CIN_STOPCINEMATIC:
 	  return CIN_StopCinematic(args[1]);
@@ -1113,28 +1109,26 @@ intptr_t CL_UISystemCalls(intptr_t *args) {
 	  return 0;
 
 	case UI_R_REMAP_SHADER:
-		re.RemapShader( (const char *)VMA(1), (const char *)VMA(2), (const char *)VMA(3) );
+		re.RemapShader( VMAS(1), VMAS(2), VMAS(3) );
 		return 0;
 
 	case UI_SP_REGISTER:
-		return !!SP_Register((const char *)VMA(1),SP_REGISTER_MENU);
+		return !!SP_Register(VMAS(1), SP_REGISTER_MENU);
 
 	case UI_SP_GETSTRINGTEXTSTRING:
 		const char* text;
 
-		assert(VMA(1));
-		assert(VMA(2));
-		text = SP_GetStringTextString((const char *) VMA(1));
-		Q_strncpyz( (char *) VMA(2), text, args[3] );
+		text = SP_GetStringTextString(VMAS(1));
+		Q_strncpyz( VMAP(2, char, args[3]), text, args[3] );
 		return qtrue;
 
 /*
 Ghoul2 Insert Start
 */
 	case UI_G2_ANGLEOVERRIDE:
-		return G2API_SetBoneAngles((g2handle_t)args[1], args[2], (const char *)VMA(3), (float *)VMA(4), args[5],
+		return G2API_SetBoneAngles((g2handle_t)args[1], args[2], VMAS(3), VMAP(4, const vec_t, 3), args[5],
 							 (const Eorientations) args[6], (const Eorientations) args[7], (const Eorientations) args[8],
-							 (qhandle_t *)VMA(9), args[10], args[11] );
+							 VMAA(9, qhandle_t, args[2] + 1), args[10], args[11] );
 /*
 Ghoul2 Insert End
 */
@@ -1147,17 +1141,17 @@ Ghoul2 Insert End
 
 	case UI_MV_GETDLLIST:
 		if (uigameversion == VERSION_UNDEF)
-			return UI_ConcatDLList((dlfile_t *)VMA(1), args[2]);
+			return UI_ConcatDLList(VMAA(1, dlfile_t, args[2]), args[2]);
 		else return qtrue;
 
 	case UI_MV_RMDLPREFIX:
 		if (uigameversion == VERSION_UNDEF)
-			return FS_RMDLPrefix((const char *)VMA(1));
+			return FS_RMDLPrefix(VMAS(1));
 		else return qtrue;
 
 	case UI_MV_DELDLFILE:
 		if (uigameversion == VERSION_UNDEF)
-			return UI_DeleteDLFile((const dlfile_t *)VMA(1));
+			return UI_DeleteDLFile(VMAV(1, const dlfile_t));
 		else return qtrue;
 
 	case MVAPI_GET_VERSION:
@@ -1280,21 +1274,21 @@ Load the blacklist entrys first so they have a better chance
 to fit in the buffer
 ====================
 */
-int UI_ConcatDLList(dlfile_t *files, int maxfiles) {
+int UI_ConcatDLList(dlfile_t *files, const int maxfiles) {
 	int i, c = 0;
 
 	CL_ReadBlacklistFile();
-	for (i = 0; i < cls.downloadBlacklistLen && maxfiles; i++, maxfiles--) {
+	for (i = 0; i < cls.downloadBlacklistLen && c < maxfiles; i++, c++) {
 		Q_strncpyz(files->name, cls.downloadBlacklist[i].name, sizeof(files->name));
 		files->time = cls.downloadBlacklist[i].time;
 		files->checkksum = cls.downloadBlacklist[i].checksum;
 		files->blacklisted = qtrue;
 
-		c++; files++;
+		files++;
 	}
 	CL_BlacklistWriteCloseFile();
 
-	return c + FS_GetDLList(files, maxfiles);
+	return c + FS_GetDLList(files, c);
 }
 
 qboolean UI_DeleteDLFile(const dlfile_t *file) {

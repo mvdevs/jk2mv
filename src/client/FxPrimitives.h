@@ -192,7 +192,7 @@ public:
 	inline void SetFlags( int flags )		{ mFlags = flags;				}
 	inline void AddFlags( int flags )		{ mFlags |= flags;				}
 	inline void ClearFlags( int flags )		{ mFlags &= ~flags;				}
-	inline void SetOrigin1( vec3_t org )	{ if(org){VectorCopy(org,mOrigin1);}else{VectorClear(mOrigin1);}	}
+	inline void SetOrigin1( const vec3_t org )	{ if(org){VectorCopy(org,mOrigin1);}else{VectorClear(mOrigin1);}	}
 	inline void SetTimeStart( int time )	{ mTimeStart = time; if (mFlags&FX_SET_SHADER_TIME) { mRefEnt.shaderTime = time * 0.001f; }}
 	inline void	SetTimeEnd( int time )		{ mTimeEnd = time;				}
 	inline void SetImpactFxID( int id )		{ mImpactFxID = id;				}
@@ -321,8 +321,8 @@ public:
 	inline void SetSizeEnd( float sz )		{ mSizeEnd = sz;			}
 	inline void SetSizeParm( float parm )	{ mSizeParm = parm;			}
 
-	inline void SetRGBStart( vec3_t rgb )	{ if(rgb){VectorCopy(rgb,mRGBStart);}else{VectorClear(mRGBStart);}	}
-	inline void SetRGBEnd( vec3_t rgb )		{ if(rgb){VectorCopy(rgb,mRGBEnd);}else{VectorClear(mRGBEnd);}		}
+	inline void SetRGBStart( const vec3_t rgb )	{ if(rgb){VectorCopy(rgb,mRGBStart);}else{VectorClear(mRGBStart);}	}
+	inline void SetRGBEnd( const vec3_t rgb )		{ if(rgb){VectorCopy(rgb,mRGBEnd);}else{VectorClear(mRGBEnd);}		}
 	inline void SetRGBParm( float parm )	{ mRGBParm = parm;			}
 };
 
@@ -394,15 +394,15 @@ public:
 
 	inline void SetShader( qhandle_t sh )	{ mRefEnt.customShader = sh;				}
 
-	inline void SetVel( vec3_t vel )		{ if(vel){VectorCopy(vel,mVel);}else{VectorClear(mVel);}	}
-	inline void SetAccel( vec3_t ac )		{ if(ac){VectorCopy(ac,mAccel);}else{VectorClear(mAccel);}	}
+	inline void SetVel( const vec3_t vel )	{ if(vel){VectorCopy(vel,mVel);}else{VectorClear(mVel);}	}
+	inline void SetAccel( const vec3_t ac )	{ if(ac){VectorCopy(ac,mAccel);}else{VectorClear(mAccel);}	}
 
 	inline void SetSizeStart( float sz )	{ mSizeStart = sz;			}
 	inline void SetSizeEnd( float sz )		{ mSizeEnd = sz;			}
 	inline void SetSizeParm( float parm )	{ mSizeParm = parm;			}
 
-	inline void SetRGBStart( vec3_t rgb )	{ if(rgb){VectorCopy(rgb,mRGBStart);}else{VectorClear(mRGBStart);}	}
-	inline void SetRGBEnd( vec3_t rgb )		{ if(rgb){VectorCopy(rgb,mRGBEnd);}else{VectorClear(mRGBEnd);}		}
+	inline void SetRGBStart( const vec3_t rgb )	{ if(rgb){VectorCopy(rgb,mRGBStart);}else{VectorClear(mRGBStart);}	}
+	inline void SetRGBEnd( const vec3_t rgb )		{ if(rgb){VectorCopy(rgb,mRGBEnd);}else{VectorClear(mRGBEnd);}		}
 	inline void SetRGBParm( float parm )	{ mRGBParm = parm;			}
 
 	inline void SetAlphaStart( float al )	{ mAlphaStart = al;			}
@@ -462,7 +462,7 @@ public:
 	virtual bool Cull();
 	virtual void Draw();
 
-	inline void SetOrigin2( vec3_t org2 )	{ VectorCopy( org2, mOrigin2 ); }
+	inline void SetOrigin2( const vec3_t org2 )	{ VectorCopy( org2, mOrigin2 ); }
 };
 
 //------------------------------
@@ -490,8 +490,8 @@ public:
 
 	void DrawSegment( vec3_t start, vec3_t end, float texcoord1, float texcoord2 );
 
-	inline void SetControlPoints( vec3_t ctrl1, vec3_t ctrl2 )	{ VectorCopy( ctrl1, mControl1 ); VectorCopy( ctrl2, mControl2 ); }
-	inline void SetControlVel( vec3_t ctrl1v, vec3_t ctrl2v )	{ VectorCopy( ctrl1v, mControl1Vel ); VectorCopy( ctrl2v, mControl2Vel ); }
+	inline void SetControlPoints( const vec3_t ctrl1, const vec3_t ctrl2 )	{ VectorCopy( ctrl1, mControl1 ); VectorCopy( ctrl2, mControl2 ); }
+	inline void SetControlVel( const vec3_t ctrl1v, const vec3_t ctrl2v )	{ VectorCopy( ctrl1v, mControl1Vel ); VectorCopy( ctrl2v, mControl2Vel ); }
 };
 
 //------------------------------
@@ -676,7 +676,7 @@ public:
 	void Rotate();
 
 	inline void SetNumVerts( int c )					{ mCount = c;			}
-	inline void SetRot( vec3_t r )						{ if(r){VectorCopy(r,mRotDelta);}else{VectorClear(mRotDelta);}}
+	inline void SetRot( const vec3_t r )				{ if(r){VectorCopy(r,mRotDelta);}else{VectorClear(mRotDelta);}}
 	inline void SetMotionTimeStamp( int t )				{ mTimeStamp = theFxHelper.GetTime() + t; }
 	inline int	GetMotionTimeStamp()					{ return mTimeStamp; }
 };

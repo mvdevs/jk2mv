@@ -15,7 +15,7 @@ CROFFSystem theROFFSystem;
 // RETURN:
 //	none
 //---------------------------------------------------------------------------
-CROFFSystem::CROFF::CROFF( char *file, int id )
+CROFFSystem::CROFF::CROFF( const char *file, int id )
 {
 	Q_strncpyz( mROFFFilePath, file, sizeof(mROFFFilePath) );
 
@@ -293,7 +293,7 @@ void CROFFSystem::FixBadAngles(CROFF *obj)
 // RETURN:
 //	returns ID of the roff, whether its an existing one or new one.
 //---------------------------------------------------------------------------
-int CROFFSystem::Cache( char *file, qboolean isClient )
+int CROFFSystem::Cache( const char *file, qboolean isClient )
 {
 	// See if this item is already cached
 	int				len;
@@ -367,7 +367,7 @@ int CROFFSystem::Cache( char *file, qboolean isClient )
 // RETURN:
 //	returns ID if there is one, zero if nothing was found
 //---------------------------------------------------------------------------
-int	CROFFSystem::GetID( char *file )
+int	CROFFSystem::GetID( const char *file )
 {
 	TROFFList::iterator itr;
 

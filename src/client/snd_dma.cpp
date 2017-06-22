@@ -1255,7 +1255,7 @@ if pos is NULL, the sound will be dynamically sourced from the entity
 Entchannel 0 will never override a playing sound
 ====================
 */
-void S_StartSound(vec3_t origin, int entityNum, int entchannel, sfxHandle_t sfxHandle ) {
+void S_StartSound(const vec3_t origin, int entityNum, int entchannel, sfxHandle_t sfxHandle ) {
 	channel_t	*ch;
 	sfx_t		*sfx;
 	int			i;
@@ -1549,6 +1549,11 @@ continuous looping sounds are added each frame
 */
 
 void S_StopLoopingSound(int entityNum) {
+	if ( entityNum < 0 || MAX_GENTITIES <= entityNum ) {
+		Com_DPrintf( S_COLOR_YELLOW "S_StopLoopingSound: bad entitynum %i\n", entityNum );
+		return;
+	}
+
 	loopSounds[entityNum].active = qfalse;
 //	loopSounds[entityNum].sfx = 0;
 	loopSounds[entityNum].kill = qfalse;
@@ -1598,6 +1603,11 @@ void S_AddLoopingSound( int entityNum, const vec3_t origin, const vec3_t velocit
 
 	if ( !sfx->iSoundLengthInSamples ) {
 		Com_Error( ERR_DROP, "%s has length 0", sfx->sSoundName );
+	}
+
+	if ( entityNum < 0 || MAX_GENTITIES <= entityNum ) {
+		Com_DPrintf( S_COLOR_YELLOW "S_AddLoopingSound: bad entitynum %i\n", entityNum );
+		return;
 	}
 
 	VectorCopy( origin, loopSounds[entityNum].origin );
@@ -1689,6 +1699,12 @@ void S_AddRealLoopingSound( int entityNum, const vec3_t origin, const vec3_t vel
 	if ( !sfx->iSoundLengthInSamples ) {
 		Com_Error( ERR_DROP, "%s has length 0", sfx->sSoundName );
 	}
+
+	if ( entityNum < 0 || MAX_GENTITIES <= entityNum ) {
+		Com_DPrintf( S_COLOR_YELLOW "S_AddRealLoopingSound: bad entitynum %i\n", entityNum );
+		return;
+	}
+
 	VectorCopy( origin, loopSounds[entityNum].origin );
 	VectorCopy( velocity, loopSounds[entityNum].velocity );
 	loopSounds[entityNum].sfx = sfx;
@@ -1967,7 +1983,7 @@ void S_UpdateEntityPosition( int entityNum, const vec3_t origin )
 	channel_t *ch;
 	int i;
 
-	if ( entityNum < 0 || entityNum > MAX_GENTITIES ) {
+	if ( entityNum < 0 || entityNum >= MAX_GENTITIES ) {
 		Com_Error( ERR_DROP, "S_UpdateEntityPosition: bad entitynum %i", entityNum );
 	}
 

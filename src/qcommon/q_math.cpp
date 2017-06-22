@@ -482,7 +482,7 @@ void AxisClear( vec3_t axis[3] ) {
 	axis[2][2] = 1;
 }
 
-void AxisCopy( vec3_t in[3], vec3_t out[3] ) {
+void AxisCopy( const vec3_t in[3], vec3_t out[3] ) {
 	VectorCopy( in[0], out[0] );
 	VectorCopy( in[1], out[1] );
 	VectorCopy( in[2], out[2] );
@@ -906,7 +906,7 @@ int	PlaneTypeForNormal (vec3_t normal) {
 MatrixMultiply
 ================
 */
-void MatrixMultiply(float in1[3][3], float in2[3][3], float out[3][3]) {
+void MatrixMultiply(const float in1[3][3], const float in2[3][3], float out[3][3]) {
 	out[0][0] = in1[0][0] * in2[0][0] + in1[0][1] * in2[1][0] +
 				in1[0][2] * in2[2][0];
 	out[0][1] = in1[0][0] * in2[0][1] + in1[0][1] * in2[1][1] +

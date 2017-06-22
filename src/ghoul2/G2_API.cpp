@@ -34,6 +34,7 @@ typedef map<g2handle_t, CGhoul2Info_v> CGhoul2Info_m;
 
 static CGhoul2Info_m	ghoultable[2];
 static g2handle_t		nextGhoul2Handle = (g2handle_t)1;
+static int				maxModelIndex[2];
 
 // game/cgame context
 bool RicksCrazyOnServer;
@@ -49,17 +50,19 @@ CGhoul2Info_v *G2API_GetGhoul2Model(g2handle_t g2h) {
 	return &ghlIt->second;
 }
 
-void FixGhoul2InfoLeaks(bool clearClient,bool clearServer)
+void FixGhoul2InfoLeaks(bool ricksCrazyOnServer)
 {
-	if ( clearClient )
-		ghoultable[0].clear();
-	if ( clearServer )
-		ghoultable[1].clear();
+	ghoultable[ricksCrazyOnServer].clear();
+	maxModelIndex[ricksCrazyOnServer] = 0;
 }
 
 void G2API_CleanGhoul2Models(g2handle_t *g2hPtr) {
 	ghoultable[RicksCrazyOnServer].erase(*g2hPtr);
 	*g2hPtr = 0;
+}
+
+int G2API_GetMaxModelIndex(bool ricksCrazyOnServer) {
+	return maxModelIndex[ricksCrazyOnServer];
 }
 
 qhandle_t G2API_PrecacheGhoul2Model(const char *fileName)
@@ -94,6 +97,8 @@ int G2API_InitGhoul2Model(g2handle_t *g2hPtr, const char *fileName, int modelInd
 		{
 			// this is only valid and used on the game side. Client side ignores this
 			it->mModelindex = modelIndex;
+			if (maxModelIndex[RicksCrazyOnServer] < modelIndex)
+				maxModelIndex[RicksCrazyOnServer] = modelIndex;
 				// on the game side this is valid. On the client side it is valid only after it has been filled in by trap_G2_SetGhoul2ModelIndexes
 			it->mModel = RE_RegisterModel(fileName);
 			model_t		*mod_m = R_GetModelByHandle(it->mModel);
@@ -125,6 +130,8 @@ int G2API_InitGhoul2Model(g2handle_t *g2hPtr, const char *fileName, int modelInd
 
 	// if we got this far, then we didn't find a spare position, so lets insert a new one
 	newModel.mModelindex = modelIndex;
+	if (maxModelIndex[RicksCrazyOnServer] < modelIndex)
+		maxModelIndex[RicksCrazyOnServer] = modelIndex;
 	// on the game side this is valid. On the client side it is valid only after it has been filled in by trap_G2_SetGhoul2ModelIndexes
 	if (customShader <= -20)
 	{ //This means the server is making the function call. And the server does not like registering models.
@@ -222,7 +229,7 @@ qboolean G2API_SetRootSurface(g2handle_t g2h, const int modelIndex, const char *
 {
 	CGhoul2Info_v *ghoul2 = G2API_GetGhoul2Model(g2h);
 
-	if (!ghoul2) {
+	if (!ghoul2 || ghoul2->size() <= (unsigned)modelIndex) {
 		return qfalse;
 	}
 
@@ -770,7 +777,7 @@ qboolean gG2_GBMNoReconstruct;
 qboolean gG2_GBMUseSPMethod;
 
 qboolean G2API_GetBoltMatrix_SPMethod(g2handle_t g2h, const int modelIndex, const int boltIndex, mdxaBone_t *matrix, const vec3_t angles,
-							 const vec3_t position, const int frameNum, qhandle_t *modelList, const vec3_t scale )
+							 const vec3_t position, const int frameNum, const qhandle_t *modelList, const vec3_t scale )
 {
 	CGhoul2Info_v *ghoul2 = G2API_GetGhoul2Model(g2h);
 
@@ -831,7 +838,7 @@ qboolean G2API_GetBoltMatrix_SPMethod(g2handle_t g2h, const int modelIndex, cons
 	return qfalse;
 }
 
-qboolean G2API_GetBoltMatrix(g2handle_t g2h, const int modelIndex, const int boltIndex, mdxaBone_t *matrix, const vec3_t angles, const vec3_t position, const int frameNum, qhandle_t *modelList, vec3_t scale )
+qboolean G2API_GetBoltMatrix(g2handle_t g2h, const int modelIndex, const int boltIndex, mdxaBone_t *matrix, const vec3_t angles, const vec3_t position, const int frameNum, const qhandle_t *modelList, const vec3_t scale )
 {
 	if (gG2_GBMUseSPMethod)
 	{
@@ -998,8 +1005,7 @@ static int QDECL QsortDistance( const void *a, const void *b ) {
 }
 
 
-void G2API_CollisionDetect(CollisionRecord_t *collRecMap, g2handle_t g2h, const vec3_t angles, const vec3_t position,
-										  int frameNumber, int entNum, vec3_t rayStart, vec3_t rayEnd, vec3_t scale, CMiniHeap *G2VertSpace, int traceFlags, int useLod, float fRadius)
+void G2API_CollisionDetect(CollisionRecord_t *collRecMap, g2handle_t g2h, const vec3_t angles, const vec3_t position, int frameNumber, int entNum, const vec3_t rayStart, const vec3_t rayEnd, const vec3_t scale, CMiniHeap *G2VertSpace, int traceFlags, int useLod, float fRadius)
 {
 
 	CGhoul2Info_v *ghoul2 = G2API_GetGhoul2Model(g2h);
@@ -1066,7 +1072,7 @@ int G2API_GetGhoul2ModelFlags(CGhoul2Info *ghlInfo)
 }
 
 // given a boltmatrix, return in vec a normalised vector for the axis requested in flags
-void G2API_GiveMeVectorFromMatrix(mdxaBone_t *boltMatrix, Eorientations flags, vec3_t vec)
+void G2API_GiveMeVectorFromMatrix(const mdxaBone_t *boltMatrix, Eorientations flags, vec3_t vec)
 {
 	switch (flags)
 	{

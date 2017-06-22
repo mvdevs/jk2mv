@@ -2273,8 +2273,13 @@ int Key_GetProtocolKey(mvversion_t protocol, int key16) {
 }
 
 int Key_GetProtocolKey15(mvversion_t protocol, int key15) {
-	if (protocol != VERSION_1_02)
-		return key15;
+	if (protocol != VERSION_1_02) {
+		if ( key15 < 0 || MAX_KEYS <= key15 ) {
+			return -1;
+		} else {
+			return key15;
+		}
+	}
 
 	switch (key15) {
 	case K_TAB:
@@ -2425,13 +2430,13 @@ int Key_GetProtocolKey15(mvversion_t protocol, int key15) {
 		return A_MWHEELUP;
 
 	case K_LAST_KEY:
-		return MAX_KEYS;
+		return -1;
 	}
 
 	// Prevent double entries for 1.02 (Example: if 1.02 asks for K_CTRL it will be as if it asked for A_CTRL, if 1.02 asks for something that has the same number as A_CTRL it will count as A_CTRL, too: the CTRL key is handled twice. Solution: check if key15 would get altered by the inverse replacement).
 	if ( Key_GetProtocolKey(protocol, key15) != key15 ) return -1;
 
-	if ( key15 >= MAX_KEYS ) return -1;
+	if ( key15 < 0 || key15 >= MAX_KEYS ) return -1;
 
 	return key15;
 }
