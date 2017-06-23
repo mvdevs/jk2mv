@@ -1122,6 +1122,9 @@ static void SV_InitGameVM( qboolean restart ) {
 
 	FixGhoul2InfoLeaks(true);
 
+	// clear physics interaction links
+	SV_ClearWorld ();
+
 	// start the entity parsing at the beginning
 	sv.entityParsePoint = (const char *) CM_EntityString();
 

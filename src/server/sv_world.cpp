@@ -130,6 +130,11 @@ void SV_ClearWorld( void ) {
 	Com_Memset( sv_worldSectors, 0, sizeof(sv_worldSectors) );
 	sv_numworldSectors = 0;
 
+	for ( unsigned i = 0; i < ARRAY_LEN( sv.svEntities ); i++ ) {
+		sv.svEntities[i].worldSector = NULL;
+		sv.svEntities[i].nextEntityInWorldSector = NULL;
+	}
+
 	// get world map bounds
 	h = CM_InlineModel( 0 );
 	CM_ModelBounds( h, mins, maxs );

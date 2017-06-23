@@ -610,9 +610,6 @@ Ghoul2 Insert End
 	sv.restartedServerId = sv.serverId;
 	Cvar_Set( "sv_serverid", va("%i", sv.serverId ) );
 
-	// clear physics interaction links
-	SV_ClearWorld ();
-
 	// media configstring setting should be done during
 	// the loading stage, so connected clients don't have
 	// to load during actual gameplay
