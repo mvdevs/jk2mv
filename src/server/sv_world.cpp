@@ -525,7 +525,7 @@ void SV_ClipMoveToEntities( moveclip_t *clip ) {
 
 	if ( clip->passEntityNum < 0 ) {
 		passOwnerNum = -1;	// common bad API usage in original modules
-	} if ( clip->passEntityNum != ENTITYNUM_NONE ) {
+	} else if ( clip->passEntityNum != ENTITYNUM_NONE ) {
 		const sharedEntity_t *passEnt = SV_GentityNum( clip->passEntityNum );
 
 		passOwnerNum = passEnt->r.ownerNum;
