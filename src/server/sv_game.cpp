@@ -1115,9 +1115,12 @@ SV_InitGameVM
 Called for both a full init and a restart
 ==================
 */
+extern void FixGhoul2InfoLeaks(bool);
 static void SV_InitGameVM( qboolean restart ) {
 	int		i;
 	int apireq;
+
+	FixGhoul2InfoLeaks(true);
 
 	// start the entity parsing at the beginning
 	sv.entityParsePoint = (const char *) CM_EntityString();

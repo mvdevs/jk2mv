@@ -443,8 +443,6 @@ clients along with it.
 This is NOT called for map_restart
 ================
 */
-extern void FixGhoul2InfoLeaks(bool);
-
 #ifdef G2_COLLISION_ENABLED
 extern CMiniHeap *G2VertSpaceServer;
 #define G2_VERT_SPACE_SERVER_SIZE 256
@@ -467,8 +465,6 @@ void SV_SpawnServer( char *server, qboolean killBots, ForceReload_e eForceReload
 
 	// shut down the existing game if it is running
 	SV_ShutdownGameProgs();
-
-	FixGhoul2InfoLeaks(true);
 
 /*
 Ghoul2 Insert Start
