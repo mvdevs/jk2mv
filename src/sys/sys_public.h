@@ -114,6 +114,7 @@ void		Sys_ShowIP(void);
 
 qboolean	Sys_Mkdir( const char *path );
 char	*Sys_Cwd( void );
+int			Sys_PID( void );
 
 char *Sys_DefaultInstallPath(void);
 char *Sys_DefaultAssetsPath();

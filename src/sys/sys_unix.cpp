@@ -462,6 +462,11 @@ void Sys_PlatformExit( void )
 {
 }
 
+int Sys_PID( void )
+{
+	return getpid( );
+}
+
 //============================================
 
 int Sys_GetProcessorId( void )

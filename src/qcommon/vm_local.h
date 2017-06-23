@@ -168,6 +168,8 @@ struct vm_s {
 	qboolean	compiled;
 	byte		*codeBase;
 	int			entryOfs;
+	int			callProcOfs;
+	int			callProcOfsSyscall;
 	int			codeLength;
 
 	intptr_t	*instructionPointers;

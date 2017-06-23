@@ -42,6 +42,7 @@ int		vm_debugLevel;
 
 #define MAX_APINUM	1000
 qboolean vm_profileInclusive;
+static vmSymbol_t nullSymbol;
 
 // used by Com_Error to get rid of running vm's before longjmp
 static int forced_unload;
@@ -95,11 +96,16 @@ const char *VM_ValueToSymbol( vm_t *vm, int value ) {
 	vmSymbol_t	*sym;
 	static char		text[MAX_TOKEN_CHARS];
 
-	if ( !vm->symbolTable ) {
+	if ( !vm->symbols ) {
 		return "NO SYMBOLS";
 	}
 
-	sym = vm->symbolTable[value];
+	sym = VM_ValueToFunctionSymbol( vm, value );
+
+	if ( sym == &nullSymbol ) {
+		Com_sprintf( text, sizeof( text ), "%x", value );
+		return text;
+	}
 
 	if ( value == sym->symValue ) {
 		return sym->symName;
@@ -118,13 +124,26 @@ For profiling, find the symbol behind this value
 ===============
 */
 vmSymbol_t *VM_ValueToFunctionSymbol( vm_t *vm, int value ) {
-	static vmSymbol_t	nullSym;
-
-	if ( !vm->symbolTable ) {
-		return &nullSym;
+	if ( value < -MAX_APINUM || vm->codeLength <= value ) {
+		return &nullSymbol;
 	}
 
-	return vm->symbolTable[value];
+	if ( vm->symbolTable ) {
+		return vm->symbolTable[value];
+	}
+
+	if ( vm->symbols ) {
+		vmSymbol_t *sym;
+
+		for ( sym = vm->symbols; sym->next; sym = sym->next ) {
+			if ( sym->symValue <= value && value < sym->next->symValue ) {
+				return sym;
+			}
+		}
+		return sym;
+	}
+
+	return &nullSymbol;
 }
 
 
@@ -214,28 +233,14 @@ void VM_LoadSymbols( vm_t *vm ) {
 		char	*c;
 		void	*v;
 	} mapfile;
-	const char *text_p;
-	const char *token;
-	char	name[MAX_QPATH];
-	char	symbols[MAX_QPATH];
-	vmSymbol_t	**prev, *sym;
-	int		count;
-	int		value;
-	int		chars;
-	int		segment;
-	int		numInstructions;
-	int		i;
+	char		name[MAX_QPATH];
+	char		symbols[MAX_QPATH];
+	int			count = 0;
+	int			i;
 
-	if ( vm->compiled ) {
+	if ( vm->dllHandle ) {
 		return;
 	}
-
-#ifndef DEBUG_VM
-	// don't load symbols if not developer
-	if ( !com_developer->integer ) {
-		return;
-	}
-#endif
 
 	COM_StripExtension(vm->name, name, sizeof(name));
 	Com_sprintf( symbols, sizeof( symbols ), "vm/%s.map", name );
@@ -245,15 +250,19 @@ void VM_LoadSymbols( vm_t *vm ) {
 		return;
 	}
 
-	numInstructions = vm->instructionCount;
+	//
+	// parse symbols
+	//
 
-	// 1000 for negative system calls
-	vm->symbolTable = (vmSymbol_t **)Hunk_Alloc( (MAX_APINUM + vm->codeLength) * sizeof(*vm->symbolTable), h_high ) + MAX_APINUM;
+	const char *text_p;
+	const char *token;
+	vmSymbol_t	**prev, *sym;
+	int			chars;
+	int			segment;
+	int			value;
 
-	// parse the symbols
 	text_p = mapfile.c;
 	prev = &vm->symbols;
-	count = 0;
 
 	while ( 1 ) {
 		token = COM_Parse( &text_p );
@@ -286,37 +295,46 @@ void VM_LoadSymbols( vm_t *vm ) {
 		sym->next = NULL;
 
 		// convert value from an instruction number to a code offset
-		if ( value >= 0 && value < numInstructions ) {
+		if ( 0 <= value && value < vm->instructionCount ) {
 			value = (int)vm->instructionPointers[value];
 		}
 
 		sym->symValue = value;
 		Q_strncpyz( sym->symName, token, chars + 1 );
 
-		// _stackStart and _stackEnd are marked as functions for some reason
-		if (value < vm->codeLength) {
-			vm->symbolTable[value] = sym;
-		}
-
 		count++;
 	}
 
-	// direct code to function who owns it
-	static vmSymbol_t invalidSym;
-	sym = &invalidSym;
-	for ( i = -MAX_APINUM; i < 0; i++ ) {
-		if ( vm->symbolTable[i] == NULL ) {
+	vm->numSymbols = count;
+
+#ifdef DEBUG_VM
+	//
+	// code->symbol lookup table for profiling and debugging interpreted QVM
+	//
+
+	if ( !vm->compiled )
+	{
+		vmSymbol_t	*sym;
+
+		vm->symbolTable = (vmSymbol_t **)Hunk_Alloc( (MAX_APINUM + vm->codeLength) * sizeof(*vm->symbolTable), h_high ) + MAX_APINUM;
+
+		for ( sym = vm->symbols; sym; sym = sym->next ) {
+			// _stackStart and _stackEnd are marked as functions for some reason
+			if (-MAX_APINUM <= sym->symValue && sym->symValue < vm->codeLength) {
+				vm->symbolTable[sym->symValue] = sym;
+			}
+		}
+
+		sym = NULL;
+		for ( i = 0; i < vm->codeLength; i++ ) {
+			if ( vm->symbolTable[i] ) {
+				sym = vm->symbolTable[i];
+			}
 			vm->symbolTable[i] = sym;
 		}
 	}
-	for ( i = 0; i < vm->codeLength; i++ ) {
-		if ( vm->symbolTable[i] ) {
-			sym = vm->symbolTable[i];
-		}
-		vm->symbolTable[i] = sym;
-	}
+#endif // DEBUG_VM
 
-	vm->numSymbols = count;
 	Com_Printf( "%i symbols parsed from %s\n", count, symbols );
 	FS_FreeFile( mapfile.v );
 }
@@ -1006,7 +1024,7 @@ void VM_VmProfile_f( void ) {
 			} else {
 				// pick first VM with symbols
 				for ( i = 0; i < MAX_VM; i++ ) {
-					if ( vmTable[i].numSymbols ) {
+					if ( !vmTable[i].compiled && vmTable[i].numSymbols ) {
 						vm = &vmTable[i];
 						break;
 					}

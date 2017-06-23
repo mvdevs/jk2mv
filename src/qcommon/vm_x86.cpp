@@ -1110,6 +1110,8 @@ void VM_Compile(vm_t *vm, vmHeader_t *header)
 	callProcOfs = EmitCallDoSyscall(vm);
 	callProcOfsSyscall = EmitCallProcedure(vm, callDoSyscallOfs);
 	vm->entryOfs = compiledOfs;
+	vm->callProcOfs = callProcOfs;
+	vm->callProcOfsSyscall = callProcOfsSyscall;
 
 	for(pass=0; pass < 3; pass++) {
 	oc0 = -23423;
