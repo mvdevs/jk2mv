@@ -405,12 +405,12 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 		return FS_GetFileList( VMAS(1), VMAS(2), VMAP(3, char, args[4]), args[4] );
 
 	case G_LOCATE_GAME_DATA:
-		SV_LocateGameData( (sharedEntity_t *)VM_ArgArray(args[1], args[3], args[2]), args[2], args[3], (playerState_t *)VM_ArgArray(args[4], args[5], MAX_CLIENTS), args[5] );
+		SV_LocateGameData( (sharedEntity_t *)VM_ArgArray(args[0], args[1], args[3], args[2]), args[2], args[3], (playerState_t *)VM_ArgArray(args[0], args[4], args[5], MAX_CLIENTS), args[5] );
 		VM_LocateGameDataCheck( sv.gentitiesMV, sv.gentitySizeMV, sv.num_entities );
 		return 0;
 	case MVAPI_LOCATE_GAME_DATA:
 		{
-			qboolean ret = MVAPI_LocateGameData((mvsharedEntity_t *)VM_ArgArray(args[1], args[3], args[2]), args[2], args[3]);
+			qboolean ret = MVAPI_LocateGameData((mvsharedEntity_t *)VM_ArgArray(args[0], args[1], args[3], args[2]), args[2], args[3]);
 			VM_LocateGameDataCheck( sv.gentitiesMV, sv.gentitySizeMV, sv.num_entities );
 			return ret;
 		}
@@ -600,7 +600,7 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 	case BOTLIB_AAS_AREA_INFO:
 		return botlib_export->aas.AAS_AreaInfo( args[1], VMAIV(2, struct aas_areainfo_s, aas_areainfo_size) );
 	case BOTLIB_AAS_ALTERNATIVE_ROUTE_GOAL:
-		return botlib_export->aas.AAS_AlternativeRouteGoals( VMAP(1, const vec_t, 3), args[2], VMAP(3, const vec_t, 3), args[4], args[5], (struct aas_altroutegoal_s *)VM_ArgArray(args[6], aas_altroutegoal_size, args[7]), args[7], args[8] );
+		return botlib_export->aas.AAS_AlternativeRouteGoals( VMAP(1, const vec_t, 3), args[2], VMAP(3, const vec_t, 3), args[4], args[5], (struct aas_altroutegoal_s *)VM_ArgArray(args[0], args[6], aas_altroutegoal_size, args[7]), args[7], args[8] );
 	case BOTLIB_AAS_ENTITY_INFO:
 		botlib_export->aas.AAS_EntityInfo( args[1], VMAIV(2, struct aas_entityinfo_s, aas_entityinfo_size) );
 		return 0;

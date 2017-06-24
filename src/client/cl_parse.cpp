@@ -800,14 +800,14 @@ void CL_SP_Print(const word ID, intptr_t Data) //, char* color)
 				case 's':
 					head[p - Text] = '\0';
 					tail = p + 2;
-					Com_sprintf(temp, sizeof(temp), "%s%s%s", head, (char *)VM_ArgString(Data), tail);
+					Com_sprintf(temp, sizeof(temp), "%s%s%s", head, (char *)VM_ArgString(CG_SP_PRINT, Data), tail);
 					done = qtrue;
 					break;
 				case 'd':
 				case 'i':
 					head[p - Text] = '\0';
 					tail = p + 2;
-					Com_sprintf(temp, sizeof(temp), "%s%d%s", head, *(int *)VM_ArgPtr(Data, sizeof(int)), tail);
+					Com_sprintf(temp, sizeof(temp), "%s%d%s", head, *(int *)VM_ArgPtr(CG_SP_PRINT, Data, sizeof(int)), tail);
 					done = qtrue;
 					break;
 				case '\0':

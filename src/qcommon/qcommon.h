@@ -342,9 +342,9 @@ intptr_t QDECL VM_Call(vm_t *vm, int callnum, ...);
 
 void	VM_Debug( int level );
 
-void	*VM_ArgPtr( intptr_t intValue, uint32_t size );
-void	*VM_ArgArray( intptr_t intValue, uint32_t size, uint32_t num );
-char	*VM_ArgString( intptr_t intValue );
+void	*VM_ArgPtr( int syscall, intptr_t intValue, uint32_t size );
+void	*VM_ArgArray( int syscall, intptr_t intValue, uint32_t size, uint32_t num );
+char	*VM_ArgString( int syscall, intptr_t intValue );
 intptr_t	VM_strncpy( intptr_t dest, intptr_t src, intptr_t size );
 void	VM_LocateGameDataCheck( const void *data, int entitySize, int num_entities );
 
@@ -361,15 +361,15 @@ static ID_INLINE float _vmf(intptr_t x)
 // float
 #define	VMF(x)				_vmf(args[x])
 // single variable of type "type"
-#define VMAV(x, type)		((type *) VM_ArgPtr(args[x], sizeof(type)))
+#define VMAV(x, type)		((type *) VM_ArgPtr(args[0], args[x], sizeof(type)))
 // single variable of incomplete "type"
-#define VMAIV(x, type, size)((type *) VM_ArgPtr(args[x], size))
+#define VMAIV(x, type, size)((type *) VM_ArgPtr(args[0], args[x], size))
 // static-length array of "type" variables
-#define VMAP(x, type, num)	((type *) VM_ArgPtr(args[x], sizeof(type) * num))
+#define VMAP(x, type, num)	((type *) VM_ArgPtr(args[0], args[x], sizeof(type) * num))
 // dynamic-length array of "type" variables
-#define VMAA(x, type, num)	((type *) VM_ArgArray(args[x], sizeof(type), num))
+#define VMAA(x, type, num)	((type *) VM_ArgArray(args[0], args[x], sizeof(type), num))
 // NULL-terminated string (first char is always safe to use)
-#define VMAS(x)				VM_ArgString(args[x])
+#define VMAS(x)				VM_ArgString(args[0], args[x])
 
 char	*VM_ExplicitArgString(vm_t *vm, intptr_t intValue);
 
