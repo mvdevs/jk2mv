@@ -698,7 +698,7 @@ void VM_Forced_Unload_Done(void) {
 	forced_unload = 0;
 }
 
-void *VM_ArgPtr( intptr_t intValue, intptr_t size ) {
+void *VM_ArgPtr( intptr_t intValue, uint32_t size ) {
 	// currentVM is missing on reconnect
 	if ( !currentVM ) {
 		return NULL;
@@ -713,14 +713,14 @@ void *VM_ArgPtr( intptr_t intValue, intptr_t size ) {
 	// don't drop on overflow for compatibility reasons
 	intValue &= currentVM->dataMask;
 
-	if ( size > currentVM->dataMask - intValue + 1 ) {
+	if ( size > (uint32_t)currentVM->dataMask - intValue + 1 ) {
 		Com_Error( ERR_DROP, "VM_ArgPtr: memory overflow" );
 	}
 
 	return (void *)(currentVM->dataBase + intValue);
 }
 
-void *VM_ArgArray( intptr_t intValue, intptr_t size, intptr_t num ) {
+void *VM_ArgArray( intptr_t intValue, uint32_t size, uint32_t num ) {
 	// currentVM is missing on reconnect
 	if ( !currentVM ) {
 		return NULL;
@@ -735,11 +735,7 @@ void *VM_ArgArray( intptr_t intValue, intptr_t size, intptr_t num ) {
 	// don't drop on overflow for compatibility reasons
 	intValue &= currentVM->dataMask;
 
-	// coming from a module so should be within int32_t
-	// range. SysCalls need to handle negative values.
-	assert( size <= INT32_MAX && num <= INT32_MAX );
-
-	if ( (int64_t) num * size > currentVM->dataMask - intValue + 1 ) {
+	if ( (uint64_t) num * size > (uint64_t)currentVM->dataMask - intValue + 1 ) {
 		Com_Error( ERR_DROP, "VM_ArgArray: memory overflow" );
 	}
 
