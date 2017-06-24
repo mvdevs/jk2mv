@@ -362,6 +362,8 @@ static ID_INLINE float _vmf(intptr_t x)
 #define	VMF(x)				_vmf(args[x])
 // single variable of type "type"
 #define VMAV(x, type)		((type *) VM_ArgPtr(args[x], sizeof(type)))
+// single variable of incomplete "type"
+#define VMAIV(x, type, size)((type *) VM_ArgPtr(args[x], size))
 // static-length array of "type" variables
 #define VMAP(x, type, num)	((type *) VM_ArgPtr(args[x], sizeof(type) * num))
 // dynamic-length array of "type" variables

@@ -421,7 +421,7 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 		SV_GameSendServerCommand( args[1], VMAS(2) );
 		return 0;
 	case G_LINKENTITY:
-		SV_LinkEntity( (sharedEntity_t *)VM_ArgPtr(args[1], MAX((int)sizeof(sharedEntity_t), sv.gentitySize)) );
+		SV_LinkEntity( VMAIV(1, sharedEntity_t, MAX((int)sizeof(sharedEntity_t), sv.gentitySize)) );
 		return 0;
 	case G_UNLINKENTITY:
 		SV_UnlinkEntity( VMAV(1, sharedEntity_t) );
@@ -598,11 +598,11 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 	case BOTLIB_AAS_BBOX_AREAS:
 		return botlib_export->aas.AAS_BBoxAreas( VMAP(1, const vec_t, 3), VMAP(2, const vec_t, 3), VMAA(3, int, args[4]), args[4] );
 	case BOTLIB_AAS_AREA_INFO:
-		return botlib_export->aas.AAS_AreaInfo( args[1], (struct aas_areainfo_s *)VM_ArgPtr(args[2], aas_areainfo_size) );
+		return botlib_export->aas.AAS_AreaInfo( args[1], VMAIV(2, struct aas_areainfo_s, aas_areainfo_size) );
 	case BOTLIB_AAS_ALTERNATIVE_ROUTE_GOAL:
 		return botlib_export->aas.AAS_AlternativeRouteGoals( VMAP(1, const vec_t, 3), args[2], VMAP(3, const vec_t, 3), args[4], args[5], (struct aas_altroutegoal_s *)VM_ArgArray(args[6], aas_altroutegoal_size, args[7]), args[7], args[8] );
 	case BOTLIB_AAS_ENTITY_INFO:
-		botlib_export->aas.AAS_EntityInfo( args[1], (struct aas_entityinfo_s *)VM_ArgPtr(args[2], aas_entityinfo_size) );
+		botlib_export->aas.AAS_EntityInfo( args[1], VMAIV(2, struct aas_entityinfo_s, aas_entityinfo_size) );
 		return 0;
 
 	case BOTLIB_AAS_INITIALIZED:
@@ -641,12 +641,12 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 	case BOTLIB_AAS_ENABLE_ROUTING_AREA:
 		return botlib_export->aas.AAS_EnableRoutingArea( args[1], args[2] );
 	case BOTLIB_AAS_PREDICT_ROUTE:
-		return botlib_export->aas.AAS_PredictRoute( (struct aas_predictroute_s *)VM_ArgPtr(args[1], aas_predictroute_size), args[2], VMAP(3, const vec_t, 3), args[4], args[5], args[6], args[7], args[8], args[9], args[10], args[11] );
+		return botlib_export->aas.AAS_PredictRoute( VMAIV(1, struct aas_predictroute_s, aas_predictroute_size), args[2], VMAP(3, const vec_t, 3), args[4], args[5], args[6], args[7], args[8], args[9], args[10], args[11] );
 
 	case BOTLIB_AAS_SWIMMING:
 		return botlib_export->aas.AAS_Swimming( VMAP(1, const vec_t, 3) );
 	case BOTLIB_AAS_PREDICT_CLIENT_MOVEMENT:
-		return botlib_export->aas.AAS_PredictClientMovement( (struct aas_clientmove_s *)VM_ArgPtr(args[1], aas_clientmove_size), args[2], VMAP(3, const vec_t, 3), args[4], args[5],
+		return botlib_export->aas.AAS_PredictClientMovement( VMAIV(1, struct aas_clientmove_s, aas_clientmove_size), args[2], VMAP(3, const vec_t, 3), args[4], args[5],
 			VMAP(6, const vec_t, 3), VMAP(7, const vec_t, 3), args[8], args[9], VMF(10), args[11], args[12], args[13] );
 
 	case BOTLIB_EA_SAY:
@@ -760,7 +760,7 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 		botlib_export->ai.BotRemoveConsoleMessage( args[1], args[2] );
 		return 0;
 	case BOTLIB_AI_NEXT_CONSOLE_MESSAGE:
-		return botlib_export->ai.BotNextConsoleMessage( args[1], (struct bot_consolemessage_s *)VM_ArgPtr(args[2], bot_consolemessage_size) );
+		return botlib_export->ai.BotNextConsoleMessage( args[1], VMAIV(2, struct bot_consolemessage_s, bot_consolemessage_size) );
 	case BOTLIB_AI_NUM_CONSOLE_MESSAGE:
 		return botlib_export->ai.BotNumConsoleMessages( args[1] );
 	case BOTLIB_AI_INITIAL_CHAT:
@@ -781,9 +781,9 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 	case BOTLIB_AI_STRING_CONTAINS:
 		return botlib_export->ai.StringContains( VMAS(1), VMAS(2), args[3] );
 	case BOTLIB_AI_FIND_MATCH:
-		return botlib_export->ai.BotFindMatch( VMAS(1), (struct bot_match_s *)VM_ArgPtr(args[2], bot_match_size), args[3] );
+		return botlib_export->ai.BotFindMatch( VMAS(1), VMAIV(2, struct bot_match_s, bot_match_size), args[3] );
 	case BOTLIB_AI_MATCH_VARIABLE:
-		botlib_export->ai.BotMatchVariable( (const struct bot_match_s *)VM_ArgPtr(args[1], bot_match_size), args[2], VMAP(3, char, args[4]), args[4] );
+		botlib_export->ai.BotMatchVariable( VMAIV(1, const struct bot_match_s, bot_match_size), args[2], VMAP(3, char, args[4]), args[4] );
 		return 0;
 	case BOTLIB_AI_UNIFY_WHITE_SPACES:
 		botlib_export->ai.UnifyWhiteSpaces( VMAS(1) );
@@ -810,7 +810,7 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 		botlib_export->ai.BotRemoveFromAvoidGoals( args[1], args[2] );
 		return 0;
 	case BOTLIB_AI_PUSH_GOAL:
-		botlib_export->ai.BotPushGoal( args[1], (struct bot_goal_s *)VM_ArgPtr(args[2], bot_goal_size) );
+		botlib_export->ai.BotPushGoal( args[1], VMAIV(2, struct bot_goal_s, bot_goal_size) );
 		return 0;
 	case BOTLIB_AI_POP_GOAL:
 		botlib_export->ai.BotPopGoal( args[1] );
@@ -828,23 +828,23 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 		botlib_export->ai.BotGoalName( args[1], VMAP(2, char, args[3]), args[3] );
 		return 0;
 	case BOTLIB_AI_GET_TOP_GOAL:
-		return botlib_export->ai.BotGetTopGoal( args[1], (struct bot_goal_s *)VM_ArgPtr(args[2], bot_goal_size) );
+		return botlib_export->ai.BotGetTopGoal( args[1], VMAIV(2, struct bot_goal_s, bot_goal_size) );
 	case BOTLIB_AI_GET_SECOND_GOAL:
-		return botlib_export->ai.BotGetSecondGoal( args[1], (struct bot_goal_s *)VM_ArgPtr(args[2], bot_goal_size) );
+		return botlib_export->ai.BotGetSecondGoal( args[1], VMAIV(2, struct bot_goal_s, bot_goal_size) );
 	case BOTLIB_AI_CHOOSE_LTG_ITEM:
 		return botlib_export->ai.BotChooseLTGItem( args[1], VMAP(2, const vec_t, 3), VMAA(3, int, MAX_ITEMS), args[4] );
 	case BOTLIB_AI_CHOOSE_NBG_ITEM:
-		return botlib_export->ai.BotChooseNBGItem( args[1], VMAP(2, const vec_t, 3), VMAA(3, const int, MAX_ITEMS), args[4], (const struct bot_goal_s *)VM_ArgPtr(args[5], bot_goal_size), VMF(6) );
+		return botlib_export->ai.BotChooseNBGItem( args[1], VMAP(2, const vec_t, 3), VMAA(3, const int, MAX_ITEMS), args[4], VMAIV(5, const struct bot_goal_s, bot_goal_size), VMF(6) );
 	case BOTLIB_AI_TOUCHING_GOAL:
-		return botlib_export->ai.BotTouchingGoal( VMAP(1, const vec_t, 3), (const struct bot_goal_s *)VM_ArgPtr(args[2], bot_goal_size) );
+		return botlib_export->ai.BotTouchingGoal( VMAP(1, const vec_t, 3), VMAIV(2, const struct bot_goal_s, bot_goal_size) );
 	case BOTLIB_AI_ITEM_GOAL_IN_VIS_BUT_NOT_VISIBLE:
-		return botlib_export->ai.BotItemGoalInVisButNotVisible( args[1], VMAP(2, const vec_t, 3), VMAP(3, const vec_t, 3), (const struct bot_goal_s *)VM_ArgPtr(args[4], bot_goal_size) );
+		return botlib_export->ai.BotItemGoalInVisButNotVisible( args[1], VMAP(2, const vec_t, 3), VMAP(3, const vec_t, 3), VMAIV(4, const struct bot_goal_s, bot_goal_size) );
 	case BOTLIB_AI_GET_LEVEL_ITEM_GOAL:
-		return botlib_export->ai.BotGetLevelItemGoal( args[1], VMAS(2), (struct bot_goal_s *)VM_ArgPtr(args[3], bot_goal_size) );
+		return botlib_export->ai.BotGetLevelItemGoal( args[1], VMAS(2), VMAIV(3, struct bot_goal_s, bot_goal_size) );
 	case BOTLIB_AI_GET_NEXT_CAMP_SPOT_GOAL:
-		return botlib_export->ai.BotGetNextCampSpotGoal( args[1], (struct bot_goal_s *)VM_ArgPtr(args[2], bot_goal_size) );
+		return botlib_export->ai.BotGetNextCampSpotGoal( args[1], VMAIV(2, struct bot_goal_s, bot_goal_size) );
 	case BOTLIB_AI_GET_MAP_LOCATION_GOAL:
-		return botlib_export->ai.BotGetMapLocationGoal( VMAS(1), (struct bot_goal_s *)VM_ArgPtr(args[2], bot_goal_size) );
+		return botlib_export->ai.BotGetMapLocationGoal( VMAS(1), VMAIV(2, struct bot_goal_s, bot_goal_size) );
 	case BOTLIB_AI_AVOID_GOAL_TIME:
 		return FloatAsInt( botlib_export->ai.BotAvoidGoalTime( args[1], args[2] ) );
 	case BOTLIB_AI_SET_AVOID_GOAL_TIME:
@@ -883,7 +883,7 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 		botlib_export->ai.BotAddAvoidSpot( args[1], VMAP(2, const vec_t, 3), VMF(3), args[4] );
 		return 0;
 	case BOTLIB_AI_MOVE_TO_GOAL:
-		botlib_export->ai.BotMoveToGoal( (struct bot_moveresult_s *)VM_ArgPtr(args[1], bot_moveresult_size), args[2], (const struct bot_goal_s *)VM_ArgPtr(args[3], bot_goal_size), args[4] );
+		botlib_export->ai.BotMoveToGoal( VMAIV(1, struct bot_moveresult_s, bot_moveresult_size), args[2], VMAIV(3, const struct bot_goal_s, bot_goal_size), args[4] );
 		return 0;
 	case BOTLIB_AI_MOVE_IN_DIRECTION:
 		return botlib_export->ai.BotMoveInDirection( args[1], VMAP(2, const vec_t, 3), VMF(3), args[4] );
@@ -896,22 +896,22 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 	case BOTLIB_AI_REACHABILITY_AREA:
 		return botlib_export->ai.BotReachabilityArea( VMAP(1, const vec_t, 3), args[2] );
 	case BOTLIB_AI_MOVEMENT_VIEW_TARGET:
-		return botlib_export->ai.BotMovementViewTarget( args[1], (const struct bot_goal_s *)VM_ArgPtr(args[2], bot_goal_size), args[3], VMF(4), VMAP(5, vec_t, 3) );
+		return botlib_export->ai.BotMovementViewTarget( args[1], VMAIV(2, const struct bot_goal_s, bot_goal_size), args[3], VMF(4), VMAP(5, vec_t, 3) );
 	case BOTLIB_AI_PREDICT_VISIBLE_POSITION:
-		return botlib_export->ai.BotPredictVisiblePosition( VMAP(1, const vec_t, 3), args[2], (const struct bot_goal_s *)VM_ArgPtr(args[3], bot_goal_size), args[4], VMAP(5, vec_t, 3) );
+		return botlib_export->ai.BotPredictVisiblePosition( VMAP(1, const vec_t, 3), args[2], VMAIV(3, const struct bot_goal_s, bot_goal_size), args[4], VMAP(5, vec_t, 3) );
 	case BOTLIB_AI_ALLOC_MOVE_STATE:
 		return botlib_export->ai.BotAllocMoveState();
 	case BOTLIB_AI_FREE_MOVE_STATE:
 		botlib_export->ai.BotFreeMoveState( args[1] );
 		return 0;
 	case BOTLIB_AI_INIT_MOVE_STATE:
-		botlib_export->ai.BotInitMoveState( args[1], (const struct bot_initmove_s *)VM_ArgPtr(args[2], bot_initmove_size) );
+		botlib_export->ai.BotInitMoveState( args[1], VMAIV(2, const struct bot_initmove_s, bot_initmove_size) );
 		return 0;
 
 	case BOTLIB_AI_CHOOSE_BEST_FIGHT_WEAPON:
 		return botlib_export->ai.BotChooseBestFightWeapon( args[1], VMAA(2, const int, MAX_ITEMS) );
 	case BOTLIB_AI_GET_WEAPON_INFO:
-		botlib_export->ai.BotGetWeaponInfo( args[1], args[2], (struct weaponinfo_s *)VM_ArgPtr(args[3], weaponinfo_size) );
+		botlib_export->ai.BotGetWeaponInfo( args[1], args[2], VMAIV(3, struct weaponinfo_s, weaponinfo_size) );
 		return 0;
 	case BOTLIB_AI_LOAD_WEAPON_WEIGHTS:
 		return botlib_export->ai.BotLoadWeaponWeights( args[1], VMAS(2) );
