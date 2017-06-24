@@ -384,6 +384,7 @@ void VM_LoadSymbols( vm_t *vm ) {
 	}
 #endif // DEBUG_VM
 
+	vm->numSymbols = count;
 	Com_Printf( "%i symbols parsed from %s\n", count, symbols );
 	FS_FreeFile( mapfile.v );
 }
@@ -1106,7 +1107,11 @@ void VM_VmProfile_f( void ) {
 		return;
 	}
 
-	if ( vm == NULL || vm->numSymbols <= 0 ) {
+	if ( vm == NULL || vm->compiled ) {
+		Com_Printf("Only interpreted VM can be profiled\n");
+		return;
+	}
+	if ( vm->numSymbols <= 0 ) {
 		Com_Printf("No symbols\n");
 		return;
 	}
@@ -1194,6 +1199,9 @@ void VM_VmInfo_f( void ) {
 			Com_Printf("    code length : %7i\n", vm->codeLength);
 			Com_Printf("    table length: %7i\n", vm->instructionCount * 4);
 			Com_Printf("    data length : %7i\n", vm->dataMask + 1);
+			if (vm->numSymbols) {
+				Com_Printf("    symbols     : %i\n", vm->numSymbols);
+			}
 		}
 
 		Com_Printf("    mvapi level : %i\n", vm->mvapilevel);
