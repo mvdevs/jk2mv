@@ -91,7 +91,7 @@ float	FloatSwap (const float *f);
 
 //================= COMPILER-SPECIFIC DEFINES ===========================
 #ifdef _MSC_VER
-#define ID_INLINE __inline
+#define Q_INLINE __inline
 #define Q_NORETURN __declspec(noreturn)
 #define Q_PTR_NORETURN // MSVC doesn't support noreturn function pointers
 #define q_unreachable() abort()
@@ -109,7 +109,7 @@ float	FloatSwap (const float *f);
     + __GNUC_MINOR__ * 100 \
     + __GNUC_PATCHLEVEL__)
 
-#define ID_INLINE inline
+#define Q_INLINE inline
 #define Q_NORETURN __attribute__((noreturn))
 #define Q_PTR_NORETURN Q_NORETURN
 #define q_unreachable() __builtin_unreachable()
@@ -119,17 +119,23 @@ float	FloatSwap (const float *f);
 #	define Q_MAX_ALIGN max_align_t
 #endif
 #elif defined __clang__
-#define ID_INLINE inline
+#define Q_INLINE inline
 #define Q_NORETURN __attribute__((noreturn))
 #define Q_PTR_NORETURN Q_NORETURN
 #define q_unreachable() __builtin_unreachable()
 #define Q_MAX_ALIGN std::max_align_t
 #else
-#define ID_INLINE inline
+#define Q_INLINE inline
 #define Q_NORETURN
 #define Q_PTR_NORETURN
 #define q_unreachable() abort()
 #define Q_MAX_ALIGN std::max_align_t
+#endif
+
+#ifdef __cplusplus
+#define ID_INLINE Q_INLINE
+#else
+#define ID_INLINE static Q_INLINE
 #endif
 
 //======================= WIN32 DEFINES =================================
@@ -166,11 +172,11 @@ float	FloatSwap (const float *f);
 
 #define LIBRARY_EXTENSION "dll"
 
-static ID_INLINE short BigShort( short l) { return ShortSwap(l); }
+ID_INLINE short BigShort( short l) { return ShortSwap(l); }
 #define LittleShort
-static ID_INLINE int BigLong(int l) { return LongSwap(l); }
+ID_INLINE int BigLong(int l) { return LongSwap(l); }
 #define LittleLong
-static ID_INLINE float BigFloat(const float *l) { return FloatSwap(l); }
+ID_INLINE float BigFloat(const float *l) { return FloatSwap(l); }
 #define LittleFloat
 
 #define	PATH_SEP '\\'
@@ -527,19 +533,19 @@ void *Hunk_AllocDebug( int size, ha_pref preference, char *label, char *file, in
 void *Hunk_Alloc( int size, ha_pref preference );
 #endif
 
-static ID_INLINE void Com_Memset (void* dest, const int val, const size_t count) {
+ID_INLINE void Com_Memset (void* dest, const int val, const size_t count) {
 	memset( dest, val, count );
 }
-static ID_INLINE void Com_Memcpy (void* dest, const void* src, const size_t count) {
+ID_INLINE void Com_Memcpy (void* dest, const void* src, const size_t count) {
 	memcpy( dest, src, count );
 }
 
-static ID_INLINE float Com_Clamp( float min, float max, float value ) {
+ID_INLINE float Com_Clamp( float min, float max, float value ) {
 	value = value > max ? max : value;
 	value = value < min ? min : value;
 	return value;
 }
-static ID_INLINE int Com_Clampi( int min, int max, int value ) {
+ID_INLINE int Com_Clampi( int min, int max, int value ) {
 	value = value > max ? max : value;
 	value = value < min ? min : value;
 	return value;
@@ -813,51 +819,7 @@ qboolean Q_isnan(float f);
 int DirToByte( vec3_t dir );
 void ByteToDir( int b, vec3_t dir );
 
-#if	1
-
-#define DotProduct(x,y)			((x)[0]*(y)[0]+(x)[1]*(y)[1]+(x)[2]*(y)[2])
-#define VectorSubtract(a,b,c)	((c)[0]=(a)[0]-(b)[0],(c)[1]=(a)[1]-(b)[1],(c)[2]=(a)[2]-(b)[2])
-#define VectorAdd(a,b,c)		((c)[0]=(a)[0]+(b)[0],(c)[1]=(a)[1]+(b)[1],(c)[2]=(a)[2]+(b)[2])
-#define VectorCopy(a,b)			((b)[0]=(a)[0],(b)[1]=(a)[1],(b)[2]=(a)[2])
-#define	VectorScale(v, s, o)	((o)[0]=(v)[0]*(s),(o)[1]=(v)[1]*(s),(o)[2]=(v)[2]*(s))
-#define	VectorMA(v, s, b, o)	((o)[0]=(v)[0]+(b)[0]*(s),(o)[1]=(v)[1]+(b)[1]*(s),(o)[2]=(v)[2]+(b)[2]*(s))
-
-#else
-
-#define DotProduct(x,y)			_DotProduct(x,y)
-#define VectorSubtract(a,b,c)	_VectorSubtract(a,b,c)
-#define VectorAdd(a,b,c)		_VectorAdd(a,b,c)
-#define VectorCopy(a,b)			_VectorCopy(a,b)
-#define	VectorScale(v, s, o)	_VectorScale(v,s,o)
-#define	VectorMA(v, s, b, o)	_VectorMA(v,s,b,o)
-
-#endif
-
-#ifdef __LCC__
-#ifdef VectorCopy
-#undef VectorCopy
-// this is a little hack to get more efficient copies in our interpreter
-typedef struct {
-	float	v[3];
-} vec3struct_t;
-#define VectorCopy(a,b)	*(vec3struct_t *)b=*(vec3struct_t *)a;
-#define ID_INLINE static
-#endif
-#endif
-
-#define VectorClear(a)			((a)[0]=(a)[1]=(a)[2]=0)
-#define VectorNegate(a,b)		((b)[0]=-(a)[0],(b)[1]=-(a)[1],(b)[2]=-(a)[2])
-#define VectorSet(v, x, y, z)	((v)[0]=(x), (v)[1]=(y), (v)[2]=(z))
-#define Vector4Copy(a,b)		((b)[0]=(a)[0],(b)[1]=(a)[1],(b)[2]=(a)[2],(b)[3]=(a)[3])
-
 #define	SnapVector(v) {v[0]=((int)(v[0]));v[1]=((int)(v[1]));v[2]=((int)(v[2]));}
-// just in case you do't want to use the macros
-vec_t _DotProduct( const vec3_t v1, const vec3_t v2 );
-void _VectorSubtract( const vec3_t veca, const vec3_t vecb, vec3_t out );
-void _VectorAdd( const vec3_t veca, const vec3_t vecb, vec3_t out );
-void _VectorCopy( const vec3_t in, vec3_t out );
-void _VectorScale( const vec3_t in, float scale, vec3_t out );
-void _VectorMA( const vec3_t veca, float scale, const vec3_t vecb, vec3_t vecc );
 
 unsigned ColorBytes3 (float r, float g, float b);
 unsigned ColorBytes4 (float r, float g, float b, float a);
@@ -868,86 +830,99 @@ float RadiusFromBounds( const vec3_t mins, const vec3_t maxs );
 void ClearBounds( vec3_t mins, vec3_t maxs );
 void AddPointToBounds( const vec3_t v, vec3_t mins, vec3_t maxs );
 
-#ifndef __LCC__
-static ID_INLINE int VectorCompare( const vec3_t v1, const vec3_t v2 ) {
+
+ID_INLINE void VectorSet( vec3_t v, float x, float y, float z ) {
+	v[0] = x;
+	v[1] = y;
+	v[2] = z;
+}
+
+ID_INLINE void VectorClear( vec3_t a ) {
+	a[0] = a[1] = a[2] = 0;
+}
+
+ID_INLINE void VectorNegate( const vec3_t in, vec3_t out ) {
+	out[0] = -in[0];
+	out[1] = -in[1];
+	out[2] = -in[2];
+}
+
+ID_INLINE vec_t DotProduct( const vec3_t v1, const vec3_t v2 ) {
+	return v1[0]*v2[0] + v1[1]*v2[1] + v1[2]*v2[2];
+}
+
+ID_INLINE void VectorSubtract( const vec3_t veca, const vec3_t vecb, vec3_t out ) {
+	out[0] = veca[0]-vecb[0];
+	out[1] = veca[1]-vecb[1];
+	out[2] = veca[2]-vecb[2];
+}
+
+ID_INLINE void VectorAdd( const vec3_t veca, const vec3_t vecb, vec3_t out ) {
+	out[0] = veca[0]+vecb[0];
+	out[1] = veca[1]+vecb[1];
+	out[2] = veca[2]+vecb[2];
+}
+
+ID_INLINE void VectorCopy( const vec3_t in, vec3_t out ) {
+	out[0] = in[0];
+	out[1] = in[1];
+	out[2] = in[2];
+}
+
+ID_INLINE void VectorScale( const vec3_t in, vec_t scale, vec3_t out ) {
+	out[0] = in[0]*scale;
+	out[1] = in[1]*scale;
+	out[2] = in[2]*scale;
+}
+
+ID_INLINE void VectorMA( const vec3_t veca, float scale, const vec3_t vecb, vec3_t vecc) {
+	vecc[0] = veca[0] + scale*vecb[0];
+	vecc[1] = veca[1] + scale*vecb[1];
+	vecc[2] = veca[2] + scale*vecb[2];
+}
+
+ID_INLINE int VectorCompare( const vec3_t v1, const vec3_t v2 ) {
 	if (v1[0] != v2[0] || v1[1] != v2[1] || v1[2] != v2[2]) {
 		return 0;
 	}
 	return 1;
 }
 
-static ID_INLINE vec_t VectorLength( const vec3_t v ) {
-	return (vec_t)sqrt (v[0]*v[0] + v[1]*v[1] + v[2]*v[2]);
+ID_INLINE vec_t VectorLength( const vec3_t v ) {
+	return (vec_t)sqrtf(v[0]*v[0] + v[1]*v[1] + v[2]*v[2]);
 }
 
-static ID_INLINE vec_t VectorLengthSquared( const vec3_t v ) {
+ID_INLINE vec_t VectorLengthSquared( const vec3_t v ) {
 	return (v[0]*v[0] + v[1]*v[1] + v[2]*v[2]);
 }
 
-static ID_INLINE vec_t Distance( const vec3_t p1, const vec3_t p2 ) {
-	vec3_t	v;
-
-	VectorSubtract (p2, p1, v);
-	return VectorLength( v );
-}
-
-static ID_INLINE vec_t DistanceSquared( const vec3_t p1, const vec3_t p2 ) {
-	vec3_t	v;
-
-	VectorSubtract (p2, p1, v);
-	return v[0]*v[0] + v[1]*v[1] + v[2]*v[2];
-}
-
-// fast vector normalize routine that does not check to make sure
-// that length != 0, nor does it return length, uses rsqrt approximation
-static ID_INLINE void VectorNormalizeFast( vec3_t v )
-{
-	float ilength;
-
-	ilength = Q_rsqrt( DotProduct( v, v ) );
-
-	v[0] *= ilength;
-	v[1] *= ilength;
-	v[2] *= ilength;
-}
-
-static ID_INLINE void VectorInverse( vec3_t v ){
-	v[0] = -v[0];
-	v[1] = -v[1];
-	v[2] = -v[2];
-}
-
-static ID_INLINE void CrossProduct( const vec3_t v1, const vec3_t v2, vec3_t cross ) {
+ID_INLINE void CrossProduct( const vec3_t v1, const vec3_t v2, vec3_t cross ) {
 	cross[0] = v1[1]*v2[2] - v1[2]*v2[1];
 	cross[1] = v1[2]*v2[0] - v1[0]*v2[2];
 	cross[2] = v1[0]*v2[1] - v1[1]*v2[0];
 }
 
-#else
-int VectorCompare( const vec3_t v1, const vec3_t v2 );
-
-vec_t VectorLength( const vec3_t v );
-
-vec_t VectorLengthSquared( const vec3_t v );
-
-vec_t Distance( const vec3_t p1, const vec3_t p2 );
 
 vec_t DistanceSquared( const vec3_t p1, const vec3_t p2 );
-
+vec_t VectorLength( const vec3_t v );
+vec_t VectorLengthSquared( const vec3_t v );
+vec_t Distance( const vec3_t p1, const vec3_t p2 );
 void VectorNormalizeFast( vec3_t v );
-
 void VectorInverse( vec3_t v );
-
-void CrossProduct( const vec3_t v1, const vec3_t v2, vec3_t cross );
-
-#endif
-
 vec_t VectorNormalize (vec3_t v);		// returns vector length
 vec_t VectorNormalize2( const vec3_t v, vec3_t out );
-void Vector4Scale( const vec4_t in, vec_t scale, vec4_t out );
 void VectorRotate( vec3_t in, vec3_t matrix[3], vec3_t out );
-int Q_log2(int val);
 
+ID_INLINE void Vector4Copy( const vec4_t in, vec4_t out ) {
+	out[0] = in[0];
+	out[1] = in[1];
+	out[2] = in[2];
+	out[3] = in[3];
+}
+
+void Vector4Scale( const vec4_t in, vec_t scale, vec4_t out );
+
+int Q_log2(int val);
 float Q_acos(float c);
 
 int		Q_rand( int *seed );

@@ -152,22 +152,20 @@ float	Q_crandom( int *seed ) {
 	return 2.0f * ( Q_random( seed ) - 0.5f );
 }
 
-#ifdef __LCC__
-
-int VectorCompare( const vec3_t v1, const vec3_t v2 ) {
-	if (v1[0] != v2[0] || v1[1] != v2[1] || v1[2] != v2[2]) {
-		return 0;
-	}
-	return 1;
-}
-
-vec_t VectorLength( const vec3_t v ) {
-	return (vec_t)sqrtf(v[0]*v[0] + v[1]*v[1] + v[2]*v[2]);
-}
-
-vec_t VectorLengthSquared( const vec3_t v ) {
-	return (v[0]*v[0] + v[1]*v[1] + v[2]*v[2]);
-}
+// these declarations are for C99 inline
+extern void VectorSet( vec3_t v, float x, float y, float z );
+extern void VectorClear( vec3_t a );
+extern void VectorNegate( const vec3_t in, vec3_t out );
+extern vec_t DotProduct( const vec3_t v1, const vec3_t v2 );
+extern void VectorSubtract( const vec3_t veca, const vec3_t vecb, vec3_t out );
+extern void VectorAdd( const vec3_t veca, const vec3_t vecb, vec3_t out );
+extern void VectorCopy( const vec3_t in, vec3_t out );
+extern void VectorScale( const vec3_t in, vec_t scale, vec3_t out );
+extern void VectorMA( const vec3_t veca, float scale, const vec3_t vecb, vec3_t vecc);
+extern int VectorCompare( const vec3_t v1, const vec3_t v2 );
+extern vec_t VectorLength( const vec3_t v );
+extern vec_t VectorLengthSquared( const vec3_t v );
+extern void CrossProduct( const vec3_t v1, const vec3_t v2, vec3_t cross );
 
 vec_t Distance( const vec3_t p1, const vec3_t p2 ) {
 	vec3_t	v;
@@ -201,13 +199,6 @@ void VectorInverse( vec3_t v ){
 	v[1] = -v[1];
 	v[2] = -v[2];
 }
-
-void CrossProduct( const vec3_t v1, const vec3_t v2, vec3_t cross ) {
-	cross[0] = v1[1]*v2[2] - v1[2]*v2[1];
-	cross[1] = v1[2]*v2[0] - v1[0]*v2[2];
-	cross[2] = v1[0]*v2[1] - v1[1]*v2[0];
-}
-#endif
 
 //=======================================================
 
@@ -827,40 +818,7 @@ vec_t VectorNormalize2( const vec3_t v, vec3_t out) {
 
 }
 
-void _VectorMA( const vec3_t veca, float scale, const vec3_t vecb, vec3_t vecc) {
-	vecc[0] = veca[0] + scale*vecb[0];
-	vecc[1] = veca[1] + scale*vecb[1];
-	vecc[2] = veca[2] + scale*vecb[2];
-}
-
-
-vec_t _DotProduct( const vec3_t v1, const vec3_t v2 ) {
-	return v1[0]*v2[0] + v1[1]*v2[1] + v1[2]*v2[2];
-}
-
-void _VectorSubtract( const vec3_t veca, const vec3_t vecb, vec3_t out ) {
-	out[0] = veca[0]-vecb[0];
-	out[1] = veca[1]-vecb[1];
-	out[2] = veca[2]-vecb[2];
-}
-
-void _VectorAdd( const vec3_t veca, const vec3_t vecb, vec3_t out ) {
-	out[0] = veca[0]+vecb[0];
-	out[1] = veca[1]+vecb[1];
-	out[2] = veca[2]+vecb[2];
-}
-
-void _VectorCopy( const vec3_t in, vec3_t out ) {
-	out[0] = in[0];
-	out[1] = in[1];
-	out[2] = in[2];
-}
-
-void _VectorScale( const vec3_t in, vec_t scale, vec3_t out ) {
-	out[0] = in[0]*scale;
-	out[1] = in[1]*scale;
-	out[2] = in[2]*scale;
-}
+extern void Vector4Copy( const vec4_t in, vec4_t out );
 
 void Vector4Scale( const vec4_t in, vec_t scale, vec4_t out ) {
 	out[0] = in[0]*scale;
