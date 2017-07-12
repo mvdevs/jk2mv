@@ -715,6 +715,19 @@ static bool SVC_IsWhitelisted( netadr_t adr ) {
 
 //
 
+typedef enum {
+	SVC_INVALID,
+	SVC_GETSTATUS,
+	SVC_GETINFO,
+	SVC_GETCHALLENGE,
+	SVC_CONNECT,
+	SVC_IPAUTHORIZE,
+	SVC_RCON,
+	SVC_DISCONNECT,
+	SVC_MVAPI,
+	SVC_MAX
+} svcType_t;
+
 /*
 =================
 SV_ConnectionlessPacket
@@ -726,8 +739,19 @@ connectionless packets.
 =================
 */
 void SV_ConnectionlessPacket( netadr_t from, msg_t *msg ) {
-	static int dropped = 0;
-	static leakyBucket_t globalBucket;
+	static int dropped[SVC_MAX];
+	static leakyBucket_t bucket[SVC_MAX];
+	static const char * const commands[SVC_MAX] = {
+		"invalid",
+		"getstatus",
+		"getinfo",
+		"getchallenge",
+		"connect",
+		"ipauthorize",
+		"rcon",
+		"disconnect",
+		"mvapi"
+	};
 
 	int		burst;
 	char	*s;
@@ -741,6 +765,15 @@ void SV_ConnectionlessPacket( netadr_t from, msg_t *msg ) {
 		return;
 	}
 
+	svcType_t cmd = SVC_INVALID;
+
+	for (int i = 1; i < SVC_MAX; i++) {
+		if (!Q_stricmpn((const char *)&msg->data[4], commands[i], strlen(commands[i]))) {
+			cmd = (svcType_t)i;
+			break;
+		}
+	}
+
 	// Whitelisted IPs can still go through when not-whitelisted rate
 	// limit is expleted. If server is DDOSed from whitelisted ips,
 	// OOB packets from not-whitelisted IPs never go through.
@@ -749,21 +782,21 @@ void SV_ConnectionlessPacket( netadr_t from, msg_t *msg ) {
 		burst *= 2;
 	}
 
-	if (SVC_RateLimit(&globalBucket, burst, 100)) {
-		dropped++;
+	if (SVC_RateLimit(&bucket[cmd], burst, 100)) {
+		dropped[cmd]++;
 		return;
 	}
 
 	// this will print every 'period' msec
-	if (dropped > 0) {
-		Com_DPrintf("SV_ConnectionlessPacket: global rate limit exceeded, dropped %d requests\n", dropped);
-		dropped = 0;
+	if (dropped[cmd] > 0) {
+		Com_DPrintf("SV_ConnectionlessPacket: \"%s\" rate limit exceeded, dropped %d requests\n", commands[cmd], dropped[cmd]);
+		dropped[cmd] = 0;
 	}
 
 	MSG_BeginReadingOOB( msg );
 	MSG_ReadLong( msg );		// skip the -1 marker
 
-	if (!Q_strncmp("connect", (const char *)&msg->data[4], 7)) {
+	if (cmd == SVC_CONNECT) {
 		Huff_Decompress(msg, 12);
 	}
 
@@ -773,23 +806,31 @@ void SV_ConnectionlessPacket( netadr_t from, msg_t *msg ) {
 	c = Cmd_Argv(0);
 	Com_DPrintf ("SV packet %s : %s\n", NET_AdrToString(from), c);
 
-	if (!Q_stricmp(c, "getstatus")) {
-		SVC_Status( from  );
-	} else if (!Q_stricmp(c, "getinfo")) {
+	switch (cmd) {
+	case SVC_GETSTATUS:
+		SVC_Status( from );
+		break;
+	case SVC_GETINFO:
 		SVC_Info( from );
-	} else if (!Q_stricmp(c, "getchallenge")) {
+		break;
+	case SVC_GETCHALLENGE:
 		SV_GetChallenge( from );
-	} else if (!Q_stricmp(c, "connect")) {
+		break;
+	case SVC_CONNECT:
 		SV_DirectConnect( from );
-	} else if (!Q_stricmp(c, "ipAuthorize")) {
+		break;
+	case SVC_IPAUTHORIZE:
 		SV_AuthorizeIpPacket( from );
-	} else if (!Q_stricmp(c, "rcon")) {
+		break;
+	case SVC_RCON:
 		SVC_RemoteCommand( from, msg );
-	} else if (!Q_stricmp(c, "disconnect")) {
+		break;
+	case SVC_DISCONNECT:
 		// if a client starts up a local server, we may see some spurious
 		// server disconnect messages when their new server sees our final
 		// sequenced messages to the old client
-	} else if (!Q_stricmp(c, "mvapi")) {
+		break;
+	case SVC_MVAPI:
 		if (VM_MVAPILevel(gvm) >= 1 && from.type == NA_IP) {
 			Q_strncpyz(currmessage, s, sizeof(currmessage));
 			curraddr.type = MV_IPV4;
@@ -803,8 +844,13 @@ void SV_ConnectionlessPacket( netadr_t from, msg_t *msg ) {
 
 			currmessage[0] = 0;
 		}
-	} else {
+		break;
+	case SVC_INVALID:
 		Com_DPrintf("bad connectionless packet from %s:\n%s\n", NET_AdrToString(from), s);
+		break;
+	case SVC_MAX:
+		assert(0);
+		break;
 	}
 }
 
