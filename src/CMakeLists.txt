@@ -577,15 +577,6 @@ if (BuildMVDED)
 		add_dependencies(${MVDED} assetsmv2)
 	endif()
 
-	# Copy assets2 to the output directory (for debugging)
-	if(BuildMVSDK)
-		add_custom_command(TARGET ${MVDED} POST_BUILD
-			COMMAND ${CMAKE_COMMAND} -E copy_if_different
-			"${CMAKE_BINARY_DIR}/src/mvsdk/code/assetsmv2.pk3"
-			"$<TARGET_FILE_DIR:${MVDED}>/base/assetsmv2.pk3"
-		)
-	endif()
-
 	# installation
 	if(WIN32 OR APPLE)
 		install(TARGETS ${MVDED} RUNTIME DESTINATION ".")
