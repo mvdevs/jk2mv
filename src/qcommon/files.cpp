@@ -1098,6 +1098,19 @@ qboolean FS_IsFifo( const char *filename ) {
 
 /*
 ===========
+FS_FLock
+
+Advisory file locking
+===========
+*/
+int FS_FLock( fileHandle_t h, flockCmd_t cmd, qboolean nb ) {
+	int fd = fileno( FS_FileForHandle(h) );
+	return Sys_FLock(fd, cmd, nb);
+}
+
+
+/*
+===========
 FS_FilenameCompare
 
 Ignore case and seprator char distinctions

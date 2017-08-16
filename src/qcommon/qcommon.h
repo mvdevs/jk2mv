@@ -549,9 +549,6 @@ extern	int			cvar_modifiedFlags;
 // etc, variables have been modified since the last check.  The bit
 // can then be cleared to allow another change detection.
 
-void FS_HomeRemove( const char *homePath );
-qboolean FS_IsFifo( const char *filename );
-
 /*
 ==============================================================
 
@@ -702,6 +699,10 @@ const char *FS_MV_VerifyDownloadPath(const char *pk3file);
 int FS_GetDLList(dlfile_t *files, int maxfiles);
 qboolean FS_RMDLPrefix(const char *qpath);
 qboolean FS_DeleteDLFile(const char *qpath);
+
+void FS_HomeRemove( const char *homePath );
+qboolean FS_IsFifo( const char *filename );
+int FS_FLock( fileHandle_t h, flockCmd_t cmd, qboolean nb );
 
 /*
 ==============================================================
