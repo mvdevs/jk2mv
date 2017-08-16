@@ -634,7 +634,6 @@ qboolean MVAPI_DisableStructConversion(qboolean disable)
 // ddos protection whitelist
 
 #define WHITELIST_FILE			"ipwhitelist.dat"
-#define WHITELIST_FILE_VERSION	1
 
 #include <unordered_set>
 
@@ -643,25 +642,11 @@ static std::unordered_set<int32_t>	svc_whitelist;
 void SVC_LoadWhitelist( void ) {
 	fileHandle_t f;
 	int32_t *data = NULL;
-	uint32_t version;
 	int len = FS_SV_FOpenFileRead(WHITELIST_FILE, &f);
 
 	if (len <= 0) {
 		return;
 	}
-
-	if (FS_Read(&version, sizeof(version), f) < (int)sizeof(version)) {
-		FS_FCloseFile(f);
-		return;
-	}
-
-	if (version != WHITELIST_FILE_VERSION) {
-		Com_Printf( S_COLOR_YELLOW "WARNING: " WHITELIST_FILE " file version mismatch. Overwriting.\n" );
-		FS_FCloseFile(f);
-		return;
-	}
-
-	len -= sizeof(version);
 
 	data = (int32_t *)Z_Malloc(len, TAG_TEMP_WORKSPACE);
 	FS_Read(data, len, f);
@@ -677,36 +662,23 @@ void SVC_LoadWhitelist( void ) {
 	data = NULL;
 }
 
-static void SVC_SaveWhitelist( void ) {
-	const uint32_t version = WHITELIST_FILE_VERSION;
-	fileHandle_t f;
-	int32_t *data = (int32_t *)Z_Malloc(svc_whitelist.size() * sizeof(int32_t), TAG_TEMP_WORKSPACE);
-	int i = 0;
-
-	Com_DPrintf("Writing " WHITELIST_FILE ".\n");
-
-	for (auto it = svc_whitelist.begin(); it != svc_whitelist.end(); ++it, ++i) {
-		data[i] = *it;
-	}
-
-	f = FS_SV_FOpenFileWrite(WHITELIST_FILE);
-
-	if (f) {
-		FS_Write(&version, sizeof(version), f);
-		FS_Write(data, svc_whitelist.size() * sizeof(int32_t), f);
-		FS_FCloseFile(f);
-	} else {
-		Com_Printf( "Couldn't write " WHITELIST_FILE ".\n" );
-	}
-
-	Z_Free(data);
-	data = NULL;
-}
-
 void SVC_WhitelistAdr( netadr_t adr ) {
-	if (svc_whitelist.insert(adr.ipi).second) {
-		SVC_SaveWhitelist();
+	fileHandle_t f;
+
+	if (!svc_whitelist.insert(adr.ipi).second) {
+		return;
 	}
+
+	Com_DPrintf("Whitelisting %s\n", NET_AdrToString(adr));
+
+	f = FS_SV_FOpenFileAppend(WHITELIST_FILE);
+	if (!f) {
+		Com_Printf("Couldn't open " WHITELIST_FILE ".\n");
+		return;
+	}
+
+	FS_Write(adr.ip, sizeof(adr.ip), f);
+	FS_FCloseFile(f);
 }
 
 static bool SVC_IsWhitelisted( netadr_t adr ) {
