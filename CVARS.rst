@@ -272,6 +272,15 @@ Server-Side
 
 ..
 
+:Name: sv_maxOOBRate
+:Valid: 1-1000
+:Default: "20"
+:Description:
+   Max out-of-bound requests handled per second. Increasing rate
+   improves server responsiveness at the cost of higher CPU usage.
+
+..
+
 :Name: mv_fixnamecrash
 :Valid: "0", "1"
 :Default: "1"

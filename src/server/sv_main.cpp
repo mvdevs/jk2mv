@@ -25,6 +25,7 @@ cvar_t	*sv_mapname;
 cvar_t	*sv_mapChecksum;
 cvar_t	*sv_serverid;
 cvar_t	*sv_maxRate;
+cvar_t	*sv_maxOOBRate;
 cvar_t	*sv_minPing;
 cvar_t	*sv_maxPing;
 cvar_t	*sv_gametype;
@@ -730,7 +731,6 @@ void SV_ConnectionlessPacket( netadr_t from, msg_t *msg ) {
 		"mvapi"
 	};
 
-	int		burst;
 	char	*s;
 	char	*c;
 
@@ -751,15 +751,18 @@ void SV_ConnectionlessPacket( netadr_t from, msg_t *msg ) {
 		}
 	}
 
+	int rate = Com_Clampi(1, 1000, sv_maxOOBRate->integer);
+	int period = 1000 / rate;
+	int burst = rate;			// one second worth of packets
+
 	// Whitelisted IPs can still go through when not-whitelisted rate
 	// limit is expleted. If server is DDOSed from whitelisted ips,
 	// OOB packets from not-whitelisted IPs never go through.
-	burst = 20;
 	if (SVC_IsWhitelisted(from)) {
 		burst *= 2;
 	}
 
-	if (SVC_RateLimit(&bucket[cmd], burst, 100)) {
+	if (SVC_RateLimit(&bucket[cmd], burst, period)) {
 		dropped[cmd]++;
 		return;
 	}
