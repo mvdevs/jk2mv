@@ -793,6 +793,45 @@ fileHandle_t FS_SV_FOpenFileWrite( const char *filename ) {
 
 /*
 ===========
+FS_SV_FOpenFileAppend
+
+===========
+*/
+fileHandle_t FS_SV_FOpenFileAppend( const char *filename ) {
+	char			*ospath;
+	fileHandle_t	f;
+
+	if ( !fs_searchpaths ) {
+		Com_Error( ERR_FATAL, "Filesystem call made without initialization" );
+	}
+
+	f = FS_HandleForFile();
+	fsh[f].zipFile = qfalse;
+
+	Q_strncpyz( fsh[f].name, filename, sizeof( fsh[f].name ) );
+
+	ospath = FS_BuildOSPath( fs_homepath->string, filename );
+
+	if ( fs_debug->integer ) {
+		Com_Printf( "FS_SV_FOpenFileAppend: %s\n", ospath );
+	}
+
+	if( FS_CreatePath( ospath ) ) {
+		return 0;
+	}
+
+	fsh[f].handleFiles.file.o = fopen( ospath, "ab" );
+	fsh[f].handleSync = qfalse;
+
+	if (!fsh[f].handleFiles.file.o) {
+		return 0;
+	}
+
+	return f;
+}
+
+/*
+===========
 FS_SV_FOpenFileRead
 search for a file somewhere below the home path, base path or cd path
 we search in that order, matching FS_SV_FOpenFileRead order
