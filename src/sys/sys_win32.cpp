@@ -462,6 +462,39 @@ void Sys_SetTaskbarState(void *win_handle, tbstate_t state, uint64_t current, ui
 	}
 }
 
+int Sys_FLock(int fd, flockCmd_t cmd, qboolean nb) {
+	HANDLE h = (HANDLE) _get_osfhandle(fd);
+	OVERLAPPED ovlp = { 0 };
+	DWORD lower;
+	DWORD upper;
+	DWORD flags = 0;
+	int res;
+
+	if (h == INVALID_HANDLE_VALUE) {
+		return -1;
+	}
+
+	lower = GetFileSize(h, &upper);
+
+	if (nb) {
+		flags |= LOCKFILE_FAIL_IMMEDIATELY;
+	}
+
+	switch (cmd) {
+	case FLOCK_EX:
+		flags |= LOCKFILE_EXCLUSIVE_LOCK;
+		// fall-through
+	case FLOCK_SH:
+		res = LockFileEx(h, flags, 0, lower, upper, &ovlp);
+		break;
+	case FLOCK_UN:
+		res = UnlockFile(h, 0, 0, lower, upper);
+		break;
+	}
+
+	return res ? 0 : -1;
+}
+
 void Sys_PlatformExit(void)
 {
 	if (timerResolution)
