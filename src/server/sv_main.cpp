@@ -649,7 +649,11 @@ void SVC_LoadWhitelist( void ) {
 	}
 
 	data = (int32_t *)Z_Malloc(len, TAG_TEMP_WORKSPACE);
+
+	FS_FLock(f, FLOCK_SH, qfalse);
 	FS_Read(data, len, f);
+	FS_FLock(f, FLOCK_UN, qfalse);
+	FS_FCloseFile(f);
 
 	len /= sizeof(int32_t);
 
@@ -657,7 +661,6 @@ void SVC_LoadWhitelist( void ) {
 		svc_whitelist.insert(data[i]);
 	}
 
-	FS_FCloseFile(f);
 	Z_Free(data);
 	data = NULL;
 }
@@ -677,7 +680,9 @@ void SVC_WhitelistAdr( netadr_t adr ) {
 		return;
 	}
 
+	FS_FLock(f, FLOCK_EX, qfalse);
 	FS_Write(adr.ip, sizeof(adr.ip), f);
+	FS_FLock(f, FLOCK_UN, qfalse);
 	FS_FCloseFile(f);
 }
 
