@@ -743,10 +743,6 @@ void SV_ConnectionlessPacket( netadr_t from, msg_t *msg ) {
 	char	*c;
 
 	if (SVC_RateLimitAddress(from, 10, 1000)) {
-		if (com_developer->integer) {
-			Com_Printf("SVC_ConnectionlessPacket: rate limit from %s exceeded, dropping request\n",
-				NET_AdrToString(from));
-		}
 		return;
 	}
 
