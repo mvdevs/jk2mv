@@ -736,8 +736,6 @@ Ghoul2 Insert End
 
 	Hunk_SetMark();
 
-	Com_Printf ("-----------------------------------\n");
-
 	/* MrE: 2000-09-13: now called in CL_DownloadsComplete
 	// don't call when running dedicated
 	if ( !com_dedicated->integer ) {
@@ -765,6 +763,10 @@ Ghoul2 Insert End
 			}
 		}
 	}
+
+	SVC_LoadWhitelist();
+
+	Com_Printf ("-----------------------------------\n");
 }
 
 
