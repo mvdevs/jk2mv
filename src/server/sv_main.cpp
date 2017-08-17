@@ -669,6 +669,10 @@ void SVC_LoadWhitelist( void ) {
 void SVC_WhitelistAdr( netadr_t adr ) {
 	fileHandle_t f;
 
+	if (adr.type != NA_IP) {
+		return;
+	}
+
 	if (!svc_whitelist.insert(adr.ipi).second) {
 		return;
 	}
@@ -688,7 +692,11 @@ void SVC_WhitelistAdr( netadr_t adr ) {
 }
 
 static bool SVC_IsWhitelisted( netadr_t adr ) {
-	return svc_whitelist.find(adr.ipi) != svc_whitelist.end();
+	if (adr.type == NA_IP) {
+		return svc_whitelist.find(adr.ipi) != svc_whitelist.end();
+	} else {
+		return true;
+	}
 }
 
 //
