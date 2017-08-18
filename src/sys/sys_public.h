@@ -18,9 +18,19 @@ typedef struct netadr_s
 {
 	netadrtype_t	type;
 
-	byte			ip[4];
+	union {
+		byte			ip[4];
+		int32_t			ipi;
+	};
 	uint16_t		port;
 } netadr_t;
+
+typedef enum
+{
+	FLOCK_SH,
+	FLOCK_EX,
+	FLOCK_UN
+} flockCmd_t;
 
 /*
 ==============================================================
@@ -127,6 +137,8 @@ time_t Sys_FileTime( const char *path );
 qboolean Sys_LowPhysicalMemory();
 
 void Sys_SetProcessorAffinity( void );
+
+int Sys_FLock(int fd, flockCmd_t cmd, qboolean nb);
 
 typedef enum graphicsApi_e
 {

@@ -234,6 +234,7 @@ extern	cvar_t	*sv_mapname;
 extern	cvar_t	*sv_mapChecksum;
 extern	cvar_t	*sv_serverid;
 extern	cvar_t	*sv_maxRate;
+extern	cvar_t	*sv_maxOOBRate;
 extern	cvar_t	*sv_minPing;
 extern	cvar_t	*sv_maxPing;
 extern	cvar_t	*sv_gametype;
@@ -262,24 +263,9 @@ extern	cvar_t	*mv_fixplayerghosting;
 //
 typedef struct leakyBucket_s leakyBucket_t;
 struct leakyBucket_s {
-	netadrtype_t	type;
-
-	union {
-		byte	_4[4];
-	} ipv;
-
 	int					lastTime;
-	signed char			burst;
-
-	int					hash;
-
-	leakyBucket_t *prev, *next;
+	unsigned short		burst;
 };
-
-extern leakyBucket_t outboundLeakyBucket;
-
-qboolean SVC_RateLimit(leakyBucket_t *bucket, int burst, int period);
-qboolean SVC_RateLimitAddress(netadr_t from, int burst, int period);
 
 void SV_FinalMessage (char *message);
 void QDECL SV_SendServerCommand( client_t *cl, const char *fmt, ...);
@@ -296,6 +282,9 @@ qboolean MVAPI_GetConnectionlessPacket(mvaddr_t *addr, char *buf, unsigned int b
 qboolean MVAPI_SendConnectionlessPacket(const mvaddr_t *addr, const char *message);
 qboolean MVAPI_DisableStructConversion(qboolean disable);
 extern qboolean mvStructConversionDisabled;
+
+void SVC_LoadWhitelist( void );
+void SVC_WhitelistAdr( netadr_t adr );
 
 //
 // sv_init.c

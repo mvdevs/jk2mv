@@ -729,8 +729,6 @@ Ghoul2 Insert End
 
 	Hunk_SetMark();
 
-	Com_Printf ("-----------------------------------\n");
-
 	/* MrE: 2000-09-13: now called in CL_DownloadsComplete
 	// don't call when running dedicated
 	if ( !com_dedicated->integer ) {
@@ -758,6 +756,10 @@ Ghoul2 Insert End
 			}
 		}
 	}
+
+	SVC_LoadWhitelist();
+
+	Com_Printf ("-----------------------------------\n");
 }
 
 
@@ -809,6 +811,7 @@ void SV_Init (void) {
 	sv_hostname = Cvar_Get ("sv_hostname", "noname", CVAR_SERVERINFO | CVAR_ARCHIVE );
 	sv_maxclients = Cvar_Get ("sv_maxclients", "8", CVAR_SERVERINFO | CVAR_LATCH);
 	sv_maxRate = Cvar_Get ("sv_maxRate", "0", CVAR_ARCHIVE | CVAR_SERVERINFO );
+	sv_maxOOBRate = Cvar_Get ("sv_maxOOBRate", "20", CVAR_ARCHIVE | CVAR_GLOBAL );
 	sv_minPing = Cvar_Get ("sv_minPing", "0", CVAR_ARCHIVE | CVAR_SERVERINFO );
 	sv_maxPing = Cvar_Get ("sv_maxPing", "0", CVAR_ARCHIVE | CVAR_SERVERINFO );
 	sv_floodProtect = Cvar_Get ("sv_floodProtect", "1", CVAR_ARCHIVE | CVAR_SERVERINFO );
@@ -864,6 +867,8 @@ void SV_Init (void) {
 
 	// init the botlib here because we need the pre-compiler in the UI
 	SV_BotInitBotLib();
+
+	SVC_LoadWhitelist();
 }
 
 

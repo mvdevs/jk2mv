@@ -13,6 +13,7 @@
 #include <dlfcn.h>
 #include <unistd.h>
 #include <signal.h>
+#include <fcntl.h>
 
 #ifdef MACOS_X
 #include <mach-o/dyld.h>
@@ -654,4 +655,19 @@ void *Sys_LoadModuleLibrary(const char *name, qboolean mvOverride, intptr_t(QDEC
 
 void Sys_SetTaskbarState(void *win_handle, tbstate_t state, uint64_t current, uint64_t total) {
 	// TODO: OSX Dock support
+}
+
+int Sys_FLock(int fd, flockCmd_t cmd, qboolean nb) {
+	struct flock l = { 0 };
+
+	l.l_whence = SEEK_SET;
+	l.l_pid = getpid();
+
+	switch (cmd) {
+	case FLOCK_SH: l.l_type = F_RDLCK; break;
+	case FLOCK_EX: l.l_type = F_WRLCK; break;
+	case FLOCK_UN: l.l_type = F_UNLCK; break;
+	}
+
+	return fcntl(fd, nb ? F_SETLK : F_SETLKW, &l);
 }
