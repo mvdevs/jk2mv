@@ -27,6 +27,8 @@ cvar_t *com_maxfps;
 cvar_t *com_maxfpsMinimized;
 cvar_t *com_maxfpsUnfocused;
 
+static volatile sig_atomic_t sys_signal = 0;
+
 /*
 ==================
 Sys_GetClipboardData
@@ -195,26 +197,7 @@ Sys_SigHandler
 =================
 */
 void Sys_SigHandler(int signal) {
-	static qboolean signalcaught = qfalse;
-
-	if (signalcaught) {
-		fprintf(stderr, "DOUBLE SIGNAL FAULT: Received signal %d, exiting...\n",
-			signal);
-	} else {
-		signalcaught = qtrue;
-		//VM_Forced_Unload_Start();
-#ifndef DEDICATED
-		CL_Shutdown();
-		//CL_Shutdown(va("Received signal %d", signal), qtrue, qtrue);
-#endif
-		SV_Shutdown(va("Received signal %d", signal));
-		//VM_Forced_Unload_Done();
-	}
-
-	if (signal == SIGTERM || signal == SIGINT)
-		Sys_Exit(1);
-	else
-		Sys_Exit(2);
+	sys_signal = signal;
 }
 
 int main(int argc, char* argv[]) {
@@ -256,7 +239,7 @@ int main(int argc, char* argv[]) {
 	NET_Init();
 
 	// main game loop
-	while (1) {
+	while (!sys_signal) {
 		if (com_busyWait->integer) {
 			bool shouldSleep = false;
 
@@ -276,6 +259,8 @@ int main(int argc, char* argv[]) {
 		// run the game
 		Com_Frame();
 	}
+
+	Com_Quit(sys_signal);
 
 	// never gets here
 	return 0;

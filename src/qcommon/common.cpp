@@ -336,6 +336,23 @@ void Com_Quit_f( void ) {
 	Sys_Quit ();
 }
 
+Q_NORETURN void Com_Quit( int signal ) {
+	char msg[64];
+
+	if (signal) {
+		Com_sprintf(msg, sizeof(msg), "Received signal: %d\n", signal);
+	} else {
+		Com_sprintf(msg, sizeof(msg), "Server quit\n");
+	}
+
+	VM_Forced_Unload_Start();
+	SV_Shutdown (msg);
+	CL_Shutdown ();
+	VM_Forced_Unload_Done();
+	Com_Shutdown ();
+	FS_Shutdown(qtrue);
+	Sys_Quit ();
+}
 
 
 /*
