@@ -1784,7 +1784,7 @@ int FS_ReadFile( const char *qpath, void **buffer ) {
 				return len;
 			}
 
-			buf = (unsigned char *)Hunk_AllocateTempMemory(len+1);
+			buf = (byte*)Z_Malloc( len+1, TAG_FILESYS, qfalse);
 			*buffer = buf;
 
 			r = FS_Read( buf, len, com_journalDataFile );
@@ -1793,7 +1793,7 @@ int FS_ReadFile( const char *qpath, void **buffer ) {
 			}
 
 			fs_loadCount++;
-			fs_loadStack++;
+			//fs_loadStack++;
 
 			// guarantee that it will have a trailing 0 for string operations
 			buf[len] = 0;
