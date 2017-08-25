@@ -697,11 +697,11 @@ static bool SVC_IsWhitelisted( netadr_t adr ) {
 //
 
 typedef enum {
-	SVC_INVALID,
+	SVC_CONNECT,
 	SVC_GETSTATUS,
+	SVC_FIRST = SVC_GETSTATUS,
 	SVC_GETINFO,
 	SVC_GETCHALLENGE,
-	SVC_CONNECT,
 	SVC_RCON,
 	SVC_DISCONNECT,
 	SVC_MVAPI,
@@ -722,11 +722,10 @@ void SV_ConnectionlessPacket( netadr_t from, msg_t *msg ) {
 	static int dropped[SVC_MAX];
 	static leakyBucket_t bucket[SVC_MAX];
 	static const char * const commands[SVC_MAX] = {
-		"invalid",
+		"connect",
 		"getstatus",
 		"getinfo",
 		"getchallenge",
-		"connect",
 		"rcon",
 		"disconnect",
 		"mvapi"
@@ -735,16 +734,27 @@ void SV_ConnectionlessPacket( netadr_t from, msg_t *msg ) {
 	char	*s;
 	char	*c;
 
+	svcType_t cmd = SVC_MAX;
+
 	if (SVC_RateLimitAddress(from, 10, 1000)) {
 		return;
 	}
 
-	svcType_t cmd = SVC_INVALID;
+	MSG_BeginReadingOOB( msg );
+	MSG_ReadLong( msg );		// skip the -1 marker
 
-	for (int i = 1; i < SVC_MAX; i++) {
-		if (!Q_stricmpn((const char *)&msg->data[4], commands[i], strlen(commands[i]))) {
+	if (!Q_strncmp("connect", (const char *)&msg->data[4], 7)) {
+		Huff_Decompress(msg, 12);
+		cmd = SVC_CONNECT;
+	}
+
+	s = MSG_ReadStringLine( msg );
+	Cmd_TokenizeString( s );
+	c = Q_strlwr(Cmd_Argv(0));
+
+	for (int i = SVC_FIRST; i < (int)cmd; i++) {
+		if (!strcmp(c, commands[i])) {
 			cmd = (svcType_t)i;
-			break;
 		}
 	}
 
@@ -770,17 +780,6 @@ void SV_ConnectionlessPacket( netadr_t from, msg_t *msg ) {
 		dropped[cmd] = 0;
 	}
 
-	MSG_BeginReadingOOB( msg );
-	MSG_ReadLong( msg );		// skip the -1 marker
-
-	if (cmd == SVC_CONNECT) {
-		Huff_Decompress(msg, 12);
-	}
-
-	s = MSG_ReadStringLine( msg );
-	Cmd_TokenizeString( s );
-
-	c = Cmd_Argv(0);
 	Com_DPrintf ("SV packet %s : %s\n", NET_AdrToString(from), c);
 
 	switch (cmd) {
@@ -819,11 +818,8 @@ void SV_ConnectionlessPacket( netadr_t from, msg_t *msg ) {
 			currmessage[0] = 0;
 		}
 		break;
-	case SVC_INVALID:
-		Com_DPrintf("bad connectionless packet from %s:\n%s\n", NET_AdrToString(from), s);
-		break;
 	case SVC_MAX:
-		assert(0);
+		Com_DPrintf("bad connectionless packet from %s:\n%s\n", NET_AdrToString(from), s);
 		break;
 	}
 }
