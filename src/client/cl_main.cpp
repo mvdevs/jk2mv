@@ -2628,7 +2628,7 @@ void *CL_RefMalloc( int size ) {
 }
 
 int CL_ScaledMilliseconds(void) {
-	return Sys_Milliseconds()*com_timescale->value;
+	return Sys_Milliseconds() * (double)com_timescale->value;
 }
 
 /*
