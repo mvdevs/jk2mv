@@ -612,7 +612,12 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 
 			if ( entityNum != ENTITYNUM_WORLD ) {
 				backEnd.currentEntity = &backEnd.refdef.entities[entityNum];
-				backEnd.refdef.floatTime = originalTime - backEnd.currentEntity->e.shaderTime;
+				if (backEnd.currentEntity->intShaderTime) {
+					backEnd.refdef.floatTime = originalTime - 0.001 * backEnd.currentEntity->e.shaderTime.i;
+				} else {
+					// precision loss on high server time
+					backEnd.refdef.floatTime = originalTime - backEnd.currentEntity->e.shaderTime.f;
+				}
 				// we have to reset the shaderTime as well otherwise image animations start
 				// from the wrong frame
 				tess.shaderTime = backEnd.refdef.floatTime - tess.shader->timeOffset;

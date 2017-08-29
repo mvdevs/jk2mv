@@ -81,6 +81,7 @@ typedef struct {
 	vec3_t		ambientLight;	// color normalized to 0-255
 	int			ambientLightInt;	// 32 bit rgba packed
 	vec3_t		directedLight;
+	qboolean	intShaderTime;
 } trRefEntity_t;
 
 
@@ -1658,7 +1659,7 @@ SCENE GENERATION
 
 void R_InitNextFrame(void);
 void RE_ClearScene( void );
-void RE_AddRefEntityToScene( const refEntity_t *ent );
+void RE_AddRefEntityToScene( const refEntity_t *ent, qboolean intShaderTime );
 void RE_AddMiniRefEntityToScene( const miniRefEntity_t *ent );
 void RE_AddPolyToScene( qhandle_t hShader , int numVerts, const polyVert_t *verts, int num );
 void RE_AddLightToScene( const vec3_t org, float intensity, float r, float g, float b );

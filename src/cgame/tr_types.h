@@ -161,7 +161,10 @@ typedef struct {
 	float				rotation;
 
 	// misc
-	float		shaderTime;			// subtracted from refdef time to control effect start times
+	union {
+		float		f;
+		int			i;
+	} shaderTime;					// subtracted from refdef time to control effect start times
 	int			frame;				// also used as MODEL_BEAM's diameter
 	//
 	//
