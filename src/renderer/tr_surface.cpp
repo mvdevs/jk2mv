@@ -1613,6 +1613,7 @@ void RB_SurfaceEntity( surfaceType_t *surfType ) {
 			start = backEnd.currentEntity->e.uRefEnt.uMini.miniStart;
 			count = backEnd.currentEntity->e.uRefEnt.uMini.miniCount;
 			backEnd.currentEntity = &tempEnt;
+			tempEnt.intShaderTime = qtrue;
 			for(i=0;i<count;i++)
 			{
 				memcpy(&backEnd.currentEntity->e, &backEnd.refdef.miniEntities[start+i], sizeof(backEnd.refdef.miniEntities[start+i]));

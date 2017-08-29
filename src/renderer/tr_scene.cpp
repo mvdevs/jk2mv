@@ -265,7 +265,7 @@ void RE_AddMiniRefEntityToScene( const miniRefEntity_t *ent )
 
 		memcpy(&tempEnt, ent, sizeof(*ent));
 		memset(((char *)&tempEnt)+sizeof(*ent), 0, sizeof(tempEnt) - sizeof(*ent));
-		RE_AddRefEntityToScene(&tempEnt, qfalse);
+		RE_AddRefEntityToScene(&tempEnt, qtrue);
 		return;
 	}
 

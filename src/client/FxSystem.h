@@ -129,7 +129,7 @@ public:
 #ifdef _DEBUG
 		mMainRefs++;
 #endif
-		re.AddRefEntityToScene( ent, qfalse );
+		re.AddRefEntityToScene( ent, qtrue );
 	}
 	inline	void	AddFxToScene( miniRefEntity_t *ent )
 	{

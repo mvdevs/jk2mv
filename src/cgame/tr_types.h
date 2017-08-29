@@ -123,7 +123,7 @@ typedef struct miniRefEntity_s
 	float				rotation;			// size 2 for RT_CYLINDER or number of verts in RT_ELECTRICITY
 
 	// misc
-	float		shaderTime;			// subtracted from refdef time to control effect start times
+	int			shaderTime;			// subtracted from refdef time to control effect start times
 	int			frame;				// also used as MODEL_BEAM's diameter
 
 } miniRefEntity_t;
