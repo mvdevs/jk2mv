@@ -1288,6 +1288,10 @@ Ghoul2 Insert End
 	case MVAPI_GET_VERSION:
 		return (int)MV_GetCurrentGameversion();
 
+	case MVAPI_R_ADDREFENTITYTOSCENE2:
+		re.AddRefEntityToScene(VMAV(1, const refEntity_t), qtrue);
+		return 0;
+
 	default:
 			assert(0); // bk010102
 		Com_Error( ERR_DROP, "Bad cgame system trap: %i", args[0] );
