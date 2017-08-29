@@ -493,6 +493,7 @@ void CL_InitRef( void );
 int CL_ServerStatus( const char *serverAddress, char *serverStatusString, int maxLen );
 
 void CL_GetVMGLConfig(vmglconfig_t *vmglconfig);
+int CL_ScaledMilliseconds(void);
 
 //
 // cl_input
