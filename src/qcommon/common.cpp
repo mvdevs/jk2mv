@@ -2496,6 +2496,7 @@ void Com_WriteConfigToFile(const char *localfile, const char *globalfile) {
 	Key_WriteBindings(fl);
 	Cvar_WriteVariables(fl, qtrue);
 	if (globalfile == NULL) {
+		FS_Printf(fl, "\n// global cvars\n");
 		Cvar_WriteVariables(fl, qfalse);
 	}
 	FS_FCloseFile(fl);
