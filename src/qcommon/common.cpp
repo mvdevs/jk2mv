@@ -2551,9 +2551,9 @@ void Com_WriteConfig_f( void ) {
 	}
 
 	Q_strncpyz( filename, Cmd_Argv(1), sizeof( filename ) );
-	COM_DefaultExtension( filename, sizeof( filename ), ".cfg" );
+	COM_SanitizeExtension( filename, sizeof( filename ), ".cfg" );
 	Com_Printf( "Writing %s.\n", filename );
-	Com_WriteConfigToFile(filename, va("%s_globals.cfg", Cmd_Argv(1)));
+	Com_WriteConfigToFile(filename, NULL);
 }
 
 /*
