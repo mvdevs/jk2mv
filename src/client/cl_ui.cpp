@@ -853,7 +853,7 @@ intptr_t CL_UISystemCalls(intptr_t *args) {
 		return 0;
 
 	case UI_R_ADDREFENTITYTOSCENE:
-		re.AddRefEntityToScene( VMAV(1, const refEntity_t) );
+		re.AddRefEntityToScene( VMAV(1, const refEntity_t), qfalse );
 		return 0;
 
 	case UI_R_ADDPOLYTOSCENE:
@@ -1156,6 +1156,10 @@ Ghoul2 Insert End
 
 	case MVAPI_GET_VERSION:
 		return (int)MV_GetCurrentGameversion();
+
+	case MVAPI_R_ADDREFENTITYTOSCENE2:
+		re.AddRefEntityToScene(VMAV(1, const refEntity_t), qtrue);
+		return 0;
 
 	default:
 		Com_Error( ERR_DROP, "Bad UI system trap: %i", args[0] );

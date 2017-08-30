@@ -800,7 +800,7 @@ intptr_t CL_CgameSystemCalls(intptr_t *args) {
 		re.ClearScene();
 		return 0;
 	case CG_R_ADDREFENTITYTOSCENE:
-		re.AddRefEntityToScene(VMAV(1, const refEntity_t));
+		re.AddRefEntityToScene(VMAV(1, const refEntity_t), qfalse);
 		return 0;
 	case CG_R_ADDPOLYTOSCENE:
 		re.AddPolyToScene( args[1], args[2], VMAA(3, const polyVert_t, args[2]), 1 );
@@ -1287,6 +1287,10 @@ Ghoul2 Insert End
 
 	case MVAPI_GET_VERSION:
 		return (int)MV_GetCurrentGameversion();
+
+	case MVAPI_R_ADDREFENTITYTOSCENE2:
+		re.AddRefEntityToScene(VMAV(1, const refEntity_t), qtrue);
+		return 0;
 
 	default:
 			assert(0); // bk010102

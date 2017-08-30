@@ -3,7 +3,7 @@
 #include "tr_local.h"
 
 
-#define	WAVEVALUE( table, base, amplitude, phase, freq )  ((base) + table[ Q_ftol( ( ( (phase) + tess.shaderTime * (freq) ) * FUNCTABLE_SIZE ) ) & FUNCTABLE_MASK ] * (amplitude))
+#define	WAVEVALUE( table, base, amplitude, phase, freq )  ((base) + table[ Q_dtol( ( ( (phase) + tess.shaderTime * (freq) ) * FUNCTABLE_SIZE ) ) & FUNCTABLE_MASK ] * (amplitude))
 
 static float *TableForFunc( genFunc_t func )
 {
@@ -232,14 +232,14 @@ void RB_CalcBulgeVertexes( deformStage_t *ds )
 	{
 		// I guess do some extra dumb stuff..the fact that it uses ST seems bad though because skin pages may be set up in certain ways that can cause
 		//	very noticeable seams on sufaces ( like on the huge ion_cannon ).
-		float		now;
-		int			off;
+		double		now;
+		int64_t		off;
 
-		now = backEnd.refdef.time * ds->bulgeSpeed * 0.001f;
+		now = backEnd.refdef.time * 0.001 * ds->bulgeSpeed;
 
 		for ( i = 0; i < tess.numVertexes; i++, xyz += 4, normal += 4 )
 		{
-			off = (float)( FUNCTABLE_SIZE / (M_PI*2) ) * ( tess.texCoords[0][i][0] * ds->bulgeWidth + now );
+			off = ( FUNCTABLE_SIZE / (M_PI * 2) ) * ( tess.texCoords[0][i][0] * ds->bulgeWidth + now );
 
 			scale = tr.sinTable[ off & FUNCTABLE_MASK ] * ds->bulgeHeight;
 
@@ -936,7 +936,7 @@ void RB_CalcEnvironmentTexCoords( float *st )
 void RB_CalcTurbulentTexCoords( const waveForm_t *wf, float *st )
 {
 	int i;
-	float now;
+	double now;
 
 	now = ( wf->phase + tess.shaderTime * wf->frequency );
 
@@ -945,8 +945,8 @@ void RB_CalcTurbulentTexCoords( const waveForm_t *wf, float *st )
 		float s = st[0];
 		float t = st[1];
 
-		st[0] = s + tr.sinTable[ ( ( int ) ( ( ( tess.xyz[i][0] + tess.xyz[i][2] )* (1.0f / 128 * 0.125f) + now ) * FUNCTABLE_SIZE ) ) & ( FUNCTABLE_MASK ) ] * wf->amplitude;
-		st[1] = t + tr.sinTable[ ( ( int ) ( ( tess.xyz[i][1] * (1.0f / 128 * 0.125f) + now ) * FUNCTABLE_SIZE ) ) & ( FUNCTABLE_MASK ) ] * wf->amplitude;
+		st[0] = s + tr.sinTable[ ( ( int64_t ) ( ( ( tess.xyz[i][0] + tess.xyz[i][2] )* (1.0 / 128 * 0.125) + now ) * FUNCTABLE_SIZE ) ) & ( FUNCTABLE_MASK ) ] * wf->amplitude;
+		st[1] = t + tr.sinTable[ ( ( int64_t ) ( ( tess.xyz[i][1] * (1.0 / 128 * 0.125) + now ) * FUNCTABLE_SIZE ) ) & ( FUNCTABLE_MASK ) ] * wf->amplitude;
 	}
 }
 
@@ -970,16 +970,16 @@ void RB_CalcScaleTexCoords( const float scale[2], float *st )
 void RB_CalcScrollTexCoords( const float scrollSpeed[2], float *st )
 {
 	int i;
-	float timeScale = tess.shaderTime;
-	float adjustedScrollS, adjustedScrollT;
+	double timeScale = tess.shaderTime;
+	double adjustedScrollS, adjustedScrollT;
 
 	adjustedScrollS = scrollSpeed[0] * timeScale;
 	adjustedScrollT = scrollSpeed[1] * timeScale;
 
 	// clamp so coordinates don't continuously get larger, causing problems
 	// with hardware limits
-	adjustedScrollS = adjustedScrollS - floorf( adjustedScrollS );
-	adjustedScrollT = adjustedScrollT - floorf( adjustedScrollT );
+	adjustedScrollS = adjustedScrollS - floor( adjustedScrollS );
+	adjustedScrollT = adjustedScrollT - floor( adjustedScrollT );
 
 	for ( i = 0; i < tess.numVertexes; i++, st += 2 )
 	{
@@ -1010,14 +1010,14 @@ void RB_CalcTransformTexCoords( const texModInfo_t *tmi, float *st  )
 */
 void RB_CalcRotateTexCoords( float degsPerSecond, float *st )
 {
-	float timeScale = tess.shaderTime;
-	float degs;
-	int index;
+	double timeScale = tess.shaderTime;
+	double degs;
+	int64_t index;
 	float sinValue, cosValue;
 	texModInfo_t tmi;
 
 	degs = -degsPerSecond * timeScale;
-	index = degs * ( FUNCTABLE_SIZE / 360.0f );
+	index = degs * ( FUNCTABLE_SIZE / 360.0 );
 
 	sinValue = tr.sinTable[ index & FUNCTABLE_MASK ];
 	cosValue = tr.sinTable[ ( index + FUNCTABLE_SIZE / 4 ) & FUNCTABLE_MASK ];

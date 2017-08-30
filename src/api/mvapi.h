@@ -108,6 +108,11 @@ typedef struct {
 
 #define MVSORT_CLIENTS_NOBOTS 5
 
+// -------------------------------------- UI & CGAME --------------------------------------- //
+
+// void trap_R_AddRefEntityToScene2(const refEntity_t *re);
+#define MVAPI_R_ADDREFENTITYTOSCENE2 706         /* asm: -707 */
+
 // ----------------------------------------------------------------------------------------- //
 
 #endif /* MVAPI_H */

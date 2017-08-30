@@ -366,7 +366,7 @@ CParticle *FX_AddParticle( CCloud *effectCloud, const vec3_t org, const vec3_t v
 		else if ( flags & FX_RGB_PARM_MASK )
 		{
 			// rgbParm should be a value from 0-100..
-			fx->SetRGBParm( rgbParm * 0.01f * killTime + theFxHelper.mTime );
+			fx->SetRGBParm( rgbParm * 0.01 * killTime + theFxHelper.mTime );
 		}
 
 		// Alpha----------------
@@ -379,7 +379,7 @@ CParticle *FX_AddParticle( CCloud *effectCloud, const vec3_t org, const vec3_t v
 		}
 		else if ( flags & FX_ALPHA_PARM_MASK )
 		{
-			fx->SetAlphaParm( alphaParm * 0.01f * killTime + theFxHelper.mTime );
+			fx->SetAlphaParm( alphaParm * 0.01 * killTime + theFxHelper.mTime );
 		}
 
 		// Size----------------
@@ -392,7 +392,7 @@ CParticle *FX_AddParticle( CCloud *effectCloud, const vec3_t org, const vec3_t v
 		}
 		else if ( flags & FX_SIZE_PARM_MASK )
 		{
-			fx->SetSizeParm( sizeParm * 0.01f * killTime + theFxHelper.mTime );
+			fx->SetSizeParm( sizeParm * 0.01 * killTime + theFxHelper.mTime );
 		}
 
 		fx->SetFlags( flags );
@@ -452,7 +452,7 @@ CParticle *FX_AddParticle( CCloud *effectCloud, CFxBoltInterface *obj, const vec
 		else if ( flags & FX_RGB_PARM_MASK )
 		{
 			// rgbParm should be a value from 0-100..
-			fx->SetRGBParm( rgbParm * 0.01f * killTime + theFxHelper.mTime );
+			fx->SetRGBParm( rgbParm * 0.01 * killTime + theFxHelper.mTime );
 		}
 
 		// Alpha----------------
@@ -465,7 +465,7 @@ CParticle *FX_AddParticle( CCloud *effectCloud, CFxBoltInterface *obj, const vec
 		}
 		else if ( flags & FX_ALPHA_PARM_MASK )
 		{
-			fx->SetAlphaParm( alphaParm * 0.01f * killTime + theFxHelper.mTime );
+			fx->SetAlphaParm( alphaParm * 0.01 * killTime + theFxHelper.mTime );
 		}
 
 		// Size----------------
@@ -478,7 +478,7 @@ CParticle *FX_AddParticle( CCloud *effectCloud, CFxBoltInterface *obj, const vec
 		}
 		else if ( flags & FX_SIZE_PARM_MASK )
 		{
-			fx->SetSizeParm( sizeParm * 0.01f * killTime + theFxHelper.mTime );
+			fx->SetSizeParm( sizeParm * 0.01 * killTime + theFxHelper.mTime );
 		}
 
 		fx->SetFlags( flags );
@@ -534,7 +534,7 @@ CLine *FX_AddLine( CCloud *effectCloud, const vec3_t start, const vec3_t end, fl
 		else if ( flags & FX_RGB_PARM_MASK )
 		{
 			// rgbParm should be a value from 0-100..
-			fx->SetRGBParm( rgbParm * 0.01f * killTime + theFxHelper.mTime );
+			fx->SetRGBParm( rgbParm * 0.01 * killTime + theFxHelper.mTime );
 		}
 
 		// Alpha----------------
@@ -547,7 +547,7 @@ CLine *FX_AddLine( CCloud *effectCloud, const vec3_t start, const vec3_t end, fl
 		}
 		else if ( flags & FX_ALPHA_PARM_MASK )
 		{
-			fx->SetAlphaParm( alphaParm * 0.01f * killTime + theFxHelper.mTime );
+			fx->SetAlphaParm( alphaParm * 0.01 * killTime + theFxHelper.mTime );
 		}
 
 		// Size----------------
@@ -560,7 +560,7 @@ CLine *FX_AddLine( CCloud *effectCloud, const vec3_t start, const vec3_t end, fl
 		}
 		else if ( flags & FX_SIZE_PARM_MASK )
 		{
-			fx->SetSizeParm( sizeParm * 0.01f * killTime + theFxHelper.mTime );
+			fx->SetSizeParm( sizeParm * 0.01 * killTime + theFxHelper.mTime );
 		}
 
 		fx->SetShader( shader );
@@ -607,7 +607,7 @@ CElectricity *FX_AddElectricity( CCloud *effectCloud, vec3_t start, vec3_t end, 
 		else if ( flags & FX_RGB_PARM_MASK )
 		{
 			// rgbParm should be a value from 0-100..
-			fx->SetRGBParm( rgbParm * 0.01f * killTime + theFxHelper.mTime );
+			fx->SetRGBParm( rgbParm * 0.01 * killTime + theFxHelper.mTime );
 		}
 
 		// Alpha----------------
@@ -620,7 +620,7 @@ CElectricity *FX_AddElectricity( CCloud *effectCloud, vec3_t start, vec3_t end, 
 		}
 		else if ( flags & FX_ALPHA_PARM_MASK )
 		{
-			fx->SetAlphaParm( alphaParm * 0.01f * killTime + theFxHelper.mTime );
+			fx->SetAlphaParm( alphaParm * 0.01 * killTime + theFxHelper.mTime );
 		}
 
 		// Size----------------
@@ -633,7 +633,7 @@ CElectricity *FX_AddElectricity( CCloud *effectCloud, vec3_t start, vec3_t end, 
 		}
 		else if ( flags & FX_SIZE_PARM_MASK )
 		{
-			fx->SetSizeParm( sizeParm * 0.01f * killTime + theFxHelper.mTime );
+			fx->SetSizeParm( sizeParm * 0.01 * killTime + theFxHelper.mTime );
 		}
 
 		fx->SetShader( shader );
@@ -690,7 +690,7 @@ CTail *FX_AddTail( CCloud *effectCloud, vec3_t org, vec3_t vel, vec3_t accel,
 		else if ( flags & FX_RGB_PARM_MASK )
 		{
 			// rgbParm should be a value from 0-100..
-			fx->SetRGBParm( rgbParm * 0.01f * killTime + theFxHelper.mTime );
+			fx->SetRGBParm( rgbParm * 0.01 * killTime + theFxHelper.mTime );
 		}
 
 		// Alpha----------------
@@ -703,7 +703,7 @@ CTail *FX_AddTail( CCloud *effectCloud, vec3_t org, vec3_t vel, vec3_t accel,
 		}
 		else if ( flags & FX_ALPHA_PARM_MASK )
 		{
-			fx->SetAlphaParm( alphaParm * 0.01f * killTime + theFxHelper.mTime );
+			fx->SetAlphaParm( alphaParm * 0.01 * killTime + theFxHelper.mTime );
 		}
 
 		// Size----------------
@@ -716,7 +716,7 @@ CTail *FX_AddTail( CCloud *effectCloud, vec3_t org, vec3_t vel, vec3_t accel,
 		}
 		else if ( flags & FX_SIZE_PARM_MASK )
 		{
-			fx->SetSizeParm( sizeParm * 0.01f * killTime + theFxHelper.mTime );
+			fx->SetSizeParm( sizeParm * 0.01 * killTime + theFxHelper.mTime );
 		}
 
 		// Length----------------
@@ -729,7 +729,7 @@ CTail *FX_AddTail( CCloud *effectCloud, vec3_t org, vec3_t vel, vec3_t accel,
 		}
 		else if ( flags & FX_LENGTH_PARM_MASK )
 		{
-			fx->SetLengthParm( lengthParm * 0.01f * killTime + theFxHelper.mTime );
+			fx->SetLengthParm( lengthParm * 0.01 * killTime + theFxHelper.mTime );
 		}
 
 		fx->SetFlags( flags );
@@ -783,7 +783,7 @@ CCylinder *FX_AddCylinder( CCloud *effectCloud, vec3_t start, vec3_t normal,
 		else if ( flags & FX_RGB_PARM_MASK )
 		{
 			// rgbParm should be a value from 0-100..
-			fx->SetRGBParm( rgbParm * 0.01f * killTime + theFxHelper.mTime );
+			fx->SetRGBParm( rgbParm * 0.01 * killTime + theFxHelper.mTime );
 		}
 
 		// Size1----------------
@@ -796,7 +796,7 @@ CCylinder *FX_AddCylinder( CCloud *effectCloud, vec3_t start, vec3_t normal,
 		}
 		else if ( flags & FX_SIZE_PARM_MASK )
 		{
-			fx->SetSizeParm( size1Parm * 0.01f * killTime + theFxHelper.mTime );
+			fx->SetSizeParm( size1Parm * 0.01 * killTime + theFxHelper.mTime );
 		}
 
 		// Size2----------------
@@ -809,7 +809,7 @@ CCylinder *FX_AddCylinder( CCloud *effectCloud, vec3_t start, vec3_t normal,
 		}
 		else if ( flags & FX_SIZE2_PARM_MASK )
 		{
-			fx->SetSize2Parm( size2Parm * 0.01f * killTime + theFxHelper.mTime );
+			fx->SetSize2Parm( size2Parm * 0.01 * killTime + theFxHelper.mTime );
 		}
 
 		// Length1---------------
@@ -822,7 +822,7 @@ CCylinder *FX_AddCylinder( CCloud *effectCloud, vec3_t start, vec3_t normal,
 		}
 		else if ( flags & FX_LENGTH_PARM_MASK )
 		{
-			fx->SetLengthParm( lengthParm * 0.01f * killTime + theFxHelper.mTime );
+			fx->SetLengthParm( lengthParm * 0.01 * killTime + theFxHelper.mTime );
 		}
 
 		// Alpha----------------
@@ -835,7 +835,7 @@ CCylinder *FX_AddCylinder( CCloud *effectCloud, vec3_t start, vec3_t normal,
 		}
 		else if ( flags & FX_ALPHA_PARM_MASK )
 		{
-			fx->SetAlphaParm( alphaParm * 0.01f * killTime + theFxHelper.mTime );
+			fx->SetAlphaParm( alphaParm * 0.01 * killTime + theFxHelper.mTime );
 		}
 
 		fx->SetShader( shader );
@@ -884,7 +884,7 @@ CEmitter *FX_AddEmitter( CCloud *effectCloud, vec3_t org, vec3_t vel, vec3_t acc
 		else if ( flags & FX_RGB_PARM_MASK )
 		{
 			// rgbParm should be a value from 0-100..
-			fx->SetRGBParm( rgbParm * 0.01f * killTime + theFxHelper.mTime );
+			fx->SetRGBParm( rgbParm * 0.01 * killTime + theFxHelper.mTime );
 		}
 
 		// Size----------------
@@ -897,7 +897,7 @@ CEmitter *FX_AddEmitter( CCloud *effectCloud, vec3_t org, vec3_t vel, vec3_t acc
 		}
 		else if ( flags & FX_SIZE_PARM_MASK )
 		{
-			fx->SetSizeParm( sizeParm * 0.01f * killTime + theFxHelper.mTime );
+			fx->SetSizeParm( sizeParm * 0.01 * killTime + theFxHelper.mTime );
 		}
 
 		// Alpha----------------
@@ -910,7 +910,7 @@ CEmitter *FX_AddEmitter( CCloud *effectCloud, vec3_t org, vec3_t vel, vec3_t acc
 		}
 		else if ( flags & FX_ALPHA_PARM_MASK )
 		{
-			fx->SetAlphaParm( alphaParm * 0.01f * killTime + theFxHelper.mTime );
+			fx->SetAlphaParm( alphaParm * 0.01 * killTime + theFxHelper.mTime );
 		}
 
 		fx->SetAngles( angs );
@@ -966,7 +966,7 @@ CLight *FX_AddLight( CCloud *effectCloud, vec3_t org, float size1, float size2, 
 		else if ( flags & FX_RGB_PARM_MASK )
 		{
 			// rgbParm should be a value from 0-100..
-			fx->SetRGBParm( rgbParm * 0.01f * killTime + theFxHelper.mTime );
+			fx->SetRGBParm( rgbParm * 0.01 * killTime + theFxHelper.mTime );
 		}
 
 		// Size----------------
@@ -979,7 +979,7 @@ CLight *FX_AddLight( CCloud *effectCloud, vec3_t org, float size1, float size2, 
 		}
 		else if ( flags & FX_SIZE_PARM_MASK )
 		{
-			fx->SetSizeParm( sizeParm * 0.01f * killTime + theFxHelper.mTime );
+			fx->SetSizeParm( sizeParm * 0.01 * killTime + theFxHelper.mTime );
 		}
 
 		fx->SetFlags( flags );
@@ -1030,7 +1030,7 @@ COrientedParticle *FX_AddOrientedParticle( CCloud *effectCloud, vec3_t org, vec3
 		else if ( flags & FX_RGB_PARM_MASK )
 		{
 			// rgbParm should be a value from 0-100..
-			fx->SetRGBParm( rgbParm * 0.01f * killTime + theFxHelper.mTime );
+			fx->SetRGBParm( rgbParm * 0.01 * killTime + theFxHelper.mTime );
 		}
 
 		// Alpha----------------
@@ -1043,7 +1043,7 @@ COrientedParticle *FX_AddOrientedParticle( CCloud *effectCloud, vec3_t org, vec3
 		}
 		else if ( flags & FX_ALPHA_PARM_MASK )
 		{
-			fx->SetAlphaParm( alphaParm * 0.01f * killTime + theFxHelper.mTime );
+			fx->SetAlphaParm( alphaParm * 0.01 * killTime + theFxHelper.mTime );
 		}
 
 		// Size----------------
@@ -1056,7 +1056,7 @@ COrientedParticle *FX_AddOrientedParticle( CCloud *effectCloud, vec3_t org, vec3
 		}
 		else if ( flags & FX_SIZE_PARM_MASK )
 		{
-			fx->SetSizeParm( sizeParm * 0.01f * killTime + theFxHelper.mTime );
+			fx->SetSizeParm( sizeParm * 0.01 * killTime + theFxHelper.mTime );
 		}
 
 		fx->SetFlags( flags );
@@ -1117,7 +1117,7 @@ CPoly *FX_AddPoly( CCloud *effectCloud, const vec3_t *verts, const vec2_t *st, i
 		else if ( flags & FX_RGB_PARM_MASK )
 		{
 			// rgbParm should be a value from 0-100..
-			fx->SetRGBParm( rgbParm * 0.01f * killTime + theFxHelper.mTime );
+			fx->SetRGBParm( rgbParm * 0.01 * killTime + theFxHelper.mTime );
 		}
 
 		// Alpha----------------
@@ -1130,7 +1130,7 @@ CPoly *FX_AddPoly( CCloud *effectCloud, const vec3_t *verts, const vec2_t *st, i
 		}
 		else if ( flags & FX_ALPHA_PARM_MASK )
 		{
-			fx->SetAlphaParm( alphaParm * 0.01f * killTime + theFxHelper.mTime );
+			fx->SetAlphaParm( alphaParm * 0.01 * killTime + theFxHelper.mTime );
 		}
 
 		fx->SetFlags( flags );
@@ -1187,7 +1187,7 @@ CBezier *FX_AddBezier( const vec3_t start, const vec3_t end,
 		else if ( flags & FX_RGB_PARM_MASK )
 		{
 			// rgbParm should be a value from 0-100..
-			fx->SetRGBParm( rgbParm * 0.01f * killTime + theFxHelper.mTime );
+			fx->SetRGBParm( rgbParm * 0.01 * killTime + theFxHelper.mTime );
 		}
 
 		// Alpha----------------
@@ -1200,7 +1200,7 @@ CBezier *FX_AddBezier( const vec3_t start, const vec3_t end,
 		}
 		else if ( flags & FX_ALPHA_PARM_MASK )
 		{
-			fx->SetAlphaParm( alphaParm * 0.01f * killTime + theFxHelper.mTime );
+			fx->SetAlphaParm( alphaParm * 0.01 * killTime + theFxHelper.mTime );
 		}
 
 		// Size----------------
@@ -1213,7 +1213,7 @@ CBezier *FX_AddBezier( const vec3_t start, const vec3_t end,
 		}
 		else if ( flags & FX_SIZE_PARM_MASK )
 		{
-			fx->SetSizeParm( sizeParm * 0.01f * killTime + theFxHelper.mTime );
+			fx->SetSizeParm( sizeParm * 0.01 * killTime + theFxHelper.mTime );
 		}
 
 		fx->SetShader( shader );
@@ -1255,7 +1255,7 @@ CFlash *FX_AddFlash( CCloud *effectCloud, vec3_t origin, vec3_t sRGB, vec3_t eRG
 		else if ( flags & FX_RGB_PARM_MASK )
 		{
 			// rgbParm should be a value from 0-100..
-			fx->SetRGBParm( rgbParm * 0.01f * killTime + theFxHelper.mTime );
+			fx->SetRGBParm( rgbParm * 0.01 * killTime + theFxHelper.mTime );
 		}
 
 /*		// Alpha----------------

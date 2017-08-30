@@ -179,7 +179,7 @@ RE_AddRefEntityToScene
 
 =====================
 */
-void RE_AddRefEntityToScene( const refEntity_t *ent ) {
+void RE_AddRefEntityToScene( const refEntity_t *ent, qboolean intShaderTime ) {
 	if ( !tr.registered ) {
 		return;
 	}
@@ -192,6 +192,7 @@ void RE_AddRefEntityToScene( const refEntity_t *ent ) {
 
 	backEndData->entities[r_numentities].e = *ent;
 	backEndData->entities[r_numentities].lightingCalculated = qfalse;
+	backEndData->entities[r_numentities].intShaderTime = intShaderTime;
 
 #ifdef WIN32
 	if (ent->ghoul2)
@@ -264,7 +265,7 @@ void RE_AddMiniRefEntityToScene( const miniRefEntity_t *ent )
 
 		memcpy(&tempEnt, ent, sizeof(*ent));
 		memset(((char *)&tempEnt)+sizeof(*ent), 0, sizeof(tempEnt) - sizeof(*ent));
-		RE_AddRefEntityToScene(&tempEnt);
+		RE_AddRefEntityToScene(&tempEnt, qtrue);
 		return;
 	}
 
@@ -440,7 +441,7 @@ void RE_RenderScene( const refdef_t *fd ) {
 
 	// derived info
 
-	tr.refdef.floatTime = tr.refdef.time * 0.001f;
+	tr.refdef.floatTime = tr.refdef.time * 0.001;
 
 	tr.refdef.numDrawSurfs = r_firstSceneDrawSurf;
 	tr.refdef.drawSurfs = backEndData->drawSurfs;

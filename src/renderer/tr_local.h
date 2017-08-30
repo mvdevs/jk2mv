@@ -81,6 +81,7 @@ typedef struct {
 	vec3_t		ambientLight;	// color normalized to 0-255
 	int			ambientLightInt;	// 32 bit rgba packed
 	vec3_t		directedLight;
+	qboolean	intShaderTime;
 } trRefEntity_t;
 
 
@@ -480,8 +481,8 @@ Ghoul2 Insert End
 
 	void		(*optimalStageIteratorFunc)( void );
 
-	float clampTime;                                  // time this shader is clamped to
-	float timeOffset;                                 // current time offset for this shader
+	double		clampTime;                                  // time this shader is clamped to
+	double		timeOffset;                                 // current time offset for this shader
 
 	int numStates;                                    // if non-zero this is a state shader
 	struct shader_s *currentShader;                   // current state if this is a state shader
@@ -544,7 +545,7 @@ typedef struct {
 	byte		areamask[MAX_MAP_AREA_BYTES];
 	qboolean	areamaskModified;	// qtrue if areamask changed since last scene
 
-	float		floatTime;			// tr.refdef.time / 1000.0
+	double		floatTime;			// tr.refdef.time / 1000.0
 
 	// text messages for deform text shaders
 	char		text[MAX_RENDER_STRINGS][MAX_RENDER_STRING_LENGTH];
@@ -1294,7 +1295,7 @@ extern	cvar_t *r_textureLODBias;
 extern	cvar_t *r_saberGlow;
 //====================================================================
 
-float R_NoiseGet4f( float x, float y, float z, float t );
+float R_NoiseGet4f( float x, float y, float z, double t );
 void  R_NoiseInit( void );
 
 void R_SwapBuffers( int );
@@ -1505,7 +1506,7 @@ struct shaderCommands_s
 	color4ub_t	constantColor255[SHADER_MAX_VERTEXES];
 
 	shader_t	*shader;
-  float   shaderTime;
+	double		shaderTime;
 	int			fogNum;
 
 	int			dlightBits;	// or together of all vertexDlightBits
@@ -1658,7 +1659,7 @@ SCENE GENERATION
 
 void R_InitNextFrame(void);
 void RE_ClearScene( void );
-void RE_AddRefEntityToScene( const refEntity_t *ent );
+void RE_AddRefEntityToScene( const refEntity_t *ent, qboolean intShaderTime );
 void RE_AddMiniRefEntityToScene( const miniRefEntity_t *ent );
 void RE_AddPolyToScene( qhandle_t hShader , int numVerts, const polyVert_t *verts, int num );
 void RE_AddLightToScene( const vec3_t org, float intensity, float r, float g, float b );
@@ -1917,6 +1918,11 @@ static inline int Q_ftol( float f ) {
 #else // original mac client, jk2mv so far
 	return (int) f;
 #endif
+}
+
+// must match Q_ftol behaviour!
+static inline int64_t Q_dtol( double f ) {
+	return (int64_t) f;
 }
 
 #endif //TR_LOCAL_H
