@@ -36,6 +36,7 @@ cvar_t	*sv_needpass;
 cvar_t	*mv_serverversion;
 cvar_t  *sv_hibernateFps;
 cvar_t	*mv_apiConnectionless;
+cvar_t	*sv_pingFix;
 
 // jk2mv's toggleable fixes
 cvar_t	*mv_fixnamecrash;
@@ -932,6 +933,10 @@ void SV_CalcPings( void ) {
 			cl->ping = total/count;
 			if ( cl->ping > 999 ) {
 				cl->ping = 999;
+			}
+			if ( sv_pingFix->integer && cl->ping < 1 )
+			{ // Botfilters assume that players with 0 ping are bots. So put the minimum ping for humans at 1. At least with the new ping calculation enabled.
+				cl->ping = 1;
 			}
 		}
 

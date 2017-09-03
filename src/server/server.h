@@ -245,6 +245,7 @@ extern	cvar_t	*sv_needpass;
 extern	cvar_t	*mv_serverversion;
 extern	cvar_t	*sv_hibernateFps;
 extern	cvar_t	*mv_apiConnectionless;
+extern	cvar_t	*sv_pingFix;
 
 // toggleable fixes
 extern	cvar_t	*mv_fixnamecrash;
