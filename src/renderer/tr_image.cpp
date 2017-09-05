@@ -137,10 +137,12 @@ static float R_BytesPerTex (int format)
 		return 2;
 		break;
 	case 3:
+	case GL_RGB:
 		//"RGB  "
 		return glConfig.colorBits/8.0f;
 		break;
 	case 4:
+	case GL_RGBA:
 		//"RGBA "
 		return glConfig.colorBits/8.0f;
 		break;
@@ -233,40 +235,42 @@ void R_ImageList_f( void ) {
 			i, image->uploadWidth, image->uploadHeight, yesno[!image->upload.noMipMaps], image->TMU );
 		switch ( image->internalFormat ) {
 		case 1:
-			ri.Printf( PRINT_ALL, "I    " );
+			ri.Printf( PRINT_ALL, "I     " );
 			break;
 		case 2:
-			ri.Printf( PRINT_ALL, "IA   " );
+			ri.Printf( PRINT_ALL, "IA    " );
 			break;
 		case 3:
-			ri.Printf( PRINT_ALL, "RGB  " );
+		case GL_RGB:
+			ri.Printf( PRINT_ALL, "RGB   " );
 			break;
 		case 4:
-			ri.Printf( PRINT_ALL, "RGBA " );
+		case GL_RGBA:
+			ri.Printf( PRINT_ALL, "RGBA  " );
 			break;
 		case GL_RGBA8:
-			ri.Printf( PRINT_ALL, "RGBA8" );
+			ri.Printf( PRINT_ALL, "RGBA8 " );
 			break;
 		case GL_RGB8:
-			ri.Printf( PRINT_ALL, "RGB8" );
+			ri.Printf( PRINT_ALL, "RGB8  " );
 			break;
 		case GL_RGB4_S3TC:
-			ri.Printf( PRINT_ALL, "S3TC " );
+			ri.Printf( PRINT_ALL, "S3TC  " );
 			break;
 		case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
-			ri.Printf( PRINT_ALL, "DXT1 " );
+			ri.Printf( PRINT_ALL, "DXT1  " );
 			break;
 		case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
-			ri.Printf( PRINT_ALL, "DXT5 " );
+			ri.Printf( PRINT_ALL, "DXT5  " );
 			break;
 		case GL_RGBA4:
-			ri.Printf( PRINT_ALL, "RGBA4" );
+			ri.Printf( PRINT_ALL, "RGBA4 " );
 			break;
 		case GL_RGB5:
-			ri.Printf( PRINT_ALL, "RGB5 " );
+			ri.Printf( PRINT_ALL, "RGB5  " );
 			break;
 		default:
-			ri.Printf( PRINT_ALL, "???? " );
+			ri.Printf( PRINT_ALL, "%-6d ", image->internalFormat );
 		}
 
 		switch ( image->wrapClampMode ) {
@@ -280,7 +284,7 @@ void R_ImageList_f( void ) {
 			ri.Printf( PRINT_ALL, "clpE " );
 			break;
 		default:
-			ri.Printf( PRINT_ALL, "%4i ", image->wrapClampMode );
+			ri.Printf( PRINT_ALL, "%-4i ", image->wrapClampMode );
 			break;
 		}
 
