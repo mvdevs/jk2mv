@@ -222,23 +222,31 @@ RE_RotatePic
 */
 void RE_RotatePic ( float x, float y, float w, float h,
 					  float s1, float t1, float s2, float t2,float a, qhandle_t hShader ) {
-	rotatePicCommand_t	*cmd;
+	transformPicCommand_t	*cmd;
+	float s, c;
 
-	cmd = (rotatePicCommand_t *) R_GetCommandBuffer( sizeof( *cmd ) );
+	cmd = (transformPicCommand_t *) R_GetCommandBuffer( sizeof( *cmd ) );
 	if ( !cmd ) {
 		return;
 	}
-	cmd->commandId = RC_ROTATE_PIC;
+
+	a = DEG2RAD( a );
+	s = sinf( a );
+	c = cosf( a );
+
+	cmd->commandId = RC_TRANSFORM_PIC;
 	cmd->shader = R_GetShaderByHandle( hShader );
-	cmd->x = x;
-	cmd->y = y;
-	cmd->w = w;
-	cmd->h = h;
+	cmd->m[0][0] = w * c;
+	cmd->m[0][1] = w * -s;
+	cmd->m[1][0] = h * s;
+	cmd->m[1][1] = h * c;
+	// rotate around top-right corner
+	cmd->x = x - cmd->m[0][0] + w;
+	cmd->y = y - cmd->m[1][0];
 	cmd->s1 = s1;
 	cmd->t1 = t1;
 	cmd->s2 = s2;
 	cmd->t2 = t2;
-	cmd->a = a;
 }
 
 /*
@@ -248,23 +256,30 @@ RE_RotatePic2
 */
 void RE_RotatePic2 ( float x, float y, float w, float h,
 					  float s1, float t1, float s2, float t2,float a, qhandle_t hShader ) {
-	rotatePicCommand_t	*cmd;
+	transformPicCommand_t	*cmd;
+	float s, c;
 
-	cmd = (rotatePicCommand_t *) R_GetCommandBuffer( sizeof( *cmd ) );
+	cmd = (transformPicCommand_t *) R_GetCommandBuffer( sizeof( *cmd ) );
 	if ( !cmd ) {
 		return;
 	}
-	cmd->commandId = RC_ROTATE_PIC2;
+
+	a = DEG2RAD( a );
+	s = sinf( a );
+	c = cosf( a );
+
+	cmd->commandId = RC_TRANSFORM_PIC;
 	cmd->shader = R_GetShaderByHandle( hShader );
-	cmd->x = x;
-	cmd->y = y;
-	cmd->w = w;
-	cmd->h = h;
+	cmd->m[0][0] = w * c;
+	cmd->m[0][1] = w * -s;
+	cmd->m[1][0] = h * s;
+	cmd->m[1][1] = h * c;
+	cmd->x = x - 0.5f * (cmd->m[0][0] + cmd->m[0][1]);
+	cmd->y = y - 0.5f * (cmd->m[1][0] + cmd->m[1][1]);
 	cmd->s1 = s1;
 	cmd->t1 = t1;
 	cmd->s2 = s2;
 	cmd->t2 = t2;
-	cmd->a = a;
 }
 
 /*

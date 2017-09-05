@@ -1805,16 +1805,6 @@ typedef struct {
 
 typedef struct {
 	int		commandId;
-	shader_t	*shader;
-	float	x, y;
-	float	w, h;
-	float	s1, t1;
-	float	s2, t2;
-	float	a;
-} rotatePicCommand_t;
-
-typedef struct {
-	int		commandId;
 	trRefdef_t	refdef;
 	viewParms_t	viewParms;
 	drawSurf_t *drawSurfs;
@@ -1843,8 +1833,6 @@ typedef enum {
 	RC_END_OF_LIST,
 	RC_SET_COLOR,
 	RC_STRETCH_PIC,
-	RC_ROTATE_PIC,
-	RC_ROTATE_PIC2,
 	RC_TRANSFORM_PIC,
 	RC_DRAW_SURFS,
 	RC_DRAW_BUFFER,
