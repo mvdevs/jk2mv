@@ -941,6 +941,80 @@ const void *RB_StretchPic ( const void *data ) {
 	return (const void *)(cmd + 1);
 }
 
+/*
+=============
+RB_TransformPic
+=============
+*/
+const void *RB_TransformPic ( const void *data ) {
+	const transformPicCommand_t	*cmd;
+	shader_t *shader;
+	int		numVerts, numIndexes;
+
+	cmd = (const transformPicCommand_t *)data;
+
+	if ( !backEnd.projection2D ) {
+		RB_SetGL2D();
+	}
+
+	shader = cmd->shader;
+	if ( shader != tess.shader ) {
+		if ( tess.numIndexes ) {
+			RB_EndSurface();
+		}
+		backEnd.currentEntity = &backEnd.entity2D;
+		RB_BeginSurface( shader, 0 );
+	}
+
+	RB_CHECKOVERFLOW( 4, 6 );
+	numVerts = tess.numVertexes;
+	numIndexes = tess.numIndexes;
+
+	tess.numVertexes += 4;
+	tess.numIndexes += 6;
+
+	tess.indexes[ numIndexes ] = numVerts + 3;
+	tess.indexes[ numIndexes + 1 ] = numVerts + 0;
+	tess.indexes[ numIndexes + 2 ] = numVerts + 2;
+	tess.indexes[ numIndexes + 3 ] = numVerts + 2;
+	tess.indexes[ numIndexes + 4 ] = numVerts + 0;
+	tess.indexes[ numIndexes + 5 ] = numVerts + 1;
+
+	tess.vertexColorsui[ numVerts ] =
+		tess.vertexColorsui[ numVerts + 1 ] =
+		tess.vertexColorsui[ numVerts + 2 ] =
+		tess.vertexColorsui[ numVerts + 3 ] = backEnd.color2Dui;
+
+	tess.xyz[ numVerts ][0] = cmd->x;
+	tess.xyz[ numVerts ][1] = cmd->y;
+	tess.xyz[ numVerts ][2] = 0;
+
+	tess.texCoords[0][ numVerts ][0] = cmd->s1;
+	tess.texCoords[0][ numVerts ][1] = cmd->t1;
+
+	tess.xyz[ numVerts + 1 ][0] = cmd->x + cmd->m[0][0];
+	tess.xyz[ numVerts + 1 ][1] = cmd->y + cmd->m[1][0];
+	tess.xyz[ numVerts + 1 ][2] = 0;
+
+	tess.texCoords[0][ numVerts + 1 ][0] = cmd->s2;
+	tess.texCoords[0][ numVerts + 1 ][1] = cmd->t1;
+
+	tess.xyz[ numVerts + 2 ][0] = cmd->x + cmd->m[0][0] + cmd->m[0][1];
+	tess.xyz[ numVerts + 2 ][1] = cmd->y + cmd->m[1][0] + cmd->m[1][1];
+	tess.xyz[ numVerts + 2 ][2] = 0;
+
+	tess.texCoords[0][ numVerts + 2 ][0] = cmd->s2;
+	tess.texCoords[0][ numVerts + 2 ][1] = cmd->t2;
+
+	tess.xyz[ numVerts + 3 ][0] = cmd->x + cmd->m[0][1];
+	tess.xyz[ numVerts + 3 ][1] = cmd->y + cmd->m[1][1];
+	tess.xyz[ numVerts + 3 ][2] = 0;
+
+	tess.texCoords[0][ numVerts + 3 ][0] = cmd->s1;
+	tess.texCoords[0][ numVerts + 3 ][1] = cmd->t2;
+
+	return (const void *)(cmd + 1);
+}
 
 /*
 =============
@@ -1426,6 +1500,9 @@ void RB_ExecuteRenderCommands( const void *data ) {
 		case RC_ROTATE_PIC2:
 			data = RB_RotatePic2( data );
 			break;
+		case RC_TRANSFORM_PIC:
+			data = RB_TransformPic( data );
+			break;
 		case RC_DRAW_SURFS:
 			data = RB_DrawSurfs( data );
 			break;
@@ -1467,6 +1544,9 @@ void RB_ExecuteRenderCommands( const void *data ) {
 			break;
 		case RC_ROTATE_PIC2:
 			data = (rotatePicCommand_t *)data + 1;
+			break;
+		case RC_TRANSFORM_PIC:
+			data = (transformPicCommand_t *)data + 1;
 			break;
 		case RC_DRAW_SURFS:
 			data =(drawSurfsCommand_t *)data + 1;

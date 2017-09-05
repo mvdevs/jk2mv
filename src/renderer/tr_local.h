@@ -1798,6 +1798,15 @@ typedef struct {
 	int		commandId;
 	shader_t	*shader;
 	float	x, y;
+	float	m[2][2];
+	float	s1, t1;
+	float	s2, t2;
+} transformPicCommand_t;
+
+typedef struct {
+	int		commandId;
+	shader_t	*shader;
+	float	x, y;
 	float	w, h;
 	float	s1, t1;
 	float	s2, t2;
@@ -1836,6 +1845,7 @@ typedef enum {
 	RC_STRETCH_PIC,
 	RC_ROTATE_PIC,
 	RC_ROTATE_PIC2,
+	RC_TRANSFORM_PIC,
 	RC_DRAW_SURFS,
 	RC_DRAW_BUFFER,
 	RC_SWAP_BUFFERS,
