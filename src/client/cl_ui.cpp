@@ -1056,7 +1056,7 @@ intptr_t CL_UISystemCalls(intptr_t *args) {
 		return FloatAsInt( atan2f( VMF(1), VMF(2) ) );
 
 	case UI_SQRT:
-		return FloatAsInt( sqrtf( VMF(1) ) );
+		return FloatAsInt( VMF(1) < 0 ? 0 : sqrtf( VMF(1) ) );
 
 	case UI_FLOOR:
 		return FloatAsInt( floorf( VMF(1) ) );

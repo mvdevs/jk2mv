@@ -948,7 +948,7 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 		return FloatAsInt( atan2f( VMF(1), VMF(2) ) );
 
 	case TRAP_SQRT:
-		return FloatAsInt( sqrtf( VMF(1) ) );
+		return FloatAsInt( VMF(1) < 0 ? 0 : sqrtf( VMF(1) ) );
 
 	case TRAP_MATRIXMULTIPLY:
 		MatrixMultiply( VMAP(1, const vec3_t, 3), VMAP(2, const vec3_t, 3), VMAP(3, vec3_t, 3) );

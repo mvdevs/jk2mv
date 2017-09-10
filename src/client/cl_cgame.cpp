@@ -900,7 +900,7 @@ intptr_t CL_CgameSystemCalls(intptr_t *args) {
 	case CGAME_ATAN2:
 		return FloatAsInt( atan2f( VMF(1), VMF(2) ) );
 	case CGAME_SQRT:
-		return FloatAsInt( sqrtf( VMF(1) ) );
+		return FloatAsInt( VMF(1) < 0 ? 0 : sqrtf( VMF(1) ) );
 	case CGAME_FLOOR:
 		return FloatAsInt( floorf( VMF(1) ) );
 	case CGAME_CEIL:
