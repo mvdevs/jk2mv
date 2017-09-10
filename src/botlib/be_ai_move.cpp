@@ -1678,7 +1678,7 @@ int BotAirControl(vec3_t origin, vec3_t velocity, vec3_t goal, vec3_t dir, float
 	int i;
 
 	VectorCopy(origin, org);
-	VectorScale(velocity, 0.1, vel);
+	VectorScale(velocity, 0.1f, vel);
 	for (i = 0; i < 50; i++)
 	{
 		vel[2] -= sv_gravity->value * 0.01;

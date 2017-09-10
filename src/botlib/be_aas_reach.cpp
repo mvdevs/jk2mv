@@ -40,7 +40,7 @@ extern botlib_import_t botimport;
 //number of units reachability points are placed inside the areas
 #define INSIDEUNITS							2
 #define INSIDEUNITS_WALKEND					5
-#define INSIDEUNITS_WALKSTART				0.1
+#define INSIDEUNITS_WALKSTART				0.1f
 #define INSIDEUNITS_WATERJUMP				15
 //area flag used for weapon jumping
 #define AREA_WEAPONJUMP						8192	//valid area to weapon jump to
