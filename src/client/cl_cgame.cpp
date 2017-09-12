@@ -1289,7 +1289,9 @@ Ghoul2 Insert End
 		return (int)MV_GetCurrentGameversion();
 
 	case MVAPI_R_ADDREFENTITYTOSCENE2:
-		re.AddRefEntityToScene(VMAV(1, const refEntity_t), qtrue);
+		if (VM_MVAPILevel(cgvm) >= 3) {
+			re.AddRefEntityToScene(VMAV(1, const refEntity_t), qtrue);
+		}
 		return 0;
 
 	default:
