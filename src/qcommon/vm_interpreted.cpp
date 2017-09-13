@@ -150,6 +150,14 @@ char *VM_Indent( vm_t *vm ) {
 	return string + 2 * ( 20 - vm->callLevel );
 }
 
+/*
+====================
+VM_StackTrace
+
+Call with (programCounter, programStack) inside of VM_CallInterpreted
+and with (*(int *)&image[programStack], stomped) inside of a systemCall.
+====================
+*/
 void VM_StackTrace( vm_t *vm, int programCounter, int programStack ) {
 	int		count;
 
