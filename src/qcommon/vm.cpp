@@ -1087,7 +1087,7 @@ void VM_VmProfile_f( void ) {
 	}
 
 	if ( resetCounts ) {
-		profileTime = Com_Milliseconds();
+		profileTime = Sys_Milliseconds();
 
 		for ( i = 0; i < MAX_VM; i++ ) {
 			for ( sym = vmTable[i].symbols ; sym ; sym = sym->next ) {
@@ -1158,7 +1158,7 @@ void VM_VmProfile_f( void ) {
 		FS_FCloseFile( callgrind );
 	}
 
-	time = Com_Milliseconds() - profileTime;
+	time = Sys_Milliseconds() - profileTime;
 
 	Com_Printf("     %12li %9i total\n", total, totalCalls );
 	Com_Printf("     %12li %9i total per second\n", 1000 * total / time, 1000 * totalCalls / time );
