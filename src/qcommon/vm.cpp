@@ -93,8 +93,8 @@ Assumes a program counter value
 ===============
 */
 const char *VM_ValueToSymbol( vm_t *vm, int value ) {
-	vmSymbol_t	*sym;
 	static char		text[MAX_TOKEN_CHARS];
+	vmSymbol_t		*sym;
 
 	if ( !vm->symbols ) {
 		return "NO SYMBOLS";
@@ -124,7 +124,7 @@ For profiling, find the symbol behind this value
 ===============
 */
 vmSymbol_t *VM_ValueToFunctionSymbol( vm_t *vm, int value ) {
-	if ( value < -MAX_APINUM || vm->codeLength <= value ) {
+	if ( (unsigned)vm->codeLength <= (unsigned)value ) {
 		return &nullSymbol;
 	}
 
@@ -136,11 +136,13 @@ vmSymbol_t *VM_ValueToFunctionSymbol( vm_t *vm, int value ) {
 		vmSymbol_t *sym;
 
 		for ( sym = vm->symbols; sym->next; sym = sym->next ) {
-			if ( sym->symValue <= value && value < sym->next->symValue ) {
+			if ( sym->next->symValue > value && value >= sym->symValue ) {
 				return sym;
 			}
 		}
-		return sym;
+		if ( sym->symValue <= value ) {
+			return sym;
+		}
 	}
 
 	return &nullSymbol;
@@ -282,24 +284,24 @@ void VM_LoadSymbols( vm_t *vm ) {
 			break;
 		}
 		value = ParseHex( token );
+		if ( value < 0 || vm->instructionCount <= value ) {
+			COM_Parse( &text_p );
+			continue;		// don't load syscalls
+		}
 
 		token = COM_Parse( &text_p );
 		if ( !token[0] ) {
 			Com_Printf( "WARNING: incomplete line at end of file\n" );
 			break;
 		}
+
+
 		chars = (int)strlen( token );
 		sym = (vmSymbol_t *)Hunk_Alloc( sizeof( *sym ) + chars, h_high );
 		*prev = sym;
 		prev = &sym->next;
 		sym->next = NULL;
-
-		// convert value from an instruction number to a code offset
-		if ( 0 <= value && value < vm->instructionCount ) {
-			value = (int)vm->instructionPointers[value];
-		}
-
-		sym->symValue = value;
+		sym->symValue = vm->instructionPointers[value] - vm->instructionPointers[0] + vm->entryOfs;
 		Q_strncpyz( sym->symName, token, chars + 1 );
 
 		count++;
@@ -316,13 +318,10 @@ void VM_LoadSymbols( vm_t *vm ) {
 	{
 		vmSymbol_t	*sym;
 
-		vm->symbolTable = (vmSymbol_t **)Hunk_Alloc( (MAX_APINUM + vm->codeLength) * sizeof(*vm->symbolTable), h_high ) + MAX_APINUM;
+		vm->symbolTable = (vmSymbol_t **)Hunk_Alloc( vm->codeLength * sizeof(*vm->symbolTable), h_high );
 
 		for ( sym = vm->symbols; sym; sym = sym->next ) {
-			// _stackStart and _stackEnd are marked as functions for some reason
-			if (-MAX_APINUM <= sym->symValue && sym->symValue < vm->codeLength) {
-				vm->symbolTable[sym->symValue] = sym;
-			}
+			vm->symbolTable[sym->symValue] = sym;
 		}
 
 		sym = NULL;
