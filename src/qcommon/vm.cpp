@@ -103,15 +103,17 @@ const char *VM_ValueToSymbol( vm_t *vm, int value ) {
 	sym = VM_ValueToFunctionSymbol( vm, value );
 
 	if ( sym == &nullSymbol ) {
-		Com_sprintf( text, sizeof( text ), "%x", value );
+		Com_sprintf( text, sizeof( text ), "%s [%#x]", vm->name, value );
 		return text;
 	}
 
 	if ( value == sym->symValue ) {
-		return sym->symName;
+		Com_sprintf( text, sizeof( text ), "%s(%s) [%#x]", vm->name, sym->symName, value );
+		return text;
 	}
 
-	Com_sprintf( text, sizeof( text ), "%s+%i", sym->symName, value - sym->symValue );
+	Com_sprintf( text, sizeof( text ), "%s(%s+%#x) [%#x]",
+		vm->name, sym->symName, value - sym->symValue, value );
 
 	return text;
 }
