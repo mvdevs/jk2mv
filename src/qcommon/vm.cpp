@@ -272,18 +272,48 @@ void VM_LoadSymbols( vm_t *vm ) {
 	}
 
 	//
+	// add symbols for vm_x86 predefined procedures
+	//
+
+	vmSymbol_t	**prev, *sym;
+
+	prev = &vm->symbols;
+
+	if ( vm->callProcOfs ) {
+		const char	*symName;
+
+		symName = "CallDoSyscall";
+		sym = *prev = (vmSymbol_t *)Hunk_Alloc( sizeof( *sym ) + strlen( symName ) + 1, h_high );
+		Q_strncpyz( sym->symName, symName, strlen( symName ) + 1 );
+		sym->symValue = 0;
+
+		symName = "CallProcedure";
+		sym = sym->next = (vmSymbol_t *)Hunk_Alloc( sizeof( *sym ) + strlen( symName ) + 1, h_high );
+		Q_strncpyz( sym->symName, symName, strlen( symName ) + 1 );
+		sym->symValue = vm->callProcOfs;
+
+		// "CallProcedureSyscall" used by ioq3 optimizer, tail of "CallProcedure"
+		symName = "CallProcedure";
+		sym = sym->next = (vmSymbol_t *)Hunk_Alloc( sizeof( *sym ) + strlen( symName ) + 1, h_high );
+		Q_strncpyz( sym->symName, symName, strlen( symName ) + 1 );
+		sym->symValue = vm->callProcOfsSyscall;
+
+		count += 3;
+		prev = &sym->next;
+		sym->next = NULL;
+	}
+
+	//
 	// parse symbols
 	//
 
 	const char *text_p;
 	const char *token;
-	vmSymbol_t	**prev, *sym;
 	int			chars;
 	int			segment;
 	int			value;
 
 	text_p = mapfile.c;
-	prev = &vm->symbols;
 
 	while ( 1 ) {
 		token = COM_Parse( &text_p );
