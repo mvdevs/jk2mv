@@ -440,11 +440,34 @@ char *Sys_DefaultAssetsPath() {
 
 qboolean stdin_active = qtrue;
 qboolean stdinIsATTY = qfalse;
+int crashlogfd;
 extern void		Sys_SigHandler( int signal );
 static void		Sys_SigHandlerFatal(int sig, siginfo_t *info, void *context);
+static Q_NORETURN void Sys_CrashLogger(int fd);
 
 void Sys_PlatformInit( void )
 {
+	int		crashfd[2];
+	pid_t	crashpid;
+
+	if (pipe(crashfd) == -1) {
+		perror("pipe()");
+		goto skip_crash;
+	}
+
+	if ((crashpid = fork()) == -1) {
+		perror("fork()");
+		goto skip_crash;
+	}
+
+	if (crashpid == 0) {
+		close(crashfd[1]);
+		Sys_CrashLogger(crashfd[0]);
+	} else {
+		close(crashfd[0]);
+		crashlogfd = crashfd[1];
+	}
+skip_crash:
 	struct sigaction act = { 0 };
 
 	act.sa_handler = Sys_SigHandler;
@@ -693,11 +716,29 @@ int Sys_FLock(int fd, flockCmd_t cmd, qboolean nb) {
 	return fcntl(fd, nb ? F_SETLK : F_SETLKW, &l);
 }
 
+/*
+==============================================================
+
+Asynchronous Crash Logging
+
+==============================================================
+*/
+
+typedef struct crashMsg_s {
+	int signum;
+} crashMsg_t;
+
 static void Sys_SigHandlerFatal(int sig, siginfo_t *info, void *context) {
 	static volatile sig_atomic_t signalcaught = 0;
 
 	if (!signalcaught) {
 		signalcaught = 1;
+
+		crashMsg_t msg;
+
+		msg.signum = sig;
+		write(crashlogfd, &msg, sizeof(msg));
+		close(crashlogfd);
 	}
 
 	// reraise the signal with default handler
@@ -708,3 +749,31 @@ static void Sys_SigHandlerFatal(int sig, siginfo_t *info, void *context) {
 	raise(sig);
 }
 
+static Q_NORETURN void Sys_CrashLogger(int fd) {
+	crashMsg_t	msg;
+	unsigned	readBytes = 0;
+
+	while (readBytes < sizeof(msg)) {
+		int ret = read(fd, &msg, sizeof(msg));
+
+		if (ret == 0) {
+			if (readBytes > 0) {
+				fprintf(stderr, "Sys_CrashLogger: Unexpected EOF\n");
+				_exit(EXIT_FAILURE);
+			} else {
+				// clean exit, parent closed pipe
+				_exit(EXIT_SUCCESS);
+			}
+		}
+		if (ret == -1) {
+			perror("read()");
+			_exit(EXIT_FAILURE);
+		}
+
+		readBytes += ret;
+	}
+
+	fprintf(stderr, "Sys_CrashLogger: Caught signal %d\n", msg.signum);
+
+	_exit(EXIT_SUCCESS);
+}
