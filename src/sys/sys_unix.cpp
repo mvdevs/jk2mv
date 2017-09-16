@@ -443,9 +443,9 @@ qboolean stdinIsATTY = qfalse;
 int crashlogfd;
 extern void		Sys_SigHandler( int signal );
 static void		Sys_SigHandlerFatal(int sig, siginfo_t *info, void *context);
-static Q_NORETURN void Sys_CrashLogger(int fd);
+static Q_NORETURN void Sys_CrashLogger(int fd, int argc, char *argv[]);
 
-void Sys_PlatformInit( void )
+void Sys_PlatformInit( int argc, char *argv[] )
 {
 	int		crashfd[2];
 	pid_t	crashpid;
@@ -462,7 +462,7 @@ void Sys_PlatformInit( void )
 
 	if (crashpid == 0) {
 		close(crashfd[1]);
-		Sys_CrashLogger(crashfd[0]);
+		Sys_CrashLogger(crashfd[0], argc, argv);
 	} else {
 		close(crashfd[0]);
 		crashlogfd = crashfd[1];
@@ -749,12 +749,12 @@ static void Sys_SigHandlerFatal(int sig, siginfo_t *info, void *context) {
 	raise(sig);
 }
 
-static Q_NORETURN void Sys_CrashLogger(int fd) {
+static Q_NORETURN void Sys_CrashLogger(int fd, int argc, char *argv[]) {
 	crashMsg_t	msg;
 	unsigned	readBytes = 0;
 
 	while (readBytes < sizeof(msg)) {
-		int ret = read(fd, &msg, sizeof(msg));
+		int ret = read(fd, &msg, sizeof(msg) - readBytes);
 
 		if (ret == 0) {
 			if (readBytes > 0) {
@@ -773,7 +773,38 @@ static Q_NORETURN void Sys_CrashLogger(int fd) {
 		readBytes += ret;
 	}
 
-	fprintf(stderr, "Sys_CrashLogger: Caught signal %d\n", msg.signum);
+	// read full crash message, write crashlog
+
+	FILE		*f;
+	time_t		rawtime;
+	char		timeStr[32];
+
+	time(&rawtime);
+	strftime(timeStr, sizeof(timeStr), "%Y-%m-%d_%H-%M-%S", localtime(&rawtime)); // or gmtime
+
+	f = fopen(va("crashlog-%s.txt", timeStr), "w");
+	if (f == NULL) {
+		f = stderr;
+	}
+
+	fprintf(f, "---JK2MV Crashlog-----------------------\n");
+	fprintf(f, "\n");
+	fprintf(f, "Date:               %s", ctime(&rawtime));
+	fprintf(f, "Build Version:      " JK2MV_VERSION "\n");
+#if defined(PORTABLE)
+	fprintf(f, "Build Type:         Portable\n");
+#endif
+	fprintf(f, "Build Date:         " __DATE__ " " __TIME__ "\n");
+	fprintf(f, "Build Arch:         " CPUSTRING "\n");
+	fprintf(f, "Process:            %s\n", argv[0]);
+	fprintf(f, "Process ID:         %d\n", getppid());
+	fprintf(f, "Arguments:          ");
+	for (int i = 1; i < argc; i++) {
+		fprintf(f, "%s ", argv[i]);
+	}
+	fprintf(f, "\n");
+
+	fclose(f);
 
 	_exit(EXIT_SUCCESS);
 }
