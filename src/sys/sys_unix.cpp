@@ -441,14 +441,37 @@ char *Sys_DefaultAssetsPath() {
 qboolean stdin_active = qtrue;
 qboolean stdinIsATTY = qfalse;
 extern void		Sys_SigHandler( int signal );
+static void		Sys_SigHandlerFatal(int sig, siginfo_t *info, void *context);
 
 void Sys_PlatformInit( void )
 {
-	const char* term = getenv( "TERM" );
+	struct sigaction act = { 0 };
 
-	signal( SIGHUP, Sys_SigHandler );
-	signal( SIGINT, Sys_SigHandler );
-	signal( SIGTERM, Sys_SigHandler );
+	act.sa_handler = Sys_SigHandler;
+
+	sigemptyset(&act.sa_mask);
+	sigaddset(&act.sa_mask, SIGHUP);
+	sigaddset(&act.sa_mask, SIGINT);
+	sigaddset(&act.sa_mask, SIGTERM);
+
+	sigaction(SIGHUP, &act, NULL);
+	sigaction(SIGINT, &act, NULL);
+	sigaction(SIGTERM, &act, NULL);
+
+	act.sa_handler = NULL;
+	act.sa_sigaction = Sys_SigHandlerFatal;
+	act.sa_flags = SA_SIGINFO | SA_NODEFER;
+
+	sigaction(SIGQUIT, &act, NULL);
+	sigaction(SIGILL, &act, NULL);
+	sigaction(SIGABRT, &act, NULL);
+	sigaction(SIGFPE, &act, NULL);
+	sigaction(SIGSEGV, &act, NULL);
+	sigaction(SIGBUS, &act, NULL);
+	sigaction(SIGSYS, &act, NULL);
+	sigaction(SIGTRAP, &act, NULL);
+
+	const char* term = getenv( "TERM" );
 
     if (isatty( STDIN_FILENO ) && !( term && ( !strcmp( term, "raw" ) || !strcmp( term, "dumb" ) ) ))
 		stdinIsATTY = qtrue;
@@ -669,3 +692,19 @@ int Sys_FLock(int fd, flockCmd_t cmd, qboolean nb) {
 
 	return fcntl(fd, nb ? F_SETLK : F_SETLKW, &l);
 }
+
+static void Sys_SigHandlerFatal(int sig, siginfo_t *info, void *context) {
+	static volatile sig_atomic_t signalcaught = 0;
+
+	if (!signalcaught) {
+		signalcaught = 1;
+	}
+
+	// reraise the signal with default handler
+	struct sigaction act = { 0 };
+	act.sa_handler = SIG_DFL;
+	sigemptyset(&act.sa_mask);
+	sigaction(sig, &act, NULL);
+	raise(sig);
+}
+
