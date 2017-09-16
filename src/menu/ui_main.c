@@ -10,7 +10,7 @@ USER INTERFACE MAIN
 
 #include "ui_local.h"
 #include "../qcommon/qfiles.h"
-#include "mv_setup.h"
+#include <mv_setup.h>
 #include "ui_force.h"
 #include "../api/mvapi.h"
 

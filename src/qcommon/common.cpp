@@ -12,7 +12,7 @@
 #include "../client/client.h"
 #include "../server/server.h"
 #include "strip.h"
-#include "mv_setup.h"
+#include <mv_setup.h>
 #ifdef WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>

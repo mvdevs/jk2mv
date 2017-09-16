@@ -22,7 +22,7 @@
 #include "../qcommon/q_shared.h"
 #include "../qcommon/qcommon.h"
 
-#include "mv_setup.h"
+#include <mv_setup.h>
 
 //=============================================================================
 

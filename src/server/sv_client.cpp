@@ -3,7 +3,7 @@
 #include "server.h"
 #include "../qcommon/strip.h"
 
-#include "mv_setup.h"
+#include <mv_setup.h>
 
 static void SV_CloseDownload( client_t *cl );
 

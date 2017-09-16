@@ -16,7 +16,7 @@
 #include "../client/client.h"
 #include "qcommon.h"
 #include <minizip/unzip.h>
-#include "mv_setup.h"
+#include <mv_setup.h>
 
 /*
 =============================================================================
