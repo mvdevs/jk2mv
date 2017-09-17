@@ -725,10 +725,6 @@ Asynchronous Crash Logging
 ==============================================================
 */
 
-typedef struct crashMsg_s {
-	int signum;
-} crashMsg_t;
-
 static qboolean Sys_CrashWrite(int fd, const void *buf, size_t len);
 static void Sys_SigHandlerFatal(int sig, siginfo_t *info, void *context) {
 	static volatile sig_atomic_t signalcaught = 0;
@@ -736,10 +732,7 @@ static void Sys_SigHandlerFatal(int sig, siginfo_t *info, void *context) {
 	if (!signalcaught) {
 		signalcaught = 1;
 
-		crashMsg_t msg;
-
-		msg.signum = sig;
-		Sys_CrashWrite(crashlogfd, &msg, sizeof(msg));
+		Sys_CrashWrite(crashlogfd, info, sizeof(*info));
 		Sys_CrashWrite(crashlogfd, &consoleLog, sizeof(consoleLog));
 		close(crashlogfd);
 	}
@@ -801,13 +794,11 @@ static qboolean Sys_CrashRead(int fd, void *buf, size_t len) {
 }
 
 static Q_NORETURN void Sys_CrashLogger(int fd, int argc, char *argv[]) {
-	crashMsg_t	msg;
+	siginfo_t	info;
 
-	if (!Sys_CrashRead(fd, &msg, sizeof(msg))) {
+	if (!Sys_CrashRead(fd, &info, sizeof(info))) {
 		_exit(EXIT_SUCCESS);
 	}
-
-	// read full crash message, write crashlog
 
 	FILE		*f;
 	time_t		rawtime;
@@ -837,6 +828,17 @@ static Q_NORETURN void Sys_CrashLogger(int fd, int argc, char *argv[]) {
 		fprintf(f, "%s ", argv[i]);
 	}
 	fprintf(f, "\n");
+
+	fprintf(f, "\n");
+	fprintf(f, "---Signal Details-----------------------\n");
+	fprintf(f, "\n");
+
+	fprintf(f, "Signal:             %d (%s)\n", info.si_signo, strsignal(info.si_signo));
+	fprintf(f, "Signal Code:        %d\n", info.si_code);
+	switch (info.si_signo) {
+	case SIGILL: case SIGFPE: case SIGSEGV: case SIGBUS: case SIGTRAP:
+		fprintf(f, "Fault Address:      %p\n", info.si_addr);
+	}
 
 	fprintf(f, "\n");
 	fprintf(f, "---Console Log--------------------------\n");
