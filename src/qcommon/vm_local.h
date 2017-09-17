@@ -137,6 +137,7 @@ typedef struct vmSymbol_s {
 	struct vmSymbol_s	*next;
 	struct vmSymbol_s	*caller;
 	int		symValue;
+	int		symInstr;
 	long	profileCount;
 	int		callCount;
 	char	symName[1];		// variable sized

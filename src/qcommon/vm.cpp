@@ -84,6 +84,24 @@ void VM_Init( void ) {
 	Com_Memset( vmTable, 0, sizeof( vmTable ) );
 }
 
+/*
+===============
+VM_ValueToInstr
+
+Calculates QVM instruction number for program counter value
+===============
+*/
+static int VM_ValueToInstr( vm_t *vm, int value ) {
+	intptr_t instrOffs = vm->instructionPointers[0] - vm->entryOfs;
+
+	for (int i = 0; i < vm->instructionCount; i++) {
+		if (vm->instructionPointers[i] - instrOffs > value) {
+			return i - 1;
+		}
+	}
+
+	return vm->instructionCount;
+}
 
 /*
 ===============
@@ -96,24 +114,23 @@ const char *VM_ValueToSymbol( vm_t *vm, int value ) {
 	static char		text[MAX_TOKEN_CHARS];
 	vmSymbol_t		*sym;
 
-	if ( !vm->symbols ) {
-		return "NO SYMBOLS";
-	}
-
 	sym = VM_ValueToFunctionSymbol( vm, value );
 
 	if ( sym == &nullSymbol ) {
-		Com_sprintf( text, sizeof( text ), "%s [%#x]", vm->name, value );
+		Com_sprintf( text, sizeof( text ), "%s(vmMain+%d) [%#x]",
+			vm->name, VM_ValueToInstr( vm, value ), value );
 		return text;
 	}
 
-	if ( value == sym->symValue ) {
-		Com_sprintf( text, sizeof( text ), "%s(%s) [%#x]", vm->name, sym->symName, value );
+	// predefined helper routines
+	if (value < vm->entryOfs) {
+		Com_sprintf( text, sizeof( text ), "%s(%s+%#x) [%#x]",
+			vm->name, sym->symName, value - sym->symValue, value );
 		return text;
 	}
 
-	Com_sprintf( text, sizeof( text ), "%s(%s+%#x) [%#x]",
-		vm->name, sym->symName, value - sym->symValue, value );
+	Com_sprintf( text, sizeof( text ), "%s(%s+%d) [%#x]", vm->name, sym->symName,
+		VM_ValueToInstr( vm, value ) - sym->symInstr, value );
 
 	return text;
 }
@@ -303,6 +320,7 @@ void VM_LoadSymbols( vm_t *vm ) {
 		*prev = sym;
 		prev = &sym->next;
 		sym->next = NULL;
+		sym->symInstr = value;
 		sym->symValue = vm->instructionPointers[value] - vm->instructionPointers[0] + vm->entryOfs;
 		Q_strncpyz( sym->symName, token, chars + 1 );
 
