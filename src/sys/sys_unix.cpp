@@ -749,28 +749,35 @@ static void Sys_SigHandlerFatal(int sig, siginfo_t *info, void *context) {
 	raise(sig);
 }
 
-static Q_NORETURN void Sys_CrashLogger(int fd, int argc, char *argv[]) {
-	crashMsg_t	msg;
-	unsigned	readBytes = 0;
+static qboolean Sys_CrashRead(int fd, void *buf, size_t len) {
+	unsigned	count = 0;
 
-	while (readBytes < sizeof(msg)) {
-		int ret = read(fd, &msg, sizeof(msg) - readBytes);
+	while (count < len) {
+		int ret = read(fd, buf, len - count);
 
 		if (ret == 0) {
-			if (readBytes > 0) {
-				fprintf(stderr, "Sys_CrashLogger: Unexpected EOF\n");
-				_exit(EXIT_FAILURE);
-			} else {
-				// clean exit, parent closed pipe
-				_exit(EXIT_SUCCESS);
-			}
+			return qfalse;
 		}
 		if (ret == -1) {
-			perror("read()");
-			_exit(EXIT_FAILURE);
+			if (errno == EINTR) {
+				continue;		// a signal was caught
+			} else {
+				perror("Sys_CrashRead()");
+				return qfalse;
+			}
 		}
 
-		readBytes += ret;
+		count += ret;
+	}
+
+	return qtrue;
+}
+
+static Q_NORETURN void Sys_CrashLogger(int fd, int argc, char *argv[]) {
+	crashMsg_t	msg;
+
+	if (!Sys_CrashRead(fd, &msg, sizeof(msg))) {
+		_exit(EXIT_SUCCESS);
 	}
 
 	// read full crash message, write crashlog
