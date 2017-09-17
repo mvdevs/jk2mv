@@ -150,6 +150,14 @@ char *VM_Indent( vm_t *vm ) {
 	return string + 2 * ( 20 - vm->callLevel );
 }
 
+/*
+====================
+VM_StackTrace
+
+Call with (programCounter, programStack) inside of VM_CallInterpreted
+and with (*(int *)&image[programStack], stomped) inside of a systemCall.
+====================
+*/
 void VM_StackTrace( vm_t *vm, int programCounter, int programStack ) {
 	int		count;
 
@@ -533,7 +541,7 @@ nextInstruction2:
 					Com_Printf( "%s<--- %s\n", DEBUGSTR, VM_ValueToSymbol( vm, programCounter ) );
 				}
 #endif
-			} else if ( (unsigned)programCounter >= (unsigned)vm->instructionCount ) {
+			} else if ( programCounter >= vm->instructionCount ) {
 				Com_Error( ERR_DROP, "VM program counter out of range in OP_CALL" );
 				return 0;
 			} else {

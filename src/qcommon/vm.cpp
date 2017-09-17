@@ -42,6 +42,7 @@ int		vm_debugLevel;
 
 #define MAX_APINUM	1000
 qboolean vm_profileInclusive;
+static vmSymbol_t nullSymbol;
 
 // used by Com_Error to get rid of running vm's before longjmp
 static int forced_unload;
@@ -83,6 +84,24 @@ void VM_Init( void ) {
 	Com_Memset( vmTable, 0, sizeof( vmTable ) );
 }
 
+/*
+===============
+VM_ValueToInstr
+
+Calculates QVM instruction number for program counter value
+===============
+*/
+static int VM_ValueToInstr( vm_t *vm, int value ) {
+	intptr_t instrOffs = vm->instructionPointers[0] - vm->entryOfs;
+
+	for (int i = 0; i < vm->instructionCount; i++) {
+		if (vm->instructionPointers[i] - instrOffs > value) {
+			return i - 1;
+		}
+	}
+
+	return vm->instructionCount;
+}
 
 /*
 ===============
@@ -92,20 +111,26 @@ Assumes a program counter value
 ===============
 */
 const char *VM_ValueToSymbol( vm_t *vm, int value ) {
-	vmSymbol_t	*sym;
 	static char		text[MAX_TOKEN_CHARS];
+	vmSymbol_t		*sym;
 
-	if ( !vm->symbolTable ) {
-		return "NO SYMBOLS";
+	sym = VM_ValueToFunctionSymbol( vm, value );
+
+	if ( sym == &nullSymbol ) {
+		Com_sprintf( text, sizeof( text ), "%s(vmMain+%d) [%#x]",
+			vm->name, VM_ValueToInstr( vm, value ), value );
+		return text;
 	}
 
-	sym = vm->symbolTable[value];
-
-	if ( value == sym->symValue ) {
-		return sym->symName;
+	// predefined helper routines
+	if (value < vm->entryOfs) {
+		Com_sprintf( text, sizeof( text ), "%s(%s+%#x) [%#x]",
+			vm->name, sym->symName, value - sym->symValue, value );
+		return text;
 	}
 
-	Com_sprintf( text, sizeof( text ), "%s+%i", sym->symName, value - sym->symValue );
+	Com_sprintf( text, sizeof( text ), "%s(%s+%d) [%#x]", vm->name, sym->symName,
+		VM_ValueToInstr( vm, value ) - sym->symInstr, value );
 
 	return text;
 }
@@ -118,13 +143,28 @@ For profiling, find the symbol behind this value
 ===============
 */
 vmSymbol_t *VM_ValueToFunctionSymbol( vm_t *vm, int value ) {
-	static vmSymbol_t	nullSym;
-
-	if ( !vm->symbolTable ) {
-		return &nullSym;
+	if ( (unsigned)vm->codeLength <= (unsigned)value ) {
+		return &nullSymbol;
 	}
 
-	return vm->symbolTable[value];
+	if ( vm->symbolTable ) {
+		return vm->symbolTable[value];
+	}
+
+	if ( vm->symbols ) {
+		vmSymbol_t *sym;
+
+		for ( sym = vm->symbols; sym->next; sym = sym->next ) {
+			if ( sym->next->symValue > value && value >= sym->symValue ) {
+				return sym;
+			}
+		}
+		if ( sym->symValue <= value ) {
+			return sym;
+		}
+	}
+
+	return &nullSymbol;
 }
 
 
@@ -204,6 +244,42 @@ int	ParseHex( const char *text ) {
 	return value;
 }
 
+static void VM_GeneratePerfMap(vm_t *vm) {
+#ifdef __linux__
+		// generate perf .map file for profiling compiled QVM
+		char		mapFile[MAX_OSPATH];
+		FILE		*f;
+		void		*address;
+		int			length;
+
+		if ( !vm->symbols ) {
+			return;
+		}
+
+		Com_sprintf( mapFile, sizeof(mapFile), "/tmp/perf-%d.map", Sys_PID() );
+
+		if ( (f = fopen( mapFile, "a" )) == NULL ) {
+			Com_Printf( S_COLOR_YELLOW "WARNING: couldn't open %s\n", mapFile );
+			return;
+		}
+
+		// perf .map format: "hex_address hex_length name\n"
+		for ( vmSymbol_t *sym = vm->symbols; sym; sym = sym->next ) {
+			address = vm->codeBase + sym->symValue;
+
+			if ( sym->next ) {
+				length = sym->next->symValue - sym->symValue;
+			} else {
+				length = vm->codeLength - sym->symValue;
+			}
+
+			fprintf( f, "%lx %x %s\n", (unsigned long)(vm->codeBase + sym->symValue), length, sym->symName );
+		}
+
+		fclose( f );
+#endif // __linux__
+}
+
 /*
 ===============
 VM_LoadSymbols
@@ -214,28 +290,14 @@ void VM_LoadSymbols( vm_t *vm ) {
 		char	*c;
 		void	*v;
 	} mapfile;
-	const char *text_p;
-	const char *token;
-	char	name[MAX_QPATH];
-	char	symbols[MAX_QPATH];
-	vmSymbol_t	**prev, *sym;
-	int		count;
-	int		value;
-	int		chars;
-	int		segment;
-	int		numInstructions;
-	int		i;
+	char		name[MAX_QPATH];
+	char		symbols[MAX_QPATH];
+	int			count = 0;
+	int			i;
 
-	if ( vm->compiled ) {
+	if ( vm->dllHandle ) {
 		return;
 	}
-
-#ifndef DEBUG_VM
-	// don't load symbols if not developer
-	if ( !com_developer->integer ) {
-		return;
-	}
-#endif
 
 	COM_StripExtension(vm->name, name, sizeof(name));
 	Com_sprintf( symbols, sizeof( symbols ), "vm/%s.map", name );
@@ -245,15 +307,49 @@ void VM_LoadSymbols( vm_t *vm ) {
 		return;
 	}
 
-	numInstructions = vm->instructionCount;
+	//
+	// add symbols for vm_x86 predefined procedures
+	//
 
-	// 1000 for negative system calls
-	vm->symbolTable = (vmSymbol_t **)Hunk_Alloc( (MAX_APINUM + vm->codeLength) * sizeof(*vm->symbolTable), h_high ) + MAX_APINUM;
+	vmSymbol_t	**prev, *sym;
 
-	// parse the symbols
-	text_p = mapfile.c;
 	prev = &vm->symbols;
-	count = 0;
+
+	if ( vm->callProcOfs ) {
+		const char	*symName;
+
+		symName = "CallDoSyscall";
+		sym = *prev = (vmSymbol_t *)Hunk_Alloc( sizeof( *sym ) + strlen( symName ) + 1, h_high );
+		Q_strncpyz( sym->symName, symName, strlen( symName ) + 1 );
+		sym->symValue = 0;
+
+		symName = "CallProcedure";
+		sym = sym->next = (vmSymbol_t *)Hunk_Alloc( sizeof( *sym ) + strlen( symName ) + 1, h_high );
+		Q_strncpyz( sym->symName, symName, strlen( symName ) + 1 );
+		sym->symValue = vm->callProcOfs;
+
+		// "CallProcedureSyscall" used by ioq3 optimizer, tail of "CallProcedure"
+		symName = "CallProcedure";
+		sym = sym->next = (vmSymbol_t *)Hunk_Alloc( sizeof( *sym ) + strlen( symName ) + 1, h_high );
+		Q_strncpyz( sym->symName, symName, strlen( symName ) + 1 );
+		sym->symValue = vm->callProcOfsSyscall;
+
+		count += 3;
+		prev = &sym->next;
+		sym->next = NULL;
+	}
+
+	//
+	// parse symbols
+	//
+
+	const char *text_p;
+	const char *token;
+	int			chars;
+	int			segment;
+	int			value;
+
+	text_p = mapfile.c;
 
 	while ( 1 ) {
 		token = COM_Parse( &text_p );
@@ -273,48 +369,61 @@ void VM_LoadSymbols( vm_t *vm ) {
 			break;
 		}
 		value = ParseHex( token );
+		if ( value < 0 || vm->instructionCount <= value ) {
+			COM_Parse( &text_p );
+			continue;		// don't load syscalls
+		}
 
 		token = COM_Parse( &text_p );
 		if ( !token[0] ) {
 			Com_Printf( "WARNING: incomplete line at end of file\n" );
 			break;
 		}
+
+
 		chars = (int)strlen( token );
 		sym = (vmSymbol_t *)Hunk_Alloc( sizeof( *sym ) + chars, h_high );
 		*prev = sym;
 		prev = &sym->next;
 		sym->next = NULL;
-
-		// convert value from an instruction number to a code offset
-		if ( value >= 0 && value < numInstructions ) {
-			value = (int)vm->instructionPointers[value];
-		}
-
-		sym->symValue = value;
+		sym->symInstr = value;
+		sym->symValue = vm->instructionPointers[value] - vm->instructionPointers[0] + vm->entryOfs;
 		Q_strncpyz( sym->symName, token, chars + 1 );
-
-		// _stackStart and _stackEnd are marked as functions for some reason
-		if (value < vm->codeLength) {
-			vm->symbolTable[value] = sym;
-		}
 
 		count++;
 	}
 
-	// direct code to function who owns it
-	static vmSymbol_t invalidSym;
-	sym = &invalidSym;
-	for ( i = -MAX_APINUM; i < 0; i++ ) {
-		if ( vm->symbolTable[i] == NULL ) {
+	vm->numSymbols = count;
+
+	if ( vm->compiled && com_developer->integer )
+	{
+		VM_GeneratePerfMap( vm );
+	}
+
+#ifdef DEBUG_VM
+	//
+	// code->symbol lookup table for profiling and debugging interpreted QVM
+	//
+
+	if ( !vm->compiled )
+	{
+		vmSymbol_t	*sym;
+
+		vm->symbolTable = (vmSymbol_t **)Hunk_Alloc( vm->codeLength * sizeof(*vm->symbolTable), h_high );
+
+		for ( sym = vm->symbols; sym; sym = sym->next ) {
+			vm->symbolTable[sym->symValue] = sym;
+		}
+
+		sym = NULL;
+		for ( i = 0; i < vm->codeLength; i++ ) {
+			if ( vm->symbolTable[i] ) {
+				sym = vm->symbolTable[i];
+			}
 			vm->symbolTable[i] = sym;
 		}
 	}
-	for ( i = 0; i < vm->codeLength; i++ ) {
-		if ( vm->symbolTable[i] ) {
-			sym = vm->symbolTable[i];
-		}
-		vm->symbolTable[i] = sym;
-	}
+#endif // DEBUG_VM
 
 	vm->numSymbols = count;
 	Com_Printf( "%i symbols parsed from %s\n", count, symbols );
@@ -688,6 +797,12 @@ void VM_Clear(void) {
 	for (i=0;i<MAX_VM; i++) {
 		VM_Free(&vmTable[i]);
 	}
+
+#ifdef __linux__
+	if ( com_developer && com_developer->integer ) {
+		remove( va("/tmp/perf-%d.map", Sys_PID()) );
+	}
+#endif
 }
 
 void VM_Forced_Unload_Start(void) {
@@ -1006,7 +1121,7 @@ void VM_VmProfile_f( void ) {
 			} else {
 				// pick first VM with symbols
 				for ( i = 0; i < MAX_VM; i++ ) {
-					if ( vmTable[i].numSymbols ) {
+					if ( !vmTable[i].compiled && vmTable[i].numSymbols ) {
 						vm = &vmTable[i];
 						break;
 					}
@@ -1020,7 +1135,7 @@ void VM_VmProfile_f( void ) {
 	}
 
 	if ( resetCounts ) {
-		profileTime = Com_Milliseconds();
+		profileTime = Sys_Milliseconds();
 
 		for ( i = 0; i < MAX_VM; i++ ) {
 			for ( sym = vmTable[i].symbols ; sym ; sym = sym->next ) {
@@ -1039,7 +1154,11 @@ void VM_VmProfile_f( void ) {
 		return;
 	}
 
-	if ( vm == NULL || vm->numSymbols <= 0 ) {
+	if ( vm == NULL || vm->compiled ) {
+		Com_Printf("Only interpreted VM can be profiled\n");
+		return;
+	}
+	if ( vm->numSymbols <= 0 ) {
 		Com_Printf("No symbols\n");
 		return;
 	}
@@ -1091,7 +1210,7 @@ void VM_VmProfile_f( void ) {
 		FS_FCloseFile( callgrind );
 	}
 
-	time = Com_Milliseconds() - profileTime;
+	time = Sys_Milliseconds() - profileTime;
 
 	Com_Printf("     %12li %9i total\n", total, totalCalls );
 	Com_Printf("     %12li %9i total per second\n", 1000 * total / time, 1000 * totalCalls / time );
@@ -1127,6 +1246,9 @@ void VM_VmInfo_f( void ) {
 			Com_Printf("    code length : %7i\n", vm->codeLength);
 			Com_Printf("    table length: %7i\n", vm->instructionCount * 4);
 			Com_Printf("    data length : %7i\n", vm->dataMask + 1);
+			if (vm->numSymbols) {
+				Com_Printf("    symbols     : %i\n", vm->numSymbols);
+			}
 		}
 
 		Com_Printf("    mvapi level : %i\n", vm->mvapilevel);
