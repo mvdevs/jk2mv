@@ -728,11 +728,13 @@ Asynchronous Crash Logging
 static qboolean Sys_CrashWrite(int fd, const void *buf, size_t len);
 static void Sys_SigHandlerFatal(int sig, siginfo_t *info, void *context) {
 	static volatile sig_atomic_t signalcaught = 0;
+	ucontext_t *ucontext = (ucontext_t *)context;
 
 	if (!signalcaught) {
 		signalcaught = 1;
 
 		Sys_CrashWrite(crashlogfd, info, sizeof(*info));
+		Sys_CrashWrite(crashlogfd, &(ucontext->uc_mcontext), sizeof(mcontext_t));
 		Sys_CrashWrite(crashlogfd, &consoleLog, sizeof(consoleLog));
 		close(crashlogfd);
 	}
@@ -855,6 +857,7 @@ static const char *Sys_DescribeSignalCode(int signal, int code) {
 
 static Q_NORETURN void Sys_CrashLogger(int fd, int argc, char *argv[]) {
 	siginfo_t	info;
+	mcontext_t	mcontext;
 
 	if (!Sys_CrashRead(fd, &info, sizeof(info))) {
 		_exit(EXIT_SUCCESS);
@@ -900,6 +903,39 @@ static Q_NORETURN void Sys_CrashLogger(int fd, int argc, char *argv[]) {
 	case SIGILL: case SIGFPE: case SIGSEGV: case SIGBUS: case SIGTRAP:
 		fprintf(f, "Fault Address:      %p\n", info.si_addr);
 	}
+
+	fprintf(f, "\n");
+	fprintf(f, "---Machine Context----------------------\n");
+	fprintf(f, "\n");
+
+	if (!Sys_CrashRead(fd, &mcontext, sizeof(mcontext))) {
+		goto exit_failure;
+	}
+
+#define GREG(X) (mcontext.gregs[REG_ ## X])
+
+#if defined(__amd64__)
+	struct selectors_s {
+		unsigned short cs, gs, fs, ss;
+	};
+	struct selectors_s *s;
+
+	s = (struct selectors_s *)&mcontext.gregs[REG_CSGSFS];
+
+	fprintf(f, "   RAX: 0x%.16llx   RBX: 0x%.16llx   RCX: 0x%.16llx\n", GREG(RAX), GREG(RBX), GREG(RCX));
+	fprintf(f, "   RDX: 0x%.16llx   RBP: 0x%.16llx   RSI: 0x%.16llx\n", GREG(RDX), GREG(RBP), GREG(RSI));
+	fprintf(f, "   RDI: 0x%.16llx   RSP: 0x%.16llx   RIP: 0x%.16llx\n", GREG(RDI), GREG(RSP), GREG(RIP));
+	fprintf(f, "    R8: 0x%.16llx    R9: 0x%.16llx   R10: 0x%.16llx\n", GREG(R8),  GREG(R9),  GREG(R10));
+	fprintf(f, "   R11: 0x%.16llx   R12: 0x%.16llx   R13: 0x%.16llx\n", GREG(R11), GREG(R12), GREG(R13));
+	fprintf(f, "   R14: 0x%.16llx   R15: 0x%.16llx\n",                  GREG(R14), GREG(R15));
+	fprintf(f, "EFLAGS: 0x%.8llx            CS: 0x%.4x  GS: 0x%.4x    FS: 0x%.4x  SS: 0x%.4x\n",
+			GREG(EFL), s->cs, s->gs, s->fs, s->ss);
+#elif defined(__i386__)
+	fprintf(f, "    EAX: 0x%.8x    EBX: 0x%.8x    ECX: 0x%.8x    EDX: 0x%.8x\n", GREG(EAX), GREG(EBX), GREG(ECX), GREG(EDX));
+	fprintf(f, "    EBP: 0x%.8x    ESI: 0x%.8x    EDI: 0x%.8x    ESP: 0x%.8x\n", GREG(EBP), GREG(ESI), GREG(EDI), GREG(ESP));
+	fprintf(f, "     CS: 0x%.4x         DS: 0x%.4x         ES: 0x%.4x         FS: 0x%.4x\n", GREG(CS), GREG(DS), GREG(ES), GREG(FS));
+	fprintf(f, " EFLAGS: 0x%.8x    EIP: 0x%.8x     GS: 0x%.4x         SS: 0x%.4x\n", GREG(EFL), GREG(EIP), GREG(GS), GREG(SS));
+#endif
 
 	fprintf(f, "\n");
 	fprintf(f, "---Console Log--------------------------\n");
