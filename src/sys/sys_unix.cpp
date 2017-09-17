@@ -14,6 +14,9 @@
 #include <unistd.h>
 #include <signal.h>
 #include <fcntl.h>
+#ifdef __GNU_LIBRARY__
+#include <gnu/libc-version.h>
+#endif
 
 #ifdef MACOS_X
 #include <mach-o/dyld.h>
@@ -884,6 +887,9 @@ static Q_NORETURN void Sys_CrashLogger(int fd, int argc, char *argv[]) {
 #endif
 	fprintf(f, "Build Date:         " __DATE__ " " __TIME__ "\n");
 	fprintf(f, "Build Arch:         " CPUSTRING "\n");
+#ifdef __GNU_LIBRARY__
+	fprintf(f, "glibc Version:      %s (%s)\n", gnu_get_libc_version(), gnu_get_libc_release());
+#endif
 	fprintf(f, "Process:            %s\n", argv[0]);
 	fprintf(f, "Process ID:         %d\n", getppid());
 	fprintf(f, "Arguments:          ");
