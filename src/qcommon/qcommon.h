@@ -330,6 +330,8 @@ typedef enum {
 	TRAP_TESTPRINTFLOAT
 } sharedTraps_t;
 
+#define	MAX_VM		3
+
 void	VM_Init( void );
 vm_t	*VM_Create(const char *module, qboolean mvOverride, intptr_t(*systemCalls)(intptr_t *), vmInterpret_t interpret);
 // module should be bare: "cgame", not "cgame.dll" or "vm/cgame.qvm"

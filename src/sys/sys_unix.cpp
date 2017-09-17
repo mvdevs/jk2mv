@@ -25,6 +25,7 @@
 
 #include "../qcommon/q_shared.h"
 #include "../qcommon/qcommon.h"
+#include "../qcommon/vm_local.h"
 #include "con_local.h"
 
 #include <mv_setup.h>
@@ -735,6 +736,7 @@ Asynchronous Crash Logging
 */
 
 static qboolean Sys_CrashWrite(int fd, const void *buf, size_t len);
+static void Sys_CrashWriteVm(int fd);
 static void Sys_SigHandlerFatal(int sig, siginfo_t *info, void *context) {
 	static volatile sig_atomic_t signalcaught = 0;
 	ucontext_t *ucontext = (ucontext_t *)context;
@@ -743,6 +745,7 @@ static void Sys_SigHandlerFatal(int sig, siginfo_t *info, void *context) {
 		signalcaught = 1;
 
 		Sys_CrashWrite(crashlogfd, info, sizeof(*info));
+		Sys_CrashWriteVm(crashlogfd);
 		Sys_CrashWrite(crashlogfd, &(ucontext->uc_mcontext), sizeof(mcontext_t));
 		Sys_CrashWrite(crashlogfd, &consoleLog, sizeof(consoleLog));
 		close(crashlogfd);
@@ -802,6 +805,39 @@ static qboolean Sys_CrashRead(int fd, void *buf, size_t len) {
 	}
 
 	return qtrue;
+}
+
+extern vm_t	vmTable[MAX_VM];
+static void Sys_CrashWriteVm(int fd) {
+	for (int i = 0; i < MAX_VM; i++) {
+		vm_t *vm = &vmTable[i];
+
+		Sys_CrashWrite(fd, vm, sizeof(*vm));
+		Sys_CrashWrite(fd, vm->instructionPointers, sizeof(intptr_t) * vm->instructionCount);
+
+		for (vmSymbol_t *sym = vm->symbols; sym; sym = sym->next) {
+			int size = sizeof(vmSymbol_t) + strlen(sym->symName);	// ending '\0' is in vmSymbol_t
+			Sys_CrashWrite(fd, &size, sizeof(size));
+			Sys_CrashWrite(fd, sym, size);
+		}
+	}
+}
+
+static void Sys_CrashReadVm(int fd) {
+	for (int i = 0; i < MAX_VM; i++) {
+		vm_t *vm = &vmTable[i];
+
+		Sys_CrashRead(fd, vm, sizeof(*vm));
+		vm->instructionPointers = (intptr_t *)malloc(sizeof(intptr_t) * vm->instructionCount);
+		Sys_CrashRead(fd, vm->instructionPointers, sizeof(intptr_t) * vm->instructionCount);
+
+		for (vmSymbol_t **sym = &(vm->symbols); *sym; sym = &((*sym)->next)) {
+			int size;
+			Sys_CrashRead(fd, &size, sizeof(size));
+			*sym = (vmSymbol_t *)malloc(size);
+			Sys_CrashRead(fd, *sym, size);
+		}
+	}
 }
 
 static const char *Sys_DescribeSignalCode(int signal, int code) {
@@ -865,15 +901,21 @@ static const char *Sys_DescribeSignalCode(int signal, int code) {
 }
 
 static void Sys_BacktraceSymbol(FILE *f, void *p) {
-	// this doesn't know about shared objects dynamically loaded after
-	// fork() in the main process, but it's enough
-	char **sym = backtrace_symbols(&p, 1);
-	if (sym) {
-		fputs(*sym, f);
+	const char *desc = VM_SymbolForCompiledPointer(p);
+
+	if (desc) {
+		fputs(desc, f);
 	} else {
-		fprintf(f, "[%p]", p);
+		// this doesn't know about shared objects dynamically loaded after
+		// fork() in the main process, but it's enough
+		char **sym = backtrace_symbols(&p, 1);
+		if (sym) {
+			fputs(*sym, f);
+		} else {
+			fprintf(f, "[%p]", p);
+		}
+		free(sym);
 	}
-	free(sym);
 }
 
 static Q_NORETURN void Sys_CrashLogger(int fd, int argc, char *argv[]) {
@@ -883,6 +925,8 @@ static Q_NORETURN void Sys_CrashLogger(int fd, int argc, char *argv[]) {
 	if (!Sys_CrashRead(fd, &info, sizeof(info))) {
 		_exit(EXIT_SUCCESS);
 	}
+
+	Sys_CrashReadVm(fd);
 
 	FILE		*f;
 	time_t		rawtime;

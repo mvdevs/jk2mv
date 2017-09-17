@@ -47,7 +47,6 @@ static vmSymbol_t nullSymbol;
 // used by Com_Error to get rid of running vm's before longjmp
 static int forced_unload;
 
-#define	MAX_VM		3
 vm_t	vmTable[MAX_VM];
 
 
@@ -190,31 +189,19 @@ int VM_SymbolToValue( vm_t *vm, const char *symbol ) {
 VM_SymbolForCompiledPointer
 =====================
 */
-#if 0 // VM_ValueToSymbol takes compiled pointer as an argument now
-const char *VM_SymbolForCompiledPointer( vm_t *vm, void *code ) {
-	int			i;
+const char *VM_SymbolForCompiledPointer( void *code ) {
+	for ( int i = 0; i < MAX_VM; i++ ) {
+		vm_t *vm = &vmTable[i];
 
-	if ( code < (void *)vm->codeBase ) {
-		return "Before code block";
-	}
-	if ( code >= (void *)(vm->codeBase + vm->codeLength) ) {
-		return "After code block";
-	}
-
-	// find which original instruction it is after
-	for ( i = 0 ; i < vm->codeLength ; i++ ) {
-		if ( (void *)vm->instructionPointers[i] > code ) {
-			break;
+		if ( vm->compiled ) {
+			if ( vm->codeBase <= code && code < vm->codeBase + vm->codeLength ) {
+				return VM_ValueToSymbol( vm, (byte *)code - vm->codeBase );
+			}
 		}
 	}
-	i--;
 
-	// now look up the bytecode instruction pointer
-	return VM_ValueToSymbol( vm, i );
+	return NULL;
 }
-#endif
-
-
 
 /*
 ===============
