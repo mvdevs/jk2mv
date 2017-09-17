@@ -122,7 +122,7 @@ static void Sys_ErrorDialog(const char *error) {
 	time(&rawtime);
 	strftime(timeStr, sizeof(timeStr), "%Y-%m-%d_%H-%M-%S", localtime(&rawtime)); // or gmtime
 	Com_sprintf(crashLogPath, sizeof(crashLogPath),
-		"%s%ccrashlog-%s.txt",
+		"%s%cerrorlog-%s.txt",
 		Sys_DefaultHomePath(), PATH_SEP, timeStr);
 
 	Sys_Mkdir(Sys_DefaultHomePath());
@@ -132,7 +132,7 @@ static void Sys_ErrorDialog(const char *error) {
 		ConsoleLogWriteOut(fp);
 		fclose(fp);
 
-		const char *errorMessage = va("%s\n\nThe crash log was written to %s", error, crashLogPath);
+		const char *errorMessage = va("%s\n\nThe error log was written to %s", error, crashLogPath);
 		if (SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", errorMessage, NULL) < 0) {
 			fprintf(stderr, "%s", errorMessage);
 		}
@@ -141,7 +141,7 @@ static void Sys_ErrorDialog(const char *error) {
 		ConsoleLogWriteOut(stderr);
 		fflush(stderr);
 
-		const char *errorMessage = va("%s\nCould not write the crash log file, but we printed it to stderr.\n"
+		const char *errorMessage = va("%s\nCould not write the error log file, but we printed it to stderr.\n"
 			"Try running the game using a command line interface.", error);
 		if (SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", errorMessage, NULL) < 0) {
 			// We really have hit rock bottom here :(
