@@ -21,6 +21,7 @@
 
 #include "../qcommon/q_shared.h"
 #include "../qcommon/qcommon.h"
+#include "con_local.h"
 
 #include <mv_setup.h>
 
@@ -739,6 +740,7 @@ static void Sys_SigHandlerFatal(int sig, siginfo_t *info, void *context) {
 
 		msg.signum = sig;
 		Sys_CrashWrite(crashlogfd, &msg, sizeof(msg));
+		Sys_CrashWrite(crashlogfd, &consoleLog, sizeof(consoleLog));
 		close(crashlogfd);
 	}
 
@@ -836,7 +838,19 @@ static Q_NORETURN void Sys_CrashLogger(int fd, int argc, char *argv[]) {
 	}
 	fprintf(f, "\n");
 
-	fclose(f);
+	fprintf(f, "\n");
+	fprintf(f, "---Console Log--------------------------\n");
+	fprintf(f, "\n");
 
+	if (!Sys_CrashRead(fd, &consoleLog, sizeof(consoleLog))) {
+		goto exit_failure;
+	}
+
+	ConsoleLogWriteOut(f);
+
+	fclose(f);
 	_exit(EXIT_SUCCESS);
+exit_failure:
+	fclose(f);
+	_exit(EXIT_FAILURE);
 }

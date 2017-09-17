@@ -10,23 +10,7 @@ CONSOLE LOG
 
 ========================================================================
 */
-#define MAX_CONSOLE_LOG_SIZE (65535)
-
-struct ConsoleLog
-{
-	// Cicular buffer of characters. Be careful, there is no null terminator.
-	// You're expected to use the console log length to know where the end
-	// of the string is.
-	char text[MAX_CONSOLE_LOG_SIZE];
-
-	// Where to start writing the next string
-	int writeHead;
-
-	// Length of buffer
-	int length;
-};
-
-static ConsoleLog consoleLog;
+ConsoleLog consoleLog;
 
 void ConsoleLogAppend( const char *string )
 {
