@@ -244,6 +244,42 @@ int	ParseHex( const char *text ) {
 	return value;
 }
 
+static void VM_GeneratePerfMap(vm_t *vm) {
+#ifdef __linux__
+		// generate perf .map file for profiling compiled QVM
+		char		mapFile[MAX_OSPATH];
+		FILE		*f;
+		void		*address;
+		int			length;
+
+		if ( !vm->symbols ) {
+			return;
+		}
+
+		Com_sprintf( mapFile, sizeof(mapFile), "/tmp/perf-%d.map", Sys_PID() );
+
+		if ( (f = fopen( mapFile, "a" )) == NULL ) {
+			Com_Printf( S_COLOR_YELLOW "WARNING: couldn't open %s\n", mapFile );
+			return;
+		}
+
+		// perf .map format: "hex_address hex_length name\n"
+		for ( vmSymbol_t *sym = vm->symbols; sym; sym = sym->next ) {
+			address = vm->codeBase + sym->symValue;
+
+			if ( sym->next ) {
+				length = sym->next->symValue - sym->symValue;
+			} else {
+				length = vm->codeLength - sym->symValue;
+			}
+
+			fprintf( f, "%lx %x %s\n", (unsigned long)(vm->codeBase + sym->symValue), length, sym->symName );
+		}
+
+		fclose( f );
+#endif // __linux__
+}
+
 /*
 ===============
 VM_LoadSymbols
@@ -358,6 +394,11 @@ void VM_LoadSymbols( vm_t *vm ) {
 	}
 
 	vm->numSymbols = count;
+
+	if ( vm->compiled && com_developer->integer )
+	{
+		VM_GeneratePerfMap( vm );
+	}
 
 #ifdef DEBUG_VM
 	//
@@ -756,6 +797,12 @@ void VM_Clear(void) {
 	for (i=0;i<MAX_VM; i++) {
 		VM_Free(&vmTable[i]);
 	}
+
+#ifdef __linux__
+	if ( com_developer && com_developer->integer ) {
+		remove( va("/tmp/perf-%d.map", Sys_PID()) );
+	}
+#endif
 }
 
 void VM_Forced_Unload_Start(void) {
