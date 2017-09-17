@@ -14,6 +14,7 @@
 #include <unistd.h>
 #include <signal.h>
 #include <fcntl.h>
+#include <execinfo.h>
 #ifdef __GNU_LIBRARY__
 #include <gnu/libc-version.h>
 #endif
@@ -863,6 +864,18 @@ static const char *Sys_DescribeSignalCode(int signal, int code) {
 	return "?";
 }
 
+static void Sys_BacktraceSymbol(FILE *f, void *p) {
+	// this doesn't know about shared objects dynamically loaded after
+	// fork() in the main process, but it's enough
+	char **sym = backtrace_symbols(&p, 1);
+	if (sym) {
+		fputs(*sym, f);
+	} else {
+		fprintf(f, "[%p]", p);
+	}
+	free(sym);
+}
+
 static Q_NORETURN void Sys_CrashLogger(int fd, int argc, char *argv[]) {
 	siginfo_t	info;
 	mcontext_t	mcontext;
@@ -912,7 +925,9 @@ static Q_NORETURN void Sys_CrashLogger(int fd, int argc, char *argv[]) {
 			Sys_DescribeSignalCode(info.si_signo, info.si_code));
 	switch (info.si_signo) {
 	case SIGILL: case SIGFPE: case SIGSEGV: case SIGBUS: case SIGTRAP:
-		fprintf(f, "Fault Address:      %p\n", info.si_addr);
+		fprintf(f, "Fault Address:      ");
+		Sys_BacktraceSymbol(f, info.si_addr);
+		fprintf(f, "\n");
 	}
 
 	fprintf(f, "\n");
