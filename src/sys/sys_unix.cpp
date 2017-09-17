@@ -793,6 +793,66 @@ static qboolean Sys_CrashRead(int fd, void *buf, size_t len) {
 	return qtrue;
 }
 
+static const char *Sys_DescribeSignalCode(int signal, int code) {
+	switch (code) {
+	case SI_USER:		return "kill";
+	case SI_KERNEL:		return "sent by the kernel";
+	case SI_QUEUE: 		return "sigqueue";
+	case SI_TKILL: 		return "tkill or tgkill";
+	}
+
+	switch (signal) {
+	case SIGILL:
+		switch (code) {
+		case ILL_ILLOPC:	return "illegal opcode";
+		case ILL_ILLOPN:	return "illegal operand";
+		case ILL_ILLADR:	return "illegal addressing mode";
+		case ILL_ILLTRP:	return "illegal trap";
+		case ILL_PRVOPC:	return "priviledged opcode";
+		case ILL_PRVREG:	return "priviledged register";
+		case ILL_COPROC:	return "coprocessor error";
+		case ILL_BADSTK:	return "internal stack error";
+		}
+		break;
+	case SIGFPE:
+		switch (code) {
+		case FPE_INTDIV:	return "integer divide by zero";
+		case FPE_INTOVF:	return "integer overflow";
+		case FPE_FLTDIV:	return "floating-point divide by zero";
+		case FPE_FLTOVF:	return "floating-point overflow";
+		case FPE_FLTUND:	return "floating-point underflow";
+		case FPE_FLTRES:	return "floating-point inexact result";
+		case FPE_FLTINV:	return "floating-point invalid operation";
+		case FPE_FLTSUB:	return "subscript out of range";
+		}
+		break;
+	case SIGSEGV:
+		switch(code) {
+		case SEGV_MAPERR:	return "address not mapped to object";
+		case SEGV_ACCERR:	return "invalid permission for mapped object";
+		}
+		break;
+	case SIGBUS:
+		switch (code) {
+		case BUS_ADRALN:	return "invalid address alignment";
+		case BUS_ADRERR:	return "nonexistent physical address";
+		case BUS_OBJERR:	return "object-specific hardware error";
+		case BUS_MCEERR_AR:	return "hardware memory error consumed on a machine check; action required";
+		case BUS_MCEERR_AO:	return "hardware memory error detected in process but not consumed; action optional";
+		}
+		break;
+	case SIGTRAP:
+		switch (code) {
+		case TRAP_BRKPT:	return "process breakpoint";
+		case TRAP_TRACE:	return "process trace trap";
+		}
+		break;
+		// not handling SIGCHLD, SIGIO, SIGPOLL
+	}
+
+	return "?";
+}
+
 static Q_NORETURN void Sys_CrashLogger(int fd, int argc, char *argv[]) {
 	siginfo_t	info;
 
@@ -834,7 +894,8 @@ static Q_NORETURN void Sys_CrashLogger(int fd, int argc, char *argv[]) {
 	fprintf(f, "\n");
 
 	fprintf(f, "Signal:             %d (%s)\n", info.si_signo, strsignal(info.si_signo));
-	fprintf(f, "Signal Code:        %d\n", info.si_code);
+	fprintf(f, "Signal Code:        %d (%s)\n", info.si_code,
+			Sys_DescribeSignalCode(info.si_signo, info.si_code));
 	switch (info.si_signo) {
 	case SIGILL: case SIGFPE: case SIGSEGV: case SIGBUS: case SIGTRAP:
 		fprintf(f, "Fault Address:      %p\n", info.si_addr);
