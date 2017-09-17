@@ -728,6 +728,7 @@ typedef struct crashMsg_s {
 	int signum;
 } crashMsg_t;
 
+static qboolean Sys_CrashWrite(int fd, const void *buf, size_t len);
 static void Sys_SigHandlerFatal(int sig, siginfo_t *info, void *context) {
 	static volatile sig_atomic_t signalcaught = 0;
 
@@ -737,7 +738,7 @@ static void Sys_SigHandlerFatal(int sig, siginfo_t *info, void *context) {
 		crashMsg_t msg;
 
 		msg.signum = sig;
-		write(crashlogfd, &msg, sizeof(msg));
+		Sys_CrashWrite(crashlogfd, &msg, sizeof(msg));
 		close(crashlogfd);
 	}
 
@@ -747,6 +748,30 @@ static void Sys_SigHandlerFatal(int sig, siginfo_t *info, void *context) {
 	sigemptyset(&act.sa_mask);
 	sigaction(sig, &act, NULL);
 	raise(sig);
+}
+
+static qboolean Sys_CrashWrite(int fd, const void *buf, size_t len) {
+	unsigned	count = 0;
+
+	while (count < len) {
+		int ret = write(fd, buf, len - count);
+
+		if (ret == 0) {
+			return qfalse;
+		}
+		if (ret == -1) {
+			if (errno == EINTR) {
+				continue;		// a signal was caught
+			} else {
+				perror("Sys_CrashWrite()");
+				return qfalse;
+			}
+		}
+
+		count += ret;
+	}
+
+	return qtrue;
 }
 
 static qboolean Sys_CrashRead(int fd, void *buf, size_t len) {
