@@ -801,7 +801,7 @@ void SV_ConnectionlessPacket( netadr_t from, msg_t *msg ) {
 			curraddr.ip.v4[3] = from.ip[3];
 			curraddr.port = from.port;
 
-			VM_Call(gvm, MVAPI_RECV_CONNECTIONLESSPACKET);
+			VM_Call(gvm, GAME_MVAPI_RECV_CONNECTIONLESSPACKET);
 
 			currmessage[0] = 0;
 		}

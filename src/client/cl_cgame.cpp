@@ -1295,7 +1295,7 @@ Ghoul2 Insert End
 
 	if (VM_MVAPILevel(cgvm) >= 3) {
 		switch (args[0]) {
-		case MVAPI_R_ADDREFENTITYTOSCENE2:
+		case CG_MVAPI_R_ADDREFENTITYTOSCENE2:
 			re.AddRefEntityToScene(VMAV(1, const refEntity_t), qtrue);
 			return 0;
 		}
