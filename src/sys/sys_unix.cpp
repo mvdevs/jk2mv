@@ -744,6 +744,7 @@ typedef struct backtrace_s {
 static int Sys_Backtrace(void **buffer, int size, const ucontext_t *context);
 static qboolean Sys_CrashWrite(int fd, const void *buf, size_t len);
 static void Sys_CrashWriteVm(int fd);
+static void Sys_CrashWriteContext(int fd, const ucontext_t *context);
 static void Sys_SigHandlerFatal(int sig, siginfo_t *info, void *context) {
 	static volatile sig_atomic_t signalcaught = 0;
 	ucontext_t *ucontext = (ucontext_t *)context;
@@ -755,7 +756,7 @@ static void Sys_SigHandlerFatal(int sig, siginfo_t *info, void *context) {
 
 		Sys_CrashWrite(crashlogfd, info, sizeof(*info));
 		Sys_CrashWriteVm(crashlogfd);
-		Sys_CrashWrite(crashlogfd, &(ucontext->uc_mcontext), sizeof(mcontext_t));
+		Sys_CrashWriteContext(crashlogfd, ucontext);
 		trace.size = Sys_Backtrace(trace.buf, ARRAY_LEN(trace.buf), ucontext);
 		Sys_CrashWrite(crashlogfd, &trace, sizeof(trace));
 		Sys_CrashWrite(crashlogfd, &consoleLog, sizeof(consoleLog));
@@ -849,6 +850,28 @@ static void Sys_CrashReadVm(int fd) {
 			Sys_CrashRead(fd, *sym, size);
 		}
 	}
+}
+
+static void Sys_CrashWriteContext(int fd, const ucontext_t *context) {
+#if defined(__i386__) || defined(__amd64__)
+		Sys_CrashWrite(crashlogfd, context, sizeof(ucontext_t));
+		Sys_CrashWrite(crashlogfd, context->uc_mcontext.fpregs, sizeof(*context->uc_mcontext.fpregs));
+#endif
+}
+
+static qboolean Sys_CrashReadContext(int fd, ucontext_t *context) {
+#if defined(__i386__) || defined(__amd64__)
+	context->uc_mcontext.fpregs = (fpregset_t)malloc(sizeof(context->uc_mcontext.fpregs));
+
+	if (!Sys_CrashRead(fd, context, sizeof(ucontext_t))) {
+		return qfalse;
+	}
+	if (!Sys_CrashRead(fd, context->uc_mcontext.fpregs, sizeof(*context->uc_mcontext.fpregs))) {
+		return qfalse;
+	}
+
+	return qtrue;
+#endif
 }
 
 static sigjmp_buf invalidFP;
@@ -983,7 +1006,7 @@ static void Sys_BacktraceSymbol(FILE *f, void *p) {
 
 static Q_NORETURN void Sys_CrashLogger(int fd, int argc, char *argv[]) {
 	siginfo_t	info;
-	mcontext_t	mcontext;
+	ucontext_t	context;
 
 	if (!Sys_CrashRead(fd, &info, sizeof(info))) {
 		_exit(EXIT_SUCCESS);
@@ -1041,11 +1064,11 @@ static Q_NORETURN void Sys_CrashLogger(int fd, int argc, char *argv[]) {
 	fprintf(f, "---Machine Context----------------------\n");
 	fprintf(f, "\n");
 
-	if (!Sys_CrashRead(fd, &mcontext, sizeof(mcontext))) {
+	if (!Sys_CrashReadContext(fd, &context)) {
 		goto exit_failure;
 	}
 
-#define GREG(X) (mcontext.gregs[REG_ ## X])
+#define GREG(X) (context.uc_mcontext.gregs[REG_ ## X])
 
 #if defined(__amd64__)
 	struct selectors_s {
@@ -1053,7 +1076,7 @@ static Q_NORETURN void Sys_CrashLogger(int fd, int argc, char *argv[]) {
 	};
 	struct selectors_s *s;
 
-	s = (struct selectors_s *)&mcontext.gregs[REG_CSGSFS];
+	s = (struct selectors_s *)&context.uc_mcontext.gregs[REG_CSGSFS];
 
 	fprintf(f, "   RAX: 0x%.16llx   RBX: 0x%.16llx   RCX: 0x%.16llx\n", GREG(RAX), GREG(RBX), GREG(RCX));
 	fprintf(f, "   RDX: 0x%.16llx   RBP: 0x%.16llx   RSI: 0x%.16llx\n", GREG(RDX), GREG(RBP), GREG(RSI));
@@ -1063,11 +1086,63 @@ static Q_NORETURN void Sys_CrashLogger(int fd, int argc, char *argv[]) {
 	fprintf(f, "   R14: 0x%.16llx   R15: 0x%.16llx\n",                  GREG(R14), GREG(R15));
 	fprintf(f, "EFLAGS: 0x%.8llx            CS: 0x%.4x  GS: 0x%.4x    FS: 0x%.4x  SS: 0x%.4x\n",
 			GREG(EFL), s->cs, s->gs, s->fs, s->ss);
+
+	fpregset_t fpregs;
+
+	fpregs = context.uc_mcontext.fpregs;
+
+	fprintf(f, "\n");
+
+	for (int i = 0; i < 8; i++) {
+		fprintf(f, "   ST%d: 0x%.4hx%.4hx%.4hx%.4hx%.4hx (%Lf)\n", i,
+			fpregs->_st[i].exponent,
+			fpregs->_st[i].significand[3], fpregs->_st[i].significand[2],
+			fpregs->_st[i].significand[1], fpregs->_st[i].significand[0],
+			*(long double *)&fpregs->_st[i]);
+	}
+
+	fprintf(f, "\n");
+
+	for (int i = 0; i < 16; i++) {
+		fprintf(f, " %sXMM%d: 0x%.8x%.8x%.8x%.8x\n", (i < 10 ? " " : ""), i,
+			fpregs->_xmm[i].element[3], fpregs->_xmm[i].element[2],
+			fpregs->_xmm[i].element[1], fpregs->_xmm[i].element[0]);
+	}
+
+	fprintf(f, "\n");
+
+	fprintf(f, "   CWD: 0x%.4hx SWD: 0x%.4hx   FTW: 0x%.4hx FOP: 0x%.4hx\n",
+		fpregs->cwd, fpregs->swd, fpregs->ftw, fpregs->fop);
+	fprintf(f, "   RIP: 0x%.16lx   RDP: 0x%.16lx\n", fpregs->rip, fpregs->rdp);
+	fprintf(f, " MXCSR: 0x%.8x    MXCSR MASK: 0x%.8x\n", fpregs->mxcsr, fpregs->mxcr_mask);
 #elif defined(__i386__)
 	fprintf(f, "    EAX: 0x%.8x    EBX: 0x%.8x    ECX: 0x%.8x    EDX: 0x%.8x\n", GREG(EAX), GREG(EBX), GREG(ECX), GREG(EDX));
 	fprintf(f, "    EBP: 0x%.8x    ESI: 0x%.8x    EDI: 0x%.8x    ESP: 0x%.8x\n", GREG(EBP), GREG(ESI), GREG(EDI), GREG(ESP));
 	fprintf(f, "     CS: 0x%.4x         DS: 0x%.4x         ES: 0x%.4x         FS: 0x%.4x\n", GREG(CS), GREG(DS), GREG(ES), GREG(FS));
 	fprintf(f, " EFLAGS: 0x%.8x    EIP: 0x%.8x     GS: 0x%.4x         SS: 0x%.4x\n", GREG(EFL), GREG(EIP), GREG(GS), GREG(SS));
+
+	fpregset_t fpregs;
+
+	fpregs = context.uc_mcontext.fpregs;
+
+	fprintf(f, "\n");
+
+	for (int i = 0; i < 8; i++) {
+		fprintf(f, "   ST%d: 0x%.4hx%.4hx%.4hx%.4hx%.4hx (%Lf)\n", i,
+			fpregs->_st[i].exponent,
+			fpregs->_st[i].significand[3], fpregs->_st[i].significand[2],
+			fpregs->_st[i].significand[1], fpregs->_st[i].significand[0],
+			*(long double *)&fpregs->_st[i]);
+	}
+
+	fprintf(f, "\n");
+
+	fprintf(f, "    CW: 0x%.4x          SW: 0x%.4x         TAG: 0x%.4x\n",
+		(unsigned)(fpregs->cw & 0xffff), (unsigned)(fpregs->sw & 0xffff),
+		(unsigned)(fpregs->tag & 0xffff));
+	fprintf(f, "    IP: 0x%.2x:0x%.8x OP: 0x%.2x:0x%.8x\n",
+		(unsigned)(fpregs->cssel & 0xff), (unsigned)fpregs->ipoff,
+		(unsigned)(fpregs->datasel & 0xff), (unsigned)fpregs->dataoff);
 #endif
 
 	fprintf(f, "\n");
