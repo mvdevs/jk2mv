@@ -401,7 +401,7 @@ int *vm_opStackBase;
 uint8_t vm_opStackOfs;
 intptr_t vm_arg;
 
-static void DoSyscall(void)
+void DoSyscall(void)
 {
 	vm_t *savedVM;
 
