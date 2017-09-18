@@ -279,7 +279,6 @@ void VM_LoadSymbols( vm_t *vm ) {
 	} mapfile;
 	char		name[MAX_QPATH];
 	char		symbols[MAX_QPATH];
-	int			i;
 
 	if ( vm->dllHandle ) {
 		return;
@@ -413,7 +412,7 @@ void VM_LoadSymbols( vm_t *vm ) {
 		}
 
 		sym = NULL;
-		for ( i = 0; i < vm->codeLength; i++ ) {
+		for ( int i = 0; i < vm->codeLength; i++ ) {
 			if ( vm->symbolTable[i] ) {
 				sym = vm->symbolTable[i];
 			}

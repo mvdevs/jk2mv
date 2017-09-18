@@ -475,8 +475,9 @@ void Sys_PlatformInit( int argc, char *argv[] )
 		crashlogfd = crashfd[1];
 	}
 skip_crash:
-	struct sigaction act = { 0 };
+	struct sigaction act;
 
+	memset(&act, 0, sizeof(act));
 	act.sa_handler = Sys_SigHandler;
 
 	sigemptyset(&act.sa_mask);
@@ -764,7 +765,8 @@ static void Sys_SigHandlerFatal(int sig, siginfo_t *info, void *context) {
 	}
 
 	// reraise the signal with default handler
-	struct sigaction act = { 0 };
+	struct sigaction act;
+	memset(&act, 0, sizeof(act));
 	act.sa_handler = SIG_DFL;
 	sigemptyset(&act.sa_mask);
 	sigaction(sig, &act, NULL);
@@ -899,8 +901,9 @@ static int Sys_Backtrace(void **buffer, int size, const ucontext_t *context) {
 
 	// stop if frame pointer is invalid (eg rest of the system was
 	// compiled with -fomit-frame-pointer)
-	struct sigaction act = { 0 };
+	struct sigaction act;
 	struct sigaction old[2];
+	memset(&act, 0, sizeof(act));
 	act.sa_handler = Sys_SigHandlerInvalidFP;
 	sigfillset(&act.sa_mask);
 	sigaction(SIGSEGV, &act, &old[0]);
@@ -1094,11 +1097,15 @@ static Q_NORETURN void Sys_CrashLogger(int fd, int argc, char *argv[]) {
 	fprintf(f, "\n");
 
 	for (int i = 0; i < 8; i++) {
+		long double val;
+
+		memcpy(&val, &fpregs->_st[i], sizeof(val));
+
 		fprintf(f, "   ST%d: 0x%.4hx%.4hx%.4hx%.4hx%.4hx (%Lf)\n", i,
 			fpregs->_st[i].exponent,
 			fpregs->_st[i].significand[3], fpregs->_st[i].significand[2],
 			fpregs->_st[i].significand[1], fpregs->_st[i].significand[0],
-			*(long double *)&fpregs->_st[i]);
+			val);
 	}
 
 	fprintf(f, "\n");
