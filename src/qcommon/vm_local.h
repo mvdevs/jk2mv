@@ -193,6 +193,7 @@ struct vm_s {
 	int			numJumpTableTargets;
 
 	int			mvapilevel;
+	qboolean	mvmenu;
 };
 
 

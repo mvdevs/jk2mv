@@ -1133,27 +1133,6 @@ Ghoul2 Insert Start
 Ghoul2 Insert End
 */
 
-	// download popup
-	case UI_MV_CONTINUE_DOWNLOAD:
-		if (uigameversion == VERSION_UNDEF)
-			CL_ContinueCurrentDownload((dldecision_t)args[1]);
-		return 0;
-
-	case UI_MV_GETDLLIST:
-		if (uigameversion == VERSION_UNDEF)
-			return UI_ConcatDLList(VMAA(1, dlfile_t, args[2]), args[2]);
-		else return qtrue;
-
-	case UI_MV_RMDLPREFIX:
-		if (uigameversion == VERSION_UNDEF)
-			return FS_RMDLPrefix(VMAS(1));
-		else return qtrue;
-
-	case UI_MV_DELDLFILE:
-		if (uigameversion == VERSION_UNDEF)
-			return UI_DeleteDLFile(VMAV(1, const dlfile_t));
-		else return qtrue;
-
 	case MVAPI_GET_VERSION:
 		return (int)MV_GetCurrentGameversion();
 	}
@@ -1163,6 +1142,21 @@ Ghoul2 Insert End
 		case UI_MVAPI_R_ADDREFENTITYTOSCENE2:
 			re.AddRefEntityToScene(VMAV(1, const refEntity_t), qtrue);
 			return 0;
+		}
+	}
+
+	if (VM_MVMenu(uivm)) {
+		switch (args[0]) {
+			// download popup
+		case UI_MV_CONTINUE_DOWNLOAD:
+			CL_ContinueCurrentDownload((dldecision_t)args[1]);
+			return qtrue;
+		case UI_MV_GETDLLIST:
+			return UI_ConcatDLList(VMAA(1, dlfile_t, args[2]), args[2]);
+		case UI_MV_RMDLPREFIX:
+			return FS_RMDLPrefix(VMAS(1));
+		case UI_MV_DELDLFILE:
+			return UI_DeleteDLFile(VMAV(1, const dlfile_t));
 		}
 	}
 

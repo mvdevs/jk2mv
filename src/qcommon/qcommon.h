@@ -380,6 +380,7 @@ void	VM_Forced_Unload_Done(void);
 
 int	VM_MVAPILevel(const vm_t *vm);
 void VM_SetMVAPILevel(vm_t *vm, int level);
+qboolean VM_MVMenu(const vm_t *vm);
 
 //Ignore __attribute__ on non-gcc platforms
 #ifndef __GNUC__
