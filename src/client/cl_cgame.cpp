@@ -1282,22 +1282,26 @@ Ghoul2 Insert End
 		cl.mSharedMemory = VMAP(1, char, MAX_CG_SHARED_BUFFER_SIZE);
 		return 0;
 
-	case MVAPI_CONTROL_FIXES:
-		return (int)CL_MVAPI_ControlFixes(args[1]);
-
 	case MVAPI_GET_VERSION:
 		return (int)MV_GetCurrentGameversion();
-
-	case MVAPI_R_ADDREFENTITYTOSCENE2:
-		if (VM_MVAPILevel(cgvm) >= 3) {
-			re.AddRefEntityToScene(VMAV(1, const refEntity_t), qtrue);
-		}
-		return 0;
-
-	default:
-			assert(0); // bk010102
-		Com_Error( ERR_DROP, "Bad cgame system trap: %i", args[0] );
 	}
+
+	if (VM_MVAPILevel(cgvm) >= 1) {
+		switch (args[0]) {
+		case MVAPI_CONTROL_FIXES:
+			return (int)CL_MVAPI_ControlFixes(args[1]);
+		}
+	}
+
+	if (VM_MVAPILevel(cgvm) >= 3) {
+		switch (args[0]) {
+		case MVAPI_R_ADDREFENTITYTOSCENE2:
+			re.AddRefEntityToScene(VMAV(1, const refEntity_t), qtrue);
+			return 0;
+		}
+	}
+
+	Com_Error( ERR_DROP, "Bad cgame system trap: %i", args[0] );
 	return 0;
 }
 
@@ -1656,10 +1660,6 @@ disable / enable toggleable fixes from the cgvm
 ====================
 */
 qboolean CL_MVAPI_ControlFixes(int fixes) {
-	if (VM_MVAPILevel(cgvm) < 1) {
-		return qtrue;
-	}
-
 	cls.fixes = fixes;
 
 	return qfalse;
