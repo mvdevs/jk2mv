@@ -1197,12 +1197,14 @@ jk2mv has it's own dll for the main menu
 void CL_InitUI(qboolean mainMenu) {
 	vmInterpret_t		interpret;
 	int v;
+	int apilevel = mv_apienabled->integer;
 
 	Cvar_Get("ui_menulevel", "0", CVAR_ROM | CVAR_INTERNAL, qfalse);
 	Cvar_Set("ui_menulevel", "0");
 
 	if (mainMenu && mv_menuOverride->integer == 0) {
 		uigameversion = VERSION_UNDEF;
+		apilevel = MV_APILEVEL;
 
 		uivm = VM_Create("jk2mvmenu", qtrue, CL_UISystemCalls, VMI_NATIVE);
 	} else {
@@ -1230,7 +1232,10 @@ void CL_InitUI(qboolean mainMenu) {
 	} else {
 		int apireq;
 
-		apireq = VM_Call( uivm, UI_INIT, mainMenu ? qfalse : (cls.state >= CA_AUTHORIZING && cls.state <= CA_ACTIVE), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, MV_APILEVEL );
+		apireq = VM_Call( uivm, UI_INIT, mainMenu ? qfalse : (cls.state >= CA_AUTHORIZING && cls.state <= CA_ACTIVE), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, apilevel );
+		if (apireq > apilevel) {
+			apireq = apilevel;
+		}
 		VM_SetMVAPILevel(uivm, apireq);
 		Com_DPrintf("UIVM uses MVAPI level %i.\n", apireq);
 

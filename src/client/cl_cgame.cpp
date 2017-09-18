@@ -1347,7 +1347,10 @@ void CL_InitCGame( void ) {
 	// init for this gamestate
 	// use the lastExecutedServerCommand instead of the serverCommandSequence
 	// otherwise server commands sent just before a gamestate are dropped
-	apireq = VM_Call(cgvm, CG_INIT, clc.serverMessageSequence, clc.lastExecutedServerCommand, clc.clientNum, 0, 0, 0, 0, 0, 0, 0, 0, MV_APILEVEL);
+	apireq = VM_Call(cgvm, CG_INIT, clc.serverMessageSequence, clc.lastExecutedServerCommand, clc.clientNum, 0, 0, 0, 0, 0, 0, 0, 0, mv_apienabled->integer);
+	if (apireq > mv_apienabled->integer) {
+		apireq = mv_apienabled->integer;
+	}
 	VM_SetMVAPILevel(cgvm, apireq);
 	Com_DPrintf("CGameVM uses MVAPI level %i.\n", apireq);
 

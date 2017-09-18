@@ -1135,7 +1135,10 @@ static void SV_InitGameVM( qboolean restart ) {
 
 	mvStructConversionDisabled = qfalse;
 
-	apireq = VM_Call(gvm, GAME_INIT, svs.time, Com_Milliseconds(), restart, 0, 0, 0, 0, 0, 0, 0, 0, MV_APILEVEL);
+	apireq = VM_Call(gvm, GAME_INIT, svs.time, Com_Milliseconds(), restart, 0, 0, 0, 0, 0, 0, 0, 0, mv_apienabled->integer);
+	if (apireq > mv_apienabled->integer) {
+		apireq = mv_apienabled->integer;
+	}
 	VM_SetMVAPILevel(gvm, apireq);
 	Com_DPrintf("GameVM uses MVAPI level %i.\n", apireq);
 
