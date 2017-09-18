@@ -15,6 +15,7 @@
 #include <signal.h>
 #include <fcntl.h>
 #include <execinfo.h>
+#include <setjmp.h>
 #ifdef __GNU_LIBRARY__
 #include <gnu/libc-version.h>
 #endif
@@ -735,6 +736,12 @@ Asynchronous Crash Logging
 ==============================================================
 */
 
+typedef struct backtrace_s {
+	int size;
+	void *buf[100];
+} backtrace_t;
+
+static int Sys_Backtrace(void **buffer, int size, const ucontext_t *context);
 static qboolean Sys_CrashWrite(int fd, const void *buf, size_t len);
 static void Sys_CrashWriteVm(int fd);
 static void Sys_SigHandlerFatal(int sig, siginfo_t *info, void *context) {
@@ -742,11 +749,15 @@ static void Sys_SigHandlerFatal(int sig, siginfo_t *info, void *context) {
 	ucontext_t *ucontext = (ucontext_t *)context;
 
 	if (!signalcaught) {
+		backtrace_t trace;
+
 		signalcaught = 1;
 
 		Sys_CrashWrite(crashlogfd, info, sizeof(*info));
 		Sys_CrashWriteVm(crashlogfd);
 		Sys_CrashWrite(crashlogfd, &(ucontext->uc_mcontext), sizeof(mcontext_t));
+		trace.size = Sys_Backtrace(trace.buf, ARRAY_LEN(trace.buf), ucontext);
+		Sys_CrashWrite(crashlogfd, &trace, sizeof(trace));
 		Sys_CrashWrite(crashlogfd, &consoleLog, sizeof(consoleLog));
 		close(crashlogfd);
 	}
@@ -838,6 +849,58 @@ static void Sys_CrashReadVm(int fd) {
 			Sys_CrashRead(fd, *sym, size);
 		}
 	}
+}
+
+static sigjmp_buf invalidFP;
+static void Sys_SigHandlerInvalidFP(int sig) {
+	siglongjmp(invalidFP, 1);
+}
+
+static int Sys_Backtrace(void **buffer, int size, const ucontext_t *context) {
+	volatile int count = 0;
+
+#if defined(__i386__) || defined(__amd64__)
+	// unwind stack manually to make it work with compiled QVM. This
+	// relies on -fno-omit-frame-pointer compiler flag
+	void **fp;
+	void *ip;
+#ifdef __amd64__
+	fp = (void **)context->uc_mcontext.gregs[REG_RBP];
+	ip = (void *)context->uc_mcontext.gregs[REG_RIP];
+#else
+	fp = (void **)context->uc_mcontext.gregs[REG_EBP];
+	ip = (void *)context->uc_mcontext.gregs[REG_EIP];
+#endif
+	buffer[0] = ip;
+	count = 1;
+
+	// stop if frame pointer is invalid (eg rest of the system was
+	// compiled with -fomit-frame-pointer)
+	struct sigaction act = { 0 };
+	struct sigaction old[2];
+	act.sa_handler = Sys_SigHandlerInvalidFP;
+	sigfillset(&act.sa_mask);
+	sigaction(SIGSEGV, &act, &old[0]);
+	sigaction(SIGBUS, &act, &old[1]);
+
+	while (fp && count < size) {
+		if (sigsetjmp(invalidFP, 1) != 0) {
+			break;
+		}
+		buffer[count++] = *(fp + 1);
+		fp = (void **)(*fp);
+	}
+
+	sigaction(SIGSEGV, &old[0], NULL);
+	sigaction(SIGBUS, &old[1], NULL);
+#else
+	// 1. not async-signal-safe
+	// 2. signal may be delivered to non-faulting thread
+	// 3. often works, try anyway
+	count = backtrace(buffer, ARRAY_LEN(buffer));
+#endif
+
+	return count;
 }
 
 static const char *Sys_DescribeSignalCode(int signal, int code) {
@@ -1006,6 +1069,22 @@ static Q_NORETURN void Sys_CrashLogger(int fd, int argc, char *argv[]) {
 	fprintf(f, "     CS: 0x%.4x         DS: 0x%.4x         ES: 0x%.4x         FS: 0x%.4x\n", GREG(CS), GREG(DS), GREG(ES), GREG(FS));
 	fprintf(f, " EFLAGS: 0x%.8x    EIP: 0x%.8x     GS: 0x%.4x         SS: 0x%.4x\n", GREG(EFL), GREG(EIP), GREG(GS), GREG(SS));
 #endif
+
+	fprintf(f, "\n");
+	fprintf(f, "---Backtrace----------------------------\n");
+	fprintf(f, "\n");
+
+	backtrace_t trace;
+
+	if (!Sys_CrashRead(fd, &trace, sizeof(trace))) {
+		goto exit_failure;
+	}
+
+	for (int i = 0; i < trace.size; i++) {
+		fprintf(f, "#%-2d ", i);
+		Sys_BacktraceSymbol(f, trace.buf[i]);
+		fprintf(f, "\n");
+	}
 
 	fprintf(f, "\n");
 	fprintf(f, "---Console Log--------------------------\n");
