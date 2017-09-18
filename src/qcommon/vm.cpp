@@ -279,18 +279,9 @@ void VM_LoadSymbols( vm_t *vm ) {
 	} mapfile;
 	char		name[MAX_QPATH];
 	char		symbols[MAX_QPATH];
-	int			count = 0;
 	int			i;
 
 	if ( vm->dllHandle ) {
-		return;
-	}
-
-	COM_StripExtension(vm->name, name, sizeof(name));
-	Com_sprintf( symbols, sizeof( symbols ), "vm/%s.map", name );
-	FS_ReadFile( symbols, &mapfile.v );
-	if ( !mapfile.c ) {
-		Com_Printf( "Couldn't load symbol file: %s\n", symbols );
 		return;
 	}
 
@@ -306,22 +297,22 @@ void VM_LoadSymbols( vm_t *vm ) {
 		const char	*symName;
 
 		symName = "CallDoSyscall";
-		sym = *prev = (vmSymbol_t *)Hunk_Alloc( sizeof( *sym ) + strlen( symName ) + 1, h_high );
+		sym = *prev = (vmSymbol_t *)Hunk_Alloc( sizeof( *sym ) + strlen( symName ), h_high );
 		Q_strncpyz( sym->symName, symName, strlen( symName ) + 1 );
 		sym->symValue = 0;
 
 		symName = "CallProcedure";
-		sym = sym->next = (vmSymbol_t *)Hunk_Alloc( sizeof( *sym ) + strlen( symName ) + 1, h_high );
+		sym = sym->next = (vmSymbol_t *)Hunk_Alloc( sizeof( *sym ) + strlen( symName ), h_high );
 		Q_strncpyz( sym->symName, symName, strlen( symName ) + 1 );
 		sym->symValue = vm->callProcOfs;
 
 		// "CallProcedureSyscall" used by ioq3 optimizer, tail of "CallProcedure"
 		symName = "CallProcedure";
-		sym = sym->next = (vmSymbol_t *)Hunk_Alloc( sizeof( *sym ) + strlen( symName ) + 1, h_high );
+		sym = sym->next = (vmSymbol_t *)Hunk_Alloc( sizeof( *sym ) + strlen( symName ), h_high );
 		Q_strncpyz( sym->symName, symName, strlen( symName ) + 1 );
 		sym->symValue = vm->callProcOfsSyscall;
 
-		count += 3;
+		vm->numSymbols = 3;
 		prev = &sym->next;
 		sym->next = NULL;
 	}
@@ -330,57 +321,76 @@ void VM_LoadSymbols( vm_t *vm ) {
 	// parse symbols
 	//
 
-	const char *text_p;
-	const char *token;
-	int			chars;
-	int			segment;
-	int			value;
+	COM_StripExtension(vm->name, name, sizeof(name));
+	Com_sprintf( symbols, sizeof( symbols ), "vm/%s.map", name );
+	FS_ReadFile( symbols, &mapfile.v );
 
-	text_p = mapfile.c;
+	if ( mapfile.c ) {
+		const char *text_p;
+		const char *token;
+		int			chars;
+		int			segment;
+		int			value;
+		int			count = 0;
 
-	while ( 1 ) {
-		token = COM_Parse( &text_p );
-		if ( !token[0] ) {
-			break;
+		text_p = mapfile.c;
+
+		while ( 1 ) {
+			token = COM_Parse( &text_p );
+			if ( !token[0] ) {
+				break;
+			}
+			segment = ParseHex( token );
+			if ( segment ) {
+				COM_Parse( &text_p );
+				COM_Parse( &text_p );
+				continue;		// only load code segment values
+			}
+
+			token = COM_Parse( &text_p );
+			if ( !token[0] ) {
+				Com_Printf( "WARNING: incomplete line at end of file\n" );
+				break;
+			}
+			value = ParseHex( token );
+			if ( value < 0 || vm->instructionCount <= value ) {
+				COM_Parse( &text_p );
+				continue;		// don't load syscalls
+			}
+
+			token = COM_Parse( &text_p );
+			if ( !token[0] ) {
+				Com_Printf( "WARNING: incomplete line at end of file\n" );
+				break;
+			}
+
+
+			chars = (int)strlen( token );
+			sym = (vmSymbol_t *)Hunk_Alloc( sizeof( *sym ) + chars, h_high );
+			*prev = sym;
+			prev = &sym->next;
+			sym->next = NULL;
+			sym->symInstr = value;
+			sym->symValue = vm->instructionPointers[value] - vm->instructionPointers[0] + vm->entryOfs;
+			Q_strncpyz( sym->symName, token, chars + 1 );
+
+			count++;
 		}
-		segment = ParseHex( token );
-		if ( segment ) {
-			COM_Parse( &text_p );
-			COM_Parse( &text_p );
-			continue;		// only load code segment values
-		}
 
-		token = COM_Parse( &text_p );
-		if ( !token[0] ) {
-			Com_Printf( "WARNING: incomplete line at end of file\n" );
-			break;
-		}
-		value = ParseHex( token );
-		if ( value < 0 || vm->instructionCount <= value ) {
-			COM_Parse( &text_p );
-			continue;		// don't load syscalls
-		}
-
-		token = COM_Parse( &text_p );
-		if ( !token[0] ) {
-			Com_Printf( "WARNING: incomplete line at end of file\n" );
-			break;
-		}
-
-
-		chars = (int)strlen( token );
-		sym = (vmSymbol_t *)Hunk_Alloc( sizeof( *sym ) + chars, h_high );
-		*prev = sym;
+		vm->numSymbols += count;
+		Com_Printf( "%i symbols parsed from %s\n", count, symbols );
+		FS_FreeFile( mapfile.v );
+	} else {
+		const char	*symName = "vmMain";
+		sym = *prev = (vmSymbol_t *)Hunk_Alloc( sizeof( *sym ) + strlen( symName ), h_high );
 		prev = &sym->next;
-		sym->next = NULL;
-		sym->symInstr = value;
-		sym->symValue = vm->instructionPointers[value] - vm->instructionPointers[0] + vm->entryOfs;
-		Q_strncpyz( sym->symName, token, chars + 1 );
+		Q_strncpyz( sym->symName, symName, strlen( symName ) + 1 );
+		sym->symValue = vm->entryOfs;
+		vm->numSymbols += 1;
 
-		count++;
+		Com_Printf( "Couldn't load symbol file: %s\n", symbols );
 	}
 
-	vm->numSymbols = count;
 
 	if ( vm->compiled && com_developer->integer )
 	{
@@ -411,10 +421,6 @@ void VM_LoadSymbols( vm_t *vm ) {
 		}
 	}
 #endif // DEBUG_VM
-
-	vm->numSymbols = count;
-	Com_Printf( "%i symbols parsed from %s\n", count, symbols );
-	FS_FreeFile( mapfile.v );
 }
 
 /*
