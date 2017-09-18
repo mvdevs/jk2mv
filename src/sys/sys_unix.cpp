@@ -737,6 +737,8 @@ Asynchronous Crash Logging
 ==============================================================
 */
 
+#define Q_BACKTRACE
+
 typedef struct backtrace_s {
 	int size;
 	void *buf[100];
@@ -855,13 +857,16 @@ static void Sys_CrashReadVm(int fd) {
 }
 
 static void Sys_CrashWriteContext(int fd, const ucontext_t *context) {
+#ifdef __GNU_LIBRARY__
 #if defined(__i386__) || defined(__amd64__)
 		Sys_CrashWrite(crashlogfd, context, sizeof(ucontext_t));
 		Sys_CrashWrite(crashlogfd, context->uc_mcontext.fpregs, sizeof(*context->uc_mcontext.fpregs));
 #endif
+#endif
 }
 
 static qboolean Sys_CrashReadContext(int fd, ucontext_t *context) {
+#ifdef __GNU_LIBRARY__
 #if defined(__i386__) || defined(__amd64__)
 	context->uc_mcontext.fpregs = (fpregset_t)malloc(sizeof(context->uc_mcontext.fpregs));
 
@@ -871,9 +876,10 @@ static qboolean Sys_CrashReadContext(int fd, ucontext_t *context) {
 	if (!Sys_CrashRead(fd, context->uc_mcontext.fpregs, sizeof(*context->uc_mcontext.fpregs))) {
 		return qfalse;
 	}
+#endif
+#endif
 
 	return qtrue;
-#endif
 }
 
 static sigjmp_buf invalidFP;
@@ -883,8 +889,7 @@ static void Sys_SigHandlerInvalidFP(int sig) {
 
 static int Sys_Backtrace(void **buffer, int size, const ucontext_t *context) {
 	volatile int count = 0;
-
-#if defined(__i386__) || defined(__amd64__)
+#if defined(__GNU_LIBRARY__) && (defined(__i386__) || defined(__amd64__))
 	// unwind stack manually to make it work with compiled QVM. This
 	// relies on -fno-omit-frame-pointer compiler flag
 	void **fp;
@@ -919,22 +924,21 @@ static int Sys_Backtrace(void **buffer, int size, const ucontext_t *context) {
 
 	sigaction(SIGSEGV, &old[0], NULL);
 	sigaction(SIGBUS, &old[1], NULL);
-#else
-	// 1. not async-signal-safe
-	// 2. signal may be delivered to non-faulting thread
-	// 3. often works, try anyway
+#elif defined(Q_BACKTRACE)
+	// not async-signal-safe but often works, try anyway
 	count = backtrace(buffer, ARRAY_LEN(buffer));
 #endif
-
 	return count;
 }
 
 static const char *Sys_DescribeSignalCode(int signal, int code) {
 	switch (code) {
 	case SI_USER:		return "kill";
-	case SI_KERNEL:		return "sent by the kernel";
 	case SI_QUEUE: 		return "sigqueue";
+#ifdef __linux__
+	case SI_KERNEL:		return "sent by the kernel";
 	case SI_TKILL: 		return "tkill or tgkill";
+#endif
 	}
 
 	switch (signal) {
@@ -973,8 +977,10 @@ static const char *Sys_DescribeSignalCode(int signal, int code) {
 		case BUS_ADRALN:	return "invalid address alignment";
 		case BUS_ADRERR:	return "nonexistent physical address";
 		case BUS_OBJERR:	return "object-specific hardware error";
+#ifdef __linux__
 		case BUS_MCEERR_AR:	return "hardware memory error consumed on a machine check; action required";
 		case BUS_MCEERR_AO:	return "hardware memory error detected in process but not consumed; action optional";
+#endif
 		}
 		break;
 	case SIGTRAP:
@@ -995,15 +1001,19 @@ static void Sys_BacktraceSymbol(FILE *f, void *p) {
 	if (desc) {
 		fputs(desc, f);
 	} else {
+		char **sym = NULL;
+#ifdef Q_BACKTRACE
 		// this doesn't know about shared objects dynamically loaded after
 		// fork() in the main process, but it's enough
-		char **sym = backtrace_symbols(&p, 1);
+		sym = backtrace_symbols(&p, 1);
 		if (sym) {
 			fputs(*sym, f);
-		} else {
-			fprintf(f, "[%p]", p);
 		}
 		free(sym);
+#endif
+		if (!sym) {
+			fprintf(f, "[%p]", p);
+		}
 	}
 }
 
@@ -1071,8 +1081,8 @@ static Q_NORETURN void Sys_CrashLogger(int fd, int argc, char *argv[]) {
 		goto exit_failure;
 	}
 
+#ifdef __GNU_LIBRARY__
 #define GREG(X) (context.uc_mcontext.gregs[REG_ ## X])
-
 #if defined(__amd64__)
 	struct selectors_s {
 		unsigned short cs, gs, fs, ss;
@@ -1151,6 +1161,7 @@ static Q_NORETURN void Sys_CrashLogger(int fd, int argc, char *argv[]) {
 		(unsigned)(fpregs->cssel & 0xff), (unsigned)fpregs->ipoff,
 		(unsigned)(fpregs->datasel & 0xff), (unsigned)fpregs->dataoff);
 #endif
+#endif // __GNU_LIBRARY__
 
 	fprintf(f, "\n");
 	fprintf(f, "---Backtrace----------------------------\n");
