@@ -140,6 +140,7 @@ qboolean Sys_LowPhysicalMemory();
 void Sys_SetProcessorAffinity( void );
 
 int Sys_FLock(int fd, flockCmd_t cmd, qboolean nb);
+void Sys_PrintBacktrace(void);
 
 typedef enum graphicsApi_e
 {

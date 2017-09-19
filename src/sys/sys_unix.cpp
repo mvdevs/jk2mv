@@ -31,6 +31,8 @@
 
 #include <mv_setup.h>
 
+#define Q_BACKTRACE 1
+
 //=============================================================================
 
 // Used to determine CD Path
@@ -729,6 +731,39 @@ int Sys_FLock(int fd, flockCmd_t cmd, qboolean nb) {
 	return fcntl(fd, nb ? F_SETLK : F_SETLKW, &l);
 }
 
+static int Sys_Backtrace(void **buffer, int size);
+void Sys_PrintBacktrace(void) {
+#define BT_LEN 20
+	void *buf[BT_LEN + 2];
+	int size;
+
+	size = Sys_Backtrace(buf, BT_LEN + 2);
+
+	for (int i = 2; i < size; i++) {
+		const char *desc = VM_SymbolForCompiledPointer(buf[i]);
+#ifdef Q_BACKTRACE
+		char **sym = NULL;
+		if (!desc) {
+			sym = backtrace_symbols(&buf[i], 1);
+			if (sym) {
+				desc = sym[0];
+			}
+		}
+#endif
+		if (!desc) {
+			desc = va("[%p]", buf[i]);
+		}
+
+		Com_Printf("  #%-2d %s\n", i - 2, desc);
+
+#ifdef Q_BACKTRACE
+		if (sym) {
+			free(sym);
+		}
+#endif
+	}
+}
+
 /*
 ==============================================================
 
@@ -737,14 +772,12 @@ Asynchronous Crash Logging
 ==============================================================
 */
 
-#define Q_BACKTRACE
-
 typedef struct backtrace_s {
 	int size;
 	void *buf[100];
 } backtrace_t;
 
-static int Sys_Backtrace(void **buffer, int size, const ucontext_t *context);
+static int Sys_CrashBacktrace(void **buffer, int size, const ucontext_t *context);
 static qboolean Sys_CrashWrite(int fd, const void *buf, size_t len);
 static void Sys_CrashWriteVm(int fd);
 static void Sys_CrashWriteContext(int fd, const ucontext_t *context);
@@ -760,7 +793,7 @@ static void Sys_SigHandlerFatal(int sig, siginfo_t *info, void *context) {
 		Sys_CrashWrite(crashlogfd, info, sizeof(*info));
 		Sys_CrashWriteVm(crashlogfd);
 		Sys_CrashWriteContext(crashlogfd, ucontext);
-		trace.size = Sys_Backtrace(trace.buf, ARRAY_LEN(trace.buf), ucontext);
+		trace.size = Sys_CrashBacktrace(trace.buf, ARRAY_LEN(trace.buf), ucontext);
 		Sys_CrashWrite(crashlogfd, &trace, sizeof(trace));
 		Sys_CrashWrite(crashlogfd, &consoleLog, sizeof(consoleLog));
 		close(crashlogfd);
@@ -887,48 +920,77 @@ static void Sys_SigHandlerInvalidFP(int sig) {
 	siglongjmp(invalidFP, 1);
 }
 
-static int Sys_Backtrace(void **buffer, int size, const ucontext_t *context) {
+int __attribute__((noinline)) Sys_BacktraceFrom(void **buffer, int size, void **fp, void *ip) {
 	volatile int count = 0;
-#if defined(__GNU_LIBRARY__) && (defined(__i386__) || defined(__amd64__))
-	// unwind stack manually to make it work with compiled QVM. This
-	// relies on -fno-omit-frame-pointer compiler flag
-	void **fp;
-	void *ip;
-#ifdef __amd64__
-	fp = (void **)context->uc_mcontext.gregs[REG_RBP];
-	ip = (void *)context->uc_mcontext.gregs[REG_RIP];
-#else
-	fp = (void **)context->uc_mcontext.gregs[REG_EBP];
-	ip = (void *)context->uc_mcontext.gregs[REG_EIP];
-#endif
-	buffer[0] = ip;
-	count = 1;
 
-	// stop if frame pointer is invalid (eg rest of the system was
-	// compiled with -fomit-frame-pointer)
-	struct sigaction act;
-	struct sigaction old[2];
-	memset(&act, 0, sizeof(act));
-	act.sa_handler = Sys_SigHandlerInvalidFP;
-	sigfillset(&act.sa_mask);
-	sigaction(SIGSEGV, &act, &old[0]);
-	sigaction(SIGBUS, &act, &old[1]);
+	if (ip)
+	{
+		// unwind stack manually to make it work with compiled QVM. This
+		// relies on -fno-omit-frame-pointer compiler flag
+		buffer[0] = ip;
+		count = 1;
 
-	while (fp && count < size) {
-		if (sigsetjmp(invalidFP, 1) != 0) {
-			break;
+		// stop if frame pointer is invalid (eg rest of the system was
+		// compiled with -fomit-frame-pointer)
+		struct sigaction act;
+		struct sigaction old[2];
+		memset(&act, 0, sizeof(act));
+		act.sa_handler = Sys_SigHandlerInvalidFP;
+		sigfillset(&act.sa_mask);
+		sigaction(SIGSEGV, &act, &old[0]);
+		sigaction(SIGBUS, &act, &old[1]);
+
+		while (fp && count < size) {
+			if (sigsetjmp(invalidFP, 1) != 0) {
+				break;
+			}
+			buffer[count++] = *(fp + 1);
+			fp = (void **)(*fp);
 		}
-		buffer[count++] = *(fp + 1);
-		fp = (void **)(*fp);
-	}
 
-	sigaction(SIGSEGV, &old[0], NULL);
-	sigaction(SIGBUS, &old[1], NULL);
-#elif defined(Q_BACKTRACE)
-	// not async-signal-safe but often works, try anyway
-	count = backtrace(buffer, ARRAY_LEN(buffer));
+		sigaction(SIGSEGV, &old[0], NULL);
+		sigaction(SIGBUS, &old[1], NULL);
+	}
+#ifdef Q_BACKTRACE
+	else
+	{
+		// not async-signal-safe but often works, try anyway
+		count = backtrace(buffer, ARRAY_LEN(buffer));
+	}
 #endif
 	return count;
+}
+
+static int Sys_CrashBacktrace(void **buffer, int size, const ucontext_t *context) {
+	void **fp;
+	void *ip;
+#if defined(__GNU_LIBRARY__) && defined(__amd64__)
+	fp = (void **)context->uc_mcontext.gregs[REG_RBP];
+	ip = (void *)context->uc_mcontext.gregs[REG_RIP];
+#elif defined(__GNU_LIBRARY__) && defined(__i386__)
+	fp = (void **)context->uc_mcontext.gregs[REG_EBP];
+	ip = (void *)context->uc_mcontext.gregs[REG_EIP];
+#else
+	fp = NULL;
+	ip = NULL;
+#endif
+	return Sys_BacktraceFrom(buffer, size, fp, ip);
+}
+
+int __attribute__((noinline)) Sys_Backtrace(void **buffer, int size) {
+	void **fp;
+	void *ip;
+#if defined(__amd64__)
+	__asm__ ("movq %%rbp, %0\n" : "=rm" (fp));
+	__asm__ ("leaq (%%rip), %0\n" : "=r" (ip));
+#elif defined(__i386__)
+	__asm__ ("movl %%ebp, %0\n" : "=rm" (fp));
+	__asm__ ("call next\n" "next: popl %0\n" : "=r" (ip));
+#else
+	fp = NULL;
+	ip = NULL;
+#endif
+	return Sys_BacktraceFrom(buffer, size, fp, ip);
 }
 
 static const char *Sys_DescribeSignalCode(int signal, int code) {

@@ -495,6 +495,8 @@ int Sys_FLock(int fd, flockCmd_t cmd, qboolean nb) {
 	return res ? 0 : -1;
 }
 
+void Sys_PrintBacktrace(void) {}
+
 void Sys_PlatformExit(void)
 {
 	if (timerResolution)
