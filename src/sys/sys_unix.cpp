@@ -928,10 +928,18 @@ int __attribute__((noinline)) Sys_BacktraceFrom(void **buffer, int size, void **
 		// unwind stack manually to make it work with compiled QVM. This
 		// relies on -fno-omit-frame-pointer compiler flag
 		buffer[0] = ip;
-		count = 1;
+
 
 		// stop if frame pointer is invalid (eg rest of the system was
 		// compiled with -fomit-frame-pointer)
+
+		// fau - I'm not sure if this is correct approach. First,
+		// POSIX says a behaviour is undefined after ignoring SIGSEGV,
+		// not sure if a longjmp is considered ignoring. Second,
+		// longjmp isn't on async-signal-safe list. Third, apparently
+		// C89 restricts longjmp to only one level of signal handling
+		// and this is called in Sys_SigHandlerFatal().
+
 		struct sigaction act;
 		struct sigaction old[2];
 		memset(&act, 0, sizeof(act));
@@ -940,11 +948,14 @@ int __attribute__((noinline)) Sys_BacktraceFrom(void **buffer, int size, void **
 		sigaction(SIGSEGV, &act, &old[0]);
 		sigaction(SIGBUS, &act, &old[1]);
 
-		while (fp && count < size) {
+		for(count = 1; count < size; count++) {
+			if (fp == NULL) {
+				break;
+			}
 			if (sigsetjmp(invalidFP, 1) != 0) {
 				break;
 			}
-			buffer[count++] = *(fp + 1);
+			buffer[count] = *(fp + 1);
 			fp = (void **)(*fp);
 		}
 
