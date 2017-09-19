@@ -423,6 +423,8 @@ void RE_RegisterModels_Info_f( void )
 
 		#ifdef _DEBUG
 		ri.Printf( PRINT_ALL, ", lvl %d\n",CachedModel.iLastLevelUsedOn);
+		#else
+		ri.Printf( PRINT_ALL, "\n");
 		#endif
 
 		iTotalBytes += CachedModel.iAllocSize;
