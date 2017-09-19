@@ -286,15 +286,22 @@ Q_NORETURN void QDECL Com_Error( errorParm_t code, const char *fmt, ... ) {
 		Cvar_Set("com_errorMessage", com_errorMessage);
 	}
 
-	if ( code == ERR_SERVERDISCONNECT ) {
+	switch (code) {
+	case ERR_SERVERDISCONNECT:
 		VM_Forced_Unload_Start();
 		CL_Disconnect( qtrue );
 		CL_FlushMemory( );
 		VM_Forced_Unload_Done();
 		com_errorEntered = qfalse;
 		longjmp(abortframe, -1);
-	} else if ( code == ERR_DROP || code == ERR_DISCONNECT ) {
-		Com_Printf ("********************\nERROR: %s\n********************\n", com_errorMessage);
+		break;
+	case ERR_DROP:
+		Com_Printf("********************\n");
+		Com_Printf("ERROR: %s\n", com_errorMessage);
+		Sys_PrintBacktrace();
+		Com_Printf("********************\n");
+		// fallthrough
+	case ERR_DISCONNECT:
 		VM_Forced_Unload_Start();
 		SV_Shutdown (va("Server crashed: %s\n",  com_errorMessage));
 		CL_Disconnect( qtrue );
@@ -302,7 +309,7 @@ Q_NORETURN void QDECL Com_Error( errorParm_t code, const char *fmt, ... ) {
 		VM_Forced_Unload_Done();
 		com_errorEntered = qfalse;
 		longjmp(abortframe, -1);
-	} else {
+	default:
 		VM_Forced_Unload_Start();
 		CL_Shutdown ();
 		SV_Shutdown (va("Server fatal crashed: %s\n", com_errorMessage));

@@ -160,6 +160,7 @@ void Q_NORETURN QDECL Sys_Error(const char *error, ...) {
 	va_end(argptr);
 
 	Sys_Print(string,qfalse);
+	Sys_PrintBacktrace();
 
 	// Only print Sys_ErrorDialog for client binary. The dedicated
 	// server binary is meant to be a command line program so you would
