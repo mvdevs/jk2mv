@@ -670,6 +670,7 @@ int		FS_filelength( fileHandle_t f );
 
 char	*FS_BuildOSPath(const char *base, const char *game, const char *qpath);
 char	*FS_BuildOSPath(const char *base, const char *path);
+qboolean FS_CreatePath (char *OSPath);
 
 int		FS_FTell( fileHandle_t f );
 // where are we?

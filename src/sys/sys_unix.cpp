@@ -1027,14 +1027,25 @@ static Q_NORETURN void Sys_CrashLogger(int fd, int argc, char *argv[]) {
 
 	Sys_CrashReadVm(fd);
 
-	FILE		*f;
+	FILE		*f = NULL;
 	time_t		rawtime;
 	char		timeStr[32];
+	char		*path;
+	char		crashlogName[MAX_OSPATH];
 
 	time(&rawtime);
 	strftime(timeStr, sizeof(timeStr), "%Y-%m-%d_%H-%M-%S", localtime(&rawtime)); // or gmtime
+	Com_sprintf(crashlogName, sizeof(crashlogName), "crashlog-%s.txt", timeStr);
+	path = FS_BuildOSPath(Sys_DefaultHomePath(), crashlogName);
 
-	f = fopen(va("crashlog-%s.txt", timeStr), "w");
+	if (FS_CreatePath(homePath)) {
+		f = fopen(path, "w");
+	}
+
+	if ( f == NULL) {
+		f = fopen(crashlogName, "w");
+	}
+
 	if (f == NULL) {
 		f = stderr;
 	}
