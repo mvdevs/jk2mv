@@ -1420,7 +1420,7 @@ Also called by bot code
 ==================
 */
 void SV_ClientThink (int client, const usercmd_t *cmd) {
-	if (client < 0 || sv_maxclients->integer < client) {
+	if (client < 0 || sv_maxclients->integer <= client) {
 		Com_DPrintf( S_COLOR_YELLOW "SV_ClientThink: bad clientNum %i\n", client );
 		return;
 	}

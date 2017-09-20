@@ -592,7 +592,7 @@ qboolean SV_BotGetConsoleMessage( int client, char *buf, int size )
 	client_t	*cl;
 	int			index;
 
-	if (client < 0 || sv_maxclients->integer < client) {
+	if (client < 0 || sv_maxclients->integer <= client) {
 		Com_DPrintf( S_COLOR_YELLOW "SV_BotGetSnapshotEntity: bad clientNum %i\n", client );
 		return qfalse;
 	}
@@ -646,7 +646,7 @@ int SV_BotGetSnapshotEntity( int client, int sequence ) {
 	client_t			*cl;
 	clientSnapshot_t	*frame;
 
-	if (client < 0 || sv_maxclients->integer < client) {
+	if (client < 0 || sv_maxclients->integer <= client) {
 		Com_DPrintf( S_COLOR_YELLOW "SV_BotGetSnapshotEntity: bad clientNum %i\n", client );
 		return -1;
 	}
