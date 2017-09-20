@@ -542,10 +542,10 @@ void SVC_RemoteCommand( netadr_t from, msg_t *msg ) {
 	if ( !strlen( sv_rconPassword->string ) ||
 		strcmp (Cmd_Argv(1), sv_rconPassword->string) ) {
 		valid = qfalse;
-		Com_DPrintf ("Bad rcon from %s:\n%s\n", NET_AdrToString (from), Cmd_Argv(2) );
+		Com_DPrintf ("Bad rcon from %s: %s\n", NET_AdrToString (from), Cmd_ArgsFrom(2) );
 	} else {
 		valid = qtrue;
-		Com_DPrintf ("Rcon from %s:\n%s\n", NET_AdrToString (from), Cmd_Argv(2) );
+		Com_DPrintf ("Rcon from %s: %s\n", NET_AdrToString (from), Cmd_ArgsFrom(2) );
 	}
 
 	// start redirecting all print outputs to the packet
