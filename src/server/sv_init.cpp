@@ -213,7 +213,7 @@ void SV_CreateBaseline( void ) {
 	sharedEntity_t *svent;
 	int				entnum;
 
-	for ( entnum = 1; entnum < sv.num_entities ; entnum++ ) {
+	for ( entnum = 0; entnum < sv.num_entities ; entnum++ ) {
 		svent = SV_GentityNum(entnum);
 		if (!svent->r.linked) {
 			continue;
