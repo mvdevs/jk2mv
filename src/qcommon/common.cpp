@@ -122,7 +122,6 @@ static void Com_Puts_Ext( qboolean extendedColors, const char *msg )
 			*rd_buffer = 0;
 		}
 		Q_strcat(rd_buffer, rd_buffersize, msg);
-		return;
 	}
 
 	// echo to console if we're not a dedicated server
