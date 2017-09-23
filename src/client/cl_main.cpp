@@ -20,8 +20,6 @@
 #include "../qcommon/INetProfile.h"
 #endif
 
-qboolean disconnecting;
-
 cvar_t	*cl_nodelta;
 cvar_t	*cl_debugMove;
 
@@ -750,13 +748,6 @@ void CL_FlushMemory( void ) {
 		Hunk_ClearToMark();
 	}
 
-	if (disconnecting && !com_sv_running->integer) {
-		disconnecting = qfalse;
-
-		FS_PureServerSetReferencedPaks("", "");
-		FS_Restart(clc.checksumFeed);
-	}
-
 	CL_StartHunkUsers();
 }
 
@@ -871,7 +862,12 @@ void CL_Disconnect( qboolean showMainMenu ) {
 
 	if (cls.state >= CA_CHALLENGING) {
 		MV_SetCurrentGameversion(VERSION_UNDEF);
-		disconnecting = qtrue;
+
+		FS_PureServerSetReferencedPaks("", "");
+		// change checksum feed so that next FS_ConditionalRestart()
+		// works when connecting back to the same server
+		clc.checksumFeed = 0;
+		FS_Restart(clc.checksumFeed);
 	}
 
 
