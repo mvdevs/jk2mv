@@ -1221,12 +1221,13 @@ void CL_InitUI(qboolean mainMenu) {
 		Com_Error( ERR_FATAL, "VM_Create on UI failed" );
 	}
 
+	cls.uiStarted = qtrue;
 
 	// sanity check
 	v = VM_Call( uivm, UI_GETAPIVERSION );
 	if (v != UI_API_16_VERSION && v != UI_API_15_VERSION) {
+		CL_ShutdownUI();
 		Com_Error(ERR_DROP, "User Interface is version %d, expected %d or %d", v, UI_API_16_VERSION, UI_API_15_VERSION);
-		cls.uiStarted = qfalse;
 	} else {
 		int apireq;
 
@@ -1237,6 +1238,20 @@ void CL_InitUI(qboolean mainMenu) {
 		if (apireq >= 1) {
 			VM_Call(uivm, MVAPI_AFTER_INIT);
 		}
+	}
+}
+
+/*
+====================
+CL_InitMVMenu
+
+Swap UI with mvmenu if it's not loaded already
+====================
+*/
+void CL_InitMVMenu( void ) {
+	if (uigameversion != VERSION_UNDEF) {
+		CL_ShutdownUI();
+		CL_InitUI(qtrue);
 	}
 }
 

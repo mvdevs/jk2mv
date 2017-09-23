@@ -751,7 +751,6 @@ void CL_FlushMemory( void ) {
 	}
 
 	if (disconnecting && !com_sv_running->integer) {
-		MV_SetCurrentGameversion(VERSION_UNDEF);
 		disconnecting = qfalse;
 
 		FS_PureServerSetReferencedPaks("", "");
@@ -868,11 +867,10 @@ void CL_Disconnect( qboolean showMainMenu ) {
 		CL_WritePacket();
 		CL_WritePacket();
 		CL_WritePacket();
-
-		disconnecting = qtrue;
 	}
 
 	if (cls.state >= CA_CHALLENGING) {
+		MV_SetCurrentGameversion(VERSION_UNDEF);
 		disconnecting = qtrue;
 	}
 
@@ -1093,9 +1091,6 @@ void CL_Connect_f( void ) {
 
 	CL_Disconnect( qtrue );
 	Con_Close();
-
-	// needed because the protocol could have been changed
-	CL_FlushMemory();
 
 	Q_strncpyz( cls.servername, server, sizeof(cls.servername) );
 
@@ -1738,8 +1733,7 @@ void CL_InitDownloads(void) {
 
 			// to get the download popup jk2mvmenu must be loaded instaed of the normal ui
 			// CL_DownloadsComplete restarts the ui after the download process anyway
-			CL_ShutdownUI();
-			CL_InitUI(qtrue);
+			CL_InitMVMenu();
 
 			CL_NextDownload();
 			return;
@@ -2613,7 +2607,6 @@ void CL_StartHunkUsers( void ) {
 	}
 
 	if ( !cls.uiStarted ) {
-		cls.uiStarted = qtrue;
 		CL_InitUI(MV_GetCurrentGameversion() == VERSION_UNDEF ? qtrue : qfalse);
 	}
 }
@@ -3115,10 +3108,8 @@ void CL_ServerInfoPacket( netadr_t from, msg_t *msg ) {
 					MV_SetCurrentGameversion(VERSION_1_02);
 					break;
 				case PROTOCOL16:
-					MV_SetCurrentGameversion(VERSION_1_04);
-					break;
 				default:
-					MV_SetCurrentGameversion(VERSION_UNDEF);
+					MV_SetCurrentGameversion(VERSION_1_04);
 					break;
 			}
 		}
@@ -3394,10 +3385,8 @@ void CL_ServerStatusResponse( netadr_t from, msg_t *msg ) {
 					MV_SetCurrentGameversion(VERSION_1_02);
 					break;
 				case PROTOCOL16:
-					MV_SetCurrentGameversion(VERSION_1_04);
-					break;
 				default:
-					MV_SetCurrentGameversion(VERSION_UNDEF);
+					MV_SetCurrentGameversion(VERSION_1_04);
 					break;
 			}
 		}

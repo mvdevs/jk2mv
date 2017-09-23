@@ -621,6 +621,7 @@ qboolean CL_MVAPI_ControlFixes(int fixes);
 //
 void CL_InitUI(qboolean mainMenu);
 void CL_ShutdownUI( void );
+void CL_InitMVMenu( void );
 int Key_GetCatcher( void );
 void Key_SetCatcher( int catcher );
 void LAN_LoadCachedServers();
