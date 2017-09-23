@@ -1590,6 +1590,10 @@ void CL_BeginDownload( const char *localName, const char *remoteName ) {
 		Cvar_Set("cl_downloadProtocol", "UDP");
 	}
 
+	// to get the download popup jk2mvmenu must be loaded instaed of the normal ui
+	// CL_DownloadsComplete restarts the ui after the download process anyway
+	CL_InitMVMenu();
+
 	VM_Call(uivm, UI_SET_ACTIVE_MENU, UIMENU_MV_DOWNLOAD_POPUP);
 	WIN_SetTaskbarState(TBS_NOTIFY, 0, 0);
 }
@@ -1730,10 +1734,6 @@ void CL_InitDownloads(void) {
 
 		if (*clc.downloadList && (clc.udpdl || clc.httpdl[0])) {
 			cls.state = CA_CONNECTED;
-
-			// to get the download popup jk2mvmenu must be loaded instaed of the normal ui
-			// CL_DownloadsComplete restarts the ui after the download process anyway
-			CL_InitMVMenu();
 
 			CL_NextDownload();
 			return;
