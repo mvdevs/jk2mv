@@ -320,8 +320,44 @@ void VM_LoadSymbols( vm_t *vm ) {
 	// parse symbols
 	//
 
+	fileHandle_t	f;
+	unsigned long	crc = 0;
+	const char		*mapFile = NULL;
+
+	// load predefined map files for retail modules
 	COM_StripExtension(vm->name, name, sizeof(name));
-	Com_sprintf( symbols, sizeof( symbols ), "vm/%s.map", name );
+	Com_sprintf(symbols, sizeof( symbols ), "vm/%s.qvm", name);
+	FS_FOpenFileReadHash(symbols, &f, qfalse, &crc);
+	FS_FCloseFile(f);
+
+#define CRC_ASSETS0_JK2MPGAME_QVM	1115512220
+#define CRC_ASSETS2_JK2MPGAME_QVM	2662605590
+#define CRC_ASSETS5_JK2MPGAME_QVM	1353136214
+#define CRC_ASSETS0_CGAME_QVM		1542843754
+#define CRC_ASSETS2_CGAME_QVM		3929377845
+#define CRC_ASSETS5_CGAME_QVM		3922670639
+#define CRC_ASSETS0_UI_QVM			2109062948
+#define CRC_ASSETS2_UI_QVM			2883122120
+#define CRC_ASSETS5_UI_QVM			14163
+
+	switch (crc) {
+	case CRC_ASSETS0_JK2MPGAME_QVM:	mapFile = "vm/jk2mpgame_102.map";	break;
+	case CRC_ASSETS2_JK2MPGAME_QVM:	mapFile = "vm/jk2mpgame_103.map";	break;
+	case CRC_ASSETS5_JK2MPGAME_QVM:	mapFile = "vm/jk2mpgame_104.map";	break;
+	case CRC_ASSETS0_CGAME_QVM:		mapFile = "vm/cgame_102.map";		break;
+	case CRC_ASSETS2_CGAME_QVM:		mapFile = "vm/cgame_103.map";		break;
+	case CRC_ASSETS5_CGAME_QVM:		mapFile = "vm/cgame_104.map";		break;
+	case CRC_ASSETS0_UI_QVM:		mapFile = "vm/ui_102.map";			break;
+	case CRC_ASSETS2_UI_QVM:		mapFile = "vm/ui_103.map";			break;
+	case CRC_ASSETS5_UI_QVM:		mapFile = "vm/ui_104.map";			break;
+	}
+
+	if (mapFile) {
+		Q_strncpyz(symbols, mapFile, sizeof(symbols));
+	} else {
+		Com_sprintf(symbols, sizeof(symbols), "vm/%s.map", name);
+	}
+
 	FS_ReadFile( symbols, &mapfile.v );
 
 	if ( mapfile.c ) {
