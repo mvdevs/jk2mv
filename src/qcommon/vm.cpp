@@ -708,6 +708,7 @@ vm_t *VM_Create( const char *module, qboolean mvOverride, intptr_t (*systemCalls
 
 	vm = &vmTable[i];
 
+	Com_Memset(vm, 0, sizeof(vm));
 	Q_strncpyz(vm->name, module, sizeof(vm->name));
 
 	vm->mvmenu = mvOverride;
