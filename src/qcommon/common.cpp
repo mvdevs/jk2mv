@@ -273,7 +273,7 @@ Q_NORETURN void QDECL Com_Error( errorParm_t code, const char *fmt, ... ) {
 	lastErrorTime = currentTime;
 
 	if ( com_errorEntered ) {
-		Sys_Error( "recursive error after: %s", com_errorMessage );
+		Sys_Error( "recursive error after: %s\n", com_errorMessage );
 	}
 	com_errorEntered = qtrue;
 
@@ -318,7 +318,7 @@ Q_NORETURN void QDECL Com_Error( errorParm_t code, const char *fmt, ... ) {
 
 	Com_Shutdown ();
 
-	Sys_Error ("%s", com_errorMessage);
+	Sys_Error ("%s\n", com_errorMessage);
 }
 
 
@@ -2341,7 +2341,7 @@ void Com_Init( char *commandLine ) {
 	Com_Printf( "%s %s %s\n", Q3_VERSION, CPUSTRING, __DATE__ );
 
 	if (setjmp(abortframe)) {
-		Sys_Error("Error during initialization");
+		Sys_Error("Error during initialization\n");
 	}
 
 	// multiprotocol support
