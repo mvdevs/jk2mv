@@ -137,6 +137,7 @@ typedef struct vmSymbol_s {
 	struct vmSymbol_s	*next;
 	struct vmSymbol_s	*caller;
 	int		symValue;
+	int		symInstr;
 	long	profileCount;
 	int		callCount;
 	char	symName[1];		// variable sized
@@ -168,6 +169,8 @@ struct vm_s {
 	qboolean	compiled;
 	byte		*codeBase;
 	int			entryOfs;
+	int			callProcOfs;
+	int			callProcOfsSyscall;
 	int			codeLength;
 
 	intptr_t	*instructionPointers;
@@ -206,6 +209,7 @@ int	VM_CallInterpreted( vm_t *vm, int *args );
 vmSymbol_t *VM_ValueToFunctionSymbol( vm_t *vm, int value );
 int VM_SymbolToValue( vm_t *vm, const char *symbol );
 const char *VM_ValueToSymbol( vm_t *vm, int value );
+const char *VM_SymbolForCompiledPointer( void *code );
 void VM_LogSyscalls( int *args );
 
 void VM_BlockCopy(unsigned int dest, unsigned int src, size_t n);

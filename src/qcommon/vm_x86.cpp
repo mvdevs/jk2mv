@@ -401,7 +401,7 @@ int *vm_opStackBase;
 uint8_t vm_opStackOfs;
 intptr_t vm_arg;
 
-static void DoSyscall(void)
+void DoSyscall(void)
 {
 	vm_t *savedVM;
 
@@ -474,6 +474,10 @@ Call to DoSyscall()
 
 int EmitCallDoSyscall(vm_t *vm)
 {
+	// save frame pointer
+	EmitString("55");					// push ebp
+	EmitRexString(0x48, "89 E5");		// mov ebp, esp
+
 	// use edx register to store DoSyscall address
 	EmitRexString(0x48, "BA");		// mov edx, DoSyscall
 	EmitPtr((void*)DoSyscall);
@@ -510,18 +514,18 @@ int EmitCallDoSyscall(vm_t *vm)
 	EmitPtr(&vm_arg);
 
 	// align the stack pointer to a 16-byte-boundary
-	EmitString("55");			// push ebp
-	EmitRexString(0x48, "89 E5");		// mov ebp, esp
+	EmitRexString(0x48, "89 E0");		// mov eax, esp
+	EmitString("51");					// push ecx (decrease esp in a portable way)
 	EmitRexString(0x48, "83 E4 F0");	// and esp, 0xFFFFFFF0
+	EmitString("59");					// pop ecx (increase esp in a portable way)
+	EmitString("50");					// push eax
 
 	// call the syscall wrapper function DoSyscall()
 
 	EmitString("FF D2");			// call edx
 
 	// reset the stack pointer to its previous value
-	EmitRexString(0x48, "89 EC");		// mov esp, ebp
-	EmitString("5D");			// pop ebp
-
+	EmitString("5C");				// pop esp
 #if idx64
 	EmitRexString(0x41, "59");		// pop r9
 	EmitRexString(0x41, "58");		// pop r8
@@ -530,6 +534,8 @@ int EmitCallDoSyscall(vm_t *vm)
 	EmitString("5E");			// pop esi
 	EmitString("59");			// pop ebx
 
+	// restore frame pointer
+	EmitString("5D");			// pop ebp
 	EmitString("C3");			// ret
 
 	return compiledOfs;
@@ -562,6 +568,10 @@ int EmitCallProcedure(vm_t *vm, int sysCallOfs)
 	int jmpSystemCall, jmpBadAddr;
 	int retval;
 
+	// Save frame pointer
+	EmitString("55");					// push ebp
+	EmitRexString(0x48, "89 E5");		// mov ebp, esp
+
 	EmitString("8B 04 9F");		// mov eax, dword ptr [edi + ebx * 4]
 	STACK_POP(1);			// sub bl, 1
 	EmitString("85 C0");		// test eax, eax
@@ -586,6 +596,7 @@ int EmitCallProcedure(vm_t *vm, int sysCallOfs)
 	Emit4((intptr_t) vm->instructionPointers);
 #endif
 	EmitString("8B 04 9F");			// mov eax, dword ptr [edi + ebx * 4]
+	EmitString("5D");			// pop ebp
 	EmitString("C3");			// ret
 
 	// badAddr:
@@ -602,6 +613,7 @@ int EmitCallProcedure(vm_t *vm, int sysCallOfs)
 
 	// have opStack reg point at return value
 	STACK_PUSH(1);			// add bl, 1
+	EmitString("5D");		// pop ebp
 	EmitString("C3");		// ret
 
 	return retval;
@@ -1098,6 +1110,8 @@ void VM_Compile(vm_t *vm, vmHeader_t *header)
 	callProcOfs = EmitCallDoSyscall(vm);
 	callProcOfsSyscall = EmitCallProcedure(vm, callDoSyscallOfs);
 	vm->entryOfs = compiledOfs;
+	vm->callProcOfs = callProcOfs;
+	vm->callProcOfsSyscall = callProcOfsSyscall;
 
 	for(pass=0; pass < 3; pass++) {
 	oc0 = -23423;
@@ -1145,6 +1159,9 @@ void VM_Compile(vm_t *vm, vmHeader_t *header)
 			EmitString("CC");				// int 3
 			break;
 		case OP_ENTER:
+			// save frame pointer
+			EmitString("55");					// push ebp
+			EmitRexString(0x48, "89 E5");		// mov ebp, esp
 			EmitString("81 EE");				// sub esi, 0x12345678
 			Emit4(Constant4());
 			break;
@@ -1196,6 +1213,8 @@ void VM_Compile(vm_t *vm, vmHeader_t *header)
 			v = Constant4();
 			EmitString("81 C6");				// add	esi, 0x12345678
 			Emit4(v);
+			// Restore frame pointer
+			EmitString("5D");				// pop ebp
 			EmitString("C3");				// ret
 			break;
 		case OP_LOAD4:

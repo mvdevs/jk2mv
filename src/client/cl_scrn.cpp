@@ -1,7 +1,7 @@
 // cl_scrn.c -- master for refresh, status bar, console, chat, notify, etc
 
 #include "client.h"
-#include "mv_setup.h"
+#include <mv_setup.h>
 
 extern console_t con;
 qboolean	scr_initialized;		// ready to draw

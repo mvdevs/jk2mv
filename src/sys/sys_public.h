@@ -114,6 +114,7 @@ void		Sys_ShowIP(void);
 
 qboolean	Sys_Mkdir( const char *path );
 char	*Sys_Cwd( void );
+int			Sys_PID( void );
 
 char *Sys_DefaultInstallPath(void);
 char *Sys_DefaultAssetsPath();
@@ -139,6 +140,7 @@ qboolean Sys_LowPhysicalMemory();
 void Sys_SetProcessorAffinity( void );
 
 int Sys_FLock(int fd, flockCmd_t cmd, qboolean nb);
+void Sys_PrintBacktrace(void);
 
 typedef enum graphicsApi_e
 {

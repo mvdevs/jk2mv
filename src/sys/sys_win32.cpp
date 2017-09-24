@@ -413,7 +413,7 @@ static UINT timerResolution = 0;
 
 ITaskbarList3 *win_taskbar;
 
-void Sys_PlatformInit(void) {
+void Sys_PlatformInit(int argc, char *argv[]) {
 	TIMECAPS ptc;
 	if (timeGetDevCaps(&ptc, sizeof(ptc)) == MMSYSERR_NOERROR)
 	{
@@ -494,6 +494,8 @@ int Sys_FLock(int fd, flockCmd_t cmd, qboolean nb) {
 
 	return res ? 0 : -1;
 }
+
+void Sys_PrintBacktrace(void) {}
 
 void Sys_PlatformExit(void)
 {

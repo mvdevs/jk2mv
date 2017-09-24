@@ -3,7 +3,7 @@
 #include "client.h"
 #include "../strings/con_text.h"
 #include "../qcommon/strip.h"
-#include "mv_setup.h"
+#include <mv_setup.h>
 
 
 console_t	con;

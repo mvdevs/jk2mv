@@ -14,6 +14,11 @@
 #include <unistd.h>
 #include <signal.h>
 #include <fcntl.h>
+#include <execinfo.h>
+#include <setjmp.h>
+#ifdef __GNU_LIBRARY__
+#include <gnu/libc-version.h>
+#endif
 
 #ifdef MACOS_X
 #include <mach-o/dyld.h>
@@ -21,8 +26,12 @@
 
 #include "../qcommon/q_shared.h"
 #include "../qcommon/qcommon.h"
+#include "../qcommon/vm_local.h"
+#include "con_local.h"
 
-#include "mv_setup.h"
+#include <mv_setup.h>
+
+#define Q_BACKTRACE 1
 
 //=============================================================================
 
@@ -440,17 +449,62 @@ char *Sys_DefaultAssetsPath() {
 
 qboolean stdin_active = qtrue;
 qboolean stdinIsATTY = qfalse;
+int crashlogfd;
 extern void		Sys_SigHandler( int signal );
+static void		Sys_SigHandlerFatal(int sig, siginfo_t *info, void *context);
+static Q_NORETURN void Sys_CrashLogger(int fd, int argc, char *argv[]);
 
-void Sys_PlatformInit( void )
+void Sys_PlatformInit( int argc, char *argv[] )
 {
-	const char* term = getenv( "TERM" );
+	int		crashfd[2];
+	pid_t	crashpid;
 
-	signal( SIGHUP, Sys_SigHandler );
-	signal( SIGQUIT, Sys_SigHandler );
-	signal( SIGTRAP, Sys_SigHandler );
-	signal( SIGIOT, Sys_SigHandler );
-	signal( SIGBUS, Sys_SigHandler );
+	if (pipe(crashfd) == -1) {
+		perror("pipe()");
+		goto skip_crash;
+	}
+
+	if ((crashpid = fork()) == -1) {
+		perror("fork()");
+		goto skip_crash;
+	}
+
+	if (crashpid == 0) {
+		close(crashfd[1]);
+		Sys_CrashLogger(crashfd[0], argc, argv);
+	} else {
+		close(crashfd[0]);
+		crashlogfd = crashfd[1];
+	}
+skip_crash:
+	struct sigaction act;
+
+	memset(&act, 0, sizeof(act));
+	act.sa_handler = Sys_SigHandler;
+
+	sigemptyset(&act.sa_mask);
+	sigaddset(&act.sa_mask, SIGHUP);
+	sigaddset(&act.sa_mask, SIGINT);
+	sigaddset(&act.sa_mask, SIGTERM);
+
+	sigaction(SIGHUP, &act, NULL);
+	sigaction(SIGINT, &act, NULL);
+	sigaction(SIGTERM, &act, NULL);
+
+	act.sa_handler = NULL;
+	act.sa_sigaction = Sys_SigHandlerFatal;
+	act.sa_flags = SA_SIGINFO | SA_NODEFER;
+
+	sigaction(SIGQUIT, &act, NULL);
+	sigaction(SIGILL, &act, NULL);
+	sigaction(SIGABRT, &act, NULL);
+	sigaction(SIGFPE, &act, NULL);
+	sigaction(SIGSEGV, &act, NULL);
+	sigaction(SIGBUS, &act, NULL);
+	sigaction(SIGSYS, &act, NULL);
+	sigaction(SIGTRAP, &act, NULL);
+
+	const char* term = getenv( "TERM" );
 
     if (isatty( STDIN_FILENO ) && !( term && ( !strcmp( term, "raw" ) || !strcmp( term, "dumb" ) ) ))
 		stdinIsATTY = qtrue;
@@ -460,6 +514,11 @@ void Sys_PlatformInit( void )
 
 void Sys_PlatformExit( void )
 {
+}
+
+int Sys_PID( void )
+{
+	return getpid( );
 }
 
 //============================================
@@ -670,4 +729,553 @@ int Sys_FLock(int fd, flockCmd_t cmd, qboolean nb) {
 	}
 
 	return fcntl(fd, nb ? F_SETLK : F_SETLKW, &l);
+}
+
+static int Sys_Backtrace(void **buffer, int size);
+void Sys_PrintBacktrace(void) {
+#define BT_LEN 20
+	void *buf[BT_LEN + 2];
+	int size;
+
+	size = Sys_Backtrace(buf, BT_LEN + 2);
+
+	for (int i = 2; i < size; i++) {
+		const char *desc = VM_SymbolForCompiledPointer(buf[i]);
+#ifdef Q_BACKTRACE
+		char **sym = NULL;
+		if (!desc) {
+			sym = backtrace_symbols(&buf[i], 1);
+			if (sym) {
+				desc = sym[0];
+			}
+		}
+#endif
+		if (!desc) {
+			desc = va("[%p]", buf[i]);
+		}
+
+		Com_Printf("  #%-2d %s\n", i - 2, desc);
+
+#ifdef Q_BACKTRACE
+		if (sym) {
+			free(sym);
+		}
+#endif
+	}
+}
+
+/*
+==============================================================
+
+Asynchronous Crash Logging
+
+==============================================================
+*/
+
+typedef struct backtrace_s {
+	int size;
+	void *buf[100];
+} backtrace_t;
+
+static int Sys_CrashBacktrace(void **buffer, int size, const ucontext_t *context);
+static qboolean Sys_CrashWrite(int fd, const void *buf, size_t len);
+static void Sys_CrashWriteVm(int fd);
+static void Sys_CrashWriteContext(int fd, const ucontext_t *context);
+static void Sys_SigHandlerFatal(int sig, siginfo_t *info, void *context) {
+	static volatile sig_atomic_t signalcaught = 0;
+	ucontext_t *ucontext = (ucontext_t *)context;
+
+	if (!signalcaught) {
+		backtrace_t trace;
+
+		signalcaught = 1;
+
+		Sys_CrashWrite(crashlogfd, info, sizeof(*info));
+		Sys_CrashWriteVm(crashlogfd);
+		Sys_CrashWriteContext(crashlogfd, ucontext);
+		trace.size = Sys_CrashBacktrace(trace.buf, ARRAY_LEN(trace.buf), ucontext);
+		Sys_CrashWrite(crashlogfd, &trace, sizeof(trace));
+		Sys_CrashWrite(crashlogfd, &consoleLog, sizeof(consoleLog));
+		close(crashlogfd);
+	}
+
+	// reraise the signal with default handler
+	struct sigaction act;
+	memset(&act, 0, sizeof(act));
+	act.sa_handler = SIG_DFL;
+	sigemptyset(&act.sa_mask);
+	sigaction(sig, &act, NULL);
+	raise(sig);
+}
+
+static qboolean Sys_CrashWrite(int fd, const void *buf, size_t len) {
+	unsigned	count = 0;
+
+	while (count < len) {
+		int ret = write(fd, buf, len - count);
+
+		if (ret == 0) {
+			return qfalse;
+		}
+		if (ret == -1) {
+			if (errno == EINTR) {
+				continue;		// a signal was caught
+			} else {
+				perror("Sys_CrashWrite()");
+				return qfalse;
+			}
+		}
+
+		count += ret;
+	}
+
+	return qtrue;
+}
+
+static qboolean Sys_CrashRead(int fd, void *buf, size_t len) {
+	unsigned	count = 0;
+
+	while (count < len) {
+		int ret = read(fd, buf, len - count);
+
+		if (ret == 0) {
+			return qfalse;
+		}
+		if (ret == -1) {
+			if (errno == EINTR) {
+				continue;		// a signal was caught
+			} else {
+				perror("Sys_CrashRead()");
+				return qfalse;
+			}
+		}
+
+		count += ret;
+	}
+
+	return qtrue;
+}
+
+extern vm_t	vmTable[MAX_VM];
+static void Sys_CrashWriteVm(int fd) {
+	for (int i = 0; i < MAX_VM; i++) {
+		vm_t *vm = &vmTable[i];
+
+		Sys_CrashWrite(fd, vm, sizeof(*vm));
+		Sys_CrashWrite(fd, vm->instructionPointers, sizeof(intptr_t) * vm->instructionCount);
+
+		for (vmSymbol_t *sym = vm->symbols; sym; sym = sym->next) {
+			int size = sizeof(vmSymbol_t) + strlen(sym->symName);	// ending '\0' is in vmSymbol_t
+			Sys_CrashWrite(fd, &size, sizeof(size));
+			Sys_CrashWrite(fd, sym, size);
+		}
+	}
+}
+
+static void Sys_CrashReadVm(int fd) {
+	for (int i = 0; i < MAX_VM; i++) {
+		vm_t *vm = &vmTable[i];
+
+		Sys_CrashRead(fd, vm, sizeof(*vm));
+		vm->instructionPointers = (intptr_t *)malloc(sizeof(intptr_t) * vm->instructionCount);
+		Sys_CrashRead(fd, vm->instructionPointers, sizeof(intptr_t) * vm->instructionCount);
+
+		for (vmSymbol_t **sym = &(vm->symbols); *sym; sym = &((*sym)->next)) {
+			int size;
+			Sys_CrashRead(fd, &size, sizeof(size));
+			*sym = (vmSymbol_t *)malloc(size);
+			Sys_CrashRead(fd, *sym, size);
+		}
+	}
+}
+
+static void Sys_CrashWriteContext(int fd, const ucontext_t *context) {
+#ifdef __GNU_LIBRARY__
+#if defined(__i386__) || defined(__amd64__)
+		Sys_CrashWrite(crashlogfd, context, sizeof(ucontext_t));
+		Sys_CrashWrite(crashlogfd, context->uc_mcontext.fpregs, sizeof(*context->uc_mcontext.fpregs));
+#endif
+#endif
+}
+
+static qboolean Sys_CrashReadContext(int fd, ucontext_t *context) {
+#ifdef __GNU_LIBRARY__
+#if defined(__i386__) || defined(__amd64__)
+	context->uc_mcontext.fpregs = (fpregset_t)malloc(sizeof(context->uc_mcontext.fpregs));
+
+	if (!Sys_CrashRead(fd, context, sizeof(ucontext_t))) {
+		return qfalse;
+	}
+	if (!Sys_CrashRead(fd, context->uc_mcontext.fpregs, sizeof(*context->uc_mcontext.fpregs))) {
+		return qfalse;
+	}
+#endif
+#endif
+
+	return qtrue;
+}
+
+static sigjmp_buf invalidFP;
+static void Sys_SigHandlerInvalidFP(int sig) {
+	siglongjmp(invalidFP, 1);
+}
+
+int __attribute__((noinline)) Sys_BacktraceFrom(void **buffer, int size, void **fp, void *ip) {
+	volatile int count = 0;
+
+	if (ip)
+	{
+		// unwind stack manually to make it work with compiled QVM. This
+		// relies on -fno-omit-frame-pointer compiler flag
+		buffer[0] = ip;
+
+
+		// stop if frame pointer is invalid (eg rest of the system was
+		// compiled with -fomit-frame-pointer)
+
+		// fau - I'm not sure if this is correct approach. First,
+		// POSIX says a behaviour is undefined after ignoring SIGSEGV,
+		// not sure if a longjmp is considered ignoring. Second,
+		// longjmp isn't on async-signal-safe list. Third, apparently
+		// C89 restricts longjmp to only one level of signal handling
+		// and this is called in Sys_SigHandlerFatal().
+
+		struct sigaction act;
+		struct sigaction old[2];
+		memset(&act, 0, sizeof(act));
+		act.sa_handler = Sys_SigHandlerInvalidFP;
+		sigfillset(&act.sa_mask);
+		sigaction(SIGSEGV, &act, &old[0]);
+		sigaction(SIGBUS, &act, &old[1]);
+
+		for(count = 1; count < size; count++) {
+			if (fp == NULL) {
+				break;
+			}
+			if (sigsetjmp(invalidFP, 1) != 0) {
+				break;
+			}
+			buffer[count] = *(fp + 1);
+			fp = (void **)(*fp);
+		}
+
+		sigaction(SIGSEGV, &old[0], NULL);
+		sigaction(SIGBUS, &old[1], NULL);
+	}
+#ifdef Q_BACKTRACE
+	else
+	{
+		// not async-signal-safe but often works, try anyway
+		count = backtrace(buffer, ARRAY_LEN(buffer));
+	}
+#endif
+	return count;
+}
+
+static int Sys_CrashBacktrace(void **buffer, int size, const ucontext_t *context) {
+	void **fp;
+	void *ip;
+#if defined(__GNU_LIBRARY__) && defined(__amd64__)
+	fp = (void **)context->uc_mcontext.gregs[REG_RBP];
+	ip = (void *)context->uc_mcontext.gregs[REG_RIP];
+#elif defined(__GNU_LIBRARY__) && defined(__i386__)
+	fp = (void **)context->uc_mcontext.gregs[REG_EBP];
+	ip = (void *)context->uc_mcontext.gregs[REG_EIP];
+#else
+	fp = NULL;
+	ip = NULL;
+#endif
+	return Sys_BacktraceFrom(buffer, size, fp, ip);
+}
+
+int __attribute__((noinline)) Sys_Backtrace(void **buffer, int size) {
+	void **fp;
+	void *ip;
+#if defined(__amd64__)
+	__asm__ ("movq %%rbp, %0\n" : "=rm" (fp));
+	__asm__ ("leaq (%%rip), %0\n" : "=r" (ip));
+#elif defined(__i386__)
+	__asm__ ("movl %%ebp, %0\n" : "=rm" (fp));
+	__asm__ ("call next\n" "next: popl %0\n" : "=r" (ip));
+#else
+	fp = NULL;
+	ip = NULL;
+#endif
+	return Sys_BacktraceFrom(buffer, size, fp, ip);
+}
+
+static const char *Sys_DescribeSignalCode(int signal, int code) {
+	switch (code) {
+	case SI_USER:		return "kill";
+	case SI_QUEUE: 		return "sigqueue";
+#ifdef __linux__
+	case SI_KERNEL:		return "sent by the kernel";
+	case SI_TKILL: 		return "tkill or tgkill";
+#endif
+	}
+
+	switch (signal) {
+	case SIGILL:
+		switch (code) {
+		case ILL_ILLOPC:	return "illegal opcode";
+		case ILL_ILLOPN:	return "illegal operand";
+		case ILL_ILLADR:	return "illegal addressing mode";
+		case ILL_ILLTRP:	return "illegal trap";
+		case ILL_PRVOPC:	return "priviledged opcode";
+		case ILL_PRVREG:	return "priviledged register";
+		case ILL_COPROC:	return "coprocessor error";
+		case ILL_BADSTK:	return "internal stack error";
+		}
+		break;
+	case SIGFPE:
+		switch (code) {
+		case FPE_INTDIV:	return "integer divide by zero";
+		case FPE_INTOVF:	return "integer overflow";
+		case FPE_FLTDIV:	return "floating-point divide by zero";
+		case FPE_FLTOVF:	return "floating-point overflow";
+		case FPE_FLTUND:	return "floating-point underflow";
+		case FPE_FLTRES:	return "floating-point inexact result";
+		case FPE_FLTINV:	return "floating-point invalid operation";
+		case FPE_FLTSUB:	return "subscript out of range";
+		}
+		break;
+	case SIGSEGV:
+		switch(code) {
+		case SEGV_MAPERR:	return "address not mapped to object";
+		case SEGV_ACCERR:	return "invalid permission for mapped object";
+		}
+		break;
+	case SIGBUS:
+		switch (code) {
+		case BUS_ADRALN:	return "invalid address alignment";
+		case BUS_ADRERR:	return "nonexistent physical address";
+		case BUS_OBJERR:	return "object-specific hardware error";
+#ifdef __linux__
+		case BUS_MCEERR_AR:	return "hardware memory error consumed on a machine check; action required";
+		case BUS_MCEERR_AO:	return "hardware memory error detected in process but not consumed; action optional";
+#endif
+		}
+		break;
+	case SIGTRAP:
+		switch (code) {
+		case TRAP_BRKPT:	return "process breakpoint";
+		case TRAP_TRACE:	return "process trace trap";
+		}
+		break;
+		// not handling SIGCHLD, SIGIO, SIGPOLL
+	}
+
+	return "?";
+}
+
+static void Sys_BacktraceSymbol(FILE *f, void *p) {
+	const char *desc = VM_SymbolForCompiledPointer(p);
+
+	if (desc) {
+		fputs(desc, f);
+	} else {
+		char **sym = NULL;
+#ifdef Q_BACKTRACE
+		// this doesn't know about shared objects dynamically loaded after
+		// fork() in the main process, but it's enough
+		sym = backtrace_symbols(&p, 1);
+		if (sym) {
+			fputs(*sym, f);
+		}
+		free(sym);
+#endif
+		if (!sym) {
+			fprintf(f, "[%p]", p);
+		}
+	}
+}
+
+static Q_NORETURN void Sys_CrashLogger(int fd, int argc, char *argv[]) {
+	siginfo_t	info;
+	ucontext_t	context;
+
+	if (!Sys_CrashRead(fd, &info, sizeof(info))) {
+		_exit(EXIT_SUCCESS);
+	}
+
+	Sys_CrashReadVm(fd);
+
+	FILE		*f = NULL;
+	time_t		rawtime;
+	char		timeStr[32];
+	char		*path;
+	char		crashlogName[MAX_OSPATH];
+
+	time(&rawtime);
+	strftime(timeStr, sizeof(timeStr), "%Y-%m-%d_%H-%M-%S", localtime(&rawtime)); // or gmtime
+	Com_sprintf(crashlogName, sizeof(crashlogName), "crashlog-%s.txt", timeStr);
+	path = FS_BuildOSPath(Sys_DefaultHomePath(), crashlogName);
+
+	if (FS_CreatePath(homePath)) {
+		f = fopen(path, "w");
+	}
+
+	if ( f == NULL) {
+		f = fopen(crashlogName, "w");
+	}
+
+	if (f == NULL) {
+		f = stderr;
+	}
+
+	fprintf(f, "---JK2MV Crashlog-----------------------\n");
+	fprintf(f, "\n");
+	fprintf(f, "Date:               %s", ctime(&rawtime));
+	fprintf(f, "Build Version:      " JK2MV_VERSION "\n");
+#if defined(PORTABLE)
+	fprintf(f, "Build Type:         Portable\n");
+#endif
+	fprintf(f, "Build Date:         " __DATE__ " " __TIME__ "\n");
+	fprintf(f, "Build Arch:         " CPUSTRING "\n");
+#ifdef __GNU_LIBRARY__
+	fprintf(f, "glibc Version:      %s (%s)\n", gnu_get_libc_version(), gnu_get_libc_release());
+#endif
+	fprintf(f, "Process:            %s\n", argv[0]);
+	fprintf(f, "Process ID:         %d\n", getppid());
+	fprintf(f, "Arguments:          ");
+	for (int i = 1; i < argc; i++) {
+		fprintf(f, "%s ", argv[i]);
+	}
+	fprintf(f, "\n");
+
+	fprintf(f, "\n");
+	fprintf(f, "---Signal Details-----------------------\n");
+	fprintf(f, "\n");
+
+	fprintf(f, "Signal:             %d (%s)\n", info.si_signo, strsignal(info.si_signo));
+	fprintf(f, "Signal Code:        %d (%s)\n", info.si_code,
+			Sys_DescribeSignalCode(info.si_signo, info.si_code));
+	switch (info.si_signo) {
+	case SIGILL: case SIGFPE: case SIGSEGV: case SIGBUS: case SIGTRAP:
+		fprintf(f, "Fault Address:      ");
+		Sys_BacktraceSymbol(f, info.si_addr);
+		fprintf(f, "\n");
+	}
+
+	fprintf(f, "\n");
+	fprintf(f, "---Machine Context----------------------\n");
+	fprintf(f, "\n");
+
+	if (!Sys_CrashReadContext(fd, &context)) {
+		goto exit_failure;
+	}
+
+#ifdef __GNU_LIBRARY__
+#define GREG(X) (context.uc_mcontext.gregs[REG_ ## X])
+#if defined(__amd64__)
+	struct selectors_s {
+		unsigned short cs, gs, fs, ss;
+	};
+	struct selectors_s *s;
+
+	s = (struct selectors_s *)&context.uc_mcontext.gregs[REG_CSGSFS];
+
+	fprintf(f, "   RAX: 0x%.16llx   RBX: 0x%.16llx   RCX: 0x%.16llx\n", GREG(RAX), GREG(RBX), GREG(RCX));
+	fprintf(f, "   RDX: 0x%.16llx   RBP: 0x%.16llx   RSI: 0x%.16llx\n", GREG(RDX), GREG(RBP), GREG(RSI));
+	fprintf(f, "   RDI: 0x%.16llx   RSP: 0x%.16llx   RIP: 0x%.16llx\n", GREG(RDI), GREG(RSP), GREG(RIP));
+	fprintf(f, "    R8: 0x%.16llx    R9: 0x%.16llx   R10: 0x%.16llx\n", GREG(R8),  GREG(R9),  GREG(R10));
+	fprintf(f, "   R11: 0x%.16llx   R12: 0x%.16llx   R13: 0x%.16llx\n", GREG(R11), GREG(R12), GREG(R13));
+	fprintf(f, "   R14: 0x%.16llx   R15: 0x%.16llx\n",                  GREG(R14), GREG(R15));
+	fprintf(f, "EFLAGS: 0x%.8llx            CS: 0x%.4x  GS: 0x%.4x    FS: 0x%.4x  SS: 0x%.4x\n",
+			GREG(EFL), s->cs, s->gs, s->fs, s->ss);
+
+	fpregset_t fpregs;
+
+	fpregs = context.uc_mcontext.fpregs;
+
+	fprintf(f, "\n");
+
+	for (int i = 0; i < 8; i++) {
+		long double val;
+
+		memcpy(&val, &fpregs->_st[i], sizeof(val));
+
+		fprintf(f, "   ST%d: 0x%.4hx%.4hx%.4hx%.4hx%.4hx (%Lf)\n", i,
+			fpregs->_st[i].exponent,
+			fpregs->_st[i].significand[3], fpregs->_st[i].significand[2],
+			fpregs->_st[i].significand[1], fpregs->_st[i].significand[0],
+			val);
+	}
+
+	fprintf(f, "\n");
+
+	for (int i = 0; i < 16; i++) {
+		fprintf(f, " %sXMM%d: 0x%.8x%.8x%.8x%.8x\n", (i < 10 ? " " : ""), i,
+			fpregs->_xmm[i].element[3], fpregs->_xmm[i].element[2],
+			fpregs->_xmm[i].element[1], fpregs->_xmm[i].element[0]);
+	}
+
+	fprintf(f, "\n");
+
+	fprintf(f, "   CWD: 0x%.4hx SWD: 0x%.4hx   FTW: 0x%.4hx FOP: 0x%.4hx\n",
+		fpregs->cwd, fpregs->swd, fpregs->ftw, fpregs->fop);
+	fprintf(f, "   RIP: 0x%.16lx   RDP: 0x%.16lx\n", fpregs->rip, fpregs->rdp);
+	fprintf(f, " MXCSR: 0x%.8x    MXCSR MASK: 0x%.8x\n", fpregs->mxcsr, fpregs->mxcr_mask);
+#elif defined(__i386__)
+	fprintf(f, "    EAX: 0x%.8x    EBX: 0x%.8x    ECX: 0x%.8x    EDX: 0x%.8x\n", GREG(EAX), GREG(EBX), GREG(ECX), GREG(EDX));
+	fprintf(f, "    EBP: 0x%.8x    ESI: 0x%.8x    EDI: 0x%.8x    ESP: 0x%.8x\n", GREG(EBP), GREG(ESI), GREG(EDI), GREG(ESP));
+	fprintf(f, "     CS: 0x%.4x         DS: 0x%.4x         ES: 0x%.4x         FS: 0x%.4x\n", GREG(CS), GREG(DS), GREG(ES), GREG(FS));
+	fprintf(f, " EFLAGS: 0x%.8x    EIP: 0x%.8x     GS: 0x%.4x         SS: 0x%.4x\n", GREG(EFL), GREG(EIP), GREG(GS), GREG(SS));
+
+	fpregset_t fpregs;
+
+	fpregs = context.uc_mcontext.fpregs;
+
+	fprintf(f, "\n");
+
+	for (int i = 0; i < 8; i++) {
+		fprintf(f, "   ST%d: 0x%.4hx%.4hx%.4hx%.4hx%.4hx (%Lf)\n", i,
+			fpregs->_st[i].exponent,
+			fpregs->_st[i].significand[3], fpregs->_st[i].significand[2],
+			fpregs->_st[i].significand[1], fpregs->_st[i].significand[0],
+			*(long double *)&fpregs->_st[i]);
+	}
+
+	fprintf(f, "\n");
+
+	fprintf(f, "    CW: 0x%.4x          SW: 0x%.4x         TAG: 0x%.4x\n",
+		(unsigned)(fpregs->cw & 0xffff), (unsigned)(fpregs->sw & 0xffff),
+		(unsigned)(fpregs->tag & 0xffff));
+	fprintf(f, "    IP: 0x%.2x:0x%.8x OP: 0x%.2x:0x%.8x\n",
+		(unsigned)(fpregs->cssel & 0xff), (unsigned)fpregs->ipoff,
+		(unsigned)(fpregs->datasel & 0xff), (unsigned)fpregs->dataoff);
+#endif
+#endif // __GNU_LIBRARY__
+
+	fprintf(f, "\n");
+	fprintf(f, "---Backtrace----------------------------\n");
+	fprintf(f, "\n");
+
+	backtrace_t trace;
+
+	if (!Sys_CrashRead(fd, &trace, sizeof(trace))) {
+		goto exit_failure;
+	}
+
+	for (int i = 0; i < trace.size; i++) {
+		fprintf(f, "#%-2d ", i);
+		Sys_BacktraceSymbol(f, trace.buf[i]);
+		fprintf(f, "\n");
+	}
+
+	fprintf(f, "\n");
+	fprintf(f, "---Console Log--------------------------\n");
+	fprintf(f, "\n");
+
+	if (!Sys_CrashRead(fd, &consoleLog, sizeof(consoleLog))) {
+		goto exit_failure;
+	}
+
+	ConsoleLogWriteOut(f);
+
+	fclose(f);
+	_exit(EXIT_SUCCESS);
+exit_failure:
+	fclose(f);
+	_exit(EXIT_FAILURE);
 }

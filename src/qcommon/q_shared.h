@@ -1117,7 +1117,7 @@ qboolean Info_Validate( const char *s );
 void Info_NextPair( const char **s, char *key, char *value );
 
 // this is only here so the functions in q_shared.c and bg_*.c can link
-Q_NORETURN void	QDECL  Com_Error( int level, const char *error, ... );
+Q_NORETURN void	QDECL  Com_Error( errorParm_t level, const char *error, ... );
 void	QDECL Com_Printf( const char *msg, ... );
 
 /*

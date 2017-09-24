@@ -1,7 +1,7 @@
 
 #include "server.h"
 
-#include "mv_setup.h"
+#include <mv_setup.h>
 
 #include "../qcommon/q_shared.h"
 /*

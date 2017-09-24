@@ -12,7 +12,7 @@
 #include "../client/client.h"
 #include "../server/server.h"
 #include "strip.h"
-#include "mv_setup.h"
+#include <mv_setup.h>
 #ifdef WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -245,7 +245,7 @@ Both client and server can use this, and it will
 do the apropriate things.
 =============
 */
-Q_NORETURN void QDECL Com_Error( int code, const char *fmt, ... ) {
+Q_NORETURN void QDECL Com_Error( errorParm_t code, const char *fmt, ... ) {
 	static char	com_errorMessage[MAXPRINTMSG];
 	va_list		argptr;
 	static int	lastErrorTime;
@@ -286,15 +286,22 @@ Q_NORETURN void QDECL Com_Error( int code, const char *fmt, ... ) {
 		Cvar_Set("com_errorMessage", com_errorMessage);
 	}
 
-	if ( code == ERR_SERVERDISCONNECT ) {
+	switch (code) {
+	case ERR_SERVERDISCONNECT:
 		VM_Forced_Unload_Start();
 		CL_Disconnect( qtrue );
 		CL_FlushMemory( );
 		VM_Forced_Unload_Done();
 		com_errorEntered = qfalse;
 		longjmp(abortframe, -1);
-	} else if ( code == ERR_DROP || code == ERR_DISCONNECT ) {
-		Com_Printf ("********************\nERROR: %s\n********************\n", com_errorMessage);
+		break;
+	case ERR_DROP:
+		Com_Printf("********************\n");
+		Com_Printf("ERROR: %s\n", com_errorMessage);
+		Sys_PrintBacktrace();
+		Com_Printf("********************\n");
+		// fallthrough
+	case ERR_DISCONNECT:
 		VM_Forced_Unload_Start();
 		SV_Shutdown (va("Server crashed: %s\n",  com_errorMessage));
 		CL_Disconnect( qtrue );
@@ -302,7 +309,7 @@ Q_NORETURN void QDECL Com_Error( int code, const char *fmt, ... ) {
 		VM_Forced_Unload_Done();
 		com_errorEntered = qfalse;
 		longjmp(abortframe, -1);
-	} else {
+	default:
 		VM_Forced_Unload_Start();
 		CL_Shutdown ();
 		SV_Shutdown (va("Server fatal crashed: %s\n", com_errorMessage));
@@ -336,6 +343,23 @@ void Com_Quit_f( void ) {
 	Sys_Quit ();
 }
 
+Q_NORETURN void Com_Quit( int signal ) {
+	char msg[64];
+
+	if (signal) {
+		Com_sprintf(msg, sizeof(msg), "Received signal: %d\n", signal);
+	} else {
+		Com_sprintf(msg, sizeof(msg), "Server quit\n");
+	}
+
+	VM_Forced_Unload_Start();
+	SV_Shutdown (msg);
+	CL_Shutdown ();
+	VM_Forced_Unload_Done();
+	Com_Shutdown ();
+	FS_Shutdown(qtrue);
+	Sys_Quit ();
+}
 
 
 /*

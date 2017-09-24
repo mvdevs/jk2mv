@@ -138,7 +138,7 @@ cvar_t		*s_musicVolume;
 cvar_t		*s_musicMult;
 cvar_t		*s_separation;
 cvar_t		*s_doppler;
-cvar_t		*s_language;
+cvar_t		*s_s_language;
 
 
 static loopSound_t		loopSounds[MAX_GENTITIES];
@@ -303,7 +303,7 @@ void S_Init( void )
 	s_show = Cvar_Get ("s_show", "0", CVAR_CHEAT);
 	s_testsound = Cvar_Get ("s_testsound", "0", CVAR_CHEAT);
 
-	s_language = Cvar_Get("s_language", "english", CVAR_ARCHIVE | CVAR_NORESTART | CVAR_GLOBAL);
+	s_s_language = Cvar_Get("s_language", "english", CVAR_ARCHIVE | CVAR_NORESTART | CVAR_GLOBAL);
 
 	MP3_InitCvars();
 

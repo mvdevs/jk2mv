@@ -330,6 +330,8 @@ typedef enum {
 	TRAP_TESTPRINTFLOAT
 } sharedTraps_t;
 
+#define	MAX_VM		3
+
 void	VM_Init( void );
 vm_t	*VM_Create(const char *module, qboolean mvOverride, intptr_t(*systemCalls)(intptr_t *), vmInterpret_t interpret);
 // module should be bare: "cgame", not "cgame.dll" or "vm/cgame.qvm"
@@ -668,6 +670,7 @@ int		FS_filelength( fileHandle_t f );
 
 char	*FS_BuildOSPath(const char *base, const char *game, const char *qpath);
 char	*FS_BuildOSPath(const char *base, const char *path);
+qboolean FS_CreatePath (char *OSPath);
 
 int		FS_FTell( fileHandle_t f );
 // where are we?
@@ -763,7 +766,8 @@ void 		QDECL Com_Printf( const char *fmt, ... );
 void		QDECL Com_Printf_Ext( qboolean extendedColors, const char *msg, ... );
 void 		QDECL Com_DPrintf( const char *fmt, ... );
 void		QDECL Com_OPrintf( const char *fmt, ...); // Outputs to the VC / Windows Debug window (only in debug compile)
-Q_NORETURN void QDECL  Com_Error( int code, const char *fmt, ... );
+Q_NORETURN void QDECL  Com_Error( errorParm_t code, const char *fmt, ... );
+Q_NORETURN void Com_Quit( int signal );
 void 		Com_Quit_f( void );
 int			Com_EventLoop( void );
 int			Com_Milliseconds( void );	// will be journaled properly

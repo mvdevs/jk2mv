@@ -27,6 +27,8 @@ cvar_t *com_maxfps;
 cvar_t *com_maxfpsMinimized;
 cvar_t *com_maxfpsUnfocused;
 
+static volatile sig_atomic_t sys_signal = 0;
+
 /*
 ==================
 Sys_GetClipboardData
@@ -120,7 +122,7 @@ static void Sys_ErrorDialog(const char *error) {
 	time(&rawtime);
 	strftime(timeStr, sizeof(timeStr), "%Y-%m-%d_%H-%M-%S", localtime(&rawtime)); // or gmtime
 	Com_sprintf(crashLogPath, sizeof(crashLogPath),
-		"%s%ccrashlog-%s.txt",
+		"%s%cerrorlog-%s.txt",
 		Sys_DefaultHomePath(), PATH_SEP, timeStr);
 
 	Sys_Mkdir(Sys_DefaultHomePath());
@@ -130,7 +132,7 @@ static void Sys_ErrorDialog(const char *error) {
 		ConsoleLogWriteOut(fp);
 		fclose(fp);
 
-		const char *errorMessage = va("%s\n\nThe crash log was written to %s", error, crashLogPath);
+		const char *errorMessage = va("%s\n\nThe error log was written to %s", error, crashLogPath);
 		if (SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", errorMessage, NULL) < 0) {
 			fprintf(stderr, "%s", errorMessage);
 		}
@@ -139,7 +141,7 @@ static void Sys_ErrorDialog(const char *error) {
 		ConsoleLogWriteOut(stderr);
 		fflush(stderr);
 
-		const char *errorMessage = va("%s\nCould not write the crash log file, but we printed it to stderr.\n"
+		const char *errorMessage = va("%s\nCould not write the error log file, but we printed it to stderr.\n"
 			"Try running the game using a command line interface.", error);
 		if (SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", errorMessage, NULL) < 0) {
 			// We really have hit rock bottom here :(
@@ -158,6 +160,7 @@ void Q_NORETURN QDECL Sys_Error(const char *error, ...) {
 	va_end(argptr);
 
 	Sys_Print(string,qfalse);
+	Sys_PrintBacktrace();
 
 	// Only print Sys_ErrorDialog for client binary. The dedicated
 	// server binary is meant to be a command line program so you would
@@ -195,33 +198,14 @@ Sys_SigHandler
 =================
 */
 void Sys_SigHandler(int signal) {
-	static qboolean signalcaught = qfalse;
-
-	if (signalcaught) {
-		fprintf(stderr, "DOUBLE SIGNAL FAULT: Received signal %d, exiting...\n",
-			signal);
-	} else {
-		signalcaught = qtrue;
-		//VM_Forced_Unload_Start();
-#ifndef DEDICATED
-		CL_Shutdown();
-		//CL_Shutdown(va("Received signal %d", signal), qtrue, qtrue);
-#endif
-		SV_Shutdown(va("Received signal %d", signal));
-		//VM_Forced_Unload_Done();
-	}
-
-	if (signal == SIGTERM || signal == SIGINT)
-		Sys_Exit(1);
-	else
-		Sys_Exit(2);
+	sys_signal = signal;
 }
 
 int main(int argc, char* argv[]) {
 	int		i;
 	char	commandLine[MAX_STRING_CHARS] = { 0 };
 
-	Sys_PlatformInit();
+	Sys_PlatformInit(argc, argv);
 
 #if defined(_DEBUG) && !defined(DEDICATED)
 	CON_CreateConsoleWindow();
@@ -256,7 +240,7 @@ int main(int argc, char* argv[]) {
 	NET_Init();
 
 	// main game loop
-	while (1) {
+	while (!sys_signal) {
 		if (com_busyWait->integer) {
 			bool shouldSleep = false;
 
@@ -276,6 +260,8 @@ int main(int argc, char* argv[]) {
 		// run the game
 		Com_Frame();
 	}
+
+	Com_Quit(sys_signal);
 
 	// never gets here
 	return 0;

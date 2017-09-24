@@ -1,4 +1,4 @@
-﻿# Make sure the user is not executing this script directly
+# Make sure the user is not executing this script directly
 if(NOT InMV)
 	message(FATAL_ERROR "Use the top-level cmake script!")
 endif(NOT InMV)
@@ -64,6 +64,16 @@ set(AssetsFiles
 	"ui/jk2mp/setup.menu_patch"
 	"ui/jk2mv/download_info.menu"
 	"ui/jk2mv/download_popup.menu"
+
+	"vm/cgame_102.map"
+	"vm/cgame_103.map"
+	"vm/cgame_104.map"
+	"vm/jk2mpgame_102.map"
+	"vm/jk2mpgame_103.map"
+	"vm/jk2mpgame_104.map"
+	"vm/ui_102.map"
+	"vm/ui_103.map"
+	"vm/ui_104.map"
 )
 
 source_group("assetsmv" FILES ${AssetsFiles})
