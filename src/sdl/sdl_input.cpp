@@ -680,6 +680,23 @@ uint8_t ConvertUTF32ToExpectedCharset( uint32_t utf32 )
 
 /*
 ===============
+IN_ModTogglesConsole
+===============
+*/
+static qboolean IN_ModTogglesConsole( int mod ) {
+	switch (mv_consoleShiftRequirement->integer) {
+	case 0:
+		return qtrue;
+	case 2:
+		return (qboolean)!!(mod & KMOD_SHIFT);
+	case 1:
+	default:
+		return (qboolean)((mod & KMOD_SHIFT) || (Key_GetCatcher() & KEYCATCH_CONSOLE));
+	}
+}
+
+/*
+===============
 IN_ProcessEvents
 ===============
 */
@@ -709,10 +726,10 @@ static void IN_ProcessEvents( void )
 					break;
 
 				if (e.key.keysym.scancode == SDL_SCANCODE_GRAVE) {
-					Sys_QueEvent(0, SE_KEY, A_CONSOLE, qtrue, 0, NULL);
-					
-					if (e.key.keysym.mod & KMOD_LSHIFT || e.key.keysym.mod & KMOD_RSHIFT)
+					if (IN_ModTogglesConsole(e.key.keysym.mod)) {
+						Sys_QueEvent(0, SE_KEY, A_CONSOLE, qtrue, 0, NULL);
 						textInput = qfalse;
+					}
 				} else {
 					key = IN_TranslateSDLToJKKey(&e.key.keysym, qtrue);
 					if (key != A_NULL)
