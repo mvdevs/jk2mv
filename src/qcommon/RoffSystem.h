@@ -9,10 +9,6 @@
 	#include "../qcommon/q_shared.h"	//needs to be in here for entityState_t
 #endif
 
-#if !defined(SERVER_H_INC)
-	#include "../server/server.h"
-#endif
-
 #include <vector>
 #include <map>
 using namespace std;

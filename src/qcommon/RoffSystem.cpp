@@ -1,6 +1,7 @@
 #include "RoffSystem.h"
 #include "qcommon.h"
 #include "../client/client.h"
+#include "../server/server.h"
 
 // The one and only instance...
 CROFFSystem theROFFSystem;
