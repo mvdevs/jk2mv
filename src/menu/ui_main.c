@@ -82,7 +82,7 @@ LIBEXPORT intptr_t QDECL vmMain(int command, int arg0, int arg1, int arg2, int a
 int MVAPI_Init(int apilevel) {
 	if (apilevel < MV_APILEVEL) {
 		// using the mvmenu without jk2mv is useless
-		trap_Error("This mvmenu version requires JK2MV " MV_MIN_VERSION "\n");
+		trap_Error("This mvmenu version requires JK2MV " MV_MIN_VERSION);
 	}
 
 	// always using the newest api internally.
@@ -923,7 +923,7 @@ void UI_LoadMenus(const char *menuFile, qboolean reset) {
 		Com_Printf( S_COLOR_YELLOW "menu file not found: %s, using default\n", menuFile );
 		handle = trap_PC_LoadSource( "ui/jk2mpmenus.txt" );
 		if (!handle) {
-			trap_Error( va( S_COLOR_RED "default menu file not found: ui/menus.txt, unable to continue!\n", menuFile ) );
+			trap_Error( va( S_COLOR_RED "default menu file not found: ui/menus.txt, unable to continue!", menuFile ) );
 		}
 	}
 
