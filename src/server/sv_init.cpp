@@ -859,6 +859,7 @@ void SV_Init (void) {
 //	sv_debugserver = Cvar_Get ("sv_debugserver", "0", 0);
 
 	sv_hibernateFps = Cvar_Get("sv_hibernateFps", "4", CVAR_ARCHIVE | CVAR_GLOBAL);
+	mv_apiConnectionless = Cvar_Get("mv_apiConnectionless", "1", CVAR_ARCHIVE | CVAR_INIT | CVAR_VM_NOWRITE);
 
 	SP_Register("str_server",SP_REGISTER_REQUIRED);
 

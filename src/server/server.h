@@ -244,6 +244,7 @@ extern	cvar_t	*sv_allowAnonymous;
 extern	cvar_t	*sv_needpass;
 extern	cvar_t	*mv_serverversion;
 extern	cvar_t	*sv_hibernateFps;
+extern	cvar_t	*mv_apiConnectionless;
 
 // toggleable fixes
 extern	cvar_t	*mv_fixnamecrash;

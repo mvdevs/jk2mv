@@ -35,6 +35,7 @@ cvar_t	*sv_allowAnonymous;
 cvar_t	*sv_needpass;
 cvar_t	*mv_serverversion;
 cvar_t  *sv_hibernateFps;
+cvar_t	*mv_apiConnectionless;
 
 // jk2mv's toggleable fixes
 cvar_t	*mv_fixnamecrash;
@@ -575,6 +576,10 @@ MVAPI_GetConnectionlessPacket
 mvaddr_t curraddr;
 char currmessage[MAX_STRING_CHARS];
 qboolean MVAPI_GetConnectionlessPacket(mvaddr_t *addr, char *buf, unsigned int bufsize) {
+	if (!mv_apiConnectionless->integer) {
+		return qtrue;
+	}
+
 	if (currmessage[0] == 0) {
 		return qtrue;
 	}
@@ -591,6 +596,10 @@ MVAPI_SendConnectionlessPacket
 */
 qboolean MVAPI_SendConnectionlessPacket(const mvaddr_t *addr, const char *message) {
 	netadr_t nativeAdr;
+
+	if (!mv_apiConnectionless->integer) {
+		return qtrue;
+	}
 
 	if (addr->type != MV_IPV4) {
 		return qtrue;

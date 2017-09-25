@@ -244,6 +244,16 @@ Client-Side
 Server-Side
 -----------
 
+:Name: mv_apiConnectionless
+:Valid: "0", "1"
+:Default: "1"
+:Description:
+   Controls if game module may use MVAPI 1 to receive and send
+   connectionless packets with arbitrary source and destination. When
+   disabled SysCalls always return qtrue as if error occured.
+
+..
+
 :Name: mv_serverversion
 :Valid: "auto", "1.04", "1.03", "1.02"
 :Default: "1.04"
