@@ -1191,7 +1191,7 @@ jk2mv has it's own dll for the main menu
 void CL_InitUI(qboolean mainMenu) {
 	vmInterpret_t		interpret;
 	int v;
-	int apilevel = mv_apienabled->integer;
+	int apilevel = MIN(mv_apienabled->integer, MV_APILEVEL);
 
 	Cvar_Get("ui_menulevel", "0", CVAR_ROM | CVAR_INTERNAL, qfalse);
 	Cvar_Set("ui_menulevel", "0");
