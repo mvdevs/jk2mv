@@ -1232,7 +1232,26 @@ disable / enable toggleable fixes from the gvm
 ====================
 */
 qboolean SV_MVAPI_ControlFixes(int fixes) {
-	sv.fixes = fixes;
+	int mask = 0;
+
+	switch (VM_MVAPILevel(gvm)) {
+	case 3:
+		mask |= MVFIX_PLAYERGHOSTING;
+		// fallthrough
+	case 2:
+		mask |= MVFIX_SABERSTEALING;
+		// fallthrough
+	case 1:
+		mask |= MVFIX_NAMECRASH;
+		mask |= MVFIX_FORCECRASH;
+		mask |= MVFIX_GALAKING;
+		mask |= MVFIX_BROKENMODEL;
+		mask |= MVFIX_TURRETCRASH;
+		mask |= MVFIX_CHARGEJUMP;
+		mask |= MVFIX_SPEEDHACK;
+	}
+
+	sv.fixes = fixes & mask;
 
 	return qfalse;
 }

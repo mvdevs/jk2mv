@@ -1664,7 +1664,16 @@ disable / enable toggleable fixes from the cgvm
 ====================
 */
 qboolean CL_MVAPI_ControlFixes(int fixes) {
-	cls.fixes = fixes;
+	int mask = 0;
+
+	switch (VM_MVAPILevel(cgvm)) {
+	case 3:
+	case 2:
+	case 1:
+		mask |= MVFIX_WPGLOWING;
+	}
+
+	cls.fixes = fixes & mask;
 
 	return qfalse;
 }
