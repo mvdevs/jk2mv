@@ -708,7 +708,10 @@ vm_t *VM_Create( const char *module, qboolean mvOverride, intptr_t (*systemCalls
 
 	vm = &vmTable[i];
 
+	Com_Memset(vm, 0, sizeof(vm));
 	Q_strncpyz(vm->name, module, sizeof(vm->name));
+
+	vm->mvmenu = mvOverride;
 
 	if (interpret == VMI_NATIVE) {
 		// try to load as a system dll
@@ -1330,4 +1333,8 @@ int	VM_MVAPILevel(const vm_t *vm) {
 
 void VM_SetMVAPILevel(vm_t *vm, int level) {
 	vm->mvapilevel = level;
+}
+
+qboolean VM_MVMenu(const vm_t *vm) {
+	return vm->mvmenu;
 }

@@ -1133,41 +1133,34 @@ Ghoul2 Insert Start
 Ghoul2 Insert End
 */
 
-	// download popup
-	case UI_MV_CONTINUE_DOWNLOAD:
-		if (uigameversion == VERSION_UNDEF)
-			CL_ContinueCurrentDownload((dldecision_t)args[1]);
-		return 0;
-
-	case UI_MV_GETDLLIST:
-		if (uigameversion == VERSION_UNDEF)
-			return UI_ConcatDLList(VMAA(1, dlfile_t, args[2]), args[2]);
-		else return qtrue;
-
-	case UI_MV_RMDLPREFIX:
-		if (uigameversion == VERSION_UNDEF)
-			return FS_RMDLPrefix(VMAS(1));
-		else return qtrue;
-
-	case UI_MV_DELDLFILE:
-		if (uigameversion == VERSION_UNDEF)
-			return UI_DeleteDLFile(VMAV(1, const dlfile_t));
-		else return qtrue;
-
 	case MVAPI_GET_VERSION:
 		return (int)MV_GetCurrentGameversion();
-
-	case MVAPI_R_ADDREFENTITYTOSCENE2:
-		if (VM_MVAPILevel(uivm) >= 3) {
-			re.AddRefEntityToScene(VMAV(1, const refEntity_t), qtrue);
-		}
-		return 0;
-
-	default:
-		Com_Error( ERR_DROP, "Bad UI system trap: %i", args[0] );
-
 	}
 
+	if (VM_MVAPILevel(uivm) >= 3) {
+		switch (args[0]) {
+		case UI_MVAPI_R_ADDREFENTITYTOSCENE2:
+			re.AddRefEntityToScene(VMAV(1, const refEntity_t), qtrue);
+			return 0;
+		}
+	}
+
+	if (VM_MVMenu(uivm)) {
+		switch (args[0]) {
+			// download popup
+		case UI_MV_CONTINUE_DOWNLOAD:
+			CL_ContinueCurrentDownload((dldecision_t)args[1]);
+			return qtrue;
+		case UI_MV_GETDLLIST:
+			return UI_ConcatDLList(VMAA(1, dlfile_t, args[2]), args[2]);
+		case UI_MV_RMDLPREFIX:
+			return FS_RMDLPrefix(VMAS(1));
+		case UI_MV_DELDLFILE:
+			return UI_DeleteDLFile(VMAV(1, const dlfile_t));
+		}
+	}
+
+	Com_Error( ERR_DROP, "Bad UI system trap: %i", args[0] );
 	return 0;
 }
 
@@ -1198,12 +1191,14 @@ jk2mv has it's own dll for the main menu
 void CL_InitUI(qboolean mainMenu) {
 	vmInterpret_t		interpret;
 	int v;
+	int apilevel = MIN(mv_apienabled->integer, MV_APILEVEL);
 
 	Cvar_Get("ui_menulevel", "0", CVAR_ROM | CVAR_INTERNAL, qfalse);
 	Cvar_Set("ui_menulevel", "0");
 
 	if (mainMenu && mv_menuOverride->integer == 0) {
 		uigameversion = VERSION_UNDEF;
+		apilevel = MV_APILEVEL;
 
 		uivm = VM_Create("jk2mvmenu", qtrue, CL_UISystemCalls, VMI_NATIVE);
 	} else {
@@ -1231,7 +1226,10 @@ void CL_InitUI(qboolean mainMenu) {
 	} else {
 		int apireq;
 
-		apireq = VM_Call( uivm, UI_INIT, mainMenu ? qfalse : (cls.state >= CA_AUTHORIZING && cls.state <= CA_ACTIVE), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, MV_APILEVEL );
+		apireq = VM_Call( uivm, UI_INIT, mainMenu ? qfalse : (cls.state >= CA_AUTHORIZING && cls.state <= CA_ACTIVE), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, apilevel );
+		if (apireq > apilevel) {
+			apireq = apilevel;
+		}
 		VM_SetMVAPILevel(uivm, apireq);
 		Com_DPrintf("UIVM uses MVAPI level %i.\n", apireq);
 

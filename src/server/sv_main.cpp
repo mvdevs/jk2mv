@@ -575,10 +575,6 @@ MVAPI_GetConnectionlessPacket
 mvaddr_t curraddr;
 char currmessage[MAX_STRING_CHARS];
 qboolean MVAPI_GetConnectionlessPacket(mvaddr_t *addr, char *buf, unsigned int bufsize) {
-	if (VM_MVAPILevel(gvm) < 1) {
-		return qtrue;
-	}
-
 	if (currmessage[0] == 0) {
 		return qtrue;
 	}
@@ -595,10 +591,6 @@ MVAPI_SendConnectionlessPacket
 */
 qboolean MVAPI_SendConnectionlessPacket(const mvaddr_t *addr, const char *message) {
 	netadr_t nativeAdr;
-
-	if (VM_MVAPILevel(gvm) < 1) {
-		return qtrue;
-	}
 
 	if (addr->type != MV_IPV4) {
 		return qtrue;
@@ -618,10 +610,6 @@ qboolean MVAPI_SendConnectionlessPacket(const mvaddr_t *addr, const char *messag
 qboolean mvStructConversionDisabled = qfalse;
 qboolean MVAPI_DisableStructConversion(qboolean disable)
 {
-	if (VM_MVAPILevel(gvm) < 2) {
-		return qtrue;
-	}
-
 	mvStructConversionDisabled = disable;
 
 	return qfalse;
@@ -813,7 +801,7 @@ void SV_ConnectionlessPacket( netadr_t from, msg_t *msg ) {
 			curraddr.ip.v4[3] = from.ip[3];
 			curraddr.port = from.port;
 
-			VM_Call(gvm, MVAPI_RECV_CONNECTIONLESSPACKET);
+			VM_Call(gvm, GAME_MVAPI_RECV_CONNECTIONLESSPACKET);
 
 			currmessage[0] = 0;
 		}

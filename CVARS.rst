@@ -110,6 +110,15 @@ Client-Side
 
 ..
 
+:Name: mv_apienabled
+:Values: "0", "1", "2", "3"
+:Default: Max supported MVAPI level
+:Description:
+   Max MVAPI level modules can use. 0 disables MVAPI SysCalls
+   completely.
+
+..
+
 :Name: mv_consoleShiftRequirement
 :Values: "0", "1", 2
 :Default: "1"
@@ -387,7 +396,6 @@ Undocumented Cvars
 * com_maxfpsMinimized
 * com_maxfpsUnfocused
 * in_nograb
-* mv_apiEnabled (ROM)
 * mv_coloredTextShadows
 * net_dropsim (dev cvar)
 * net_enabled

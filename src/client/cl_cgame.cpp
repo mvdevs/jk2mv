@@ -1282,22 +1282,26 @@ Ghoul2 Insert End
 		cl.mSharedMemory = VMAP(1, char, MAX_CG_SHARED_BUFFER_SIZE);
 		return 0;
 
-	case MVAPI_CONTROL_FIXES:
-		return (int)CL_MVAPI_ControlFixes(args[1]);
-
 	case MVAPI_GET_VERSION:
 		return (int)MV_GetCurrentGameversion();
-
-	case MVAPI_R_ADDREFENTITYTOSCENE2:
-		if (VM_MVAPILevel(cgvm) >= 3) {
-			re.AddRefEntityToScene(VMAV(1, const refEntity_t), qtrue);
-		}
-		return 0;
-
-	default:
-			assert(0); // bk010102
-		Com_Error( ERR_DROP, "Bad cgame system trap: %i", args[0] );
 	}
+
+	if (VM_MVAPILevel(cgvm) >= 1) {
+		switch (args[0]) {
+		case MVAPI_CONTROL_FIXES:
+			return (int)CL_MVAPI_ControlFixes(args[1]);
+		}
+	}
+
+	if (VM_MVAPILevel(cgvm) >= 3) {
+		switch (args[0]) {
+		case CG_MVAPI_R_ADDREFENTITYTOSCENE2:
+			re.AddRefEntityToScene(VMAV(1, const refEntity_t), qtrue);
+			return 0;
+		}
+	}
+
+	Com_Error( ERR_DROP, "Bad cgame system trap: %i", args[0] );
 	return 0;
 }
 
@@ -1343,7 +1347,11 @@ void CL_InitCGame( void ) {
 	// init for this gamestate
 	// use the lastExecutedServerCommand instead of the serverCommandSequence
 	// otherwise server commands sent just before a gamestate are dropped
-	apireq = VM_Call(cgvm, CG_INIT, clc.serverMessageSequence, clc.lastExecutedServerCommand, clc.clientNum, 0, 0, 0, 0, 0, 0, 0, 0, MV_APILEVEL);
+	apireq = VM_Call(cgvm, CG_INIT, clc.serverMessageSequence, clc.lastExecutedServerCommand,
+		clc.clientNum, 0, 0, 0, 0, 0, 0, 0, 0, MIN(mv_apienabled->integer, MV_APILEVEL));
+	if (apireq > mv_apienabled->integer) {
+		apireq = mv_apienabled->integer;
+	}
 	VM_SetMVAPILevel(cgvm, apireq);
 	Com_DPrintf("CGameVM uses MVAPI level %i.\n", apireq);
 
@@ -1656,11 +1664,16 @@ disable / enable toggleable fixes from the cgvm
 ====================
 */
 qboolean CL_MVAPI_ControlFixes(int fixes) {
-	if (VM_MVAPILevel(cgvm) < 1) {
-		return qtrue;
+	int mask = 0;
+
+	switch (VM_MVAPILevel(cgvm)) {
+	case 3:
+	case 2:
+	case 1:
+		mask |= MVFIX_WPGLOWING;
 	}
 
-	cls.fixes = fixes;
+	cls.fixes = fixes & mask;
 
 	return qfalse;
 }

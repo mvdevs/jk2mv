@@ -58,7 +58,6 @@ typedef enum {
 // vmMain(MVAPI_AFTER_INIT, ...)
 #define MVAPI_AFTER_INIT 100
 
-// ************************** //
 // ----------------------------------------- GAME ------------------------------------------ //
 
 typedef enum {
@@ -88,30 +87,37 @@ typedef struct {
 // ******** SYSCALLS ******** //
 
 // qboolean trap_MVAPI_SendConnectionlessPacket(const mvaddr_t *addr, const char *message);
-#define MVAPI_SEND_CONNECTIONLESSPACKET 700      /* asm: -701 */
+#define G_MVAPI_SEND_CONNECTIONLESSPACKET 700      /* asm: -701 */
 
 // qboolean trap_MVAPI_GetConnectionlessPacket(mvaddr_t *addr, char *buf, unsigned int bufsize);
-#define MVAPI_GET_CONNECTIONLESSPACKET 701       /* asm: -702 */
+#define G_MVAPI_GET_CONNECTIONLESSPACKET 701       /* asm: -702 */
 
 // qboolean trap_MVAPI_LocateGameData(mvsharedEntity_t *mvEnts, int numGEntities, int sizeofmvsharedEntity_t);
-#define MVAPI_LOCATE_GAME_DATA 702               /* asm: -703 */
+#define G_MVAPI_LOCATE_GAME_DATA 702               /* asm: -703 */
 
 // qboolean trap_MVAPI_DisableStructConversion(qboolean disable);
-#define MVAPI_DISABLE_STRUCT_CONVERSION 705		/* asm: -706 */
+#define G_MVAPI_DISABLE_STRUCT_CONVERSION 705		/* asm: -706 */
 
 // ******** VMCALLS ******** //
 
-// vmMain(MVAPI_RECV_CONNECTIONLESSPACKET, ...)
-#define MVAPI_RECV_CONNECTIONLESSPACKET 101
+// vmMain(GAME_MVAPI_RECV_CONNECTIONLESSPACKET, ...)
+#define GAME_MVAPI_RECV_CONNECTIONLESSPACKET 101
 
 // ------------------------------------------ UI ------------------------------------------- //
 
 #define MVSORT_CLIENTS_NOBOTS 5
 
-// -------------------------------------- UI & CGAME --------------------------------------- //
+// ******** SYSCALLS ******** //
 
 // void trap_R_AddRefEntityToScene2(const refEntity_t *re);
-#define MVAPI_R_ADDREFENTITYTOSCENE2 706         /* asm: -707 */
+#define UI_MVAPI_R_ADDREFENTITYTOSCENE2 706         /* asm: -707 */
+
+// ---------------------------------------- CGAME ------------------------------------------ //
+
+// ******** SYSCALLS ******** //
+
+// void trap_R_AddRefEntityToScene2(const refEntity_t *re);
+#define CG_MVAPI_R_ADDREFENTITYTOSCENE2 706         /* asm: -707 */
 
 // ----------------------------------------------------------------------------------------- //
 

@@ -80,7 +80,7 @@ LIBEXPORT intptr_t QDECL vmMain(int command, int arg0, int arg1, int arg2, int a
 }
 
 int MVAPI_Init(int apilevel) {
-	if (!((int)trap_Cvar_VariableValue("mv_apienabled")) || apilevel < MV_APILEVEL) {
+	if (apilevel < MV_APILEVEL) {
 		// using the mvmenu without jk2mv is useless
 		trap_Error("This mvmenu version requires JK2MV " MV_MIN_VERSION "\n");
 	}

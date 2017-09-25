@@ -380,6 +380,7 @@ void	VM_Forced_Unload_Done(void);
 
 int	VM_MVAPILevel(const vm_t *vm);
 void VM_SetMVAPILevel(vm_t *vm, int level);
+qboolean VM_MVMenu(const vm_t *vm);
 
 //Ignore __attribute__ on non-gcc platforms
 #ifndef __GNUC__
@@ -799,6 +800,8 @@ extern	cvar_t	*com_buildScript;		// for building release pak files
 extern	cvar_t	*com_journal;
 extern	cvar_t	*com_cameraMode;
 extern	cvar_t	*com_busyWait;
+
+extern cvar_t	*mv_apienabled;
 
 // both client and server must agree to pause
 extern	cvar_t	*cl_paused;

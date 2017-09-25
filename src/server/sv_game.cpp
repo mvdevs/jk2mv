@@ -304,10 +304,6 @@ MVAPI_LocateGameData
 ===============
 */
 qboolean MVAPI_LocateGameData(mvsharedEntity_t *mvEnts, int numGEntities, int sizeofmvsharedEntity_t) {
-	if (VM_MVAPILevel(gvm) < 1) {
-		return qtrue;
-	}
-
 	if ( mvEnts && ( numGEntities <= 0 || sizeofmvsharedEntity_t <= 0 ) ) {
 		Com_Error( ERR_DROP, "MVAPI_LocateGameData: incorrect shared game entity data" );
 	}
@@ -408,12 +404,6 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 		SV_LocateGameData( (sharedEntity_t *)VM_ArgArray(args[0], args[1], args[3], args[2]), args[2], args[3], (playerState_t *)VM_ArgArray(args[0], args[4], args[5], MAX_CLIENTS), args[5] );
 		VM_LocateGameDataCheck( sv.gentitiesMV, sv.gentitySizeMV, sv.num_entities );
 		return 0;
-	case MVAPI_LOCATE_GAME_DATA:
-		{
-			qboolean ret = MVAPI_LocateGameData((mvsharedEntity_t *)VM_ArgArray(args[0], args[1], args[3], args[2]), args[2], args[3]);
-			VM_LocateGameDataCheck( sv.gentitiesMV, sv.gentitySizeMV, sv.num_entities );
-			return ret;
-		}
 	case G_DROP_CLIENT:
 		SV_GameDropClient( args[1], VMAS(2) );
 		return 0;
@@ -1070,24 +1060,36 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 #endif
 		return 0;
 
-	case MVAPI_GET_CONNECTIONLESSPACKET:
-		return (int)MVAPI_GetConnectionlessPacket(VMAV(1, mvaddr_t), VMAP(2, char, (unsigned int)args[3]), (unsigned int)args[3]);
-
-	case MVAPI_SEND_CONNECTIONLESSPACKET:
-		return (int)MVAPI_SendConnectionlessPacket(VMAV(1, const mvaddr_t), VMAS(2));
-
-	case MVAPI_CONTROL_FIXES:
-		return (int)SV_MVAPI_ControlFixes(args[1]);
-
 	case MVAPI_GET_VERSION:
 		return (int)MV_GetCurrentGameversion();
 
-	case MVAPI_DISABLE_STRUCT_CONVERSION:
-		return (int)MVAPI_DisableStructConversion((qboolean)!!args[1]);
-
-	default:
-		Com_Error( ERR_DROP, "Bad game system trap: %i", args[0] );
 	}
+
+	if (VM_MVAPILevel(gvm) >= 1) {
+		switch (args[0]) {
+		case G_MVAPI_LOCATE_GAME_DATA:
+		{
+			qboolean ret = MVAPI_LocateGameData((mvsharedEntity_t *)VM_ArgArray(args[0], args[1], args[3], args[2]), args[2], args[3]);
+			VM_LocateGameDataCheck( sv.gentitiesMV, sv.gentitySizeMV, sv.num_entities );
+			return ret;
+		}
+		case G_MVAPI_GET_CONNECTIONLESSPACKET:
+			return (int)MVAPI_GetConnectionlessPacket(VMAV(1, mvaddr_t), VMAP(2, char, (unsigned int)args[3]), (unsigned int)args[3]);
+		case G_MVAPI_SEND_CONNECTIONLESSPACKET:
+			return (int)MVAPI_SendConnectionlessPacket(VMAV(1, const mvaddr_t), VMAS(2));
+		case MVAPI_CONTROL_FIXES:
+			return (int)SV_MVAPI_ControlFixes(args[1]);
+		}
+	}
+
+	if (VM_MVAPILevel(gvm) >= 2) {
+		switch (args[0]) {
+		case G_MVAPI_DISABLE_STRUCT_CONVERSION:
+			return (int)MVAPI_DisableStructConversion((qboolean)!!args[1]);
+		}
+	}
+
+	Com_Error( ERR_DROP, "Bad game system trap: %i", args[0] );
 	return -1;
 }
 
@@ -1133,7 +1135,11 @@ static void SV_InitGameVM( qboolean restart ) {
 
 	mvStructConversionDisabled = qfalse;
 
-	apireq = VM_Call(gvm, GAME_INIT, svs.time, Com_Milliseconds(), restart, 0, 0, 0, 0, 0, 0, 0, 0, MV_APILEVEL);
+	apireq = VM_Call(gvm, GAME_INIT, svs.time, Com_Milliseconds(), restart,
+		0, 0, 0, 0, 0, 0, 0, 0, MIN(mv_apienabled->integer, MV_APILEVEL));
+	if (apireq > mv_apienabled->integer) {
+		apireq = mv_apienabled->integer;
+	}
 	VM_SetMVAPILevel(gvm, apireq);
 	Com_DPrintf("GameVM uses MVAPI level %i.\n", apireq);
 
@@ -1226,11 +1232,26 @@ disable / enable toggleable fixes from the gvm
 ====================
 */
 qboolean SV_MVAPI_ControlFixes(int fixes) {
-	if (VM_MVAPILevel(gvm) < 1) {
-		return qtrue;
+	int mask = 0;
+
+	switch (VM_MVAPILevel(gvm)) {
+	case 3:
+		mask |= MVFIX_PLAYERGHOSTING;
+		// fallthrough
+	case 2:
+		mask |= MVFIX_SABERSTEALING;
+		// fallthrough
+	case 1:
+		mask |= MVFIX_NAMECRASH;
+		mask |= MVFIX_FORCECRASH;
+		mask |= MVFIX_GALAKING;
+		mask |= MVFIX_BROKENMODEL;
+		mask |= MVFIX_TURRETCRASH;
+		mask |= MVFIX_CHARGEJUMP;
+		mask |= MVFIX_SPEEDHACK;
 	}
 
-	sv.fixes = fixes;
+	sv.fixes = fixes & mask;
 
 	return qfalse;
 }

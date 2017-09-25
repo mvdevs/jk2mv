@@ -2439,7 +2439,7 @@ void Com_Init( char *commandLine ) {
 	Cvar_Get ("com_othertasks", "0", CVAR_ROM );
 	Cvar_Get("com_ignoreothertasks", "0", CVAR_ARCHIVE | CVAR_GLOBAL);
 
-	mv_apienabled = Cvar_Get("mv_apienabled", "1", CVAR_ROM);
+	mv_apienabled = Cvar_Get("mv_apienabled", XSTR(MV_APILEVEL), CVAR_INIT | CVAR_VM_NOWRITE);
 
 	if ( com_dedicated->integer ) {
 		if ( !com_viewlog->integer ) {
