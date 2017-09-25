@@ -1,6 +1,5 @@
-#include "../qcommon/q_shared.h"
-#include "qfiles.h"
-
+#ifndef _CM_PUBLIC_H_
+#define _CM_PUBLIC_H_
 
 void		CM_LoadMap( const char *name, qboolean clientload, int *checksum);
 void		CM_ClearMap( void );
@@ -58,3 +57,5 @@ void CM_DrawDebugSurface( void (*drawPoly)(int color, int numPoints, float *poin
 const char *CM_GetShaderText(const char *key);
 void CM_FreeShaderText(void);
 void CM_LoadShaderText(qboolean forceReload);
+
+#endif // _CM_PUBLIC_H_

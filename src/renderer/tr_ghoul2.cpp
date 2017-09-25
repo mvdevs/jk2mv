@@ -1,11 +1,6 @@
 // leave this as first line for PCH reasons...
 //
 
-
-#include "../client/client.h"	//FIXME!! EVIL - just include the definitions needed
-
-
-
 #if !defined(TR_LOCAL_H)
 	#include "tr_local.h"
 #endif

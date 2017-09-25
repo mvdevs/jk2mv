@@ -1,5 +1,5 @@
 #include "tr_local.h"
-
+#include "../qcommon/cm_public.h"
 
 
 /*

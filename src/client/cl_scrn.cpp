@@ -1,6 +1,7 @@
 // cl_scrn.c -- master for refresh, status bar, console, chat, notify, etc
 
 #include "client.h"
+#include "snd_public.h"
 #include <mv_setup.h>
 
 extern console_t con;

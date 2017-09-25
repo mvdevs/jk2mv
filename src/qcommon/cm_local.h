@@ -1,6 +1,7 @@
 
-#include "../qcommon/q_shared.h"
 #include "qcommon.h"
+#include "qfiles.h"
+#include "cm_public.h"
 #include "cm_polylib.h"
 
 #define	MAX_SUBMODELS			256

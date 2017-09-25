@@ -4,8 +4,8 @@
 #include <atomic>
 #include <condition_variable>
 #include <mongoose.h>
-#include "../server/server.h"
-#include "../client/client.h"
+#include "q_shared.h"
+#include "qcommon.h"
 
 #define POLL_MSEC 100
 

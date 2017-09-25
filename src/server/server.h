@@ -6,10 +6,10 @@
 #define SERVER_H_INC
 
 
-#include "../qcommon/q_shared.h"
 #include "../qcommon/qcommon.h"
 #include "../game/g_public.h"
 #include "../game/bg_public.h"
+#include "../qcommon/cm_public.h"
 
 #include "../api/mvapi.h"
 

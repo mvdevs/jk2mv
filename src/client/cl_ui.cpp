@@ -1,5 +1,6 @@
 
 #include "client.h"
+#include "snd_public.h"
 
 #include "../game/botlib.h"
 #include "../qcommon/strip.h"

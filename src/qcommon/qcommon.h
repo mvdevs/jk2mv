@@ -2,11 +2,8 @@
 #ifndef _QCOMMON_H_
 #define _QCOMMON_H_
 
-#include <stdint.h>
-#include "../qcommon/cm_public.h"
 #include "../qcommon/q_shared.h"
 #include "../api/mvapi.h"
-#include "../menu/ui_public.h"
 #include "../sys/sys_public.h"
 
 //============================================================================

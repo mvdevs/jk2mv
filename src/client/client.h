@@ -1,11 +1,10 @@
 // client.h -- primary header for client
 
-#include "../qcommon/q_shared.h"
 #include "../qcommon/qcommon.h"
+#include "../qcommon/cm_public.h"
 #include "../renderer/tr_public.h"
 #include "../menu/ui_public.h"
 #include "keys.h"
-#include "snd_public.h"
 #include "../cgame/cg_public.h"
 #include "../game/bg_public.h"
 #include "../api/mvapi.h"

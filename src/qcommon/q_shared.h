@@ -1047,6 +1047,21 @@ typedef enum {
 	FS_SEEK_SET
 } fsOrigin_t;
 
+
+typedef enum {
+	DL_ACCEPT,
+	DL_ABORT,
+	DL_ABORT_BLACKLIST,
+} dldecision_t;
+
+typedef struct {
+	char name[256];
+	time_t time;
+
+	int checkksum;
+	qboolean blacklisted;
+} dlfile_t;
+
 //=============================================
 
 int Q_isprint( int c );

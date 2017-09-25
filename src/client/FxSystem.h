@@ -6,6 +6,8 @@
 #ifndef FX_SYSTEM_H_INC
 #define FX_SYSTEM_H_INC
 
+#include "snd_public.h"
+
 #ifdef CHC
 	#define irand	Q_irand
 	#define flrand	Q_flrand

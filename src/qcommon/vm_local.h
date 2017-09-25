@@ -20,8 +20,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
 
-#include "../qcommon/q_shared.h"
 #include "qcommon.h"
+#include "qfiles.h"
 #include <stdint.h>
 
 // Max number of arguments to pass from engine to vm's vmMain function.

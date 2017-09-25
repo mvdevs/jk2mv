@@ -4,6 +4,7 @@
 #include <mv_setup.h>
 
 #include "../qcommon/q_shared.h"
+
 /*
 Ghoul2 Insert Start
 */

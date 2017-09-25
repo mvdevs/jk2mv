@@ -2,6 +2,7 @@
 #include "../qcommon/qcommon.h"
 #include "../qcommon/q_shared.h"
 #include "../client/client.h"
+#include "../client/snd_public.h"
 #include "../sys/sys_local.h"
 
 static cvar_t *in_keyboardDebug     = NULL;

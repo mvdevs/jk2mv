@@ -1,4 +1,5 @@
 #include "client.h"
+#include "snd_public.h"
 #include "../qcommon/strip.h"
 /*
 
