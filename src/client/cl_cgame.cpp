@@ -835,10 +835,10 @@ intptr_t CL_CgameSystemCalls(intptr_t *args) {
 	case CG_R_LERPTAG:
 		return re.LerpTag( VMAV(1, orientation_t), args[2], args[3], args[4], VMF(5), VMAS(6) );
 	case CG_R_DRAWROTATEPIC:
-		re.DrawRotatePic( VMF(1), VMF(2), VMF(3), VMF(4), VMF(5), VMF(6), VMF(7), VMF(8), VMF(9), args[10] );
+		re.DrawRotatePic( VMF(1), VMF(2), VMF(3), VMF(4), VMF(5), VMF(6), VMF(7), VMF(8), VMF(9), args[10], 1, 1 );
 		return 0;
 	case CG_R_DRAWROTATEPIC2:
-		re.DrawRotatePic2( VMF(1), VMF(2), VMF(3), VMF(4), VMF(5), VMF(6), VMF(7), VMF(8), VMF(9), args[10] );
+		re.DrawRotatePic2( VMF(1), VMF(2), VMF(3), VMF(4), VMF(5), VMF(6), VMF(7), VMF(8), VMF(9), args[10], 1, 1 );
 		return 0;
 	case CG_GETGLCONFIG:
 		CL_GetVMGLConfig(VMAV(1, vmglconfig_t));
