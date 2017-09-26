@@ -1029,7 +1029,11 @@ static void ComputeTexCoords( shaderStage_t *pStage ) {
 			RB_CalcFogTexCoords( ( float * ) tess.svars.texcoords[b] );
 			break;
 		case TCGEN_ENVIRONMENT_MAPPED:
-			RB_CalcEnvironmentTexCoords( ( float * ) tess.svars.texcoords[b] );
+			if ( r_environmentMapping->integer ) {
+				RB_CalcEnvironmentTexCoords( texcoords );
+			} else {
+				Com_Memset( texcoords, 0, sizeof( float ) * 2 * tess.numVertexes );
+			}
 			break;
 		case TCGEN_BAD:
 			return;

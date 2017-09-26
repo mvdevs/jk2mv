@@ -1292,6 +1292,7 @@ extern	cvar_t *r_consoleFont;
 extern	cvar_t *r_fontSharpness;
 extern	cvar_t *r_textureLODBias;
 extern	cvar_t *r_saberGlow;
+extern	cvar_t *r_environmentMapping;
 //====================================================================
 
 float R_NoiseGet4f( float x, float y, float z, double t );
