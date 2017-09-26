@@ -1014,16 +1014,16 @@ intptr_t CL_UISystemCalls(intptr_t *args) {
 		return re.RegisterFont( VMAS(1) );
 
 	case UI_R_FONT_STRLENPIXELS:
-		return re.Font_StrLenPixels( VMAS(1), args[2], VMF(3) );
+		return re.Font_StrLenPixels( VMAS(1), args[2], VMF(3), 1, 1 );
 
 	case UI_R_FONT_STRLENCHARS:
 		return re.Font_StrLenChars( VMAS(1) );
 
 	case UI_R_FONT_STRHEIGHTPIXELS:
-		return re.Font_HeightPixels( args[1], VMF(2) );
+		return re.Font_HeightPixels( args[1], VMF(2), 1, 1 );
 
 	case UI_R_FONT_DRAWSTRING:
-		re.Font_DrawString( args[1], args[2], VMAS(3), VMAP(4, const vec_t, 4), args[5], args[6], VMF(7) );
+		re.Font_DrawString( args[1], args[2], VMAS(3), VMAP(4, const vec_t, 4), args[5], args[6], VMF(7), 1, 1 );
 		return 0;
 
 	case UI_LANGUAGE_ISASIAN:

@@ -695,13 +695,14 @@ CFontInfo *GetFont(int index)
 	return(NULL);
 }
 
-CFontInfo *RE_Font_GetVariant(CFontInfo *font, float *scale) {
+CFontInfo *RE_Font_GetVariant(CFontInfo *font, float *scale, float xadjust, float yadjust) {
 	int variants = font->GetNumVariants();
 
 	if (variants > 0) {
 		CFontInfo *variant;
 		int requestedSize = font->GetPointSize() * *scale *
-		  r_fontSharpness->value * glConfig.vidHeight / 480.0f;
+			r_fontSharpness->value * glConfig.vidHeight *
+			(yadjust / SCREEN_HEIGHT);
 
 		if (requestedSize <= font->GetPointSize())
 			return font;
@@ -720,7 +721,7 @@ CFontInfo *RE_Font_GetVariant(CFontInfo *font, float *scale) {
 	return font;
 }
 
-int RE_Font_StrLenPixels(const char *psText, const int iFontHandle, float fScale)
+int RE_Font_StrLenPixels(const char *psText, const int iFontHandle, float fScale, float xadjust, float yadjust)
 {			
 	size_t		i = 0;
 	CFontInfo	*curfont;
@@ -750,7 +751,7 @@ int RE_Font_StrLenPixels(const char *psText, const int iFontHandle, float fScale
 		return(0);
 	}
 
-	curfont = RE_Font_GetVariant(curfont, &fScale);
+	curfont = RE_Font_GetVariant(curfont, &fScale, xadjust, yadjust);
 
 	float fScaleA = fScale;
 	if (Language_IsAsian())
@@ -801,14 +802,14 @@ int RE_Font_StrLenChars(const char *psText)
 	return iCharCount;
 }
 
-int RE_Font_HeightPixels(const int iFontHandle, float fScale)
+int RE_Font_HeightPixels(const int iFontHandle, float fScale, float xadjust, float yadjust)
 {
 	CFontInfo	*curfont;
 
 	curfont = GetFont(iFontHandle);
 	if(curfont)
 	{
-		curfont = RE_Font_GetVariant(curfont, &fScale);
+		curfont = RE_Font_GetVariant(curfont, &fScale, xadjust, yadjust);
 		return(Round(curfont->GetPointSize() * fScale));
 	}
 	return(0);
@@ -816,9 +817,12 @@ int RE_Font_HeightPixels(const int iFontHandle, float fScale)
 
 // iCharLimit is -1 for "all of string", else MBCS char count...
 //
+// ox, oy are in virtual screen coordinates
+// xadjust is 640 / virtual screen width
+// yadjust is 480 / virtual screen height
 qboolean gbInShadow = qfalse;	// MUST default to this
 extern cvar_t	*mv_coloredTextShadows;
-void RE_Font_DrawString(int ox, int oy, const char *psText, const vec4_t rgba, int iFontHandle, int iCharLimit, float fScale)
+void RE_Font_DrawString(int ox, int oy, const char *psText, const vec4_t rgba, int iFontHandle, int iCharLimit, float fScale, float xadjust, float yadjust)
 {
 	int					colour, offset;
 	float				fox, foy, fx, fy;
@@ -840,7 +844,7 @@ void RE_Font_DrawString(int ox, int oy, const char *psText, const vec4_t rgba, i
 		return;
 	}
 
-	curfont = RE_Font_GetVariant(curfont, &fScale);
+	curfont = RE_Font_GetVariant(curfont, &fScale, xadjust, yadjust);
 	iFontHandle = curfont->GetHandle() | (iFontHandle & ~SET_MASK);
 
 	float fScaleA = fScale;
@@ -875,7 +879,8 @@ void RE_Font_DrawString(int ox, int oy, const char *psText, const vec4_t rgba, i
 			}
 			dropShadowText[r] = 0;
 
-			RE_Font_DrawString(ox + offset, oy + offset, dropShadowText, v4DKGREY2, iFontHandle & SET_MASK, iCharLimit, fScale);
+			RE_Font_DrawString(ox + offset, oy + offset, dropShadowText, v4DKGREY2,
+				iFontHandle & SET_MASK, iCharLimit, fScale, xadjust, yadjust);
 		}
 		else
 		{
@@ -884,7 +889,8 @@ void RE_Font_DrawString(int ox, int oy, const char *psText, const vec4_t rgba, i
 			offset = Round(curfont->GetPointSize() * fScale * 0.075f);
 
 			gbInShadow = qtrue;
-			RE_Font_DrawString(ox + offset, oy + offset, psText, v4DKGREY2, iFontHandle & SET_MASK, iCharLimit, fScale);
+			RE_Font_DrawString(ox + offset, oy + offset, psText, v4DKGREY2,
+				iFontHandle & SET_MASK, iCharLimit, fScale, xadjust, yadjust);
 			gbInShadow = qfalse;
 		}
 	}
@@ -941,18 +947,18 @@ void RE_Font_DrawString(int ox, int oy, const char *psText, const vec4_t rgba, i
 			// this 'mbRoundCalcs' stuff is crap, but the only way to make the font code work. Sigh...
 			//
 			float fThisScale = uiLetter > 255 ? fScaleA : fScale;
-			fy = foy - ((float)pLetter->baseline * fThisScale);	//fixed
+			fy = foy - (pLetter->baseline * fThisScale);	//fixed
 
-			RE_StretchPic ( fx + (float)pLetter->horizOffset * fThisScale, // float x
+			RE_StretchPic ( fx + pLetter->horizOffset * fThisScale, // float x
 							(uiLetter > 255) ? fy - iAsianYAdjust : fy,	// float y
-							(float)pLetter->width * fThisScale,	// float w
-							(float)pLetter->height * fThisScale, // float h
+							pLetter->width * fThisScale,	// float w
+							pLetter->height * fThisScale, // float h
 							pLetter->s,						// float s1
 							pLetter->t,						// float t1
 							pLetter->s2,					// float s2
 							pLetter->t2,					// float t2
 							hShader,						// qhandle_t hShader
-							1, 1);
+							xadjust, yadjust);
 
 			fx += (float)pLetter->horizAdvance * fThisScale;
 			break;
