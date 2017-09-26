@@ -193,10 +193,15 @@ void	RE_SetColor( const vec4_t rgba ) {
 /*
 =============
 RE_StretchPic
+
+x, y, w and h are in virtual screen coordinates
+xadjust is 640 / virtual screen width
+yadjust is 480 / virtual screen height
 =============
 */
-void RE_StretchPic ( float x, float y, float w, float h,
-					  float s1, float t1, float s2, float t2, qhandle_t hShader ) {
+void RE_StretchPic ( float x, float y, float w, float h, float s1, float t1,
+	float s2, float t2, qhandle_t hShader, float xadjust, float yadjust )
+{
 	stretchPicCommand_t	*cmd;
 
 	cmd = (stretchPicCommand_t *)R_GetCommandBuffer( sizeof( *cmd ) );
@@ -205,10 +210,10 @@ void RE_StretchPic ( float x, float y, float w, float h,
 	}
 	cmd->commandId = RC_STRETCH_PIC;
 	cmd->shader = R_GetShaderByHandle( hShader );
-	cmd->x = x;
-	cmd->y = y;
-	cmd->w = w;
-	cmd->h = h;
+	cmd->x = x * xadjust;
+	cmd->y = y * yadjust;
+	cmd->w = w * xadjust;
+	cmd->h = h * yadjust;
 	cmd->s1 = s1;
 	cmd->t1 = t1;
 	cmd->s2 = s2;

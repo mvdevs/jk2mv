@@ -336,7 +336,6 @@ typedef struct {
 	qhandle_t	consoleShader;
 
 	qhandle_t	recordingShader;
-	float		ratioFix;
 	float		xadjust;
 	float		yadjust;
 

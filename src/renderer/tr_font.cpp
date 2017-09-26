@@ -951,8 +951,8 @@ void RE_Font_DrawString(int ox, int oy, const char *psText, const vec4_t rgba, i
 							pLetter->t,						// float t1
 							pLetter->s2,					// float s2
 							pLetter->t2,					// float t2
-							hShader							// qhandle_t hShader
-							);
+							hShader,						// qhandle_t hShader
+							1, 1);
 
 			fx += (float)pLetter->horizAdvance * fThisScale;
 			break;

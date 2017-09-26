@@ -726,7 +726,7 @@ void Con_DrawSolidConsole( float frac ) {
 
 	// draw the bottom bar and version number
 	re.SetColor( g_color_table[ColorIndex_Extended(COLOR_JK2MV)] );
-	re.DrawStretchPic( 0, y, SCREEN_WIDTH, 2, 0, 0, 0, 0, cls.whiteShader );
+	SCR_DrawPic( 0, y, SCREEN_WIDTH, 2, cls.whiteShader );
 
 
 	vertext = Q3_VERSION;

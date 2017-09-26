@@ -50,8 +50,8 @@ typedef struct {
 	void	(*RenderScene)( const refdef_t *fd );
 
 	void	(*SetColor)( const vec4_t rgba );	// NULL = 1,1,1,1
-	void	(*DrawStretchPic) ( float x, float y, float w, float h,
-		float s1, float t1, float s2, float t2, qhandle_t hShader );	// 0 = white
+	void	(*DrawStretchPic) ( float x, float y, float w, float h, float s1, float t1,
+		float s2, float t2, qhandle_t hShader, float xadjust, float yadjust );	// 0 = white
 	void	(*DrawRotatePic) ( float x, float y, float w, float h,
 		float s1, float t1, float s2, float t2, float a1, qhandle_t hShader );	// 0 = white
 	void	(*DrawRotatePic2) ( float x, float y, float w, float h,

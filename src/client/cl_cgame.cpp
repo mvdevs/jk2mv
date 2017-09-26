@@ -827,7 +827,7 @@ intptr_t CL_CgameSystemCalls(intptr_t *args) {
 		re.SetColor( VMAP(1, vec_t, 4) );
 		return 0;
 	case CG_R_DRAWSTRETCHPIC:
-		re.DrawStretchPic( VMF(1), VMF(2), VMF(3), VMF(4), VMF(5), VMF(6), VMF(7), VMF(8), args[9] );
+		re.DrawStretchPic( VMF(1), VMF(2), VMF(3), VMF(4), VMF(5), VMF(6), VMF(7), VMF(8), args[9], 1, 1 );
 		return 0;
 	case CG_R_MODELBOUNDS:
 		re.ModelBounds( args[1], VMAP(2, vec_t, 3), VMAP(3, vec_t, 3) );
