@@ -339,6 +339,11 @@ typedef struct {
 	float		xadjust;
 	float		yadjust;
 
+	float		cgxadj;
+	float		cgyadj;
+	float		uixadj;
+	float		uiyadj;
+
 	blacklistentry_t *downloadBlacklist;
 	int downloadBlacklistLen;
 	qboolean ignoreNextDownloadList;

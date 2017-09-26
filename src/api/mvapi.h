@@ -112,12 +112,18 @@ typedef struct {
 // void trap_R_AddRefEntityToScene2(const refEntity_t *re);
 #define UI_MVAPI_R_ADDREFENTITYTOSCENE2 706         /* asm: -707 */
 
+// void trap_MVAPI_SetVirtualScreen(float w, float h);
+#define UI_MVAPI_SETVIRTUALSCREEN 707				/* asm: -708 */
+
 // ---------------------------------------- CGAME ------------------------------------------ //
 
 // ******** SYSCALLS ******** //
 
 // void trap_R_AddRefEntityToScene2(const refEntity_t *re);
 #define CG_MVAPI_R_ADDREFENTITYTOSCENE2 706         /* asm: -707 */
+
+// void trap_MVAPI_SetVirtualScreen(float w, float h);
+#define CG_MVAPI_SETVIRTUALSCREEN 707				/* asm: -708 */
 
 // ----------------------------------------------------------------------------------------- //
 

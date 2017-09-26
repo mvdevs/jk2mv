@@ -2566,6 +2566,11 @@ void CL_InitRenderer( void ) {
 	cls.xadjust = (float) SCREEN_WIDTH / cls.glconfig.vidWidth;
 	cls.yadjust = (float) SCREEN_HEIGHT / cls.glconfig.vidHeight;
 
+	cls.cgxadj = 1;
+	cls.cgyadj = 1;
+	cls.uixadj = 1;
+	cls.uiyadj = 1;
+
 	kg.yankIndex = -1;
 }
 
