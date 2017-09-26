@@ -1008,8 +1008,10 @@ static const char *Sys_DescribeSignalCode(int signal, int code) {
 	switch (code) {
 	case SI_USER:		return "kill";
 	case SI_QUEUE: 		return "sigqueue";
-#ifdef __linux__
+#ifdef SI_KERNEL
 	case SI_KERNEL:		return "sent by the kernel";
+#endif
+#ifdef SI_TKILL
 	case SI_TKILL: 		return "tkill or tgkill";
 #endif
 	}
@@ -1050,7 +1052,7 @@ static const char *Sys_DescribeSignalCode(int signal, int code) {
 		case BUS_ADRALN:	return "invalid address alignment";
 		case BUS_ADRERR:	return "nonexistent physical address";
 		case BUS_OBJERR:	return "object-specific hardware error";
-#ifdef __linux__
+#ifdef BUS_MCEERR_AR
 		case BUS_MCEERR_AR:	return "hardware memory error consumed on a machine check; action required";
 		case BUS_MCEERR_AO:	return "hardware memory error detected in process but not consumed; action optional";
 #endif
