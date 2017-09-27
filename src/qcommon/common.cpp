@@ -3118,8 +3118,9 @@ void Field_CheckRep( field_t *edit ) {
 	assert( edit->widthInChars >= 0 );
 	assert( edit->cursor >= 0 );
 	assert( edit->cursor <= len );
-	assert( edit->scroll >= 0 );
-	assert( edit->scroll <= len );
+	// scroll is adjusted when printing now
+	// assert( edit->scroll >= 0 );
+	// assert( edit->scroll <= len );
 
 	assert( 0 <= edit->historyTail && edit->historyTail < FIELD_HISTORY_SIZE );
 	assert( 0 <= edit->historyHead && edit->historyHead < FIELD_HISTORY_SIZE );

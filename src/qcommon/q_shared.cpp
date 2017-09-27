@@ -923,6 +923,68 @@ int Q_PrintStrlen(const char *string, qboolean use102color) {
 	return len;
 }
 
+int Q_PrintStrCharsTo(const char *str, int pos, char *color, qboolean use102color) {
+	int			advance = 0;
+	char		lastColor = 0;
+	int			i;
+
+	for (i = 0; advance < pos && str[i]; i++) {
+		if (Q_IsColorString(&str[i]) || (use102color && Q_IsColorString_1_02(&str[i]))) {
+			i++;
+			lastColor = str[i];
+		} else {
+			advance++;
+		}
+	}
+
+	if (color) {
+		*color = lastColor;
+	}
+
+	return i;
+}
+
+
+int Q_PrintStrLenTo(const char *str, int chars, char *color, qboolean use102color) {
+	int		offset = 0;
+	char	lastColor = 0;
+	int		i;
+
+	for (i = 0; i < chars && str[i]; i++) {
+		if (Q_IsColorString(&str[i]) || (use102color && Q_IsColorString_1_02(&str[i]))) {
+			i++;
+			lastColor = str[i];
+		} else {
+			offset++;
+		}
+	}
+
+	if (color) {
+		*color = lastColor;
+	}
+
+	return offset;
+}
+
+// copy a substring of len printable characters from 'from' offset, saving initial color
+void Q_PrintStrCopy(char *dst, const char *src, int dstSize, int from, int len, qboolean use102color) {
+	int		fromOffset = Q_PrintStrLenTo(src, from, NULL, use102color);
+	int		to;
+	char	color;
+
+	from = Q_PrintStrCharsTo(src, fromOffset, &color, use102color);
+	to = Q_PrintStrCharsTo(src, fromOffset + len, NULL, use102color);
+
+	assert(dstSize >= 3);
+
+	if (color) {
+		*dst++ = Q_COLOR_ESCAPE;
+		*dst++ = color;
+		dstSize -= 2;
+	}
+
+	Q_strncpyz(dst, src + from, MIN(dstSize, to - from + 1));
+}
 
 char *Q_CleanStr(char *string, qboolean use102color) {
 	char*	d;

@@ -396,37 +396,30 @@ x, y, amd width are in pixels
 */
 void Field_VariableSizeDraw( field_t *edit, int x, int y, qboolean smallSize, qboolean showCursor ) {
 	int		len;
-	int		drawLen;
-	int		prestep;
+	int		printLen;
 	int		cursorChar;
-	char	str[MAX_STRING_CHARS];
-	int		i;
+	int		cursorOffset;
+	int		scrollOffset;
+	char	str[MAX_EDIT_LINE];
 
 	len = strlen(edit->buffer);
+	printLen = Q_PrintStrlen(edit->buffer, (qboolean)MV_USE102COLOR);
 
-	if ( edit->scroll > edit->cursor - 1 )
-		edit->scroll = MAX(0, edit->cursor - 1);
+	cursorOffset = Q_PrintStrLenTo(edit->buffer, edit->cursor, NULL, MV_USE102COLOR);
+	scrollOffset = Q_PrintStrLenTo(edit->buffer, edit->scroll, NULL, MV_USE102COLOR);
 
-	if ( edit->scroll > len - edit->widthInChars + 1 )
-		edit->scroll = MAX(0, len - edit->widthInChars + 1);
+	if (scrollOffset > cursorOffset - 1)
+		scrollOffset = MAX(0, cursorOffset - 1);
 
-	if ( edit->scroll < edit->cursor - edit->widthInChars + 1 )
-		edit->scroll = MAX(0, edit->cursor - edit->widthInChars + 1);
+	if (scrollOffset > printLen - edit->widthInChars + 1)
+		scrollOffset = MAX(0, printLen - edit->widthInChars + 1);
 
-	drawLen = edit->widthInChars;
-	prestep = edit->scroll;
+	if (scrollOffset < cursorOffset - edit->widthInChars + 1)
+		scrollOffset = MAX(0, cursorOffset - edit->widthInChars + 1);
 
-	if ( prestep + drawLen > len ) {
-		drawLen = len - prestep;
-	}
+	edit->scroll = Q_PrintStrCharsTo(edit->buffer, scrollOffset, NULL, MV_USE102COLOR);
 
-	// extract <drawLen> characters from the field at <prestep>
-	if ( drawLen >= MAX_STRING_CHARS ) {
-		Com_Error( ERR_DROP, "drawLen >= MAX_STRING_CHARS" );
-	}
-
-	Com_Memcpy( str, edit->buffer + prestep, drawLen );
-	str[ drawLen ] = 0;
+	Q_PrintStrCopy(str, edit->buffer, sizeof(str), edit->scroll, edit->widthInChars, MV_USE102COLOR);
 
 	// draw it
 	if ( smallSize ) {
@@ -454,15 +447,13 @@ void Field_VariableSizeDraw( field_t *edit, int x, int y, qboolean smallSize, qb
 		cursorChar = 10;
 	}
 
-	i = drawLen - ( Q_PrintStrlen( str, (qboolean)MV_USE102COLOR ) );
+	cursorOffset = cursorOffset - scrollOffset;
 
 	if ( smallSize ) {
-		SCR_DrawSmallChar( x + ( edit->cursor - prestep - i ) * con.charWidth, y, cursorChar );
+		SCR_DrawSmallChar( x + cursorOffset * con.charWidth, y, cursorChar );
 	} else {
-		str[0] = cursorChar;
-		str[1] = 0;
-		SCR_DrawBigString( x + ( edit->cursor - prestep - i ) * BIGCHAR_WIDTH, y, str, 1.0 );
-
+		char cursorStr[] = { (char)cursorChar, '\0' };
+		SCR_DrawBigString( x + cursorOffset * BIGCHAR_WIDTH, y, cursorStr, 1.0 );
 	}
 }
 

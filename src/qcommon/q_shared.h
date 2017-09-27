@@ -1087,6 +1087,10 @@ void	Q_strcat( char *dest, size_t size, const char *src );
 
 // strlen that discounts Quake color sequences
 int Q_PrintStrlen( const char *string, qboolean use102color );
+
+int Q_PrintStrCharsTo(const char *str, int pos, char *color, qboolean use102color);
+int Q_PrintStrLenTo(const char *str, int chars, char *color, qboolean use102color);
+void Q_PrintStrCopy(char *dst, const char *src, int dstSize, int from, int len, qboolean use102color);
 // removes color sequences from string
 char *Q_CleanStr( char *string, qboolean use102color ) ;
 

@@ -555,8 +555,9 @@ void Con_DrawInput (void) {
 	if ( kg.g_consoleField.scroll > 0 )
 		SCR_DrawSmallChar( 0, y, CON_SCROLL_L_CHAR );
 
-	int len = strlen( kg.g_consoleField.buffer );
-	if ( kg.g_consoleField.scroll + kg.g_consoleField.widthInChars < len )
+	int len = Q_PrintStrlen( kg.g_consoleField.buffer, MV_USE102COLOR );
+	int pos = Q_PrintStrLenTo( kg.g_consoleField.buffer, kg.g_consoleField.scroll, NULL, MV_USE102COLOR);
+	if ( pos + kg.g_consoleField.widthInChars < len )
 		SCR_DrawSmallChar( cls.glconfig.vidWidth - con.charWidth, y, CON_SCROLL_R_CHAR );
 }
 
