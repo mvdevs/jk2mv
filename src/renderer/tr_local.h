@@ -1401,12 +1401,12 @@ model_t		*R_AllocModel( void );
 void		R_Init( void );
 void R_LoadImage( const char *name, byte **pic, int *width, int *height );
 image_t		*R_FindImageFile( const char *name, qboolean mipmap, qboolean allowPicmip, qboolean allowTC, int glWrapClampMode );
-image_t		*R_FindImageFileNew( const char *name, upload_t *upload, int glWrapClampMode );
+image_t		*R_FindImageFileNew( const char *name, const upload_t *upload, int glWrapClampMode );
 
 image_t		*R_CreateImage( const char *name, byte *data, int width, int height, qboolean mipmap
 					, qboolean allowPicmip, qboolean allowTC, int wrapClampMode );
 image_t *R_CreateImageNew( const char *name, byte * const *mipmaps, qboolean customMip, int width, int height,
-	upload_t *upload, int glWrapClampMode );
+	const upload_t *upload, int glWrapClampMode );
 qboolean	R_GetModeInfo( int *width, int *height, float *windowAspect, int mode );
 
 void		R_SetColorMappings( void );

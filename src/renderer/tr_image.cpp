@@ -919,7 +919,7 @@ qboolean RE_RegisterImages_LevelLoadEnd(void)
 //
 // This is called by both R_FindImageFile and anything that creates default images...
 //
-static image_t *R_FindImageFile_NoLoad(const char *name, upload_t *upload, int glWrapClampMode )
+static image_t *R_FindImageFile_NoLoad(const char *name, const upload_t *upload, int glWrapClampMode )
 {
 	if (!name) {
 		return NULL;
@@ -991,7 +991,7 @@ image_t *R_CreateImage( const char *name, byte *data, int width, int height,
 }
 
 image_t *R_CreateImageNew( const char *name, byte * const *mipmaps, qboolean customMip, int width, int height,
-	upload_t *upload, int glWrapClampMode ) {
+	const upload_t *upload, int glWrapClampMode ) {
 	image_t		*image;
 	qboolean	isLightmap = qfalse;
 
@@ -2214,7 +2214,7 @@ static int R_MipMapLevel(int ref_w, int ref_h, int w, int h)
 	return MAX_MIP_LEVELS;
 }
 
-image_t	*R_FindImageFileNew( const char *name, upload_t *upload, int glWrapClampMode ) {
+image_t	*R_FindImageFileNew( const char *name, const upload_t *upload, int glWrapClampMode ) {
 	image_t		*image;
 	int			width, height;
 	byte		*pic;
