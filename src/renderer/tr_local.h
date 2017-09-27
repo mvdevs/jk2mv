@@ -472,7 +472,7 @@ Ghoul2 Insert Start
 Ghoul2 Insert End
 */
 	int			numDeforms;
-	deformStage_t	deforms[MAX_SHADER_DEFORMS];
+	deformStage_t	*deforms[MAX_SHADER_DEFORMS];
 
 	int			numUnfoggedPasses;
 	int			lastNonDetailStage;
@@ -494,18 +494,8 @@ Ghoul2 Insert End
 
 	struct shader_s *remappedShader;                  // current shader this one is remapped too
 
-	int shaderStates[MAX_STATES_PER_SHADER];          // index to valid shader states
-
 	struct	shader_s	*next;
 } shader_t;
-
-typedef struct shaderState_s {
-  char shaderName[MAX_QPATH];     // name of shader this state belongs to
-  char name[MAX_STATE_NAME];      // name of this state
-  char stateShader[MAX_QPATH];    // shader this name invokes
-  int cycleTime;                  // time this cycle lasts, <= 0 is forever
-  shader_t *shader;
-} shaderState_t;
 
 /*
 Ghoul2 Insert Start

@@ -1769,7 +1769,8 @@ static void ParseDeform( const char **text ) {
 		return;
 	}
 
-	ds = &shader.deforms[ shader.numDeforms ];
+	shader.deforms[ shader.numDeforms ] = (deformStage_t *)ri.Hunk_Alloc( sizeof( deformStage_t ), h_low );
+	ds = shader.deforms[ shader.numDeforms ];
 	shader.numDeforms++;
 
 	if ( !Q_stricmp( token, "projectionShadow" ) ) {

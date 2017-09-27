@@ -569,7 +569,7 @@ void RB_DeformTessGeometry( void ) {
 	deformStage_t	*ds;
 
 	for ( i = 0 ; i < tess.shader->numDeforms ; i++ ) {
-		ds = &tess.shader->deforms[ i ];
+		ds = tess.shader->deforms[ i ];
 
 		switch ( ds->deformation ) {
         case DEFORM_NONE:
