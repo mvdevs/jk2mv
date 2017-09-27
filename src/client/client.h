@@ -336,9 +336,13 @@ typedef struct {
 	qhandle_t	consoleShader;
 
 	qhandle_t	recordingShader;
-	float		ratioFix;
 	float		xadjust;
 	float		yadjust;
+
+	float		cgxadj;
+	float		cgyadj;
+	float		uixadj;
+	float		uiyadj;
 
 	blacklistentry_t *downloadBlacklist;
 	int downloadBlacklistLen;

@@ -193,10 +193,15 @@ void	RE_SetColor( const vec4_t rgba ) {
 /*
 =============
 RE_StretchPic
+
+x, y, w and h are in virtual screen coordinates
+xadjust is 640 / virtual screen width
+yadjust is 480 / virtual screen height
 =============
 */
-void RE_StretchPic ( float x, float y, float w, float h,
-					  float s1, float t1, float s2, float t2, qhandle_t hShader ) {
+void RE_StretchPic ( float x, float y, float w, float h, float s1, float t1,
+	float s2, float t2, qhandle_t hShader, float xadjust, float yadjust )
+{
 	stretchPicCommand_t	*cmd;
 
 	cmd = (stretchPicCommand_t *)R_GetCommandBuffer( sizeof( *cmd ) );
@@ -205,10 +210,10 @@ void RE_StretchPic ( float x, float y, float w, float h,
 	}
 	cmd->commandId = RC_STRETCH_PIC;
 	cmd->shader = R_GetShaderByHandle( hShader );
-	cmd->x = x;
-	cmd->y = y;
-	cmd->w = w;
-	cmd->h = h;
+	cmd->x = x * xadjust;
+	cmd->y = y * yadjust;
+	cmd->w = w * xadjust;
+	cmd->h = h * yadjust;
 	cmd->s1 = s1;
 	cmd->t1 = t1;
 	cmd->s2 = s2;
@@ -218,53 +223,76 @@ void RE_StretchPic ( float x, float y, float w, float h,
 /*
 =============
 RE_RotatePic
+
+x, y, w and h are in virtual screen coordinates
+xadjust is 640 / virtual screen width
+yadjust is 480 / virtual screen height
 =============
 */
-void RE_RotatePic ( float x, float y, float w, float h,
-					  float s1, float t1, float s2, float t2,float a, qhandle_t hShader ) {
-	rotatePicCommand_t	*cmd;
+void RE_RotatePic ( float x, float y, float w, float h, float s1, float t1,
+	float s2, float t2,float a, qhandle_t hShader, float xadjust, float yadjust ) {
+	transformPicCommand_t	*cmd;
+	float s, c;
 
-	cmd = (rotatePicCommand_t *) R_GetCommandBuffer( sizeof( *cmd ) );
+	cmd = (transformPicCommand_t *) R_GetCommandBuffer( sizeof( *cmd ) );
 	if ( !cmd ) {
 		return;
 	}
-	cmd->commandId = RC_ROTATE_PIC;
+
+	a = DEG2RAD( a );
+	s = sinf( a );
+	c = cosf( a );
+
+	cmd->commandId = RC_TRANSFORM_PIC;
 	cmd->shader = R_GetShaderByHandle( hShader );
-	cmd->x = x;
-	cmd->y = y;
-	cmd->w = w;
-	cmd->h = h;
+	cmd->m[0][0] = xadjust * w * c;
+	cmd->m[0][1] = xadjust * h * -s;
+	cmd->m[1][0] = yadjust * w * s;
+	cmd->m[1][1] = yadjust * h * c;
+	// rotate around top-right corner
+	cmd->x = xadjust * x - cmd->m[0][0] + xadjust * w;
+	cmd->y = yadjust * y - cmd->m[1][0];
 	cmd->s1 = s1;
 	cmd->t1 = t1;
 	cmd->s2 = s2;
 	cmd->t2 = t2;
-	cmd->a = a;
 }
 
 /*
 =============
 RE_RotatePic2
+
+x, y, w and h are in virtual screen coordinates
+xadjust is 640 / virtual screen width
+yadjust is 480 / virtual screen height
 =============
 */
-void RE_RotatePic2 ( float x, float y, float w, float h,
-					  float s1, float t1, float s2, float t2,float a, qhandle_t hShader ) {
-	rotatePicCommand_t	*cmd;
+void RE_RotatePic2 ( float x, float y, float w, float h, float s1, float t1,
+	float s2, float t2,float a, qhandle_t hShader, float xadjust, float yadjust ) {
+	transformPicCommand_t	*cmd;
+	float s, c;
 
-	cmd = (rotatePicCommand_t *) R_GetCommandBuffer( sizeof( *cmd ) );
+	cmd = (transformPicCommand_t *) R_GetCommandBuffer( sizeof( *cmd ) );
 	if ( !cmd ) {
 		return;
 	}
-	cmd->commandId = RC_ROTATE_PIC2;
+
+	a = DEG2RAD( a );
+	s = sinf( a );
+	c = cosf( a );
+
+	cmd->commandId = RC_TRANSFORM_PIC;
 	cmd->shader = R_GetShaderByHandle( hShader );
-	cmd->x = x;
-	cmd->y = y;
-	cmd->w = w;
-	cmd->h = h;
+	cmd->m[0][0] = xadjust * w * c;
+	cmd->m[0][1] = xadjust * h * -s;
+	cmd->m[1][0] = yadjust * w * s;
+	cmd->m[1][1] = yadjust * h * c;
+	cmd->x = xadjust * x - 0.5f * (cmd->m[0][0] + cmd->m[0][1]);
+	cmd->y = yadjust * y - 0.5f * (cmd->m[1][0] + cmd->m[1][1]);
 	cmd->s1 = s1;
 	cmd->t1 = t1;
 	cmd->s2 = s2;
 	cmd->t2 = t2;
-	cmd->a = a;
 }
 
 /*

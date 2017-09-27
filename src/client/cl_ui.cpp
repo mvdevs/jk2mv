@@ -744,6 +744,16 @@ static int GetConfigString(int index, char *buf, int size)
 
 /*
 ====================
+CL_UISetVirtualScreen
+====================
+*/
+void CL_UISetVirtualScreen(float w, float h) {
+	cls.uixadj = SCREEN_WIDTH / w;
+	cls.uiyadj = SCREEN_HEIGHT / h;
+}
+
+/*
+====================
 CL_UISystemCalls
 
 The ui module is making a system call
@@ -873,7 +883,7 @@ intptr_t CL_UISystemCalls(intptr_t *args) {
 		return 0;
 
 	case UI_R_DRAWSTRETCHPIC:
-		re.DrawStretchPic( VMF(1), VMF(2), VMF(3), VMF(4), VMF(5), VMF(6), VMF(7), VMF(8), args[9] );
+		re.DrawStretchPic( VMF(1), VMF(2), VMF(3), VMF(4), VMF(5), VMF(6), VMF(7), VMF(8), args[9], cls.uixadj, cls.uiyadj );
 		return 0;
 
 	case UI_R_MODELBOUNDS:
@@ -1014,16 +1024,16 @@ intptr_t CL_UISystemCalls(intptr_t *args) {
 		return re.RegisterFont( VMAS(1) );
 
 	case UI_R_FONT_STRLENPIXELS:
-		return re.Font_StrLenPixels( VMAS(1), args[2], VMF(3) );
+		return re.Font_StrLenPixels( VMAS(1), args[2], VMF(3), cls.uixadj, cls.uiyadj );
 
 	case UI_R_FONT_STRLENCHARS:
 		return re.Font_StrLenChars( VMAS(1) );
 
 	case UI_R_FONT_STRHEIGHTPIXELS:
-		return re.Font_HeightPixels( args[1], VMF(2) );
+		return re.Font_HeightPixels( args[1], VMF(2), cls.uixadj, cls.uiyadj );
 
 	case UI_R_FONT_DRAWSTRING:
-		re.Font_DrawString( args[1], args[2], VMAS(3), VMAP(4, const vec_t, 4), args[5], args[6], VMF(7) );
+		re.Font_DrawString( args[1], args[2], VMAS(3), VMAP(4, const vec_t, 4), args[5], args[6], VMF(7), cls.uixadj, cls.uiyadj );
 		return 0;
 
 	case UI_LANGUAGE_ISASIAN:
@@ -1141,6 +1151,9 @@ Ghoul2 Insert End
 		switch (args[0]) {
 		case UI_MVAPI_R_ADDREFENTITYTOSCENE2:
 			re.AddRefEntityToScene(VMAV(1, const refEntity_t), qtrue);
+			return 0;
+		case UI_MVAPI_SETVIRTUALSCREEN:
+			CL_UISetVirtualScreen(VMF(1), VMF(2));
 			return 0;
 		}
 	}

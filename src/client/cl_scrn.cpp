@@ -25,7 +25,7 @@ void SCR_DrawNamedPic( float x, float y, float width, float height, const char *
 	assert( width != 0 );
 
 	hShader = re.RegisterShader( picname );
-	re.DrawStretchPic( x, y, width, height, 0, 0, 1, 1, hShader );
+	re.DrawStretchPic( x, y, width, height, 0, 0, 1, 1, hShader, 1, 1 );
 }
 
 
@@ -39,7 +39,7 @@ Coordinates are 640*480 virtual values
 void SCR_FillRect( float x, float y, float width, float height, const float *color ) {
 	re.SetColor( color );
 
-	re.DrawStretchPic( x, y, width, height, 0, 0, 0, 0, cls.whiteShader );
+	re.DrawStretchPic( x, y, width, height, 0, 0, 0, 0, cls.whiteShader, 1, 1 );
 
 	re.SetColor( NULL );
 }
@@ -53,7 +53,7 @@ Coordinates are 640*480 virtual values
 =================
 */
 void SCR_DrawPic( float x, float y, float width, float height, qhandle_t hShader ) {
-	re.DrawStretchPic( x, y, width, height, 0, 0, 1, 1, hShader );
+	re.DrawStretchPic( x, y, width, height, 0, 0, 1, 1, hShader, 1, 1 );
 }
 
 
@@ -95,7 +95,7 @@ static void SCR_DrawChar( int x, int y, float size, int ch ) {
 	re.DrawStretchPic( ax, ay, aw, ah,
 					   fcol, frow,
 					   fcol + size, frow + size2,
-					   cls.charSetShader );
+					   cls.charSetShader, 1, 1 );
 }
 
 /*
@@ -132,11 +132,11 @@ void SCR_DrawSmallChar( int x, int y, int ch ) {
 #endif
 	size2 = 0.0625;
 
-	re.DrawStretchPic( x * cls.xadjust, y * cls.yadjust,
-					   con.charWidth * cls.xadjust, con.charHeight * cls.yadjust,
+	re.DrawStretchPic( x, y, con.charWidth, con.charHeight,
 					   fcol, frow,
 					   fcol + size, frow + size2,
-					   cls.charSetShader );
+					   cls.charSetShader,
+					   cls.xadjust, cls.yadjust );
 }
 
 
@@ -286,7 +286,6 @@ SCR_DrawDemoRecording
 =================
 */
 void SCR_DrawDemoRecording( void ) {
-	const float ratio = cls.ratioFix;
 	char	string[1024];
 	int		pos;
 
@@ -300,7 +299,8 @@ void SCR_DrawDemoRecording( void ) {
 	if (cl_drawRecording->integer >= 2 && cls.recordingShader) {
 		static const float width = 60.0f, height = 15.0f;
 		re.SetColor(NULL);
-		re.DrawStretchPic(0*ratio, SCREEN_HEIGHT-height, width*ratio, height, 0, 0, 1, 1, cls.recordingShader);
+		re.DrawStretchPic(0, cls.glconfig.vidHeight - height, width, height,
+			0, 0, 1, 1, cls.recordingShader, cls.xadjust, cls.yadjust);
 	} else if (cl_drawRecording->integer) {
 		pos = FS_FTell( clc.demofile );
 		sprintf( string, "RECORDING %s: %ik", clc.demoName, pos / 1024 );
@@ -356,8 +356,8 @@ void SCR_DrawDebugGraph (void)
 	x = 0;
 	y = cls.glconfig.vidHeight;
 	re.SetColor( g_color_table[0] );
-	re.DrawStretchPic(x, y - cl_graphheight->integer,
-		w, cl_graphheight->integer, 0, 0, 0, 0, cls.whiteShader );
+	re.DrawStretchPic(x, y - cl_graphheight->integer, w, cl_graphheight->integer,
+		0, 0, 0, 0, cls.whiteShader, cls.xadjust, cls.yadjust );
 	re.SetColor( NULL );
 
 	for (a=0 ; a<w ; a++)
@@ -370,7 +370,8 @@ void SCR_DrawDebugGraph (void)
 		if (v < 0)
 			v += cl_graphheight->integer * (1+(int)(-v / cl_graphheight->integer));
 		h = (int)v % cl_graphheight->integer;
-		re.DrawStretchPic( x+w-1-a, y - h, 1, h, 0, 0, 0, 0, cls.whiteShader );
+		re.DrawStretchPic( x+w-1-a, y - h, 1, h,
+			0, 0, 0, 0, cls.whiteShader, cls.xadjust, cls.yadjust );
 	}
 }
 
@@ -416,16 +417,6 @@ This will be called twice if rendering in stereo mode
 */
 void SCR_DrawScreenField( stereoFrame_t stereoFrame ) {
 	re.BeginFrame( stereoFrame );
-
-	// wide aspect ratio screens need to have the sides cleared
-	// unless they are displaying game renderings
-	if ( cls.state != CA_ACTIVE ) {
-		if ( cls.glconfig.vidWidth * 480 > cls.glconfig.vidHeight * 640 ) {
-			re.SetColor( g_color_table[0] );
-			re.DrawStretchPic( 0, 0, cls.glconfig.vidWidth, cls.glconfig.vidHeight, 0, 0, 0, 0, cls.whiteShader );
-			re.SetColor( NULL );
-		}
-	}
 
 	if ( !uivm ) {
 		Com_DPrintf("draw screen without UI loaded\n");

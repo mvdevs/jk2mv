@@ -626,6 +626,16 @@ void MV_AddLightToScene(const vec3_t org, float intensity, float r, float g, flo
 
 /*
 ====================
+CL_CgameSetVirtualScreen
+====================
+*/
+void CL_CgameSetVirtualScreen(float w, float h) {
+	cls.cgxadj = SCREEN_WIDTH / w;
+	cls.cgyadj = SCREEN_HEIGHT / h;
+}
+
+/*
+====================
 CL_CgameSystemCalls
 
 The cgame module is making a system call
@@ -782,13 +792,13 @@ intptr_t CL_CgameSystemCalls(intptr_t *args) {
 	case CG_R_REGISTERFONT:
 		return re.RegisterFont( VMAS(1) );
 	case CG_R_FONT_STRLENPIXELS:
-		return re.Font_StrLenPixels( VMAS(1), args[2], VMF(3) );
+		return re.Font_StrLenPixels( VMAS(1), args[2], VMF(3), cls.cgxadj, cls.cgyadj );
 	case CG_R_FONT_STRLENCHARS:
 		return re.Font_StrLenChars( VMAS(1) );
 	case CG_R_FONT_STRHEIGHTPIXELS:
-		return re.Font_HeightPixels( args[1], VMF(2) );
+		return re.Font_HeightPixels( args[1], VMF(2), cls.cgxadj, cls.cgyadj );
 	case CG_R_FONT_DRAWSTRING:
-		re.Font_DrawString( args[1], args[2], VMAS(3), VMAP(4, const vec_t, 4), args[5], args[6], VMF(7) );
+		re.Font_DrawString( args[1], args[2], VMAS(3), VMAP(4, const vec_t, 4), args[5], args[6], VMF(7), cls.cgxadj, cls.cgyadj );
 		return 0;
 	case CG_LANGUAGE_ISASIAN:
 		return re.Language_IsAsian();
@@ -827,7 +837,7 @@ intptr_t CL_CgameSystemCalls(intptr_t *args) {
 		re.SetColor( VMAP(1, vec_t, 4) );
 		return 0;
 	case CG_R_DRAWSTRETCHPIC:
-		re.DrawStretchPic( VMF(1), VMF(2), VMF(3), VMF(4), VMF(5), VMF(6), VMF(7), VMF(8), args[9] );
+		re.DrawStretchPic( VMF(1), VMF(2), VMF(3), VMF(4), VMF(5), VMF(6), VMF(7), VMF(8), args[9], cls.cgxadj, cls.cgyadj );
 		return 0;
 	case CG_R_MODELBOUNDS:
 		re.ModelBounds( args[1], VMAP(2, vec_t, 3), VMAP(3, vec_t, 3) );
@@ -835,10 +845,10 @@ intptr_t CL_CgameSystemCalls(intptr_t *args) {
 	case CG_R_LERPTAG:
 		return re.LerpTag( VMAV(1, orientation_t), args[2], args[3], args[4], VMF(5), VMAS(6) );
 	case CG_R_DRAWROTATEPIC:
-		re.DrawRotatePic( VMF(1), VMF(2), VMF(3), VMF(4), VMF(5), VMF(6), VMF(7), VMF(8), VMF(9), args[10] );
+		re.DrawRotatePic( VMF(1), VMF(2), VMF(3), VMF(4), VMF(5), VMF(6), VMF(7), VMF(8), VMF(9), args[10], cls.cgxadj, cls.cgyadj );
 		return 0;
 	case CG_R_DRAWROTATEPIC2:
-		re.DrawRotatePic2( VMF(1), VMF(2), VMF(3), VMF(4), VMF(5), VMF(6), VMF(7), VMF(8), VMF(9), args[10] );
+		re.DrawRotatePic2( VMF(1), VMF(2), VMF(3), VMF(4), VMF(5), VMF(6), VMF(7), VMF(8), VMF(9), args[10], cls.cgxadj, cls.cgyadj );
 		return 0;
 	case CG_GETGLCONFIG:
 		CL_GetVMGLConfig(VMAV(1, vmglconfig_t));
@@ -1297,6 +1307,9 @@ Ghoul2 Insert End
 		switch (args[0]) {
 		case CG_MVAPI_R_ADDREFENTITYTOSCENE2:
 			re.AddRefEntityToScene(VMAV(1, const refEntity_t), qtrue);
+			return 0;
+		case CG_MVAPI_SETVIRTUALSCREEN:
+			CL_CgameSetVirtualScreen(VMF(1), VMF(2));
 			return 0;
 		}
 	}

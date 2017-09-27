@@ -2563,9 +2563,13 @@ void CL_InitRenderer( void ) {
 	cls.whiteShader = re.RegisterShader( "white" );
 	cls.consoleShader = re.RegisterShader( "console" );
 	cls.recordingShader = re.RegisterShaderNoMip("gfx/2d/demorec");
-	cls.ratioFix = (float)(SCREEN_WIDTH * cls.glconfig.vidHeight) / (float)(SCREEN_HEIGHT * cls.glconfig.vidWidth);
 	cls.xadjust = (float) SCREEN_WIDTH / cls.glconfig.vidWidth;
 	cls.yadjust = (float) SCREEN_HEIGHT / cls.glconfig.vidHeight;
+
+	cls.cgxadj = 1;
+	cls.cgyadj = 1;
+	cls.uixadj = 1;
+	cls.uiyadj = 1;
 
 	kg.yankIndex = -1;
 }

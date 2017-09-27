@@ -23,3 +23,16 @@ gfx/2d/mplus_1m_bold
         depthFunc disable
     }
 }
+
+// retail shader overrides
+
+gfx/2d/wedge
+{
+	nomipmaps
+	cull disable
+	{
+		clampmap gfx/2d/wedge
+		blendFunc blend
+		rgbGen vertex
+	}
+}
