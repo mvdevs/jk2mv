@@ -3525,7 +3525,13 @@ shader_t *R_FindShader( const char *name, const int *lightmapIndex, const byte *
 	shader.defaultShader = qtrue;
 	return FinishShader();
 #else
-	image = R_FindImageFile( fileName, mipRawImage, mipRawImage, qtrue, mipRawImage ? GL_REPEAT : GL_CLAMP );
+	shader.upload.noMipMaps = (qboolean)!mipRawImage;
+	shader.upload.noPicMip = (qboolean)!mipRawImage;
+	shader.upload.noLightScale = (qboolean)!mipRawImage;
+	shader.upload.noTC = qfalse;
+	shader.upload.textureMode = mipRawImage ? NULL : GetTextureMode("GL_LINEAR");
+
+	image = R_FindImageFileNew(fileName, &shader.upload, mipRawImage ? GL_REPEAT : GL_CLAMP );
 	if ( !image ) {
 		ri.Printf( PRINT_DEVELOPER, "Couldn't find image for shader %s\n", name );
 		shader.defaultShader = qtrue;
