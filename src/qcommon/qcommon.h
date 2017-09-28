@@ -1044,7 +1044,4 @@ void MV_SetCurrentGameversion(mvversion_t version);
 mvversion_t MV_GetCurrentGameversion();
 mvprotocol_t MV_GetCurrentProtocol();
 
-void MV_CopyStringWithColors( const char *src, char *dst, size_t dstSize, int nonColors );
-int MV_StrlenSkipColors( const char *str );
-
 #endif // _QCOMMON_H_

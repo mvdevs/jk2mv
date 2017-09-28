@@ -605,13 +605,17 @@ static void SV_Status_f( void )
 		s = NET_AdrToString( cl->netchan.remoteAddress );
 
 		// Count the length of the visible characters in the name and if it's less than 15 fill the rest with spaces
-		k = MV_StrlenSkipColors(cl->name);
+		k = Q_PrintStrlen(cl->name, MV_USE102COLOR);
 		if ( k < 0 ) k = 0; // Should never happen
 		for( j = 0; j < (15 - k); j++ ) spaces[j] = ' ';
 		spaces[j] = 0;
 
-		if (!avoidTruncation) MV_CopyStringWithColors( cl->name, displayName, sizeof(displayName), 15 ); // Limit the visible length of the name to 15 characters (not counting colors)
-		else				  Q_strncpyz( displayName, cl->name, sizeof(displayName) );
+		if (!avoidTruncation) {
+			// Limit the visible length of the name to 15 characters (not counting colors)
+			Q_PrintStrCopy( displayName, cl->name, sizeof(displayName), 0, 15, MV_USE102COLOR );
+		} else {
+			Q_strncpyz( displayName, cl->name, sizeof(displayName) );
+		}
 
 		Com_Printf ("%3i %5i %s %s^7%s %7i %21s %5i %5i\n",
 			i,

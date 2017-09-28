@@ -2933,56 +2933,6 @@ mvprotocol_t MV_GetCurrentProtocol() {
 	}
 }
 
-void MV_CopyStringWithColors( const char *src, char *dst, size_t dstSize, int nonColors )
-{
-	size_t	i;
-	int		nonColorCount = 0;
-
-	const bool use102color = MV_USE102COLOR;
-
-	const size_t srclen = strlen(src);
-
-	for ( i = 0; i < srclen; i++ )
-	{
-		if ( i >= dstSize ) break;
-		if ( nonColorCount >= nonColors ) break;
-
-		if (!use102color) {
-			if ( !Q_IsColorString(&src[i]) && (i < 1 || !Q_IsColorString(&src[i-1])) )
-				nonColorCount++;
-		} else {
-			if ( !Q_IsColorString_1_02(&src[i]) && (i < 1 || !Q_IsColorString_1_02(&src[i-1])) )
-				nonColorCount++;
-		}
-
-		dst[i] = src[i];
-	}
-
-	if ( i >= (dstSize - 1) ) dst[dstSize-1] = '\0';
-	else					  dst[i] = '\0';
-}
-
-int MV_StrlenSkipColors( const char *str )
-{
-	int	  len = 0;
-	const char *strPtr = str;
-
-	const bool use102color = MV_USE102COLOR;
-
-	while ( *strPtr != '\0' )
-	{
-		if ( Q_IsColorString(strPtr) || (use102color && Q_IsColorString_1_02(strPtr)) )
-			strPtr++;
-		else
-			len++;
-
-		strPtr++;
-	}
-
-	return len;
-}
-
-
 // for auto-complete (copied from OpenJK)
 /*
 =============================================================================
