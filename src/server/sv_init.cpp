@@ -684,6 +684,8 @@ Ghoul2 Insert End
 	SV_BotFrame( svs.time );
 	svs.time += 100;
 
+	svs.hibernation.disableUntil = svs.time + 10000;
+
 	// if a dedicated server we need to touch the cgame and ui because it could be in a
 	// seperate pk3 file and the client will need to load the latest cgame.qvm
 	if (com_dedicated->integer) {
