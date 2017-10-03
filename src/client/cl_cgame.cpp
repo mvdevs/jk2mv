@@ -1311,6 +1311,8 @@ Ghoul2 Insert End
 		case CG_MVAPI_SETVIRTUALSCREEN:
 			CL_CgameSetVirtualScreen(VMF(1), VMF(2));
 			return 0;
+		case MVAPI_FS_FLOCK:
+			return (int)FS_FLock(args[1], (flockCmd_t)args[2], (qboolean)!!args[3]);
 		}
 	}
 

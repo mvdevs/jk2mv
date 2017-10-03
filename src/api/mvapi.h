@@ -45,6 +45,13 @@ typedef enum {
 	VERSION_1_04 = 4,
 } mvversion_t;
 
+typedef enum
+{
+	FLOCK_SH,
+	FLOCK_EX,
+	FLOCK_UN
+} flockCmd_t;
+
 // ******** SYSCALLS ******** //
 
 // qboolean trap_MVAPI_ControlFixes(int fixes);
@@ -52,6 +59,9 @@ typedef enum {
 
 // mvversion_t trap_MVAPI_GetVersion(void);
 #define MVAPI_GET_VERSION 704                    /* asm: -705 */
+
+// int trap_FS_FLock(fileHandle_t h, flockCmd_t cmd, qboolean nb)
+#define MVAPI_FS_FLOCK 708                       /* asm: -709 */
 
 // ******** VMCALLS ******** //
 

@@ -1089,6 +1089,13 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 		}
 	}
 
+	if (VM_MVAPILevel(gvm) >= 3) {
+		switch (args[0]) {
+		case MVAPI_FS_FLOCK:
+			return (int)FS_FLock(args[1], (flockCmd_t)args[2], (qboolean)!!args[3]);
+		}
+	}
+
 	Com_Error( ERR_DROP, "Bad game system trap: %i", args[0] );
 	return -1;
 }

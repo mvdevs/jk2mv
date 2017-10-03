@@ -25,13 +25,6 @@ typedef struct netadr_s
 	uint16_t		port;
 } netadr_t;
 
-typedef enum
-{
-	FLOCK_SH,
-	FLOCK_EX,
-	FLOCK_UN
-} flockCmd_t;
-
 /*
 ==============================================================
 
