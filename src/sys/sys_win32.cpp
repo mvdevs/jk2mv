@@ -465,16 +465,14 @@ void Sys_SetTaskbarState(void *win_handle, tbstate_t state, uint64_t current, ui
 int Sys_FLock(int fd, flockCmd_t cmd, qboolean nb) {
 	HANDLE h = (HANDLE) _get_osfhandle(fd);
 	OVERLAPPED ovlp = { 0 };
-	DWORD lower;
-	DWORD upper;
+	DWORD lower = 1;
+	DWORD upper = 0;
 	DWORD flags = 0;
 	int res;
 
 	if (h == INVALID_HANDLE_VALUE) {
 		return -1;
 	}
-
-	lower = GetFileSize(h, &upper);
 
 	if (nb) {
 		flags |= LOCKFILE_FAIL_IMMEDIATELY;
