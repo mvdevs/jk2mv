@@ -42,6 +42,7 @@ void ClampVec( vec3_t dat, byte *res )
 //
 //--------------------------
 CEffect::CEffect() :
+	mFlags(0),
 	mNext(0)
 {
 	memset( &mRefEnt, 0, sizeof( mRefEnt ));
