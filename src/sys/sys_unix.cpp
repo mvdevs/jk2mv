@@ -786,7 +786,7 @@ static void Sys_SigHandlerFatal(int sig, siginfo_t *info, void *context) {
 	ucontext_t *ucontext = (ucontext_t *)context;
 
 	if (!signalcaught) {
-		backtrace_t trace;
+		backtrace_t trace = { 0 };
 
 		signalcaught = 1;
 
@@ -901,11 +901,12 @@ static void Sys_CrashWriteContext(int fd, const ucontext_t *context) {
 static qboolean Sys_CrashReadContext(int fd, ucontext_t *context) {
 #ifdef __GNU_LIBRARY__
 #if defined(__i386__) || defined(__amd64__)
-	context->uc_mcontext.fpregs = (fpregset_t)malloc(sizeof(context->uc_mcontext.fpregs));
-
 	if (!Sys_CrashRead(fd, context, sizeof(ucontext_t))) {
 		return qfalse;
 	}
+
+	context->uc_mcontext.fpregs = (fpregset_t)malloc(sizeof(*context->uc_mcontext.fpregs));
+
 	if (!Sys_CrashRead(fd, context->uc_mcontext.fpregs, sizeof(*context->uc_mcontext.fpregs))) {
 		return qfalse;
 	}
