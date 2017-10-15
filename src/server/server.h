@@ -58,7 +58,7 @@ typedef struct {
 	int				gentitySize;
 	int				num_entities;		// current number, <= MAX_GENTITIES
 
-	playerState_t	*gameClients;
+	void			*gameClients;
 	int				gameClientSize;		// will be > sizeof(playerState_t) due to game private data
 
 	int				restartTime;

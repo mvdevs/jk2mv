@@ -281,13 +281,19 @@ SV_LocateGameData
 ===============
 */
 void SV_LocateGameData( sharedEntity_t *gEnts, int numGEntities, int sizeofGEntity_t,
-					   playerState_t *clients, int sizeofGameClient ) {
+					   void *clients, int sizeofGameClient ) {
 	if ( gEnts && ( sizeofGEntity_t <= (int)sizeof(sharedEntity_t) || numGEntities <= 0 ) ) {
 		Com_Error( ERR_DROP, "SV_LocateGameData: incorrect game entity data" );
 	}
 
-	if ( clients && sizeofGameClient <= (int)sizeof(playerState_t) ) {
-		Com_Error( ERR_DROP, "SV_LocateGameData: incorrect player state data" );
+	if (MV_GetCurrentGameversion() == VERSION_1_02) {
+		if ( clients && sizeofGameClient < (int)sizeof(playerState15_t) ) {
+			Com_Error( ERR_DROP, "SV_LocateGameData: incorrect player state data" );
+		}
+	} else {
+		if ( clients && sizeofGameClient < (int)sizeof(playerState_t) ) {
+			Com_Error( ERR_DROP, "SV_LocateGameData: incorrect player state data" );
+		}
 	}
 
 	sv.gentities = gEnts;
