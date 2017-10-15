@@ -282,7 +282,7 @@ SV_LocateGameData
 */
 void SV_LocateGameData( sharedEntity_t *gEnts, int numGEntities, int sizeofGEntity_t,
 					   void *clients, int sizeofGameClient ) {
-	if ( gEnts && ( sizeofGEntity_t <= (int)sizeof(sharedEntity_t) || numGEntities <= 0 ) ) {
+	if ( gEnts && ( sizeofGEntity_t < (int)sizeof(sharedEntity_t) || numGEntities < 0 ) ) {
 		Com_Error( ERR_DROP, "SV_LocateGameData: incorrect game entity data" );
 	}
 
