@@ -290,7 +290,7 @@ Q_NORETURN void QDECL Com_Error( errorParm_t code, const char *fmt, ... ) {
 	case ERR_SERVERDISCONNECT:
 		VM_Forced_Unload_Start();
 		CL_Disconnect( qtrue );
-		CL_FlushMemory( );
+		CL_FlushMemory( qtrue );
 		VM_Forced_Unload_Done();
 		com_errorEntered = qfalse;
 		longjmp(abortframe, -1);
@@ -305,7 +305,7 @@ Q_NORETURN void QDECL Com_Error( errorParm_t code, const char *fmt, ... ) {
 		VM_Forced_Unload_Start();
 		SV_Shutdown (va("Server crashed: %s\n",  com_errorMessage));
 		CL_Disconnect( qtrue );
-		CL_FlushMemory( );
+		CL_FlushMemory( qtrue );
 		VM_Forced_Unload_Done();
 		com_errorEntered = qfalse;
 		longjmp(abortframe, -1);

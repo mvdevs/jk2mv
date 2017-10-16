@@ -460,7 +460,7 @@ extern	cvar_t	*cl_autoDemoFormat;
 //
 
 void CL_Init (void);
-void CL_FlushMemory(void);
+void CL_FlushMemory( qboolean disconnecting );
 void CL_ShutdownAll(void);
 void CL_AddReliableCommand( const char *cmd );
 

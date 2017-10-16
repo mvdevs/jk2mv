@@ -730,7 +730,7 @@ Also called by Com_Error
 */
 extern void FixGhoul2InfoLeaks(bool);
 
-void CL_FlushMemory( void ) {
+void CL_FlushMemory( qboolean disconnecting ) {
 
 	// shutdown all the client stuff
 	CL_ShutdownAll();
@@ -746,6 +746,16 @@ void CL_FlushMemory( void ) {
 	else {
 		// clear all the client data on the hunk
 		Hunk_ClearToMark();
+	}
+
+	if (disconnecting && !com_sv_running->integer) {
+		MV_SetCurrentGameversion(VERSION_UNDEF);
+
+		FS_PureServerSetReferencedPaks("", "");
+		// change checksum feed so that next FS_ConditionalRestart()
+		// works when connecting back to the same server
+		clc.checksumFeed = 0;
+		FS_Restart(clc.checksumFeed);
 	}
 
 	CL_StartHunkUsers();
@@ -859,17 +869,6 @@ void CL_Disconnect( qboolean showMainMenu ) {
 		CL_WritePacket();
 		CL_WritePacket();
 	}
-
-	if (cls.state >= CA_CHALLENGING) {
-		MV_SetCurrentGameversion(VERSION_UNDEF);
-
-		FS_PureServerSetReferencedPaks("", "");
-		// change checksum feed so that next FS_ConditionalRestart()
-		// works when connecting back to the same server
-		clc.checksumFeed = 0;
-		FS_Restart(clc.checksumFeed);
-	}
-
 
 	CL_ClearState ();
 
@@ -1536,7 +1535,7 @@ void CL_DownloadsComplete( void ) {
 	// this will also (re)load the UI
 	// if this is a local client then only the client part of the hunk
 	// will be cleared, note that this is done after the hunk mark has been set
-	CL_FlushMemory();
+	CL_FlushMemory( qfalse );
 
 	// initialize the CGame
 	cls.cgameStarted = qtrue;
