@@ -21,6 +21,7 @@ Main Features:
 # Build
 | Windows | Linux / OSX |
 |---------|-------------|
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/872b979ad7dc46aebb6c63d66c1cea77)](https://www.codacy.com/app/ouned/jk2mv?utm_source=github.com&utm_medium=referral&utm_content=mvdevs/jk2mv&utm_campaign=badger)
 | [![Windows Build Status](https://ci.appveyor.com/api/projects/status/bwkb8nfl5w6s53u4?svg=true)](https://ci.appveyor.com/project/ouned/jk2mv/history) | [![Linux/OSX Build Status](https://api.travis-ci.org/mvdevs/jk2mv.svg)](https://travis-ci.org/mvdevs/jk2mv/builds)
 
 [Download Automated Builds](https://jk2mv.org/builds)
