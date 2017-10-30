@@ -23,6 +23,8 @@ Main Features:
 |---------|-------------|
 | [![Windows Build Status](https://ci.appveyor.com/api/projects/status/bwkb8nfl5w6s53u4?svg=true)](https://ci.appveyor.com/project/ouned/jk2mv/history) | [![Linux/OSX Build Status](https://api.travis-ci.org/mvdevs/jk2mv.svg)](https://travis-ci.org/mvdevs/jk2mv/builds)
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/872b979ad7dc46aebb6c63d66c1cea77)](https://www.codacy.com/app/mvdevs/jk2mv?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=mvdevs/jk2mv&amp;utm_campaign=Badge_Grade)
+
 [Download Automated Builds](https://jk2mv.org/builds)
 
 1. Get CMake from either https://cmake.org or, in case of Linux, from the repositories of your distribution.
