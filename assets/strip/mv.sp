@@ -547,8 +547,8 @@ INDEX 60
    REFERENCE MOD_OPTIONS_EMPTY
    NOTES "You may use newline (\n) here if a message doesn't fit"
    TEXT_LANGUAGE1 "Mods may use this menu for custom options."
-   TEXT_LANGUAGE2 "Mods may use this menu for custom options."
-   TEXT_LANGUAGE3 "Mods may use this menu for custom options."
+   TEXT_LANGUAGE2 "Les mods peut utiliser ce menu pour les options personnalisées."
+   TEXT_LANGUAGE3 "Mods können dieses Menü für benutzerdefinierte Optionen verwenden."
    TEXT_LANGUAGE6 "Mods may use this menu for custom options."
-   TEXT_LANGUAGE8 "Mods may use this menu for custom options."
+   TEXT_LANGUAGE8 "Los mods pueden usar este menú para opciones personalizadas."
 }
