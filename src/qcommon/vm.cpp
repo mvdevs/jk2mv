@@ -719,6 +719,7 @@ vm_t *VM_Create( const char *module, qboolean mvOverride, intptr_t (*systemCalls
 		vm->dllHandle = Sys_LoadModuleLibrary(module, mvOverride, &vm->entryPoint, VM_DllSyscall);
 		if (vm->dllHandle) {
 			vm->systemCall = systemCalls;
+			vm->gameversion = MV_GetCurrentGameversion();
 			return vm;
 		}
 
@@ -775,6 +776,8 @@ vm_t *VM_Create( const char *module, qboolean mvOverride, intptr_t (*systemCalls
 	vm->stackBottom = vm->programStack - PROGRAM_STACK_SIZE;
 
 	Com_Printf("%s loaded in %d bytes on the hunk\n", module, remaining - Hunk_MemoryRemaining());
+
+	vm->gameversion = MV_GetCurrentGameversion();
 
 	return vm;
 }
@@ -1337,4 +1340,12 @@ void VM_SetMVAPILevel(vm_t *vm, int level) {
 
 qboolean VM_MVMenu(const vm_t *vm) {
 	return vm->mvmenu;
+}
+
+mvversion_t VM_GetGameversion(const vm_t *vm) {
+	return vm->gameversion;
+}
+
+void VM_SetGameversion(vm_t *vm, mvversion_t gameversion) {
+	vm->gameversion = gameversion;
 }

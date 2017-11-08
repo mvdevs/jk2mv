@@ -194,6 +194,7 @@ struct vm_s {
 
 	int			mvapilevel;
 	qboolean	mvmenu;
+	mvversion_t	gameversion;
 };
 
 

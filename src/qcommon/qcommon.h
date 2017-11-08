@@ -379,6 +379,9 @@ int	VM_MVAPILevel(const vm_t *vm);
 void VM_SetMVAPILevel(vm_t *vm, int level);
 qboolean VM_MVMenu(const vm_t *vm);
 
+mvversion_t VM_GetGameversion(const vm_t *vm);
+void VM_SetGameversion(vm_t *vm, mvversion_t gameversion);
+
 //Ignore __attribute__ on non-gcc platforms
 #ifndef __GNUC__
 #ifndef __attribute__

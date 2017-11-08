@@ -265,7 +265,7 @@ qboolean	CL_GetSnapshot15(int snapshotNumber, snapshot15_t *snapshot) {
 }
 
 qboolean	CL_GetSnapshot(int snapshotNumber, snapshot_t *snapshot) {
-	if (MV_GetCurrentGameversion() != VERSION_1_02) {
+	if (VM_GetGameversion(cgvm) != VERSION_1_02) {
 		return CL_GetSnapshot16(snapshotNumber, snapshot);
 	} else {
 		return CL_GetSnapshot15(snapshotNumber, (snapshot15_t *)snapshot);
@@ -645,7 +645,7 @@ extern bool RicksCrazyOnServer;
 intptr_t CL_CgameSystemCalls(intptr_t *args) {
 	// fix syscalls from 1.02 to match 1.04
 	// this is a mess... can it be done better?
-	if (MV_GetCurrentGameversion() == VERSION_1_02) {
+	if (VM_GetGameversion(cgvm) == VERSION_1_02) {
 		if (args[0] == 52)
 			args[0] = CG_ANYLANGUAGE_READCHARFROMSTRING;
 		else if (args[0] <= 300 && args[0] >= 286)
@@ -884,14 +884,14 @@ intptr_t CL_CgameSystemCalls(intptr_t *args) {
 	case CG_MEMORY_REMAINING:
 		return Hunk_MemoryRemaining();
   case CG_KEY_ISDOWN:
-		return Key_IsDown( Key_GetProtocolKey15(MV_GetCurrentGameversion(), args[1]) ); // 1.02 keynums -> 1.04 keynums
+		return Key_IsDown( Key_GetProtocolKey15(VM_GetGameversion(cgvm), args[1]) ); // 1.02 keynums -> 1.04 keynums
   case CG_KEY_GETCATCHER:
 		return Key_GetCatcher();
   case CG_KEY_SETCATCHER:
 		Key_SetCatcher( args[1] );
 	return 0;
   case CG_KEY_GETKEY:
-	  return Key_GetProtocolKey(MV_GetCurrentGameversion(), Key_GetKey(VMAS(1))); // 1.04 keynums -> 1.02 keynums (return)
+	  return Key_GetProtocolKey(VM_GetGameversion(cgvm), Key_GetKey(VMAS(1))); // 1.04 keynums -> 1.02 keynums (return)
 
 
 
@@ -1293,7 +1293,7 @@ Ghoul2 Insert End
 		return 0;
 
 	case MVAPI_GET_VERSION:
-		return (int)MV_GetCurrentGameversion();
+		return (int)VM_GetGameversion(cgvm);
 	}
 
 	if (VM_MVAPILevel(cgvm) >= 1) {

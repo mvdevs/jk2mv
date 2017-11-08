@@ -286,7 +286,7 @@ void SV_LocateGameData( sharedEntity_t *gEnts, int numGEntities, int sizeofGEnti
 		Com_Error( ERR_DROP, "SV_LocateGameData: incorrect game entity data" );
 	}
 
-	if (MV_GetCurrentGameversion() == VERSION_1_02) {
+	if (VM_GetGameversion(gvm) == VERSION_1_02) {
 		if ( clients && sizeofGameClient < (int)sizeof(playerState15_t) ) {
 			Com_Error( ERR_DROP, "SV_LocateGameData: incorrect player state data" );
 		}
@@ -351,7 +351,7 @@ extern bool RicksCrazyOnServer;
 intptr_t SV_GameSystemCalls( intptr_t *args ) {
 	// fix syscalls from 1.02 to match 1.04
 	// this is a mess... can it be done better?
-	if (MV_GetCurrentGameversion() == VERSION_1_02) {
+	if (VM_GetGameversion(gvm) == VERSION_1_02) {
 		if (args[0] > G_G2_GETBOLT_NOREC && args[0] <= G_G2_COLLISIONDETECT) {
 			args[0]++;
 		}
@@ -1067,7 +1067,7 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 		return 0;
 
 	case MVAPI_GET_VERSION:
-		return (int)MV_GetCurrentGameversion();
+		return (int)VM_GetGameversion(gvm);
 
 	}
 

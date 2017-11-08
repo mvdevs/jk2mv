@@ -764,7 +764,7 @@ The ui module is making a system call
 intptr_t CL_UISystemCalls(intptr_t *args) {
 	// fix syscalls from 1.02 to match 1.04
 	// this is a mess... can it be done better?
-	if (UI_GetCurrentGameversion() == VERSION_1_02) {
+	if (VM_GetGameversion(uivm) == VERSION_1_02) {
 		if (args[0] == 61) {
 			args[0] = UI_ANYLANGUAGE_READCHARFROMSTRING;
 		} else if (args[0] == 62) {
@@ -1145,7 +1145,7 @@ Ghoul2 Insert End
 */
 
 	case MVAPI_GET_VERSION:
-		return (int)MV_GetCurrentGameversion();
+		return (int)VM_GetGameversion(uivm);
 	}
 
 	if (VM_MVAPILevel(uivm) >= 3) {
