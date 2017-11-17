@@ -25,10 +25,6 @@ qboolean UI_DeleteDLFile(const dlfile_t *file);
 
 vm_t *uivm;
 
-// the UI keeps it's own protocol from init to shutdown to keep the keymapping
-// working correctly. (on a 1.02 server in the connecting screen the engine already communicates with protocol 15, but the jk2mvmenu is still running which needs keys16)
-mvversion_t uigameversion;
-
 /*
 ====================
 GetClientState
@@ -907,19 +903,19 @@ intptr_t CL_UISystemCalls(intptr_t *args) {
 		return 0;
 
 	case UI_KEY_KEYNUMTOSTRINGBUF:
-		Key_KeynumToStringBuf(Key_GetProtocolKey15(UI_GetCurrentGameversion(), args[1]), VMAP(2, char, args[3]), args[3]); // 1.02 keynums -> 1.04 keynums
+		Key_KeynumToStringBuf(Key_GetProtocolKey15(VM_GetGameversion(uivm), args[1]), VMAP(2, char, args[3]), args[3]); // 1.02 keynums -> 1.04 keynums
 		return 0;
 
 	case UI_KEY_GETBINDINGBUF:
-		Key_GetBindingBuf(Key_GetProtocolKey15(UI_GetCurrentGameversion(), args[1]), VMAP(2, char, args[3]), args[3]); // 1.02 keynums -> 1.04 keynums
+		Key_GetBindingBuf(Key_GetProtocolKey15(VM_GetGameversion(uivm), args[1]), VMAP(2, char, args[3]), args[3]); // 1.02 keynums -> 1.04 keynums
 		return 0;
 
 	case UI_KEY_SETBINDING:
-		Key_SetBinding(Key_GetProtocolKey15(UI_GetCurrentGameversion(), args[1]), VMAS(2)); // 1.02 keynums -> 1.04 keynums
+		Key_SetBinding(Key_GetProtocolKey15(VM_GetGameversion(uivm), args[1]), VMAS(2)); // 1.02 keynums -> 1.04 keynums
 		return 0;
 
 	case UI_KEY_ISDOWN:
-		return Key_IsDown(Key_GetProtocolKey15(UI_GetCurrentGameversion(), args[1])); // 1.02 keynums -> 1.04 keynums
+		return Key_IsDown(Key_GetProtocolKey15(VM_GetGameversion(uivm), args[1])); // 1.02 keynums -> 1.04 keynums
 
 	case UI_KEY_GETOVERSTRIKEMODE:
 		return Key_GetOverstrikeMode();
@@ -1158,6 +1154,9 @@ Ghoul2 Insert End
 			return 0;
 		case MVAPI_FS_FLOCK:
 			return (int)FS_FLock(args[1], (flockCmd_t)args[2], (qboolean)!!args[3]);
+		case MVAPI_SET_VERSION:
+			VM_SetGameversion( uivm, (mvversion_t)args[1] );
+			return 0;
 		}
 	}
 
@@ -1194,8 +1193,6 @@ void CL_ShutdownUI( void ) {
 	VM_Call( uivm, UI_SHUTDOWN );
 	VM_Free( uivm );
 	uivm = NULL;
-
-	uigameversion = VERSION_UNDEF;
 }
 
 /*
@@ -1213,13 +1210,10 @@ void CL_InitUI(qboolean mainMenu) {
 	Cvar_Set("ui_menulevel", "0");
 
 	if (mainMenu && mv_menuOverride->integer == 0) {
-		uigameversion = VERSION_UNDEF;
 		apilevel = MV_APILEVEL;
 
 		uivm = VM_Create("jk2mvmenu", qtrue, CL_UISystemCalls, VMI_NATIVE);
 	} else {
-		uigameversion = MV_GetCurrentGameversion();
-
 		if (cl_connectedToPureServer != 0) {
 			// if sv_pure is set we only allow qvms to be loaded
 			interpret = VMI_COMPILED;
@@ -1263,7 +1257,7 @@ Swap UI with mvmenu if it's not loaded already
 ====================
 */
 void CL_InitMVMenu( void ) {
-	if (uigameversion != VERSION_UNDEF) {
+	if ( !VM_MVMenu(uivm) ) {
 		CL_ShutdownUI();
 		CL_InitUI(qtrue);
 	}
@@ -1290,14 +1284,6 @@ qboolean UI_GameCommand( void ) {
 	}
 
 	return (qboolean)!!VM_Call( uivm, UI_CONSOLE_COMMAND, cls.realtime );
-}
-
-mvversion_t UI_GetCurrentGameversion() {
-	return uigameversion;
-}
-
-void UI_SetCurrentGameversion(mvversion_t protocol) {
-	uigameversion = protocol;
 }
 
 /*

@@ -1099,6 +1099,9 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 		switch (args[0]) {
 		case MVAPI_FS_FLOCK:
 			return (int)FS_FLock(args[1], (flockCmd_t)args[2], (qboolean)!!args[3]);
+		case MVAPI_SET_VERSION:
+			VM_SetGameversion( gvm, (mvversion_t)args[1] );
+			return 0;
 		}
 	}
 

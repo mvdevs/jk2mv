@@ -1313,6 +1313,9 @@ Ghoul2 Insert End
 			return 0;
 		case MVAPI_FS_FLOCK:
 			return (int)FS_FLock(args[1], (flockCmd_t)args[2], (qboolean)!!args[3]);
+		case MVAPI_SET_VERSION:
+			VM_SetGameversion( cgvm, (mvversion_t)args[1] );
+			return 0;
 		}
 	}
 

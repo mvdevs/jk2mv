@@ -630,9 +630,6 @@ void Key_SetCatcher( int catcher );
 void LAN_LoadCachedServers();
 void LAN_SaveServersToCache();
 
-mvversion_t UI_GetCurrentGameversion();
-void UI_SetCurrentGameversion(mvversion_t protocol);
-
 //
 // cl_net_chan.c
 //

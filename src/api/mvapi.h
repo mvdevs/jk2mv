@@ -60,8 +60,11 @@ typedef enum
 // mvversion_t trap_MVAPI_GetVersion(void);
 #define MVAPI_GET_VERSION 704                    /* asm: -705 */
 
-// int trap_FS_FLock(fileHandle_t h, flockCmd_t cmd, qboolean nb)
+// int trap_FS_FLock(fileHandle_t h, flockCmd_t cmd, qboolean nb);
 #define MVAPI_FS_FLOCK 708                       /* asm: -709 */
+
+// void trap_MVAPI_SetVersion(mvversion_t version);
+#define MVAPI_SET_VERSION 709                    /* asm: -710 */
 
 // ******** VMCALLS ******** //
 

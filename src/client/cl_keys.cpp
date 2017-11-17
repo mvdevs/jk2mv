@@ -1951,7 +1951,7 @@ void CL_KeyEvent (int key, qboolean down, unsigned time) {
 			return;
 		}
 
-		VM_Call(uivm, UI_KEY_EVENT, Key_GetProtocolKey(UI_GetCurrentGameversion(), key), down);
+		VM_Call(uivm, UI_KEY_EVENT, Key_GetProtocolKey(VM_GetGameversion(uivm), key), down);
 		return;
 	}
 
@@ -1967,9 +1967,9 @@ void CL_KeyEvent (int key, qboolean down, unsigned time) {
 		CL_AddKeyUpCommands( key, kb );
 
 		if ( cls.keyCatchers & KEYCATCH_UI && uivm ) {
-			VM_Call(uivm, UI_KEY_EVENT, Key_GetProtocolKey(UI_GetCurrentGameversion(), key), down);
+			VM_Call(uivm, UI_KEY_EVENT, Key_GetProtocolKey(VM_GetGameversion(uivm), key), down);
 		} else if ( cls.keyCatchers & KEYCATCH_CGAME && cgvm ) {
-			VM_Call(cgvm, CG_KEY_EVENT, Key_GetProtocolKey(MV_GetCurrentGameversion(), key), down);
+			VM_Call(cgvm, CG_KEY_EVENT, Key_GetProtocolKey(VM_GetGameversion(cgvm), key), down);
 		}
 
 		return;
@@ -1981,11 +1981,11 @@ void CL_KeyEvent (int key, qboolean down, unsigned time) {
 		Console_Key( key );
 	} else if ( cls.keyCatchers & KEYCATCH_UI ) {
 		if ( uivm ) {
-			VM_Call(uivm, UI_KEY_EVENT, Key_GetProtocolKey(UI_GetCurrentGameversion(), key), down);
+			VM_Call(uivm, UI_KEY_EVENT, Key_GetProtocolKey(VM_GetGameversion(uivm), key), down);
 		}
 	} else if ( cls.keyCatchers & KEYCATCH_CGAME ) {
 		if ( cgvm ) {
-			VM_Call(cgvm, CG_KEY_EVENT, Key_GetProtocolKey(MV_GetCurrentGameversion(), key), down);
+			VM_Call(cgvm, CG_KEY_EVENT, Key_GetProtocolKey(VM_GetGameversion(cgvm), key), down);
 		}
 	} else if ( cls.keyCatchers & KEYCATCH_MESSAGE ) {
 		Message_Key( key );
