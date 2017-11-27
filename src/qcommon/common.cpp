@@ -303,7 +303,7 @@ Q_NORETURN void QDECL Com_Error( errorParm_t code, const char *fmt, ... ) {
 		// fallthrough
 	case ERR_DISCONNECT:
 		VM_Forced_Unload_Start();
-		SV_Shutdown (va("Server crashed: %s\n",  com_errorMessage));
+		SV_Shutdown (va("Server crashed: %s",  com_errorMessage));
 		CL_Disconnect( qtrue );
 		CL_FlushMemory( qtrue );
 		VM_Forced_Unload_Done();
@@ -312,7 +312,7 @@ Q_NORETURN void QDECL Com_Error( errorParm_t code, const char *fmt, ... ) {
 	default:
 		VM_Forced_Unload_Start();
 		CL_Shutdown ();
-		SV_Shutdown (va("Server fatal crashed: %s\n", com_errorMessage));
+		SV_Shutdown (va("Server fatal crashed: %s", com_errorMessage));
 		VM_Forced_Unload_Done();
 	}
 
@@ -334,7 +334,7 @@ void Com_Quit_f( void ) {
 	// don't try to shutdown if we are in a recursive error
 	if ( !com_errorEntered ) {
 		VM_Forced_Unload_Start();
-		SV_Shutdown ("Server quit\n");
+		SV_Shutdown ("Server quit");
 		CL_Shutdown ();
 		VM_Forced_Unload_Done();
 		Com_Shutdown ();
@@ -347,9 +347,9 @@ Q_NORETURN void Com_Quit( int signal ) {
 	char msg[64];
 
 	if (signal) {
-		Com_sprintf(msg, sizeof(msg), "Received signal: %d\n", signal);
+		Com_sprintf(msg, sizeof(msg), "Received signal: %d", signal);
 	} else {
-		Com_sprintf(msg, sizeof(msg), "Server quit\n");
+		Com_sprintf(msg, sizeof(msg), "Server quit");
 	}
 
 	VM_Forced_Unload_Start();
