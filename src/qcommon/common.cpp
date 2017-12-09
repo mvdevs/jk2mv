@@ -69,6 +69,7 @@ cvar_t	*com_cameraMode;
 cvar_t	*com_busyWait;
 
 cvar_t	*mv_apienabled;
+cvar_t	*com_timestamps;
 
 // com_speeds times
 int		time_game;
@@ -116,6 +117,8 @@ void Com_EndRedirect (void)
 
 static void Com_Puts_Ext( qboolean extendedColors, const char *msg )
 {
+	const char *p = msg;
+
 	if ( rd_buffer ) {
 		if (strlen (msg) + strlen(rd_buffer) + strlen(S_COLOR_WHITE) + 1 > rd_buffersize) {
 			rd_flush(rd_buffer);
@@ -130,28 +133,55 @@ static void Com_Puts_Ext( qboolean extendedColors, const char *msg )
 		CL_ConsolePrint( msg, extendedColors );
 	}
 
-	// echo to dedicated console and early console
-	Sys_Print( msg, extendedColors );
+	while (*p) {
+		static qboolean	newLine = qtrue;
+		char			line[MAXPRINTMSG];
+		size_t			lineLen;
 
-	// logfile
-	if ( com_logfile && com_logfile->integer ) {
-		if ( !logfile ) {
-			struct tm *newtime;
-			time_t aclock;
+		if (newLine) {
+			qtime_t	t;
 
-			time( &aclock );
-			newtime = localtime( &aclock );
-
-			logfile = FS_FOpenFileWrite( "qconsole.log" );
-			Com_Printf( "logfile opened on %s\n", asctime( newtime ) );
-			if ( com_logfile->integer > 1 ) {
-				// force it to not buffer so we get valid
-				// data even if we are crashing
-				FS_ForceFlush(logfile);
+			Com_RealTime(&t);
+			Com_sprintf(line, sizeof(line), "%04i-%02i-%02i %02i:%02i:%02i ",
+				1900 + t.tm_year, 1 + t.tm_mon, t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec);
+			lineLen = strlen(line);
+			newLine = qfalse;
+		} else {
+			if (const char *s = strchr(p, '\n')) {
+				lineLen = (size_t)(s - p + 1);
+				newLine = qtrue;
+			} else {
+				lineLen = strlen(p);
 			}
+
+			Com_Memcpy(line, p, lineLen);
+			line[lineLen] = '\0';
+			p += lineLen;
 		}
-		if ( logfile && FS_Initialized()) {
-			FS_Write(msg, (int)strlen(msg), logfile);
+
+		// echo to dedicated console and early console
+		Sys_Print( line, extendedColors );
+
+		// logfile
+		if ( com_logfile && com_logfile->integer ) {
+			if ( !logfile ) {
+				struct tm *newtime;
+				time_t aclock;
+
+				time( &aclock );
+				newtime = localtime( &aclock );
+
+				logfile = FS_FOpenFileWrite( "qconsole.log" );
+				Com_Printf( "logfile opened on %s\n", asctime( newtime ) );
+				if ( com_logfile->integer > 1 ) {
+					// force it to not buffer so we get valid
+					// data even if we are crashing
+					FS_ForceFlush(logfile);
+				}
+			}
+			if ( logfile && FS_Initialized()) {
+				FS_Write(line, lineLen, logfile);
+			}
 		}
 	}
 
@@ -2440,6 +2470,7 @@ void Com_Init( char *commandLine ) {
 	Cvar_Get("com_ignoreothertasks", "0", CVAR_ARCHIVE | CVAR_GLOBAL);
 
 	mv_apienabled = Cvar_Get("mv_apienabled", XSTR(MV_APILEVEL), CVAR_INIT | CVAR_VM_NOWRITE);
+	com_timestamps = Cvar_Get("com_timestamps", "1", CVAR_ARCHIVE);
 
 	if ( com_dedicated->integer ) {
 		if ( !com_viewlog->integer ) {

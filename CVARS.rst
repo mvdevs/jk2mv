@@ -10,6 +10,14 @@ New and Modified Cvars
 :Description:
    Enable / Disable old "busy" game loop using 100% CPU time.
 
+..
+
+:Name: com_timestamps
+:Values: "0", "1"
+:Default: "1"
+:Description:
+   Print timestamps in qconsole.log and system console.
+
 -----------
 Client-Side
 -----------
