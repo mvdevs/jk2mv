@@ -308,7 +308,7 @@ Find or allocate a bucket for an address
 */
 #include <unordered_map>
 
-static leakyBucket_t *SVC_BucketForAddress(netadr_t address, int burst, int period) {
+static leakyBucket_t *SVC_BucketForAddress(netadr_t address, int burst, int period, int now) {
 	static std::unordered_map<int, leakyBucket_t> bucketMap;
 	static unsigned int	callCounter = 0;
 
@@ -319,7 +319,6 @@ static leakyBucket_t *SVC_BucketForAddress(netadr_t address, int burst, int peri
 	callCounter++;
 
 	if ((callCounter & 0xffffu) == 0) {
-		int now = Sys_Milliseconds();
 		auto it = bucketMap.begin();
 
 		while (it != bucketMap.end()) {
@@ -343,9 +342,8 @@ SVC_RateLimit
 Allows one packet per period msec with bucket size of burst
 ================
 */
-static qboolean SVC_RateLimit(leakyBucket_t *bucket, int burst, int period) {
+static qboolean SVC_RateLimit(leakyBucket_t *bucket, int burst, int period, int now) {
 	if (bucket != NULL) {
-		int now = Sys_Milliseconds();
 		int interval = now - bucket->lastTime;
 		int expired = interval / period;
 		int expiredRemainder = interval % period;
@@ -377,10 +375,10 @@ SVC_RateLimitAddress
 Rate limit for a particular address
 ================
 */
-static qboolean SVC_RateLimitAddress(netadr_t from, int burst, int period) {
-	leakyBucket_t *bucket = SVC_BucketForAddress(from, burst, period);
+static qboolean SVC_RateLimitAddress(netadr_t from, int burst, int period, int now) {
+	leakyBucket_t *bucket = SVC_BucketForAddress(from, burst, period, now);
 
-	return SVC_RateLimit(bucket, burst, period);
+	return SVC_RateLimit(bucket, burst, period, now);
 }
 
 /*
@@ -695,6 +693,7 @@ static bool SVC_IsWhitelisted( netadr_t adr ) {
 //
 
 typedef enum {
+	SVC_INVALID,
 	SVC_CONNECT,
 	SVC_GETSTATUS,
 	SVC_FIRST = SVC_GETSTATUS,
@@ -717,9 +716,13 @@ connectionless packets.
 =================
 */
 void SV_ConnectionlessPacket( netadr_t from, msg_t *msg ) {
-	static int dropped[SVC_MAX];
+	static unsigned droppedAdr;
+	static unsigned dropped[SVC_MAX];
+	static int lastMsgAdr;
+	static int lastMsg[SVC_MAX];
 	static leakyBucket_t bucket[SVC_MAX];
 	static const char * const commands[SVC_MAX] = {
+		"invalid",
 		"connect",
 		"getstatus",
 		"getinfo",
@@ -732,9 +735,14 @@ void SV_ConnectionlessPacket( netadr_t from, msg_t *msg ) {
 	char	*s;
 	char	*c;
 
-	svcType_t cmd = SVC_MAX;
+	svcType_t cmd = SVC_INVALID;
+	int now = Sys_Milliseconds();
 
-	if (SVC_RateLimitAddress(from, 10, 1000)) {
+	if (SVC_RateLimitAddress(from, 10, 1000, now)) {
+		if (com_developer && com_developer->integer) {
+			Com_DPrintf("SV_ConnectionlessPacket: rate limit from %s exceeded, dropping request\n", NET_AdrToString(from));
+		}
+		droppedAdr++;
 		return;
 	}
 
@@ -750,7 +758,7 @@ void SV_ConnectionlessPacket( netadr_t from, msg_t *msg ) {
 	Cmd_TokenizeString( s );
 	c = Q_strlwr(Cmd_Argv(0));
 
-	for (int i = SVC_FIRST; i < (int)cmd; i++) {
+	for (int i = SVC_FIRST; i < SVC_MAX && cmd == SVC_INVALID; i++) {
 		if (!strcmp(c, commands[i])) {
 			cmd = (svcType_t)i;
 		}
@@ -767,15 +775,21 @@ void SV_ConnectionlessPacket( netadr_t from, msg_t *msg ) {
 		burst *= 2;
 	}
 
-	if (SVC_RateLimit(&bucket[cmd], burst, period)) {
+	if (SVC_RateLimit(&bucket[cmd], burst, period, now)) {
 		dropped[cmd]++;
 		return;
 	}
 
-	// this will print every 'period' msec
-	if (dropped[cmd] > 0) {
-		Com_DPrintf("SV_ConnectionlessPacket: \"%s\" rate limit exceeded, dropped %d requests\n", commands[cmd], dropped[cmd]);
+	if (dropped[cmd] > 0 && lastMsg[cmd] + 1000 < now) {
+		Com_Printf("SV_ConnectionlessPacket: \"%s\" rate limit exceeded, dropped %d requests\n", commands[cmd], dropped[cmd]);
 		dropped[cmd] = 0;
+		lastMsg[cmd] = now;
+	}
+
+	if (droppedAdr > 0 && lastMsgAdr + 1000 < now) {
+		Com_Printf("SV_ConnectionlessPacket: IP rate limit exceeded, dropped %d requests\n", droppedAdr);
+		droppedAdr = 0;
+		lastMsgAdr = now;
 	}
 
 	Com_DPrintf ("SV packet %s : %s\n", NET_AdrToString(from), c);
@@ -816,7 +830,7 @@ void SV_ConnectionlessPacket( netadr_t from, msg_t *msg ) {
 			currmessage[0] = 0;
 		}
 		break;
-	case SVC_MAX:
+	default:
 		Com_DPrintf("bad connectionless packet from %s:\n%s\n", NET_AdrToString(from), s);
 		break;
 	}
