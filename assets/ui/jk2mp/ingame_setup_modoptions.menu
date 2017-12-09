@@ -192,7 +192,7 @@
 			backcolor			0 0 1 0
 			forecolor			.433 .703 .722 1
 			visible				1
-			wrapped
+			autowrapped
 		}
 	}
 }
