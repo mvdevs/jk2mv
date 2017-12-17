@@ -138,7 +138,7 @@ static void Com_Puts_Ext( qboolean extendedColors, const char *msg )
 		char			line[MAXPRINTMSG];
 		size_t			lineLen;
 
-		if (newLine) {
+		if (newLine && com_timestamps && com_timestamps->integer) {
 			qtime_t	t;
 
 			Com_RealTime(&t);
