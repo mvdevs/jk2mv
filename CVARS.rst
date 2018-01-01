@@ -185,7 +185,7 @@ Client-Side
 :Values: "0", "1"
 :Default: "0"
 :Description:
-   Enable / Disable dynamic glow effect know from JK:JA.
+   Enable / Disable dynamic glow effect.
 
 ..
 
