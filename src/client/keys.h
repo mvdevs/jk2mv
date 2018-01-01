@@ -61,3 +61,6 @@ qboolean Key_GetOverstrikeMode( void );
 void Key_SetOverstrikeMode( qboolean state );
 void Key_ClearStates( void );
 int Key_GetKey(const char *binding);
+
+int Key_GetProtocolKey15(mvversion_t protocol, int key15);
+int Key_GetProtocolKey(mvversion_t protocol, int key16);

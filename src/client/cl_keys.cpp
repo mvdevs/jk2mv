@@ -2091,334 +2091,172 @@ multiprotocol support
 ===================
 */
 
-int Key_GetProtocolKey(mvversion_t protocol, int key16) {
-	if (protocol != VERSION_1_02)
-		return key16;
+static mvKeyconversion_t mvKeyconversion[] =
+{
+	{ K_TAB, A_TAB },
+	{ K_ENTER, A_ENTER },
+	{ K_ESCAPE, A_ESCAPE },
+	{ K_SPACE, A_SPACE },
 
-	switch (key16) {
-	case A_TAB:
-		return K_TAB;
-	case A_ENTER:
-		return K_ENTER;
-	case A_ESCAPE:
-		return K_ESCAPE;
-	case A_SPACE:
-		return K_SPACE;
+	{ K_BACKSPACE, A_BACKSPACE },
 
-	case A_BACKSPACE:
-		return K_BACKSPACE;
+	//{ K_COMMAND, A_COMMAND },
+	{ K_CAPSLOCK, A_CAPSLOCK },
+	//{ K_POWER, A_POWER },
+	{ K_PAUSE, A_PAUSE },
 
-		/*
-	case A_COMMAND:
-		return K_COMMAND;
-	case A_CAPSLOCK:
-		return K_CAPSLOCK;
-	case A_POWER:
-		return K_POWER;
-		*/
-	case A_PAUSE:
-		return K_PAUSE;
+	{ K_UPARROW, A_CURSOR_UP },
+	{ K_DOWNARROW, A_CURSOR_DOWN },
+	{ K_LEFTARROW, A_CURSOR_LEFT },
+	{ K_RIGHTARROW, A_CURSOR_RIGHT },
 
-	case A_CURSOR_UP:
-		return K_UPARROW;
-	case A_CURSOR_DOWN:
-		return K_DOWNARROW;
-	case A_CURSOR_LEFT:
-		return K_LEFTARROW;
-	case A_CURSOR_RIGHT:
-		return K_RIGHTARROW;
+	{ K_ALT, A_ALT },
+	{ K_ALT, A_ALT2 }, // 1.02 only knows ALT, 1.03+ knows ALT and ALTGR
+	{ K_CTRL, A_CTRL },
+	{ K_SHIFT, A_SHIFT },
+	{ K_INS, A_INSERT },
+	{ K_DEL, A_DELETE },
+	{ K_PGDN, A_PAGE_DOWN },
+	{ K_PGUP, A_PAGE_UP },
+	{ K_HOME, A_HOME },
+	{ K_END, A_END },
 
-	case A_ALT:
-		return K_ALT;
-	case A_ALT2:
-		return K_ALT;
-	case A_CTRL:
-		return K_CTRL;
-	case A_SHIFT:
-		return K_SHIFT;
-	case A_INSERT:
-		return K_INS;
-	case A_DELETE:
-		return K_DEL;
-	case A_PAGE_DOWN:
-		return K_PGDN;
-	case A_PAGE_UP:
-		return K_PGUP;
-	case A_HOME:
-		return K_HOME;
-	case A_END:
-		return K_END;
+	{ K_F1, A_F1 },
+	{ K_F2, A_F2 },
+	{ K_F3, A_F3 },
+	{ K_F4, A_F4 },
+	{ K_F5, A_F5 },
+	{ K_F6, A_F6 },
+	{ K_F7, A_F7 },
+	{ K_F8, A_F8 },
+	{ K_F9, A_F9 },
+	{ K_F10, A_F10 },
+	{ K_F11, A_F11 },
+	{ K_F12, A_F12 },
+	/*
+	{ K_F13, A_F13 },
+	{ K_F14, A_F14 },
+	{ K_F15, A_F15 },
+	*/
 
-	case A_F1:
-		return K_F1;
-	case A_F2:
-		return K_F2;
-	case A_F3:
-		return K_F3;
-	case A_F4:
-		return K_F4;
-	case A_F5:
-		return K_F5;
-	case A_F6:
-		return K_F6;
-	case A_F7:
-		return K_F7;
-	case A_F8:
-		return K_F8;
-	case A_F9:
-		return K_F9;
-	case A_F10:
-		return K_F10;
-	case A_F11:
-		return K_F11;
-	case A_F12:
-		return K_F12;
-		/*
-	case A_F13:
-		return K_F13;
-	case A_F14:
-		return K_F14;
-	case A_F15:
-		return K_F15;
-		*/
+	{ K_KP_HOME, A_KP_7 },
+	{ K_KP_UPARROW, A_KP_8 },
+	{ K_KP_PGUP, A_KP_9 },
+	{ K_KP_LEFTARROW, A_KP_4 },
+	{ K_KP_5, A_KP_5 },
+	{ K_KP_RIGHTARROW, A_KP_6 },
+	{ K_KP_END, A_KP_1 },
+	{ K_KP_DOWNARROW, A_KP_2 },
+	{ K_KP_PGDN, A_KP_3 },
+	{ K_KP_ENTER, A_KP_ENTER },
+	{ K_KP_INS, A_KP_0 },
+	{ K_KP_DEL, A_KP_PERIOD },
+	{ K_KP_SLASH, A_DIVIDE },
+	{ K_KP_MINUS, A_KP_MINUS },
+	{ K_KP_PLUS, A_KP_PLUS },
+	{ K_KP_NUMLOCK, A_NUMLOCK },
+	{ K_KP_STAR, A_MULTIPLY },
+	//{ K_KP_EQUALS, A_KP_EQUALS },
 
-		/*
-	case A_KP_HOME:
-		return K_KP_HOME;
-	case A_KP_UPARROW:
-		return K_KP_UPARROW;
-	case A_KP_PGUP:
-		return K_KP_PGUP;
-	case A_KP_LEFTARROW:
-		return K_KP_LEFTARROW;
-		*/
-	case A_KP_5:
-		return K_KP_5;
-		/*
-	case A_KP_RIGHTARROW:
-		return K_KP_RIGHTARROW;
-	case A_KP_END:
-		return K_KP_END;
-	case A_KP_DOWNARROW:
-		return K_KP_DOWNARROW;
-	case A_KP_PGDN:
-		return K_KP_PGDN;
-		*/
-	case A_KP_ENTER:
-		return K_KP_ENTER;
-		/*
-	case A_KP_INS:
-		return K_KP_INS;
-	case A_KP_DEL:
-		return K_KP_DEL;
-		*/
-	case A_DIVIDE:
-		return K_KP_SLASH;
-	case A_KP_MINUS:
-		return K_KP_MINUS;
-	case A_KP_PLUS:
-		return K_KP_PLUS;
-		/*
-	case A_KP_NUMBLOCK:
-		return K_KP_NUMLOCK;
-		*/
-	case A_MULTIPLY:
-		return K_KP_STAR;
-		/*
-	case A_KP_EQUALS:
-		return K_KP_EQUALS;
-		*/
+	{ K_MOUSE1, A_MOUSE1 },
+	{ K_MOUSE2, A_MOUSE2 },
+	{ K_MOUSE3, A_MOUSE3 },
+	{ K_MOUSE4, A_MOUSE4 },
+	{ K_MOUSE5, A_MOUSE5 },
 
-	case A_MOUSE1:
-		return K_MOUSE1;
-	case A_MOUSE2:
-		return K_MOUSE2;
-	case A_MOUSE3:
-		return K_MOUSE3;
-	case A_MOUSE4:
-		return K_MOUSE4;
-	case A_MOUSE5:
-		return K_MOUSE5;
+	{ K_MWHEELDOWN, A_MWHEELDOWN },
+	{ K_MWHEELUP, A_MWHEELUP },
 
-	case A_MWHEELDOWN:
-		return K_MWHEELDOWN;
-	case A_MWHEELUP:
-		return K_MWHEELUP;
+	{ K_JOY1, A_JOY1 },
+	{ K_JOY2, A_JOY2 },
+	{ K_JOY3, A_JOY3 },
+	{ K_JOY4, A_JOY4 },
+	{ K_JOY5, A_JOY5 },
+	{ K_JOY6, A_JOY6 },
+	{ K_JOY7, A_JOY7 },
+	{ K_JOY8, A_JOY8 },
+	{ K_JOY9, A_JOY9 },
+	{ K_JOY10, A_JOY10 },
+	{ K_JOY11, A_JOY11 },
+	{ K_JOY12, A_JOY12 },
+	{ K_JOY13, A_JOY13 },
+	{ K_JOY14, A_JOY14 },
+	{ K_JOY15, A_JOY15 },
+	{ K_JOY16, A_JOY16 },
+	{ K_JOY17, A_JOY17 },
+	{ K_JOY18, A_JOY18 },
+	{ K_JOY19, A_JOY19 },
+	{ K_JOY20, A_JOY20 },
+	{ K_JOY21, A_JOY21 },
+	{ K_JOY22, A_JOY22 },
+	{ K_JOY23, A_JOY23 },
+	{ K_JOY24, A_JOY24 },
+	{ K_JOY25, A_JOY25 },
+	{ K_JOY26, A_JOY26 },
+	{ K_JOY27, A_JOY27 },
+	{ K_JOY28, A_JOY28 },
+	{ K_JOY29, A_JOY29 },
+	{ K_JOY30, A_JOY30 },
+	{ K_JOY31, A_JOY31 },
+	// { K_JOY32, A_JOY0 }, //FIXME: 1.02 has JOY32, 1.04 has JOY0, but they're not really mapped
 
-	case MAX_KEYS:
-		return K_LAST_KEY;
-	}
+	{ K_AUX1, A_AUX1 },
+	{ K_AUX2, A_AUX2 },
+	{ K_AUX3, A_AUX3 },
+	{ K_AUX4, A_AUX4 },
+	{ K_AUX5, A_AUX5 },
+	{ K_AUX6, A_AUX6 },
+	{ K_AUX7, A_AUX7 },
+	{ K_AUX8, A_AUX8 },
+	{ K_AUX9, A_AUX9 },
+	{ K_AUX10, A_AUX10 },
+	{ K_AUX11, A_AUX11 },
+	{ K_AUX12, A_AUX12 },
+	{ K_AUX13, A_AUX13 },
+	{ K_AUX14, A_AUX14 },
+	{ K_AUX15, A_AUX15 },
+	{ K_AUX16, A_AUX16 },
 
-	if ( key16 >= MAX_KEYS) return -1;
+	{ K_LAST_KEY, MAX_KEYS },
+};
+static int mvKeyconversionCount = sizeof(mvKeyconversion) / sizeof(mvKeyconversion[0]);
 
-	return key16;
-}
 
-int Key_GetProtocolKey15(mvversion_t protocol, int key15) {
-	if (protocol != VERSION_1_02) {
-		if ( key15 < 0 || MAX_KEYS <= key15 ) {
-			return -1;
-		} else {
-			return key15;
+int Key_GetProtocolKey_New(mvversion_t version, int key, qboolean to15, qboolean invert) {
+	int i;
+
+	// We don't need to convert anything if we're not dealing with 1.02, cause internally we use the 1.03/1.04 values
+	if ( version != VERSION_1_02 )
+		return key;
+
+	// Char events don't need conversion
+	if ( key & K_CHAR_FLAG )
+		return key;
+
+	for ( i = 0; i < mvKeyconversionCount; i++ )
+	{ // Find matching key
+		if ( (key == mvKeyconversion[i].key16 && to15) || (key == mvKeyconversion[i].key15 && !to15) )
+		{ // Found a match
+			return (to15 ? (int)mvKeyconversion[i].key15 : (int)mvKeyconversion[i].key16);
 		}
 	}
 
-	switch (key15) {
-	case K_TAB:
-		return A_TAB;
-	case K_ENTER:
-		return A_ENTER;
-	case K_ESCAPE:
-		return A_ESCAPE;
-	case K_SPACE:
-		return A_SPACE;
+	// Prevent double entries for 1.02 (Example: if 1.02 asks for K_CTRL it will be as if it asked for A_CTRL, if 1.02 asks for something that has the same number as A_CTRL it will count as A_CTRL, too: the CTRL key is handled twice. Solution: check if key would get altered by the inverse replacement).
+	if ( !invert && Key_GetProtocolKey_New( version, key, (qboolean)!to15, qtrue ) != key ) return -1;
 
-	case K_BACKSPACE:
-		return A_BACKSPACE;
+	// Limit the maximum
+	if ( (to15 && key >= K_LAST_KEY) || (!to15 && key >= MAX_KEYS) ) return -1;
 
-		/*
-	case K_COMMAND:
-		return A_COMMAND;
-	case K_CAPSLOCK:
-		return A_CAPSLOCK;
-	case K_POWER:
-		return A_POWER;
-		*/
-	case K_PAUSE:
-		return A_PAUSE;
+	// Return the key unmodified
+	return key;
+}
 
-	case K_UPARROW:
-		return A_CURSOR_UP;
-	case K_DOWNARROW:
-		return A_CURSOR_DOWN;
-	case K_LEFTARROW:
-		return A_CURSOR_LEFT;
-	case K_RIGHTARROW:
-		return A_CURSOR_RIGHT;
+int Key_GetProtocolKey(mvversion_t version, int key16) {
+	// Converts key16 to key15 (if not on 1.02)
+	return Key_GetProtocolKey_New(version, key16, qtrue, qfalse);
+}
 
-	case K_ALT:
-		return A_ALT;
-	case K_CTRL:
-		return A_CTRL;
-	case K_SHIFT:
-		return A_SHIFT;
-	case K_INS:
-		return A_INSERT;
-	case K_DEL:
-		return A_DELETE;
-	case K_PGDN:
-		return A_PAGE_DOWN;
-	case K_PGUP:
-		return A_PAGE_UP;
-	case K_HOME:
-		return A_HOME;
-	case K_END:
-		return A_END;
-
-	case K_F1:
-		return A_F1;
-	case K_F2:
-		return A_F2;
-	case K_F3:
-		return A_F3;
-	case K_F4:
-		return A_F4;
-	case K_F5:
-		return A_F5;
-	case K_F6:
-		return A_F6;
-	case K_F7:
-		return A_F7;
-	case K_F8:
-		return A_F8;
-	case K_F9:
-		return A_F9;
-	case K_F10:
-		return A_F10;
-	case K_F11:
-		return A_F11;
-	case K_F12:
-		return A_F12;
-		/*
-	case K_F13:
-		return A_F13;
-	case K_F14:
-		return A_F14;
-	case K_F15:
-		return A_F15;
-		*/
-
-		/*
-	case K_KP_HOME:
-		return A_KP_HOME;
-	case K_KP_UPARROW:
-		return A_KP_UPARROW;
-	case K_KP_PGUP:
-		return A_KP_PGUP;
-	case K_KP_LEFTARROW:
-		return A_KP_LEFTARROW;
-		*/
-	case K_KP_5:
-		return A_KP_5;
-		/*
-	case K_KP_RIGHTARROW:
-		return A_KP_RIGHTARROW;
-	case K_KP_END:
-		return A_KP_END;
-	case K_KP_DOWNARROW:
-		return A_KP_DOWNARROW;
-	case K_KP_PGDN:
-		return A_KP_PGDN;
-		*/
-	case K_KP_ENTER:
-		return A_KP_ENTER;
-		/*
-	case K_KP_INS:
-		return A_KP_INS;
-	case K_KP_DEL:
-		return A_KP_DEL;
-		*/
-	case K_KP_SLASH:
-		return A_DIVIDE;
-	case K_KP_MINUS:
-		return A_KP_MINUS;
-	case K_KP_PLUS:
-		return A_KP_PLUS;
-		/*
-	case K_KP_NUMBLOCK:
-		return A_KP_NUMLOCK;
-		*/
-	case K_KP_STAR:
-		return A_MULTIPLY;
-		/*
-	case K_KP_EQUALS:
-		return A_KP_EQUALS;
-		*/
-
-	case K_MOUSE1:
-		return A_MOUSE1;
-	case K_MOUSE2:
-		return A_MOUSE2;
-	case K_MOUSE3:
-		return A_MOUSE3;
-	case K_MOUSE4:
-		return A_MOUSE4;
-	case K_MOUSE5:
-		return A_MOUSE5;
-
-	case K_MWHEELDOWN:
-		return A_MWHEELDOWN;
-	case K_MWHEELUP:
-		return A_MWHEELUP;
-
-	case K_LAST_KEY:
-		return -1;
-	}
-
-	// Prevent double entries for 1.02 (Example: if 1.02 asks for K_CTRL it will be as if it asked for A_CTRL, if 1.02 asks for something that has the same number as A_CTRL it will count as A_CTRL, too: the CTRL key is handled twice. Solution: check if key15 would get altered by the inverse replacement).
-	if ( Key_GetProtocolKey(protocol, key15) != key15 ) return -1;
-
-	if ( key15 < 0 || key15 >= MAX_KEYS ) return -1;
-
-	return key15;
+int Key_GetProtocolKey15(mvversion_t version, int key15) {
+	// Converts key15 to key16 (if not on 1.02)
+	return Key_GetProtocolKey_New(version, key15, qfalse, qfalse);
 }

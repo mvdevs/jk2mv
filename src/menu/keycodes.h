@@ -465,6 +465,12 @@ typedef enum
 	MAX_KEYS
 } fakeAscii_t;
 
+typedef struct mvKeyconversion_s
+{
+	key15_t     key15;
+	fakeAscii_t key16;
+} mvKeyconversion_t;
+
 
 // The menu code needs to get both key and char events, but
 // to avoid duplicating the paths, the char events are just
