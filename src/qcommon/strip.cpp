@@ -1716,7 +1716,7 @@ static void SP_UpdateLanguage(void)
 
 void SP_Init(void)
 {
-	sp_language = Cvar_Get("sp_language", va("%d", SP_LANGUAGE_ENGLISH), CVAR_ARCHIVE | CVAR_NORESTART);
+	sp_language = Cvar_Get("sp_language", va("%d", SP_LANGUAGE_ENGLISH), CVAR_ARCHIVE | CVAR_NORESTART | CVAR_GLOBAL);
 	sp_show_strip = Cvar_Get ("sp_show_strip", "0", 0);
 
 	SP_UpdateLanguage();
