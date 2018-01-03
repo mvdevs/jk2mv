@@ -712,6 +712,7 @@ static void IN_ProcessEvents( void )
 {
 	SDL_Event e;
 	fakeAscii_t key = A_NULL;
+	int mx = 0, my = 0;
 	 // not using SDL_StopTextInput for screen kbd and other
 	 // considerations
 	static qboolean textInput = qtrue;
@@ -787,9 +788,8 @@ static void IN_ProcessEvents( void )
 			case SDL_MOUSEMOTION:
 				if ( mouseActive )
 				{
-					if ( !e.motion.xrel && !e.motion.yrel )
-						break;
-					Sys_QueEvent( 0, SE_MOUSE, e.motion.xrel, e.motion.yrel, 0, NULL );
+					mx += e.motion.xrel;
+					my += e.motion.yrel;
 				}
 				break;
 
@@ -861,6 +861,10 @@ static void IN_ProcessEvents( void )
 			default:
 				break;
 		}
+	}
+
+	if (mx || my) {
+		Sys_QueEvent( 0, SE_MOUSE, mx, my, 0, NULL );
 	}
 }
 
