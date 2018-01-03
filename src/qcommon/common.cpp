@@ -756,6 +756,8 @@ int Com_RealTime(qtime_t *qtime) {
 		qtime->tm_wday = tms->tm_wday;
 		qtime->tm_yday = tms->tm_yday;
 		qtime->tm_isdst = tms->tm_isdst;
+	} else {
+		Com_Memset(qtime, 0, sizeof(qtime_t));
 	}
 
     // there is no other way then casting
