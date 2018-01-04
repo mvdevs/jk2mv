@@ -330,6 +330,9 @@ static void R_SetupEntityLightingGrid( trRefEntity_t *ent ) {
 			gridPos = startGridPos;
 			for ( j = 0 ; j < 3 ; j++ ) {
 				if ( i & (1<<j) ) {
+					if ( pos[j] + 1 > tr.world->lightGridBounds[j] - 1 ) {
+						break; // ignore values outside lightgrid
+					}
 					factor *= frac[j];
 					gridPos += gridStep[j];
 				} else {
@@ -337,6 +340,10 @@ static void R_SetupEntityLightingGrid( trRefEntity_t *ent ) {
 				}
 			}
 
+			if (j != 3)
+			{
+				continue;
+			}
 			if (gridPos >= tr.world->lightGridArray + tr.world->numGridArrayElements)
 			{//we've gone off the array somehow
 				continue;
