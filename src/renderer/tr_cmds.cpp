@@ -112,20 +112,20 @@ void R_SyncRenderThread( void ) {
 
 /*
 ============
-R_GetCommandBuffer
+R_GetCommandBufferReserved
 
 make sure there is enough command space, waiting on the
 render thread if needed.
 ============
 */
-void *R_GetCommandBuffer( unsigned int bytes ) {
+void *R_GetCommandBufferReserved( unsigned int bytes, int reservedBytes ) {
 	renderCommandList_t	*cmdList;
 
 	cmdList = &backEndData->commands;
 	bytes = PAD( bytes, sizeof( void * ) );
 
 	// always leave room for the end of list command
-	if ( cmdList->used + bytes + sizeof( int ) > MAX_RENDER_COMMANDS ) {
+	if ( cmdList->used + bytes + sizeof( int ) + reservedBytes > MAX_RENDER_COMMANDS ) {
 		if ( bytes > MAX_RENDER_COMMANDS - sizeof( int ) ) {
 			ri.Error( ERR_FATAL, "R_GetCommandBuffer: bad size %i", bytes );
 		}
@@ -136,6 +136,17 @@ void *R_GetCommandBuffer( unsigned int bytes ) {
 	cmdList->used += bytes;
 
 	return cmdList->cmds + cmdList->used - bytes;
+}
+
+/*
+============
+R_GetCommandBuffer
+
+returns NULL if there is not enough space for important commands
+============
+*/
+void *R_GetCommandBuffer( unsigned int bytes ) {
+	return R_GetCommandBufferReserved( bytes, PAD( sizeof ( swapBuffersCommand_t ), sizeof( void * ) ) );
 }
 
 
@@ -443,7 +454,7 @@ void RE_EndFrame( int *frontEndMsec, int *backEndMsec ) {
 	if ( !tr.registered ) {
 		return;
 	}
-	cmd = (swapBuffersCommand_t *)R_GetCommandBuffer( sizeof( *cmd ) );
+	cmd = (swapBuffersCommand_t *)R_GetCommandBufferReserved( sizeof( *cmd ), 0 );
 	if (!cmd) {
 		return;
 	}
