@@ -2154,7 +2154,7 @@ void RB_SurfaceGhoul( CRenderableSurface *surf ) {
 	//
 
 	// first up, sanity check our numbers
-	RB_CheckOverflow( surface->numVerts, surface->numTriangles );
+	RB_CHECKOVERFLOW( surface->numVerts, surface->numTriangles * 3 );
 
 	// now copy the right number of verts to the temporary area for verts for this shader
 	const int baseVertex = tess.numVertexes;
