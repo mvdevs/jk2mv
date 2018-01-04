@@ -487,7 +487,7 @@ void Com_StartupVariable( const char *match ) {
 
 		s = Cmd_Argv(1);
 		if ( !match || !strcmp( s, match ) ) {
-			Cvar_Set( s, Cmd_Argv(2) );
+			Cvar_Set( s, Cmd_ArgsFrom(2) );
 			cv = Cvar_Get( s, "", 0 );
 			cv->flags |= CVAR_USER_CREATED;
 //			com_consoleLines[i] = 0;
@@ -519,7 +519,7 @@ qboolean Com_AddStartupCommands( void ) {
 		}
 
 		// set commands won't override menu startup
-		if ( Q_stricmpn( com_consoleLines[i], "set", 3 ) ) {
+		if ( Q_stricmpn( com_consoleLines[i], "set ", 4 ) ) {
 			added = qtrue;
 		}
 		Cbuf_AddText( com_consoleLines[i] );
