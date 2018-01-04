@@ -803,6 +803,7 @@ void RB_StageIteratorSky( void ) {
 
 		qglPushMatrix ();
 		GL_State( 0 );
+		GL_Cull( CT_FRONT_SIDED );
 		qglTranslatef (backEnd.viewParms.ori.origin[0], backEnd.viewParms.ori.origin[1], backEnd.viewParms.ori.origin[2]);
 
 		DrawSkyBox( tess.shader );

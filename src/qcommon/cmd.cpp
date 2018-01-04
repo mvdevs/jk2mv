@@ -763,8 +763,12 @@ Cmd_CompleteArgument
 */
 void Cmd_CompleteArgument( const char *command, char *args, int argNum ) {
 	for ( cmd_function_t *cmd=cmd_functions; cmd; cmd=cmd->next ) {
-		if ( !Q_stricmp( command, cmd->name ) && cmd->complete )
-			cmd->complete( args, argNum );
+		if ( !Q_stricmp( command, cmd->name ) ) {
+			if ( cmd->complete ) {
+				cmd->complete( args, argNum );
+			}
+			return;
+		}
 	}
 }
 
@@ -785,8 +789,10 @@ Cmd_SetCommandCompletionFunc
 */
 void Cmd_SetCommandCompletionFunc( const char *command, completionFunc_t complete ) {
 	for ( cmd_function_t *cmd=cmd_functions; cmd; cmd=cmd->next ) {
-		if ( !Q_stricmp( command, cmd->name ) )
+		if ( !Q_stricmp( command, cmd->name ) ) {
 			cmd->complete = complete;
+			return;
+		}
 	}
 }
 

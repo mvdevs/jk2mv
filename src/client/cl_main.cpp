@@ -561,12 +561,14 @@ qboolean CL_ServerVersionIs103 (const char *versionstr) {
 
 void CL_PlayDemo_f( void ) {
 	char		name[MAX_OSPATH]/*, extension[32]*/;
-	char		*arg;
+	char		arg[MAX_OSPATH];
 
 	if (Cmd_Argc() != 2) {
 		Com_Printf ("demo <demoname>\n");
 		return;
 	}
+
+	Q_strncpyz(arg, Cmd_Argv(1), sizeof(arg));
 
 	// make sure a local server is killed
 	Cvar_Set( "sv_killserver", "1" );
@@ -579,8 +581,6 @@ void CL_PlayDemo_f( void ) {
 	*/
 
 	// open the demo file
-	arg = Cmd_Argv(1);
-
 	if ( !Q_stricmp( arg + strlen(arg) - strlen(".dm_15"), ".dm_15" ) || !Q_stricmp( arg + strlen(arg) - strlen(".dm_16"), ".dm_16" ) )
 	{ // Load "dm_15" and "dm_16" demos.
 		Com_sprintf (name, sizeof(name), "demos/%s", arg);
@@ -622,7 +622,7 @@ void CL_PlayDemo_f( void ) {
 			}
 		}
 	}
-	Q_strncpyz( clc.demoName, Cmd_Argv(1), sizeof( clc.demoName ) );
+	Q_strncpyz( clc.demoName, arg, sizeof( clc.demoName ) );
 
 	Con_Close();
 
@@ -630,7 +630,7 @@ void CL_PlayDemo_f( void ) {
 	clc.demoplaying = qtrue;
 	com_demoplaying = qtrue;
 
-	Q_strncpyz( cls.servername, Cmd_Argv(1), sizeof( cls.servername ) );
+	Q_strncpyz( cls.servername, arg, sizeof( cls.servername ) );
 
 	// Set the protocol according to the the demo-file.
 	if ( !Q_stricmp( name + strlen(name) - strlen(".dm_15"), ".dm_15" ) ) {
@@ -1056,7 +1056,7 @@ CL_Connect_f
 ================
 */
 void CL_Connect_f( void ) {
-	char	*server;
+	char	server[MAX_OSPATH];
 
 	if ( Cmd_Argc() != 2 ) {
 		Com_Printf( "usage: connect [server]\n");
@@ -1073,7 +1073,7 @@ void CL_Connect_f( void ) {
 	// clear any previous "server full" type messages
 	clc.serverMessage[0] = 0;
 
-	server = Cmd_Argv (1);
+	Q_strncpyz(server, Cmd_Argv(1), sizeof(server));
 
 	if ( com_sv_running->integer && !strcmp( server, "localhost" ) ) {
 		// if running a local server, kill it
@@ -1749,7 +1749,7 @@ Resend a connect message if the last one has timed out
 void CL_CheckForResend( void ) {
 	int		port;
 	char	info[MAX_INFO_STRING];
-	char	data[MAX_INFO_STRING];
+	char	data[MAX_INFO_STRING + 10];
 
 	// don't send anything if playing back a demo
 	if ( clc.demoplaying ) {
@@ -1794,7 +1794,7 @@ void CL_CheckForResend( void ) {
 		Info_SetValueForKey( info, "protocol", va("%i", MV_GetCurrentProtocol() ) );
 		Info_SetValueForKey( info, "qport", va("%i", port ) );
 		Info_SetValueForKey( info, "challenge", va("%i", clc.challenge ) );
-		sprintf(data, "connect \"%s\"", info );
+		Com_sprintf(data, sizeof(data), "connect \"%s\"", info );
 		NET_OutOfBandData( NS_CLIENT, clc.serverAddress, (unsigned char *)data, (int)strlen(data) );
 
 		// the most current userinfo has been sent, so watch for any

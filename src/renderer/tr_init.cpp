@@ -379,7 +379,7 @@ static void GLimp_InitExtensions(void) {
 
 	// GL_EXT_texture_env_add
 	glConfig.textureEnvAddAvailable = qfalse;
-	if (GL_CheckForExtension("EXT_texture_env_add")) {
+	if (GL_CheckForExtension("GL_EXT_texture_env_add")) {
 		if (r_ext_texture_env_add->integer) {
 			glConfig.textureEnvAddAvailable = qtrue;
 			Com_Printf("...using GL_EXT_texture_env_add\n");
@@ -393,7 +393,7 @@ static void GLimp_InitExtensions(void) {
 	
 	// GL_EXT_texture_filter_anisotropic
 	glConfig.textureFilterAnisotropicMax = 1.0f;
-	if ( GL_CheckForExtension( "EXT_texture_filter_anisotropic" ) )
+	if ( GL_CheckForExtension( "GL_EXT_texture_filter_anisotropic" ) )
 	{
 		qglGetFloatv( GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &glConfig.textureFilterAnisotropicMax );
 		Com_Printf ("...GL_EXT_texture_filter_anisotropic available\n" );
@@ -610,7 +610,7 @@ static void GLimp_InitExtensions(void) {
 
 	// GL_EXT_texture_lod_bias
 	glConfig.textureLODBiasAvailable = qfalse;
-	if (GL_CheckForExtension("EXT_texture_lod_bias")) {
+	if (GL_CheckForExtension("GL_EXT_texture_lod_bias")) {
 		glConfig.textureLODBiasAvailable = qtrue;
 		Com_Printf ("...GL_EXT_texture_lod_bias available\n" );
 	} else {
