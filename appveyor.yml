@@ -8,6 +8,9 @@ environment:
     - TYPE: "win-x86-portable"
     - TYPE: "win-x64-portable"
 
+install:
+- git submodule update --init --recursive
+
 build_script:
   - ps: |
       cd build
