@@ -1,0 +1,3 @@
+[submodule "src/mvsdk"]
+	path = src/mvsdk
+	url = https://github.com/mvdevs/mvsdk.git
