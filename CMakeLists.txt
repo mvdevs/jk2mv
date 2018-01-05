@@ -41,7 +41,12 @@ endif()
 option(BuildPortableVersion "Build portable version (does not read or write files from your user/home directory" ON)
 option(BuildMVMP "Whether to create targets for the client (jk2mvmp & jk2mvmenu)" ON)
 option(BuildMVDED "Whether to create targets for the dedicated server (jk2mvded)" ON)
-option(BuildMVSDK "Whether to build and integrate the mvsdk modules" OFF)
+option(BuildMVSDK "Whether to build and integrate the mvsdk modules" ON)
+
+if(BuildMVSDK AND NOT EXISTS "${CMAKE_SOURCE_DIR}/src/mvsdk/CMakeLists.txt")
+    message(WARNING "Could not find CMakeLists.txt in \"src/mvsdk\". Make sure you cloned jk2mv including submodules. Continuing with BuildMVSDK=OFF.")
+    set(BuildMVSDK OFF)
+endif()
 
 if(NOT APPLE AND NOT WIN32)
 	option(BuildPackDEB "Whether to create the DEB package" OFF)
