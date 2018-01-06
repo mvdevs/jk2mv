@@ -442,6 +442,11 @@ void SCR_DrawScreenField( stereoFrame_t stereoFrame ) {
 		case CA_CONNECTING:
 		case CA_CHALLENGING:
 		case CA_CONNECTED:
+			{
+				// workaround for ingame UI not loading connect.menu
+				qhandle_t hShader = re.RegisterShader("menu/art/unknownmap");
+				re.DrawStretchPic(0, 0, 640, 480, 0, 0, 1, 1, hShader, 1, 1);
+			}
 			// connecting clients will only show the connection dialog
 			// refresh to update the time
 			VM_Call(uivm, UI_REFRESH, cls.realtime);
