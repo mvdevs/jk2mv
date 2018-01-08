@@ -1822,7 +1822,7 @@ void CL_InitKeyCommands( void ) {
 CL_AddKeyUpCommands
 ===================
 */
-void CL_AddKeyUpCommands( int key, const char *kb ) {
+void CL_AddKeyUpCommands( int key, const char *kb, int time ) {
 	int i;
 	char button[1024], *buttonPtr;
 	char	cmd[1024];
@@ -1868,7 +1868,7 @@ CL_KeyEvent
 Called by the system for both key up and key down events
 ===================
 */
-void CL_KeyEvent (int key, qboolean down, unsigned time) {
+void CL_KeyEvent (int key, qboolean down, int time) {
 	const char	*kb;
 	char		cmd[1024];
 
@@ -1964,7 +1964,7 @@ void CL_KeyEvent (int key, qboolean down, unsigned time) {
 	if (!down) {
 		kb = kg.keys[ keynames[key].upper ].binding;
 
-		CL_AddKeyUpCommands( key, kb );
+		CL_AddKeyUpCommands( key, kb, time );
 
 		if ( cls.keyCatchers & KEYCATCH_UI && uivm ) {
 			VM_Call(uivm, UI_KEY_EVENT, Key_GetProtocolKey(VM_GetGameversion(uivm), key), down);

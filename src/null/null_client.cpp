@@ -38,7 +38,7 @@ qboolean CL_GameCommand( void ) {
 	return qfalse;
 }
 
-void CL_KeyEvent (int key, qboolean down, unsigned time) {
+void CL_KeyEvent (int key, qboolean down, int time) {
 }
 
 qboolean UI_GameCommand( void ) {
