@@ -382,13 +382,6 @@ qboolean VM_MVMenu(const vm_t *vm);
 mvversion_t VM_GetGameversion(const vm_t *vm);
 void VM_SetGameversion(vm_t *vm, mvversion_t gameversion);
 
-//Ignore __attribute__ on non-gcc platforms
-#ifndef __GNUC__
-#ifndef __attribute__
-#define __attribute__(x)
-#endif
-#endif
-
 /*
 ==============================================================
 
