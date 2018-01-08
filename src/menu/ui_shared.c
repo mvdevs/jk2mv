@@ -283,6 +283,7 @@ void String_Init() {
 PC_SourceWarning
 =================
 */
+__attribute__ ((format (printf, 2, 3)))
 void PC_SourceWarning(int handle, char *format, ...) {
 	int line;
 	char filename[128];
@@ -305,6 +306,7 @@ void PC_SourceWarning(int handle, char *format, ...) {
 PC_SourceError
 =================
 */
+ __attribute__ ((format (printf, 2, 3)))
 void PC_SourceError(int handle, char *format, ...) {
 	int line;
 	char filename[128];

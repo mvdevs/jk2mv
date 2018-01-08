@@ -186,7 +186,7 @@ dlHandle_t	NET_HTTP_StartDownload(const char *url, const char *toPath, dl_ended_
 void		NET_HTTP_StopDownload(dlHandle_t handle);
 
 void		NET_SendPacket (netsrc_t sock, int length, const void *data, netadr_t to);
-void		QDECL NET_OutOfBandPrint( netsrc_t net_socket, netadr_t adr, const char *format, ...);
+void		QDECL NET_OutOfBandPrint( netsrc_t net_socket, netadr_t adr, const char *format, ...) __attribute__ ((format (printf, 3, 4)));
 void		QDECL NET_OutOfBandData( netsrc_t sock, netadr_t adr, byte *format, int len );
 
 qboolean	NET_CompareAdr (netadr_t a, netadr_t b);
@@ -671,7 +671,7 @@ int		FS_FTell( fileHandle_t f );
 
 void	FS_Flush( fileHandle_t f );
 
-void 	QDECL FS_Printf( fileHandle_t f, const char *fmt, ... );
+void 	QDECL FS_Printf( fileHandle_t f, const char *fmt, ... ) __attribute__ ((format (printf, 2, 3)));
 // like fprintf
 
 int		FS_FOpenFileByMode( const char *qpath, fileHandle_t *f, fsMode_t mode );
@@ -756,11 +756,11 @@ void		Info_Print( const char *s );
 
 void		Com_BeginRedirect (char *buffer, size_t buffersize, void (*flush)(char *));
 void		Com_EndRedirect( void );
-void 		QDECL Com_Printf( const char *fmt, ... );
-void		QDECL Com_Printf_Ext( qboolean extendedColors, const char *msg, ... );
-void 		QDECL Com_DPrintf( const char *fmt, ... );
-void		QDECL Com_OPrintf( const char *fmt, ...); // Outputs to the VC / Windows Debug window (only in debug compile)
-Q_NORETURN void QDECL  Com_Error( errorParm_t code, const char *fmt, ... );
+void 		QDECL Com_Printf( const char *fmt, ... ) __attribute__ ((format (printf, 1, 2)));
+void		QDECL Com_Printf_Ext( qboolean extendedColors, const char *msg, ... ) __attribute__ ((format (printf, 2, 3)));
+void 		QDECL Com_DPrintf( const char *fmt, ... ) __attribute__ ((format (printf, 1, 2)));
+void		QDECL Com_OPrintf( const char *fmt, ...) __attribute__ ((format (printf, 1, 2))); // Outputs to the VC / Windows Debug window (only in debug compile)
+Q_NORETURN void QDECL  Com_Error( errorParm_t code, const char *fmt, ... ) __attribute__ ((format (printf, 2, 3)));
 Q_NORETURN void Com_Quit( int signal );
 void 		Com_Quit_f( void );
 int			Com_EventLoop( void );

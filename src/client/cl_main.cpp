@@ -2511,7 +2511,7 @@ DLL glue
 ================
 */
 
-void QDECL CL_RefPrintf( int print_level, const char *fmt, ...) {
+void QDECL __attribute__ ((format (printf, 1, 2))) CL_RefPrintf( int print_level, const char *fmt, ...) {
 	va_list		argptr;
 	char		msg[MAXPRINTMSG];
 
