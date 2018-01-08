@@ -923,7 +923,7 @@ void UI_LoadMenus(const char *menuFile, qboolean reset) {
 		Com_Printf( S_COLOR_YELLOW "menu file not found: %s, using default\n", menuFile );
 		handle = trap_PC_LoadSource( "ui/jk2mpmenus.txt" );
 		if (!handle) {
-			trap_Error( va( S_COLOR_RED "default menu file not found: ui/menus.txt, unable to continue!", menuFile ) );
+			trap_Error( S_COLOR_RED "default menu file not found: ui/jk2mpmenus.txt, unable to continue!" );
 		}
 	}
 
@@ -1174,7 +1174,7 @@ static void UI_DrawGenericNum(rectDef_t *rect, float scale, vec4_t color, int te
 		i = min;
 	}
 
-	Com_sprintf(s, sizeof(s), "%i\0", val);
+	Com_sprintf(s, sizeof(s), "%i", val);
 	Text_Paint(rect->x, rect->y, scale, color, s,0, 0, textStyle, iMenuFont);
 }
 
@@ -1197,7 +1197,7 @@ static void UI_DrawForceMastery(rectDef_t *rect, float scale, vec4_t color, int 
 static void UI_DrawSkinColor(rectDef_t *rect, float scale, vec4_t color, int textStyle, int val, int min, int max, int iMenuFont)
 {
 	int i;
-	char s[256];
+	const char *s;
 
 	i = val;
 	if (i < min || i > max)
@@ -1208,13 +1208,13 @@ static void UI_DrawSkinColor(rectDef_t *rect, float scale, vec4_t color, int tex
 	switch(val)
 	{
 	case TEAM_RED:
-		Com_sprintf(s, sizeof(s), "Red\0");
+		s = "Red";
 		break;
 	case TEAM_BLUE:
-		Com_sprintf(s, sizeof(s), "Blue\0");
+		s = "Blue";
 		break;
 	default:
-		Com_sprintf(s, sizeof(s), "Default\0");
+		s = "Default";
 		break;
 	}
 
@@ -6563,7 +6563,7 @@ static void UI_BuildQ3Model_List( void )
 					continue;
 				}
 
-				Com_sprintf( uiInfo.q3HeadNames[uiInfo.q3HeadCount], sizeof(uiInfo.q3HeadNames[uiInfo.q3HeadCount]), va("%s%s", dirptr, skinname));
+				Com_sprintf( uiInfo.q3HeadNames[uiInfo.q3HeadCount], sizeof(uiInfo.q3HeadNames[uiInfo.q3HeadCount]), "%s%s", dirptr, skinname);
 				uiInfo.q3HeadIcons[uiInfo.q3HeadCount++] = 0;//trap_R_RegisterShaderNoMip(fpath);
 				//rww - we are now registering them as they are drawn like the TA feeder, so as to decrease UI load time.
 			}

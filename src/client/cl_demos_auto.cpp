@@ -77,9 +77,9 @@ char *demoAutoFormat(const char* name) {
 					int min = demoAuto.timeStamps[t] / 60000;
 					int sec = (demoAuto.timeStamps[t] / 1000) % 60;
 					if (t == 0) {
-						Com_sprintf(timeStamps, sizeof(timeStamps), "%0.2d%0.2d", min, sec);
+						Com_sprintf(timeStamps, sizeof(timeStamps), "%02d%02d", min, sec);
 					} else {
-						Com_sprintf(timeStamps, sizeof(timeStamps), "%s_%0.2d%0.2d", timeStamps, min, sec);
+						Com_sprintf(timeStamps, sizeof(timeStamps), "%s_%02d%02d", timeStamps, min, sec);
 					}
 					t++;
 				}

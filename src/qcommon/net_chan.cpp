@@ -281,7 +281,7 @@ qboolean Netchan_Process(netchan_t *chan, msg_t *msg) {
 		// if we missed a fragment, dump the message
 		if (fragmentStart != chan->fragmentLength) {
 			if (showdrop->integer || showpackets->integer) {
-				Com_Printf("%s:Dropped a message fragment\n"
+				Com_Printf("%s:Dropped a message fragment at %i\n"
 					, NET_AdrToString(chan->remoteAddress)
 					, sequence);
 			}

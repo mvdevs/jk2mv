@@ -74,7 +74,7 @@ public:
 	void	AdjustTime_Pos( int time, const vec3_t refdef_vieworg, const vec3_t refdef_viewaxis[3] );
 
 	// These functions are wrapped and used by the fx system in case it makes things a bit more portable
-	void	Print( const char *msg, ... ) __attribute__ ((format (printf, 1, 2)));
+	void	Print( const char *msg, ... ) __attribute__ ((format (printf, 2, 3)));
 
 	// File handling
 	inline	int		OpenFile( const char *path, fileHandle_t *fh, int mode )

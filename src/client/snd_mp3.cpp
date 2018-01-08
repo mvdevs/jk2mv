@@ -525,7 +525,7 @@ qboolean MP3_ReadSpecialTagInfo(byte *pbLoadedFile, int iLoadedFileLen,		// (in)
 cvar_t* cv_MP3overhead = NULL;
 void MP3_InitCvars(void)
 {
-	cv_MP3overhead = Cvar_Get("s_mp3overhead", va("%d", sizeof(MP3STREAM) + FUZZY_AMOUNT), CVAR_ARCHIVE | CVAR_GLOBAL);
+	cv_MP3overhead = Cvar_Get("s_mp3overhead", va("%d", (int)(sizeof(MP3STREAM) + FUZZY_AMOUNT)), CVAR_ARCHIVE | CVAR_GLOBAL);
 
 #ifdef USE_OPENAL
 	extern int s_UseOpenAL;

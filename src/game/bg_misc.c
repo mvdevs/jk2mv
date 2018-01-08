@@ -2352,7 +2352,7 @@ void *BG_Alloc ( size_t size )
 
 	if (bg_poolSize + size > bg_poolTail)
 	{
-		Com_Error( ERR_DROP, "BG_Alloc: buffer exceeded tail (%d > %d)", bg_poolSize + size, bg_poolTail);
+		Com_Error( ERR_DROP, "BG_Alloc: buffer exceeded tail (%d > %d)", (int)(bg_poolSize + size), (int)bg_poolTail);
 		return 0;
 	}
 
@@ -2365,7 +2365,7 @@ void *BG_AllocUnaligned ( int size )
 {
 	if (bg_poolSize + size > bg_poolTail)
 	{
-		Com_Error( ERR_DROP, "BG_AllocUnaligned: buffer exceeded tail (%d > %d)", bg_poolSize + size, bg_poolTail);
+		Com_Error( ERR_DROP, "BG_AllocUnaligned: buffer exceeded tail (%d > %d)", (int)(bg_poolSize + size), (int)bg_poolTail);
 		return 0;
 	}
 
@@ -2380,7 +2380,7 @@ void *BG_TempAlloc( int size )
 
 	if (bg_poolTail - size < bg_poolSize)
 	{
-		Com_Error( ERR_DROP, "BG_TempAlloc: buffer exceeded head (%d > %d)", bg_poolTail - size, bg_poolSize);
+		Com_Error( ERR_DROP, "BG_TempAlloc: buffer exceeded head (%d > %d)", (int)(bg_poolTail - size), (int)bg_poolSize);
 		return 0;
 	}
 
@@ -2395,7 +2395,7 @@ void BG_TempFree( int size )
 
 	if (bg_poolTail+size > MAX_POOL_SIZE)
 	{
-		Com_Error( ERR_DROP, "BG_TempFree: tail greater than size (%d > %d)", bg_poolTail+size, MAX_POOL_SIZE );
+		Com_Error( ERR_DROP, "BG_TempFree: tail greater than size (%d > %d)", (int)(bg_poolTail+size), MAX_POOL_SIZE );
 	}
 
 	bg_poolTail += size;

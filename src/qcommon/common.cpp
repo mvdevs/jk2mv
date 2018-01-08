@@ -1650,7 +1650,6 @@ Com_InitZoneMemory
 void Com_InitHunkMemory( void ) {
 	cvar_t	*cv;
 	int nMinAlloc;
-	char *pMsg = NULL;
 
 	// make sure the file system has allocated and "not" freed any temp blocks
 	// this allows the config and product id files ( journal files too ) to be loaded
@@ -1666,16 +1665,20 @@ void Com_InitHunkMemory( void ) {
 	// if we are not dedicated min allocation is 56, otherwise min is 1
 	if (com_dedicated && com_dedicated->integer) {
 		nMinAlloc = MIN_DEDICATED_COMHUNKMEGS;
-		pMsg = "Minimum com_hunkMegs for a dedicated server is %i, allocating %i megs.\n";
 	}
 	else {
 		nMinAlloc = MIN_COMHUNKMEGS;
-		pMsg = "Minimum com_hunkMegs is %i, allocating %i megs.\n";
 	}
 
 	if ( cv->integer < nMinAlloc ) {
 		s_hunkTotal = 1024 * 1024 * nMinAlloc;
-	    Com_Printf(pMsg, nMinAlloc, s_hunkTotal / (1024 * 1024));
+		if (com_dedicated && com_dedicated->integer) {
+			Com_Printf("Minimum com_hunkMegs for a dedicated server is %i, allocating %i megs.\n",
+				nMinAlloc, s_hunkTotal / (1024 * 1024));
+		} else {
+			Com_Printf("Minimum com_hunkMegs is %i, allocating %i megs.\n",
+				nMinAlloc, s_hunkTotal / (1024 * 1024));
+		}
 	} else {
 		s_hunkTotal = cv->integer * 1024 * 1024;
 	}

@@ -1014,7 +1014,7 @@ void CL_Setenv_f( void ) {
 		if ( env ) {
 			Com_Printf( "%s=%s\n", Cmd_Argv(1), env );
 		} else {
-			Com_Printf( "%s undefined\n", Cmd_Argv(1), env );
+			Com_Printf( "%s undefined\n", Cmd_Argv(1) );
 		}
 	}
 }
@@ -2510,8 +2510,8 @@ CL_RefPrintf
 DLL glue
 ================
 */
-
-void QDECL __attribute__ ((format (printf, 1, 2))) CL_RefPrintf( int print_level, const char *fmt, ...) {
+ __attribute__ ((format (printf, 2, 3)))
+void QDECL CL_RefPrintf( int print_level, const char *fmt, ...) {
 	va_list		argptr;
 	char		msg[MAXPRINTMSG];
 

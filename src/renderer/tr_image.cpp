@@ -2265,7 +2265,7 @@ image_t	*R_FindImageFileNew( const char *name, const upload_t *upload, int glWra
 		mipdata[minLevel] = pic;
 		pName = GenerateImageMappingName(name);
 
-		for (size_t n = 1; n < MAX_MIP_LEVELS; n++) {
+		for (int n = 1; n < MAX_MIP_LEVELS; n++) {
 			char	mipName[MAX_QPATH];
 			int		w, h;
 			int		level;

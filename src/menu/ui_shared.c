@@ -249,11 +249,11 @@ void String_Report() {
 	f = strPoolIndex;
 	f /= STRING_POOL_SIZE;
 	f *= 100;
-	Com_Printf("String Pool is %.1f%% full, %i bytes out of %i used.\n", f, strPoolIndex, STRING_POOL_SIZE);
+	Com_Printf("String Pool is %.1f%% full, %zu bytes out of %i used.\n", f, strPoolIndex, STRING_POOL_SIZE);
 	f = allocPoint;
 	f /= MEM_POOL_SIZE;
 	f *= 100;
-	Com_Printf("Memory Pool is %.1f%% full, %i bytes out of %i used.\n", f, allocPoint, MEM_POOL_SIZE);
+	Com_Printf("Memory Pool is %.1f%% full, %zu bytes out of %i used.\n", f, allocPoint, MEM_POOL_SIZE);
 }
 
 /*

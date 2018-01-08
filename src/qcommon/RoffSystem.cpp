@@ -502,7 +502,7 @@ void CROFFSystem::List()
 		Com_Printf( S_COLOR_GREEN"%2i - %s\n", (*itr).first, (*itr).second->mROFFFilePath );
 	}
 
-	Com_Printf( S_COLOR_GREEN"\nFiles: %i\n", mROFFList.size() );
+	Com_Printf( S_COLOR_GREEN"\nFiles: %i\n", (int)mROFFList.size() );
 }
 
 
