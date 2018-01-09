@@ -84,6 +84,8 @@ qboolean	com_errorEntered;
 qboolean	com_fullyInitialized;
 qboolean	com_demoplaying;
 
+static int com_initTime;
+
 void Com_WriteConfig_f( void );
 void CIN_CloseAllVideos();
 
@@ -2360,6 +2362,42 @@ static void Com_Freeze_f (void) {
 	}
 }
 
+/*
+=============
+Com_Uptime_f
+=============
+*/
+static void Com_Uptime_f (void) {
+	qtime_t	t;
+	int		days, hours, minutes, seconds;
+
+	seconds = Com_RealTime(&t) - com_initTime;
+
+	Com_Printf("%02d:%02d:%02d", t.tm_hour, t.tm_min, t.tm_sec);
+
+	minutes = seconds / 60;
+	hours = minutes / 60;
+	days = hours / 24;
+
+	seconds %= 60;
+	minutes %= 60;
+	hours %= 24;
+
+	Com_Printf(" up");
+
+	if (days > 0) {
+		Com_Printf(" %d day%s", days, days == 1 ? "" : "s");
+	}
+	if (hours > 0) {
+		Com_Printf(" %d hour%s", hours, hours == 1 ? "" : "s");
+	}
+	if (minutes > 0) {
+		Com_Printf(" %d minute%s", minutes, minutes == 1 ? "" : "s");
+	}
+	Com_Printf(" %d second%s", seconds, seconds == 1 ? "" : "s");
+	Com_Printf("\n");
+}
+
 #ifdef MEM_DEBUG
 	void SH_Register(void);
 #endif
@@ -2378,6 +2416,8 @@ void Com_Init( char *commandLine ) {
 	if (setjmp(abortframe)) {
 		Sys_Error("Error during initialization\n");
 	}
+
+	com_initTime = Com_RealTime(NULL);
 
 	// multiprotocol support
 	// startup will be UNDEFINED
@@ -2491,6 +2531,7 @@ void Com_Init( char *commandLine ) {
 	Cmd_AddCommand ("changeVectors", MSG_ReportChangeVectors_f );
 	Cmd_AddCommand ("writeconfig", Com_WriteConfig_f );
 	Cmd_SetCommandCompletionFunc( "writeconfig", Cmd_CompleteCfgName );
+	Cmd_AddCommand ("uptime", Com_Uptime_f );
 
 	s = va("%s %s %s", Q3_VERSION, CPUSTRING, __DATE__ );
 	com_version = Cvar_Get ("version", s, CVAR_ROM | CVAR_SERVERINFO );
