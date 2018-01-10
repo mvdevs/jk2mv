@@ -62,6 +62,7 @@ typedef struct {
 	int				gameClientSize;		// will be > sizeof(playerState_t) due to game private data
 
 	int				restartTime;
+	int				time;				// game module physics time
 
 	int				http_port;
 	int				saberBlockCounter;	// for mv_fixturretcrash

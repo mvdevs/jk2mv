@@ -1520,7 +1520,7 @@ static void SV_UserMove( client_t *cl, msg_t *msg, qboolean delta ) {
 			continue;
 		}
 		// extremely lagged or cmd from before a map_restart
-		//if ( cmds[i].serverTime > svs.time + 3000 ) {
+		//if ( cmds[i].serverTime > sv.time + 3000 ) {
 		//	continue;
 		//}
 		// don't execute if this is an old cmd which is already executed
@@ -1596,6 +1596,13 @@ void SV_ExecuteClientMessage( client_t *cl, msg_t *msg ) {
 			SV_SendClientGameState( cl );
 		}
 		return;
+	}
+
+	// this client has acknowledged the new gamestate so it's
+	// safe to start sending it the real time again
+	if( cl->oldServerTime && serverId == sv.serverId ){
+		Com_DPrintf( "%s acknowledged gamestate\n", cl->name );
+		cl->oldServerTime = 0;
 	}
 
 	// read optional clientCommand strings
