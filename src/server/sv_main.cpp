@@ -324,7 +324,7 @@ static leakyBucket_t *SVC_BucketForAddress(netadr_t address, int burst, int peri
 		while (it != bucketMap.end()) {
 			int interval = now - it->second.lastTime;
 
-			if (interval > it->second.burst * period) {
+			if (interval > it->second.burst * period || interval < 0) {
 				it = bucketMap.erase(it);
 			} else {
 				++it;
