@@ -657,6 +657,7 @@ void *Sys_LoadModuleLibrary(const char *name, qboolean mvOverride, intptr_t(QDEC
 		filePath = FS_BuildOSPath(path, NULL, filename);
 
 		Com_DPrintf("Loading module: %s...", filePath);
+		assert(!dlopen(filePath, RTLD_NOLOAD));
 		libHandle = dlopen(filePath, RTLD_NOW);
 		if (!libHandle) {
 			Com_DPrintf(" failed: %s\n", dlerror());
@@ -664,6 +665,7 @@ void *Sys_LoadModuleLibrary(const char *name, qboolean mvOverride, intptr_t(QDEC
 			filePath = FS_BuildOSPath(path, NULL, filename);
 
 			Com_DPrintf("Loading module: %s...", filePath);
+			assert(!dlopen(filePath, RTLD_NOLOAD));
 			libHandle = dlopen(filePath, RTLD_NOW);
 			if (!libHandle) {
 				Com_DPrintf(" failed: %s\n", dlerror());
@@ -685,6 +687,7 @@ void *Sys_LoadModuleLibrary(const char *name, qboolean mvOverride, intptr_t(QDEC
 #endif
 
 		Com_DPrintf("Loading module: %s...", lpath);
+		assert(!dlopen(lpath, RTLD_NOLOAD));
 		libHandle = dlopen(lpath, RTLD_NOW);
 		if (!libHandle) {
 			Com_DPrintf(" failed: %s\n", dlerror());
