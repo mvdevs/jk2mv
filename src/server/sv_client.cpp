@@ -1386,15 +1386,16 @@ static qboolean SV_ClientCommand( client_t *cl, msg_t *msg ) {
 	// normal to spam a lot of commands when downloading
 
 	// Applying floodprotect only to "CS_ACTIVE" clients leaves too much room for abuse. Extending floodprotect to clients pre CS_ACTIVE shouldn't cause any issues, as the download-commands are handled within the engine and floodprotect only filters calls to the VM.
-	if ( !com_cl_running->integer &&
-		/* cl->state >= CS_ACTIVE && */
-		sv_floodProtect->integer &&
-		svs.time < cl->nextReliableTime ) {
-		// ignore any other text messages from this client but let them keep playing
-		clientOk = qfalse;
-		// Moved the message into SV_ExecuteClientCommand, cause we can't tell here, whether the command will really be ignored or not.
-		//Com_DPrintf( "client text ignored for %s\n", cl->name );
-		//return qfalse;	// stop processing
+	if ( !com_cl_running->integer && /* cl->state >= CS_ACTIVE && */ sv_floodProtect->integer )
+	{
+		if ( sv_floodProtect->integer == 1 && svs.time < cl->nextReliableTime )
+		{
+			clientOk = qfalse;
+		}
+		else if ( SVC_RateLimit(&cl->cmdBucket, sv_floodProtect->integer, 1000, svs.time) )
+		{
+			clientOk = qfalse;
+		}
 	}
 
 	// don't allow another command for one second

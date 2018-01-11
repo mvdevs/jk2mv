@@ -407,6 +407,17 @@ Server-Side
 :Description:
    The fps to use while the server is in hibernation mode.
 
+..
+
+:Name: sv_floodProtect
+:Values: Integer >= 0
+:Default: "3"
+:Description:
+   | 0: Disable flood protection.
+   | 1: Original flood protection - 1 client command per second.
+   | 2+: Relaxed flood protection - Allow sv_floodProtect commands
+   at once (burst), after this 1 command per second (rate).
+
 ==================
 Undocumented Cvars
 ==================

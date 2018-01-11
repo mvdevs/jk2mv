@@ -342,7 +342,7 @@ SVC_RateLimit
 Allows one packet per period msec with bucket size of burst
 ================
 */
-static qboolean SVC_RateLimit(leakyBucket_t *bucket, int burst, int period, int now) {
+qboolean SVC_RateLimit(leakyBucket_t *bucket, int burst, int period, int now) {
 	if (bucket != NULL) {
 		int interval = now - bucket->lastTime;
 		int expired = interval / period;

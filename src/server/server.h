@@ -108,6 +108,10 @@ typedef enum {
 	CS_ACTIVE		// client is fully in game
 } clientState_t;
 
+typedef struct leakyBucket_s {
+	int					lastTime;
+	unsigned short		burst;
+} leakyBucket_t;
 
 typedef struct client_s {
 	clientState_t	state;
@@ -155,6 +159,8 @@ typedef struct client_s {
 	int				snapshotMsec;		// requests a snapshot every snapshotMsec unless rate choked
 	int				pureAuthentic;
 	netchan_t		netchan;
+	int				oldServerTime;		// client server time before map change
+	leakyBucket_t	cmdBucket;			// for command flood protection
 
 	int				lastUserInfoChange; //if > svs.time && count > x, deny change -rww
 	int				lastUserInfoCount; //allow a certain number of changes within a certain time period -rww
@@ -263,12 +269,6 @@ extern	cvar_t	*mv_fixplayerghosting;
 //
 // sv_main.c
 //
-typedef struct leakyBucket_s leakyBucket_t;
-struct leakyBucket_s {
-	int					lastTime;
-	unsigned short		burst;
-};
-
 void SV_FinalMessage (char *message);
 void QDECL SV_SendServerCommand( client_t *cl, const char *fmt, ...) __attribute__ ((format (printf, 2, 3)));
 
@@ -285,6 +285,7 @@ qboolean MVAPI_SendConnectionlessPacket(const mvaddr_t *addr, const char *messag
 qboolean MVAPI_DisableStructConversion(qboolean disable);
 extern qboolean mvStructConversionDisabled;
 
+qboolean SVC_RateLimit(leakyBucket_t *bucket, int burst, int period, int now);
 void SVC_LoadWhitelist( void );
 void SVC_WhitelistAdr( netadr_t adr );
 
