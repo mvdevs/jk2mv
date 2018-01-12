@@ -1310,36 +1310,36 @@ void SV_ExecuteClientCommand( client_t *cl, const char *s, qboolean clientOK ) {
 		}
 	}
 
-	// q3cbufexec fix
-	if (!Q_stricmp(cmd, "say") || !Q_stricmp(cmd, "say_team") || !Q_stricmp(cmd, "tell")) {
-		for (int i = 1; i < Cmd_Argc(); i++) {
-			if (strpbrk(Cmd_Argv(i), "\n\r")) {
-				return;
-			}
-		}
-	}
-
-	// disable useless vsay commands (because?)
-	if (!Q_stricmp(cmd, "vsay") || !Q_stricmp(cmd, "vsay_team") || !Q_stricmp(cmd, "vtell") || !Q_stricmp(cmd, "vosay") ||
-		!Q_stricmp(cmd, "vosay_team") || !Q_stricmp(cmd, "votell") || !Q_stricmp(cmd, "vtaunt")) {
-		return;
-	}
-
-	// q3cbufexec fix
-	if ((!Q_stricmp(cmd, "callvote") || !Q_stricmp(cmd, "callteamvote"))) {
-	  if (strpbrk(arg1, ";\n\r") || strpbrk(arg2, ";\n\r")) {
-			return;
-		}
-	}
-
-	// teamcmd crash fix
-	if (!Q_stricmp(cmd, "team") && (!Q_stricmp(arg1, "follow1") || !Q_stricmp(arg1, "follow2"))) {
-		return;
-	}
-
 	if (clientOK) {
 		// pass unknown strings to the game
 		if (!u->name && sv.state == SS_GAME) {
+			// q3cbufexec fix
+			if (!Q_stricmp(cmd, "say") || !Q_stricmp(cmd, "say_team") || !Q_stricmp(cmd, "tell")) {
+				for (int i = 1; i < Cmd_Argc(); i++) {
+					if (strpbrk(Cmd_Argv(i), "\n\r")) {
+						return;
+					}
+				}
+			}
+
+			// disable useless vsay commands (because?)
+			if (!Q_stricmp(cmd, "vsay") || !Q_stricmp(cmd, "vsay_team") || !Q_stricmp(cmd, "vtell") || !Q_stricmp(cmd, "vosay") ||
+				!Q_stricmp(cmd, "vosay_team") || !Q_stricmp(cmd, "votell") || !Q_stricmp(cmd, "vtaunt")) {
+				return;
+			}
+
+			// q3cbufexec fix
+			if ((!Q_stricmp(cmd, "callvote") || !Q_stricmp(cmd, "callteamvote"))) {
+				if (strpbrk(arg1, ";\n\r") || strpbrk(arg2, ";\n\r")) {
+					return;
+				}
+			}
+
+			// teamcmd crash fix
+			if (!Q_stricmp(cmd, "team") && (!Q_stricmp(arg1, "follow1") || !Q_stricmp(arg1, "follow2"))) {
+				return;
+			}
+
 			VM_Call( gvm, GAME_CLIENT_COMMAND, cl - svs.clients );
 		}
 	}
