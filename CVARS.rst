@@ -171,7 +171,7 @@ Client-Side
 
 :Name: r_consoleFont
 :Values: "0", "1", "2"
-:Default: "1"
+:Default: "0"
 :Description:
    Font used in console, timer, message input field and other places:
 
