@@ -1347,7 +1347,7 @@ Ghoul2 Insert End
 
 	r_screenshotJpegQuality = ri.Cvar_Get("r_screenshotJpegQuality", "95", CVAR_ARCHIVE | CVAR_GLOBAL);
 
-	r_consoleFont = ri.Cvar_Get("r_consoleFont", "1", CVAR_ARCHIVE | CVAR_GLOBAL);
+	r_consoleFont = ri.Cvar_Get("r_consoleFont", "0", CVAR_ARCHIVE | CVAR_GLOBAL);
 	r_consoleFont->modified = qtrue;
 	r_fontSharpness = ri.Cvar_Get("r_fontSharpness", "1", CVAR_ARCHIVE | CVAR_GLOBAL);
 	r_textureLODBias = ri.Cvar_Get("r_textureLODBias", "0", CVAR_ARCHIVE | CVAR_GLOBAL);
