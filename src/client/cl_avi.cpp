@@ -634,7 +634,7 @@ qboolean CL_CloseAVI( void )
 
   FS_FCloseFile( afd.f );
 
-  Com_Printf( "Wrote %d:%d frames to %s\n", afd.numVideoFrames, afd.numAudioFrames, afd.fileName );
+  Com_DPrintf( "Wrote %d:%d frames to %s\n", afd.numVideoFrames, afd.numAudioFrames, afd.fileName );
 
   return qtrue;
 }
