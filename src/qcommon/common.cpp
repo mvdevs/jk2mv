@@ -70,6 +70,7 @@ cvar_t	*com_busyWait;
 
 cvar_t	*mv_apienabled;
 cvar_t	*com_timestamps;
+cvar_t	*com_debugMessage;
 
 // com_speeds times
 int		time_game;
@@ -2501,6 +2502,7 @@ void Com_Init( char *commandLine ) {
 	com_speeds = Cvar_Get ("com_speeds", "0", 0);
 	com_timedemo = Cvar_Get ("timedemo", "0", 0);
 	com_cameraMode = Cvar_Get ("com_cameraMode", "0", CVAR_CHEAT);
+	com_debugMessage = Cvar_Get ("com_debugMessage", "0", CVAR_TEMP);
 
 	cl_paused = Cvar_Get ("cl_paused", "0", CVAR_ROM);
 	sv_paused = Cvar_Get ("sv_paused", "0", CVAR_ROM);

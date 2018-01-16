@@ -12,6 +12,15 @@ New and Modified Cvars
 
 ..
 
+:Name: com_debugMessage
+:Values: "0", "1"
+:Default: "0"
+:Description:
+   Print warnings about field overflows in network messages. Useful
+   for debugging modules.
+
+..
+
 :Name: com_timestamps
 :Values: "0", "1"
 :Default: "1"

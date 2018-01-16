@@ -114,11 +114,11 @@ void MSG_WriteBits(msg_t *msg, int value, int bits) {
 	}
 
 	// check for overflows
-	if (bits != 32) {
+	if (com_debugMessage->integer && bits != 32) {
 		if (bits > 0) {
 			if (value > ((1 << bits) - 1) || value < 0) {
 				overflows++;
-				Com_DPrintf ("MSG_WriteBits: overflow writing %d in %d bits [field %s offset %d]\n", value, bits, gLastField->name, fieldIndex);
+				Com_Printf ("MSG_WriteBits: overflow writing %d in %d bits [field %s offset %d]\n", value, bits, gLastField->name, fieldIndex);
 				assert (gLastField != &noField); // this means engine bug
 			}
 		} else {
@@ -128,7 +128,7 @@ void MSG_WriteBits(msg_t *msg, int value, int bits) {
 
 			if (value >  r - 1 || value < -r) {
 				overflows++;
-				Com_DPrintf ("MSG_WriteBits: overflow writing %d in %d bits [field %s offset %d]\n", value, bits, gLastField->name, fieldIndex);
+				Com_Printf ("MSG_WriteBits: overflow writing %d in %d bits [field %s offset %d]\n", value, bits, gLastField->name, fieldIndex);
 				assert (gLastField != &noField);  // this means engine bug
 			}
 		}
