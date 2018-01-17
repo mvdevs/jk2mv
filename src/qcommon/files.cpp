@@ -3200,10 +3200,8 @@ void FS_Shutdown( qboolean closemfp ) {
 	searchpath_t	*p, *next;
 	int	i;
 
-	for(i = 0; i < MAX_FILE_HANDLES; i++) {
-		if (fsh[i].fileSize) {
-			FS_FCloseFile(i);
-		}
+	for(i = 1; i < MAX_FILE_HANDLES; i++) {
+		FS_FCloseFile(i);
 	}
 
 	// free everything
