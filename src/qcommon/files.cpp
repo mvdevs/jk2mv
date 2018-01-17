@@ -375,7 +375,7 @@ static fileHandle_t	FS_HandleForFile(void) {
 }
 
 static FILE	*FS_FileForHandle( fileHandle_t f ) {
-	if ( f < 0 || f > MAX_FILE_HANDLES ) {
+	if ( f < 1 || f >= MAX_FILE_HANDLES ) {
 		Com_Error( ERR_DROP, "FS_FileForHandle: out of reange" );
 	}
 	if (fsh[f].zipFile == qtrue) {
@@ -977,7 +977,7 @@ void FS_FCloseFile( fileHandle_t f ) {
 		Com_Error( ERR_FATAL, "Filesystem call made without initialization" );
 	}
 
-	if ( f < 0 || f > MAX_FILE_HANDLES ) {
+	if ( f < 1 || f >= MAX_FILE_HANDLES ) {
 		Com_DPrintf( "FS_FCloseFile: handle out of range\n" );
 		return;
 	}
@@ -1501,7 +1501,8 @@ int FS_Read2( void *buffer, int len, fileHandle_t f ) {
 		Com_Error( ERR_FATAL, "Filesystem call made without initialization" );
 	}
 
-	if ( !f ) {
+	if ( f < 1 || f >= MAX_FILE_HANDLES ) {
+		Com_DPrintf( "FS_Read2: handle out of range\n" );
 		return 0;
 	}
 
@@ -1518,11 +1519,7 @@ int FS_Read( void *buffer, int len, fileHandle_t f ) {
 		Com_Error( ERR_FATAL, "Filesystem call made without initialization" );
 	}
 
-	if ( !f ) {
-		return 0;
-	}
-
-	if ( f < 0 || f > MAX_FILE_HANDLES ) {
+	if ( f < 1 || f >= MAX_FILE_HANDLES ) {
 		Com_DPrintf( "FS_Read: handle out of range\n" );
 		return 0;
 	}
@@ -1573,7 +1570,8 @@ int FS_Write( const void *buffer, int len, fileHandle_t h ) {
 		Com_Error( ERR_FATAL, "Filesystem call made without initialization" );
 	}
 
-	if ( !h ) {
+	if ( h < 1 || h >= MAX_FILE_HANDLES ) {
+		Com_DPrintf( "FS_Write: handle out of range\n" );
 		return 0;
 	}
 
@@ -1630,7 +1628,7 @@ int FS_Seek( fileHandle_t f, int offset, int origin ) {
 		return -1;
 	}
 
-	if ( f < 0 || f > MAX_FILE_HANDLES ) {
+	if ( f < 1 || f >= MAX_FILE_HANDLES ) {
 		Com_DPrintf( "FS_Seek: handle out of range\n" );
 		return -1;
 	}
@@ -3910,7 +3908,7 @@ int FS_FOpenFileByModeHash( const char *qpath, fileHandle_t *f, fsMode_t mode, u
 int	FS_FTell( fileHandle_t f ) {
 	int pos;
 
-	if ( f < 0 || f > MAX_FILE_HANDLES ) {
+	if ( f < 1 || f >= MAX_FILE_HANDLES ) {
 		Com_DPrintf( "FS_FTell: handle out of range\n" );
 		return -1;
 	}
