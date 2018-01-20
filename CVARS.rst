@@ -198,6 +198,15 @@ Client-Side
 
 ..
 
+:Name: r_environmentMapping
+:Values: "0", "1"
+:Default: "1"
+:Description:
+   Disable environment mapping for better performance on low-end
+   machines.
+
+..
+
 :Name: r_ext_multisample
 :Values: "0", "2", "4", "8", "16"
 :Default: "0"
@@ -308,15 +317,6 @@ Server-Side
 
 ..
 
-:Name: sv_maxOOBRate
-:Valid: 1-1000
-:Default: "20"
-:Description:
-   Max out-of-bound requests handled per second. Increasing rate
-   improves server responsiveness at the cost of higher CPU usage.
-
-..
-
 :Name: mv_fixnamecrash
 :Valid: "0", "1"
 :Default: "1"
@@ -398,6 +398,17 @@ Server-Side
 
 ..
 
+:Name: sv_floodProtect
+:Values: Integer >= 0
+:Default: "3"
+:Description:
+   | 0: Disable flood protection.
+   | 1: Original flood protection - 1 client command per second.
+   | 2+: Relaxed flood protection - Allow sv_floodProtect commands
+   at once (burst), after this 1 command per second (rate).
+
+..
+
 :Name: sv_hibernateTime
 :Values: Integer >= 0
 :Default: "0"
@@ -418,14 +429,20 @@ Server-Side
 
 ..
 
-:Name: sv_floodProtect
-:Values: Integer >= 0
-:Default: "3"
+:Name: sv_maxOOBRate
+:Valid: 1-1000
+:Default: "20"
 :Description:
-   | 0: Disable flood protection.
-   | 1: Original flood protection - 1 client command per second.
-   | 2+: Relaxed flood protection - Allow sv_floodProtect commands
-   at once (burst), after this 1 command per second (rate).
+   Max out-of-bound requests handled per second. Increasing rate
+   improves server responsiveness at the cost of higher CPU usage.
+
+..
+
+:Name: sv_pingFix
+:Values: "0", "1"
+:Default: "1"
+:Description:
+   Enable more accurate and bug-free ping calculation.
 
 ==================
 Undocumented Cvars
