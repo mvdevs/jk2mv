@@ -1213,6 +1213,7 @@ void CL_InitUI(qboolean mainMenu) {
 		apilevel = MV_APILEVEL;
 
 		uivm = VM_Create("jk2mvmenu", qtrue, CL_UISystemCalls, VMI_NATIVE);
+		VM_SetGameversion(uivm, VERSION_UNDEF);
 	} else {
 		if (cl_connectedToPureServer != 0) {
 			// if sv_pure is set we only allow qvms to be loaded
