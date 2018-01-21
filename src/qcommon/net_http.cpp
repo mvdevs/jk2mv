@@ -33,6 +33,7 @@ static struct {
 	struct mg_mgr mgr;
 	struct mg_connection *con;
 	bool running;
+	int port;
 
 	struct {
 		std::mutex mutex;
@@ -108,7 +109,7 @@ NET_HTTP_StartServer
 */
 int NET_HTTP_StartServer(int port) {
 	if (srv.running)
-		return 0;
+		return srv.port;
 
 	mg_mgr_init(&srv.mgr, NULL);
 
@@ -123,7 +124,7 @@ int NET_HTTP_StartServer(int port) {
 
 	if (srv.con) {
 		mg_set_protocol_http_websocket(srv.con);
-		
+
 		// reset event
 		srv.event.processed = true;
 
@@ -133,6 +134,7 @@ int NET_HTTP_StartServer(int port) {
 
 		Com_Printf("HTTP Downloads: webserver running on port %i...\n", port);
 		srv.running = true;
+		srv.port = port;
 		return port;
 	} else {
 		mg_mgr_free(&srv.mgr);
@@ -157,6 +159,7 @@ void NET_HTTP_StopServer() {
 
 	mg_mgr_free(&srv.mgr);
 	srv.running = false;
+	srv.port = 0;
 }
 
 #ifndef DEDICATED

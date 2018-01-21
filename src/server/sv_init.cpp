@@ -282,23 +282,6 @@ void SV_Startup( void ) {
 }
 
 /*
-Ghoul2 Insert Start
-*/
-
- void SV_InitSV(void)
-{
-	int http_port;
-
-	// clear out most of the sv struct
-	http_port = sv.http_port;
-	memset(&sv, 0, (sizeof(sv)));
-	sv.http_port = http_port;
- }
-/*
-Ghoul2 Insert End
-*/
-
-/*
 ==================
 SV_ChangeMaxClients
 ==================
@@ -380,17 +363,7 @@ void SV_ClearServer(void) {
 
 //	CM_ClearMap();
 
-	/*
-Ghoul2 Insert Start
-*/
-
-	// nope, can't do this anymore.. sv contains entitystates with STL in them.
-//	memset (&sv, 0, sizeof(sv));
- 	SV_InitSV();
-/*
-Ghoul2 Insert End
-*/
-//	Com_Memset (&sv, 0, sizeof(sv));
+	Com_Memset (&sv, 0, sizeof(sv));
 }
 
 /*
@@ -754,23 +727,18 @@ Ghoul2 Insert End
 	}
 	*/
 
-	// shutdown webserver
-	if (sv.http_port && ((mv_httpdownloads->latchedString && !atoi(mv_httpdownloads->latchedString)) || mv_httpserverport->latchedString)) {
-		NET_HTTP_StopServer();
-		sv.http_port = 0;
-	}
-
 	// here because latched
 	mv_httpdownloads = Cvar_Get("mv_httpdownloads", "0", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_LATCH);
 	mv_httpserverport = Cvar_Get("mv_httpserverport", "0", CVAR_ARCHIVE | CVAR_LATCH);
 
 	if (mv_httpdownloads->integer) {
-		if (Q_stristr(mv_httpserverport->string, "http://")) {
+		sv.http_port = NET_HTTP_StartServer(mv_httpserverport->integer);
+	} else {
+		NET_HTTP_StopServer();
+		sv.http_port = 0;
+
+		if (!Q_stricmpn(mv_httpserverport->string, "http://", strlen("http://"))) {
 			Com_Printf("HTTP Downloads: redirecting to %s\n", mv_httpserverport->string);
-		} else {
-			if (!sv.http_port) {
-				sv.http_port = NET_HTTP_StartServer(mv_httpserverport->integer);
-			}
 		}
 	}
 
