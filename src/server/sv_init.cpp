@@ -572,6 +572,11 @@ Ghoul2 Insert End
 		}
 	}
 
+	// close all filehandles before FS_Restart
+	for (i = 0; i < sv_maxclients->integer; i++) {
+		SV_CloseDownload( &svs.clients[i] );
+	}
+
 	// wipe the entire per-level structure
 	SV_ClearServer();
 	for ( i = 0 ; i < MAX_CONFIGSTRINGS ; i++ ) {

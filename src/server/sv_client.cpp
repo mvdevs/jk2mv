@@ -5,8 +5,6 @@
 
 #include <mv_setup.h>
 
-static void SV_CloseDownload( client_t *cl );
-
 /*
 =================
 SV_GetChallenge
@@ -403,11 +401,6 @@ void SV_DropClient( client_t *drop, const char *reason ) {
 	Com_DPrintf( "Going to CS_ZOMBIE for %s\n", drop->name );
 	drop->state = CS_ZOMBIE;		// become free in a few seconds
 
-	if (drop->download)	{
-		FS_FCloseFile( drop->download );
-		drop->download = 0;
-	}
-
 	// call the prog function for removing a client
 	// this will remove the body, among other things
 	VM_Call( gvm, GAME_CLIENT_DISCONNECT, drop - svs.clients );
@@ -598,7 +591,7 @@ SV_CloseDownload
 clear/free any download vars
 ==================
 */
-static void SV_CloseDownload( client_t *cl ) {
+void SV_CloseDownload( client_t *cl ) {
 	int i;
 
 	// EOF

@@ -323,6 +323,7 @@ void SV_ExecuteClientCommand( client_t *cl, const char *s, qboolean clientOK );
 void SV_ClientThink (int client, const usercmd_t *cmd);
 
 void SV_WriteDownloadToClient( client_t *cl , msg_t *msg );
+void SV_CloseDownload( client_t *cl );
 
 //
 // sv_ccmds.c
