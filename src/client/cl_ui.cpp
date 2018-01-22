@@ -1297,10 +1297,10 @@ to fit in the buffer
 ====================
 */
 int UI_ConcatDLList(dlfile_t *files, const int maxfiles) {
-	int i, c = 0;
+	int i;
 
 	CL_ReadBlacklistFile();
-	for (i = 0; i < cls.downloadBlacklistLen && c < maxfiles; i++, c++) {
+	for (i = 0; i < cls.downloadBlacklistLen && i < maxfiles; i++) {
 		Q_strncpyz(files->name, cls.downloadBlacklist[i].name, sizeof(files->name));
 		files->time = cls.downloadBlacklist[i].time;
 		files->checkksum = cls.downloadBlacklist[i].checksum;
@@ -1310,7 +1310,7 @@ int UI_ConcatDLList(dlfile_t *files, const int maxfiles) {
 	}
 	CL_BlacklistWriteCloseFile();
 
-	return c + FS_GetDLList(files, c);
+	return i + FS_GetDLList(files, maxfiles - i);
 }
 
 qboolean UI_DeleteDLFile(const dlfile_t *file) {
