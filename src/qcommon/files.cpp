@@ -265,6 +265,7 @@ typedef struct {
 	int			zipFilePos;
 	int			zipFileLen;
 	qboolean	zipFile;
+	module_t	module;
 	char		name[MAX_ZPATH];
 } fileHandleData_t;
 
@@ -374,7 +375,7 @@ static fileHandle_t	FS_HandleForFile(void) {
 	return 0;
 }
 
-static FILE	*FS_FileForHandle( fileHandle_t f ) {
+static FILE	*FS_FileForHandle( fileHandle_t f, module_t module = MODULE_MAIN ) {
 	if ( f < 1 || f >= MAX_FILE_HANDLES ) {
 		Com_Error( ERR_DROP, "FS_FileForHandle: out of reange" );
 	}
@@ -388,10 +389,10 @@ static FILE	*FS_FileForHandle( fileHandle_t f ) {
 	return fsh[f].handleFiles.file.o;
 }
 
-void	FS_ForceFlush( fileHandle_t f ) {
+void	FS_ForceFlush( fileHandle_t f, module_t module ) {
 	FILE *file;
 
-	file = FS_FileForHandle(f);
+	file = FS_FileForHandle(f, module);
 	setvbuf( file, NULL, _IONBF, 0 );
 }
 
@@ -404,12 +405,12 @@ it will return the size of the pak file, not the expected
 size of the file.
 ================
 */
-int FS_filelength( fileHandle_t f ) {
+int FS_filelength( fileHandle_t f, module_t module ) {
 	int		pos;
 	int		end;
 	FILE*	h;
 
-	h = FS_FileForHandle(f);
+	h = FS_FileForHandle(f, module);
 	pos = ftell (h);
 	fseek (h, 0, SEEK_END);
 	end = ftell (h);
@@ -760,7 +761,7 @@ FS_SV_FOpenFileWrite
 
 ===========
 */
-fileHandle_t FS_SV_FOpenFileWrite( const char *filename ) {
+fileHandle_t FS_SV_FOpenFileWrite( const char *filename, module_t module ) {
 	char *ospath;
 	fileHandle_t	f;
 
@@ -772,6 +773,7 @@ fileHandle_t FS_SV_FOpenFileWrite( const char *filename ) {
 	ospath[strlen(ospath)-1] = '\0';
 
 	f = FS_HandleForFile();
+	fsh[f].module = module;
 	fsh[f].zipFile = qfalse;
 
 	if ( fs_debug->integer ) {
@@ -800,7 +802,7 @@ FS_SV_FOpenFileAppend
 
 ===========
 */
-fileHandle_t FS_SV_FOpenFileAppend( const char *filename ) {
+fileHandle_t FS_SV_FOpenFileAppend( const char *filename, module_t module ) {
 	char			*ospath;
 	fileHandle_t	f;
 
@@ -809,6 +811,7 @@ fileHandle_t FS_SV_FOpenFileAppend( const char *filename ) {
 	}
 
 	f = FS_HandleForFile();
+	fsh[f].module = module;
 	fsh[f].zipFile = qfalse;
 
 	Q_strncpyz( fsh[f].name, filename, sizeof( fsh[f].name ) );
@@ -840,7 +843,7 @@ search for a file somewhere below the home path, base path or cd path
 we search in that order, matching FS_SV_FOpenFileRead order
 ===========
 */
-int FS_SV_FOpenFileRead( const char *filename, fileHandle_t *fp ) {
+int FS_SV_FOpenFileRead( const char *filename, fileHandle_t *fp, module_t module ) {
 	char *ospath;
 	fileHandle_t	f = 0; // bk001129 - from cvs1.17
 
@@ -849,6 +852,7 @@ int FS_SV_FOpenFileRead( const char *filename, fileHandle_t *fp ) {
 	}
 
 	f = FS_HandleForFile();
+	fsh[f].module = module;
 	fsh[f].zipFile = qfalse;
 
 	Q_strncpyz( fsh[f].name, filename, sizeof( fsh[f].name ) );
@@ -892,7 +896,7 @@ int FS_SV_FOpenFileRead( const char *filename, fileHandle_t *fp ) {
 
 	*fp = f;
 	if (f) {
-		return FS_filelength(f);
+		return FS_filelength(f, module);
 	}
 	return 0;
 }
@@ -972,7 +976,7 @@ For some reason, other dll's can't just cal fclose()
 on files returned by FS_FOpenFile...
 ==============
 */
-void FS_FCloseFile( fileHandle_t f ) {
+void FS_FCloseFile( fileHandle_t f, module_t module ) {
 	if ( !fs_searchpaths ) {
 		Com_Error( ERR_FATAL, "Filesystem call made without initialization" );
 	}
@@ -1004,7 +1008,7 @@ FS_FOpenFileWrite
 
 ===========
 */
-fileHandle_t FS_FOpenFileWrite( const char *filename ) {
+fileHandle_t FS_FOpenFileWrite( const char *filename, module_t module ) {
 	char			*ospath;
 	fileHandle_t	f;
 
@@ -1013,6 +1017,7 @@ fileHandle_t FS_FOpenFileWrite( const char *filename ) {
 	}
 
 	f = FS_HandleForFile();
+	fsh[f].module = module;
 	fsh[f].zipFile = qfalse;
 
 	ospath = FS_BuildOSPath( fs_homepath->string, fs_gamedir, filename );
@@ -1039,7 +1044,7 @@ fileHandle_t FS_FOpenFileWrite( const char *filename ) {
 	return f;
 }
 
-fileHandle_t FS_FOpenBaseFileWrite(const char *filename) {
+fileHandle_t FS_FOpenBaseFileWrite(const char *filename, module_t module) {
 	char			*ospath;
 	fileHandle_t	f;
 
@@ -1048,6 +1053,7 @@ fileHandle_t FS_FOpenBaseFileWrite(const char *filename) {
 	}
 
 	f = FS_HandleForFile();
+	fsh[f].module = module;
 	fsh[f].zipFile = qfalse;
 
 	ospath = FS_BuildOSPath(fs_homepath->string, "base", filename);
@@ -1080,7 +1086,7 @@ FS_FOpenFileAppend
 
 ===========
 */
-fileHandle_t FS_FOpenFileAppend( const char *filename ) {
+fileHandle_t FS_FOpenFileAppend( const char *filename, module_t module ) {
 	char			*ospath;
 	fileHandle_t	f;
 
@@ -1089,6 +1095,7 @@ fileHandle_t FS_FOpenFileAppend( const char *filename ) {
 	}
 
 	f = FS_HandleForFile();
+	fsh[f].module = module;
 	fsh[f].zipFile = qfalse;
 
 	Q_strncpyz( fsh[f].name, filename, sizeof( fsh[f].name ) );
@@ -1150,8 +1157,8 @@ FS_FLock
 Advisory file locking
 ===========
 */
-int FS_FLock( fileHandle_t h, flockCmd_t cmd, qboolean nb ) {
-	int fd = fileno( FS_FileForHandle(h) );
+int FS_FLock( fileHandle_t h, flockCmd_t cmd, qboolean nb, module_t module ) {
+	int fd = fileno( FS_FileForHandle(h, module) );
 	return Sys_FLock(fd, cmd, nb);
 }
 
@@ -1243,11 +1250,11 @@ separate file or a ZIP file.
 */
 extern qboolean		com_fullyInitialized;
 
-int FS_FOpenFileRead(const char *filename, fileHandle_t *file, qboolean uniqueFILE) {
-	return FS_FOpenFileReadHash(filename, file, uniqueFILE, NULL);
+int FS_FOpenFileRead(const char *filename, fileHandle_t *file, qboolean uniqueFILE, module_t module) {
+	return FS_FOpenFileReadHash(filename, file, uniqueFILE, NULL, module);
 }
 
-int FS_FOpenFileReadHash(const char *filename, fileHandle_t *file, qboolean uniqueFILE, unsigned long *filehash) {
+int FS_FOpenFileReadHash(const char *filename, fileHandle_t *file, qboolean uniqueFILE, unsigned long *filehash, module_t module) {
 	bool			isLocalConfig;
 	searchpath_t	*search;
 	char			*netpath;
@@ -1296,6 +1303,7 @@ int FS_FOpenFileReadHash(const char *filename, fileHandle_t *file, qboolean uniq
 	//
 
 	*file = FS_HandleForFile();
+	fsh[*file].module = module;
 	fsh[*file].handleFiles.unique = uniqueFILE;
 
 	for ( search = fs_searchpaths ; search ; search = search->next ) {
@@ -1478,7 +1486,7 @@ int FS_FOpenFileReadHash(const char *filename, fileHandle_t *file, qboolean uniq
 			}
 #endif
 #endif // dedicated
-			return FS_filelength (*file);
+			return FS_filelength (*file, module);
 		}
 	}
 
@@ -1496,7 +1504,7 @@ FS_Read
 Properly handles partial reads
 =================
 */
-int FS_Read2( void *buffer, int len, fileHandle_t f ) {
+int FS_Read2( void *buffer, int len, fileHandle_t f, module_t module ) {
 	if ( !fs_searchpaths ) {
 		Com_Error( ERR_FATAL, "Filesystem call made without initialization" );
 	}
@@ -1506,10 +1514,10 @@ int FS_Read2( void *buffer, int len, fileHandle_t f ) {
 		return 0;
 	}
 
-	return FS_Read( buffer, len, f);
+	return FS_Read( buffer, len, f, module );
 }
 
-int FS_Read( void *buffer, int len, fileHandle_t f ) {
+int FS_Read( void *buffer, int len, fileHandle_t f, module_t module ) {
 	size_t		block, remaining;
 	size_t		read;
 	byte	*buf;
@@ -1559,7 +1567,7 @@ FS_Write
 Properly handles partial writes
 =================
 */
-int FS_Write( const void *buffer, int len, fileHandle_t h ) {
+int FS_Write( const void *buffer, int len, fileHandle_t h, module_t module ) {
 	size_t		block, remaining;
 	size_t		written;
 	const byte	*buf;
@@ -1575,7 +1583,7 @@ int FS_Write( const void *buffer, int len, fileHandle_t h ) {
 		return 0;
 	}
 
-	f = FS_FileForHandle(h);
+	f = FS_FileForHandle(h, module);
 	buf = (const byte *)buffer;
 
 	remaining = len;
@@ -1610,7 +1618,7 @@ void QDECL FS_Printf( fileHandle_t h, const char *fmt, ... ) {
 	Q_vsnprintf (msg,sizeof(msg),fmt,argptr);
 	va_end (argptr);
 
-	FS_Write(msg, (int)strlen(msg), h);
+	FS_Write(msg, (int)strlen(msg), h, MODULE_MAIN);
 }
 
 /*
@@ -1619,7 +1627,7 @@ FS_Seek
 
 =================
 */
-int FS_Seek( fileHandle_t f, int offset, int origin ) {
+int FS_Seek( fileHandle_t f, int offset, int origin, module_t module ) {
 	int		_origin;
 	char	foo[65536];
 
@@ -1642,14 +1650,14 @@ int FS_Seek( fileHandle_t f, int offset, int origin ) {
 			// set the file position in the zip file (also sets the current file info)
 			unzSetOffset(fsh[f].handleFiles.file.z, fsh[f].zipFilePos);
 			unzOpenCurrentFile(fsh[f].handleFiles.file.z);
-			return FS_Read(foo, offset, f);
+			return FS_Read(foo, offset, f, module);
 		} else {
 			Com_Error( ERR_FATAL, "ZIP FILE FSEEK NOT YET IMPLEMENTED" );
 			return -1;
 		}
 	} else {
 		FILE *file;
-		file = FS_FileForHandle(f);
+		file = FS_FileForHandle(f, module);
 		switch( origin ) {
 		case FS_SEEK_CUR:
 			_origin = SEEK_CUR;
@@ -1837,7 +1845,7 @@ int FS_ReadFile( const char *qpath, void **buffer ) {
 			FS_Write( &len, sizeof( len ), com_journalDataFile );
 			FS_Flush( com_journalDataFile );
 		}
-		FS_FCloseFile( h);
+		FS_FCloseFile( h );
 		return len;
 	}
 
@@ -3199,7 +3207,7 @@ void FS_Shutdown( qboolean closemfp ) {
 	int	i;
 
 	for(i = 1; i < MAX_FILE_HANDLES; i++) {
-		FS_FCloseFile(i);
+		FS_FCloseFile(i, fsh[i].module);
 	}
 
 	// free everything
@@ -3844,11 +3852,11 @@ Handle based file calls for virtual machines
 ========================================================================================
 */
 
-int FS_FOpenFileByMode(const char *qpath, fileHandle_t *f, fsMode_t mode) {
-	return FS_FOpenFileByModeHash(qpath, f, mode, NULL);
+int FS_FOpenFileByMode(const char *qpath, fileHandle_t *f, fsMode_t mode, module_t module) {
+	return FS_FOpenFileByModeHash(qpath, f, mode, NULL, module);
 }
 
-int FS_FOpenFileByModeHash( const char *qpath, fileHandle_t *f, fsMode_t mode, unsigned long *hash ) {
+int FS_FOpenFileByModeHash( const char *qpath, fileHandle_t *f, fsMode_t mode, unsigned long *hash, module_t module ) {
 	int		r;
 	qboolean	sync;
 	char *ospath;
@@ -3870,10 +3878,10 @@ int FS_FOpenFileByModeHash( const char *qpath, fileHandle_t *f, fsMode_t mode, u
 
 	switch( mode ) {
 	case FS_READ:
-		r = FS_FOpenFileReadHash( qpath, f, qtrue, hash );
+		r = FS_FOpenFileReadHash( qpath, f, qtrue, hash, module );
 		break;
 	case FS_WRITE:
-		*f = FS_FOpenFileWrite( qpath );
+		*f = FS_FOpenFileWrite( qpath, module );
 		r = 0;
 		if (*f == 0) {
 			r = -1;
@@ -3882,7 +3890,7 @@ int FS_FOpenFileByModeHash( const char *qpath, fileHandle_t *f, fsMode_t mode, u
 	case FS_APPEND_SYNC:
 		sync = qtrue;
 	case FS_APPEND:
-		*f = FS_FOpenFileAppend( qpath );
+		*f = FS_FOpenFileAppend( qpath, module );
 		r = 0;
 		if (*f == 0) {
 			r = -1;
@@ -3905,7 +3913,7 @@ int FS_FOpenFileByModeHash( const char *qpath, fileHandle_t *f, fsMode_t mode, u
 	return r;
 }
 
-int	FS_FTell( fileHandle_t f ) {
+int	FS_FTell( fileHandle_t f, module_t module ) {
 	int pos;
 
 	if ( f < 1 || f >= MAX_FILE_HANDLES ) {
@@ -3921,8 +3929,8 @@ int	FS_FTell( fileHandle_t f ) {
 	return pos;
 }
 
-void FS_Flush( fileHandle_t f ) {
-	fflush(FS_FileForHandle(f));
+void FS_Flush( fileHandle_t f, module_t module ) {
+	fflush(FS_FileForHandle(f, module));
 }
 
 // only referenced pk3 files can be downloaded

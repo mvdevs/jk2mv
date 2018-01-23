@@ -393,15 +393,15 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 		return 0;
 
 	case G_FS_FOPEN_FILE:
-		return FS_FOpenFileByMode( VMAS(1), VMAV(2, int), (fsMode_t)args[3] );
+		return FS_FOpenFileByMode( VMAS(1), VMAV(2, int), (fsMode_t)args[3], MODULE_GAME );
 	case G_FS_READ:
-		FS_Read2( VMAP(1, char, args[2]), args[2], args[3] );
+		FS_Read2( VMAP(1, char, args[2]), args[2], args[3], MODULE_GAME );
 		return 0;
 	case G_FS_WRITE:
-		FS_Write( VMAP(1, char, args[2]), args[2], args[3] );
+		FS_Write( VMAP(1, char, args[2]), args[2], args[3], MODULE_GAME );
 		return 0;
 	case G_FS_FCLOSE_FILE:
-		FS_FCloseFile( args[1] );
+		FS_FCloseFile( args[1], MODULE_GAME );
 		return 0;
 	case G_FS_GETFILELIST:
 		return FS_GetFileList( VMAS(1), VMAS(2), VMAP(3, char, args[4]), args[4] );
@@ -1098,7 +1098,7 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 	if (VM_MVAPILevel(gvm) >= 3) {
 		switch (args[0]) {
 		case MVAPI_FS_FLOCK:
-			return (int)FS_FLock(args[1], (flockCmd_t)args[2], (qboolean)!!args[3]);
+			return (int)FS_FLock(args[1], (flockCmd_t)args[2], (qboolean)!!args[3], MODULE_GAME);
 		case MVAPI_SET_VERSION:
 			VM_SetGameversion( gvm, (mvversion_t)args[1] );
 			return 0;
