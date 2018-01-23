@@ -3208,7 +3208,15 @@ void FS_Shutdown( qboolean closemfp ) {
 	int	i;
 
 	for(i = 1; i < MAX_FILE_HANDLES; i++) {
-		FS_FCloseFile(i, fsh[i].module);
+		switch (fsh[i].module) {
+		case MODULE_GAME:
+		case MODULE_CGAME:
+		case MODULE_UI:
+			FS_FCloseFile(i, fsh[i].module);
+			break;
+		default:
+			break;
+		}
 	}
 
 	// free everything
