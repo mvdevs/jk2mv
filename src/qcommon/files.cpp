@@ -368,6 +368,7 @@ static fileHandle_t	FS_HandleForFile(void) {
 
 	for ( i = 1 ; i < MAX_FILE_HANDLES ; i++ ) {
 		if ( fsh[i].handleFiles.file.o == NULL ) {
+			Com_Memset(&fsh[i], 0, sizeof(fsh[0]));
 			return i;
 		}
 	}
