@@ -687,15 +687,15 @@ intptr_t CL_CgameSystemCalls(intptr_t *args) {
 		Cmd_ArgsBuffer( VMAP(1, char, args[2]), args[2] );
 		return 0;
 	case CG_FS_FOPENFILE:
-		return FS_FOpenFileByMode( VMAS(1), VMAV(2, int), (fsMode_t)args[3] );
+		return FS_FOpenFileByMode( VMAS(1), VMAV(2, int), (fsMode_t)args[3], MODULE_CGAME );
 	case CG_FS_READ:
-		FS_Read2( VMAP(1, char, args[2]), args[2], args[3] );
+		FS_Read2( VMAP(1, char, args[2]), args[2], args[3], MODULE_CGAME );
 		return 0;
 	case CG_FS_WRITE:
 		FS_Write( VMAP(1, const char, args[2]), args[2], args[3] );
 		return 0;
 	case CG_FS_FCLOSEFILE:
-		FS_FCloseFile( args[1] );
+		FS_FCloseFile( args[1], MODULE_CGAME );
 		return 0;
 	case CG_SENDCONSOLECOMMAND:
 		Cbuf_AddText( VMAS(1) );
@@ -1312,7 +1312,7 @@ Ghoul2 Insert End
 			CL_CgameSetVirtualScreen(VMF(1), VMF(2));
 			return 0;
 		case MVAPI_FS_FLOCK:
-			return (int)FS_FLock(args[1], (flockCmd_t)args[2], (qboolean)!!args[3]);
+			return (int)FS_FLock(args[1], (flockCmd_t)args[2], (qboolean)!!args[3], MODULE_CGAME);
 		case MVAPI_SET_VERSION:
 			VM_SetGameversion( cgvm, (mvversion_t)args[1] );
 			return 0;

@@ -586,6 +586,17 @@ issues.
 
 #define	MAX_FILE_HANDLES	256 // increased from 64 in jk2mv
 
+typedef enum {
+	MODULE_MAIN,
+	MODULE_RENDERER,
+	MODULE_FX,
+	MODULE_BOTLIB,
+	MODULE_GAME,
+	MODULE_CGAME,
+	MODULE_UI,
+	MODULE_MAX
+} module_t;
+
 qboolean FS_CopyFile( char *fromOSPath, char *toOSPath, char *newOSPath = NULL, const int newSize = 0 );
 
 qboolean FS_Initialized();
@@ -613,17 +624,16 @@ int		FS_LoadStack();
 int		FS_GetFileList(  const char *path, const char *extension, char *listbuf, int bufsize );
 int		FS_GetModList(  char *listbuf, int bufsize );
 
-fileHandle_t	FS_FOpenFileWrite( const char *qpath );
-fileHandle_t FS_FOpenBaseFileWrite(const char *filename);
+fileHandle_t	FS_FOpenFileWrite( const char *qpath, module_t module = MODULE_MAIN );
+fileHandle_t FS_FOpenBaseFileWrite(const char *filename, module_t module = MODULE_MAIN);
 // will properly create any needed paths and deal with seperater character issues
 
-int		FS_filelength( fileHandle_t f );
-fileHandle_t FS_SV_FOpenFileWrite( const char *filename );
-fileHandle_t FS_SV_FOpenFileAppend( const char *filename );
-int		FS_SV_FOpenFileRead( const char *filename, fileHandle_t *fp );
+fileHandle_t FS_SV_FOpenFileWrite( const char *filename, module_t module = MODULE_MAIN );
+fileHandle_t FS_SV_FOpenFileAppend( const char *filename, module_t module = MODULE_MAIN );
+int		FS_SV_FOpenFileRead( const char *filename, fileHandle_t *fp, module_t module = MODULE_MAIN );
 void	FS_SV_Rename( const char *from, const char *to );
-int		FS_FOpenFileRead( const char *qpath, fileHandle_t *file, qboolean uniqueFILE );
-int		FS_FOpenFileReadHash( const char *filename, fileHandle_t *file, qboolean uniqueFILE, unsigned long *filehash );
+int		FS_FOpenFileRead( const char *qpath, fileHandle_t *file, qboolean uniqueFILE, module_t module = MODULE_MAIN );
+int		FS_FOpenFileReadHash( const char *filename, fileHandle_t *file, qboolean uniqueFILE, unsigned long *filehash, module_t module = MODULE_MAIN );
 // if uniqueFILE is true, then a new FILE will be fopened even if the file
 // is found in an already open pak file.  If uniqueFILE is false, you must call
 // FS_FCloseFile instead of fclose, otherwise the pak FILE would be improperly closed
@@ -633,13 +643,13 @@ int		FS_FOpenFileReadHash( const char *filename, fileHandle_t *file, qboolean un
 int		FS_FileIsInPAK(const char *filename, int *pChecksum );
 // returns 1 if a file is in the PAK file, otherwise -1
 
-int		FS_Write( const void *buffer, int len, fileHandle_t f );
+int		FS_Write( const void *buffer, int len, fileHandle_t f, module_t module = MODULE_MAIN );
 
-int		FS_Read2( void *buffer, int len, fileHandle_t f );
-int		FS_Read( void *buffer, int len, fileHandle_t f );
+int		FS_Read2( void *buffer, int len, fileHandle_t f, module_t module = MODULE_MAIN );
+int		FS_Read( void *buffer, int len, fileHandle_t f, module_t module = MODULE_MAIN );
 // properly handles partial reads and reads from other dlls
 
-void	FS_FCloseFile( fileHandle_t f );
+void	FS_FCloseFile( fileHandle_t f, module_t module = MODULE_MAIN );
 // note: you can't just fclose from another DLL, due to MS libc issues
 
 int		FS_ReadFile( const char *qpath, void **buffer );
@@ -650,7 +660,7 @@ int		FS_ReadFile( const char *qpath, void **buffer );
 // the buffer should be considered read-only, because it may be cached
 // for other uses.
 
-void	FS_ForceFlush( fileHandle_t f );
+void	FS_ForceFlush( fileHandle_t f, module_t module = MODULE_MAIN );
 // forces flush on files we're writing to.
 
 void	FS_FreeFile( void *buffer );
@@ -659,26 +669,26 @@ void	FS_FreeFile( void *buffer );
 void	FS_WriteFile( const char *qpath, const void *buffer, int size );
 // writes a complete file, creating any subdirectories needed
 
-int		FS_filelength( fileHandle_t f );
+int		FS_filelength( fileHandle_t f, module_t module = MODULE_MAIN );
 // doesn't work for files that are opened from a pack file
 
 char	*FS_BuildOSPath(const char *base, const char *game, const char *qpath);
 char	*FS_BuildOSPath(const char *base, const char *path);
 qboolean FS_CreatePath (char *OSPath);
 
-int		FS_FTell( fileHandle_t f );
+int		FS_FTell( fileHandle_t f, module_t module = MODULE_MAIN );
 // where are we?
 
-void	FS_Flush( fileHandle_t f );
+void	FS_Flush( fileHandle_t f, module_t module = MODULE_MAIN );
 
 void 	QDECL FS_Printf( fileHandle_t f, const char *fmt, ... ) __attribute__ ((format (printf, 2, 3)));
 // like fprintf
 
-int		FS_FOpenFileByMode( const char *qpath, fileHandle_t *f, fsMode_t mode );
-int		FS_FOpenFileByModeHash( const char *qpath, fileHandle_t *f, fsMode_t mode, unsigned long *hash );
+int		FS_FOpenFileByMode( const char *qpath, fileHandle_t *f, fsMode_t mode, module_t module = MODULE_MAIN );
+int		FS_FOpenFileByModeHash( const char *qpath, fileHandle_t *f, fsMode_t mode, unsigned long *hash, module_t module = MODULE_MAIN );
 // opens a file for reading, writing, or appending depending on the value of mode
 
-int		FS_Seek( fileHandle_t f, int offset, int origin );
+int		FS_Seek( fileHandle_t f, int offset, int origin, module_t module = MODULE_MAIN );
 // seek on a file (doesn't work for zip files!!!!!!!!)
 
 int		FS_FilenameCompare( const char *s1, const char *s2 );
@@ -718,7 +728,7 @@ qboolean FS_DeleteDLFile(const char *qpath);
 
 void FS_HomeRemove( const char *homePath );
 qboolean FS_IsFifo( const char *filename );
-int FS_FLock( fileHandle_t h, flockCmd_t cmd, qboolean nb );
+int FS_FLock( fileHandle_t h, flockCmd_t cmd, qboolean nb, module_t module = MODULE_MAIN );
 
 /*
 ==============================================================

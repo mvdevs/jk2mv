@@ -79,16 +79,16 @@ public:
 	// File handling
 	inline	int		OpenFile( const char *path, fileHandle_t *fh, int mode )
 	{
-		return FS_FOpenFileByMode( path, fh, FS_READ );
+		return FS_FOpenFileByMode( path, fh, FS_READ, MODULE_FX );
 	}
 	inline	int		ReadFile( void *data, int len, fileHandle_t fh )
 	{
-		FS_Read2( data, len, fh );
+		FS_Read2( data, len, fh, MODULE_FX );
 		return 1;
 	}
 	inline	void	CloseFile( fileHandle_t fh )
 	{
-		FS_FCloseFile( fh );
+		FS_FCloseFile( fh, MODULE_FX );
 	}
 
 	// Sound

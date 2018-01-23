@@ -829,10 +829,10 @@ intptr_t CL_UISystemCalls(intptr_t *args) {
 		return 0;
 
 	case UI_FS_FOPENFILE:
-		return FS_FOpenFileByMode( VMAS(1), VMAV(2, int), (fsMode_t)args[3] );
+		return FS_FOpenFileByMode( VMAS(1), VMAV(2, int), (fsMode_t)args[3], MODULE_UI );
 
 	case UI_FS_READ:
-		FS_Read2( VMAP(1, char, args[2]), args[2], args[3] );
+		FS_Read2( VMAP(1, char, args[2]), args[2], args[3], MODULE_UI );
 		return 0;
 
 	case UI_FS_WRITE:
@@ -840,7 +840,7 @@ intptr_t CL_UISystemCalls(intptr_t *args) {
 		return 0;
 
 	case UI_FS_FCLOSEFILE:
-		FS_FCloseFile( args[1] );
+		FS_FCloseFile( args[1], MODULE_UI );
 		return 0;
 
 	case UI_FS_GETFILELIST:
@@ -1153,7 +1153,7 @@ Ghoul2 Insert End
 			CL_UISetVirtualScreen(VMF(1), VMF(2));
 			return 0;
 		case MVAPI_FS_FLOCK:
-			return (int)FS_FLock(args[1], (flockCmd_t)args[2], (qboolean)!!args[3]);
+			return (int)FS_FLock(args[1], (flockCmd_t)args[2], (qboolean)!!args[3], MODULE_UI);
 		case MVAPI_SET_VERSION:
 			VM_SetGameversion( uivm, (mvversion_t)args[1] );
 			return 0;

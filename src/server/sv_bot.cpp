@@ -530,6 +530,29 @@ static int bot_Z_AvailableMemory(void)
 	return iMaxBOTLIBMem - Z_MemSize( TAG_BOTLIB );
 }
 
+static int BotImport_FS_FOpenFileByMode(const char *qpath, fileHandle_t *f, fsMode_t mode) {
+	return FS_FOpenFileByMode(qpath, f, mode, MODULE_BOTLIB);
+}
+
+static int BotImport_FS_FOpenFileByModeHash( const char *qpath, fileHandle_t *f, fsMode_t mode, unsigned long *hash ) {
+	return FS_FOpenFileByModeHash(qpath, f, mode, hash, MODULE_BOTLIB);
+}
+
+static int BotImport_FS_Read2( void *buffer, int len, fileHandle_t f ) {
+	return FS_Read2(buffer, len, f, MODULE_BOTLIB);
+}
+
+static void BotImport_FS_FCloseFile( fileHandle_t f ) {
+	FS_FCloseFile( f, MODULE_BOTLIB );
+}
+static int BotImport_FS_Write( const void *buffer, int len, fileHandle_t h ) {
+	return FS_Write(buffer, len, h, MODULE_BOTLIB);
+}
+
+static int BotImport_FS_Seek( fileHandle_t f, int offset, int origin ) {
+	return FS_Seek(f, offset, origin, MODULE_BOTLIB);
+}
+
 /*
 ==================
 SV_BotInitBotLib
@@ -558,12 +581,12 @@ void SV_BotInitBotLib(void) {
 	botlib_import.HunkAlloc = BotImport_HunkAlloc;
 
 	// file system access
-	botlib_import.FS_FOpenFile = FS_FOpenFileByMode;
-	botlib_import.FS_FOpenFileHash = FS_FOpenFileByModeHash;
-	botlib_import.FS_Read = FS_Read2;
-	botlib_import.FS_Write = FS_Write;
-	botlib_import.FS_FCloseFile = FS_FCloseFile;
-	botlib_import.FS_Seek = FS_Seek;
+	botlib_import.FS_FOpenFile = BotImport_FS_FOpenFileByMode;
+	botlib_import.FS_FOpenFileHash = BotImport_FS_FOpenFileByModeHash;
+	botlib_import.FS_Read = BotImport_FS_Read2;
+	botlib_import.FS_Write = BotImport_FS_Write;
+	botlib_import.FS_FCloseFile = BotImport_FS_FCloseFile;
+	botlib_import.FS_Seek = BotImport_FS_Seek;
 
 	//debug lines
 	botlib_import.DebugLineCreate = BotImport_DebugLineCreate;
