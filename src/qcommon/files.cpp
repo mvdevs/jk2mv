@@ -288,6 +288,34 @@ char lastValidGame[MAX_OSPATH];
 
 qboolean FS_idPak(pack_t *pack);
 
+static const char * const moduleName[MODULE_MAX] = {
+	"Main",
+	"Renderer",
+	"FX",
+	"BotLib",
+	"Game",
+	"CGame",
+	"UI"
+};
+
+static inline qboolean FS_CheckHandle(const char *fname, fileHandle_t f, module_t module) {
+	if ( f < 1 || f >= MAX_FILE_HANDLES ) {
+		Com_DPrintf( S_COLOR_YELLOW "%s (%s module): handle out of range\n",
+			fname, moduleName[module] );
+		assert(module == MODULE_GAME || module == MODULE_CGAME || module == MODULE_UI);
+		return qfalse;
+	}
+	if ( fsh[f].module != module ) {
+		Com_DPrintf( S_COLOR_YELLOW "%s (%s module): access violation\n",
+			fname, moduleName[module] );
+		assert(module == MODULE_GAME || module == MODULE_CGAME || module == MODULE_UI);
+		return qfalse;
+	}
+	return qtrue;
+}
+
+#define FS_CHECKHANDLE(f, module, retval) if (!FS_CheckHandle(__FUNCTION__, f, module)) return retval;
+
 /*
 ==============
 FS_Initialized
@@ -378,13 +406,16 @@ static fileHandle_t	FS_HandleForFile(void) {
 
 static FILE	*FS_FileForHandle( fileHandle_t f, module_t module = MODULE_MAIN ) {
 	if ( f < 1 || f >= MAX_FILE_HANDLES ) {
-		Com_Error( ERR_DROP, "FS_FileForHandle: out of reange" );
+		Com_Error( ERR_DROP, "FS_FileForHandle (%s module): out of reange", moduleName[module] );
 	}
 	if (fsh[f].zipFile == qtrue) {
-		Com_Error( ERR_DROP, "FS_FileForHandle: can't get FILE on zip file" );
+		Com_Error( ERR_DROP, "FS_FileForHandle (%s module): can't get FILE on zip file", moduleName[module] );
 	}
 	if ( ! fsh[f].handleFiles.file.o ) {
-		Com_Error( ERR_DROP, "FS_FileForHandle: NULL" );
+		Com_Error( ERR_DROP, "FS_FileForHandle (%s module): NULL", moduleName[module] );
+	}
+	if ( fsh[f].module != module ) {
+		Com_Error( ERR_DROP, "FS_FileForHandle (%s module): access violation", moduleName[module] );
 	}
 
 	return fsh[f].handleFiles.file.o;
@@ -982,10 +1013,7 @@ void FS_FCloseFile( fileHandle_t f, module_t module ) {
 		Com_Error( ERR_FATAL, "Filesystem call made without initialization" );
 	}
 
-	if ( f < 1 || f >= MAX_FILE_HANDLES ) {
-		Com_DPrintf( "FS_FCloseFile: handle out of range\n" );
-		return;
-	}
+	FS_CHECKHANDLE(f, module, )
 
 	if (fsh[f].zipFile == qtrue) {
 		unzCloseCurrentFile( fsh[f].handleFiles.file.z );
@@ -1510,10 +1538,7 @@ int FS_Read2( void *buffer, int len, fileHandle_t f, module_t module ) {
 		Com_Error( ERR_FATAL, "Filesystem call made without initialization" );
 	}
 
-	if ( f < 1 || f >= MAX_FILE_HANDLES ) {
-		Com_DPrintf( "FS_Read2: handle out of range\n" );
-		return 0;
-	}
+	FS_CHECKHANDLE(f, module, 0);
 
 	return FS_Read( buffer, len, f, module );
 }
@@ -1528,10 +1553,7 @@ int FS_Read( void *buffer, int len, fileHandle_t f, module_t module ) {
 		Com_Error( ERR_FATAL, "Filesystem call made without initialization" );
 	}
 
-	if ( f < 1 || f >= MAX_FILE_HANDLES ) {
-		Com_DPrintf( "FS_Read: handle out of range\n" );
-		return 0;
-	}
+	FS_CHECKHANDLE(f, module, 0)
 
 	buf = (byte *)buffer;
 	fs_readCount += len;
@@ -1579,10 +1601,7 @@ int FS_Write( const void *buffer, int len, fileHandle_t h, module_t module ) {
 		Com_Error( ERR_FATAL, "Filesystem call made without initialization" );
 	}
 
-	if ( h < 1 || h >= MAX_FILE_HANDLES ) {
-		Com_DPrintf( "FS_Write: handle out of range\n" );
-		return 0;
-	}
+	FS_CHECKHANDLE(h, module, 0)
 
 	f = FS_FileForHandle(h, module);
 	buf = (const byte *)buffer;
@@ -1637,10 +1656,7 @@ int FS_Seek( fileHandle_t f, int offset, int origin, module_t module ) {
 		return -1;
 	}
 
-	if ( f < 1 || f >= MAX_FILE_HANDLES ) {
-		Com_DPrintf( "FS_Seek: handle out of range\n" );
-		return -1;
-	}
+	FS_CHECKHANDLE(f, module, -1)
 
 	if (fsh[f].zipFile == qtrue) {
 		if (offset == 0 && origin == FS_SEEK_SET) {
@@ -3925,10 +3941,7 @@ int FS_FOpenFileByModeHash( const char *qpath, fileHandle_t *f, fsMode_t mode, u
 int	FS_FTell( fileHandle_t f, module_t module ) {
 	int pos;
 
-	if ( f < 1 || f >= MAX_FILE_HANDLES ) {
-		Com_DPrintf( "FS_FTell: handle out of range\n" );
-		return -1;
-	}
+	FS_CHECKHANDLE(f, module, -1)
 
 	if (fsh[f].zipFile == qtrue) {
 		pos = unztell(fsh[f].handleFiles.file.z);

@@ -594,6 +594,7 @@ typedef enum {
 	MODULE_GAME,
 	MODULE_CGAME,
 	MODULE_UI,
+	MODULE_MAX
 } module_t;
 
 qboolean FS_CopyFile( char *fromOSPath, char *toOSPath, char *newOSPath = NULL, const int newSize = 0 );
