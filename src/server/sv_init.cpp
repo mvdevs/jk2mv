@@ -727,18 +727,19 @@ Ghoul2 Insert End
 	}
 	*/
 
+	if (mv_httpdownloads->modified || mv_httpserverport->modified) {
+		NET_HTTP_StopServer();
+	}
+
 	// here because latched
 	mv_httpdownloads = Cvar_Get("mv_httpdownloads", "0", CVAR_SERVERINFO | CVAR_ARCHIVE | CVAR_LATCH);
 	mv_httpserverport = Cvar_Get("mv_httpserverport", "0", CVAR_ARCHIVE | CVAR_LATCH);
 
 	if (mv_httpdownloads->integer) {
-		sv.http_port = NET_HTTP_StartServer(mv_httpserverport->integer);
-	} else {
-		NET_HTTP_StopServer();
-		sv.http_port = 0;
-
 		if (!Q_stricmpn(mv_httpserverport->string, "http://", strlen("http://"))) {
 			Com_Printf("HTTP Downloads: redirecting to %s\n", mv_httpserverport->string);
+		} else {
+			sv.http_port = NET_HTTP_StartServer(mv_httpserverport->integer);
 		}
 	}
 
