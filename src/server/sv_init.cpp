@@ -727,7 +727,7 @@ Ghoul2 Insert End
 	}
 	*/
 
-	if (mv_httpdownloads->modified || mv_httpserverport->modified) {
+	if (!mv_httpdownloads || mv_httpdownloads->modified || mv_httpserverport->modified) {
 		NET_HTTP_StopServer();
 	}
 
