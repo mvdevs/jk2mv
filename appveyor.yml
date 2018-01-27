@@ -21,13 +21,13 @@ build_script:
         choco install -y nsis
 
         cmake -G "Visual Studio 14" -DBuildPortableVersion=OFF ../..
-        msbuild /m /p:Configuration=Release PACKAGE.vcxproj
+        msbuild /m /p:Configuration=RelWithDebInfo PACKAGE.vcxproj
       } elseif ($env:TYPE -eq "win-x86-portable") {
         cmake -G "Visual Studio 14" -DBuildPortableVersion=ON ../..
-        msbuild /m /p:Configuration=Release PACKAGE.vcxproj
+        msbuild /m /p:Configuration=RelWithDebInfo PACKAGE.vcxproj
       } elseif ($env:TYPE -eq "win-x64-portable") {
         cmake -G "Visual Studio 14 Win64" -DBuildPortableVersion=ON ../..
-        msbuild /m /p:Configuration=Release PACKAGE.vcxproj
+        msbuild /m /p:Configuration=RelWithDebInfo PACKAGE.vcxproj
       }
 
       if (! $?) {
