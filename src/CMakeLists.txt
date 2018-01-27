@@ -1,4 +1,4 @@
-﻿# Make sure the user is not executing this script directly
+# Make sure the user is not executing this script directly
 if(NOT InMV)
 	message(FATAL_ERROR "Use the top-level cmake script!")
 endif(NOT InMV)
@@ -214,9 +214,14 @@ if (BuildMVMP OR BuildMVDED)
 
 	if(MSVC)
 		set(MVMPDEDWIN32Files
+			"${LIBDir}/StackWalker/include/StackWalker.h"
+
+			"${LIBDir}/StackWalker/StackWalker.cpp"
+
 			"win32/q3asm.asm"
 		)
 		source_group("win32" FILES ${MVMPDEDWIN32Files})
+		set(MVMPDEDIncludeDirs ${MVMPDEDIncludeDirs} "${LIBDir}/StackWalker/include")
 		set(MVMPDEDFiles ${MVMPDEDFiles} ${MVMPDEDWIN32Files})
 	endif()
 	
