@@ -6,7 +6,9 @@
 #include <Shobjidl.h>
 #include <mv_setup.h>
 #include <signal.h>
+#include <string>
 #include <StackWalker.h>
+#include "con_local.h"
 #include "../qcommon/q_shared.h"
 #include "../qcommon/qcommon.h"
 
@@ -419,13 +421,6 @@ static UINT timerResolution = 0;
 ITaskbarList3 *win_taskbar;
 
 void Sys_PlatformInit(int argc, char *argv[]) {
-#ifndef _DEBUG
-	signal(SIGABRT, Sys_CrashSignalHandler);
-	signal(SIGFPE, Sys_CrashSignalHandler);
-	signal(SIGILL, Sys_CrashSignalHandler);
-	signal(SIGSEGV, Sys_CrashSignalHandler);
-#endif
-
 	TIMECAPS ptc;
 	if (timeGetDevCaps(&ptc, sizeof(ptc)) == MMSYSERR_NOERROR)
 	{
@@ -562,20 +557,28 @@ Crash Handling
 */
 #ifndef _DEBUG
 
+std::string callstack_str;
+
 class MVStackWalker : public StackWalker
 {
-	FILE *f;
-
 public:
-	MVStackWalker(FILE *f) : StackWalker(RetrieveSymbol | RetrieveLine | SymBuildPath) { this->f = f; }
+	MVStackWalker() : StackWalker(RetrieveSymbol | RetrieveLine | SymBuildPath) {}
 protected:
 	virtual void OnOutput(LPCSTR szText) {
-		fwrite(szText, 1, strlen(szText), f);
-		StackWalker::OnOutput(szText);
+		callstack_str.append(szText);
 	}
 };
 
-void Sys_CrashSignalHandler(int signal) {
+LONG WINAPI Sys_NoteException(EXCEPTION_POINTERS* pExp, DWORD dwExpCode) {
+	callstack_str.clear();
+
+	MVStackWalker sw;
+	sw.ShowCallstack(GetCurrentThread(), pExp->ContextRecord);
+
+	return EXCEPTION_EXECUTE_HANDLER;
+}
+
+void Sys_WriteCrashlog() {
 	time_t		rawtime;
 	char		timeStr[32];
 	char		crashlogName[MAX_OSPATH];
@@ -587,16 +590,17 @@ void Sys_CrashSignalHandler(int signal) {
 	Com_sprintf(crashlogName, sizeof(crashlogName), "crashlog-%s.txt", timeStr);
 	path = FS_BuildOSPath(Sys_DefaultHomePath(), crashlogName);
 
-	if (FS_CreatePath(Sys_DefaultHomePath())) {
-		f = fopen(path, "w");
-	}
+	FS_CreatePath(Sys_DefaultHomePath());
+	f = fopen(path, "wb");
 
 	if (f == NULL) {
-		f = fopen(crashlogName, "w");
+		f = fopen(crashlogName, "wb");
+		path = crashlogName;
 	}
 
 	if (f == NULL) {
 		f = stderr;
+		path = "stderr";
 	}
 
 	fprintf(f, "---JK2MV Crashlog-----------------------\n");
@@ -615,8 +619,13 @@ void Sys_CrashSignalHandler(int signal) {
 	fprintf(f, "\n");
 
 	fprintf(f, "---Callstack----------------------------\n");
-	MVStackWalker sw(f);
-	sw.ShowCallstack();
+	fprintf(f, callstack_str.c_str());
+
+	fprintf(f, "\n");
+	fprintf(f, "\n");
+
+	fprintf(f, "---Console Log--------------------------\n");
+	ConsoleLogWriteOut(f);
 
 	fclose(f);
 
