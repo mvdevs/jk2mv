@@ -37,6 +37,7 @@ target_compile_definitions(${MVMENU}
 	PRIVATE ${GlobalDefines} ${MVMENUDefines}
 	PRIVATE $<$<CONFIG:Debug>:${DebugDefines}>
 	PRIVATE $<$<CONFIG:Release>:${ReleaseDefines}>
+	PRIVATE $<$<CONFIG:RelWithDebInfo>:${ReleaseDefines}>
 )
 
 set_target_properties(${MVMENU} PROPERTIES C_STANDARD 90)
