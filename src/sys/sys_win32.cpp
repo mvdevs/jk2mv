@@ -4,8 +4,13 @@
 #include <io.h>
 #include <shlobj.h>
 #include <Shobjidl.h>
+#include <mv_setup.h>
+#include <signal.h>
+#include <StackWalker.h>
 #include "../qcommon/q_shared.h"
 #include "../qcommon/qcommon.h"
+
+void Sys_CrashSignalHandler(int signal);
 
 char *Sys_GetCurrentUser( void )
 {
@@ -414,6 +419,13 @@ static UINT timerResolution = 0;
 ITaskbarList3 *win_taskbar;
 
 void Sys_PlatformInit(int argc, char *argv[]) {
+#ifndef _DEBUG
+	signal(SIGABRT, Sys_CrashSignalHandler);
+	signal(SIGFPE, Sys_CrashSignalHandler);
+	signal(SIGILL, Sys_CrashSignalHandler);
+	signal(SIGSEGV, Sys_CrashSignalHandler);
+#endif
+
 	TIMECAPS ptc;
 	if (timeGetDevCaps(&ptc, sizeof(ptc)) == MMSYSERR_NOERROR)
 	{
@@ -540,3 +552,81 @@ void Sys_SnapVector(vec3_t vec) {
 
 }
 #endif
+
+/*
+==============================================================
+
+Crash Handling
+
+==============================================================
+*/
+#ifndef _DEBUG
+
+class MVStackWalker : public StackWalker
+{
+	FILE *f;
+
+public:
+	MVStackWalker(FILE *f) : StackWalker(RetrieveSymbol | RetrieveLine | SymBuildPath) { this->f = f; }
+protected:
+	virtual void OnOutput(LPCSTR szText) {
+		fwrite(szText, 1, strlen(szText), f);
+		StackWalker::OnOutput(szText);
+	}
+};
+
+void Sys_CrashSignalHandler(int signal) {
+	time_t		rawtime;
+	char		timeStr[32];
+	char		crashlogName[MAX_OSPATH];
+	char		*path;
+	FILE		*f = NULL;
+
+	time(&rawtime);
+	strftime(timeStr, sizeof(timeStr), "%Y-%m-%d_%H-%M-%S", localtime(&rawtime)); // or gmtime
+	Com_sprintf(crashlogName, sizeof(crashlogName), "crashlog-%s.txt", timeStr);
+	path = FS_BuildOSPath(Sys_DefaultHomePath(), crashlogName);
+
+	if (FS_CreatePath(Sys_DefaultHomePath())) {
+		f = fopen(path, "w");
+	}
+
+	if (f == NULL) {
+		f = fopen(crashlogName, "w");
+	}
+
+	if (f == NULL) {
+		f = stderr;
+	}
+
+	fprintf(f, "---JK2MV Crashlog-----------------------\n");
+	fprintf(f, "\n");
+	fprintf(f, "Date:               %s", ctime(&rawtime));
+	fprintf(f, "Build Version:      " JK2MV_VERSION "\n");
+#if defined(PORTABLE)
+	fprintf(f, "Build Type:         Portable\n");
+#endif
+	fprintf(f, "Build Date:         " __DATE__ " " __TIME__ "\n");
+	fprintf(f, "Build Arch:         " CPUSTRING "\n");
+
+	fprintf(f, "\n");
+	fprintf(f, "\n");
+
+	fprintf(f, "---Callstack----------------------------\n");
+	MVStackWalker sw(f);
+	sw.ShowCallstack();
+
+	fclose(f);
+
+	char *err_msg = va("JK2MV just crashed. :( Sorry for that.\n\n"
+		"A crashlog has been written to the file %s.\n\n"
+		"If you think this needs to be fixed, send this file to the JK2MV developers.", path);
+#ifndef DEDICATED
+	MessageBoxA(NULL, err_msg, "JK2MV Crashed", MB_OK | MB_ICONERROR | MB_TOPMOST);
+#else
+	fprintf(stderr, err_msg);
+#endif
+}
+
+#endif
+
