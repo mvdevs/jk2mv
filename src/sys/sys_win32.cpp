@@ -605,6 +605,8 @@ void Sys_CrashSignalHandler(int signal) {
 	fprintf(f, "Build Version:      " JK2MV_VERSION "\n");
 #if defined(PORTABLE)
 	fprintf(f, "Build Type:         Portable\n");
+#else
+	fprintf(f, "Build Type:         Installed\n");
 #endif
 	fprintf(f, "Build Date:         " __DATE__ " " __TIME__ "\n");
 	fprintf(f, "Build Arch:         " CPUSTRING "\n");
