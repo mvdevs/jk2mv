@@ -45,6 +45,7 @@ set_target_properties(${MVMENU} PROPERTIES PROJECT_LABEL "jk2mvmenu")
 
 if(WIN32)
 	install(TARGETS ${MVMENU} RUNTIME DESTINATION ".")
+	install(FILES $<TARGET_PDB_FILE:${MVMENU}> DESTINATION "." OPTIONAL)
 elseif(APPLE)
 	install(TARGETS ${MVMENU} LIBRARY DESTINATION "${MVMP}.app/Contents/MacOS")
 else()
