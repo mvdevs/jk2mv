@@ -501,6 +501,7 @@ if (BuildMVMP)
 		PRIVATE ${GlobalDefines}
 		PRIVATE $<$<CONFIG:Debug>:${DebugDefines}>
 		PRIVATE $<$<CONFIG:Release>:${ReleaseDefines}>
+		PRIVATE $<$<CONFIG:RelWithDebInfo>:${ReleaseDefines}>
 	)
 
 	set_target_properties(${MVMP} PROPERTIES CXX_STANDARD 11)
@@ -572,6 +573,7 @@ if (BuildMVDED)
 		PRIVATE ${GlobalDefines} ${MVDEDDefines}
 		PRIVATE $<$<CONFIG:Debug>:${DebugDefines}>
 		PRIVATE $<$<CONFIG:Release>:${ReleaseDefines}>
+		PRIVATE $<$<CONFIG:RelWithDebInfo>:${ReleaseDefines}>
 	)
 
 	set_target_properties(${MVDED} PROPERTIES CXX_STANDARD 11)
