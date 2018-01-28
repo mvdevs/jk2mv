@@ -556,7 +556,7 @@ Crash Handling
 
 ==============================================================
 */
-#ifndef _DEBUG
+#if defined(_MSC_VER) && !defined(_DEBUG)
 
 DWORD exception_type;
 std::string callstack_str, modules_str;

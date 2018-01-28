@@ -201,7 +201,7 @@ void Sys_SigHandler(int signal) {
 	sys_signal = signal;
 }
 
-#if defined(WIN32) && !defined(_DEBUG)
+#if defined(_MSC_VER) && !defined(_DEBUG)
 LONG WINAPI Sys_NoteException(EXCEPTION_POINTERS* pExp, DWORD dwExpCode);
 void Sys_WriteCrashlog();
 #endif
@@ -210,7 +210,7 @@ int main(int argc, char* argv[]) {
 	int		i;
 	char	commandLine[MAX_STRING_CHARS] = { 0 };
 
-#if defined(WIN32) && !defined(_DEBUG)
+#if defined(_MSC_VER) && !defined(_DEBUG)
 	__try {
 #endif
 
@@ -272,7 +272,7 @@ int main(int argc, char* argv[]) {
 
 	Com_Quit(sys_signal);
 
-#if defined(WIN32) && !defined(_DEBUG)
+#if defined(_MSC_VER) && !defined(_DEBUG)
 	} __except(Sys_NoteException(GetExceptionInformation(), GetExceptionCode())) {
 		Sys_WriteCrashlog();
 		return 1;
