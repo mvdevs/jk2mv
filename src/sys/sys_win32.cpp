@@ -4,8 +4,16 @@
 #include <io.h>
 #include <shlobj.h>
 #include <Shobjidl.h>
+#include <mv_setup.h>
+#include <signal.h>
+#include <string>
+#include <StackWalker.h>
+#include "con_local.h"
+#include "../qcommon/vm_local.h"
 #include "../qcommon/q_shared.h"
 #include "../qcommon/qcommon.h"
+
+void Sys_CrashSignalHandler(int signal);
 
 char *Sys_GetCurrentUser( void )
 {
@@ -540,3 +548,136 @@ void Sys_SnapVector(vec3_t vec) {
 
 }
 #endif
+
+/*
+==============================================================
+
+Crash Handling
+
+==============================================================
+*/
+#if defined(_MSC_VER) && !defined(_DEBUG)
+
+DWORD exception_type;
+std::string callstack_str, modules_str;
+
+class MVStackWalker : public StackWalker
+{
+public:
+	MVStackWalker() : StackWalker(RetrieveSymbol | RetrieveLine | SymBuildPath, VM_SymbolForCompiledPointer) {}
+protected:
+	virtual void OnOutput(LPCSTR szText) {
+		switch (otype) {
+		case OutputType::OTYPE_MODULE:
+			modules_str.append(szText);
+			break;
+		case OutputType::OTYPE_CALLSTACK:
+			callstack_str.append(szText);
+			break;
+		}
+	}
+
+	virtual void OnDbgHelpErr(LPCSTR szFuncName, DWORD gle, DWORD64 addr) {}
+};
+
+LONG WINAPI Sys_NoteException(EXCEPTION_POINTERS* pExp, DWORD dwExpCode) {
+	callstack_str.clear();
+	modules_str.clear();
+	exception_type = dwExpCode;
+
+	MVStackWalker sw;
+	sw.ShowCallstack(GetCurrentThread(), pExp->ContextRecord);
+
+	return EXCEPTION_EXECUTE_HANDLER;
+}
+
+void Sys_WriteCrashlog() {
+	time_t		rawtime;
+	char		timeStr[32];
+	char		crashlogName[MAX_OSPATH];
+	char		*path;
+	FILE		*f = NULL;
+
+	time(&rawtime);
+	strftime(timeStr, sizeof(timeStr), "%Y-%m-%d_%H-%M-%S", localtime(&rawtime)); // or gmtime
+	Com_sprintf(crashlogName, sizeof(crashlogName), "crashlog-%s.txt", timeStr);
+	path = FS_BuildOSPath(Sys_DefaultHomePath(), crashlogName);
+
+	FS_CreatePath(Sys_DefaultHomePath());
+	f = fopen(path, "wb");
+
+	if (f == NULL) {
+		f = fopen(crashlogName, "wb");
+		path = crashlogName;
+	}
+
+	if (f == NULL) {
+		f = stderr;
+		path = "stderr";
+	}
+
+	fprintf(f, "---JK2MV Crashlog-----------------------\n");
+	fprintf(f, "Date:               %s", ctime(&rawtime));
+	fprintf(f, "Build Version:      " JK2MV_VERSION "\n");
+#if defined(PORTABLE)
+	fprintf(f, "Build Type:         Portable");
+#else
+	fprintf(f, "Build Type:         Installed");
+#endif
+#if defined(DEDICATED)
+	fprintf(f, ", Dedicated\n");
+#else
+	fprintf(f, ", Client\n");
+#endif
+	fprintf(f, "Build Date:         " __DATE__ " " __TIME__ "\n");
+	fprintf(f, "Build Arch:         " CPUSTRING "\n");
+
+	fprintf(f, "\n");
+
+	fprintf(f, "Exception Type: ");
+	switch (exception_type) {
+	case EXCEPTION_ACCESS_VIOLATION:         fprintf(f, "Access Violation"); break;
+	case EXCEPTION_ARRAY_BOUNDS_EXCEEDED:    fprintf(f, "Range Check"); break;
+	case EXCEPTION_BREAKPOINT:               fprintf(f, "Breakpoint"); break;
+	case EXCEPTION_DATATYPE_MISALIGNMENT:    fprintf(f, "Datatype misaligment"); break;
+	case EXCEPTION_ILLEGAL_INSTRUCTION:      fprintf(f, "Illegal instruction"); break;
+	case EXCEPTION_INT_DIVIDE_BY_ZERO:       fprintf(f, "Divide by zero"); break;
+	case EXCEPTION_INT_OVERFLOW:             fprintf(f, "Integer overflow"); break;
+	case EXCEPTION_PRIV_INSTRUCTION:         fprintf(f, "Privileged instruction"); break;
+	case EXCEPTION_STACK_OVERFLOW:           fprintf(f, "Stack overflow"); break;
+	default: fprintf(f, "Unknown (%d)", exception_type);
+	}
+	fprintf(f, "\n");
+
+	fprintf(f, "\n");
+	fprintf(f, "\n");
+
+	fprintf(f, "---Modules------------------------------\n");
+	fprintf(f, modules_str.c_str());
+
+	fprintf(f, "\n");
+	fprintf(f, "\n");
+
+	fprintf(f, "---Callstack----------------------------\n");
+	fprintf(f, callstack_str.c_str());
+
+	fprintf(f, "\n");
+	fprintf(f, "\n");
+
+	fprintf(f, "---Console Log--------------------------\n");
+	ConsoleLogWriteOut(f);
+
+	fclose(f);
+
+	char *err_msg = va("JK2MV just crashed. :( Sorry for that.\n\n"
+		"A crashlog has been written to the file %s.\n\n"
+		"If you think this needs to be fixed, send this file to the JK2MV developers.", path);
+#ifndef DEDICATED
+	MessageBoxA(NULL, err_msg, "JK2MV Crashed", MB_OK | MB_ICONERROR | MB_TOPMOST);
+#else
+	fprintf(stderr, err_msg);
+#endif
+}
+
+#endif
+
