@@ -440,6 +440,7 @@ if (BuildMVMP)
 		set(MVMPWIN32Files
 			"win32/resource.h"
 			"win32/mv.rc"
+			"win32/dpi_scaling.manifest"
 		)
 		source_group("win32" FILES ${MVMPWIN32Files})
 		set(MVMPFiles ${MVMPFiles} ${MVMPWIN32Files})
@@ -489,14 +490,6 @@ if (BuildMVMP)
 		)
 	endif()
 
-	# add DPI awareness manifest
-	if(MSVC)
-		add_custom_command(TARGET ${MVMP} POST_BUILD
-			COMMAND "mt.exe" -manifest \"${CMAKE_CURRENT_SOURCE_DIR}\\win32\\dpi_scaling.manifest\" -inputresource:\"$<TARGET_FILE:${MVMP}>\"\;\#1 -outputresource:\"$<TARGET_FILE:${MVMP}>\"\;\#1
-			COMMENT "Adding manifest..." 
-		)
-	endif()
-	
 	target_compile_definitions(${MVMP}
 		PRIVATE ${GlobalDefines}
 		PRIVATE $<$<CONFIG:Debug>:${DebugDefines}>
