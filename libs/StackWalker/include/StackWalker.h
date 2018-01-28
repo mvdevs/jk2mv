@@ -143,12 +143,18 @@ protected:
     CHAR loadedImageName[STACKWALK_MAX_NAMELEN];
   } CallstackEntry;
 
+  enum OutputType {
+    OTYPE_MODULE,
+    OTYPE_CALLSTACK
+  } otype;
+
   typedef enum CallstackEntryType {firstEntry, nextEntry, lastEntry};
 
   virtual void OnSymInit(LPCSTR szSearchPath, DWORD symOptions, LPCSTR szUserName);
   virtual void OnLoadModule(LPCSTR img, LPCSTR mod, DWORD64 baseAddr, DWORD size, DWORD result, LPCSTR symType, LPCSTR pdbName, ULONGLONG fileVersion);
   virtual void OnCallstackEntry(CallstackEntryType eType, CallstackEntry &entry);
   virtual void OnDbgHelpErr(LPCSTR szFuncName, DWORD gle, DWORD64 addr);
+  virtual void SwitchOutputType(OutputType type);
   virtual void OnOutput(LPCSTR szText);
 
   StackWalkerInternal *m_sw;
