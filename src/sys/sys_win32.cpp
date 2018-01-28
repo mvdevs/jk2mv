@@ -557,7 +557,7 @@ Crash Handling
 */
 #ifndef _DEBUG
 
-std::string callstack_str;
+std::string callstack_str, modules_str;
 
 class MVStackWalker : public StackWalker
 {
@@ -565,8 +565,17 @@ public:
 	MVStackWalker() : StackWalker(RetrieveSymbol | RetrieveLine | SymBuildPath) {}
 protected:
 	virtual void OnOutput(LPCSTR szText) {
-		callstack_str.append(szText);
+		switch (otype) {
+		case OutputType::OTYPE_MODULE:
+			modules_str.append(szText);
+			break;
+		case OutputType::OTYPE_CALLSTACK:
+			callstack_str.append(szText);
+			break;
+		}
 	}
+
+	virtual void OnDbgHelpErr(LPCSTR szFuncName, DWORD gle, DWORD64 addr) {}
 };
 
 LONG WINAPI Sys_NoteException(EXCEPTION_POINTERS* pExp, DWORD dwExpCode) {
@@ -614,6 +623,12 @@ void Sys_WriteCrashlog() {
 #endif
 	fprintf(f, "Build Date:         " __DATE__ " " __TIME__ "\n");
 	fprintf(f, "Build Arch:         " CPUSTRING "\n");
+
+	fprintf(f, "\n");
+	fprintf(f, "\n");
+
+	fprintf(f, "---Modules------------------------------\n");
+	fprintf(f, modules_str.c_str());
 
 	fprintf(f, "\n");
 	fprintf(f, "\n");
