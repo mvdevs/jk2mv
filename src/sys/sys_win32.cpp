@@ -620,9 +620,14 @@ void Sys_WriteCrashlog() {
 	fprintf(f, "Date:               %s", ctime(&rawtime));
 	fprintf(f, "Build Version:      " JK2MV_VERSION "\n");
 #if defined(PORTABLE)
-	fprintf(f, "Build Type:         Portable\n");
+	fprintf(f, "Build Type:         Portable");
 #else
-	fprintf(f, "Build Type:         Installed\n");
+	fprintf(f, "Build Type:         Installed");
+#endif
+#if defined(DEDICATED)
+	fprintf(f, ", Dedicated\n");
+#else
+	fprintf(f, ", Client\n");
 #endif
 	fprintf(f, "Build Date:         " __DATE__ " " __TIME__ "\n");
 	fprintf(f, "Build Arch:         " CPUSTRING "\n");
