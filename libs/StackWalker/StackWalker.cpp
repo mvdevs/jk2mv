@@ -857,13 +857,14 @@ StackWalker::StackWalker(DWORD dwProcessId, HANDLE hProcess)
   this->m_szSymPath = NULL;
   this->m_MaxRecursionCount = 1000;
 }
-StackWalker::StackWalker(int options, LPCSTR szSymPath, DWORD dwProcessId, HANDLE hProcess)
+StackWalker::StackWalker(int options, vm_getsymbol_ptr vm_get_sym, LPCSTR szSymPath, DWORD dwProcessId, HANDLE hProcess)
 {
   this->m_options = options;
   this->m_modulesLoaded = FALSE;
   this->m_hProcess = hProcess;
   this->m_sw = new StackWalkerInternal(this, this->m_hProcess);
   this->m_dwProcessId = dwProcessId;
+  this->m_vm_get_sym = vm_get_sym;
   if (szSymPath != NULL)
   {
     this->m_szSymPath = _strdup(szSymPath);
@@ -1163,7 +1164,17 @@ BOOL StackWalker::ShowCallstack(HANDLE hThread, const CONTEXT *context, PReadPro
       }
       else
       {
-        this->OnDbgHelpErr("SymGetSymFromAddr64", GetLastError(), s.AddrPC.Offset);
+		  const char *qvm_name = m_vm_get_sym((void *)s.AddrPC.Offset);
+		  if (qvm_name)
+		  {
+			  MyStrCpy(csEntry.name, STACKWALK_MAX_NAMELEN, qvm_name);
+			  this->m_sw->pUDSN(qvm_name, csEntry.undName, STACKWALK_MAX_NAMELEN, UNDNAME_NAME_ONLY);
+			  this->m_sw->pUDSN(qvm_name, csEntry.undFullName, STACKWALK_MAX_NAMELEN, UNDNAME_COMPLETE);
+		  }
+		  else
+		  {
+			  this->OnDbgHelpErr("SymGetSymFromAddr64", GetLastError(), s.AddrPC.Offset);
+		  }
       }
 
       // show line number info, NT5.0-method (SymGetLineFromAddr64())

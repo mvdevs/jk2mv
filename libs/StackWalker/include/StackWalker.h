@@ -90,8 +90,11 @@ public:
     OptionsAll = 0x3F
   } StackWalkOptions;
 
+  typedef const char *(*vm_getsymbol_ptr)(void *);
+
   StackWalker(
     int options = OptionsAll, // 'int' is by design, to combine the enum-flags
+    vm_getsymbol_ptr vm_get_sym = NULL,
     LPCSTR szSymPath = NULL, 
     DWORD dwProcessId = GetCurrentProcessId(), 
     HANDLE hProcess = GetCurrentProcess()
@@ -162,6 +165,7 @@ protected:
   DWORD m_dwProcessId;
   BOOL m_modulesLoaded;
   LPSTR m_szSymPath;
+  vm_getsymbol_ptr m_vm_get_sym;
 
   int m_options;
   int m_MaxRecursionCount;
