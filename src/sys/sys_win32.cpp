@@ -557,6 +557,7 @@ Crash Handling
 */
 #ifndef _DEBUG
 
+DWORD exception_type;
 std::string callstack_str, modules_str;
 
 class MVStackWalker : public StackWalker
@@ -580,6 +581,8 @@ protected:
 
 LONG WINAPI Sys_NoteException(EXCEPTION_POINTERS* pExp, DWORD dwExpCode) {
 	callstack_str.clear();
+	modules_str.clear();
+	exception_type = dwExpCode;
 
 	MVStackWalker sw;
 	sw.ShowCallstack(GetCurrentThread(), pExp->ContextRecord);
@@ -613,7 +616,6 @@ void Sys_WriteCrashlog() {
 	}
 
 	fprintf(f, "---JK2MV Crashlog-----------------------\n");
-	fprintf(f, "\n");
 	fprintf(f, "Date:               %s", ctime(&rawtime));
 	fprintf(f, "Build Version:      " JK2MV_VERSION "\n");
 #if defined(PORTABLE)
@@ -623,6 +625,23 @@ void Sys_WriteCrashlog() {
 #endif
 	fprintf(f, "Build Date:         " __DATE__ " " __TIME__ "\n");
 	fprintf(f, "Build Arch:         " CPUSTRING "\n");
+
+	fprintf(f, "\n");
+
+	fprintf(f, "Exception Type: ");
+	switch (exception_type) {
+	case EXCEPTION_ACCESS_VIOLATION:         fprintf(f, "Access Violation"); break;
+	case EXCEPTION_ARRAY_BOUNDS_EXCEEDED:    fprintf(f, "Range Check"); break;
+	case EXCEPTION_BREAKPOINT:               fprintf(f, "Breakpoint"); break;
+	case EXCEPTION_DATATYPE_MISALIGNMENT:    fprintf(f, "Datatype misaligment"); break;
+	case EXCEPTION_ILLEGAL_INSTRUCTION:      fprintf(f, "Illegal instruction"); break;
+	case EXCEPTION_INT_DIVIDE_BY_ZERO:       fprintf(f, "Divide by zero"); break;
+	case EXCEPTION_INT_OVERFLOW:             fprintf(f, "Integer overflow"); break;
+	case EXCEPTION_PRIV_INSTRUCTION:         fprintf(f, "Privileged instruction"); break;
+	case EXCEPTION_STACK_OVERFLOW:           fprintf(f, "Stack overflow"); break;
+	default: fprintf(f, "Unknown (%d)", exception_type);
+	}
+	fprintf(f, "\n");
 
 	fprintf(f, "\n");
 	fprintf(f, "\n");
