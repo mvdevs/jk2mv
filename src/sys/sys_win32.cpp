@@ -9,6 +9,7 @@
 #include <string>
 #include <StackWalker.h>
 #include "con_local.h"
+#include "../qcommon/vm_local.h"
 #include "../qcommon/q_shared.h"
 #include "../qcommon/qcommon.h"
 
@@ -563,7 +564,7 @@ std::string callstack_str, modules_str;
 class MVStackWalker : public StackWalker
 {
 public:
-	MVStackWalker() : StackWalker(RetrieveSymbol | RetrieveLine | SymBuildPath) {}
+	MVStackWalker() : StackWalker(RetrieveSymbol | RetrieveLine | SymBuildPath, VM_SymbolForCompiledPointer) {}
 protected:
 	virtual void OnOutput(LPCSTR szText) {
 		switch (otype) {
