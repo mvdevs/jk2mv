@@ -1261,29 +1261,7 @@ Ghoul2 Insert End
 		return G2API_SetNewOrigin((g2handle_t)args[1], /*(const int)VMA(2)*/args[2]);
 
 	case CG_SP_GETSTRINGTEXTSTRING:
-//	case CG_SP_GETSTRINGTEXT:
-		const char* text;
-
-//		if (args[0] == CG_SP_GETSTRINGTEXT)
-//		{
-//			text = SP_GetStringText( args[1] );
-//		}
-//		else
-		{
-			text = SP_GetStringTextString( VMAS(1) );
-		}
-
-		if ( text[0] )
-		{
-			Q_strncpyz( VMAP(2, char, args[3]), text, args[3] );
-			return qtrue;
-		}
-		else
-		{
-			Q_strncpyz( VMAP(2, char, args[3]), "??", args[3] );
-			return qfalse;
-		}
-		break;
+		return SP_VMGetStringText(VMAS(1), VMAP(2, char, args[3]), args[3]);
 
 	case CG_SP_REGISTER:
 		return !!SP_Register(VMAS(1), SP_REGISTER_CLIENT);

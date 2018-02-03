@@ -509,29 +509,7 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 	case SP_REGISTER_SERVER_CMD:
 		return SP_RegisterServer( VMAS(1) );
 	case SP_GETSTRINGTEXTSTRING:
-		//return (int)SP_GetStringTextString((char *)VMA(1));
-		const char* text;
-
-//		if (args[0] == CG_SP_GETSTRINGTEXT)
-//		{
-//			text = SP_GetStringText( args[1] );
-//		}
-//		else
-		{
-			text = SP_GetStringTextString( VMAS(1) );
-		}
-
-		if ( text[0] )
-		{
-			Q_strncpyz( VMAP(2, char, args[3]), text, args[3] );
-			return qtrue;
-		}
-		else
-		{
-			Q_strncpyz( VMAP(2, char, args[3]), "??", args[3] );
-			return qfalse;
-		}
-		break;
+		return SP_VMGetStringText( VMAS(1), VMAP(2, char, args[3]), args[3] );
 
 	case G_ROFF_CLEAN:
 		return theROFFSystem.Clean(qfalse);

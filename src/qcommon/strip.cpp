@@ -1691,6 +1691,30 @@ const char *SP_GetStringTextString(const char *Reference)
 	return SP_GetStringText(index);
 }
 
+const qboolean SP_VMGetStringText(const char *Reference, char *dst, size_t dstsize)
+{
+	if (dstsize <= 0)
+	{
+		return qfalse;
+	}
+
+	int index = SP_GetStringID(Reference);
+
+	if (index != -1)
+	{
+		cStringsSingle	*string = SP_GetString(index);;
+		char			*value = string->GetText();;
+
+		if (value)
+		{
+			Q_strncpyz(dst, value, dstsize);
+			return qtrue;
+		}
+	}
+
+	Q_strncpyz(dst, "??", dstsize);
+	return qfalse;
+}
 
 static void SP_UpdateLanguage(void)
 {

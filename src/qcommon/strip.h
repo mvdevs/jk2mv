@@ -299,6 +299,7 @@ cStringsSingle			*SP_GetString(unsigned short ID);
 cStringsSingle			*SP_GetString(const char *Reference);
 const char				*SP_GetStringText(unsigned short ID);
 const char				*SP_GetStringTextString(const char *Reference);
+const qboolean			SP_VMGetStringText(const char *Reference, char *dst, size_t dstsize);
 
 // Initialization
 void					SP_Init(void);
