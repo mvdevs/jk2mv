@@ -341,8 +341,8 @@ intptr_t QDECL VM_Call(vm_t *vm, int callnum, ...);
 
 void	VM_Debug( int level );
 
-void	*VM_ArgPtr( int syscall, intptr_t intValue, uint32_t size );
-void	*VM_ArgArray( int syscall, intptr_t intValue, uint32_t size, uint32_t num );
+void	*VM_ArgPtr( int syscall, intptr_t intValue, int32_t size );
+void	*VM_ArgArray( int syscall, intptr_t intValue, uint32_t size, int32_t num );
 char	*VM_ArgString( int syscall, intptr_t intValue );
 intptr_t	VM_strncpy( intptr_t dest, intptr_t src, intptr_t size );
 void	VM_LocateGameDataCheck( const void *data, int entitySize, int num_entities );

@@ -847,7 +847,7 @@ void VM_Forced_Unload_Done(void) {
 	forced_unload = 0;
 }
 
-void *VM_ArgPtr( int syscall, intptr_t intValue, uint32_t size ) {
+void *VM_ArgPtr( int syscall, intptr_t intValue, int32_t size ) {
 	if ( currentVM->entryPoint ) {
 		return (void *) intValue;
 	}
@@ -858,14 +858,16 @@ void *VM_ArgPtr( int syscall, intptr_t intValue, uint32_t size ) {
 	// don't drop on overflow for compatibility reasons
 	intValue &= currentVM->dataMask;
 
-	if ( size > (uint32_t)currentVM->dataMask - intValue + 1 ) {
+	// Disregarding integer overflows:
+	// if ( size < 0 || currentVM->dataMask < intValue + size - 1 )
+	if ( (uint32_t)size > (uint32_t)(currentVM->dataMask - intValue + 1) ) {
 		Com_Error( ERR_DROP, "VM_ArgPtr: memory overflow in syscall %d (%s)", syscall, currentVM->name );
 	}
 
 	return (void *)(currentVM->dataBase + intValue);
 }
 
-void *VM_ArgArray( int syscall, intptr_t intValue, uint32_t size, uint32_t num ) {
+void *VM_ArgArray( int syscall, intptr_t intValue, uint32_t size, int32_t num ) {
 	if ( currentVM->entryPoint ) {
 		return (void *) intValue;
 	}
@@ -876,7 +878,10 @@ void *VM_ArgArray( int syscall, intptr_t intValue, uint32_t size, uint32_t num )
 	// don't drop on overflow for compatibility reasons
 	intValue &= currentVM->dataMask;
 
-	if ( (uint64_t) num * size > (uint64_t)currentVM->dataMask - intValue + 1 ) {
+	// Disregarding integer overflows:
+	// if ( size * num < 0 || currentVM->dataMask < intValue + size * num - 1 )
+	int64_t bytes = (int64_t)size * (int64_t)num;
+	if ( (uint64_t)bytes > (uint64_t)(currentVM->dataMask - intValue + 1) ) {
 		Com_Error( ERR_DROP, "VM_ArgArray: memory overflow in syscall %d (%s)", syscall, currentVM->name );
 	}
 
