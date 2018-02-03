@@ -848,10 +848,6 @@ void VM_Forced_Unload_Done(void) {
 }
 
 void *VM_ArgPtr( int syscall, intptr_t intValue, uint32_t size ) {
-	// currentVM is missing on reconnect
-	if ( !currentVM ) {
-		return NULL;
-	}
 	if ( currentVM->entryPoint ) {
 		return (void *) intValue;
 	}
@@ -870,10 +866,6 @@ void *VM_ArgPtr( int syscall, intptr_t intValue, uint32_t size ) {
 }
 
 void *VM_ArgArray( int syscall, intptr_t intValue, uint32_t size, uint32_t num ) {
-	// currentVM is missing on reconnect
-	if ( !currentVM ) {
-		return NULL;
-	}
 	if ( currentVM->entryPoint ) {
 		return (void *) intValue;
 	}
@@ -892,10 +884,6 @@ void *VM_ArgArray( int syscall, intptr_t intValue, uint32_t size, uint32_t num )
 }
 
 char *VM_ArgString( int syscall, intptr_t intValue ) {
-	// currentVM is missing on reconnect
-	if ( !currentVM ) {
-		return NULL;
-	}
 	if ( currentVM->entryPoint ) {
 		return (char *) intValue;
 	}
@@ -950,10 +938,6 @@ char *VM_ExplicitArgString( vm_t *vm, intptr_t intValue ) {
 }
 
 intptr_t VM_strncpy( intptr_t dest, intptr_t src, intptr_t size ) {
-	// currentVM is missing on reconnect
-	if ( !currentVM ) {
-		return 0;
-	}
 	if ( currentVM->entryPoint ) {
 		return (intptr_t) strncpy( (char *)dest, (const char *)src, size );
 	}
@@ -982,10 +966,6 @@ intptr_t VM_strncpy( intptr_t dest, intptr_t src, intptr_t size ) {
 // needed because G_LOCATE_GAME_DATA and MVAPI_LOCATE_GAME_DATA update
 // the same sv.num_entities variable
 void VM_LocateGameDataCheck( const void *data, int entitySize, int num_entities ) {
-	// currentVM is missing on reconnect
-	if ( !currentVM ) {
-		return;
-	}
 	if ( !data ) {
 		return;
 	}
