@@ -583,10 +583,9 @@ Com_StringContains
 ============
 */
 static const char *Com_StringContains(const char *str1, const char *str2, int casesensitive) {
-	ptrdiff_t	len, i;
-	size_t		j;
+	int		len, i, j;
 
-	len = strlen(str1) - strlen(str2);
+	len = Q_strlen(str1) - Q_strlen(str2);
 	for (i = 0; i <= len; i++, str1++) {
 		for (j = 0; str2[j]; j++) {
 			if (casesensitive) {
