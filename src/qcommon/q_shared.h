@@ -1087,8 +1087,8 @@ char	*Q_strupr( char *s1 );
 char	*Q_strrchr( const char* string, int c );
 
 // buffer size safe library replacements
-void	Q_strncpyz( char *dest, const char *src, size_t destsize );
-void	Q_strcat( char *dest, size_t size, const char *src );
+void	Q_strncpyz( char *dest, const char *src, int destsize );
+void	Q_strcat( char *dest, int size, const char *src );
 
 // strlen that discounts Quake color sequences
 int Q_PrintStrlen( const char *string, qboolean use102color );
