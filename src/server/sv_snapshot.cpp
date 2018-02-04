@@ -482,8 +482,8 @@ static void SV_BuildClientSnapshot( client_t *client ) {
 		// tricky but works atleast on x86
 		playerState15_t *ps15 = (playerState15_t *)ps;
 
-		memcpy(&frame->ps, ps15, (((size_t)&ps15->saberIndex) - (size_t)ps15));
-		memcpy(&frame->ps.saberIndex, &ps15->saberIndex, ((size_t)&(ps15)[1] - (size_t)&ps15->saberIndex));
+		memcpy(&frame->ps, ps15, ((char *)&ps15->saberIndex) - (char *)ps15);
+		memcpy(&frame->ps.saberIndex, &ps15->saberIndex, (char *)&(ps15)[1] - (char *)&ps15->saberIndex);
 	}
 
 

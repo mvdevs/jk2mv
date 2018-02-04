@@ -196,8 +196,8 @@ clSnapshot15_t *CL_GetSnapshot15from16(clSnapshot_t *snapshot) {
 	retn.serverCommandNum = snapshot->serverCommandNum;
 
 	// tricky but works atleast on x86
-	memcpy(&retn.ps, &snapshot->ps, (((size_t)&snapshot->ps.saberIndex) - (size_t)&snapshot->ps));
-	memcpy(&retn.ps.saberIndex, &snapshot->ps.saberIndex, ((size_t)&(&snapshot->ps)[1] - (size_t)&snapshot->ps.saberIndex));
+	memcpy(&retn.ps, &snapshot->ps, ((char *)&snapshot->ps.saberIndex) - (char *)&snapshot->ps);
+	memcpy(&retn.ps.saberIndex, &snapshot->ps.saberIndex, (char *)&(&snapshot->ps)[1] - (char *)&snapshot->ps.saberIndex);
 
 	return &retn;
 }
