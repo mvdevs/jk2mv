@@ -788,7 +788,11 @@ Q_strncpyz
 Safe strncpy that ensures a trailing zero
 =============
 */
-void Q_strncpyz(char *dest, const char *src, size_t destsize) {
+void Q_strncpyz(char *dest, const char *src, int destsize) {
+	if (destsize < 1) {
+		Com_Error(ERR_FATAL, "Q_strncpyz: destsize < 1");
+	}
+
 	strncpy(dest, src, destsize - 1);
 	dest[destsize - 1] = 0;
 }
@@ -893,11 +897,17 @@ char *Q_strupr(char *s1) {
 
 
 // never goes past bounds or leaves without a terminating 0
-void Q_strcat(char *dest, size_t size, const char *src) {
+void Q_strcat(char *dest, int size, const char *src) {
 	size_t		l1;
 
 	l1 = strlen(dest);
-	Q_strncpyz(dest + l1, src, size - l1);
+	if (l1 > INT_MAX) {
+		Com_Error(ERR_FATAL, "Q_strcat: oversize dest string");
+	}
+	if (l1 >= (size_t)size) {
+		Com_Error(ERR_FATAL, "Q_strcat: already overflowed");
+	}
+	Q_strncpyz(dest + l1, src, size - (int)l1);
 }
 
 
