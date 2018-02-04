@@ -1080,7 +1080,7 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 			return ret;
 		}
 		case G_MVAPI_GET_CONNECTIONLESSPACKET:
-			return (int)MVAPI_GetConnectionlessPacket(VMAV(1, mvaddr_t), VMAP(2, char, (unsigned int)args[3]), (unsigned int)args[3]);
+			return (int)MVAPI_GetConnectionlessPacket(VMAV(1, mvaddr_t), VMAP(2, char, args[3]), args[3]);
 		case G_MVAPI_SEND_CONNECTIONLESSPACKET:
 			return (int)MVAPI_SendConnectionlessPacket(VMAV(1, const mvaddr_t), VMAS(2));
 		case MVAPI_CONTROL_FIXES:
