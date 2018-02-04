@@ -28,8 +28,8 @@ char *demoAutoFormat(const char* name) {
 	const	char *format;
 	qboolean haveTag = qfalse;
 	static char	outBuf[512];
-	size_t		outIndex = 0;
-	size_t		outLeft = sizeof(outBuf) - 1;
+	int			outIndex = 0;
+	int			outLeft = sizeof(outBuf) - 1;
 	
 	int t = 0;
 	char timeStamps[MAX_QPATH] = "";
