@@ -1056,16 +1056,20 @@ size_t Q_vsnprintf(char *str, size_t size, const char *format, va_list ap) {
 }
 #endif
 
-void QDECL Com_sprintf(char *dest, size_t size, const char *fmt, ...) {
+void QDECL Com_sprintf(char *dest, int size, const char *fmt, ...) {
 	size_t		len;
 	va_list		argptr;
+
+	if (size < 1) {
+		Com_Error(ERR_FATAL, "Com_sprintf: size < 1");
+	}
 
 	va_start(argptr, fmt);
 	len = Q_vsnprintf(dest, size, fmt, argptr);
 	va_end(argptr);
 
-	if (len >= size) {
-		Com_Printf("Com_sprintf: overflow of %zu in %zu\n", len, size);
+	if (len >= (size_t)size) {
+		Com_Printf("Com_sprintf: overflow of %zu in %d\n", len, size);
 	}
 }
 
