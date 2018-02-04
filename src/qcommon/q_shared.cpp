@@ -895,15 +895,28 @@ char *Q_strupr(char *s1) {
 	return s1;
 }
 
+/*
+=============
+Q_strlen
+
+Safe strlen with int result
+=============
+*/
+int Q_strlen(const char *s) {
+	size_t l = strlen(s);
+
+	if (l > INT_MAX) {
+		Com_Error(ERR_FATAL, "Q_strlen: oversize string");
+	}
+
+	return l;
+}
 
 // never goes past bounds or leaves without a terminating 0
 void Q_strcat(char *dest, int size, const char *src) {
 	size_t		l1;
 
-	l1 = strlen(dest);
-	if (l1 > INT_MAX) {
-		Com_Error(ERR_FATAL, "Q_strcat: oversize dest string");
-	}
+	l1 = Q_strlen(dest);
 	if (l1 >= (size_t)size) {
 		Com_Error(ERR_FATAL, "Q_strcat: already overflowed");
 	}
