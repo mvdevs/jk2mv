@@ -574,7 +574,7 @@ MVAPI_GetConnectionlessPacket
 */
 mvaddr_t curraddr;
 char currmessage[MAX_STRING_CHARS];
-qboolean MVAPI_GetConnectionlessPacket(mvaddr_t *addr, char *buf, unsigned int bufsize) {
+qboolean MVAPI_GetConnectionlessPacket(mvaddr_t *addr, char *buf, int bufsize) {
 	if (!mv_apiConnectionless->integer) {
 		return qtrue;
 	}
