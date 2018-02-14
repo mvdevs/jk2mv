@@ -470,7 +470,7 @@ void IN_Init( void *windowData )
 	Com_DPrintf( "\n------- Input Initialization -------\n" );
 
 	// joystick variables
-	in_keyboardDebug = Cvar_Get( "in_keyboardDebug", "0", CVAR_ARCHIVE | CVAR_GLOBAL);
+	in_keyboardDebug = Cvar_Get( "in_keyboardDebug", "0", CVAR_TEMP );
 
 	in_joystick = Cvar_Get( "in_joystick", "0", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH );
 
