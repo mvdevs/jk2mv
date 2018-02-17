@@ -22,10 +22,10 @@
 #include <map>
 // #include <algorithm>
 
-// #ifdef assert
-// #	undef assert
-// #	define assert(x) ((void)0)
-// #endif
+#ifdef assert
+#	undef assert
+#	define assert(x) ((void)0)
+#endif
 
 extern mdxaBone_t		worldMatrix;
 extern mdxaBone_t		worldMatrixInv;
