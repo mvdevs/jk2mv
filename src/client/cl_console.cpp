@@ -255,9 +255,14 @@ void Con_CheckResize (void)
 	}
 	else
 	{
-		float	scale = cls.glconfig.displayDPI / 96.0f; 
-		scale *= (con_scale && con_scale->value > 0.0f) ? con_scale->value : 1.0f;
+		float	scale = cls.glconfig.displayDPI / 96.0f *
+			((con_scale && con_scale->value > 0.0f) ? con_scale->value : 1.0f);
 		int		charWidth = scale * SMALLCHAR_WIDTH;
+
+		if (charWidth < 1) {
+			charWidth = 1;
+			scale = 1.0f / SMALLCHAR_WIDTH;
+		}
 
 		width = (cls.glconfig.vidWidth / charWidth) - 2;
 
@@ -265,11 +270,6 @@ void Con_CheckResize (void)
 			width = 20;
 			charWidth = cls.glconfig.vidWidth / 22;
 			scale = charWidth / SMALLCHAR_WIDTH;
-		}
-		if (charWidth == 0) {
-			charWidth = 1;
-			width = cls.glconfig.vidWidth - 2;
-			scale = 1.0f / SMALLCHAR_WIDTH;
 		}
 
 		if (con_timestamps->integer) {
