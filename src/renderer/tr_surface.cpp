@@ -1609,6 +1609,7 @@ void RB_SurfaceEntity( surfaceType_t *surfType ) {
 		{
 			int				i, count, start;
 			trRefEntity_t	tempEnt = *backEnd.currentEntity;
+			trRefEntity_t	*curEnt = backEnd.currentEntity;
 
 			start = backEnd.currentEntity->e.uRefEnt.uMini.miniStart;
 			count = backEnd.currentEntity->e.uRefEnt.uMini.miniCount;
@@ -1619,6 +1620,7 @@ void RB_SurfaceEntity( surfaceType_t *surfType ) {
 				memcpy(&backEnd.currentEntity->e, &backEnd.refdef.miniEntities[start+i], sizeof(backEnd.refdef.miniEntities[start+i]));
 				RB_SurfaceEntity(surfType);
 			}
+			backEnd.currentEntity = curEnt;
 		}
 		break;
 	default:
