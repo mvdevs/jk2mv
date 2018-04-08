@@ -2720,6 +2720,19 @@ void CL_SetModel_f( void ) {
 	}
 }
 
+static void CL_SetTeamModel_f( void ) {
+	char	*arg;
+	char	name[256];
+
+	arg = Cmd_Argv( 1 );
+	if (arg[0]) {
+		Cvar_Set( "team_model", arg );
+	} else {
+		Cvar_VariableStringBuffer( "team_model", name, sizeof(name) );
+		Com_Printf("team_model is set to %s\n", name);
+	}
+}
+
 void CL_SetForcePowers_f( void ) {
 	return;
 }
@@ -2886,6 +2899,8 @@ void CL_Init( void ) {
 	Cmd_AddCommand ("fs_referencedList", CL_ReferencedPK3List_f );
 	Cmd_AddCommand ("model", CL_SetModel_f );
 	Cmd_SetCommandCompletionFunc( "model", CL_CompleteModelName );
+	Cmd_AddCommand ("team_model", CL_SetTeamModel_f );
+	Cmd_SetCommandCompletionFunc( "team_model", CL_CompleteModelName );
 	Cmd_AddCommand ("forcepowers", CL_SetForcePowers_f );
 	Cmd_AddCommand ("saveDemo", demoAutoSave_f);
 	Cmd_AddCommand ("saveDemoLast", demoAutoSaveLast_f);
