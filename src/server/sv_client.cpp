@@ -315,8 +315,6 @@ gotnewcl:
 		Com_Printf("Server restored from hibernation\n");
 	}
 
-	SVC_WhitelistAdr( from );
-
 	SV_UserinfoChanged( newcl );
 
 	// send the connect packet to the client
@@ -558,6 +556,8 @@ void SV_ClientEnterWorld( client_t *client, usercmd_t *cmd ) {
 
 	Com_DPrintf( "Going from CS_PRIMED to CS_ACTIVE for %s\n", client->name );
 	client->state = CS_ACTIVE;
+
+	SVC_WhitelistAdr( client->netchan.remoteAddress );
 
 	// set up the entity for the client
 	clientNum = client - svs.clients;
