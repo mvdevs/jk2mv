@@ -613,6 +613,10 @@ const char	**FS_ListFiles( const char *directory, const char *extension, int *nu
 // directory should not have either a leading or trailing /
 // if extension is "/", only subdirectories will be returned
 // the returned files will not include any directories or /
+const char	**FS_ListFiles2( const char *directory, const char *extension, int *numfiles );
+// directory argument is required to be an actual directory, not a
+// path prefix. If directory argument has a trailing / then files one
+// level below are listed too.
 
 void	FS_FreeFileList( const char **list );
 

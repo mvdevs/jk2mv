@@ -2189,9 +2189,13 @@ FS_ListFilteredFiles
 
 Returns a uniqued list of files that match the given criteria
 from all search paths
+
+id Tech 3 FS_ListFilteredFiles used path argument as a file path
+prefix, rather than directory (but only for files in paks!). When
+compat is true, this behaviour is reproduced.
 ===============
 */
-static const char **FS_ListFilteredFiles( const char *path, const char *extension, char *filter, int *numfiles ) {
+static const char **FS_ListFilteredFiles( const char *path, const char *extension, char *filter, int *numfiles, qboolean compat ) {
 	int				nfiles;
 	const char		**listCopy;
 	const char		*list[MAX_FOUND_FILES];
@@ -2269,10 +2273,13 @@ static const char **FS_ListFilteredFiles( const char *path, const char *extensio
 					nfiles = FS_AddFileToList( name, list, nfiles );
 				}
 				else {
-
 					zpathLen = FS_ReturnPath(name, zpath, &depth);
 
 					if ( (depth-pathDepth)>2 || pathLength > zpathLen || Q_stricmpn( name, path, pathLength ) ) {
+						continue;
+					}
+
+					if ( !compat && name[pathLength] != '/' ) {
 						continue;
 					}
 
@@ -2343,7 +2350,16 @@ FS_ListFiles
 =================
 */
 const char **FS_ListFiles( const char *path, const char *extension, int *numfiles ) {
-	return FS_ListFilteredFiles( path, extension, NULL, numfiles );
+	return FS_ListFilteredFiles( path, extension, NULL, numfiles, qtrue );
+}
+
+/*
+=================
+FS_ListFiles2
+=================
+*/
+const char **FS_ListFiles2( const char *path, const char *extension, int *numfiles ) {
+	return FS_ListFilteredFiles( path, extension, NULL, numfiles, qfalse );
 }
 
 /*
@@ -2620,7 +2636,7 @@ void FS_Dir_f( void ) {
 	Com_Printf( "Directory of %s %s\n", path, extension );
 	Com_Printf( "---------------\n" );
 
-	dirnames = FS_ListFiles( path, extension, &ndirs );
+	dirnames = FS_ListFiles2( path, extension, &ndirs );
 
 	for ( i = 0; i < ndirs; i++ ) {
 		Com_Printf( "%s\n", dirnames[i] );
@@ -2742,7 +2758,7 @@ void FS_NewDir_f( void ) {
 
 	Com_Printf( "---------------\n" );
 
-	dirnames = FS_ListFilteredFiles( "", "", filter, &ndirs );
+	dirnames = FS_ListFilteredFiles( "", "", filter, &ndirs, qtrue );
 
 	FS_SortFileList(dirnames, ndirs);
 
@@ -4014,7 +4030,7 @@ void FS_FilenameCompletion( const char *dir, const char *ext, qboolean stripExt,
 	else
 		Q_strncpyz(realExt, ext, sizeof(realExt));
 
-	filenames = FS_ListFilteredFiles( dir, realExt, NULL, &nfiles );
+	filenames = FS_ListFilteredFiles( dir, realExt, NULL, &nfiles, qfalse );
 
 	FS_SortFileList( filenames, nfiles );
 
