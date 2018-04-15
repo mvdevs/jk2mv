@@ -272,22 +272,6 @@ void Cmd_Echo_f (void)
 
 
 /*
-============
-Cmd_List_f
-============
-*/
-void Cmd_Silent_f(void)
-{
-	Com_BeginRedirect(NULL, 0, NULL, qtrue);
-
-	Cmd_DropArg(0);
-	Cmd_Execute();
-
-	Com_EndRedirect();
-}
-
-
-/*
 =============================================================================
 
 					COMMAND EXECUTION
@@ -625,16 +609,6 @@ void Cmd_CompleteCfgName( char *args, int argNum ) { // for auto-complete (copie
 	}
 }
 
-static void Cmd_CompleteSilent( char *args, int argNum )
-{
-		// Skip "silent "
-		char *p = Com_SkipTokens( args, 1, " " );
-
-		if( p > args )
-			Field_CompleteCommand( p, qtrue, qtrue, qtrue );
-}
-
-
 /*
 ============
 Cmd_Init
@@ -648,8 +622,6 @@ void Cmd_Init (void) {
 	Cmd_SetCommandCompletionFunc( "vstr", Cvar_CompleteCvarName );
 	Cmd_AddCommand ("echo",Cmd_Echo_f);
 	Cmd_AddCommand ("wait", Cmd_Wait_f);
-	Cmd_AddCommand ("silent", Cmd_Silent_f);
-	Cmd_SetCommandCompletionFunc( "silent", Cmd_CompleteSilent );
 }
 
 // for auto-complete (copied from OpenJK)

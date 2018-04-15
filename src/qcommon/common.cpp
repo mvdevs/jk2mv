@@ -134,12 +134,8 @@ static void Com_Puts_Ext( qboolean extendedColors, const char *msg )
 		Q_strcat(rd_buffer, rd_buffersize, msg);
 	}
 
-	if ( rd_silent ) {
-		return;
-	}
-
 	// echo to console if we're not a dedicated server
-	if ( com_dedicated && !com_dedicated->integer ) {
+	if ( com_dedicated && !com_dedicated->integer && !rd_silent ) {
 		CL_ConsolePrint( msg, extendedColors );
 	}
 

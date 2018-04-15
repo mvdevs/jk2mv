@@ -1173,20 +1173,32 @@ void CL_Rcon_f( void ) {
 }
 
 /*
+============
+CL_Silent_f
+============
+*/
+void CL_Silent_f(void)
+{
+	Com_BeginRedirect(NULL, 0, NULL, qtrue);
+
+	Cmd_DropArg(0);
+	Cmd_Execute();
+
+	Com_EndRedirect();
+}
+
+/*
 ==================
-CL_CompleteRcon
+CL_CompleteRedirect
 ==================
 */
-static void CL_CompleteRcon( char *args, int argNum )
-{ // for auto-complete (copied from OpenJK)
-	if( argNum == 2 )
-	{
-		// Skip "rcon "
-		char *p = Com_SkipTokens( args, 1, " " );
+static void CL_CompleteRedirect( char *args, int argNum )
+{
+	// skip first command
+	char *p = Com_SkipTokens( args, 1, " " );
 
-		if( p > args )
-			Field_CompleteCommand( p, qtrue, qtrue, qtrue );
-	}
+	if( p > args )
+		Field_CompleteCommand( p, qtrue, qtrue, qtrue );
 }
 
 /*
@@ -2890,7 +2902,7 @@ void CL_Init( void ) {
 	Cmd_AddCommand ("localservers", CL_LocalServers_f);
 	Cmd_AddCommand ("globalservers", CL_GlobalServers_f);
 	Cmd_AddCommand ("rcon", CL_Rcon_f);
-	Cmd_SetCommandCompletionFunc( "rcon", CL_CompleteRcon );
+	Cmd_SetCommandCompletionFunc( "rcon", CL_CompleteRedirect );
 	Cmd_AddCommand ("setenv", CL_Setenv_f );
 	Cmd_AddCommand ("ping", CL_Ping_f );
 	Cmd_AddCommand ("serverstatus", CL_ServerStatus_f );
@@ -2906,6 +2918,8 @@ void CL_Init( void ) {
 	Cmd_AddCommand ("saveDemoLast", demoAutoSaveLast_f);
 	Cmd_AddCommand ("video", CL_Video_f);
 	Cmd_AddCommand ("stopvideo", CL_StopVideo_f);
+	Cmd_AddCommand ("silent", CL_Silent_f);
+	Cmd_SetCommandCompletionFunc( "silent", CL_CompleteRedirect );
 
 	CL_InitRef();
 
