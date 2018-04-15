@@ -333,6 +333,7 @@ Q_NORETURN void QDECL Com_Error( errorParm_t code, const char *fmt, ... ) {
 		CL_FlushMemory( qtrue );
 		VM_Forced_Unload_Done();
 		com_errorEntered = qfalse;
+		Com_EndRedirect();
 		longjmp(abortframe, -1);
 		break;
 	case ERR_DROP:
@@ -348,6 +349,7 @@ Q_NORETURN void QDECL Com_Error( errorParm_t code, const char *fmt, ... ) {
 		CL_FlushMemory( qtrue );
 		VM_Forced_Unload_Done();
 		com_errorEntered = qfalse;
+		Com_EndRedirect();
 		longjmp(abortframe, -1);
 	default:
 		VM_Forced_Unload_Start();
