@@ -550,7 +550,7 @@ void SVC_RemoteCommand( netadr_t from, msg_t *msg ) {
 
 	// start redirecting all print outputs to the packet
 	svs.redirectAddress = from;
-	Com_BeginRedirect (sv_outputbuf, SV_OUTPUTBUF_LENGTH, SV_FlushRedirect);
+	Com_BeginRedirect (sv_outputbuf, SV_OUTPUTBUF_LENGTH, SV_FlushRedirect, qfalse);
 
 	if ( !strlen( sv_rconPassword->string ) ) {
 		Com_Printf ("No rconpassword set.\n");

@@ -92,12 +92,14 @@ void CIN_CloseAllVideos();
 
 //============================================================================
 
+static qboolean	rd_silent;
 static char		*rd_buffer;
 static size_t	rd_buffersize;
 static void		(*rd_flush)( char *buffer );
 
-void Com_BeginRedirect (char *buffer, size_t buffersize, void (*flush)( char *) )
+void Com_BeginRedirect (char *buffer, size_t buffersize, void (*flush)( char *), qboolean silent)
 {
+	rd_silent = silent;
 	if (!buffer || !buffersize || !flush)
 		return;
 	rd_buffer = buffer;
@@ -113,6 +115,7 @@ void Com_EndRedirect (void)
 		rd_flush(rd_buffer);
 	}
 
+	rd_silent = qfalse;
 	rd_buffer = NULL;
 	rd_buffersize = 0;
 	rd_flush = NULL;
@@ -129,6 +132,10 @@ static void Com_Puts_Ext( qboolean extendedColors, const char *msg )
 		}
 		Q_strcat(rd_buffer, rd_buffersize, S_COLOR_WHITE);
 		Q_strcat(rd_buffer, rd_buffersize, msg);
+	}
+
+	if ( rd_silent ) {
+		return;
 	}
 
 	// echo to console if we're not a dedicated server
