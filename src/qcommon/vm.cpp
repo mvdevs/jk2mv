@@ -664,6 +664,8 @@ vm_t *VM_Restart(vm_t *vm)
 	// free the original file
 	FS_FreeFile(header);
 
+	vm->gameversion = MV_GetCurrentGameversion();
+
 	return vm;
 }
 
