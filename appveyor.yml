@@ -1,6 +1,5 @@
 os: Visual Studio 2015
-configuration: Release
-version: jk2mv-{branch}-{build}
+version: jk2mv-{build}
 
 environment:
   matrix:
@@ -13,6 +12,9 @@ install:
 
 build_script:
   - ps: |
+      $version = git describe --tags
+      Update-AppveyorBuild -Version $version
+  
       cd build
       mkdir appveyor
       cd appveyor
@@ -39,9 +41,22 @@ build_script:
       Get-ChildItem "*.zip" | % { Push-AppveyorArtifact $_.Name }
 
 deploy:
-  - provider: FTP
-    protocol: ftp
-    host: jk2mv.org
-    username: defaultcideploy
-    password:
-      secure: TP9rWoVLFDsn7qTz5CxzMA==
+  - provider: BinTray
+    username: ouned
+    api_key:
+      secure: qpzkDGuG2cXmXNsOuBfZxaR2Bsj9AAYHx533UfRQWPSvYMsGxiTd8Kx2851Ey957
+    subject: mvdevs
+    repo: jk2mv
+    package: jk2mv-dev
+    publish: true
+    override: true
+    explode: false
+    on:
+      appveyor_repo_tag: false
+
+  - provider: GitHub
+    description: ''
+    auth_token:
+      secure: QZNpf5euIq4+cVLazVgYHe1EpbW3en/IOaNHmr9QNHa+TDJW5GWcjp/XDa/gnU42
+    on:
+      appveyor_repo_tag: true

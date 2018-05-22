@@ -48,15 +48,6 @@ if(BuildMVSDK AND NOT EXISTS "${CMAKE_SOURCE_DIR}/src/mvsdk/CMakeLists.txt")
     set(BuildMVSDK OFF)
 endif()
 
-if(NOT APPLE AND NOT WIN32)
-	option(BuildPackDEB "Whether to create the DEB package" OFF)
-	option(BuildPackRPM "Whether to create the RPM package" OFF)
-	
-	if ((BuildPackDEB OR BuildPackRPM) AND BuildPortableVersion)
-		message(FATAL_ERROR "Packaging the portable version is not supported.")
-	endif()
-endif()
-
 option(LegacyHTTPDownloads "Activate this for legacy JK2MF http downloads. Bad code due to bad implementation in jk2mf" OFF)
 option(NTClientWorkaround "Disable loading of NT-Mod pk3 files to prevent crashing the game" ON)
 
@@ -346,30 +337,32 @@ if(WIN32)
 		)
 		string(REGEX REPLACE "/" "\\\\\\\\" CPACK_NSIS_INCLFILE "${CMAKE_BINARY_DIR}/res/NSIS.definitions.nsh")
 	endif()
-	
-	include(CPack)
 elseif(APPLE)
 	set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_FILE_NAME}-macosx-${Architecture}")
 
-	set(CPACK_GENERATOR "DragNDrop")
-	set(CPACK_DMG_FORMAT "UDBZ")
+	if(BuildPortableVersion)
+		set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_FILE_NAME}-portable")
 
-	include(CPack)
+		set(CPACK_GENERATOR "TGZ")
+	else()
+		set(CPACK_GENERATOR "DragNDrop")
+		set(CPACK_DMG_FORMAT "UDBZ")
+	endif()
 else()
 	set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_FILE_NAME}-linux-${Architecture}")
 
-	# DEB
-	if(BuildPackDEB)
+	if(BuildPortableVersion)
+		set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_FILE_NAME}-portable")
+
+		set(CPACK_GENERATOR "TGZ")
+	else()
 		set(CPACK_GENERATOR ${CPACK_GENERATOR} "DEB")
 		set(CPACK_DEBIAN_PACKAGE_NAME "jk2mv") # debian packages are lowercase
 		set(CPACK_DEBIAN_PACKAGE_SECTION "games")
 		set(CPACK_DEBIAN_PACKAGE_HOMEPAGE ${ProjectURL})
 		set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE ${Architecture})
 		set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
-	endif()
 
-	# RPM
-	if(BuildPackRPM)
 		set(CPACK_GENERATOR ${CPACK_GENERATOR} "RPM")
 		set(CPACK_RPM_PACKAGE_NAME "jk2mv")
 		set(CPACK_RPM_PACKAGE_DESCRIPTION "JK2MV (Multi Version) is a modification for Jedi Knight II: Jedi Outcast. It supports all three game versions and comes with various features and optimizations.")
@@ -383,7 +376,7 @@ else()
 			/usr/share/icons/hicolor/256x256 /usr/share/icons/hicolor/256x256/apps
 			/usr/share/icons/hicolor/48x48 /usr/share/icons/hicolor/48x48/apps
 		)
-		
+
 		set(CPACK_RPM_PACKAGE_REQUIRES "glibc, libgcc, libstdc++, SDL2, openal-soft")
 		if(NOT UseInternalZLIB)
 			set(CPACK_RPM_PACKAGE_REQUIRES "${CPACK_RPM_PACKAGE_REQUIRES}, zlib")
@@ -398,11 +391,8 @@ else()
 			set(CPACK_RPM_PACKAGE_REQUIRES "${CPACK_RPM_PACKAGE_REQUIRES}, libpng")
 		endif()
 	endif()
-	
-	if(BuildPackDEB OR BuildPackRPM)
-		include(CPack)
-	endif()
 endif()
+include(CPack)
 
 add_subdirectory(assets)
 add_subdirectory(src)
