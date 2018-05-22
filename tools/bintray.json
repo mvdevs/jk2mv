@@ -14,7 +14,7 @@
 
     "files":
         [
-            {"includePattern": "build/travis/out/([^/]+\\.(deb|rpm|dmg))$", "uploadPattern": "/$1"}
+            {"includePattern": "build/travis/out/([^/]+\\.(deb|rpm|dmg|tar.gz))$", "uploadPattern": "/$1"}
         ],
     "publish": true
 }

@@ -1,8 +1,4 @@
 language: cpp
-sudo: required
-dist: trusty
-services:
-  - docker
 
 notifications:
   irc:
@@ -15,20 +11,30 @@ notifications:
 matrix:
   include:
     - os: linux
-      env: HOST=linux-x86_64-gcc
+      dist: trusty
+      sudo: required
+      env: HOST=linux-x86_64-package
+    - os: linux
+      dist: trusty
+      sudo: required
+      env: HOST=linux-x86_64-portable
     - os: osx
-      env: HOST=macosx-x86_64-clang
+      osx_image: xcode8.3
+      env: HOST=macosx-x86_64-app
+    - os: osx
+      osx_image: xcode8.3
+      env: HOST=macosx-x86_64-portable
 
 before_install: |
   git fetch --unshallow
 
-  if [[ "$HOST" == linux-x86_64-gcc ]]; then
+  if [[ "$HOST" == linux-x86_64-* ]]; then
       docker pull ubuntu:16.04
       docker run --name bc -v $TRAVIS_BUILD_DIR:/jk2mv -td ubuntu:16.04 /bin/bash
   fi
 
 install: |
-  if [[ "$HOST" == linux-x86_64-gcc ]]; then
+  if [[ "$HOST" == linux-* ]]; then
       docker exec bc apt update
       docker exec bc apt -y install git cmake zip rpm debhelper devscripts build-essential libsdl2-dev libgl1-mesa-dev libopenal-dev
   else
@@ -45,18 +51,29 @@ install: |
 script: |
   mkdir $TRAVIS_BUILD_DIR/build/travis
   cd $TRAVIS_BUILD_DIR/build/travis
-  if [[ "$HOST" == linux-x86_64-gcc ]]; then
-      docker exec bc sh -c "cd /jk2mv/build/travis && cmake -DUseInternalPNG=ON -DUseInternalJPEG=ON -DUseInternalZLIB=ON -DUseInternalMiniZip=ON -DBuildPortableVersion=OFF -DBuildPackDEB=ON -DBuildPackRPM=ON ../.."
+
+  if [[ "$HOST" == linux-* ]]; then
+      if [[ "$HOST" == *-portable ]]; then
+          docker exec bc sh -c "cd /jk2mv/build/travis && cmake -DUseInternalLibs=ON -DBuildPortableVersion=ON ../.."
+      else
+          docker exec bc sh -c "cd /jk2mv/build/travis && cmake -DUseInternalLibs=ON -DBuildPortableVersion=OFF ../.."
+      fi
+
       docker exec bc sh -c "cd /jk2mv/build/travis && make"
       docker exec bc sh -c "cd /jk2mv/build/travis && make package"
   else
-      cmake -G "Unix Makefiles" -DUseInternalPNG=ON -DUseInternalJPEG=ON -DUseInternalZLIB=ON -DUseInternalMiniZip=ON -DBuildPortableVersion=OFF ../..
+      if [[ "$HOST" == *-portable ]]; then
+          cmake -G "Unix Makefiles" -DUseInternalLibs=ON -DBuildPortableVersion=ON ../..
+      else
+          cmake -G "Unix Makefiles" -DUseInternalLibs=ON -DBuildPortableVersion=OFF ../..
+      fi
+
       make
       make package
   fi
 
 after_script: |
-  if [[ "$HOST" == linux-x86_64-gcc ]]; then docker stop bc; fi
+  if [[ "$HOST" == linux-* ]]; then docker stop bc; fi
 
 before_deploy: |
   cd $TRAVIS_BUILD_DIR
