@@ -45,7 +45,11 @@ set_target_properties(${MVMENU} PROPERTIES INCLUDE_DIRECTORIES "${MVMENUIncludeD
 set_target_properties(${MVMENU} PROPERTIES PROJECT_LABEL "jk2mvmenu")
 
 if(BuildPortableVersion)
-	install(TARGETS ${MVMENU} LIBRARY DESTINATION ".")
+	if(WIN32)
+		install(TARGETS ${MVMENU} RUNTIME DESTINATION ".")
+	else()
+		install(TARGETS ${MVMENU} LIBRARY DESTINATION ".")
+	endif()
 else()
 	if(WIN32)
 		install(TARGETS ${MVMENU} RUNTIME DESTINATION ".")

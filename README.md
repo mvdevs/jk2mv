@@ -40,8 +40,8 @@ Clone the JK2MV repository including submodules (required if you also want to bu
 		* Fedora: `dnf install git SDL2-devel mesa-libGL-devel openal-soft-devel libjpeg-turbo-devel libpng-devel zlib-devel minizip-devel`
 	* MacOSX: XCode on MacOSX >= 10.6
 		* Configure / Build SDL2:
-			1. `curl -O https://www.libsdl.org/release/SDL2-2.0.7.tar.gz`
-			2. `tar xzf SDL2-2.0.7.tar.gz && cd SDL2-2.0.7/Xcode/SDL`
+			1. `curl -O https://www.libsdl.org/release/SDL2-2.0.8.tar.gz`
+			2. `tar xzf SDL2-2.0.8.tar.gz && cd SDL2-2.0.8/Xcode/SDL`
 			4. `sed -i -e 's/@rpath//g' SDL.xcodeproj/project.pbxproj` (packaging fails otherwise)
 			5. `xcodebuild -configuration Release`
 			6. `mkdir -p ~/Library/Frameworks/`

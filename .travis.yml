@@ -92,7 +92,7 @@ deploy:
 
   - provider: releases
     file_glob: true
-    file: "build/travis/out/*.{deb,rpm,dmg}"
+    file: "build/travis/out/*.{deb,rpm,dmg,tar.gz}"
     api_key:
       secure: "Uo5ezYFbjZRfGZYm3i5dyqZooBr2JcFSp3XQWpFQBbHWXFPZ2DDcgr4LcahuvKhO8660XDh8TS8GdmfslgYEwEARYFSt68lU5cHx85dpuuVRxkhZKFpgZMY6YOMxkzpkJwtZtFWGla784oe5v3X1nlzYp11oxhKkuhwZe0iJsC0="
     skip_cleanup: true
