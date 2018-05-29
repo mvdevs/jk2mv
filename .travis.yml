@@ -32,6 +32,10 @@ before_install: |
       docker pull ubuntu:16.04
       docker run --name bc -v $TRAVIS_BUILD_DIR:/jk2mv -td ubuntu:16.04 /bin/bash
   fi
+  
+  if [[ "$HOST" == macosx-* ]]; then
+      export MACOSX_DEPLOYMENT_TARGET=10.9
+  fi
 
 install: |
   if [[ "$HOST" == linux-* ]]; then
