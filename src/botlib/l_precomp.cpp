@@ -3012,7 +3012,7 @@ void PC_UnreadToken(source_t *source, token_t *token)
 //============================================================================
 void PC_SetIncludePath(source_t *source, char *path)
 {
-	strncpy(source->includepath, path, MAX_PATH);
+	Q_strncpyz(source->includepath, path, MAX_PATH);
 	//add trailing path seperator
 	if (source->includepath[strlen(source->includepath)-1] != '\\' &&
 		source->includepath[strlen(source->includepath)-1] != '/')
@@ -3058,7 +3058,7 @@ source_t *LoadSourceFile(const char *filename)
 	source = (source_t *) GetMemory(sizeof(source_t));
 	Com_Memset(source, 0, sizeof(source_t));
 
-	strncpy(source->filename, filename, MAX_PATH);
+	Q_strncpyz(source->filename, filename, MAX_PATH);
 	source->scriptstack = script;
 	source->tokens = NULL;
 	source->defines = NULL;
@@ -3091,7 +3091,7 @@ source_t *LoadSourceMemory(const char *ptr, int length, const char *name)
 	source = (source_t *) GetMemory(sizeof(source_t));
 	Com_Memset(source, 0, sizeof(source_t));
 
-	strncpy(source->filename, name, MAX_PATH);
+	Q_strncpyz(source->filename, name, MAX_PATH);
 	source->scriptstack = script;
 	source->tokens = NULL;
 	source->defines = NULL;

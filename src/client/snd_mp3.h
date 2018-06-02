@@ -13,12 +13,14 @@
 
 
 typedef struct id3v1_1 {
-	char id[3];
-	char title[30];		// <file basename>
-	char artist[30];	// "Raven Software"
-	char album[30];		// "#UNCOMP %d"		// needed
-	char year[4];		// "2001"
-	char comment[28];	// "#MAXVOL %g"		// needed
+	// These fields are fixed width strings meaning they don't need to
+	// end with 0, hence nonstring attribute is needed for GCC.
+	char id[3] __attribute__ ((nonstring));
+	char title[30] __attribute__ ((nonstring));		// <file basename>
+	char artist[30] __attribute__ ((nonstring));	// "Raven Software"
+	char album[30] __attribute__ ((nonstring));		// "#UNCOMP %d"		// needed
+	char year[4] __attribute__ ((nonstring));		// "2001"
+	char comment[28] __attribute__ ((nonstring));	// "#MAXVOL %g"		// needed
 	char zero;
 	char track;
 	char genre;
