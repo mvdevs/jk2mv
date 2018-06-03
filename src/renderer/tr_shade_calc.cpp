@@ -857,6 +857,8 @@ void RB_CalcFogTexCoords( float *st ) {
 
 		eyeT = DotProduct( backEnd.ori.viewOrigin, fogDepthVector ) + fogDepthVector[3];
 	} else {
+		fogDepthVector[0] = fogDepthVector[1] = fogDepthVector[2] = fogDepthVector[3] = 0.0f;
+
 		eyeT = 1;	// non-surface fog always has eye inside
 	}
 
@@ -874,13 +876,12 @@ void RB_CalcFogTexCoords( float *st ) {
 	// calculate density for each point
 	for (i = 0, v = tess.xyz[0] ; i < tess.numVertexes ; i++, v += 4) {
 		// calculate the length in fog
-		assert( fog->hasSurface );
 		s = DotProduct( v, fogDistanceVector ) + fogDistanceVector[3];
 		t = DotProduct( v, fogDepthVector ) + fogDepthVector[3];
 
 		// partially clipped fogs use the T axis
 		if ( eyeOutside ) {
-			if ( t < 1.0f ) {
+			if ( t < 1.0f || t == eyeT ) {
 				t = 1.0f/32;	// point is outside, so no fogging
 			} else {
 				t = 1.0f/32 + 30.0f/32 * t / ( t - eyeT );	// cut the distance at the fog plane
