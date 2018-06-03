@@ -1283,6 +1283,8 @@ qboolean G2API_SetNewOrigin(g2handle_t g2h, const int boltIndex)
 	return qfalse;
 }
 
+#if 0
+
 int G2API_GetBoneIndex(CGhoul2Info *ghlInfo, const char *boneName)
 {
 	if (ghlInfo)
@@ -1327,3 +1329,5 @@ void G2API_LoadSaveCodeDestructGhoul2Info(g2handle_t g2h)
 
 	ghoul2->~CGhoul2Info_v();	// so I can load junk over it then memset to 0 without orphaning
 }
+
+#endif // 0

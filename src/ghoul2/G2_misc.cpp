@@ -1225,6 +1225,8 @@ void *G2_FindSurface(void *mod_t, int index, int lod)
 	return (void *)current;
 }
 
+#if 0
+
 #define SURFACE_SAVE_BLOCK_SIZE	sizeof(surfaceInfo_t)
 #define BOLT_SAVE_BLOCK_SIZE (sizeof(boltInfo_t) - sizeof(mdxaBone_t))
 #define BONE_SAVE_BLOCK_SIZE sizeof(boneInfo_t)
@@ -1412,6 +1414,8 @@ void G2_LoadGhoul2Model(CGhoul2Info_v &ghoul2, char *buffer)
 		}
 	}
 }
+
+#endif // 0
 
 void G2_LerpAngles(CGhoul2Info_v &ghoul2,CGhoul2Info_v &nextGhoul2, float interpolation)
 {

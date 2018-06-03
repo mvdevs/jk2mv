@@ -382,6 +382,14 @@ struct SEffectTemplate
 	int		mPrimitiveCount;
 	CPrimitiveTemplate	*mPrimitives[FX_MAX_EFFECT_COMPONENTS];
 
+	SEffectTemplate() :
+		mInUse(),
+		mCopy(),
+		mEffectName(),
+		mPrimitiveCount(),
+		mPrimitives()
+	{}
+
 	bool operator == (const char * name) const
 	{
 		return !Q_stricmp( mEffectName, name );

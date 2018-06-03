@@ -970,7 +970,7 @@ int __attribute__((noinline)) Sys_BacktraceFrom(void **buffer, int size, void **
 	else
 	{
 		// not async-signal-safe but often works, try anyway
-		count = backtrace(buffer, ARRAY_LEN(buffer));
+		count = backtrace(buffer, size);
 	}
 #endif
 	return count;
