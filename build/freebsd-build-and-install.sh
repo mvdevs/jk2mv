@@ -10,4 +10,4 @@ cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release \
 	  -DBuildMVMP=ON -DBuildPortableVersion=OFF ../..
 
 make
-#sudo make install
+sudo make install
