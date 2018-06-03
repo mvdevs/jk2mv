@@ -578,6 +578,8 @@ if (BuildMVDED)
 	target_link_libraries(${MVDED} ${MVDEDLibraries} ${MINIZIP_LIBRARIES} ${ZLIB_LIBRARIES})
 	set_target_properties(${MVDED} PROPERTIES PROJECT_LABEL "jk2mvded")
 
+	add_dependencies(${MVDED} assetsmv)
+
 	if(BuildMVSDK)
 		add_dependencies(${MVDED} assetsmv2)
 	endif()
