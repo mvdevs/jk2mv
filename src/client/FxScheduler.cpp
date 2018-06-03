@@ -1055,6 +1055,7 @@ void CFxScheduler::PlayEffect( int id, CFxBoltInterface *obj )
 	vec3_t origin, forward;
 	vec3_t axis[3];
 
+	obj->GetOrigin(origin);
 	obj->GetForward(forward);
 
 	VectorCopy( forward, axis[0] );
@@ -1241,15 +1242,7 @@ void CFxScheduler::PlayEffect( int id, CFxBoltInterface *obj )
 						sfx->mEntNum = -1;
 						sfx->mModelNum = 0;
 #endif
-						if ( origin )
-						{
-							VectorCopy( origin, sfx->mOrigin );
-						}
-						else
-						{
-							VectorClear( sfx->mOrigin );
-						}
-
+						VectorCopy( origin, sfx->mOrigin );
 						AxisCopy( axis, sfx->mAxis );
 #if 0//#ifndef EFFECTSED#ifndef EFFECTSED
 					}
