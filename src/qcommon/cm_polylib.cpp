@@ -311,8 +311,6 @@ void	ClipWindingEpsilon (winding_t *in, vec3_t normal, vec_t dist,
 		}
 		counts[sides[i]]++;
 	}
-	sides[i] = sides[0];
-	dists[i] = dists[0];
 
 	*front = *back = NULL;
 
@@ -326,6 +324,9 @@ void	ClipWindingEpsilon (winding_t *in, vec3_t normal, vec_t dist,
 		*front = CopyWinding (in);
 		return;
 	}
+
+	sides[i] = sides[0];
+	dists[i] = dists[0];
 
 	maxpts = in->numpoints+4;	// cant use counts[0]+2 because
 								// of fp grouping errors
