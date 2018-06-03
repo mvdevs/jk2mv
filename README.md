@@ -7,7 +7,7 @@ Main Features:
 - Supports 1.02, 1.03 & 1.04 in a single executable
 - Supports most mods made for JK2 (maps, skins, (code)mods etc.)
 - Fast ingame HTTP-Downloads with a dialogue asking you for permission before downloading files to your computer
-- Multiplatform: Windows, Linux, MacOSX
+- Multiplatform: Windows, Linux, MacOSX, FreeBSD
 - Multiarchitecture: 32 and 64 bit support on all platforms
 - Dynamic glow: Better looking lightsabers with the dynamic glow feature from JKA
 - EAX/OpenAL sound fixed
@@ -35,7 +35,7 @@ Clone the JK2MV repository including submodules (required if you also want to bu
 3. Dependencies
  	* Windows: Requires at least Visual Studio 2013, required libraries are shipped with JK2MV in the `libs` directory.
 		* If you plan to build the installer package get NSIS from http://nsis.sourceforge.net
-	* Linux: OpenGL, OpenAL, SDL2 and depending on your configuration libjpeg, libpng, libminizip, zlib.
+	* Linux/FreeBSD: OpenGL, OpenAL, SDL2 and depending on your configuration libjpeg, libpng, libminizip, zlib.
 		* Ubuntu/Debian: `apt-get install git debhelper devscripts libsdl2-dev libgl1-mesa-dev libopenal-dev libjpeg8-dev libpng12-dev zlib1g-dev libminizip-dev`
 		* Fedora: `dnf install git SDL2-devel mesa-libGL-devel openal-soft-devel libjpeg-turbo-devel libpng-devel zlib-devel minizip-devel`
 	* MacOSX: XCode on MacOSX >= 10.6

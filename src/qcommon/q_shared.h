@@ -247,7 +247,7 @@ inline static float LittleFloat (const float *l) { return FloatSwap(l); }
 
 // the mac compiler can't handle >32k of locals, so we
 // just waste space and make big arrays static...
-#ifdef __linux__
+#if defined(__linux__) || defined(__FreeBSD__)
 
 // bk001205 - from Makefile
 #define stricmp strcasecmp

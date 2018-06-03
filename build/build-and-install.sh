@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 type cmake >/dev/null 2>&1 || { echo >&2 "Can't find cmake."; exit 1; }
 

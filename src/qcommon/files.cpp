@@ -14,7 +14,7 @@
 
 #include "../qcommon/q_shared.h"
 #include "qcommon.h"
-#include <minizip/unzip.h>
+#include <unzip.h>	// minizip
 #include <mv_setup.h>
 
 #if !defined(DEDICATED) && !defined(FINAL_BUILD)
