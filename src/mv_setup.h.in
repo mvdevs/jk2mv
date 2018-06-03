@@ -1,7 +1,13 @@
-#ifndef MV_VERSION_H
-#define MV_VERSION_H
+#ifndef MV_SETUP_H
+#define MV_SETUP_H
 
 #define JK2MV_VERSION "@MV_VERSION@"
 #define Q3_VERSION "JK2MV: v" JK2MV_VERSION
 
-#endif /* MV_VERSION_H */
+#cmakedefine Backtrace_FOUND
+#ifdef Backtrace_FOUND
+#define Q_BACTRACE 1
+#include <@Backtrace_HEADER@>
+#endif
+
+#endif /* MV_SETUP_H */

@@ -14,7 +14,6 @@
 #include <unistd.h>
 #include <signal.h>
 #include <fcntl.h>
-#include <execinfo.h>
 #include <setjmp.h>
 #ifdef __GNU_LIBRARY__
 #include <gnu/libc-version.h>
@@ -30,8 +29,6 @@
 #include "con_local.h"
 
 #include <mv_setup.h>
-
-#define Q_BACKTRACE 1
 
 //=============================================================================
 
