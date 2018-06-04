@@ -1719,7 +1719,7 @@ This function is called directly by the generated code
 ==============
 */
 
-#if defined(_MSC_VER) && defined(idx64)
+#if defined(_MSC_VER) && idx64
 extern "C" uint8_t qvmcall64(int *programStack, int *opStack, intptr_t *instructionPointers, byte *dataBase);
 #endif
 

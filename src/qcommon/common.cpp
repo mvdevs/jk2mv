@@ -2416,7 +2416,7 @@ Com_Init
 void Com_Init( char *commandLine ) {
 	char	*s;
 
-	Com_Printf( "%s %s %s\n", Q3_VERSION, CPUSTRING, __DATE__ );
+	Com_Printf( "%s %s %s\n", Q3_VERSION, PLATFORM_STRING, __DATE__ );
 
 	if (setjmp(abortframe)) {
 		Sys_Error("Error during initialization\n");
@@ -2539,7 +2539,7 @@ void Com_Init( char *commandLine ) {
 	Cmd_SetCommandCompletionFunc( "writeconfig", Cmd_CompleteCfgName );
 	Cmd_AddCommand ("uptime", Com_Uptime_f );
 
-	s = va("%s %s %s", Q3_VERSION, CPUSTRING, __DATE__ );
+	s = va("%s %s %s", Q3_VERSION, PLATFORM_STRING, __DATE__ );
 	com_version = Cvar_Get ("version", s, CVAR_ROM | CVAR_SERVERINFO );
 
 	SP_Init();
@@ -2994,8 +2994,8 @@ void MV_SetCurrentGameversion(mvversion_t version) {
 
 	if ( com_fullyInitialized )
 	{ // Only do this if we're fully initialized
-		if ( version == VERSION_UNDEF )	Cvar_Set("version", va("%s %s %s", Q3_VERSION, CPUSTRING, __DATE__ ));
-		else							Cvar_Set("version", va("JK2MP: v1.%02dmv %s %s", version, CPUSTRING, __DATE__)); // Set the version to JK2MP for compatibility reasons
+		if ( version == VERSION_UNDEF )	Cvar_Set("version", va("%s %s %s", Q3_VERSION, PLATFORM_STRING, __DATE__ ));
+		else							Cvar_Set("version", va("JK2MP: v1.%02dmv %s %s", version, PLATFORM_STRING, __DATE__)); // Set the version to JK2MP for compatibility reasons
 	}
 }
 

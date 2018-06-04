@@ -1152,8 +1152,3 @@ typedef struct postGameInfo_s {
 
 
 #endif
-
-#ifndef WIN32
-#   define LIBEXPORT __attribute__((visibility("default")))
-#endif
-

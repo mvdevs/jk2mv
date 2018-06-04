@@ -630,7 +630,7 @@ void Sys_WriteCrashlog() {
 	fprintf(f, ", Client\n");
 #endif
 	fprintf(f, "Build Date:         " __DATE__ " " __TIME__ "\n");
-	fprintf(f, "Build Arch:         " CPUSTRING "\n");
+	fprintf(f, "Build Platform:     " PLATFORM_STRING "\n");
 
 	fprintf(f, "\n");
 

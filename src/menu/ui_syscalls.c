@@ -8,7 +8,7 @@
 
 static intptr_t (QDECL *engine_syscall)( intptr_t arg, ... );
 
-LIBEXPORT void QDECL dllEntry(intptr_t (QDECL *syscallptr)(intptr_t arg, ...)) {
+Q_EXPORT void QDECL dllEntry(intptr_t (QDECL *syscallptr)(intptr_t arg, ...)) {
 	engine_syscall = syscallptr;
 }
 

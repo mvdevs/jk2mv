@@ -56,12 +56,6 @@
 
 #endif
 
-#ifdef _WIN32
-
-//#pragma intrinsic( memset, memcpy )
-
-#endif
-
 // this is the define for determining if we have an asm version of a C function
 #if (defined ARCH_X86)  && !defined __LCC__
 #define id386	1
@@ -75,7 +69,13 @@
 #define idx64	0
 #endif
 
-#if (defined(powerc) || defined(powerpc) || defined(ppc) || defined(__ppc) || defined(__ppc__)) && !defined(C_ONLY)
+#if defined(ARCH_ARM32) && !defined __LCC__
+#define idarm32	1
+#else
+#define idarm32	0
+#endif
+
+#if (defined(powerc) || defined(powerpc) || defined(ppc) || defined(__ppc) || defined(__ppc__)) && !defined __LCC__
 #define idppc	1
 #else
 #define idppc	0
@@ -86,16 +86,9 @@
 #include <emmintrin.h>
 #endif
 
-// for windows fastcall option
-
-#define	QDECL
-
-short   ShortSwap (short l);
-int		LongSwap (int l);
-float	FloatSwap (const float *f);
-
 //================= COMPILER-SPECIFIC DEFINES ===========================
 #ifdef _MSC_VER
+
 #define Q_INLINE __inline
 #define Q_NORETURN __declspec(noreturn)
 #define Q_PTR_NORETURN // MSVC doesn't support noreturn function pointers
@@ -109,8 +102,11 @@ float	FloatSwap (const float *f);
 #define __alignas_is_defined 1
 #endif
 #define Q_MAX_ALIGN std::max_align_t
+#define Q_EXPORT __declspec(dllexport)
+
 #elif defined __GNUC__ && !defined __clang__
-#define GCC_VERSION (__GNUC__ * 10000 \
+
+#define GCC_VERSION (__GNUC__ * 10000			\
     + __GNUC_MINOR__ * 100 \
     + __GNUC_PATCHLEVEL__)
 
@@ -123,18 +119,26 @@ float	FloatSwap (const float *f);
 #else
 #	define Q_MAX_ALIGN max_align_t
 #endif
+#define Q_EXPORT __attribute__((visibility("default")))
+
 #elif defined __clang__
+
 #define Q_INLINE inline
 #define Q_NORETURN __attribute__((noreturn))
 #define Q_PTR_NORETURN Q_NORETURN
 #define q_unreachable() __builtin_unreachable()
 #define Q_MAX_ALIGN std::max_align_t
+#define Q_EXPORT __attribute__((visibility("default")))
+
 #else
+
 #define Q_INLINE inline
 #define Q_NORETURN
 #define Q_PTR_NORETURN
 #define q_unreachable() abort()
 #define Q_MAX_ALIGN std::max_align_t
+#define Q_EXPORT
+
 #endif
 
 #ifdef __cplusplus
@@ -147,50 +151,10 @@ float	FloatSwap (const float *f);
 
 #ifdef WIN32
 
-#define	MAC_STATIC
-
-#undef QDECL
+#define OS_STRING "win"
 #define	QDECL	__cdecl
-
-// buildstring will be incorporated into the version string
-#ifdef NDEBUG
-
-#ifdef ARCH_X86
-#define ARCH_STRING "x86"
-#define	CPUSTRING	"win-x86"
-#elif defined ARCH_X86_64
-#define ARCH_STRING "x64"
-#define	CPUSTRING	"win-x64"
-#endif
-
-#else
-
-#ifdef ARCH_X86
-#define ARCH_STRING "x86"
-#define	CPUSTRING	"win-x86-debug"
-#elif defined ARCH_X86_64
-#define ARCH_STRING "x64"
-#define	CPUSTRING	"win-x64-debug"
-#endif
-
-#endif
-
 #define LIBRARY_EXTENSION "dll"
-
-ID_INLINE short BigShort( short l) { return ShortSwap(l); }
-#define LittleShort
-ID_INLINE int BigLong(int l) { return LongSwap(l); }
-#define LittleLong
-ID_INLINE float BigFloat(const float *l) { return FloatSwap(l); }
-#define LittleFloat
-
 #define	PATH_SEP '\\'
-
-#ifdef GAME_EXPORTS
-#define LIBEXPORT __declspec(dllexport)
-#else
-#define LIBEXPORT
-#endif
 
 #endif
 
@@ -198,110 +162,81 @@ ID_INLINE float BigFloat(const float *l) { return FloatSwap(l); }
 
 #if defined(MACOS_X)
 
-#define MAC_STATIC
-#define __cdecl
-#define __declspec(x)
-
-#define stricmp strcasecmp
-#define strnicmp strncasecmp
-
-#ifdef __ppc__
-#define CPUSTRING	"macosx-ppc"
-#elif defined __i386__
-#define CPUSTRING	"macosx-i386"
-#elif defined __amd64__
-#define CPUSTRING	"macosx-x86_64"
-#else
-#define CPUSTRING	"macosx-other"
-#endif
-
-#ifdef __i386__
-#	define ARCH_STRING "i386"
-#else
-#	define ARCH_STRING "x86_64"
-#endif
-
+#define OS_STRING "macosx"
+#define QDECL
 #define LIBRARY_EXTENSION "dylib"
-
 #define	PATH_SEP	'/'
-
-#if !idppc
-inline static short BigShort( short l) { return ShortSwap(l); }
-#define LittleShort
-inline static int BigLong(int l) { return LongSwap(l); }
-#define LittleLong
-inline static float BigFloat(const float *l) { return FloatSwap(l); }
-#define LittleFloat
-#else
-#define BigShort
-inline static short LittleShort(short l) { return ShortSwap(l); }
-#define BigLong
-inline static int LittleLong (int l) { return LongSwap(l); }
-#define BigFloat
-inline static float LittleFloat (const float *l) { return FloatSwap(l); }
-#endif
 
 #endif
 
 //======================= LINUX DEFINES =================================
 
-// the mac compiler can't handle >32k of locals, so we
-// just waste space and make big arrays static...
-#if defined(__linux__) || defined(__FreeBSD__)
+#if defined(__linux__)
 
-// bk001205 - from Makefile
-#define stricmp strcasecmp
-#define strnicmp strncasecmp
-
-#define	MAC_STATIC // bk: FIXME
-
-#ifdef __i386__
-#define	CPUSTRING	"linux-i386"
-#elif __amd64__
-#define	CPUSTRING	"linux-amd64"
-#elif defined __axp__
-#define	CPUSTRING	"linux-alpha"
-#else
-#define	CPUSTRING	"linux-other"
-#endif
-
-#ifdef __i386__
-#	define ARCH_STRING "i386"
-#else
-#	define ARCH_STRING "amd64"
-#endif
-
+#define OS_STRING "linux"
+#define QDECL
 #define LIBRARY_EXTENSION "so"
-
 #define	PATH_SEP '/'
 
-// bk001205 - try
-#ifdef Q3_STATIC
-#define	GAME_HARD_LINKED
-#define	CGAME_HARD_LINKED
-#define	UI_HARD_LINKED
-#define	BOTLIB_HARD_LINKED
 #endif
 
-#if !idppc
-inline static short BigShort( short l) { return ShortSwap(l); }
-#define LittleShort
-inline static int BigLong(int l) { return LongSwap(l); }
-#define LittleLong
-inline static float BigFloat(const float *l) { return FloatSwap(l); }
-#define LittleFloat
-#else
-#define BigShort
-inline static short LittleShort(short l) { return ShortSwap(l); }
-#define BigLong
-inline static int LittleLong (int l) { return LongSwap(l); }
-#define BigFloat
-inline static float LittleFloat (const float *l) { return FloatSwap(l); }
-#endif
+//======================= LINUX DEFINES =================================
+
+#if defined(__FreeBSD__)
+
+#define OS_STRING "freebsd"
+#define QDECL
+#define LIBRARY_EXTENSION "so"
+#define	PATH_SEP '/'
 
 #endif
 
 //=============================================================
+
+#if id386
+#define ARCH_STRING "x86"
+#define Q_LITTLE_ENDIAN
+#elif idx64
+#define ARCH_STRING "amd64"
+#define Q_LITTLE_ENDIAN
+#elif idarm32
+#define ARCH_STRING "arm"
+#define Q_LITTLE_ENDIAN
+#elif idppc
+#define ARCH_STRING "ppc"
+#define Q_BIG_ENDIAN
+#else
+#error "Architecture not supported"
+#endif
+
+#if defined(Q_LITTLE_ENDIAN)
+#define BigShort(x) ShortSwap(x)
+#define BigLong(x) LongSwap(x)
+#define BigFloat(x) FloatSwap(x)
+#define LittleShort
+#define LittleLong
+#define LittleFloat
+#endif
+
+#if defined(Q_BIG_ENDIAN)
+#define LittleShort(x) ShortSwap(x)
+#define LittleLong(x) LongSwap(x)
+#define LittleFloat(x) FloatSwap(x)
+#define BigShort
+#define BigLong
+#define BigFloat
+#endif
+
+
+#ifndef OS_STRING
+#error "Operating system not supported"
+#endif
+
+#ifdef NDEBUG
+#define	PLATFORM_STRING	OS_STRING "-" ARCH_STRING
+#else
+#define	PLATFORM_STRING	OS_STRING "-" ARCH_STRING "-debug"
+#endif
 
 //=============================================================
 
@@ -564,6 +499,42 @@ ID_INLINE int Com_Clampi( int min, int max, int value ) {
 #define	CIN_hold	4
 #define CIN_silent	8
 #define CIN_shader	16
+
+/*
+============================================================================
+
+BYTE ORDER FUNCTIONS
+
+============================================================================
+*/
+
+ID_INLINE int16_t ShortSwap(int16_t l) {
+	uint16_t us = *(uint16_t *)&l;
+
+	return
+		((us & 0x00FFu) << 8u) |
+		((us & 0xFF00u) >> 8u);
+}
+
+ID_INLINE int32_t LongSwap(int32_t l) {
+	uint32_t ui = *(uint32_t *)&l;
+
+  return
+    ((ui & 0x000000FFu) << 24u) |
+    ((ui & 0x0000FF00u) <<  8u) |
+    ((ui & 0x00FF0000u) >>  8u) |
+    ((ui & 0xFF000000u) >> 24u);
+
+}
+
+ID_INLINE float FloatSwap(const float *f) {
+	floatint_t out;
+
+	out.f = *f;
+	out.i = LongSwap(out.i);
+
+	return out.f;
+}
 
 /*
 ==============================================================
@@ -1099,22 +1070,6 @@ int Q_PrintStrLenTo(const char *str, int chars, char *color, qboolean use102colo
 void Q_PrintStrCopy(char *dst, const char *src, int dstSize, int from, int len, qboolean use102color);
 // removes color sequences from string
 char *Q_CleanStr( char *string, qboolean use102color ) ;
-
-//=============================================
-
-// 64-bit integers for global rankings interface
-// implemented as a struct for qvm compatibility
-typedef struct
-{
-	byte	b0;
-	byte	b1;
-	byte	b2;
-	byte	b3;
-	byte	b4;
-	byte	b5;
-	byte	b6;
-	byte	b7;
-} qint64;
 
 //=============================================
 /*

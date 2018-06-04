@@ -1134,7 +1134,7 @@ static Q_NORETURN void Sys_CrashLogger(int fd, int argc, char *argv[]) {
 	fprintf(f, "Build Type:         Portable\n");
 #endif
 	fprintf(f, "Build Date:         " __DATE__ " " __TIME__ "\n");
-	fprintf(f, "Build Arch:         " CPUSTRING "\n");
+	fprintf(f, "Build Platform:     " PLATFORM_STRING "\n");
 #ifdef __GNU_LIBRARY__
 	fprintf(f, "glibc Version:      %s (%s)\n", gnu_get_libc_version(), gnu_get_libc_release());
 #endif
