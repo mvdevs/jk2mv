@@ -836,7 +836,7 @@ intptr_t CL_UISystemCalls(intptr_t *args) {
 		return 0;
 
 	case UI_FS_WRITE:
-		FS_Write( VMAP(1, char, args[2]), args[2], args[3] );
+		FS_Write( VMAP(1, char, args[2]), args[2], args[3], MODULE_UI );
 		return 0;
 
 	case UI_FS_FCLOSEFILE:

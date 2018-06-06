@@ -692,7 +692,7 @@ intptr_t CL_CgameSystemCalls(intptr_t *args) {
 		FS_Read2( VMAP(1, char, args[2]), args[2], args[3], MODULE_CGAME );
 		return 0;
 	case CG_FS_WRITE:
-		FS_Write( VMAP(1, const char, args[2]), args[2], args[3] );
+		FS_Write( VMAP(1, const char, args[2]), args[2], args[3], MODULE_CGAME );
 		return 0;
 	case CG_FS_FCLOSEFILE:
 		FS_FCloseFile( args[1], MODULE_CGAME );
