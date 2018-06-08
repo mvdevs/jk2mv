@@ -89,6 +89,7 @@
 //================= COMPILER-SPECIFIC DEFINES ===========================
 #ifdef _MSC_VER
 
+#define	QDECL	__cdecl
 #define Q_INLINE __inline
 #define Q_NORETURN __declspec(noreturn)
 #define Q_PTR_NORETURN // MSVC doesn't support noreturn function pointers
@@ -106,6 +107,7 @@
 
 #elif defined __GNUC__ && !defined __clang__
 
+#define	QDECL
 #define GCC_VERSION (__GNUC__ * 10000			\
     + __GNUC_MINOR__ * 100 \
     + __GNUC_PATCHLEVEL__)
@@ -123,6 +125,7 @@
 
 #elif defined __clang__
 
+#define	QDECL
 #define Q_INLINE inline
 #define Q_NORETURN __attribute__((noreturn))
 #define Q_PTR_NORETURN Q_NORETURN
@@ -132,6 +135,7 @@
 
 #else
 
+#define	QDECL
 #define Q_INLINE inline
 #define Q_NORETURN
 #define Q_PTR_NORETURN
@@ -152,7 +156,6 @@
 #ifdef WIN32
 
 #define OS_STRING "win"
-#define	QDECL	__cdecl
 #define LIBRARY_EXTENSION "dll"
 #define	PATH_SEP '\\'
 
@@ -163,7 +166,6 @@
 #if defined(MACOS_X)
 
 #define OS_STRING "macosx"
-#define QDECL
 #define LIBRARY_EXTENSION "dylib"
 #define	PATH_SEP	'/'
 
@@ -180,7 +182,7 @@
 
 #endif
 
-//======================= LINUX DEFINES =================================
+//======================= FREEBSD DEFINES =================================
 
 #if defined(__FreeBSD__)
 
