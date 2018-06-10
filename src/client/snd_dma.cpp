@@ -422,9 +422,9 @@ void S_Init( void )
 		return;
 	}
 	else
-	{
 	#endif
-		r = SNDDMA_Init();
+	{
+		r = SNDDMA_Init(s_khz->integer);
 		Com_Printf("------------------------------------\n");
 
 		if ( r ) {
@@ -439,9 +439,7 @@ void S_Init( void )
 
 		S_SoundInfo_f();
 		}
-		#ifdef USE_OPENAL
 	}
-	#endif
 }
 
 /*

@@ -631,6 +631,10 @@ LINES_INSERT 1400 [
 				hide			highlight12
 ]
 
+LINES_REPLACE 1517 [
+			cvarFloatList		{ @MENUS0_LOW 11  @MENUS0_MEDIUM 22 @MENUS0_HIGH 44 }
+]
+
 LINES_REPLACE 2082 [
 				play		"sound/interface/button1.wav"
 ]

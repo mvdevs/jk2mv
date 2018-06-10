@@ -134,7 +134,7 @@ static void SNDDMA_PrintAudiospec(const char *str, const SDL_AudioSpec *spec)
 SNDDMA_Init
 ===============
 */
-qboolean SNDDMA_Init(void)
+qboolean SNDDMA_Init(int khz)
 {
 	SDL_AudioSpec desired;
 	SDL_AudioSpec obtained;
@@ -174,7 +174,14 @@ qboolean SNDDMA_Init(void)
 		tmp = 16;
 
 	desired.freq = (int) s_sdlSpeed->value;
-	if(!desired.freq) desired.freq = 44100;
+	if (!desired.freq) {
+		switch (khz) {
+		default:
+		case 44: desired.freq = 44100; break;
+		case 22: desired.freq = 22050; break;
+		case 11: desired.freq = 11025; break;
+		}
+	}
 	desired.format = ((tmp == 16) ? AUDIO_S16SYS : AUDIO_U8);
 
 	// I dunno if this is the best idea, but I'll give it a try...

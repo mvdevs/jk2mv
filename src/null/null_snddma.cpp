@@ -6,7 +6,7 @@
 
 qboolean gbInsideLoadSound = qfalse; // important to default to this!!!
 
-qboolean SNDDMA_Init(void)
+qboolean SNDDMA_Init(int khz)
 {
 	return qfalse;
 }
