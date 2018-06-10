@@ -398,6 +398,18 @@ Server-Side
 
 ..
 
+:Name: sv_autoWhitelist
+:Values: "0", "1"
+:Default: "1"
+:Description:
+   Automatically add IPs of players to a whitelist. Whitelisted IPs
+   are can still access the server while it's under a DOS attack and
+   they are stored in ipwhitelist.dat file. Collecting IP addresses
+   without consent may be against European Union's General Data
+   Protection Regulation.
+
+..
+
 :Name: sv_floodProtect
 :Values: Integer >= 0
 :Default: "3"
