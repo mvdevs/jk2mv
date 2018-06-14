@@ -199,7 +199,13 @@
 #define ARCH_STRING "x86"
 #define Q_LITTLE_ENDIAN
 #elif idx64
-#define ARCH_STRING "amd64"
+#	if WIN32
+#		define ARCH_STRING "x64"
+#	elif MACOS_X
+#		define ARCH_STRING "x86_64""
+#	else
+#		define ARCH_STRING "amd64"
+#	endif
 #define Q_LITTLE_ENDIAN
 #elif idarm32
 #define ARCH_STRING "arm"
