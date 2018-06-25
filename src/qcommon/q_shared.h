@@ -202,7 +202,7 @@
 #	if WIN32
 #		define ARCH_STRING "x64"
 #	elif MACOS_X
-#		define ARCH_STRING "x86_64""
+#		define ARCH_STRING "x86_64"
 #	else
 #		define ARCH_STRING "amd64"
 #	endif
