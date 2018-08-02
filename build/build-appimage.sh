@@ -62,6 +62,7 @@ find ./usr/lib -type d -empty -delete
 delete_blacklisted
 
 rm ./usr/lib/libpulse* # pulseaudio libs should be provided by the os
+rm ./usr/lib/libxcb* # X stuff
 
 ########################################################################
 # desktopintegration asks the user on first run to install a menu item
