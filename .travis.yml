@@ -30,7 +30,7 @@ before_install: |
 
   if [[ "$HOST" == linux-x86_64-* ]]; then
       docker pull ubuntu:16.04
-      docker run --name bc -v $TRAVIS_BUILD_DIR:/jk2mv -td ubuntu:16.04 /bin/bash
+      docker run --name bc -v $TRAVIS_BUILD_DIR:/jk2mv --cap-add SYS_ADMIN --device /dev/fuse -td ubuntu:16.04 /bin/bash
   fi
   
   if [[ "$HOST" == macosx-* ]]; then
@@ -40,7 +40,7 @@ before_install: |
 install: |
   if [[ "$HOST" == linux-* ]]; then
       docker exec bc apt update
-      docker exec bc apt -y install git cmake zip rpm debhelper devscripts build-essential libsdl2-dev libgl1-mesa-dev libopenal-dev
+      docker exec bc apt -y install git cmake zip wget libfuse2 build-essential libsdl2-dev libgl1-mesa-dev libopenal-dev libjpeg-dev libpng-dev libminizip-dev
   else
       cd ~
       curl -O https://www.libsdl.org/release/SDL2-2.0.8.tar.gz
@@ -59,12 +59,12 @@ script: |
   if [[ "$HOST" == linux-* ]]; then
       if [[ "$HOST" == *-portable ]]; then
           docker exec bc sh -c "cd /jk2mv/build/travis && cmake -DUseInternalLibs=ON -DBuildPortableVersion=ON ../.."
+          docker exec bc sh -c "cd /jk2mv/build/travis && make"
+          docker exec bc sh -c "cd /jk2mv/build/travis && make package"
       else
-          docker exec bc sh -c "cd /jk2mv/build/travis && cmake -DUseInternalLibs=ON -DBuildPortableVersion=OFF ../.."
+          docker exec bc sh -c "cd /jk2mv/build && ./build-appimage.sh"
+          docker exec bc sh -c "cd /jk2mv/build && mv ./*-appimage/out ./travis"
       fi
-
-      docker exec bc sh -c "cd /jk2mv/build/travis && make"
-      docker exec bc sh -c "cd /jk2mv/build/travis && make package"
   else
       if [[ "$HOST" == *-portable ]]; then
           cmake -G "Unix Makefiles" -DUseInternalLibs=ON -DBuildPortableVersion=ON ../..
@@ -96,7 +96,7 @@ deploy:
 
   - provider: releases
     file_glob: true
-    file: "build/travis/out/*.{deb,rpm,dmg,tar.gz}"
+    file: "build/travis/out/*.{AppImage,dmg,tar.gz}"
     api_key:
       secure: "Uo5ezYFbjZRfGZYm3i5dyqZooBr2JcFSp3XQWpFQBbHWXFPZ2DDcgr4LcahuvKhO8660XDh8TS8GdmfslgYEwEARYFSt68lU5cHx85dpuuVRxkhZKFpgZMY6YOMxkzpkJwtZtFWGla784oe5v3X1nlzYp11oxhKkuhwZe0iJsC0="
     skip_cleanup: true
