@@ -37,6 +37,12 @@ get_apprun
 get_desktop
 get_icon
 
+# For some reason appimage cant deal with our icon names
+sed -i "s/$LOWERAPP/jk2mv/g" $LOWERAPP.desktop
+mv $LOWERAPP.png jk2mv.png
+find ./usr/share/icons -type f -execdir mv -i {} jk2mv.png \;
+
+
 ########################################################################
 # Copy in the dependencies that cannot be assumed to be available
 # on all target systems
