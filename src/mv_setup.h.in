@@ -6,7 +6,7 @@
 
 #cmakedefine Backtrace_FOUND
 #ifdef Backtrace_FOUND
-#define Q_BACTRACE 1
+#define Q_BACKTRACE 1
 #include <@Backtrace_HEADER@>
 #endif
 
