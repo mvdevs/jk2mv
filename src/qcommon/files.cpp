@@ -3893,6 +3893,44 @@ Handle based file calls for virtual machines
 ========================================================================================
 */
 
+// We don't want VMs to be able to access the following files
+static char *invalidExtensions[] = {
+	"dll",
+	"exe",
+	"bat",
+	"cmd",
+	"dylib",
+	"so",
+	"qvm",
+	"pk3",
+};
+static int invalidExtensionsAmount = sizeof(invalidExtensions) / sizeof(invalidExtensions[0]);
+
+qboolean FS_IsInvalidExtension( const char *ext ) {
+	int i;
+
+	for ( i = 0; i < invalidExtensionsAmount; i++ ) {
+		if ( !Q_stricmp(ext, invalidExtensions[i]) )
+			return qtrue;
+	}
+	return qfalse;
+}
+
+// Invalid characters. Originally intended to be OS-specific, but considering that VMs run on different systems it's
+// probably not a bad idea to share the same behavior on all systems.
+qboolean FS_ContainsInvalidCharacters( char *filename ) {
+	static char *invalidCharacters = "<>:\"|?*";
+	char *ptr = invalidCharacters;
+
+	while ( *ptr ) {
+		if ( strchr(filename, *ptr) )
+			return qtrue;
+		ptr++;
+	}
+
+	return qfalse;
+}
+
 int FS_FOpenFileByMode(const char *qpath, fileHandle_t *f, fsMode_t mode, module_t module) {
 	return FS_FOpenFileByModeHash(qpath, f, mode, NULL, module);
 }
@@ -3901,7 +3939,7 @@ int FS_FOpenFileByModeHash( const char *qpath, fileHandle_t *f, fsMode_t mode, u
 	int		r;
 	qboolean	sync;
 	char *ospath;
-	const char *ext;
+	char *resolved;
 
 	sync = qfalse;
 
@@ -3910,10 +3948,19 @@ int FS_FOpenFileByModeHash( const char *qpath, fileHandle_t *f, fsMode_t mode, u
 	// unix doesn't really care for the ext but jk2 still only loads them with this extension
 	// writing qvm's & pk3's could bypass mv's dl pk3 loading restriction
 	ospath = FS_BuildOSPath(fs_homepath->string, fs_gamedir, qpath);
-	ext = get_filename_ext(ospath);
-	if (!Q_stricmp(ext, "dll") || !Q_stricmp(ext, "exe") || !Q_stricmp(ext, "bat") || !Q_stricmp(ext, "cmd") ||
-		!Q_stricmp(ext, "dylib") || !Q_stricmp(ext, "so") || !Q_stricmp(ext, "qvm") || !Q_stricmp(ext, "pk3")) {
-		Com_Printf("FS_FOpenFileByMode: blocked writing binary file.\n");
+	resolved = Sys_ResolvePath( ospath );
+	if ( !strlen(resolved) ) return -1;
+
+	// Check both, the built ospath and the resolved path, in case there is a symlink
+	if ( FS_IsInvalidExtension(get_filename_ext(ospath)) || FS_IsInvalidExtension(get_filename_ext(resolved)) ) {
+		Com_Printf( "FS_FOpenFileByMode: blocked writing binary file (%s) [%s].\n", ospath, resolved );
+		Com_Error( ERR_DROP, "FS_FOpenFileByMode: blocked writing binary file.\n" );
+		return -1;
+	}
+
+	// Only check the unresolved path for invalid characters, the os probably knows what it's doing
+	if ( FS_ContainsInvalidCharacters(ospath) ) {
+		Com_Printf( "FS_FOpenFileByMode: invalid filename (%s)\n", ospath );
 		return -1;
 	}
 

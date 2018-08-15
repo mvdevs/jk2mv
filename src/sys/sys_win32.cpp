@@ -681,3 +681,16 @@ void Sys_WriteCrashlog() {
 
 #endif
 
+/*
+===============
+Sys_ResolvePath
+===============
+*/
+char *Sys_ResolvePath( char *path )
+{
+	static char resolvedPath[MAX_PATH];
+	if ( !GetFullPathNameA((LPCSTR)path, sizeof(resolvedPath), (LPSTR)resolvedPath, NULL) )
+		return "";
+	return resolvedPath;
+}
+
