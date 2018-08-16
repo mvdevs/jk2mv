@@ -689,8 +689,41 @@ Sys_ResolvePath
 char *Sys_ResolvePath( char *path )
 {
 	static char resolvedPath[MAX_PATH];
+
 	if ( !GetFullPathNameA((LPCSTR)path, sizeof(resolvedPath), (LPSTR)resolvedPath, NULL) )
 		return "";
+
 	return resolvedPath;
+}
+
+/*
+===============
+Sys_RealPath
+===============
+*/
+char *Sys_RealPath( char *path )
+{
+	static char realPath[MAX_PATH];
+	HANDLE fileHandle;
+	DWORD len;
+
+	// Get a handle to later resolve symlinks
+	fileHandle = CreateFileA( (LPCSTR)path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL );
+
+	// If we can't access it return the original instead
+	if( fileHandle == INVALID_HANDLE_VALUE)
+		return path;
+
+	// Get the resolvedName from the handle
+	len = GetFinalPathNameByHandleA( fileHandle, (LPSTR)realPath, sizeof(realPath), VOLUME_NAME_NT );
+
+	// If it's longer than we can store return "" to disable access
+	if( len >= sizeof(realPath) )
+		return "";
+
+	// Close the handle
+	CloseHandle( fileHandle );
+
+	return realPath;
 }
 

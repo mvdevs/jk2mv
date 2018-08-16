@@ -3918,7 +3918,7 @@ qboolean FS_IsInvalidExtension( const char *ext ) {
 
 // Invalid characters. Originally intended to be OS-specific, but considering that VMs run on different systems it's
 // probably not a bad idea to share the same behavior on all systems.
-qboolean FS_ContainsInvalidCharacters( char *filename ) {
+qboolean FS_ContainsInvalidCharacters( const char *filename ) {
 	static char *invalidCharacters = "<>:\"|?*";
 	char *ptr = invalidCharacters;
 
@@ -3938,30 +3938,31 @@ int FS_FOpenFileByMode(const char *qpath, fileHandle_t *f, fsMode_t mode, module
 int FS_FOpenFileByModeHash( const char *qpath, fileHandle_t *f, fsMode_t mode, unsigned long *hash, module_t module ) {
 	int		r;
 	qboolean	sync;
-	char *ospath;
 	char *resolved;
+	char *realPath;
 
 	sync = qfalse;
 
-	// VMs are not allowed to write binary files
-	// a vm can write e.g. cgamex86.dll and then set vm_cgame to 0...
-	// unix doesn't really care for the ext but jk2 still only loads them with this extension
-	// writing qvm's & pk3's could bypass mv's dl pk3 loading restriction
-	ospath = FS_BuildOSPath(fs_homepath->string, fs_gamedir, qpath);
-	resolved = Sys_ResolvePath( ospath );
-	if ( !strlen(resolved) ) return -1;
-
-	// Check both, the built ospath and the resolved path, in case there is a symlink
-	if ( FS_IsInvalidExtension(get_filename_ext(ospath)) || FS_IsInvalidExtension(get_filename_ext(resolved)) ) {
-		Com_Printf( "FS_FOpenFileByMode: blocked writing binary file (%s) [%s].\n", ospath, resolved );
-		Com_Error( ERR_DROP, "FS_FOpenFileByMode: blocked writing binary file.\n" );
+	// Only check the unresolved path for invalid characters, the os probably knows what it's doing
+	if ( FS_ContainsInvalidCharacters(qpath) ) {
+		Com_Printf( "FS_FOpenFileByMode: invalid filename (%s)\n", qpath );
 		return -1;
 	}
 
-	// Only check the unresolved path for invalid characters, the os probably knows what it's doing
-	if ( FS_ContainsInvalidCharacters(ospath) ) {
-		Com_Printf( "FS_FOpenFileByMode: invalid filename (%s)\n", ospath );
-		return -1;
+	// Prevent writing to files with some extensions to prevent bypassing several restrictions
+	if ( mode != FS_READ ) {
+		// Resolve paths
+		resolved = Sys_ResolvePath( FS_BuildOSPath(fs_homepath->string, fs_gamedir, qpath) );
+		if ( !strlen(resolved) ) return -1;
+		realPath = Sys_RealPath( resolved );
+		if ( !strlen(realPath) ) return -1;
+
+		// Check both, the resolved and the real path, in case there is a symlink
+		if ( FS_IsInvalidExtension(get_filename_ext(resolved)) || FS_IsInvalidExtension(get_filename_ext(realPath)) ) {
+			Com_Printf( "FS_FOpenFileByMode: blocked writing binary file (%s) [%s].\n", resolved, realPath );
+			Com_Error( ERR_DROP, "FS_FOpenFileByMode: blocked writing binary file.\n" );
+			return -1;
+		}
 	}
 
 	switch( mode ) {

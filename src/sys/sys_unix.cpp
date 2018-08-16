@@ -1290,10 +1290,19 @@ Sys_ResolvePath
 */
 char *Sys_ResolvePath( char *path )
 {	// There seems to be no function to resolve paths of files that don't exist
-	// on unix, so we just attempt to resolve the path with "realpath" and if it
-	// succeeds we return the realpath, if not we return the input. We just need
-	// to resolve paths for those on windows anyway.
+	// on unix, so we just return the input path. This shouldn't be an issue,
+	// as we just need to resolve paths for those on windows anyway.
 
+	return path;
+}
+
+/*
+===============
+Sys_RealPath
+===============
+*/
+char *Sys_RealPath( char *path )
+{
 	static char realPath[PATH_MAX+1];
 	if ( realpath(path, realPath) )
 		return realPath;
