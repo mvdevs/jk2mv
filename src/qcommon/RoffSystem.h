@@ -11,7 +11,6 @@
 
 #include <vector>
 #include <map>
-using namespace std;
 
 // ROFF Defines
 //-------------------
@@ -36,8 +35,8 @@ private:
 	class			CROFF;
 	struct			SROFFEntity;
 
-	typedef	map		<int, CROFF *> TROFFList;
-	typedef vector	<SROFFEntity *> TROFFEntList;
+	typedef	std::map	<int, CROFF *> TROFFList;
+	typedef std::vector	<SROFFEntity *> TROFFEntList;
 
 	TROFFList		mROFFList;				// List of cached roffs
 	int				mID;					// unique ID generator for new roff objects

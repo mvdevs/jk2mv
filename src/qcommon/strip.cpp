@@ -21,7 +21,9 @@
 //	#include "../qcommon/palette.h"
 #endif
 
+#include <list>
 
+using namespace std;
 
 #ifdef _STRIPED_
 
