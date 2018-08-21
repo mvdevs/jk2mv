@@ -675,6 +675,10 @@ int Q_isalnum(int c) {
 	return Q_isdigit(c) | Q_isalpha(c);
 }
 
+int Q_isascii(int c) {
+	return c >= 0;
+}
+
 char* Q_strrchr(const char* string, int c) {
 	char cc = c;
 	const char *s;

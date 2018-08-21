@@ -1054,6 +1054,7 @@ int Q_isupper( int c );
 int Q_isalpha( int c );
 int Q_isdigit( int c );
 int Q_isalnum( int c );
+int Q_isascii( int c );
 
 
 // portable case insensitive compare

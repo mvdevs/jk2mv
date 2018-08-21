@@ -728,12 +728,18 @@ int Com_FilterPath(char *filter, char *name, int casesensitive)
 Com_HashKey
 ============
 */
-int Com_HashKey(char *string, int maxlen) {
+int Com_HashKey(const char *string, int maxlen) {
 	int hash, i;
 
 	hash = 0;
 	for (i = 0; i < maxlen && string[i] != '\0'; i++) {
-		hash += string[i] * (119 + i);
+		char	ch = string[i];
+
+		if (!Q_isascii(ch) || ch == '%') {
+			ch = '.';
+		}
+
+		hash += ch * (119 + i);
 	}
 	hash = (hash ^ (hash >> 10) ^ (hash >> 20));
 	return hash;
