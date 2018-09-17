@@ -49,11 +49,11 @@ void Con_ToggleConsole_f (void) {
 Con_MessageMode_f
 ================
 */
-void Con_MessageMode_f (void) {	//yell
+void Con_MessageMode_f (void) {		//yell
 	chat_playerNum = -1;
 	chat_team = qfalse;
 	Field_Clear( &chatField );
-	chatField.widthInChars = 30;
+	chatField.widthInChars = 30 / cls.cgxadj;
 
 	cls.keyCatchers ^= KEYCATCH_MESSAGE;
 }
@@ -67,7 +67,7 @@ void Con_MessageMode2_f (void) {	//team chat
 	chat_playerNum = -1;
 	chat_team = qtrue;
 	Field_Clear( &chatField );
-	chatField.widthInChars = 25;
+	chatField.widthInChars = 25 / cls.cgxadj;
 	cls.keyCatchers ^= KEYCATCH_MESSAGE;
 }
 
@@ -84,7 +84,7 @@ void Con_MessageMode3_f (void) {		//target chat
 	}
 	chat_team = qfalse;
 	Field_Clear( &chatField );
-	chatField.widthInChars = 30;
+	chatField.widthInChars = 30 / cls.cgxadj;
 	cls.keyCatchers ^= KEYCATCH_MESSAGE;
 }
 
@@ -101,7 +101,7 @@ void Con_MessageMode4_f (void) {	//attacker
 	}
 	chat_team = qfalse;
 	Field_Clear( &chatField );
-	chatField.widthInChars = 30;
+	chatField.widthInChars = 30 / cls.cgxadj;
 	cls.keyCatchers ^= KEYCATCH_MESSAGE;
 }
 

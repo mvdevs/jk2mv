@@ -96,8 +96,9 @@ static void SCR_DrawChar( int x, int y, float size, int ch ) {
 	re.DrawStretchPic( ax, ay, aw, ah,
 					   fcol, frow,
 					   fcol + size, frow + size2,
-					   cls.charSetShader, 1, 1 );
+						cls.charSetShader, cls.cgxadj, cls.cgyadj );
 }
+
 
 /*
 ** SCR_DrawSmallChar
@@ -305,7 +306,7 @@ void SCR_DrawDemoRecording( void ) {
 	} else if (cl_drawRecording->integer) {
 		pos = FS_FTell( clc.demofile );
 		sprintf( string, "RECORDING %s: %ik", clc.demoName, pos / 1024 );
-		SCR_DrawStringExt( 320 - (int)strlen( string ) * 4, 20, 8, string, g_color_table[7], qtrue );
+		SCR_DrawStringExt( ((SCREEN_WIDTH / 2) * (1 / cls.cgxadj)) - (int)strlen( string ) * 4, 20, 8, string, g_color_table[7], qtrue );
 	}
 }
 
@@ -403,10 +404,10 @@ void MV_DrawConnectingInfo( void )
 	char	 txtbuf[128];
 
 	Com_sprintf(txtbuf, sizeof(txtbuf), "^1[ ^7JK2MV " JK2MV_VERSION " " PLATFORM_STRING " ^1]");
-	SCR_DrawStringExt(320 - SCR_Strlen(txtbuf) * 4, yPos + (line * 0), 8, txtbuf, g_color_table[7], qfalse);
+	SCR_DrawStringExt(((SCREEN_WIDTH / 2) * (1 / cls.cgxadj)) - SCR_Strlen(txtbuf) * 4, yPos + (line * 0), 8, txtbuf, g_color_table[7], qfalse);
 
 	Com_sprintf(txtbuf, sizeof(txtbuf), "Game-Version^1: ^71.%02d", (int)MV_GetCurrentGameversion());
-	SCR_DrawStringExt((int)(320 - SCR_Strlen(txtbuf) * 3.5), yPos + (line * 1), 7, txtbuf, g_color_table[7], qfalse);
+	SCR_DrawStringExt(((SCREEN_WIDTH / 2) * (1 / cls.cgxadj)) - SCR_Strlen(txtbuf) * 3.5, yPos + (line * 1), 7, txtbuf, g_color_table[7], qfalse);
 }
 
 /*
