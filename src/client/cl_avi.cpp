@@ -56,6 +56,7 @@ typedef struct aviFileData_s
   int           numVideoFrames;
   int           maxRecordSize;
   qboolean      motionJpeg;
+  qboolean      isFifo;
 
   qboolean      audio;
   audioFormat_t a;
@@ -347,6 +348,7 @@ qboolean CL_OpenAVIForWriting( const char *fileName )
   afd.framePeriod = (int)( 1000000.0f / afd.frameRate );
   afd.width = cls.glconfig.vidWidth;
   afd.height = cls.glconfig.vidHeight;
+  afd.isFifo = FS_IsFifo( afd.fileName );
 
   if( cl_aviMotionJpeg->integer )
     afd.motionJpeg = qtrue;
@@ -426,7 +428,7 @@ static qboolean CL_CheckFileSize( int bytesToAdd )
 
   // I assume all the operating systems
   // we target can handle a 2Gb file
-  if( newFileSize > 0x7fffffffu && !FS_IsFifo( afd.fileName ) )
+  if( newFileSize > 0x7fffffffu && !afd.isFifo )
   {
     // Close the current file...
     CL_CloseAVI( );
