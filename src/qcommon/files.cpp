@@ -2279,7 +2279,8 @@ static const char **FS_ListFilteredFiles( const char *path, const char *extensio
 						continue;
 					}
 
-					if ( !compat && name[pathLength] != '/' ) {
+					// there can be either \ or / path separators in a pk3 file
+					if ( !compat && name[pathLength] != '/' && name[pathLength] != '\\' ) {
 						continue;
 					}
 
