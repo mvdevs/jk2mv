@@ -1234,8 +1234,6 @@ static void SV_UpdateUserinfo_f( client_t *cl ) {
 		return;
 	}
 
-	Q_strncpyz( cl->userinfo, arg, sizeof(cl->userinfo) );
-
 	if (cl->lastUserInfoChange > svs.time) {
 		cl->lastUserInfoCount++;
 
@@ -1248,6 +1246,7 @@ static void SV_UpdateUserinfo_f( client_t *cl ) {
 		cl->lastUserInfoChange = svs.time + INFO_CHANGE_MIN_INTERVAL;
 	}
 
+	Q_strncpyz( cl->userinfo, arg, sizeof(cl->userinfo) );
 	SV_UserinfoChanged( cl );
 
 	// call prog code to allow overrides
