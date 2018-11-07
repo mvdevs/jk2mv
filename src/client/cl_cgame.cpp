@@ -1594,10 +1594,10 @@ void CL_SetCGameTime( void ) {
 			tn = 900;
 		}
 #else
-		if (tn<-30) {
-			tn = -30;
-		} else if (tn>30) {
-			tn = 30;
+		if (tn<-2000) {
+			tn = -2000;
+		} else if (tn>2000) {
+			tn = 2000;
 		}
 #endif
 
