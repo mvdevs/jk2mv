@@ -79,8 +79,13 @@ void Con_MessageMode2_f (void) {	//team chat
 Con_MessageMode3_f
 ================
 */
-void Con_MessageMode3_f (void) {		//target chat
-	chat_playerNum = VM_Call( cgvm, CG_CROSSHAIR_PLAYER );
+void Con_MessageMode3_f (void) {	//target chat
+	if (cl.snap.ps.pm_flags & PMF_FOLLOW) { //Send to the person we are spectating instead
+		chat_playerNum = cl.snap.ps.clientNum;
+	}
+	else {
+		chat_playerNum = VM_Call(cgvm, CG_CROSSHAIR_PLAYER);
+	}
 	if ( chat_playerNum < 0 || chat_playerNum >= MAX_CLIENTS ) {
 		chat_playerNum = -1;
 		return;
