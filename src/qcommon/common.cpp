@@ -72,6 +72,9 @@ cvar_t	*mv_apienabled;
 cvar_t	*com_timestamps;
 cvar_t	*com_debugMessage;
 
+cvar_t	*com_renderfps;
+cvar_t	*cl_commandsize;//Loda - FPS UNLOCK ENGINE
+
 // com_speeds times
 int		time_game;
 int		time_frontend;		// renderer frontend time
@@ -2525,6 +2528,9 @@ void Com_Init( char *commandLine ) {
 
 	Cvar_Get ("com_othertasks", "0", CVAR_ROM );
 	Cvar_Get("com_ignoreothertasks", "0", CVAR_ARCHIVE | CVAR_GLOBAL);
+
+	com_renderfps = Cvar_Get("com_renderfps", "0", CVAR_ARCHIVE);
+	cl_commandsize = Cvar_Get("cl_commandsize", "64", CVAR_ARCHIVE);//Loda - FPS UNLOCK ENGINE
 
 	mv_apienabled = Cvar_Get("mv_apienabled", XSTR(MV_APILEVEL), CVAR_INIT | CVAR_VM_NOWRITE);
 	com_timestamps = Cvar_Get("com_timestamps", "1", CVAR_ARCHIVE);

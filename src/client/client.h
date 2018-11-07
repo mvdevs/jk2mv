@@ -304,6 +304,8 @@ typedef struct {
 	int			realtime;			// ignores pause
 	int			realFrametime;		// ignoring pause, so console always works
 
+	int			lastDrawTime;//Loda - com_renderfps
+
 	int			numlocalservers;
 	serverInfo_t	localServers[MAX_OTHER_SERVERS];
 
@@ -436,6 +438,9 @@ extern	cvar_t	*m_yaw;
 extern	cvar_t	*m_forward;
 extern	cvar_t	*m_side;
 extern	cvar_t	*m_filter;
+
+//EternalJK2MV
+extern	cvar_t	*cl_commandsize;//JAPRO ENGINE
 
 extern	cvar_t	*cl_timedemo;
 extern	cvar_t	*cl_aviFrameRate;

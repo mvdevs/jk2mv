@@ -2413,8 +2413,15 @@ static unsigned int frameCount;
 static float avgFrametime=0.0;
 extern void SP_CheckForLanguageUpdates(void);
 void CL_Frame ( int msec ) {
+	qboolean render = qfalse;
+
 	if ( !com_cl_running->integer ) {
 		return;
+	}
+
+	if ((com_renderfps->integer <= 0) || ((cls.realtime >= cls.lastDrawTime + (1000 / com_renderfps->integer)))) {
+		render = qtrue;
+		cls.lastDrawTime = cls.realtime;
 	}
 
 	SP_CheckForLanguageUpdates();	// will take zero time to execute unless language changes, then will reload strings.
@@ -2503,10 +2510,12 @@ void CL_Frame ( int msec ) {
 	CL_SetCGameTime();
 
 	// update the screen
-	SCR_UpdateScreen();
+	if (render) {
+		SCR_UpdateScreen();
 
-	// update audio
-	S_Update();
+		// update audio
+		S_Update();
+	}
 
 	// advance local effects for next frame
 	SCR_RunCinematic();
