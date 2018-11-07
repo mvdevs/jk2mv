@@ -1098,6 +1098,7 @@ void CompleteCommand( void )
 	Cvar_CommandCompletion( PrintMatches );
 }
 */
+extern cvar_t *con_timestamps;
 void CompleteCommand( void )
 { // This is now calling Field_AutoComplete2 and adds a '\' if we found a match... (Hybrid between the old and the new Completion)
 	field_t		*edit;
@@ -1131,7 +1132,10 @@ void CompleteCommand( void )
 
 	Com_Memcpy(temp, edit->buffer, MAX_EDIT_LINE);
 
-	Com_sprintf(edit->buffer, MAX_EDIT_LINE, "\\%s", shortestMatch);
+	if (con_timestamps->integer) 
+		Com_sprintf(edit->buffer, MAX_EDIT_LINE, "%s", shortestMatch);
+	else
+		Com_sprintf(edit->buffer, MAX_EDIT_LINE, "\\%s", shortestMatch);
 	if (matchCount == 1) {
 		if (Cmd_Argc() == 1) {
 			Q_strcat(edit->buffer, MAX_EDIT_LINE, " ");
@@ -1179,7 +1183,10 @@ void Console_Key (int key) {
 			CompleteCommand();
 		}
 
-		Com_Printf ( "]%s\n", kg.g_consoleField.buffer );
+		if (con_timestamps && con_timestamps->integer)
+			Com_Printf("\\%s\n", kg.g_consoleField.buffer);
+		else
+			Com_Printf ( "]%s\n", kg.g_consoleField.buffer );
 
 		// leading slash is an explicit command
 		if ( kg.g_consoleField.buffer[0] == '\\' || kg.g_consoleField.buffer[0] == '/' ) {

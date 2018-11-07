@@ -548,7 +548,7 @@ Draw the editline after a ] prompt
 ================
 */
 void Con_DrawInput (void) {
-	int		y;
+	int		y, x = 0;
 
 	if ( cls.state != CA_DISCONNECTED && !(cls.keyCatchers & KEYCATCH_CONSOLE ) ) {
 		return;
@@ -556,11 +556,34 @@ void Con_DrawInput (void) {
 
 	y = con.vislines - ( con.charHeight * (re.Language_IsAsian() ? 1.5 : 2) );
 
+	if (con_timestamps->integer)
+	{
+		qtime_t	time;
+		char	timestamp[CON_TIMESTAMP_LEN + 1];
+		const unsigned char color = ColorIndex(CT_GREEN);
+
+		Com_RealTime(&time);
+		Com_sprintf(timestamp, sizeof(timestamp), "[%02d:%02d:%02d] ",
+			time.tm_hour, time.tm_min, time.tm_sec);
+
+		re.SetColor(colorGreen);
+		for (x = 0; x < CON_TIMESTAMP_LEN; x++) {
+			SCR_DrawSmallChar(con.xadjust + (x + 1) * con.charWidth, y, timestamp[x]);
+		}
+		re.SetColor(NULL);
+
+		x = CON_TIMESTAMP_LEN + 1;
+	}
+
 	re.SetColor( con.color );
 
-	Field_Draw( &kg.g_consoleField, 2 * con.charWidth, y, qtrue );
-
-	SCR_DrawSmallChar( con.charWidth, y, CONSOLE_PROMPT_CHAR );
+	if (con_timestamps->integer) {
+		Field_Draw(&kg.g_consoleField, x * con.charWidth, y, qtrue);
+	}
+	else {
+		SCR_DrawSmallChar( con.charWidth, y, CONSOLE_PROMPT_CHAR );
+		Field_Draw(&kg.g_consoleField, 2 * con.charWidth, y, qtrue);
+	}
 
 	re.SetColor( g_color_table[ColorIndex_Extended(COLOR_LT_TRANSPARENT)] );
 
