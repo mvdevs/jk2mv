@@ -405,10 +405,19 @@ void Con_Init (void) {
 Con_Linefeed
 ===============
 */
-void Con_Linefeed (void)
+static void Con_Linefeed (qboolean skipnotify)
 {
 	int		i;
 	int		line = (con.current % con.totallines) * con.rowwidth;
+
+	// mark time for transparent overlay
+	if (con.current >= 0)
+	{
+		if (skipnotify)
+			con.times[con.current & NUM_CON_TIMES] = 0;
+		else
+			con.times[con.current % NUM_CON_TIMES] = cls.realtime;
+	}
 
 	// print timestamp on the PREVIOUS line
 	{
@@ -424,10 +433,6 @@ void Con_Linefeed (void)
 			con.text[line + i].f = { color, timestamp[i] };
 		}
 	}
-
-	// mark time for transparent overlay
-	if (con.current >= 0)
-		con.times[con.current % NUM_CON_TIMES] = cls.realtime;
 
 	con.x = 0;
 
@@ -454,10 +459,18 @@ void CL_ConsolePrint( const char *txt, qboolean extendedColors ) {
 	unsigned char	color;
 	char			c;
 	int				y;
+	qboolean		skipnotify = qfalse;
 
 	// for some demos we don't want to ever show anything on the console
-	if ( cl_noprint && cl_noprint->integer ) {
+	if (cl_noprint && cl_noprint->integer) {
 		return;
+	}
+
+	// TTimo - prefix for text that shows up in console but not in notify
+	// backported from RTCW
+	if (!Q_strncmp(txt, "[skipnotify]", 12)) {
+		skipnotify = qtrue;
+		txt += 12;
 	}
 
 	if (!con.initialized) {
@@ -491,7 +504,7 @@ void CL_ConsolePrint( const char *txt, qboolean extendedColors ) {
 		switch (c)
 		{
 		case '\n':
-			Con_Linefeed ();
+			Con_Linefeed(skipnotify);
 			break;
 		case '\r':
 			con.x = 0;
@@ -501,7 +514,7 @@ void CL_ConsolePrint( const char *txt, qboolean extendedColors ) {
 
 			if (con.x == con.rowwidth - CON_TIMESTAMP_LEN - 1) {
 				con.text[y * con.rowwidth + CON_TIMESTAMP_LEN + con.x] = CON_WRAP;
-				Con_Linefeed();
+				Con_Linefeed(skipnotify);
 				y = con.current % con.totallines;
 			}
 
@@ -510,12 +523,6 @@ void CL_ConsolePrint( const char *txt, qboolean extendedColors ) {
 			break;
 		}
 	}
-
-
-	// mark time for transparent overlay
-
-	if (con.current >= 0)
-		con.times[con.current % NUM_CON_TIMES] = cls.realtime;
 }
 
 
