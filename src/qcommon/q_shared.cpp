@@ -679,6 +679,27 @@ int Q_isascii(int c) {
 	return c >= 0;
 }
 
+qboolean Q_isanumber( const char *s )
+{
+	char *p;
+	double ret;
+
+	if( *s == '\0' )
+		return qfalse;
+
+	ret = strtod( s, &p );
+
+	if ( ret == HUGE_VAL || errno == ERANGE )
+		return qfalse;
+
+	return (qboolean)(*p == '\0');
+}
+
+qboolean Q_isintegral( float f )
+{
+	return (qboolean)( (int)f == f );
+}
+
 char* Q_strrchr(const char* string, int c) {
 	char cc = c;
 	const char *s;
@@ -944,6 +965,120 @@ char *Q_CleanStr(char *string, qboolean use102color) {
 
 	return string;
 }
+
+/*
+==================
+Q_StripColor
+
+Strips coloured strings in-place using multiple passes: "fgs^^56fds" -> "fgs^6fds" -> "fgsfds"
+
+This function modifies INPUT (is mutable)
+
+(Also strips ^8 and ^9)
+==================
+*/
+void Q_StripColor(char *text)
+{
+	qboolean doPass = qtrue;
+	char *read;
+	char *write;
+
+	while ( doPass )
+	{
+		doPass = qfalse;
+		read = write = text;
+		while ( *read )
+		{
+			if ( Q_IsColorString(read) || Q_IsColorString_1_02(read) )
+			{
+				doPass = qtrue;
+				read += 2;
+			}
+			else
+			{
+				// Avoid writing the same data over itself
+				if (write != read)
+				{
+					*write = *read;
+				}
+				write++;
+				read++;
+			}
+		}
+		if ( write < read )
+		{
+			// Add trailing NUL byte if string has shortened
+			*write = '\0';
+		}
+	}
+}
+
+/*
+Q_strstrip
+
+Description:	Replace strip[x] in string with repl[x] or remove characters entirely
+Mutates:		string
+Return:			--
+
+Examples:		Q_strstrip( "Bo\nb is h\rairy!!", "\n\r!", "123" );	// "Bo1b is h2airy33"
+Q_strstrip( "Bo\nb is h\rairy!!", "\n\r!", "12" );	// "Bo1b is h2airy"
+Q_strstrip( "Bo\nb is h\rairy!!", "\n\r!", NULL );	// "Bob is hairy"
+*/
+
+void Q_strstrip( char *string, const char *strip, const char *repl )
+{
+	char		*out=string, *p=string, c;
+	const char	*s=strip;
+	int			replaceLen = repl?strlen( repl ):0, offset=0;
+	qboolean	recordChar = qtrue;
+
+	while ( (c = *p++) != '\0' )
+	{
+		recordChar = qtrue;
+		for ( s=strip; *s; s++ )
+		{
+			offset = s-strip;
+			if ( c == *s )
+			{
+				if ( !repl || offset >= replaceLen )
+					recordChar = qfalse;
+				else
+					c = repl[offset];
+				break;
+			}
+		}
+		if ( recordChar )
+			*out++ = c;
+	}
+	*out = '\0';
+}
+
+/*
+Q_strchrs
+
+Description:	Find any characters in a string. Think of it as a shorthand strchr loop.
+Mutates:		--
+Return:			first instance of any characters found
+otherwise NULL
+*/
+
+const char *Q_strchrs( const char *string, const char *search )
+{
+	const char *p = string, *s = search;
+
+	while ( *p != '\0' )
+	{
+		for ( s=search; *s; s++ )
+		{
+			if ( *p == *s )
+				return p;
+		}
+		p++;
+	}
+
+	return NULL;
+}
+
 
 
 #if defined(_MSC_VER) && _MSC_VER < 1900

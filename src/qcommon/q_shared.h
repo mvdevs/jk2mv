@@ -1056,6 +1056,8 @@ int Q_isdigit( int c );
 int Q_isalnum( int c );
 int Q_isascii( int c );
 
+qboolean Q_isanumber( const char *s );
+qboolean Q_isintegral( float f );
 
 // portable case insensitive compare
 int		Q_stricmp (const char *s1, const char *s2);
@@ -1079,6 +1081,9 @@ int Q_PrintStrLenTo(const char *str, int chars, char *color, qboolean use102colo
 void Q_PrintStrCopy(char *dst, const char *src, int dstSize, int from, int len, qboolean use102color);
 // removes color sequences from string
 char *Q_CleanStr( char *string, qboolean use102color ) ;
+void Q_StripColor(char *text); //strips both colors
+const char *Q_strchrs( const char *string, const char *search );
+void Q_strstrip( char *string, const char *strip, const char *repl );
 
 //=============================================
 /*

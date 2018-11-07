@@ -350,6 +350,11 @@ typedef struct {
 	qboolean ignoreNextDownloadList;
 
 	int			fixes;
+
+	//EternalJK2MV
+	struct {
+		fileHandle_t	chat;
+	} log;
 } clientStatic_t;
 
 #define	CON_TEXTSIZE	131072 // increased in jk2mv
@@ -440,6 +445,7 @@ extern	cvar_t	*m_side;
 extern	cvar_t	*m_filter;
 
 //EternalJK2MV
+extern	cvar_t	*cl_logChat;
 extern	cvar_t	*cl_commandsize;//JAPRO ENGINE
 
 extern	cvar_t	*cl_timedemo;
@@ -499,6 +505,9 @@ void CL_ShutdownRef( void );
 void CL_InitRef( void );
 
 int CL_ServerStatus( const char *serverAddress, char *serverStatusString, int maxLen );
+
+
+void CL_LogPrintf(fileHandle_t fileHandle, const char *fmt, ...);
 
 void CL_GetVMGLConfig(vmglconfig_t *vmglconfig);
 int CL_ScaledMilliseconds(void);
@@ -571,6 +580,9 @@ void Con_PageDown( int lines );
 void Con_Top( void );
 void Con_Bottom( void );
 void Con_Close( void );
+
+void Con_Copy(void);
+void Con_CopyLink(void);
 
 
 //

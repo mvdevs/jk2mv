@@ -559,12 +559,50 @@ rescan:
 		return qtrue;
 	}
 
+	//chat logs
+	if (!strcmp(cmd, "chat") || !strcmp(cmd, "tchat")) {
+		if (cl_logChat->integer) {
+			char chat[MAX_NAME_LENGTH + 4 + MAX_SAY_TEXT + 12];
+			int i, l;
+
+			s = Cmd_Argv(1);
+			Com_sprintf(chat, sizeof(chat), "%s\n", s);
+			Q_StripColor(chat);
+
+			//Remove escape char from name
+			l = 0;
+			for (i = 0; chat[i]; i++) {
+				if (chat[i] == '\x19')
+					continue;
+				chat[l++] = chat[i];
+			}
+			chat[l] = '\0';
+
+			CL_LogPrintf(cls.log.chat, chat);
+		}
+	}
+
 	// we may want to put a "connect to other server" command here
 
 	// cgame can now act on the command
 	return qtrue;
 }
 
+static void CL_OpenLog(const char *filename, fileHandle_t *f, qboolean sync) {
+	FS_FOpenFileByMode(filename, f, sync ? FS_APPEND_SYNC : FS_APPEND);
+	if (*f)
+		Com_Printf("Logging to %s\n", filename);
+	else
+		Com_Printf("^3WARNING: Couldn't open logfile: %s\n", filename);
+}
+
+static void CL_CloseLog(fileHandle_t *f) {
+	if (!*f)
+		return;
+
+	FS_FCloseFile(*f);
+	*f = ((fileHandle_t)0); //NULL_FILE;
+}
 
 /*
 ====================
@@ -601,6 +639,11 @@ void CL_ShutdownCGame( void ) {
 
 	if (cl_autoDemo->integer && !clc.demoplaying) {
 		demoAutoComplete();
+	}
+
+	if (cl_logChat->integer) {
+		CL_LogPrintf(cls.log.chat, "End logging\n------------------------------------------------------------\n\n");
+		CL_CloseLog(&cls.log.chat);
 	}
 }
 
@@ -1382,6 +1425,18 @@ void CL_InitCGame( void ) {
 #ifdef _DONETPROFILE_
 	ClReadProf().Reset();
 #endif
+
+	if (cl_logChat->integer) {
+		struct tm		*newtime;
+		time_t			rawtime;
+		char			logname[32];
+
+		time(&rawtime);
+		newtime = localtime(&rawtime);
+		strftime(logname, sizeof(logname), "chatlogs/cl_%y-%b.log", newtime);
+
+		CL_OpenLog(logname, &cls.log.chat, (cl_logChat->integer == 2 ? qtrue : qfalse));
+	}
 }
 
 

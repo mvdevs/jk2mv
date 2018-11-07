@@ -128,6 +128,174 @@ void Con_Clear_f (void) {
 	Con_Bottom();		// go to end
 }
 
+void Con_Copy(void) {
+	qboolean		empty;
+	int				l, i, j, x;
+	int				line;
+	int				lineLen;
+	char			buffer[CON_TIMESTAMP_LEN + MAXPRINTMSG + 1];
+	int				bufferlen, savebufferlen;
+	char			*savebuffer;
+
+	// skip empty lines
+	for (l = 1, empty = qtrue; l < con.totallines && empty; l++)
+	{
+		line = ((con.current + l) % con.totallines) * con.rowwidth;
+
+		for (j = CON_TIMESTAMP_LEN; j < con.rowwidth - 1; j++)
+			if (con.text[line + j].f.character != CON_BLANK_CHAR)
+				empty = qfalse;
+	}
+
+#ifdef _WIN32
+	bufferlen = con.linewidth + 3;
+#else
+	bufferlen = con.linewidth + 2;
+#endif
+
+	savebufferlen = bufferlen*(con.current - l);
+	savebuffer = (char *)Hunk_AllocateTempMemory(savebufferlen);
+	memset(savebuffer, 0, savebufferlen);
+
+	for (; l < con.totallines; l++)
+	{
+		lineLen = 0;
+		i = 0;
+		x = 0;
+
+		// Print timestamp
+		if (con_timestamps->integer) {
+			line = ((con.current + l) % con.totallines) * con.rowwidth;
+
+			for (i = 0; i < CON_TIMESTAMP_LEN; i++)
+				buffer[i] = con.text[line + i].f.character;
+
+			lineLen = CON_TIMESTAMP_LEN;
+		}
+
+		// Concatenate wrapped lines
+		for (; l < con.totallines; l++)
+		{
+			line = ((con.current + l) % con.totallines) * con.rowwidth;
+
+			for (j = CON_TIMESTAMP_LEN; j < con.rowwidth - 1 && i < (int)sizeof(buffer) - 1; j++, i++) {
+				buffer[i] = con.text[line + j].f.character;
+
+				if (con.text[line + j].f.character != CON_BLANK_CHAR)
+					lineLen = i + 1;
+			}
+
+			if (i == sizeof(buffer) - 1)
+				break;
+
+			if (con.text[line + j].compare != CON_WRAP.compare)
+				break;
+		}
+
+		for (x = con.linewidth - 1; x >= 0; x--)
+		{
+			if (buffer[x] == CON_BLANK_CHAR)
+				buffer[x] = 0;
+			else
+				break;
+		}
+
+		buffer[lineLen] = '\n';
+
+		Q_strcat(savebuffer, savebufferlen, buffer);
+	}
+
+
+	Sys_SetClipboardData(savebuffer);
+	Com_Printf("^2Console successfully copied to clipboard!\n");
+	Hunk_FreeTempMemory(savebuffer);
+}
+
+void Con_CopyLink(void) {
+	int l, x, i, pointDiff;
+	//short *line;
+	conChar_t *line;
+	char *buffer, n[] = "\0";
+	const char *link, *point1, *point2, *point3;
+	qboolean containsNum = qfalse, containsPoint = qfalse;
+
+	buffer = (char *)Hunk_AllocateTempMemory(con.linewidth);
+
+	for (l = con.current; l >= con.current - 32; l--)
+	{
+		line = con.text + (l%con.totallines)*con.linewidth;
+		for (i = 0; i < con.linewidth; i++) {
+			buffer[i] = (char)(line[i].f.character);// & 0xff);
+			if (!containsNum && Q_isanumber(&buffer[i])) containsNum = qtrue;
+			if (!containsPoint && buffer[i] == '.') containsPoint = qtrue;
+		}
+		// Clear spaces at end of buffer
+		for (x = con.linewidth - 1; x >= 0; x--) {
+			if (buffer[x] == ' ')
+				buffer[x] = 0;
+			else
+				break;
+		}
+		Q_StripColor(buffer);
+		if ((link = Q_stristr(buffer, "://")) || (link = Q_stristr(buffer, "www."))) {
+			// Move link ptr back until it hits a space or first char of string
+			while (link != &buffer[0] && *(link - 1) != ' ') link--;
+			for (i = 0; buffer[i] != 0; i++) {
+				buffer[i] = *link++;
+				if (*link == ' ' || *link == '"') buffer[i + 1] = 0;
+			}
+			Sys_SetClipboardData(buffer);
+			Com_Printf("^2Link ^7\"%s\" ^2Copied!\n", buffer);
+			break;
+		}
+		if (containsNum && containsPoint) {
+			containsNum = qfalse, containsPoint = qfalse;
+			if (!(point1 = Q_stristr(buffer, ".")) || // Set address of first point
+													  // Check if points exist after point1 and set their addresses
+				!(point2 = Q_stristr(point1 + 1, ".")) ||
+				!(point3 = Q_stristr(point2 + 1, "."))) continue;
+			for (i = 0; buffer[i] != 0; i++) {
+				if (point1 == &buffer[i]) { // If addresses match, set point1 to next point
+											// Check if points exist and set point addresses
+					if (
+						!(point1 = Q_stristr(&buffer[i + 1], ".")) ||
+						!(point2 = Q_stristr(point1 + 1, ".")) ||
+						!(point3 = Q_stristr(point2 + 1, "."))
+						) break;
+				}
+				*n = buffer[i]; // Force Q_isanumber to look at a single char
+				if (Q_isanumber(n)) {
+					// Check if chars exist between points and the amount of chars is > 0 & <=3
+					// <xxx>.<xxx>.<xxx>. Can't reliably check for chars after last point
+					if ((pointDiff = point1 - &buffer[i]) <= 3 &&
+						pointDiff > 0 &&
+						(pointDiff = point2 - (point1 + 1)) <= 3 &&
+						pointDiff > 0 &&
+						(pointDiff = point3 - (point2 + 1)) <= 3 &&
+						pointDiff > 0
+						) {
+						link = &buffer[i];
+						break;
+					}
+				}
+			}
+			if (link) {
+				for (i = 0; buffer[i] != 0; i++) {
+					buffer[i] = *link++;
+					if (*link == ' ' || *link == '"') buffer[i + 1] = 0;
+				}
+				Sys_SetClipboardData(buffer);
+				Com_Printf("^2IP ^7\"%s\" ^2Copied!\n", buffer);
+				break;
+			}
+		}
+	}
+	if (!link) {
+		Com_Printf("^1No Links or IPs found!\n", buffer);
+	}
+	Hunk_FreeTempMemory(buffer);
+}
+
 
 /*
 ================
