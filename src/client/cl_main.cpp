@@ -2822,7 +2822,7 @@ void CL_Init( void ) {
 	cl_pitchspeed = Cvar_Get("cl_pitchspeed", "140", CVAR_ARCHIVE | CVAR_GLOBAL);
 	cl_anglespeedkey = Cvar_Get("cl_anglespeedkey", "1.5", CVAR_ARCHIVE | CVAR_GLOBAL);
 
-	cl_maxpackets = Cvar_Get("cl_maxpackets", "60", CVAR_ARCHIVE | CVAR_GLOBAL);
+	cl_maxpackets = Cvar_Get("cl_maxpackets", "125", CVAR_ARCHIVE | CVAR_GLOBAL);
 	cl_packetdup = Cvar_Get("cl_packetdup", "1", CVAR_ARCHIVE | CVAR_GLOBAL);
 
 	cl_run = Cvar_Get ("cl_run", "1", CVAR_ARCHIVE | CVAR_GLOBAL);
@@ -2894,7 +2894,7 @@ void CL_Init( void ) {
 	// mv cvars
 	mv_slowrefresh = Cvar_Get("mv_slowrefresh", "3", CVAR_ARCHIVE | CVAR_GLOBAL);
 	mv_coloredTextShadows	= Cvar_Get("mv_coloredTextShadows"	, "2", CVAR_ARCHIVE | CVAR_GLOBAL);
-	mv_consoleShiftRequirement = Cvar_Get("mv_consoleShiftRequirement", "1", CVAR_ARCHIVE | CVAR_GLOBAL);
+	mv_consoleShiftRequirement = Cvar_Get("mv_consoleShiftRequirement", "0", CVAR_ARCHIVE | CVAR_GLOBAL);
 	mv_menuOverride = Cvar_Get("mv_menuOverride", "0", CVAR_INIT | CVAR_VM_NOWRITE);
 
 	cl_downloadName = Cvar_Get("cl_downloadName", "", CVAR_INTERNAL);
