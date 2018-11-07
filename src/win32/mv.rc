@@ -21,9 +21,9 @@ BEGIN
       VALUE "CompanyName", "jk2mv.org"
       VALUE "FileDescription", "JK2MV Client"
       VALUE "FileVersion", JK2MV_VERSION
-      VALUE "InternalName", "JK2MV"
+      VALUE "InternalName", "EternalJK2MV"
       VALUE "LegalCopyright", "jk2mv.org"
-      VALUE "ProductName", "JK2MV"
+      VALUE "ProductName", "EternalJK2"
       VALUE "ProductVersion", JK2MV_VERSION
     END
   END

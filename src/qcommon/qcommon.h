@@ -253,7 +253,7 @@ PROTOCOL
 
 #define	MAX_MASTER_SERVERS	8
 
-#define	UPDATE_SERVER_NAME		"update.jk2mv.org"
+#define	UPDATE_SERVER_NAME	""//"update.jk2mv.org"
 
 #define	PORT_MASTER			28060
 #define	PORT_UPDATE			28061

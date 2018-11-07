@@ -2469,8 +2469,8 @@ void Com_Init( char *commandLine ) {
 #ifdef DEDICATED
 		Cbuf_AddText ("exec jk2mvserver.cfg\n");
 #else
-		Cbuf_AddText ("exec jk2mvconfig.cfg\n");
-		Cbuf_AddText("exec jk2mvglobal.cfg\n");
+		Cbuf_AddText ("exec eternaljk2mv.cfg\n");
+		Cbuf_AddText("exec eternaljk2mvglobal.cfg\n");
 #endif
 	}
 
@@ -2642,9 +2642,9 @@ void Com_WriteConfiguration( void ) {
 	cvar_modifiedFlags &= ~CVAR_ARCHIVE;
 
 #ifdef DEDICATED
-	Com_WriteConfigToFile( "jk2mvserver.cfg", NULL );
+	Com_WriteConfigToFile( "eternaljk2mvserver.cfg", NULL );
 #else
-	Com_WriteConfigToFile("jk2mvconfig.cfg", "jk2mvglobal.cfg");
+	Com_WriteConfigToFile("eternaljk2mv.cfg", "eternaljk2mvglobal.cfg");
 #endif
 }
 

@@ -1323,9 +1323,9 @@ int FS_FOpenFileReadHash(const char *filename, fileHandle_t *file, qboolean uniq
 	}
 
 	isLocalConfig = ( !strcmp( filename, "autoexec.cfg" ) ||
-		!strcmp( filename, "jk2mvconfig.cfg" ) ||
-		!strcmp( filename, "jk2mvserver.cfg" ) ||
-		!strcmp( filename, "jk2mvglobal.cfg" ) );
+		!strcmp( filename, "eternaljk2mv.cfg" ) ||
+		!strcmp( filename, "eternaljk2mvserver.cfg" ) ||
+		!strcmp( filename, "eternaljk2mvglobal.cfg" ) );
 
 	//
 	// search through the path, one element at a time
@@ -3295,7 +3295,7 @@ static void FS_Startup( const char *gameName ) {
 	fs_debug = Cvar_Get( "fs_debug", "0", 0 );
 	fs_copyfiles = Cvar_Get( "fs_copyfiles", "0", CVAR_INIT );
 	fs_basepath = Cvar_Get ("fs_basepath", Sys_DefaultInstallPath(), CVAR_INIT | CVAR_VM_NOWRITE );
-	fs_basegame = Cvar_Get ("fs_basegame", "", CVAR_INIT );
+	fs_basegame = Cvar_Get ("fs_basegame", "eternaljk2", CVAR_INIT );
 	fs_homepath = Cvar_Get ("fs_homepath", Sys_DefaultHomePath(), CVAR_INIT | CVAR_VM_NOWRITE );
 	fs_gamedirvar = Cvar_Get ("fs_game", "", CVAR_INIT|CVAR_SYSTEMINFO );
 
@@ -3859,9 +3859,9 @@ void FS_Restart( int checksumFeed ) {
 		// skip the jk2mpconfig.cfg if "safe" is on the command line
 		if ( !Com_SafeMode() ) {
 #ifdef DEDICATED
-			Cbuf_AddText ("exec jk2mvserver.cfg\n");
+			Cbuf_AddText ("exec eternaljk2mvserver.cfg\n");
 #else
-			Cbuf_AddText ("exec jk2mvconfig.cfg\n");
+			Cbuf_AddText ("exec eternaljk2mv.cfg\n");
 #endif
 		}
 	}
