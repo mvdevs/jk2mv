@@ -14,6 +14,9 @@ cvar_t		*con_scale;
 cvar_t		*con_speed;
 cvar_t		*con_timestamps;
 
+//EternalJK2MV
+cvar_t		*con_opacity;
+
 #define	DEFAULT_CONSOLE_WIDTH	78
 #define CON_BLANK_CHAR			' '
 #define CON_SCROLL_L_CHAR		'$'
@@ -382,6 +385,8 @@ void Con_Init (void) {
 	con_speed = Cvar_Get ("con_speed", "3", CVAR_GLOBAL | CVAR_ARCHIVE);
 	con_scale = Cvar_Get ("con_scale", "1", CVAR_GLOBAL | CVAR_ARCHIVE);
 	con_timestamps = Cvar_Get ("con_timestamps", "0", CVAR_GLOBAL | CVAR_ARCHIVE);
+	//EternalJK2MV
+	con_opacity = Cvar_Get("con_opacity", "1.0", CVAR_GLOBAL|CVAR_ARCHIVE);
 
 	Field_Clear( &kg.g_consoleField );
 	kg.g_consoleField.widthInChars = DEFAULT_CONSOLE_WIDTH - 1; // Command prompt
@@ -729,6 +734,17 @@ void Con_DrawSolidConsole( float frac ) {
 		y = 0;
 	}
 	else {
+		// draw the background at full opacity only if fullscreen
+		if (frac < 1.0f)
+		{
+			vec4_t con_color;
+			MAKERGBA(con_color, 1.0f, 1.0f, 1.0f, Com_Clamp(0.0f, 1.0f, con_opacity->value));
+			re.SetColor(con_color);
+		}
+		else
+		{
+			re.SetColor(NULL);
+		}
 		SCR_DrawPic( 0, 0, SCREEN_WIDTH, (float) y, cls.consoleShader );
 	}
 
