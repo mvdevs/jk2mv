@@ -1320,6 +1320,18 @@ void CL_Vid_Restart_f( void ) {
 
 /*
 =================
+CL_Fs_Restart_f
+
+Restart the filesystem
+=================
+*/
+
+void CL_FS_Restart_f( void ) {
+	FS_Restart( clc.checksumFeed ); //xD
+}
+
+/*
+=================
 CL_Snd_Restart_f
 
 Restart the sound subsystem
@@ -2898,6 +2910,7 @@ void CL_Init( void ) {
 	Cmd_AddCommand ("cmd", CL_ForwardToServer_f);
 	Cmd_AddCommand ("configstrings", CL_Configstrings_f);
 	Cmd_AddCommand ("clientinfo", CL_Clientinfo_f);
+	Cmd_AddCommand ("fs_restart", CL_FS_Restart_f);
 	Cmd_AddCommand ("snd_restart", CL_Snd_Restart_f);
 	Cmd_AddCommand ("vid_restart", CL_Vid_Restart_f);
 	Cmd_AddCommand ("disconnect", CL_Disconnect_f);
