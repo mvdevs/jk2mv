@@ -302,24 +302,14 @@ void CL_StopRecord_f( void ) {
 CL_DemoFilename
 ==================
 */
-void CL_DemoFilename( int number, char *fileName ) {
-	int		a,b,c,d;
+void CL_DemoFilename( char *buf, int bufSize ) {
+	time_t rawtime;
+	char timeStr[32] = {0}; // should really only reach ~19 chars
 
-	if ( number < 0 || number > 9999 ) {
-		Com_sprintf( fileName, MAX_OSPATH, "demo9999.tga" );
-		return;
-	}
+	time( &rawtime );
+	strftime( timeStr, sizeof( timeStr ), "%Y-%m-%d_%H-%M-%S", localtime( &rawtime ) ); // or gmtime
 
-	a = number / 1000;
-	number -= a*1000;
-	b = number / 100;
-	number -= b*100;
-	c = number / 10;
-	number -= c*10;
-	d = number;
-
-	Com_sprintf( fileName, MAX_OSPATH, "demo%i%i%i%i"
-		, a, b, c, d );
+	Com_sprintf( buf, bufSize, "demo%s", timeStr );
 }
 
 /*
@@ -372,18 +362,15 @@ void CL_Record_f( void ) {
 		Q_strncpyz( demoName, s, sizeof( demoName ) );
 		Com_sprintf (name, sizeof(name), "demos/%s.dm_%d", demoName, MV_GetCurrentProtocol() );
 	} else {
-		int		number;
+		// timestamp the file
+		CL_DemoFilename( demoName, sizeof( demoName ) );
 
-		// scan for a free demo name
-		for ( number = 0 ; number <= 9999 ; number++ ) {
-			CL_DemoFilename( number, demoName );
-			Com_sprintf(name, sizeof(name), "demos/%s.dm_%d", demoName, MV_GetCurrentProtocol());
+		Com_sprintf(name, sizeof(name), "demos/%s.dm_%d", demoName, MV_GetCurrentProtocol());
 
-			len = FS_ReadFile( name, NULL );
-			if ( len <= 0 ) {
-				break;	// file doesn't exist
-			}
-		}
+		if ( FS_FileExists( name ) ) {
+			Com_Printf( "Record: Couldn't create a file\n");
+			return;
+ 		}
 	}
 
 	// open the demo file
