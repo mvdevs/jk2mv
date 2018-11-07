@@ -399,8 +399,8 @@ typedef struct {
   float			bias;
   int				realTime;
   int				frameTime;
-	int				cursorx;
-	int				cursory;
+	float			cursorx;
+	float			cursory;
 	qboolean	debug;
 
   cachedAssets_t Assets;
