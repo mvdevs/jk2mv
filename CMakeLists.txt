@@ -14,7 +14,7 @@ list(INSERT CMAKE_MODULE_PATH 0 "${RESDir}")
 # Project & Versioning
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-set(ProjectName "JK2MV" CACHE STRING "Project Name")
+set(ProjectName "EternalJK2MV" CACHE STRING "Project Name")
 set(ProjectURL "https://jk2mv.org")
 project(${ProjectName})
 

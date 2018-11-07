@@ -721,6 +721,12 @@ void Con_DrawSolidConsole( float frac ) {
 //	qhandle_t		conShader;
 	char *vertext;
 
+	struct tm		*newtime;
+	char			am_pm[] = "AM";
+	time_t			rawtime;
+	char			ts[24];
+	const int padding = (int)(0.5f + (con_scale && con_scale->value > 0.0f) ? 2 * con_scale->value : 2.0f);
+
 	lines = (int) (cls.glconfig.vidHeight * frac);
 	if (lines <= 0)
 		return;
@@ -752,12 +758,24 @@ void Con_DrawSolidConsole( float frac ) {
 	re.SetColor( g_color_table[ColorIndex_Extended(COLOR_JK2MV)] );
 	SCR_DrawPic( 0, y, SCREEN_WIDTH, 2, cls.whiteShader );
 
-
 	vertext = Q3_VERSION;
 	i = (int)strlen(vertext);
-	for (x=0 ; x<i ; x++) {
-		SCR_DrawSmallChar( cls.glconfig.vidWidth - ( i - x ) * con.charWidth,
-			(lines-(con.charHeight+con.charHeight/2)), vertext[x] );
+	for (x = 0; x<i; x++) {
+		SCR_DrawSmallChar(cls.glconfig.vidWidth - (i - x + 1) * con.charWidth,
+			(lines - (con.charHeight * 2 + con.charHeight / 2)) + padding, vertext[x]);
+	}
+
+	// Draw time and date
+	time(&rawtime);
+	newtime = localtime(&rawtime);
+	if (newtime->tm_hour > 12) strcpy(am_pm, "PM");
+	if (newtime->tm_hour > 12) newtime->tm_hour -= 12;
+	if (newtime->tm_hour == 0) newtime->tm_hour = 12;
+	Com_sprintf(ts, sizeof(ts), "%.19s %s ", asctime(newtime), am_pm);
+	i = strlen(ts);
+
+	for (x = 0; x<i; x++) {
+		SCR_DrawSmallChar(cls.glconfig.vidWidth - (i - x) * con.charWidth, lines - (con.charHeight + con.charHeight / 2) + padding, ts[x]);
 	}
 
 
