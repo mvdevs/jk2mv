@@ -1170,7 +1170,7 @@ void Console_Key (int key) {
 		(keynames[ key ].lower == 'j' && kg.keys[A_CTRL].down) )
 	{
 		// if not in the game explicitly prepent a slash if needed
-		if ( cls.state != CA_ACTIVE && kg.g_consoleField.buffer[0] != '\\'
+		/*if ( cls.state != CA_ACTIVE && kg.g_consoleField.buffer[0] != '\\'
 			&& kg.g_consoleField.buffer[0] != '/' ) {
 			char	temp[MAX_STRING_CHARS];
 
@@ -1178,7 +1178,7 @@ void Console_Key (int key) {
 			Com_sprintf( kg.g_consoleField.buffer, MAX_EDIT_LINE, "\\%s", temp );
 			kg.g_consoleField.cursor++;
 		}
-		else
+		else*/
 		{	// Added this to automatically make explicit commands not need slashes.
 			CompleteCommand();
 		}
@@ -1197,7 +1197,8 @@ void Console_Key (int key) {
 			if ( !kg.g_consoleField.buffer[0] ) {
 				return;	// empty lines just scroll the console without adding to history
 			} else {
-				Cbuf_AddText ("cmd say ");
+				if (com_unfocused->integer || com_minimized->integer) //only chat messages if typing in external window?
+					Cbuf_AddText ("cmd say ");
 				Cbuf_AddText( kg.g_consoleField.buffer );
 				Cbuf_AddText ("\n");
 			}
@@ -1917,6 +1918,7 @@ void CL_KeyEvent (int key, qboolean down, int time) {
 		}
 
 		Con_ToggleConsole_f ();
+		Key_ClearStates();
 		return;
 	}
 
