@@ -87,7 +87,7 @@ void Con_MessageMode3_f (void) {		//target chat
 	}
 	chat_team = qfalse;
 	Field_Clear( &chatField );
-	chatField.widthInChars = 30 / cls.cgxadj;
+	chatField.widthInChars = 26 / cls.cgxadj;
 	cls.keyCatchers ^= KEYCATCH_MESSAGE;
 }
 
@@ -614,6 +614,7 @@ void Con_DrawNotify (void)
 	int		i;
 	int		time;
 	int		skip;
+	const char* chattext;
 
 	currentColor = 7;
 	re.SetColor( g_color_table[currentColor] );
@@ -709,17 +710,21 @@ void Con_DrawNotify (void)
 	// draw the chat line
 	if ( cls.keyCatchers & KEYCATCH_MESSAGE )
 	{
-		if (chat_team)
-		{
-			SCR_DrawBigString (8, v, "say_team:", 1.0f );
-			skip = 11;
+		if (chat_playerNum != -1) {
+			chattext = "Whisper:";
+			skip = 9;
+		}
+		else if (chat_team) {
+			chattext = "Say Team:";
+			skip = 10;
 		}
 		else
 		{
-			SCR_DrawBigString (8, v, "say:", 1.0f );
+			chattext = "Say:";
 			skip = 5;
 		}
 
+		SCR_DrawBigString(8, v, chattext, 1.0f);
 		Field_BigDraw( &chatField, skip * BIGCHAR_WIDTH, v, qtrue );
 
 		v += BIGCHAR_HEIGHT;
