@@ -56,6 +56,9 @@ cvar_t	*r_measureOverdraw;
 
 cvar_t	*r_inGameVideo;
 cvar_t	*r_fastsky;
+cvar_t	*r_fastSkyR;
+cvar_t	*r_fastSkyG;
+cvar_t	*r_fastSkyB;
 cvar_t	*r_drawSun;
 cvar_t	*r_dynamiclight;
 cvar_t	*r_dlightBacks;
@@ -1238,7 +1241,10 @@ void R_Register( void )
 	r_znear = ri.Cvar_Get( "r_znear", "4", CVAR_CHEAT );
 	AssertCvarRange( r_znear, 0.001f, 200, qtrue );
 	r_ignoreGLErrors = ri.Cvar_Get("r_ignoreGLErrors", "1", CVAR_ARCHIVE | CVAR_GLOBAL);
-	r_fastsky = ri.Cvar_Get("r_fastsky", "0", CVAR_ARCHIVE | CVAR_GLOBAL);
+	r_fastsky = ri.Cvar_Get("r_fastsky", "0", CVAR_GLOBAL);
+	r_fastSkyR = ri.Cvar_Get("r_fastSkyR", "0.25", CVAR_GLOBAL);
+	r_fastSkyG = ri.Cvar_Get("r_fastSkyG", "0.25", CVAR_GLOBAL);
+	r_fastSkyB = ri.Cvar_Get("r_fastSkyB", "0.25", CVAR_GLOBAL);
 	r_inGameVideo = ri.Cvar_Get("r_inGameVideo", "1", CVAR_ARCHIVE | CVAR_GLOBAL);
 	r_drawSun = ri.Cvar_Get("r_drawSun", "0", CVAR_ARCHIVE | CVAR_GLOBAL);
 	r_dynamiclight = ri.Cvar_Get("r_dynamiclight", "1", CVAR_ARCHIVE | CVAR_GLOBAL);
