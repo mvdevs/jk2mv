@@ -914,6 +914,7 @@ void RE_Font_DrawString(int ox, int oy, const char *psText, const vec4_t rgba, i
 
 		switch( uiLetter )
 		{
+#if 0
 		case '^':
 			colour = ColorIndex(*psText);
 			if (!gbInShadow)
@@ -922,6 +923,7 @@ void RE_Font_DrawString(int ox, int oy, const char *psText, const vec4_t rgba, i
 			}
 			++psText;
 			break;
+#endif
 		case 10:						//linefeed
 			fx = fox;
 			foy += (float)curfont->GetPointSize() * fScale;
@@ -933,7 +935,20 @@ void RE_Font_DrawString(int ox, int oy, const char *psText, const vec4_t rgba, i
 			pLetter = curfont->GetLetter(' ');
 			fx += (float)pLetter->horizAdvance * fScale;
 			break;
-
+#if 1
+		case '^':
+			if (*psText && *psText != '\0' && *psText != ' ' && *psText != '^'&& *psText != 10
+				&& *psText != 13 && *psText != 32) //uugh
+			{
+				colour = ColorIndex(*psText);
+				if (!gbInShadow)
+				{
+					RE_SetColor(g_color_table[colour]);
+				}
+				++psText;
+				break;
+			}
+#endif
 		default:
 			qbThisCharCountsAsLetter = qtrue;
 			pLetter = curfont->GetLetter( uiLetter, &hShader );			// Description of pLetter
