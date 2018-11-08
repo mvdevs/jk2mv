@@ -287,7 +287,29 @@ float CL_KeyState( kbutton_t *key ) {
 	return val;
 }
 
+//do we have any force powers that we would normally need to cycle to?
+//dumb clone of the qbool check in cg_main, don't want to break compatibility for 1 silly VM call
+qboolean CL_NoUseableForce(void)
+{
+	int i = FP_HEAL;
+	while (i < NUM_FORCE_POWERS)
+	{
+		if (i != FP_SABERTHROW &&
+			i != FP_SABERATTACK &&
+			i != FP_SABERDEFEND &&
+			i != FP_LEVITATION)
+		{ //valid selectable power
+			if (cl.snap.ps.fd.forcePowersKnown & (1 << i))
+			{ //we have it
+				return qfalse;
+			}
+		}
+		i++;
+	}
 
+	//no useable force powers, I guess.
+	return qtrue;
+}
 
 void IN_UpDown(void) {IN_KeyDown(&in_up);}
 void IN_UpUp(void) {IN_KeyUp(&in_up);}
@@ -583,6 +605,16 @@ void CL_CmdButtons( usercmd_t *cmd ) {
 			cmd->buttons |= 1 << i;
 		}
 		in_buttons[i].wasPressed = qfalse;
+	}
+
+	if (cmd->buttons & BUTTON_FORCEPOWER)
+	{
+		//check for transferring a use force to a use inventory...
+		if ((cmd->buttons & BUTTON_USE) || CL_NoUseableForce())
+		{ //it's pushed, remap it!
+			cmd->buttons &= ~BUTTON_FORCEPOWER;
+			cmd->buttons |= BUTTON_USE_HOLDABLE;
+		}
 	}
 
 	if ( cls.keyCatchers ) {
