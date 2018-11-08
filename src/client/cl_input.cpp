@@ -659,7 +659,7 @@ void CL_CmdButtons( usercmd_t *cmd ) {
 		}
 	}
 
-	if ( cls.keyCatchers ) {
+	if ( cls.keyCatchers || com_unfocused->integer || com_minimized->integer ) {
 		cmd->buttons |= BUTTON_TALK;
 	}
 
