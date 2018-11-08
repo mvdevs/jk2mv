@@ -1228,6 +1228,8 @@ extern cvar_t	*r_DynamicGlowWidth;
 extern cvar_t	*r_DynamicGlowHeight;
 extern cvar_t	*r_DynamicGlowScale;
 
+extern cvar_t	*r_smartpicmip;
+
 extern	cvar_t	*r_nobind;						// turns off binding to appropriate textures
 extern	cvar_t	*r_singleShader;				// make most world faces use default shader
 extern	cvar_t	*r_colorMipLevels;				// development aid to see texture mip usage

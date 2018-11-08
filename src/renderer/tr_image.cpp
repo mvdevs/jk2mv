@@ -941,7 +941,7 @@ static image_t *R_FindImageFile_NoLoad(const char *name, const upload_t *upload,
 			if ( pImage->upload.noMipMaps != upload->noMipMaps ) {
 				ri.Printf( PRINT_WARNING, "WARNING: reused image %s with mixed mipmap parm\n", pName );
 			}
-			if ( pImage->upload.noPicMip != upload->noPicMip ) {
+			if ( pImage->upload.noPicMip != upload->noPicMip && !(r_smartpicmip->integer && r_picmip->integer && Q_stricmpn(name, "textures/", 9)) ) {
 				ri.Printf( PRINT_WARNING, "WARNING: reused image %s with mixed allowPicmip parm\n", pName );
 			}
 			if ( pImage->upload.noLightScale != upload->noLightScale ) {
@@ -1050,6 +1050,10 @@ image_t *R_CreateImageNew( const char *name, byte * const *mipmaps, qboolean cus
 	}
 
 	GL_Bind(image);
+
+	if (r_smartpicmip->integer && r_picmip->integer && Q_stricmpn(name, "textures/", 9)) {
+		image->upload.noPicMip = qtrue;
+	}
 
 	Upload32( mipmaps, customMip, image, isLightmap );
 

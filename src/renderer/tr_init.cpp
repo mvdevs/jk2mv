@@ -111,6 +111,8 @@ cvar_t	*r_DynamicGlowWidth;
 cvar_t	*r_DynamicGlowHeight;
 cvar_t	*r_DynamicGlowScale;
 
+cvar_t	*r_smartpicmip;
+
 cvar_t	*r_ignoreGLErrors;
 cvar_t	*r_logFile;
 
@@ -1211,6 +1213,7 @@ void R_Register( void )
 	r_DynamicGlowScale = ri.Cvar_Get("r_DynamicGlowScale", "0.25", CVAR_ARCHIVE|CVAR_GLOBAL|CVAR_LATCH);
 
 	r_picmip = ri.Cvar_Get("r_picmip", "1", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);
+	r_smartpicmip = ri.Cvar_Get("r_smartpicmip", "1", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);
 	r_colorMipLevels = ri.Cvar_Get ("r_colorMipLevels", "0", CVAR_LATCH );
 	AssertCvarRange( r_picmip, 0, 16, qtrue );
 	r_detailTextures = ri.Cvar_Get("r_detailtextures", "1", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);
