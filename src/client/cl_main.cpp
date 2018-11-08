@@ -72,6 +72,7 @@ cvar_t	*cl_framerate;
 
 //EternalJK2MV
 cvar_t	*cl_logChat;
+cvar_t	*cl_idrive; //JAPRO ENGINE
 
 cvar_t	*cl_autolodscale;
 
