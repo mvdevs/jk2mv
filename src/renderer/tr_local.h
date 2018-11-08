@@ -1116,6 +1116,9 @@ typedef struct {
 	// gamma correction
 	GLuint gammaVertexShader, gammaPixelShader;
 	GLuint gammaLUTImage;
+
+	int						dynamicGlowWidth;
+	int						dynamicGlowHeight;
 } trGlobals_t;
 
 
@@ -1223,6 +1226,7 @@ extern cvar_t	*r_DynamicGlowIntensity;
 extern cvar_t	*r_DynamicGlowSoft;
 extern cvar_t	*r_DynamicGlowWidth;
 extern cvar_t	*r_DynamicGlowHeight;
+extern cvar_t	*r_DynamicGlowScale;
 
 extern	cvar_t	*r_nobind;						// turns off binding to appropriate textures
 extern	cvar_t	*r_singleShader;				// make most world faces use default shader
