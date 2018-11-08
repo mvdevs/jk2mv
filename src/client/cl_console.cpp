@@ -813,7 +813,7 @@ void Con_DrawNotify (void)
 		if (time >= con_notifytime->value*1000)
 			continue;
 		text = con.text + (i % con.totallines)*con.rowwidth;
-		if (!con_timestamps->integer)
+		if (!con_timestamps->integer || con_timestamps->integer == 1)
 			text += CON_TIMESTAMP_LEN;
 
 		if (cl.snap.ps.pm_type != PM_INTERMISSION && cls.keyCatchers & (KEYCATCH_UI | KEYCATCH_CGAME) ) {
