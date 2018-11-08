@@ -1340,17 +1340,13 @@ void Message_Key( int key ) {
 		(keynames[ key ].lower == 'j' && kg.keys[A_CTRL].down) )
 	{
 		if ( chatField.buffer[0] && cls.state == CA_ACTIVE ) {
+			Q_strstrip(chatField.buffer, "\"%", "'/");//Replace % with / and " with '
 			if (chat_playerNum != -1 )
-
 				Com_sprintf( buffer, sizeof( buffer ), "tell %i \"%s\"\n", chat_playerNum, chatField.buffer );
-
 			else if (chat_team)
-
 				Com_sprintf( buffer, sizeof( buffer ), "say_team \"%s\"\n", chatField.buffer );
 			else
 				Com_sprintf( buffer, sizeof( buffer ), "say \"%s\"\n", chatField.buffer );
-
-
 
 			CL_AddReliableCommand( buffer );
 		}
