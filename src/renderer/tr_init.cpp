@@ -1191,11 +1191,11 @@ void R_Register( void )
 	r_ext_compressed_textures = ri.Cvar_Get("r_ext_compress_textures", "0", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);
 	r_ext_compressed_lightmaps = ri.Cvar_Get("r_ext_compress_lightmaps", "0", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);
 	r_ext_preferred_tc_method = ri.Cvar_Get("r_ext_preferred_tc_method", "0", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);
-	r_ext_gamma_control = ri.Cvar_Get("r_ext_gamma_control", "1", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);
+	r_ext_gamma_control = ri.Cvar_Get("r_ext_gamma_control", "0", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);
 	r_ext_multitexture = ri.Cvar_Get("r_ext_multitexture", "1", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);
 	r_ext_compiled_vertex_array = ri.Cvar_Get("r_ext_compiled_vertex_array", "1", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);
 	r_ext_texture_env_add = ri.Cvar_Get("r_ext_texture_env_add", "1", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);
-	r_ext_texture_filter_anisotropic = ri.Cvar_Get("r_ext_texture_filter_anisotropic", "2", CVAR_ARCHIVE | CVAR_GLOBAL);
+	r_ext_texture_filter_anisotropic = ri.Cvar_Get("r_ext_texture_filter_anisotropic", "16", CVAR_ARCHIVE | CVAR_GLOBAL);
 
 	r_DynamicGlow = ri.Cvar_Get( "r_DynamicGlow", "0", CVAR_ARCHIVE | CVAR_GLOBAL );
 	r_DynamicGlowPasses = ri.Cvar_Get("r_DynamicGlowPasses", "5", CVAR_ARCHIVE | CVAR_GLOBAL);
@@ -1244,7 +1244,7 @@ void R_Register( void )
 	r_dynamiclight = ri.Cvar_Get("r_dynamiclight", "1", CVAR_ARCHIVE | CVAR_GLOBAL);
 	r_dlightBacks = ri.Cvar_Get("r_dlightBacks", "1", CVAR_ARCHIVE | CVAR_GLOBAL);
 	r_finish = ri.Cvar_Get("r_finish", "0", CVAR_ARCHIVE | CVAR_GLOBAL);
-	r_textureMode = ri.Cvar_Get("r_textureMode", "GL_LINEAR_MIPMAP_NEAREST", CVAR_ARCHIVE | CVAR_GLOBAL);
+	r_textureMode = ri.Cvar_Get("r_textureMode", "GL_LINEAR_MIPMAP_LINEAR", CVAR_ARCHIVE | CVAR_GLOBAL);
 
 	// gamma correction
 	r_gamma = ri.Cvar_Get("r_gamma", "1", CVAR_ARCHIVE | CVAR_GLOBAL);
@@ -1345,11 +1345,11 @@ Ghoul2 Insert End
 	ri.Cmd_AddCommand("modellist", R_Modellist_f);
 	ri.Cmd_AddCommand( "modelcacheinfo", RE_RegisterModels_Info_f);
 
-	r_screenshotJpegQuality = ri.Cvar_Get("r_screenshotJpegQuality", "95", CVAR_ARCHIVE | CVAR_GLOBAL);
+	r_screenshotJpegQuality = ri.Cvar_Get("r_screenshotJpegQuality", "100", CVAR_ARCHIVE | CVAR_GLOBAL);
 
-	r_consoleFont = ri.Cvar_Get("r_consoleFont", "1", CVAR_ARCHIVE | CVAR_GLOBAL);
+	r_consoleFont = ri.Cvar_Get("r_consoleFont", "0", CVAR_ARCHIVE | CVAR_GLOBAL);
 	r_consoleFont->modified = qtrue;
-	r_fontSharpness = ri.Cvar_Get("r_fontSharpness", "1", CVAR_ARCHIVE | CVAR_GLOBAL);
+	r_fontSharpness = ri.Cvar_Get("r_fontSharpness", "0", CVAR_ARCHIVE | CVAR_GLOBAL);
 	r_textureLODBias = ri.Cvar_Get("r_textureLODBias", "0", CVAR_ARCHIVE | CVAR_GLOBAL);
 	r_saberGlow = ri.Cvar_Get("r_saberGlow", "1", CVAR_ARCHIVE | CVAR_LATCH);
 	r_environmentMapping = ri.Cvar_Get("r_environmentMapping", "1", CVAR_ARCHIVE | CVAR_GLOBAL);
