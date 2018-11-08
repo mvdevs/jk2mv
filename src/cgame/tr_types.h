@@ -37,6 +37,7 @@
 #define RF_DISINTEGRATE1	0x20000	// does a procedural hole-ripping thing.
 #define RF_DISINTEGRATE2	0x40000	// does a procedural hole-ripping thing with scaling at the ripping point
 
+#define	RF_FULLBRIGHT		0x80000 //RGB brightskins
 
 
 // refdef flags
