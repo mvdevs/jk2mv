@@ -743,7 +743,6 @@ void Con_DrawInput (void) {
 		for (x = 0; x < CON_TIMESTAMP_LEN; x++) {
 			SCR_DrawSmallChar(con.xadjust + (x + 1) * con.charWidth, y, timestamp[x]);
 		}
-		re.SetColor(NULL);
 
 		x = CON_TIMESTAMP_LEN + 1;
 	}
@@ -754,8 +753,8 @@ void Con_DrawInput (void) {
 		Field_Draw(&kg.g_consoleField, x * con.charWidth, y, qtrue);
 	}
 	else {
-		SCR_DrawSmallChar( con.charWidth, y, CONSOLE_PROMPT_CHAR );
 		Field_Draw(&kg.g_consoleField, 2 * con.charWidth, y, qtrue);
+		SCR_DrawSmallChar(con.charWidth, y, CONSOLE_PROMPT_CHAR);
 	}
 
 	re.SetColor( g_color_table[ColorIndex_Extended(COLOR_LT_TRANSPARENT)] );
