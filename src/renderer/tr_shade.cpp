@@ -1604,10 +1604,10 @@ void RB_EndSurface( void ) {
 	//
 	// draw debugging stuff
 	//
-	if ( r_showtris->integer && com_developer->integer ) {
+	if ( r_showtris->integer ) {
 		DrawTris (input);
 	}
-	if ( r_shownormals->integer && com_developer->integer ) {
+	if ( r_shownormals->integer ) {
 		DrawNormals (input);
 	}
 	// clear shader so we can tell we don't have any unclosed surfaces
