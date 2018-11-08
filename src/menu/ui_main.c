@@ -6743,7 +6743,7 @@ void _UI_Init( qboolean inGameLoad ) {
 	trap_Cvar_Register(&ui_serverFilterType, "ui_serverFilterType", "0", CVAR_ARCHIVE | CVAR_GLOBAL);
 
 	// botfilter
-	trap_Cvar_Register(&ui_botfilter, "ui_botfilter", "0", CVAR_ARCHIVE | CVAR_GLOBAL);
+	trap_Cvar_Register(&ui_botfilter, "ui_botfilter", "1", CVAR_ARCHIVE | CVAR_GLOBAL);
 
 	trap_Cvar_Set("ui_menulevel", "1");
 }
@@ -7407,7 +7407,7 @@ static const cvarTable_t cvarTable[] = {
 	{ &ui_blueteam6, "ui_blueteam6", "1", CVAR_ARCHIVE },
 	{ &ui_blueteam7, "ui_blueteam7", "1", CVAR_ARCHIVE },
 	{ &ui_blueteam8, "ui_blueteam8", "1", CVAR_ARCHIVE },
-	{ &ui_netSource, "ui_netSource", "0", CVAR_ARCHIVE },
+	{ &ui_netSource, "ui_netSource", "1", CVAR_ARCHIVE },
 	{ &ui_menuFiles, "ui_menuFilesMP", "ui/jk2mpmenus.txt", CVAR_ARCHIVE },
 	{ &ui_currentTier, "ui_currentTier", "0", CVAR_ARCHIVE },
 	{ &ui_currentMap, "ui_currentMap", "0", CVAR_ARCHIVE },
