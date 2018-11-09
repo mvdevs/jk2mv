@@ -313,7 +313,7 @@ add_subdirectory(libs/mongoose)
 
 # Package
 set(CPACK_PACKAGE_NAME ${ProjectName})
-set(CPACK_PACKAGE_FILE_NAME "jk2mv-v${MV_VERSION}")
+set(CPACK_PACKAGE_FILE_NAME "eternaljk2mv-v${MV_VERSION}")
 set(CPACK_PACKAGE_VENDOR "jk2mv.org")
 set(CPACK_PACKAGE_CONTACT "jk2mv.org <contact@jk2mv.org>")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Jedi Knight II: Multi Version")
@@ -358,15 +358,15 @@ else()
 		set(CPACK_GENERATOR "TGZ")
 	else()
 		set(CPACK_GENERATOR ${CPACK_GENERATOR} "DEB")
-		set(CPACK_DEBIAN_PACKAGE_NAME "jk2mv") # debian packages are lowercase
+		set(CPACK_DEBIAN_PACKAGE_NAME "eternaljk2mv") # debian packages are lowercase
 		set(CPACK_DEBIAN_PACKAGE_SECTION "games")
 		set(CPACK_DEBIAN_PACKAGE_HOMEPAGE ${ProjectURL})
 		set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE ${Architecture})
 		set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
 
 		set(CPACK_GENERATOR ${CPACK_GENERATOR} "RPM")
-		set(CPACK_RPM_PACKAGE_NAME "jk2mv")
-		set(CPACK_RPM_PACKAGE_DESCRIPTION "JK2MV (Multi Version) is a modification for Jedi Knight II: Jedi Outcast. It supports all three game versions and comes with various features and optimizations.")
+		set(CPACK_RPM_PACKAGE_NAME "eternaljk2mv")
+		set(CPACK_RPM_PACKAGE_DESCRIPTION "EternalJK2MV (Multi Version) is a modification for Jedi Knight II: Jedi Outcast. It supports all three game versions and comes with various features and optimizations.")
 		set(CPACK_RPM_PACKAGE_URL ${ProjectURL})
 		set(CPACK_RPM_PACKAGE_LICENSE "GPLv2")
 		set(CPACK_RPM_PACKAGE_GROUP "Amusements/Games")

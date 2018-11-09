@@ -87,7 +87,7 @@ endif()
 
 include(InstallZIP)
 add_zip_command(${CMAKE_CURRENT_BINARY_DIR}/assetsmv.pk3 ${OUTFILE}
-	DIR "${CMAKE_SOURCE_DIR}/assets"
+	DIR "${CMAKE_SOURCE_DIR}/assets/jk2mv"
 	FILES "${AssetsFiles}"
 	DEPENDS "${AssetsFiles}"
 )
