@@ -33,20 +33,36 @@ char *Sys_GetCurrentUser( void )
 }
 
 char *Sys_DefaultHomePath(void) {
-#if !defined(PORTABLE)
 	char szPath[MAX_PATH];
 	static char homePath[MAX_OSPATH];
 
+	if (Cvar_VariableIntegerValue("fs_portable"))
+	{
+		Com_Printf("fs_portable enabled, skipping fs_homepath support\n");
+
+		if (Cvar_VariableIntegerValue("fs_portable") == 2)
+			return Sys_Cwd();
+
+		FILE *ftest = fopen(va("%s/w", Sys_Cwd()), "w");
+
+		if (ftest) { //write test succeeded
+			fclose(ftest);
+			remove(va("%s/w", Sys_Cwd()));
+			return Sys_Cwd();
+		}
+		else {
+			Com_Printf("fs_portable write test failed, attempting to use fs_homepath\n");
+		}
+	}
+
 	if (!SUCCEEDED(SHGetFolderPathA(NULL, CSIDL_PERSONAL, NULL, 0, szPath))) {
 		Com_Printf("Unable to detect CSIDL_PERSONAL\n");
-		return NULL;
+		Com_Printf("No write permissions in current directory, settings will not save!\n");
+		return Sys_Cwd();
 	}
 
 	Com_sprintf(homePath, sizeof(homePath), "%s%cjk2mv", szPath, PATH_SEP);
 	return homePath;
-#else
-	return Sys_Cwd();
-#endif
 }
 
 // read the path from the registry on windows... steam also sets it, but with "InstallPath" instead of "Install Path"

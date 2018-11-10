@@ -232,6 +232,9 @@ typedef struct searchpath_s {
 
 static	char		fs_gamedir[MAX_OSPATH];	// this will be a single file name with no separators
 static	cvar_t		*fs_debug;
+#ifndef PORTABLE
+static	cvar_t		*fs_portable;
+#endif
 static	cvar_t		*fs_homepath;
 static	cvar_t		*fs_basepath;
 static	cvar_t		*fs_assetspath;
@@ -3297,6 +3300,9 @@ static void FS_Startup( const char *gameName ) {
 	fs_copyfiles = Cvar_Get( "fs_copyfiles", "0", CVAR_INIT );
 	fs_basepath = Cvar_Get ("fs_basepath", Sys_DefaultInstallPath(), CVAR_INIT | CVAR_VM_NOWRITE );
 	fs_basegame = Cvar_Get ("fs_basegame", "eternaljk2", CVAR_INIT );
+#ifndef PORTABLE
+	fs_portable = Cvar_Get("fs_portable", "1", CVAR_INIT|CVAR_VM_NOWRITE); //"Disable fs_homepath and use only one folder for all game files" 
+#endif
 	fs_homepath = Cvar_Get ("fs_homepath", Sys_DefaultHomePath(), CVAR_INIT | CVAR_VM_NOWRITE );
 
 #ifndef DEDICATED
@@ -3306,8 +3312,10 @@ static void FS_Startup( const char *gameName ) {
 	if (fs_globalcfg->integer)
 		fs_gamedirvar = Cvar_Get ("fs_basegame", "eternaljk2", CVAR_INIT);//?
 	else
+		fs_gamedirvar = Cvar_Get("fs_game", "", CVAR_INIT | CVAR_SYSTEMINFO);
+#else
+		fs_gamedirvar = Cvar_Get("fs_game", "", CVAR_INIT | CVAR_SYSTEMINFO);
 #endif
-	fs_gamedirvar = Cvar_Get ("fs_game", "", CVAR_INIT|CVAR_SYSTEMINFO);
 
 	assetsPath = Sys_DefaultAssetsPath();
 	fs_assetspath = Cvar_Get("fs_assetspath", assetsPath ? assetsPath : "", CVAR_INIT | CVAR_VM_NOWRITE);
