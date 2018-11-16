@@ -1,7 +1,7 @@
 VERSION 1
 ID 128
 REFERENCE MV
-COUNT 61
+COUNT 62
 INDEX 0
 {
    REFERENCE GAME_VERSION
@@ -550,4 +550,13 @@ INDEX 60
    TEXT_LANGUAGE3 "Mods können dieses Menü für benutzerdefinierte Optionen verwenden."
    TEXT_LANGUAGE6 "Mods may use this menu for custom options."
    TEXT_LANGUAGE8 "Los mods pueden usar este menú para opciones personalizadas."
+}
+INDEX 61
+{
+   REFERENCE MOUSE_RAW
+   TEXT_LANGUAGE1 "Enable RAW mouse input (highest possible precision)."
+   TEXT_LANGUAGE2 "Enable RAW mouse input (highest possible precision)."
+   TEXT_LANGUAGE3 "Aktiviere RAW Input für die Maus (Höchstmögliche Mauspräzision)."
+   TEXT_LANGUAGE6 "Enable RAW mouse input (highest possible precision)."
+   TEXT_LANGUAGE8 "Enable RAW mouse input (highest possible precision)."
 }

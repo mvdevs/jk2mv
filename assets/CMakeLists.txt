@@ -56,7 +56,9 @@ set(AssetsFiles
 	"strip/mv.sp"
 
 	"ui/jk2mpingame.txt"
+	"ui/jk2mp/controls.menu_patch"
 	"ui/jk2mp/createserver.menu_patch"
+	"ui/jk2mp/ingame_controls.menu_patch"
 	"ui/jk2mp/ingame_player.menu_patch"
 	"ui/jk2mp/ingame_setup.menu_patch"
 	"ui/jk2mp/ingame_setup_modoptions.menu"
