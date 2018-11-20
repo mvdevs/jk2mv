@@ -555,8 +555,8 @@ INDEX 61
 {
    REFERENCE MOUSE_RAW
    TEXT_LANGUAGE1 "Enable RAW mouse input (highest possible precision)."
-   TEXT_LANGUAGE2 "Enable RAW mouse input (highest possible precision)."
+   TEXT_LANGUAGE2 "Activer l'entrée de la souris RAW (la plus grande précision possible)."
    TEXT_LANGUAGE3 "Aktiviere RAW Input für die Maus (Höchstmögliche Mauspräzision)."
    TEXT_LANGUAGE6 "Enable RAW mouse input (highest possible precision)."
-   TEXT_LANGUAGE8 "Enable RAW mouse input (highest possible precision)."
+   TEXT_LANGUAGE8 "Habilitar la entrada RAW de ratón (la mayor precisión posible)."
 }
