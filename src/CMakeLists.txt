@@ -288,11 +288,10 @@ if (BuildMVMP)
 
 	if(UseInternalOpenAL)
 		# OpenAL
-		find_library(OpenALLib NAMES "softoal_${Architecture}" PATHS "${LIBDir}/OpenAL")
-		if(NOT OpenALLib)
-			message(FATAL_ERROR "softoal library not found!")
-		endif()
-		set(MVMPLibraries ${MVMPLibraries} ${OpenALLib})
+		set(MVMPLibraries ${MVMPLibraries}
+			${LIBDir}/OpenAL/lib/${Architecture}/OpenAL32.lib
+		)
+		
 		set(MVMPIncludeDirs ${MVMPIncludeDirs} "${LIBDir}/OpenAL/include")
 	else()
 		# OpenAL
@@ -489,7 +488,7 @@ if (BuildMVMP)
 		# copy over openal & sdl dll
 		add_custom_command(TARGET ${MVMP} POST_BUILD
 			COMMAND ${CMAKE_COMMAND} -E copy_if_different
-			"${LIBDir}/OpenAL/softoal_${Architecture}.dll"
+			"${LIBDir}/OpenAL/bin/${Architecture}/OpenAL32.dll"
 			$<TARGET_FILE_DIR:${MVMP}>
 		)
 		
@@ -516,7 +515,7 @@ if (BuildMVMP)
 	if(MSVC)
 		install(TARGETS ${MVMP} RUNTIME DESTINATION ".")
 		install(FILES $<TARGET_PDB_FILE:${MVMP}> DESTINATION "." OPTIONAL)
-		install(FILES "${LIBDir}/OpenAL/softoal_${Architecture}.dll" DESTINATION ".")
+		install(FILES "${LIBDir}/OpenAL/bin/${Architecture}/OpenAL32.dll" DESTINATION ".")
 		install(FILES "${LIBDir}/SDL2/bin/${Architecture}/SDL2.dll" DESTINATION ".")
 		if(NOT BuildPortableVersion)
 			install(FILES "${RESDir}/mv.ico" DESTINATION ".")
