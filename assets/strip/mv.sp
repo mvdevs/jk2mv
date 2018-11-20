@@ -1,7 +1,7 @@
 VERSION 1
 ID 128
 REFERENCE MV
-COUNT 62
+COUNT 63
 INDEX 0
 {
    REFERENCE GAME_VERSION
@@ -554,6 +554,15 @@ INDEX 60
 INDEX 61
 {
    REFERENCE MOUSE_RAW
+   TEXT_LANGUAGE1 "RAW Input:"
+   TEXT_LANGUAGE2 "Entrée RAW:"
+   TEXT_LANGUAGE3 "RAW Input:"
+   TEXT_LANGUAGE6 "RAW Input:"
+   TEXT_LANGUAGE8 "Entrada RAW:"
+}
+INDEX 62
+{
+   REFERENCE MOUSE_RAW_INFO
    TEXT_LANGUAGE1 "Enable RAW mouse input (highest possible precision)."
    TEXT_LANGUAGE2 "Activer l'entrée de la souris RAW (la plus grande précision possible)."
    TEXT_LANGUAGE3 "Aktiviere RAW Input für die Maus (Höchstmögliche Mauspräzision)."
