@@ -676,7 +676,7 @@ int Q_isalnum(int c) {
 }
 
 int Q_isascii(int c) {
-	return c >= 0;
+	return (0 <= c && c <= 127);
 }
 
 qboolean Q_isanumber( const char *s )

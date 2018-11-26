@@ -1,0 +1,26 @@
+ORI_HASH 858652891
+
+LINES_DELETE 2736 2738
+
+LINES_DELETE 2742 2745
+LINES_INSERT 2741 [
+			group				joycontrols
+			type				ITEM_TYPE_MULTI
+			text				@MV_MOUSE_RAW
+			cvar				"in_mouse"
+			cvarFloatList		{ @MENUS0_ON 1 @MENUS0_OFF 2 }
+]
+
+LINES_DELETE 2755 2759
+LINES_INSERT 2754 [
+			descText			@MV_MOUSE_RAW_INFO
+]
+
+LINES_INSERT 2768 [
+			}
+			action
+			{
+				play			"sound/interface/button1.wav" ;
+				exec			in_restart
+]
+
