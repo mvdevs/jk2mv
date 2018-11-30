@@ -12,6 +12,10 @@
 		descScale               0.7
 		descColor               .235 .882 .847 1
 		descAlignment           ITEM_ALIGN_CENTER
+		onClose 
+		{
+			close					ingame_setup ;
+		}
 
 		//----------------------------------------------------------------------------------------------
 		//
