@@ -175,9 +175,8 @@ static qboolean GLimp_DeserializeWindowPosition( savedWindow_t *saved, const cha
 	if ( token[consumed] != '\0' )
 		return qfalse;
 
-	// range tests
-	if ( saved->display.w <= 0 || saved->display.h <= 0 ||
-		saved->display.x < 0 || saved->display.y < 0 )
+	// range tests; coordinates can be negative and visible
+	if ( saved->display.w <= 0 || saved->display.h <= 0 )
 		return qfalse;
 
 	// inverse function test
