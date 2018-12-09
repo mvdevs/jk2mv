@@ -21,7 +21,7 @@ typedef unsigned int glIndex_t;
 // parallel on a dual cpu machine
 #define	SMP_FRAMES		2
 
-#define	MAX_SHADERS				2048
+#define	MAX_SHADERS				16384 // 14 bit, matching jka
 
 #define MAX_SHADER_STATES 2048
 #define MAX_STATES_PER_SHADER 32
@@ -928,14 +928,14 @@ compared quickly during the qsorting process
 
 the bits are allocated as follows:
 
-21 - 31	: sorted shader index
-11 - 20	: entity index
-2 - 6	: fog index
-//2		: used to be clipped flag REMOVED - 03.21.00 rad
-0 - 1	: dlightmap index
+31      : unused
+17 - 30 : sorted shader index
+7 - 16  : entity index
+2 - 6   : fog index
+0 - 1   : dlightmap index
 */
-#define	QSORT_SHADERNUM_SHIFT	21
-#define	QSORT_ENTITYNUM_SHIFT	11
+#define	QSORT_SHADERNUM_SHIFT	17	// MAX_SHADERS  (14 bit)
+#define	QSORT_ENTITYNUM_SHIFT	7	// MAX_ENTITIES (10 bit)
 #define	QSORT_FOGNUM_SHIFT		2
 
 /*
