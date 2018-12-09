@@ -9,6 +9,15 @@
 	typedef unsigned int uint32_t;
 #endif
 
+
+// #####################################################################################################
+// ### Forks of JK2MV should NOT modify any content of this file. Forks should define their own api. ###
+// #####################################################################################################
+// ### Removing, adding or modifying defines, flags, functions, etc. might lead to incompatibilities ###
+// ### and crashes.                                                                                  ###
+// #####################################################################################################
+
+
 // -------------------------------------- API Version -------------------------------------- //
 // MV_APILEVEL defines the API-Level which implements the following features.
 // MV_MIN_VERSION is the minimum required JK2MV version which implements this API-Level.
