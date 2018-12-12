@@ -2560,6 +2560,8 @@ void Com_Init( char *commandLine ) {
 	com_dedicated->modified = qfalse;
 	if ( !com_dedicated->integer ) {
 		CL_Init();
+	} else {
+		CON_CreateConsoleWindow();
 	}
 
 	// set com_frameTime so that if a map is started on the
