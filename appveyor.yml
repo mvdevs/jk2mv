@@ -1,4 +1,4 @@
-os: Visual Studio 2015
+image: Visual Studio 2017
 version: jk2mv-{build}
 
 environment:
@@ -22,13 +22,13 @@ build_script:
       if ($env:TYPE -eq "win-x86-installer") {
         choco install -y nsis
 
-        cmake -G "Visual Studio 14" -DBuildPortableVersion=OFF ../..
+        cmake -G "Visual Studio 15" -DBuildPortableVersion=OFF ../..
         msbuild /m /p:Configuration=RelWithDebInfo PACKAGE.vcxproj
       } elseif ($env:TYPE -eq "win-x86-portable") {
-        cmake -G "Visual Studio 14" -DBuildPortableVersion=ON ../..
+        cmake -G "Visual Studio 15" -DBuildPortableVersion=ON ../..
         msbuild /m /p:Configuration=RelWithDebInfo PACKAGE.vcxproj
       } elseif ($env:TYPE -eq "win-x64-portable") {
-        cmake -G "Visual Studio 14 Win64" -DBuildPortableVersion=ON ../..
+        cmake -G "Visual Studio 15 Win64" -DBuildPortableVersion=ON ../..
         msbuild /m /p:Configuration=RelWithDebInfo PACKAGE.vcxproj
       }
 
