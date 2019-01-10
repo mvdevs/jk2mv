@@ -237,13 +237,13 @@ cvar_t *Cvar_Get( const char *var_name, const char *var_value, int flags, qboole
 			var->flags &= ~CVAR_USER_CREATED;
 			Z_Free( (void *)var->resetString );
 			var->resetString = CopyString( var_value );
-
-			// ZOID--needs to be set so that cvars the game sets as
-			// SERVERINFO get sent to clients
-			cvar_modifiedFlags |= flags;
 		}
 
 		var->flags |= flags;
+		// ZOID--needs to be set so that cvars the game sets as
+		// SERVERINFO get sent to clients
+		cvar_modifiedFlags |= flags;
+
 		// only allow one non-empty reset string without a warning
 		if ( !var->resetString[0] ) {
 			// we don't have a reset string yet
@@ -300,6 +300,7 @@ cvar_t *Cvar_Get( const char *var_name, const char *var_value, int flags, qboole
 	cvar_vars = var;
 
 	var->flags = flags;
+	cvar_modifiedFlags |= flags;
 
 	hash = generateHashValue(var_name);
 	var->hashNext = hashTable[hash];
