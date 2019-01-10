@@ -1,5 +1,8 @@
 #pragma once
 
+// Prevent gl.h from including system glext.h
+#define GL_GLEXT_LEGACY
+
 #if defined( __LINT__ )
 #	include <GL/gl.h>
 #elif defined( WIN32 )
@@ -7,19 +10,15 @@
 #	include <windows.h>
 #	include <GL/gl.h>
 #elif defined(MACOS_X)
-// Prevent OS X from including its own out-of-date glext.h
-#	define GL_GLEXT_LEGACY
 #	include <OpenGL/gl.h>
 #elif defined( __linux__ )
 #	include <GL/gl.h>
-#	include <GL/glx.h>
 // bk001129 - from cvs1.17 (mkv)
 #	if defined(__FX__)
 #		include <GL/fxmesa.h>
 #	endif
 #elif defined( __FreeBSD__ ) // rb010123
 #	include <GL/gl.h>
-#	include <GL/glx.h>
 #	if defined(__FX__)
 #		include <GL/fxmesa.h>
 #	endif
