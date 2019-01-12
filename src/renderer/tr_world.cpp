@@ -354,6 +354,16 @@ void RE_GetBModelVerts( int bmodelIndex, vec3_t *verts, vec3_t normal )
 	pModel = R_GetModelByHandle( bmodelIndex );
 	bmodel = pModel->bmodel;
 
+	if (!bmodel)
+	{
+		ri.Error(ERR_DROP, "RE_GetBModelVerts: non-brush model");
+	}
+
+	if (bmodel->numSurfaces == 0)
+	{
+		ri.Error(ERR_DROP, "RE_GetBModelVerts: model has no surfaces");
+	}
+
 	// Loop through all surfaces on the brush and find the best two candidates
 	for ( i = 0 ; i < bmodel->numSurfaces; i++ )
 	{
