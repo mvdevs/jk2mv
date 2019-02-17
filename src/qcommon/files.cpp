@@ -238,6 +238,7 @@ static	cvar_t		*fs_assetspath;
 static	cvar_t		*fs_basegame;
 static	cvar_t		*fs_copyfiles;
 static	cvar_t		*fs_gamedirvar;
+static	cvar_t		*fs_forcegame;
 static	searchpath_t	*fs_searchpaths;
 static	int			fs_readCount;			// total bytes read
 static	int			fs_loadCount;			// total files read
@@ -3285,6 +3286,7 @@ static void FS_Startup( const char *gameName ) {
 	fs_basegame = Cvar_Get ("fs_basegame", "", CVAR_INIT );
 	fs_homepath = Cvar_Get ("fs_homepath", Sys_DefaultHomePath(), CVAR_INIT | CVAR_VM_NOWRITE );
 	fs_gamedirvar = Cvar_Get ("fs_game", "", CVAR_INIT|CVAR_SYSTEMINFO );
+	fs_forcegame = Cvar_Get ("fs_forcegame", "", CVAR_INIT );
 
 	assetsPath = Sys_DefaultAssetsPath();
 	fs_assetspath = Cvar_Get("fs_assetspath", assetsPath ? assetsPath : "", CVAR_INIT | CVAR_VM_NOWRITE);
@@ -3338,6 +3340,19 @@ static void FS_Startup( const char *gameName ) {
 		if (fs_homepath->string[0] && Q_stricmp(fs_homepath->string,fs_basepath->string)) {
 			FS_AddGameDirectory(fs_homepath->string, fs_gamedirvar->string, qfalse);
 		}
+	}
+
+	// forcegame allows users to override any fs_game settings
+	if ( fs_forcegame->string[0] && Q_stricmp(fs_forcegame->string, fs_gamedir) ) {
+		if ( !fs_basegame->string[0] || Q_stricmp(fs_forcegame->string, fs_basegame->string) ) {
+			if (fs_basepath->string[0]) {
+				FS_AddGameDirectory(fs_basepath->string, fs_forcegame->string, qfalse);
+			}
+			if (fs_homepath->string[0] && Q_stricmp(fs_homepath->string,fs_basepath->string)) {
+				FS_AddGameDirectory(fs_homepath->string, fs_forcegame->string, qfalse);
+			}
+		}
+		Q_strncpyz( fs_gamedir, fs_forcegame->string, sizeof( fs_gamedir ) );
 	}
 
 	// add our commands
@@ -3785,6 +3800,7 @@ void FS_InitFilesystem( void ) {
 	Com_StartupVariable( "fs_game" );
 	Com_StartupVariable( "fs_copyfiles" );
 	Com_StartupVariable( "fs_restrict" );
+	Com_StartupVariable( "fs_forcegame" );
 
 	// try to start up normally
 	FS_Startup( BASEGAME );
@@ -3843,7 +3859,7 @@ void FS_Restart( int checksumFeed ) {
 	}
 
 	// bk010116 - new check before safeMode
-	if ( Q_stricmp(fs_gamedirvar->string, lastValidGame) ) {
+	if ( Q_stricmp(fs_gamedirvar->string, lastValidGame) && !fs_forcegame->string[0] ) {
 		// skip the jk2mpconfig.cfg if "safe" is on the command line
 		if ( !Com_SafeMode() ) {
 #ifdef DEDICATED
