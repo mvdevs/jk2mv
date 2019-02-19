@@ -72,6 +72,7 @@ typedef struct {
 	int				  gentitySizeMV;
 
 	int				fixes;
+	int				engineFlags;
 } server_t;
 
 typedef struct {
@@ -356,7 +357,8 @@ void		SV_ShutdownGameProgs ( void );
 void		SV_RestartGameProgs( void );
 qboolean	SV_inPVS (const vec3_t p1, const vec3_t p2);
 
-qboolean SV_MVAPI_ControlFixes(int fixes);
+qboolean	SV_MVAPI_ControlFixes(int fixes);
+int			SV_MVAPI_EngineFlags(int flags);
 
 //
 // sv_bot.c

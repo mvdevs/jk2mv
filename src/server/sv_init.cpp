@@ -429,6 +429,7 @@ void SV_SpawnServer( char *server, qboolean killBots, ForceReload_e eForceReload
 	qboolean	isBot;
 	char		systemInfo[16384];
 	const char	*p;
+	qboolean	resetTime;
 
 	Com_Printf("------ Server Initialization ------\n");
 	Com_Printf("Server: %s\n", server);
@@ -550,10 +551,17 @@ Ghoul2 Insert End
 		SV_CloseDownload( &svs.clients[i] );
 	}
 
+	resetTime = (qboolean)!!(sv.engineFlags & MVGFLAG_RESETTIME);
+
 	// wipe the entire per-level structure
 	SV_ClearServer();
 	for ( i = 0 ; i < MAX_CONFIGSTRINGS ; i++ ) {
 		sv.configstrings[i] = CopyString("");
+	}
+
+	if (!resetTime) {
+		// Keep old game module time as original engine did
+		sv.time = svs.time;
 	}
 
 	// decide which serverversion to host

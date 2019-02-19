@@ -1083,6 +1083,13 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 		}
 	}
 
+	if (VM_MVAPILevel(gvm) >= 4) {
+		switch(args[0]) {
+		case MVAPI_ENGINE_FLAGS:
+			return SV_MVAPI_EngineFlags(args[1]);
+		}
+	}
+
 	Com_Error( ERR_DROP, "Bad game system trap: %lli", (long long int)args[0] );
 	return -1;
 }
@@ -1248,4 +1255,22 @@ qboolean SV_MVAPI_ControlFixes(int fixes) {
 	sv.fixes = fixes & mask;
 
 	return qfalse;
+}
+
+/*
+====================
+SV_MVAPI_EngineFlags
+
+Set JK2MV-specific engine flags requested by game module
+====================
+*/
+int SV_MVAPI_EngineFlags(int flags) {
+	int mask = 0;
+
+	switch (VM_MVAPILevel(gvm)) {
+	case 4:
+		mask |= MVGFLAG_RESETTIME;
+	}
+
+	return sv.engineFlags = (flags & mask);
 }

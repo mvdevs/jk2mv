@@ -48,6 +48,11 @@ typedef enum {
 } mvfix_t;
 
 typedef enum {
+	MVGFLAG_NONE              = 0,
+	MVGFLAG_RESETTIME         = (1 << 0),
+} mvGameFlag_t;
+
+typedef enum {
 	VERSION_UNDEF = 0,
 	VERSION_1_02 = 2,
 	VERSION_1_03 = 3,
@@ -74,6 +79,9 @@ typedef enum
 
 // void trap_MVAPI_SetVersion(mvversion_t version);
 #define MVAPI_SET_VERSION 709                    /* asm: -710 */
+
+// void trap_MVAPI_EngineFlags(int flags);
+#define MVAPI_ENGINE_FLAGS 710                   /* asm: -711 */
 
 // ******** VMCALLS ******** //
 
