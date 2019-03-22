@@ -54,6 +54,12 @@ typedef enum {
 	VERSION_1_04 = 4,
 } mvversion_t;
 
+typedef enum {
+	PROTOCOL_UNDEF = 0,
+	PROTOCOL15 = 15,
+	PROTOCOL16 = 16,
+} mvprotocol_t;
+
 typedef enum
 {
 	FLOCK_SH,
