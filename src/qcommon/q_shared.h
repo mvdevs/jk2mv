@@ -1040,10 +1040,16 @@ typedef enum {
 
 typedef struct {
 	char name[256];
-	time_t time;
-
 	int checkksum;
 	qboolean blacklisted;
+
+	// time_t has a dynamic size (native-only), so we cast time_t to uint64_t and have a union for qvms
+	union {
+		unsigned int qvm[2]; // 32-bit * 2
+		#ifndef __LCC__
+		uint64_t native;
+		#endif
+	} time;
 } dlfile_t;
 
 //=============================================

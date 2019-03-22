@@ -4133,7 +4133,7 @@ int FS_GetDLList(dlfile_t *files, const int maxfiles) {
 
 			Com_sprintf(files->name, sizeof(files->name), "%s/%s", dirs[d], pakfiles[c]);
 			files->blacklisted = qfalse;
-			files->time = 0;
+			files->time.native = 0;
 
 			files++; ret++;
 		}

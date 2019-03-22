@@ -193,7 +193,7 @@ struct vm_s {
 	int			numJumpTableTargets;
 
 	int			mvapilevel;
-	qboolean	mvmenu;
+	int			mvmenu;
 	mvversion_t	gameversion;
 };
 
