@@ -2878,6 +2878,7 @@ static void FS_Which_f( void ) {
 				if ( fsh[f].handleFiles.file.z == pak->handle ) {
 					// found it!
 					Com_Printf( "File \"%s\" found in \"%s\"\n", filename, pak->pakFilename );
+					FS_FCloseFile( f );
 					return;
 				}
 			}
