@@ -17,9 +17,6 @@
 // ### and crashes.                                                                                  ###
 // #####################################################################################################
 
-#define MV_MENULEVEL_MAX 2
-#define MV_MENULEVEL_MIN 2
-
 
 // -------------------------------------- API Version -------------------------------------- //
 // MV_APILEVEL defines the API-Level which implements the following features.
@@ -155,12 +152,6 @@ typedef struct {
 
 // void trap_MVAPI_SetVirtualScreen(float w, float h);
 #define CG_MVAPI_SETVIRTUALSCREEN 707				/* asm: -708 */
-
-// ---------------------------------------- MVMENU ----------------------------------------- //
-#define UI_MVAPI_CONTINUE_DOWNLOAD 300				/* asm: -301 */
-#define UI_MVAPI_GETDLLIST 301						/* asm: -302 */
-#define UI_MVAPI_RMDLPREFIX 302						/* asm: -303 */
-#define UI_MVAPI_DELDLFILE 303						/* asm: -304 */
 
 // ----------------------------------------------------------------------------------------- //
 

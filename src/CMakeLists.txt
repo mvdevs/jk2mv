@@ -261,6 +261,7 @@ if (BuildMVMP OR BuildMVDED)
 	
 	set(MVMPDEDApiFiles
 		"api/mvapi.h"
+		"api/mvmenu.h"
 	)
 	source_group("api" FILES ${MVMPDEDApiFiles})
 	set(MVMPDEDFiles ${MVMPDEDFiles} ${MVMPDEDApiFiles})

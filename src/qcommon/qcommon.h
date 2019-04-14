@@ -4,6 +4,7 @@
 
 #include "../qcommon/q_shared.h"
 #include "../api/mvapi.h"
+#include "../api/mvmenu.h"
 #include "../sys/sys_public.h"
 
 //============================================================================
