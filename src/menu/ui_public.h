@@ -6,9 +6,6 @@
 #include <time.h>
 #include "../qcommon/q_shared.h"
 
-#define MV_MENULEVEL_MAX 2
-#define MV_MENULEVEL_MIN 2
-
 #define UI_API_15_VERSION	6
 #define UI_API_16_VERSION	7
 
@@ -148,11 +145,6 @@ Ghoul2 Insert Start
 /*
 Ghoul2 Insert End
 */
-
-	UI_MV_CONTINUE_DOWNLOAD,
-	UI_MV_GETDLLIST,
-	UI_MV_RMDLPREFIX,
-	UI_MV_DELDLFILE,
 } uiImport_t;
 
 typedef enum {

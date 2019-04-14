@@ -1163,14 +1163,14 @@ Ghoul2 Insert End
 	if (VM_MVMenuLevel(uivm) >= 2) {
 		switch (args[0]) {
 			// download popup
-		case UI_MV_CONTINUE_DOWNLOAD:
+		case UI_MVAPI_CONTINUE_DOWNLOAD:
 			CL_ContinueCurrentDownload((dldecision_t)args[1]);
 			return qtrue;
-		case UI_MV_GETDLLIST:
+		case UI_MVAPI_GETDLLIST:
 			return UI_ConcatDLList(VMAA(1, dlfile_t, args[2]), args[2]);
-		case UI_MV_RMDLPREFIX:
+		case UI_MVAPI_RMDLPREFIX:
 			return FS_RMDLPrefix(VMAS(1));
-		case UI_MV_DELDLFILE:
+		case UI_MVAPI_DELDLFILE:
 			return UI_DeleteDLFile(VMAV(1, const dlfile_t));
 		}
 	}
@@ -1328,7 +1328,6 @@ int UI_ConcatDLList(dlfile_t *files, const int maxfiles) {
 	CL_ReadBlacklistFile();
 	for (i = 0; i < cls.downloadBlacklistLen && i < maxfiles; i++) {
 		Q_strncpyz(files->name, cls.downloadBlacklist[i].name, sizeof(files->name));
-		files->time.native = (uint64_t)cls.downloadBlacklist[i].time;
 		files->checkksum = cls.downloadBlacklist[i].checksum;
 		files->blacklisted = qtrue;
 
