@@ -307,10 +307,10 @@ SVC_BucketForAddress
 Find or allocate a bucket for an address
 ================
 */
-#include <unordered_map>
+#include <map>
 
 static leakyBucket_t *SVC_BucketForAddress(netadr_t address, int burst, int period, int now) {
-	static std::unordered_map<int, leakyBucket_t> bucketMap;
+	static std::map<int, leakyBucket_t> bucketMap;
 	static unsigned int	callCounter = 0;
 
 	if (address.type != NA_IP) {
@@ -628,9 +628,9 @@ qboolean MVAPI_DisableStructConversion(qboolean disable)
 
 #define WHITELIST_FILE			"ipwhitelist.dat"
 
-#include <unordered_set>
+#include <set>
 
-static std::unordered_set<int32_t>	svc_whitelist;
+static std::set<int32_t>	svc_whitelist;
 
 void SVC_LoadWhitelist( void ) {
 	fileHandle_t f;
