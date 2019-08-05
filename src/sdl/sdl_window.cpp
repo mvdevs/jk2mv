@@ -850,13 +850,9 @@ static rserr_t GLimp_SetMode(glconfig_t *glConfig, const windowDesc_t *windowDes
 
 	glConfig->displayDPI = 96.0f;
 #if SDL_VERSION_ATLEAST(2, 0, 4)
-	float hdpi, vdpi;
-	if (!SDL_GetDisplayDPI(display, NULL, &hdpi, &vdpi)) {
-		if (hdpi == vdpi) {
-			glConfig->displayDPI = hdpi;
-		} else {
-			Com_DPrintf("SDL_CreateWindow: hdpi != vdpi unsupported, using default DPI settings...\n");
-		}
+	float ddpi;
+	if (!SDL_GetDisplayDPI(display, &ddpi, NULL, NULL)) {
+		glConfig->displayDPI = ddpi;
 	}
 	Com_DPrintf("SDL_CreateWindow: Screen DPI: %f\n", glConfig->displayDPI);
 #endif
