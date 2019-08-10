@@ -30,8 +30,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "../client/snd_local.h"
 
 extern dma_t		dma;
-SDL_AudioDeviceID dev;
-qboolean snd_inited = qfalse;
+static SDL_AudioDeviceID dev;
+static qboolean snd_inited = qfalse;
 
 cvar_t *s_sdlBits;
 cvar_t *s_sdlSpeed;
@@ -301,23 +301,14 @@ void SNDDMA_BeginPainting (void)
 	SDL_LockAudio();
 }
 
-#ifdef USE_OPENAL
-extern int s_UseOpenAL;
-#endif
+/*
+===============
+SNDDMA_BeginPainting
 
-// (De)activates sound playback
-void SNDDMA_Activate( qboolean activate )
+(De)activates sound playback
+===============
+*/
+void SNDDMA_Activate(qboolean activate)
 {
-#ifdef USE_OPENAL
-	if ( s_UseOpenAL )
-	{
-		S_MuteAllSounds( (qboolean)!activate );
-	}
-#endif
-
-	if (activate) {
-		S_ClearSoundBuffer();
-	}
-
-	SDL_PauseAudioDevice( dev, !activate );
+	SDL_PauseAudioDevice(dev, !activate);
 }

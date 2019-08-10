@@ -28,6 +28,10 @@ void SNDDMA_Submit(void)
 {
 }
 
+void SNDDMA_Activate(qboolean activate)
+{
+}
+
 sfxHandle_t S_RegisterSound( const char *name ) {
 	return 0;
 }
