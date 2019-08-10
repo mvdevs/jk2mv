@@ -2559,13 +2559,7 @@ void S_Update_(void) {
 		if (endtime - s_soundtime > samps)
 			endtime = s_soundtime + samps;
 
-
-
-		SNDDMA_BeginPainting ();
-
 		S_PaintChannels (endtime);
-
-		SNDDMA_Submit ();
 
 		lastTime = thisTime;
 	}
