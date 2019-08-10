@@ -288,7 +288,7 @@ Send sound to device if buffer isn't really the dma buffer
 */
 void SNDDMA_Submit(void)
 {
-	SDL_UnlockAudio();
+	SDL_UnlockAudioDevice(dev);
 }
 
 /*
@@ -298,7 +298,7 @@ SNDDMA_BeginPainting
 */
 void SNDDMA_BeginPainting (void)
 {
-	SDL_LockAudio();
+	SDL_LockAudioDevice(dev);
 }
 
 /*
