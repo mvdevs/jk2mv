@@ -792,7 +792,7 @@ int RE_Font_StrLenChars(const char *psText)
 
 		switch (uiChar)
 		{
-			case '^':					psText++;	break;	// colour code (note next-char skip)
+			case '^':	if ( *psText ) psText++;	break;	// colour code (note next-char skip)
 			case 10:								break;	// linefeed
 			case 13:								break;	// return
 			default:	iCharCount++;				break;
@@ -915,6 +915,7 @@ void RE_Font_DrawString(int ox, int oy, const char *psText, const vec4_t rgba, i
 		switch( uiLetter )
 		{
 		case '^':
+			if ( !*psText ) break; // If we were given a string ending with '^'
 			colour = ColorIndex(*psText);
 			if (!gbInShadow)
 			{
