@@ -4,6 +4,7 @@
 
 #include "../qcommon/q_shared.h"
 #include "../api/mvapi.h"
+#include "../api/mvmenu.h"
 #include "../sys/sys_public.h"
 
 //============================================================================
@@ -378,7 +379,9 @@ void	VM_Forced_Unload_Done(void);
 
 int	VM_MVAPILevel(const vm_t *vm);
 void VM_SetMVAPILevel(vm_t *vm, int level);
-qboolean VM_MVMenu(const vm_t *vm);
+
+void VM_SetMVMenuLevel(vm_t *vm, int level);
+int VM_MVMenuLevel(const vm_t *vm);
 
 mvversion_t VM_GetGameversion(const vm_t *vm);
 void VM_SetGameversion(vm_t *vm, mvversion_t gameversion);

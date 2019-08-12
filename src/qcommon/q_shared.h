@@ -1031,21 +1031,6 @@ typedef enum {
 	FS_SEEK_SET
 } fsOrigin_t;
 
-
-typedef enum {
-	DL_ACCEPT,
-	DL_ABORT,
-	DL_ABORT_BLACKLIST,
-} dldecision_t;
-
-typedef struct {
-	char name[256];
-	time_t time;
-
-	int checkksum;
-	qboolean blacklisted;
-} dlfile_t;
-
 //=============================================
 
 int Q_isprint( int c );
@@ -2303,12 +2288,5 @@ typedef union byteAlias_u {
 #define STRING( a ) #a
 #define XSTRING( a ) STRING( a )
 #define ARRAY_LEN( x ) ( sizeof( x ) / sizeof( *(x) ) )
-
-// multiprotocol support
-typedef enum {
-	PROTOCOL_UNDEF = 0,
-	PROTOCOL15 = 15,
-	PROTOCOL16 = 16,
-} mvprotocol_t;
 
 #endif	// __Q_SHARED_H

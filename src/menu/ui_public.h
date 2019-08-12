@@ -145,11 +145,6 @@ Ghoul2 Insert Start
 /*
 Ghoul2 Insert End
 */
-
-	UI_MV_CONTINUE_DOWNLOAD,
-	UI_MV_GETDLLIST,
-	UI_MV_RMDLPREFIX,
-	UI_MV_DELDLFILE,
 } uiImport_t;
 
 typedef enum {
