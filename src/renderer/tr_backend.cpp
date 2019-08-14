@@ -1400,8 +1400,7 @@ void RB_ExecuteRenderCommands( const void *data ) {
 			data = RB_SwapBuffers( data );
 			break;
 		case RC_VIDEOFRAME:
-			secondPassDone = qfalse;
-			data = (videoFrameCommand_t *)data + 1;
+			data = RB_TakeVideoFrameCmd( data );
 			break;
 		case RC_SCREENSHOT:
 			secondPassDone = qfalse;
@@ -1439,7 +1438,7 @@ void RB_ExecuteRenderCommands( const void *data ) {
 			data = (swapBuffersCommand_t *)data + 1;
 			break;
 		case RC_VIDEOFRAME:
-			data = RB_TakeVideoFrameCmd( data );
+			data = (videoFrameCommand_t *)data + 1;
 			break;
 		case RC_SCREENSHOT:
 			data = RB_TakeScreenshotCmd( data );
