@@ -1370,14 +1370,11 @@ smp extensions, or asyncronously by another thread.
 ====================
 */
 void RB_ExecuteRenderCommands( const void *data ) {
-	const void	*dataOrig = data;
-	qboolean	firstPassDone = qfalse;
-	qboolean	secondPassDone = qtrue;
 	int			t1, t2;
 
 	t1 = ri.Milliseconds()*Cvar_VariableValue("timescale");
 
-	while (!firstPassDone) {
+	while ( 1 ) {
 		data = PADP( data, sizeof( void * ) );
 
 		switch ( *(const int *)data ) {
@@ -1403,57 +1400,17 @@ void RB_ExecuteRenderCommands( const void *data ) {
 			data = RB_TakeVideoFrameCmd( data );
 			break;
 		case RC_SCREENSHOT:
-			secondPassDone = qfalse;
-			data = (screenshotCommand_t *)data + 1;
-		case RC_END_OF_LIST:
-			firstPassDone = qtrue;
-			break;
-		default:
-			ri.Error(ERR_DROP, "Unknown render command");
-		}
-	}
-
-	data = dataOrig;
-
-	while (!secondPassDone) {
-		data = PADP( data, sizeof( void * ) );
-
-		switch ( *(const int *)data ) {
-		case RC_SET_COLOR:
-			data = (setColorCommand_t *)data + 1;
-			break;
-		case RC_STRETCH_PIC:
-			data = (stretchPicCommand_t *)data + 1;
-			break;
-		case RC_TRANSFORM_PIC:
-			data = (transformPicCommand_t *)data + 1;
-			break;
-		case RC_DRAW_SURFS:
-			data =(drawSurfsCommand_t *)data + 1;
-			break;
-		case RC_DRAW_BUFFER:
-			data = (drawBufferCommand_t *)data + 1;
-			break;
-		case RC_SWAP_BUFFERS:
-			data = (swapBuffersCommand_t *)data + 1;
-			break;
-		case RC_VIDEOFRAME:
-			data = (videoFrameCommand_t *)data + 1;
-			break;
-		case RC_SCREENSHOT:
 			data = RB_TakeScreenshotCmd( data );
 			break;
 		case RC_END_OF_LIST:
-			secondPassDone = qtrue;
-			break;
+			// stop rendering
+			t2 = ri.Milliseconds()*Cvar_VariableValue("timescale");
+			backEnd.pc.msec = t2 - t1;
+			return;
 		default:
 			ri.Error(ERR_DROP, "Unknown render command");
 		}
 	}
-
-	// stop rendering
-	t2 = ri.Milliseconds()*Cvar_VariableValue("timescale");
-	backEnd.pc.msec = t2 - t1;
 }
 
 // What Pixel Shader type is currently active (regcoms or fragment programs).
