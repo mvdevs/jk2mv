@@ -1204,6 +1204,8 @@ const void	*RB_SwapBuffers( const void *data ) {
 		RB_EndSurface();
 	}
 
+	RB_RenderWorldEffects();
+
 	// gamma correction
 	if (r_gammamethod->integer == GAMMA_POSTPROCESSING) {
 		RB_SetGL2D();
@@ -1251,8 +1253,6 @@ const void	*RB_SwapBuffers( const void *data ) {
 	if (r_showImages->integer) {
 		RB_ShowImages();
 	}
-
-	RB_RenderWorldEffects();
 
 	cmd = (const swapBuffersCommand_t *)data;
 
