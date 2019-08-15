@@ -723,6 +723,7 @@ byte *RB_ReadPixels(int x, int y, int width, int height, size_t *offset, qboolea
 {
 	byte	*buffer, *bufstart;
 	int		padwidth, linelen;
+	GLint	readBuffer;
 
 	qglPixelStorei(GL_PACK_ALIGNMENT, packAlign);
 
@@ -733,7 +734,10 @@ byte *RB_ReadPixels(int x, int y, int width, int height, size_t *offset, qboolea
 	buffer = (byte *)ri.Hunk_AllocateTempMemory(padwidth * height + *offset + packAlign - 1);
 	bufstart = (byte *)PADP((intptr_t)buffer + *offset, packAlign);
 
+	qglGetIntegerv(GL_READ_BUFFER, &readBuffer);
+	qglReadBuffer( GL_FRONT );
 	qglReadPixels(x, y, width, height, swapRB ? GL_BGR : GL_RGB, GL_UNSIGNED_BYTE, bufstart);
+	qglReadBuffer( readBuffer );
 
 	// gamma correct
 	if (r_gammamethod->integer == GAMMA_HARDWARE)
