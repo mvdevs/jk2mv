@@ -1204,8 +1204,6 @@ const void	*RB_SwapBuffers( const void *data ) {
 		RB_EndSurface();
 	}
 
-	RB_RenderWorldEffects();
-
 	// gamma correction
 	if (r_gammamethod->integer == GAMMA_POSTPROCESSING) {
 		RB_SetGL2D();
@@ -1283,6 +1281,27 @@ const void	*RB_SwapBuffers( const void *data ) {
 	GLimp_LogComment( "***************** RB_SwapBuffers *****************\n\n\n" );
 
     WIN_Present(&glWindow);
+
+	return (const void *)(cmd + 1);
+}
+
+/*
+==================
+RB_WorldEffects
+==================
+*/
+const void *RB_WorldEffects( const void *data )
+{
+	const worldEffectsCommand_t	*cmd;
+
+	cmd = (const worldEffectsCommand_t *)data;
+
+	// finish any 2D drawing if needed
+	if ( tess.numIndexes ) {
+		RB_EndSurface();
+	}
+
+	RB_RenderWorldEffects();
 
 	return (const void *)(cmd + 1);
 }
@@ -1394,6 +1413,9 @@ void RB_ExecuteRenderCommands( const void *data ) {
 			break;
 		case RC_SWAP_BUFFERS:
 			data = RB_SwapBuffers( data );
+			break;
+		case RC_WORLD_EFFECTS:
+			data = RB_WorldEffects( data );
 			break;
 		case RC_VIDEOFRAME:
 			data = RB_TakeVideoFrameCmd( data );

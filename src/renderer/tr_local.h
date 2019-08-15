@@ -1803,6 +1803,10 @@ typedef struct {
 
 typedef struct {
 	int		commandId;
+} worldEffectsCommand_t;
+
+typedef struct {
+	int		commandId;
 	int		width;
 	int		height;
 	qboolean	motionJpeg;
@@ -1827,6 +1831,7 @@ typedef enum {
 	RC_DRAW_SURFS,
 	RC_DRAW_BUFFER,
 	RC_SWAP_BUFFERS,
+	RC_WORLD_EFFECTS,
 	RC_VIDEOFRAME,
 	RC_SCREENSHOT,
 } renderCommand_t;
@@ -1877,6 +1882,7 @@ void RE_RotatePic2 ( float x, float y, float w, float h, float s1, float t1,
 	float s2, float t2,float a, qhandle_t hShader, float xadjust, float yadjust );
 void RE_BeginFrame( stereoFrame_t stereoFrame );
 void RE_EndFrame( int *frontEndMsec, int *backEndMsec );
+void RE_RenderWorldEffects( void );
 void SaveJPG(const char * filename, int quality, int image_width, int image_height, byte *image_buffer, int padding);
 size_t SaveJPGToBuffer(byte *buffer, size_t bufSize, int quality, int image_width,
 	int image_height, byte *image_buffer, int padding);

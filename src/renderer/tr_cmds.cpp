@@ -500,3 +500,24 @@ void RE_TakeVideoFrame( int width, int height, qboolean motionJpeg, int motionJp
 	cmd->motionJpeg = motionJpeg;
 	cmd->motionJpegQuality = motionJpegQuality;
 }
+
+/*
+=============
+RE_RenderWorldEffects
+=============
+*/
+void RE_RenderWorldEffects( void )
+{
+	worldEffectsCommand_t	*cmd;
+
+	if( !tr.registered ) {
+		return;
+	}
+
+	cmd = (worldEffectsCommand_t *)R_GetCommandBuffer( sizeof( *cmd ) );
+	if( !cmd ) {
+		return;
+	}
+
+	cmd->commandId = RC_WORLD_EFFECTS;
+}
