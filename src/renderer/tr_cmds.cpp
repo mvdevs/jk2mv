@@ -454,6 +454,11 @@ void RE_EndFrame( int *frontEndMsec, int *backEndMsec ) {
 	if ( !tr.registered ) {
 		return;
 	}
+
+	if (r_gammamethod->integer == GAMMA_POSTPROCESSING) {
+		RE_GammaCorrection();
+	}
+
 	cmd = (swapBuffersCommand_t *)R_GetCommandBufferReserved( sizeof( *cmd ), 0 );
 	if (!cmd) {
 		return;
@@ -520,4 +525,25 @@ void RE_RenderWorldEffects( void )
 	}
 
 	cmd->commandId = RC_WORLD_EFFECTS;
+}
+
+/*
+=============
+RE_GammaCorrection
+=============
+*/
+void RE_GammaCorrection( void )
+{
+	gammaCorrectionCommand_t	*cmd;
+
+	if( !tr.registered ) {
+		return;
+	}
+
+	cmd = (gammaCorrectionCommand_t *)R_GetCommandBuffer( sizeof( *cmd ) );
+	if( !cmd ) {
+		return;
+	}
+
+	cmd->commandId = RC_GAMMA_CORRECTION;
 }
