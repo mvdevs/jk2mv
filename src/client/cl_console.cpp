@@ -379,11 +379,11 @@ void Con_CheckResize (void)
 		Com_Error(ERR_FATAL, "Con_CheckResize: Window too small to draw a console");
 	}
 
-	rowwidth = width + 1 + CON_TIMESTAMP_LEN;
+	rowwidth = width + 1 + (con_timestamps->integer ? 0 : CON_TIMESTAMP_LEN);
 
 	con.charWidth = charWidth;
 	con.charHeight = scale * SMALLCHAR_HEIGHT;
-	con.linewidth = width - (con_timestamps->integer ? 0 : CON_TIMESTAMP_LEN);
+	con.linewidth = width;
 	kg.g_consoleField.widthInChars = width - 1; // Command prompt
 
 	if (con.rowwidth != rowwidth)
