@@ -484,6 +484,8 @@ void SCR_DrawScreenField( stereoFrame_t stereoFrame ) {
 	if ( cl_debuggraph->integer || cl_timegraph->integer || cl_debugMove->integer ) {
 		SCR_DrawDebugGraph ();
 	}
+
+	re.EndFrame();
 }
 
 /*
@@ -515,9 +517,9 @@ void SCR_UpdateScreen( void ) {
 	}
 
 	if ( com_speeds->integer ) {
-		re.EndFrame( &time_frontend, &time_backend );
+		re.SwapBuffers( &time_frontend, &time_backend );
 	} else {
-		re.EndFrame( NULL, NULL );
+		re.SwapBuffers( NULL, NULL );
 	}
 
 	CL_TakeVideoFrame();

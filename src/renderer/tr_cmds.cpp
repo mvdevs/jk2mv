@@ -445,18 +445,27 @@ void RE_BeginFrame( stereoFrame_t stereoFrame ) {
 =============
 RE_EndFrame
 
+This must be called when drawing is done after RE_BeginFrame
+=============
+*/
+void RE_EndFrame( void ) {
+	if (r_gammamethod->integer == GAMMA_POSTPROCESSING) {
+		RE_GammaCorrection();
+	}
+}
+
+/*
+=============
+RE_SwapBuffers
+
 Returns the number of msec spent in the back end
 =============
 */
-void RE_EndFrame( int *frontEndMsec, int *backEndMsec ) {
+void RE_SwapBuffers( int *frontEndMsec, int *backEndMsec ) {
 	swapBuffersCommand_t	*cmd;
 
 	if ( !tr.registered ) {
 		return;
-	}
-
-	if (r_gammamethod->integer == GAMMA_POSTPROCESSING) {
-		RE_GammaCorrection();
 	}
 
 	cmd = (swapBuffersCommand_t *)R_GetCommandBufferReserved( sizeof( *cmd ), 0 );

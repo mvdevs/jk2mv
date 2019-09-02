@@ -62,9 +62,10 @@ typedef struct {
 	void	(*UploadCinematic) (int cols, int rows, const byte *data, int client, qboolean dirty);
 
 	void	(*BeginFrame)( stereoFrame_t stereoFrame );
+	void	(*EndFrame)( void );
 
 	// if the pointers are not NULL, timing info will be returned
-	void	(*EndFrame)( int *frontEndMsec, int *backEndMsec );
+	void	(*SwapBuffers)( int *frontEndMsec, int *backEndMsec );
 
 
 	int		(*MarkFragments)( int numPoints, const vec3_t *points, const vec3_t projection,
