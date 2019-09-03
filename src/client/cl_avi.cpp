@@ -569,7 +569,7 @@ void CL_TakeVideoFrame( void )
   if( !afd.fileOpen )
     return;
 
-  re.TakeVideoFrame( afd.width, afd.height, AVI_LINE_PADDING, afd.motionJpeg, cl_aviMotionJpegQuality->integer, CL_WriteAVIVideoFrame );
+  re.CaptureFrame( afd.width, afd.height, AVI_LINE_PADDING, afd.motionJpeg, cl_aviMotionJpegQuality->integer, CL_WriteAVIVideoFrame );
 }
 
 /*

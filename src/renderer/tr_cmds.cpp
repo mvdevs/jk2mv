@@ -491,29 +491,29 @@ void RE_SwapBuffers( int *frontEndMsec, int *backEndMsec ) {
 
 /*
 =============
-RE_TakeVideoFrame
+RE_CaptureFrame
 =============
 */
-void RE_TakeVideoFrame( int width, int height, int padding, qboolean motionJpeg, int motionJpegQuality, videoFrameCallback_t *callback )
+void RE_CaptureFrame( int width, int height, int padding, qboolean jpeg, int jpegQuality, captureFrameCallback_t *callback )
 {
-	videoFrameCommand_t	*cmd;
+	captureFrameCommand_t	*cmd;
 
 	if( !tr.registered ) {
 		return;
 	}
 
-	cmd = (videoFrameCommand_t *)R_GetCommandBuffer( sizeof( *cmd ) );
+	cmd = (captureFrameCommand_t *)R_GetCommandBuffer( sizeof( *cmd ) );
 	if( !cmd ) {
 		return;
 	}
 
-	cmd->commandId = RC_VIDEOFRAME;
+	cmd->commandId = RC_CAPTURE_FRAME;
 
 	cmd->width = width;
 	cmd->height = height;
 	cmd->padding = padding;
-	cmd->motionJpeg = motionJpeg;
-	cmd->motionJpegQuality = motionJpegQuality;
+	cmd->jpeg = jpeg;
+	cmd->jpegQuality = jpegQuality;
 	cmd->callback = callback;
 }
 

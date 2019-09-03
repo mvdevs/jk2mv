@@ -1670,7 +1670,7 @@ refexport_t *GetRefAPI ( int apiVersion, refimport_t *rimp ) {
 
 	re.GetBModelVerts = RE_GetBModelVerts;
 
-	re.TakeVideoFrame = RE_TakeVideoFrame;
+	re.CaptureFrame = RE_CaptureFrame;
 #endif //!DEDICATED
 	return &re;
 }

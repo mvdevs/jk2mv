@@ -1324,23 +1324,23 @@ const void *RB_GammaCorrection( const void *data )
 
 /*
 ==================
-RB_TakeVideoFrameCmd
+RB_CaptureFrame
 ==================
 */
-const void *RB_TakeVideoFrameCmd( const void *data )
+const void *RB_CaptureFrame( const void *data )
 {
-	const videoFrameCommand_t	*cmd;
+	const captureFrameCommand_t	*cmd;
 	byte	*buffer;
 	byte	*captureBuffer;
 	size_t	offset;
 	size_t	memcount, linelen;
 	int		padwidth, padlen;
 
-	cmd = (const videoFrameCommand_t *)data;
+	cmd = (const captureFrameCommand_t *)data;
 
 	offset = 0;
 	buffer = RB_ReadPixels(0, 0, cmd->width, cmd->height, &offset,
-		(qboolean) !cmd->motionJpeg, cmd->padding);
+		(qboolean) !cmd->jpeg, cmd->padding);
 	captureBuffer = buffer + offset;
 
 	// AVI line padding
@@ -1349,7 +1349,7 @@ const void *RB_TakeVideoFrameCmd( const void *data )
 	padlen = padwidth - linelen;
 	memcount = padwidth * cmd->height;
 
-	if(cmd->motionJpeg)
+	if(cmd->jpeg)
 	{
 		byte	*buffer2;
 		byte	*encodeBuffer;
@@ -1358,8 +1358,7 @@ const void *RB_TakeVideoFrameCmd( const void *data )
 		encodeBuffer = (byte *)PADP(buffer2, cmd->padding);
 
 		memcount = SaveJPGToBuffer(encodeBuffer, linelen * cmd->height,
-			cmd->motionJpegQuality,
-			cmd->width, cmd->height, captureBuffer, padlen);
+			cmd->jpegQuality, cmd->width, cmd->height, captureBuffer, padlen);
 
 		cmd->callback(encodeBuffer, memcount);
 
@@ -1435,8 +1434,8 @@ void RB_ExecuteRenderCommands( const void *data ) {
 		case RC_GAMMA_CORRECTION:
 			data = RB_GammaCorrection( data );
 			break;
-		case RC_VIDEOFRAME:
-			data = RB_TakeVideoFrameCmd( data );
+		case RC_CAPTURE_FRAME:
+			data = RB_CaptureFrame( data );
 			break;
 		case RC_SCREENSHOT:
 			data = RB_TakeScreenshotCmd( data );

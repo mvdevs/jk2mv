@@ -1814,10 +1814,10 @@ typedef struct {
 	int		width;
 	int		height;
 	int		padding;
-	qboolean	motionJpeg;
-	int		motionJpegQuality;
-	videoFrameCallback_t	*callback;
-} videoFrameCommand_t;
+	qboolean	jpeg;
+	int		jpegQuality;
+	captureFrameCallback_t	*callback;
+} captureFrameCommand_t;
 
 typedef struct {
 	int		commandId;
@@ -1839,7 +1839,7 @@ typedef enum {
 	RC_SWAP_BUFFERS,
 	RC_WORLD_EFFECTS,
 	RC_GAMMA_CORRECTION,
-	RC_VIDEOFRAME,
+	RC_CAPTURE_FRAME,
 	RC_SCREENSHOT,
 } renderCommand_t;
 
@@ -1895,7 +1895,7 @@ void RE_GammaCorrection( void );
 void SaveJPG(const char * filename, int quality, int image_width, int image_height, byte *image_buffer, int padding);
 size_t SaveJPGToBuffer(byte *buffer, size_t bufSize, int quality, int image_width,
 	int image_height, byte *image_buffer, int padding);
-void RE_TakeVideoFrame( int width, int height, int padding, qboolean motionJpeg, int motionJpegQuality, videoFrameCallback_t *callback );
+void RE_CaptureFrame( int width, int height, int padding, qboolean jpeg, int jpegQuality, captureFrameCallback_t *callback );
 
 /*
 Ghoul2 Insert Start
