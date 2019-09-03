@@ -494,7 +494,7 @@ void RE_SwapBuffers( int *frontEndMsec, int *backEndMsec ) {
 RE_TakeVideoFrame
 =============
 */
-void RE_TakeVideoFrame( int width, int height, qboolean motionJpeg, int motionJpegQuality )
+void RE_TakeVideoFrame( int width, int height, int padding, qboolean motionJpeg, int motionJpegQuality, videoFrameCallback_t *callback )
 {
 	videoFrameCommand_t	*cmd;
 
@@ -511,8 +511,10 @@ void RE_TakeVideoFrame( int width, int height, qboolean motionJpeg, int motionJp
 
 	cmd->width = width;
 	cmd->height = height;
+	cmd->padding = padding;
 	cmd->motionJpeg = motionJpeg;
 	cmd->motionJpegQuality = motionJpegQuality;
+	cmd->callback = callback;
 }
 
 /*

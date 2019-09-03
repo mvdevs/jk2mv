@@ -70,6 +70,9 @@ static aviFileData_t afd;
 
 #define MAX_AVI_BUFFER 2048
 
+// AVI files have the start of pixel lines 4 byte-aligned
+#define AVI_LINE_PADDING 4
+
 static byte buffer[ MAX_AVI_BUFFER ];
 static int  bufIndex;
 
@@ -566,7 +569,7 @@ void CL_TakeVideoFrame( void )
   if( !afd.fileOpen )
     return;
 
-  re.TakeVideoFrame( afd.width, afd.height, afd.motionJpeg, cl_aviMotionJpegQuality->integer );
+  re.TakeVideoFrame( afd.width, afd.height, AVI_LINE_PADDING, afd.motionJpeg, cl_aviMotionJpegQuality->integer, CL_WriteAVIVideoFrame );
 }
 
 /*

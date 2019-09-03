@@ -5,6 +5,8 @@
 
 #define	REF_API_VERSION		8
 
+typedef void (videoFrameCallback_t)(const byte *imageBuffer, int size);
+
 //
 // these are the functions exported by the refresh module
 //
@@ -98,7 +100,7 @@ typedef struct {
 
 	void	(*GetBModelVerts)( int bmodelIndex, vec3_t *vec, vec3_t normal );
 
-	void (*TakeVideoFrame)( int h, int w, qboolean motionJpeg, int motionJpegQuality );
+	void (*TakeVideoFrame)( int h, int w, int padding, qboolean motionJpeg, int motionJpegQuality, videoFrameCallback_t *callback );
 } refexport_t;
 
 //
@@ -159,8 +161,6 @@ typedef struct {
 	void	(*CIN_UploadCinematic)(int handle);
 	int		(*CIN_PlayCinematic)( const char *arg0, int xpos, int ypos, int width, int height, int bits);
 	e_status (*CIN_RunCinematic) (int handle);
-
-	void	(*CL_WriteAVIVideoFrame)( const byte *buffer, int size );
 
 	int (*CM_PointContents)( const vec3_t p, clipHandle_t model );
 

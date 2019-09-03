@@ -2690,8 +2690,6 @@ void CL_InitRef( void ) {
 	ri.CIN_PlayCinematic = CIN_PlayCinematic;
 	ri.CIN_RunCinematic = CIN_RunCinematic;
 
-	ri.CL_WriteAVIVideoFrame = CL_WriteAVIVideoFrame;
-
 	ri.CM_PointContents = CM_PointContents;
 
 	ret = GetRefAPI( REF_API_VERSION, &ri );

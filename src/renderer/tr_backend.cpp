@@ -1340,12 +1340,12 @@ const void *RB_TakeVideoFrameCmd( const void *data )
 
 	offset = 0;
 	buffer = RB_ReadPixels(0, 0, cmd->width, cmd->height, &offset,
-		(qboolean) !cmd->motionJpeg, AVI_LINE_PADDING);
+		(qboolean) !cmd->motionJpeg, cmd->padding);
 	captureBuffer = buffer + offset;
 
 	// AVI line padding
 	linelen = cmd->width * 3;
-	padwidth = PAD(linelen, AVI_LINE_PADDING);
+	padwidth = PAD(linelen, cmd->padding);
 	padlen = padwidth - linelen;
 	memcount = padwidth * cmd->height;
 
@@ -1354,20 +1354,20 @@ const void *RB_TakeVideoFrameCmd( const void *data )
 		byte	*buffer2;
 		byte	*encodeBuffer;
 
-		buffer2 = (byte *)ri.Hunk_AllocateTempMemory(memcount + AVI_LINE_PADDING - 1);
-		encodeBuffer = (byte *)PADP(buffer2, AVI_LINE_PADDING);
+		buffer2 = (byte *)ri.Hunk_AllocateTempMemory(memcount + cmd->padding - 1);
+		encodeBuffer = (byte *)PADP(buffer2, cmd->padding);
 
 		memcount = SaveJPGToBuffer(encodeBuffer, linelen * cmd->height,
 			cmd->motionJpegQuality,
 			cmd->width, cmd->height, captureBuffer, padlen);
 
-		ri.CL_WriteAVIVideoFrame(encodeBuffer, memcount);
+		cmd->callback(encodeBuffer, memcount);
 
 		ri.Hunk_FreeTempMemory(buffer2);
 	}
 	else
 	{
-		ri.CL_WriteAVIVideoFrame(captureBuffer, memcount);
+		cmd->callback(captureBuffer, memcount);
 	}
 
 	ri.Hunk_FreeTempMemory(buffer);
