@@ -1324,6 +1324,36 @@ const void *RB_GammaCorrection( const void *data )
 }
 
 /*
+===============
+RB_ReadPixels
+===============
+*/
+byte *RB_ReadPixels(int x, int y, int width, int height, size_t *offset, qboolean swapRB, int packAlign)
+{
+	byte	*buffer, *bufstart;
+	int		padwidth, linelen;
+
+	qglPixelStorei(GL_PACK_ALIGNMENT, packAlign);
+
+	linelen = width * 3;
+	padwidth = PAD(linelen, packAlign);
+
+	// Allocate a few more bytes so that we can choose an alignment we like
+	buffer = (byte *)ri.Hunk_AllocateTempMemory(padwidth * height + *offset + packAlign - 1);
+	bufstart = (byte *)PADP((intptr_t)buffer + *offset, packAlign);
+
+	qglReadPixels(x, y, width, height, swapRB ? GL_BGR : GL_RGB, GL_UNSIGNED_BYTE, bufstart);
+
+	// gamma correct
+	if (r_gammamethod->integer == GAMMA_HARDWARE)
+		R_GammaCorrect(bufstart, padwidth * height);
+
+	*offset = bufstart - buffer;
+
+	return buffer;
+}
+
+/*
 ==================
 RB_CaptureFrame
 ==================
@@ -1361,35 +1391,16 @@ const void *RB_CaptureFrame( const void *data )
 		memcount = SaveJPGToBuffer(encodeBuffer, linelen * cmd->height,
 			cmd->jpegQuality, cmd->width, cmd->height, captureBuffer, padlen);
 
-		cmd->callback(encodeBuffer, memcount);
+		cmd->callback(encodeBuffer, memcount, cmd->callbackData);
 
 		ri.Hunk_FreeTempMemory(buffer2);
 	}
 	else
 	{
-		cmd->callback(captureBuffer, memcount);
+		cmd->callback(captureBuffer, memcount, cmd->callbackData);
 	}
 
 	ri.Hunk_FreeTempMemory(buffer);
-
-	return (const void *)(cmd + 1);
-}
-
-/*
-==================
-RB_TakeScreenshotCmd
-==================
-*/
-const void *RB_TakeScreenshotCmd( const void *data )
-{
-	const screenshotCommand_t	*cmd;
-
-	cmd = (const screenshotCommand_t *)data;
-
-	if (cmd->jpeg)
-		RB_TakeScreenshotJPEG(cmd->x, cmd->y, cmd->width, cmd->height, cmd->fileName);
-	else
-		RB_TakeScreenshot(cmd->x, cmd->y, cmd->width, cmd->height, cmd->fileName);
 
 	return (const void *)(cmd + 1);
 }
@@ -1437,9 +1448,6 @@ void RB_ExecuteRenderCommands( const void *data ) {
 			break;
 		case RC_CAPTURE_FRAME:
 			data = RB_CaptureFrame( data );
-			break;
-		case RC_SCREENSHOT:
-			data = RB_TakeScreenshotCmd( data );
 			break;
 		case RC_END_OF_LIST:
 			// stop rendering

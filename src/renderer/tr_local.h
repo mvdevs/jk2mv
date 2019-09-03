@@ -1113,6 +1113,14 @@ typedef struct {
 	float					inverseSawToothTable[FUNCTABLE_SIZE];
 	float					fogTable[FOG_TABLE_SIZE];
 
+	qboolean				screenshot;
+	qboolean				screenshotJpeg;
+	int						screenshotJpegQuality;
+	char					screenshotName[MAX_OSPATH];
+
+	qboolean				levelshot;
+	char					levelshotName[MAX_OSPATH];
+
 	// gamma correction
 	GLuint gammaVertexShader, gammaPixelShader;
 	GLuint gammaLUTImage;
@@ -1534,9 +1542,6 @@ void RB_AddQuadStampExt( vec3_t origin, vec3_t left, vec3_t up, byte *color, flo
 
 void RB_ShowImages( void );
 
-void RB_TakeScreenshot(int x, int y, int width, int height, const char *fileName);
-void RB_TakeScreenshotJPEG(int x, int y, int width, int height, const char *fileName);
-
 /*
 ============================================================
 
@@ -1817,17 +1822,8 @@ typedef struct {
 	qboolean	jpeg;
 	int		jpegQuality;
 	captureFrameCallback_t	*callback;
+	void	*callbackData;
 } captureFrameCommand_t;
-
-typedef struct {
-	int		commandId;
-	int		x;
-	int		y;
-	int		width;
-	int		height;
-	char	fileName[MAX_OSPATH]; // large but we don't take screenshots too often
-	qboolean	jpeg;
-} screenshotCommand_t;
 
 typedef enum {
 	RC_END_OF_LIST,
@@ -1840,7 +1836,6 @@ typedef enum {
 	RC_WORLD_EFFECTS,
 	RC_GAMMA_CORRECTION,
 	RC_CAPTURE_FRAME,
-	RC_SCREENSHOT,
 } renderCommand_t;
 
 
@@ -1895,7 +1890,9 @@ void RE_GammaCorrection( void );
 void SaveJPG(const char * filename, int quality, int image_width, int image_height, byte *image_buffer, int padding);
 size_t SaveJPGToBuffer(byte *buffer, size_t bufSize, int quality, int image_width,
 	int image_height, byte *image_buffer, int padding);
-void RE_CaptureFrame( int width, int height, int padding, qboolean jpeg, int jpegQuality, captureFrameCallback_t *callback );
+void RE_CaptureFrame( int width, int height, int padding, qboolean jpeg, int jpegQuality, captureFrameCallback_t *callback, void *callbackData );
+void RE_TakeScreenshot( qboolean jpeg, int jpegQuality, const char *filename );
+void RE_TakeLevelshot( const char *filename );
 
 /*
 Ghoul2 Insert Start

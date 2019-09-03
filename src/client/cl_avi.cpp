@@ -450,7 +450,7 @@ static qboolean CL_CheckFileSize( int bytesToAdd )
 CL_WriteAVIVideoFrame
 ===============
 */
-void CL_WriteAVIVideoFrame( const byte *imageBuffer, int size )
+void CL_WriteAVIVideoFrame( const byte *imageBuffer, int size, void *data )
 {
   int   chunkOffset = afd.fileSize - afd.moviOffset - 8;
   int   chunkSize = 8 + size;
@@ -569,7 +569,7 @@ void CL_TakeVideoFrame( void )
   if( !afd.fileOpen )
     return;
 
-  re.CaptureFrame( afd.width, afd.height, AVI_LINE_PADDING, afd.motionJpeg, cl_aviMotionJpegQuality->integer, CL_WriteAVIVideoFrame );
+  re.CaptureFrame( afd.width, afd.height, AVI_LINE_PADDING, afd.motionJpeg, cl_aviMotionJpegQuality->integer, CL_WriteAVIVideoFrame, NULL );
 }
 
 /*
