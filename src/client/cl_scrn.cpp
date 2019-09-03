@@ -516,13 +516,13 @@ void SCR_UpdateScreen( void ) {
 		SCR_DrawScreenField( STEREO_CENTER );
 	}
 
+	CL_TakeVideoFrame();
+
 	if ( com_speeds->integer ) {
 		re.SwapBuffers( &time_frontend, &time_backend );
 	} else {
 		re.SwapBuffers( NULL, NULL );
 	}
-
-	CL_TakeVideoFrame();
 
 	recursive = 0;
 }
