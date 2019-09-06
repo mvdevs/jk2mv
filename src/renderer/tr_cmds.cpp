@@ -555,11 +555,8 @@ int RE_CaptureFrameJPEG( byte *buffer, int bufSize, int quality )
 	readPixelsCommand_t	*cmd;
 	byte	*captureBuffer;
 	int		width, height;
-	size_t	memcount, linelen;
-	int		padwidth, padlen;
+	size_t	memcount;
 	int		size;
-	// 4 is OpenGL default, may be faster
-	int		padding = 4;
 
 	if( !tr.registered ) {
 		return 0;
@@ -572,10 +569,7 @@ int RE_CaptureFrameJPEG( byte *buffer, int bufSize, int quality )
 
 	width = glConfig.vidWidth;
 	height = glConfig.vidHeight;
-	linelen = width * 3;
-	padwidth = PAD(linelen, padding);
-	padlen = padwidth - linelen;
-	memcount = padwidth * height;
+	memcount = width * height * 3;
 
 	captureBuffer = (byte *)ri.Hunk_AllocateTempMemory(memcount);
 
@@ -584,7 +578,7 @@ int RE_CaptureFrameJPEG( byte *buffer, int bufSize, int quality )
 
 	cmd->buffer = captureBuffer;
 	cmd->bufSize = memcount;
-	cmd->padding = padding;
+	cmd->padding = 1;
 	cmd->format = GL_RGB;
 
 	R_SyncRenderThread();
@@ -594,7 +588,7 @@ int RE_CaptureFrameJPEG( byte *buffer, int bufSize, int quality )
 		R_GammaCorrect(captureBuffer, memcount);
 
 	size = SaveJPGToBuffer(buffer, bufSize,
-		quality, width, height, captureBuffer, padlen);
+		quality, width, height, captureBuffer, 0);
 
 	ri.Hunk_FreeTempMemory(captureBuffer);
 
