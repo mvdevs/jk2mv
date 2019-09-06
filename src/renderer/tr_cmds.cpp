@@ -502,9 +502,15 @@ void RE_SwapBuffers( int *frontEndMsec, int *backEndMsec ) {
 /*
 =============
 RE_CaptureFrame
+
+Captures current frame buffer. Pixel data is saved to *buffer array
+that should have enough space and be aligned to padding. Enough space
+currently is PAD(width, padding) * height * 3 bytes. Data is stored in
+RGB bytes format unless jpeg option is enabled, then it is a jpeg
+image. Padding parameter determines row padding in raw mode.
 =============
 */
-void RE_CaptureFrame( int width, int height, int padding, qboolean jpeg, int jpegQuality, captureFrameCallback_t *callback, void *callbackData )
+void RE_CaptureFrame( byte *buffer, int *size, int width, int height, int padding, qboolean jpeg, int jpegQuality )
 {
 	captureFrameCommand_t	*cmd;
 
@@ -519,13 +525,15 @@ void RE_CaptureFrame( int width, int height, int padding, qboolean jpeg, int jpe
 
 	cmd->commandId = RC_CAPTURE_FRAME;
 
+	cmd->buffer = buffer;
+	cmd->size = size;
 	cmd->width = width;
 	cmd->height = height;
 	cmd->padding = padding;
 	cmd->jpeg = jpeg;
 	cmd->jpegQuality = jpegQuality;
-	cmd->callback = callback;
-	cmd->callbackData = callbackData;
+
+	R_SyncRenderThread();
 }
 
 /*
@@ -570,17 +578,6 @@ void RE_GammaCorrection( void )
 	cmd->commandId = RC_GAMMA_CORRECTION;
 }
 
-typedef struct {
-	char	filename[MAX_OSPATH];
-} screenshotCallbackData_t;
-
-static void R_ScreenshotCallback(const byte *imageBuffer, int size, void *data) {
-	screenshotCallbackData_t *cmd = (screenshotCallbackData_t *)data;
-
-	ri.FS_WriteFile(cmd->filename, imageBuffer, (int)size);
-	ri.Free(data);
-}
-
 /*
 =============
 RE_TakeScreenshot
@@ -588,27 +585,59 @@ RE_TakeScreenshot
 */
 void RE_TakeScreenshot( qboolean jpeg, int jpegQuality, const char *filename )
 {
-	screenshotCallbackData_t *callbackData =
-		(screenshotCallbackData_t *)ri.Malloc(sizeof(screenshotCallbackData_t), TAG_RENDERER, qfalse);
+	int		width = glConfig.vidWidth;
+	int		height = glConfig.vidHeight;
+	byte	*buffer;
+	byte	*captureBuffer;
+	int		size;
 
-	Q_strncpyz(callbackData->filename, filename, sizeof(callbackData->filename));
+	if (jpeg) {
+		buffer = (byte *)ri.Hunk_AllocateTempMemory(width * height * 3);
+		captureBuffer = buffer;
+	} else {
+		buffer = (byte *)ri.Hunk_AllocateTempMemory(width * height * 3 + 18);
 
-	RE_CaptureFrame(glConfig.vidWidth, glConfig.vidHeight, 1, jpeg, jpegQuality, R_ScreenshotCallback, callbackData);
+		Com_Memset (buffer, 0, 18);
+		buffer[2] = 2;		// uncompressed type
+		buffer[12] = width & 255;
+		buffer[13] = width >> 8;
+		buffer[14] = height & 255;
+		buffer[15] = height >> 8;
+		buffer[16] = 24;	// pixel size
+
+		captureBuffer = buffer + 18;
+	}
+
+	RE_CaptureFrame(captureBuffer, &size, width, height, 1, jpeg, jpegQuality);
+	ri.FS_WriteFile(filename, buffer, size);
+	ri.Hunk_FreeTempMemory(buffer);
 }
 
 #define LEVELSHOTSIZE 256
 
-static void R_LevelshotCallback(const byte *imageBuffer, int size, void *data) {
-	screenshotCallbackData_t *cmd = (screenshotCallbackData_t *)data;
+/*
+=============
+RE_TakeLevelshot
+=============
+*/
+void RE_TakeLevelshot( const char *filename )
+{
+	int		width = glConfig.vidWidth;
+	int		height = glConfig.vidHeight;
+	byte	*captureBuffer;
 	byte	*buffer;
-	const byte *src;
+	int		size;
+	byte	*src;
 	byte	*dst;
 	int		x, y;
 	int		r, g, b;
 	float	xScale, yScale;
 	int		xx, yy;
 
-	buffer = (unsigned char *)ri.Hunk_AllocateTempMemory( LEVELSHOTSIZE * LEVELSHOTSIZE*3 + 18);
+	captureBuffer = (byte *)ri.Hunk_AllocateTempMemory(width * height * 3);
+	buffer = (byte *)ri.Hunk_AllocateTempMemory( LEVELSHOTSIZE * LEVELSHOTSIZE*3 + 18);
+
+	RE_CaptureFrame(captureBuffer, &size, width, height, 1, qfalse, 0);
 
 	Com_Memset (buffer, 0, 18);
 	buffer[2] = 2;		// uncompressed type
@@ -619,14 +648,14 @@ static void R_LevelshotCallback(const byte *imageBuffer, int size, void *data) {
 	buffer[16] = 24;	// pixel size
 
 	// resample from source
-	xScale = glConfig.vidWidth / (4.0*LEVELSHOTSIZE);
-	yScale = glConfig.vidHeight / (3.0*LEVELSHOTSIZE);
+	xScale = width / (4.0*LEVELSHOTSIZE);
+	yScale = height / (3.0*LEVELSHOTSIZE);
 	for ( y = 0 ; y < LEVELSHOTSIZE ; y++ ) {
 		for ( x = 0 ; x < LEVELSHOTSIZE ; x++ ) {
 			r = g = b = 0;
 			for ( yy = 0 ; yy < 3 ; yy++ ) {
 				for ( xx = 0 ; xx < 4 ; xx++ ) {
-					src = imageBuffer + 3 * ( glConfig.vidWidth * (int)( (y*3+yy)*yScale ) + (int)( (x*4+xx)*xScale ) );
+					src = captureBuffer + 3 * ( width * (int)( (y*3+yy)*yScale ) + (int)( (x*4+xx)*xScale ) );
 					r += src[0];
 					g += src[1];
 					b += src[2];
@@ -639,23 +668,8 @@ static void R_LevelshotCallback(const byte *imageBuffer, int size, void *data) {
 		}
 	}
 
-	ri.FS_WriteFile(cmd->filename, buffer, LEVELSHOTSIZE * LEVELSHOTSIZE*3 + 18 );
+	ri.FS_WriteFile(filename, buffer, LEVELSHOTSIZE * LEVELSHOTSIZE*3 + 18 );
 
 	ri.Hunk_FreeTempMemory( buffer );
-	ri.Free(data);
-}
-
-/*
-=============
-RE_TakeLevelshot
-=============
-*/
-void RE_TakeLevelshot( const char *filename )
-{
-	screenshotCallbackData_t *callbackData =
-		(screenshotCallbackData_t *)ri.Malloc(sizeof(screenshotCallbackData_t), TAG_RENDERER, qfalse);
-
-	Q_strncpyz(callbackData->filename, filename, sizeof(callbackData->filename));
-
-	RE_CaptureFrame(glConfig.vidWidth, glConfig.vidHeight, 1, qfalse, 0, R_LevelshotCallback, callbackData);
+	ri.Hunk_FreeTempMemory( captureBuffer );
 }

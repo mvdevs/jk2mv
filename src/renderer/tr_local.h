@@ -1432,7 +1432,7 @@ float	R_SumOfUsedImages( qboolean bUseFormat );
 void	R_InitSkins( void );
 skin_t	*R_GetSkinByHandle( qhandle_t hSkin );
 
-byte *RB_ReadPixels(int x, int y, int width, int height, size_t *offset, qboolean swapRB, int packAlign);
+byte *RB_ReadPixels(byte *buffer, int x, int y, int width, int height, size_t *offset, qboolean swapRB, int packAlign);
 
 //
 // tr_shader.c
@@ -1816,13 +1816,13 @@ typedef struct {
 
 typedef struct {
 	int		commandId;
+	byte	*buffer;
+	int		*size;
 	int		width;
 	int		height;
 	int		padding;
 	qboolean	jpeg;
 	int		jpegQuality;
-	captureFrameCallback_t	*callback;
-	void	*callbackData;
 } captureFrameCommand_t;
 
 typedef enum {
@@ -1890,7 +1890,7 @@ void RE_GammaCorrection( void );
 void SaveJPG(const char * filename, int quality, int image_width, int image_height, byte *image_buffer, int padding);
 size_t SaveJPGToBuffer(byte *buffer, size_t bufSize, int quality, int image_width,
 	int image_height, byte *image_buffer, int padding);
-void RE_CaptureFrame( int width, int height, int padding, qboolean jpeg, int jpegQuality, captureFrameCallback_t *callback, void *callbackData );
+void RE_CaptureFrame( byte *buffer, int *size, int width, int height, int padding, qboolean jpeg, int jpegQuality );
 void RE_TakeScreenshot( qboolean jpeg, int jpegQuality, const char *filename );
 void RE_TakeLevelshot( const char *filename );
 

@@ -1324,36 +1324,6 @@ const void *RB_GammaCorrection( const void *data )
 }
 
 /*
-===============
-RB_ReadPixels
-===============
-*/
-byte *RB_ReadPixels(int x, int y, int width, int height, size_t *offset, qboolean swapRB, int packAlign)
-{
-	byte	*buffer, *bufstart;
-	int		padwidth, linelen;
-
-	qglPixelStorei(GL_PACK_ALIGNMENT, packAlign);
-
-	linelen = width * 3;
-	padwidth = PAD(linelen, packAlign);
-
-	// Allocate a few more bytes so that we can choose an alignment we like
-	buffer = (byte *)ri.Hunk_AllocateTempMemory(padwidth * height + *offset + packAlign - 1);
-	bufstart = (byte *)PADP((intptr_t)buffer + *offset, packAlign);
-
-	qglReadPixels(x, y, width, height, swapRB ? GL_BGR : GL_RGB, GL_UNSIGNED_BYTE, bufstart);
-
-	// gamma correct
-	if (r_gammamethod->integer == GAMMA_HARDWARE)
-		R_GammaCorrect(bufstart, padwidth * height);
-
-	*offset = bufstart - buffer;
-
-	return buffer;
-}
-
-/*
 ==================
 RB_CaptureFrame
 ==================
@@ -1361,46 +1331,39 @@ RB_CaptureFrame
 const void *RB_CaptureFrame( const void *data )
 {
 	const captureFrameCommand_t	*cmd;
-	byte	*buffer;
+	GLenum	format;
 	byte	*captureBuffer;
-	size_t	offset;
 	size_t	memcount, linelen;
 	int		padwidth, padlen;
 
 	cmd = (const captureFrameCommand_t *)data;
 
-	offset = 0;
-	buffer = RB_ReadPixels(0, 0, cmd->width, cmd->height, &offset,
-		(qboolean) !cmd->jpeg, cmd->padding);
-	captureBuffer = buffer + offset;
-
-	// AVI line padding
 	linelen = cmd->width * 3;
 	padwidth = PAD(linelen, cmd->padding);
 	padlen = padwidth - linelen;
 	memcount = padwidth * cmd->height;
+	format = cmd->jpeg ? GL_RGB : GL_BGR;
 
-	if(cmd->jpeg)
-	{
-		byte	*buffer2;
-		byte	*encodeBuffer;
+	if (cmd->jpeg) {
+		captureBuffer = (byte *)ri.Hunk_AllocateTempMemory(memcount);
+	} else {
+		captureBuffer = cmd->buffer;
+	}
 
-		buffer2 = (byte *)ri.Hunk_AllocateTempMemory(memcount + cmd->padding - 1);
-		encodeBuffer = (byte *)PADP(buffer2, cmd->padding);
+	qglPixelStorei(GL_PACK_ALIGNMENT, cmd->padding);
+	qglReadPixels(0, 0, cmd->width, cmd->height, format, GL_UNSIGNED_BYTE, captureBuffer);
 
-		memcount = SaveJPGToBuffer(encodeBuffer, linelen * cmd->height,
+	if (r_gammamethod->integer == GAMMA_HARDWARE)
+		R_GammaCorrect(captureBuffer, memcount);
+
+	if(cmd->jpeg) {
+		*cmd->size = SaveJPGToBuffer(cmd->buffer, linelen * cmd->height,
 			cmd->jpegQuality, cmd->width, cmd->height, captureBuffer, padlen);
 
-		cmd->callback(encodeBuffer, memcount, cmd->callbackData);
-
-		ri.Hunk_FreeTempMemory(buffer2);
+		ri.Hunk_FreeTempMemory(captureBuffer);
+	} else {
+		*cmd->size = memcount;
 	}
-	else
-	{
-		cmd->callback(captureBuffer, memcount, cmd->callbackData);
-	}
-
-	ri.Hunk_FreeTempMemory(buffer);
 
 	return (const void *)(cmd + 1);
 }
