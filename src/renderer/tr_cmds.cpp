@@ -688,9 +688,9 @@ void RE_TakeLevelshot( const char *filename )
 			for ( yy = 0 ; yy < 3 ; yy++ ) {
 				for ( xx = 0 ; xx < 4 ; xx++ ) {
 					src = captureBuffer + 3 * ( width * (int)( (y*3+yy)*yScale ) + (int)( (x*4+xx)*xScale ) );
-					r += src[0];
+					b += src[0];
 					g += src[1];
-					b += src[2];
+					r += src[2];
 				}
 			}
 			dst = buffer + 18 + 3 * ( y * LEVELSHOTSIZE + x );
