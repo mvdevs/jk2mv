@@ -513,7 +513,7 @@ image size in bytes is returned.
 */
 int RE_CaptureFrame( byte *buffer, int padding, qboolean jpeg, int jpegQuality )
 {
-	captureFrameCommand_t	*cmd;
+	readPixelsCommand_t	*cmd;
 	byte	*captureBuffer;
 	GLenum	format;
 	int		width, height;
@@ -525,7 +525,7 @@ int RE_CaptureFrame( byte *buffer, int padding, qboolean jpeg, int jpegQuality )
 		return 0;
 	}
 
-	cmd = (captureFrameCommand_t *)R_GetCommandBuffer( sizeof( *cmd ) );
+	cmd = (readPixelsCommand_t *)R_GetCommandBuffer( sizeof( *cmd ) );
 	if( !cmd ) {
 		return 0;
 	}
@@ -545,7 +545,7 @@ int RE_CaptureFrame( byte *buffer, int padding, qboolean jpeg, int jpegQuality )
 	}
 
 	// Get raw pixels from backend
-	cmd->commandId = RC_CAPTURE_FRAME;
+	cmd->commandId = RC_READ_PIXELS;
 
 	cmd->buffer = captureBuffer;
 	cmd->padding = padding;

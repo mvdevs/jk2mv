@@ -1325,14 +1325,14 @@ const void *RB_GammaCorrection( const void *data )
 
 /*
 ==================
-RB_CaptureFrame
+RB_ReadPixels
 ==================
 */
-const void *RB_CaptureFrame( const void *data )
+const void *RB_ReadPixels( const void *data )
 {
-	const captureFrameCommand_t	*cmd;
+	const readPixelsCommand_t	*cmd;
 
-	cmd = (const captureFrameCommand_t *)data;
+	cmd = (const readPixelsCommand_t *)data;
 
 	// finish any 2D drawing if needed
 	if ( tess.numIndexes ) {
@@ -1387,8 +1387,8 @@ void RB_ExecuteRenderCommands( const void *data ) {
 		case RC_GAMMA_CORRECTION:
 			data = RB_GammaCorrection( data );
 			break;
-		case RC_CAPTURE_FRAME:
-			data = RB_CaptureFrame( data );
+		case RC_READ_PIXELS:
+			data = RB_ReadPixels( data );
 			break;
 		case RC_END_OF_LIST:
 			// stop rendering

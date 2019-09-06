@@ -1819,7 +1819,7 @@ typedef struct {
 	byte	*buffer;
 	int		padding;
 	GLenum	format;
-} captureFrameCommand_t;
+} readPixelsCommand_t;
 
 typedef enum {
 	RC_END_OF_LIST,
@@ -1831,7 +1831,7 @@ typedef enum {
 	RC_SWAP_BUFFERS,
 	RC_WORLD_EFFECTS,
 	RC_GAMMA_CORRECTION,
-	RC_CAPTURE_FRAME,
+	RC_READ_PIXELS,
 } renderCommand_t;
 
 
