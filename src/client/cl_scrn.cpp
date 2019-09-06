@@ -417,7 +417,9 @@ This will be called twice if rendering in stereo mode
 ==================
 */
 void SCR_DrawScreenField( stereoFrame_t stereoFrame ) {
-	re.BeginFrame( stereoFrame );
+	qboolean skipBackend = (qboolean)(com_minimized->integer && !CL_VideoRecording());
+
+	re.BeginFrame( stereoFrame, skipBackend );
 
 	if ( !uivm ) {
 		Com_DPrintf("draw screen without UI loaded\n");

@@ -88,7 +88,7 @@ void R_IssueRenderCommands( qboolean runPerformanceCounters ) {
 	}
 
 	// actually start the commands going
-	if (!r_skipBackEnd->integer) {
+	if (!tr.skipBackend) {
 		// let it start on the new batch
 		RB_ExecuteRenderCommands(cmdList->cmds);
 	}
@@ -314,7 +314,7 @@ If running in stereo, RE_BeginFrame will be called twice
 for each RE_EndFrame
 ====================
 */
-void RE_BeginFrame( stereoFrame_t stereoFrame ) {
+void RE_BeginFrame( stereoFrame_t stereoFrame, qboolean skipBackend ) {
 	drawBufferCommand_t	*cmd;
 
 	if ( !tr.registered ) {
@@ -324,6 +324,8 @@ void RE_BeginFrame( stereoFrame_t stereoFrame ) {
 
 	tr.frameCount++;
 	tr.frameSceneNum = 0;
+
+	tr.skipBackend = (qboolean)(r_skipBackEnd->integer || skipBackend);
 
 	//
 	// do overdraw measurement
