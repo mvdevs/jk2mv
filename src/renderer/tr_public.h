@@ -98,7 +98,7 @@ typedef struct {
 
 	void	(*GetBModelVerts)( int bmodelIndex, vec3_t *vec, vec3_t normal );
 
-	void (*CaptureFrame)( byte *buffer, int *size, int h, int w, int padding, qboolean jpeg, int jpegQuality );
+	int (*CaptureFrame)( byte *buffer, int padding, qboolean jpeg, int jpegQuality );
 } refexport_t;
 
 //

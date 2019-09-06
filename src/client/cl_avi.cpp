@@ -580,7 +580,7 @@ void CL_TakeVideoFrame( void )
   if( !afd.fileOpen )
     return;
 
-  re.CaptureFrame( afd.frameBuffer, &size, afd.width, afd.height, AVI_LINE_PADDING,
+  size = re.CaptureFrame( afd.frameBuffer, AVI_LINE_PADDING,
 	  afd.motionJpeg, cl_aviMotionJpegQuality->integer );
 
   CL_WriteAVIVideoFrame( afd.frameBuffer, size );

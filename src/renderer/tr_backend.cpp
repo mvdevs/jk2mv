@@ -1331,39 +1331,17 @@ RB_CaptureFrame
 const void *RB_CaptureFrame( const void *data )
 {
 	const captureFrameCommand_t	*cmd;
-	GLenum	format;
-	byte	*captureBuffer;
-	size_t	memcount, linelen;
-	int		padwidth, padlen;
 
 	cmd = (const captureFrameCommand_t *)data;
 
-	linelen = cmd->width * 3;
-	padwidth = PAD(linelen, cmd->padding);
-	padlen = padwidth - linelen;
-	memcount = padwidth * cmd->height;
-	format = cmd->jpeg ? GL_RGB : GL_BGR;
-
-	if (cmd->jpeg) {
-		captureBuffer = (byte *)ri.Hunk_AllocateTempMemory(memcount);
-	} else {
-		captureBuffer = cmd->buffer;
+	// finish any 2D drawing if needed
+	if ( tess.numIndexes ) {
+		RB_EndSurface();
 	}
 
 	qglPixelStorei(GL_PACK_ALIGNMENT, cmd->padding);
-	qglReadPixels(0, 0, cmd->width, cmd->height, format, GL_UNSIGNED_BYTE, captureBuffer);
-
-	if (r_gammamethod->integer == GAMMA_HARDWARE)
-		R_GammaCorrect(captureBuffer, memcount);
-
-	if(cmd->jpeg) {
-		*cmd->size = SaveJPGToBuffer(cmd->buffer, linelen * cmd->height,
-			cmd->jpegQuality, cmd->width, cmd->height, captureBuffer, padlen);
-
-		ri.Hunk_FreeTempMemory(captureBuffer);
-	} else {
-		*cmd->size = memcount;
-	}
+	qglReadPixels(0, 0, glConfig.vidWidth, glConfig.vidHeight,
+		cmd->format, GL_UNSIGNED_BYTE, cmd->buffer);
 
 	return (const void *)(cmd + 1);
 }

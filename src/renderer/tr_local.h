@@ -1817,12 +1817,8 @@ typedef struct {
 typedef struct {
 	int		commandId;
 	byte	*buffer;
-	int		*size;
-	int		width;
-	int		height;
 	int		padding;
-	qboolean	jpeg;
-	int		jpegQuality;
+	GLenum	format;
 } captureFrameCommand_t;
 
 typedef enum {
@@ -1890,7 +1886,7 @@ void RE_GammaCorrection( void );
 void SaveJPG(const char * filename, int quality, int image_width, int image_height, byte *image_buffer, int padding);
 size_t SaveJPGToBuffer(byte *buffer, size_t bufSize, int quality, int image_width,
 	int image_height, byte *image_buffer, int padding);
-void RE_CaptureFrame( byte *buffer, int *size, int width, int height, int padding, qboolean jpeg, int jpegQuality );
+int RE_CaptureFrame( byte *buffer, int padding, qboolean jpeg, int jpegQuality );
 void RE_TakeScreenshot( qboolean jpeg, int jpegQuality, const char *filename );
 void RE_TakeLevelshot( const char *filename );
 
