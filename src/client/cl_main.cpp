@@ -2429,12 +2429,9 @@ void CL_Frame ( int msec ) {
 
 	// if recording an avi, lock to a fixed fps
 	if ( CL_VideoRecording() && cl_aviFrameRate->integer && msec) {
-		// save the current screen
 		if ( cls.state == CA_ACTIVE || cl_forceavidemo->integer) {
 			static double	overflow = 0.0;
 			double			frameTime;
-
-			CL_TakeVideoFrame();
 
 			frameTime = (1000.0 / abs(cl_aviFrameRate->integer)) * com_timescale->value;
 			frameTime += overflow;
@@ -2692,8 +2689,6 @@ void CL_InitRef( void ) {
 	ri.CIN_UploadCinematic = CIN_UploadCinematic;
 	ri.CIN_PlayCinematic = CIN_PlayCinematic;
 	ri.CIN_RunCinematic = CIN_RunCinematic;
-
-	ri.CL_WriteAVIVideoFrame = CL_WriteAVIVideoFrame;
 
 	ri.CM_PointContents = CM_PointContents;
 

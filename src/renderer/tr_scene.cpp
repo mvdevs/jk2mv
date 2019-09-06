@@ -505,5 +505,7 @@ void RE_RenderScene( const refdef_t *fd ) {
 
 	refEntParent = -1;
 
+	RE_RenderWorldEffects();
+
 	tr.frontEndMsec += ri.Milliseconds() - startTime;
 }

@@ -1014,6 +1014,7 @@ typedef struct {
 */
 typedef struct {
 	qboolean				registered;		// cleared at shutdown, set at beginRegistration
+	qboolean				skipBackend;	// don't execute backend commands
 
 	int						visCount;		// incremented every time a new vis cluster is entered
 	int						frameCount;		// incremented every frame
@@ -1112,6 +1113,18 @@ typedef struct {
 	float					sawToothTable[FUNCTABLE_SIZE];
 	float					inverseSawToothTable[FUNCTABLE_SIZE];
 	float					fogTable[FOG_TABLE_SIZE];
+
+	qboolean				screenshotTGA;
+	qboolean				screenshotTGASilent;
+	char					screenshotTGAName[MAX_OSPATH];
+
+	qboolean				screenshotJPEG;
+	qboolean				screenshotJPEGSilent;
+	char					screenshotJPEGName[MAX_OSPATH];
+	int						screenshotJPEGQuality;
+
+	qboolean				levelshot;
+	char					levelshotName[MAX_OSPATH];
 
 	// gamma correction
 	GLuint gammaVertexShader, gammaPixelShader;
@@ -1370,7 +1383,7 @@ void	GL_Cull( int cullType );
 void	RE_StretchRaw (int x, int y, int w, int h, int cols, int rows, const byte *data, int client, qboolean dirty);
 void	RE_UploadCinematic (int cols, int rows, const byte *data, int client, qboolean dirty);
 
-void		RE_BeginFrame( stereoFrame_t stereoFrame );
+void		RE_BeginFrame( stereoFrame_t stereoFrame, qboolean skipBacken );
 void		RE_BeginRegistration( glconfig_t *glconfig );
 void		RE_LoadWorldMap( const char *mapname );
 void		RE_SetWorldVisData( const byte *vis );
@@ -1424,7 +1437,7 @@ float	R_SumOfUsedImages( qboolean bUseFormat );
 void	R_InitSkins( void );
 skin_t	*R_GetSkinByHandle( qhandle_t hSkin );
 
-byte *RB_ReadPixels(int x, int y, int width, int height, size_t *offset, qboolean swapRB, int packAlign);
+byte *RB_ReadPixels(byte *buffer, int x, int y, int width, int height, size_t *offset, qboolean swapRB, int packAlign);
 
 //
 // tr_shader.c
@@ -1533,9 +1546,6 @@ void RB_AddQuadStamp( vec3_t origin, vec3_t left, vec3_t up, byte *color );
 void RB_AddQuadStampExt( vec3_t origin, vec3_t left, vec3_t up, byte *color, float s1, float t1, float s2, float t2 );
 
 void RB_ShowImages( void );
-
-void RB_TakeScreenshot(int x, int y, int width, int height, const char *fileName);
-void RB_TakeScreenshotJPEG(int x, int y, int width, int height, const char *fileName);
 
 /*
 ============================================================
@@ -1803,21 +1813,19 @@ typedef struct {
 
 typedef struct {
 	int		commandId;
-	int		width;
-	int		height;
-	qboolean	motionJpeg;
-	int		motionJpegQuality;
-} videoFrameCommand_t;
+} worldEffectsCommand_t;
 
 typedef struct {
 	int		commandId;
-	int		x;
-	int		y;
-	int		width;
-	int		height;
-	char	fileName[MAX_OSPATH]; // large but we don't take screenshots too often
-	qboolean	jpeg;
-} screenshotCommand_t;
+} gammaCorrectionCommand_t;
+
+typedef struct {
+	int		commandId;
+	byte	*buffer;
+	int		bufSize;
+	int		padding;
+	GLenum	format;
+} readPixelsCommand_t;
 
 typedef enum {
 	RC_END_OF_LIST,
@@ -1827,8 +1835,9 @@ typedef enum {
 	RC_DRAW_SURFS,
 	RC_DRAW_BUFFER,
 	RC_SWAP_BUFFERS,
-	RC_VIDEOFRAME,
-	RC_SCREENSHOT,
+	RC_WORLD_EFFECTS,
+	RC_GAMMA_CORRECTION,
+	RC_READ_PIXELS,
 } renderCommand_t;
 
 
@@ -1876,11 +1885,18 @@ void RE_RotatePic ( float x, float y, float w, float h, float s1, float t1,
 void RE_RotatePic2 ( float x, float y, float w, float h, float s1, float t1,
 	float s2, float t2,float a, qhandle_t hShader, float xadjust, float yadjust );
 void RE_BeginFrame( stereoFrame_t stereoFrame );
-void RE_EndFrame( int *frontEndMsec, int *backEndMsec );
+void RE_EndFrame( void );
+void RE_SwapBuffers( int *frontEndMsec, int *backEndMsec );
+void RE_RenderWorldEffects( void );
+void RE_GammaCorrection( void );
 void SaveJPG(const char * filename, int quality, int image_width, int image_height, byte *image_buffer, int padding);
 size_t SaveJPGToBuffer(byte *buffer, size_t bufSize, int quality, int image_width,
 	int image_height, byte *image_buffer, int padding);
-void RE_TakeVideoFrame( int width, int height, qboolean motionJpeg, int motionJpegQuality );
+int RE_CaptureFrameRaw( byte *buffer, int bufSize, int padding );
+int RE_CaptureFrameJPEG( byte *buffer, int bufSize, int quality );
+void RE_TakeScreenshotJPEG( const char *filename, int quality, qboolean silent );
+void RE_TakeScreenshotTGA( const char *filename, qboolean silent );
+void RE_TakeLevelshot( const char *filename );
 
 /*
 Ghoul2 Insert Start

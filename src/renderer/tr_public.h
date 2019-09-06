@@ -61,10 +61,11 @@ typedef struct {
 	void	(*DrawStretchRaw) (int x, int y, int w, int h, int cols, int rows, const byte *data, int client, qboolean dirty);
 	void	(*UploadCinematic) (int cols, int rows, const byte *data, int client, qboolean dirty);
 
-	void	(*BeginFrame)( stereoFrame_t stereoFrame );
+	void	(*BeginFrame)( stereoFrame_t stereoFrame, qboolean skipBackend );
+	void	(*EndFrame)( void );
 
 	// if the pointers are not NULL, timing info will be returned
-	void	(*EndFrame)( int *frontEndMsec, int *backEndMsec );
+	void	(*SwapBuffers)( int *frontEndMsec, int *backEndMsec );
 
 
 	int		(*MarkFragments)( int numPoints, const vec3_t *points, const vec3_t projection,
@@ -97,7 +98,8 @@ typedef struct {
 
 	void	(*GetBModelVerts)( int bmodelIndex, vec3_t *vec, vec3_t normal );
 
-	void (*TakeVideoFrame)( int h, int w, qboolean motionJpeg, int motionJpegQuality );
+	int (*CaptureFrameRaw)( byte *buffer, int bufSize, int padding );
+	int (*CaptureFrameJPEG)( byte *buffer, int bufSize, int quality );
 } refexport_t;
 
 //
@@ -158,8 +160,6 @@ typedef struct {
 	void	(*CIN_UploadCinematic)(int handle);
 	int		(*CIN_PlayCinematic)( const char *arg0, int xpos, int ypos, int width, int height, int bits);
 	e_status (*CIN_RunCinematic) (int handle);
-
-	void	(*CL_WriteAVIVideoFrame)( const byte *buffer, int size );
 
 	int (*CM_PointContents)( const vec3_t p, clipHandle_t model );
 
