@@ -88,7 +88,7 @@ void R_IssueRenderCommands( qboolean runPerformanceCounters ) {
 	}
 
 	// actually start the commands going
-	if (!r_skipBackEnd->integer && !com_minimized->integer) {
+	if (!r_skipBackEnd->integer) {
 		// let it start on the new batch
 		RB_ExecuteRenderCommands(cmdList->cmds);
 	}
@@ -470,7 +470,12 @@ void RE_SwapBuffers( int *frontEndMsec, int *backEndMsec ) {
 
 	if (tr.screenshot) {
 		tr.screenshot = qfalse;
-		RE_TakeScreenshot(tr.screenshotJpeg, tr.screenshotJpegQuality, tr.screenshotName);
+		RE_TakeScreenshotTGA(tr.screenshotName);
+	}
+	
+	if (tr.screenshotJpeg) {
+		tr.screenshotJpeg = qfalse;
+		RE_TakeScreenshotJPEG(tr.screenshotJpegName, tr.screenshotJpegQuality);
 	}
 
 	if (tr.levelshot) {
@@ -498,28 +503,63 @@ void RE_SwapBuffers( int *frontEndMsec, int *backEndMsec ) {
 	backEnd.pc.msec = 0;
 }
 
+/*
+=============
+RE_CaptureFrameRAW
+
+Capture current frame buffer as raw BGR data. Returns data size.
+=============
+*/
+int RE_CaptureFrameRaw( byte *buffer, int bufSize, int padding )
+{
+	readPixelsCommand_t	*cmd;
+	int		size;
+
+	if( !tr.registered ) {
+		return 0;
+	}
+
+	cmd = (readPixelsCommand_t *)R_GetCommandBuffer( sizeof( *cmd ) );
+	if( !cmd ) {
+		return 0;
+	}
+
+	size = PAD(glConfig.vidWidth * 3, padding) * glConfig.vidHeight;
+
+	// Get raw pixels from backend
+	cmd->commandId = RC_READ_PIXELS;
+
+	cmd->buffer = buffer;
+	cmd->bufSize = bufSize;
+	cmd->padding = padding;
+	cmd->format = GL_BGR;
+
+	R_SyncRenderThread();
+	//
+
+	if (r_gammamethod->integer == GAMMA_HARDWARE)
+		R_GammaCorrect(buffer, size);
+
+	return size;
+}
 
 /*
 =============
-RE_CaptureFrame
+RE_CaptureFrameJPEG
 
-Captures current frame buffer. Pixel data is saved to *buffer array
-that should have enough space and be aligned to padding. Enough space
-currently is PAD(width, padding) * height * 3 bytes. Data is stored in
-RGB bytes format unless jpeg option is enabled, then it is a jpeg
-image. Padding parameter determines row padding in raw mode. captured
-image size in bytes is returned.
+Capture current frame buffer as JPEG image. Returns JPEG size.
 =============
 */
-int RE_CaptureFrame( byte *buffer, int padding, qboolean jpeg, int jpegQuality )
+int RE_CaptureFrameJPEG( byte *buffer, int bufSize, int quality )
 {
 	readPixelsCommand_t	*cmd;
 	byte	*captureBuffer;
-	GLenum	format;
 	int		width, height;
 	size_t	memcount, linelen;
 	int		padwidth, padlen;
 	int		size;
+	// 4 is OpenGL default, may be faster
+	int		padding = 4;
 
 	if( !tr.registered ) {
 		return 0;
@@ -536,20 +576,16 @@ int RE_CaptureFrame( byte *buffer, int padding, qboolean jpeg, int jpegQuality )
 	padwidth = PAD(linelen, padding);
 	padlen = padwidth - linelen;
 	memcount = padwidth * height;
-	format = jpeg ? GL_RGB : GL_BGR;
 
-	if ( jpeg ) {
-		captureBuffer = (byte *)ri.Hunk_AllocateTempMemory(memcount);
-	} else {
-		captureBuffer = buffer;
-	}
+	captureBuffer = (byte *)ri.Hunk_AllocateTempMemory(memcount);
 
 	// Get raw pixels from backend
 	cmd->commandId = RC_READ_PIXELS;
 
 	cmd->buffer = captureBuffer;
+	cmd->bufSize = memcount;
 	cmd->padding = padding;
-	cmd->format = format;
+	cmd->format = GL_RGB;
 
 	R_SyncRenderThread();
 	//
@@ -557,13 +593,10 @@ int RE_CaptureFrame( byte *buffer, int padding, qboolean jpeg, int jpegQuality )
 	if (r_gammamethod->integer == GAMMA_HARDWARE)
 		R_GammaCorrect(captureBuffer, memcount);
 
-	if ( jpeg ) {
-		size = SaveJPGToBuffer(buffer, linelen * height,
-			jpegQuality, width, height, captureBuffer, padlen);
-		ri.Hunk_FreeTempMemory(captureBuffer);
-	} else {
-		size = memcount;
-	}
+	size = SaveJPGToBuffer(buffer, bufSize,
+		quality, width, height, captureBuffer, padlen);
+
+	ri.Hunk_FreeTempMemory(captureBuffer);
 
 	return size;
 }
@@ -612,40 +645,62 @@ void RE_GammaCorrection( void )
 
 /*
 =============
-RE_TakeScreenshot
+RE_TakeScreenshotJPEG
 =============
 */
-void RE_TakeScreenshot( qboolean jpeg, int jpegQuality, const char *filename )
+void RE_TakeScreenshotJPEG( const char *filename, int quality )
 {
 	int		width = glConfig.vidWidth;
 	int		height = glConfig.vidHeight;
 	byte	*buffer;
-	byte	*captureBuffer;
+	int		bufSize;
 	int		size;
 
-	if (jpeg) {
-		buffer = (byte *)ri.Hunk_AllocateTempMemory(width * height * 3);
-		captureBuffer = buffer;
-	} else {
-		buffer = (byte *)ri.Hunk_AllocateTempMemory(width * height * 3 + 18);
+	bufSize = width * height * 3;
+	buffer = (byte *)ri.Hunk_AllocateTempMemory(bufSize);
 
-		Com_Memset (buffer, 0, 18);
-		buffer[2] = 2;		// uncompressed type
-		buffer[12] = width & 255;
-		buffer[13] = width >> 8;
-		buffer[14] = height & 255;
-		buffer[15] = height >> 8;
-		buffer[16] = 24;	// pixel size
-
-		captureBuffer = buffer + 18;
-	}
-
-	size = RE_CaptureFrame(captureBuffer, 1, jpeg, jpegQuality);
+	size = RE_CaptureFrameJPEG(buffer, bufSize, quality);
 	ri.FS_WriteFile(filename, buffer, size);
+
 	ri.Hunk_FreeTempMemory(buffer);
 }
 
-#define LEVELSHOTSIZE 256
+/*
+=============
+RE_TakeScreenshotTGA
+=============
+*/
+void RE_TakeScreenshotTGA( const char *filename )
+{
+	int		width, height;
+	byte	*buffer;
+	byte	*captureBuffer;
+	int		bufSize;
+	int		captureBufSize;
+
+	width = glConfig.vidWidth;
+	height = glConfig.vidHeight;
+
+	captureBufSize = width * height * 3;
+	bufSize = captureBufSize + 18;
+
+	buffer = (byte *)ri.Hunk_AllocateTempMemory(bufSize);
+
+	Com_Memset (buffer, 0, 18);
+	buffer[2] = 2;		// uncompressed type
+	buffer[12] = width & 255;
+	buffer[13] = width >> 8;
+	buffer[14] = height & 255;
+	buffer[15] = height >> 8;
+	buffer[16] = 24;	// pixel size
+
+	captureBuffer = buffer + 18;
+
+	RE_CaptureFrameRaw(captureBuffer, captureBufSize, 1);
+	ri.FS_WriteFile(filename, buffer, bufSize);
+
+	ri.Hunk_FreeTempMemory(buffer);
+}
 
 /*
 =============
@@ -658,7 +713,8 @@ void RE_TakeLevelshot( const char *filename )
 	int		height = glConfig.vidHeight;
 	byte	*captureBuffer;
 	byte	*buffer;
-	int		size;
+	int		captureBufferSize;
+	int		bufferSize;
 	byte	*src;
 	byte	*dst;
 	int		x, y;
@@ -666,10 +722,14 @@ void RE_TakeLevelshot( const char *filename )
 	float	xScale, yScale;
 	int		xx, yy;
 
-	captureBuffer = (byte *)ri.Hunk_AllocateTempMemory(width * height * 3);
-	buffer = (byte *)ri.Hunk_AllocateTempMemory( LEVELSHOTSIZE * LEVELSHOTSIZE*3 + 18);
+	const int LEVELSHOTSIZE = 256;
 
-	size = RE_CaptureFrame(captureBuffer, 1, qfalse, 0);
+	captureBufferSize = width * height * 3;
+	captureBuffer = (byte *)ri.Hunk_AllocateTempMemory(captureBufferSize);
+	bufferSize = LEVELSHOTSIZE * LEVELSHOTSIZE*3 + 18;
+	buffer = (byte *)ri.Hunk_AllocateTempMemory(bufferSize);
+
+	RE_CaptureFrameRaw(captureBuffer, captureBufferSize, 1);
 
 	Com_Memset (buffer, 0, 18);
 	buffer[2] = 2;		// uncompressed type
@@ -700,7 +760,7 @@ void RE_TakeLevelshot( const char *filename )
 		}
 	}
 
-	ri.FS_WriteFile(filename, buffer, LEVELSHOTSIZE * LEVELSHOTSIZE*3 + 18 );
+	ri.FS_WriteFile(filename, buffer, bufferSize );
 
 	ri.Hunk_FreeTempMemory( buffer );
 	ri.Hunk_FreeTempMemory( captureBuffer );

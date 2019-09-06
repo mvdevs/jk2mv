@@ -1331,12 +1331,19 @@ RB_ReadPixels
 const void *RB_ReadPixels( const void *data )
 {
 	const readPixelsCommand_t	*cmd;
+	int		memcount;
 
 	cmd = (const readPixelsCommand_t *)data;
 
 	// finish any 2D drawing if needed
 	if ( tess.numIndexes ) {
 		RB_EndSurface();
+	}
+
+	memcount = PAD(glConfig.vidWidth * 3, cmd->padding) * glConfig.vidHeight;
+
+	if ( cmd->bufSize < memcount ) {
+		ri.Error( ERR_DROP, "RB_ReadPixels: buffer too small\n" );
 	}
 
 	qglPixelStorei(GL_PACK_ALIGNMENT, cmd->padding);

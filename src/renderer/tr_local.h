@@ -1114,9 +1114,11 @@ typedef struct {
 	float					fogTable[FOG_TABLE_SIZE];
 
 	qboolean				screenshot;
+	char					screenshotName[MAX_OSPATH];
+
 	qboolean				screenshotJpeg;
 	int						screenshotJpegQuality;
-	char					screenshotName[MAX_OSPATH];
+	char					screenshotJpegName[MAX_OSPATH];
 
 	qboolean				levelshot;
 	char					levelshotName[MAX_OSPATH];
@@ -1817,6 +1819,7 @@ typedef struct {
 typedef struct {
 	int		commandId;
 	byte	*buffer;
+	int		bufSize;
 	int		padding;
 	GLenum	format;
 } readPixelsCommand_t;
@@ -1886,8 +1889,10 @@ void RE_GammaCorrection( void );
 void SaveJPG(const char * filename, int quality, int image_width, int image_height, byte *image_buffer, int padding);
 size_t SaveJPGToBuffer(byte *buffer, size_t bufSize, int quality, int image_width,
 	int image_height, byte *image_buffer, int padding);
-int RE_CaptureFrame( byte *buffer, int padding, qboolean jpeg, int jpegQuality );
-void RE_TakeScreenshot( qboolean jpeg, int jpegQuality, const char *filename );
+int RE_CaptureFrameRaw( byte *buffer, int bufSize, int padding );
+int RE_CaptureFrameJPEG( byte *buffer, int bufSize, int quality );
+void RE_TakeScreenshotJPEG( const char *filename, int quality );
+void RE_TakeScreenshotTGA( const char *filename );
 void RE_TakeLevelshot( const char *filename );
 
 /*

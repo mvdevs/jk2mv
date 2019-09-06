@@ -814,8 +814,7 @@ void R_ScreenShotTGA_f (void) {
 	}
 
 	Q_strncpyz(tr.screenshotName, checkname, sizeof(tr.screenshotName));
-	tr.screenshotJpeg = qfalse;
-	tr.screenshot = qtrue;
+	tr.screenshot = qfalse;
 
 	if ( !silent ) {
 		ri.Printf (PRINT_ALL, "Wrote %s\n", checkname);
@@ -868,10 +867,9 @@ void R_ScreenShot_f (void) {
 		lastNumber++;
 	}
 
-	Q_strncpyz(tr.screenshotName, checkname, sizeof(tr.screenshotName));
+	Q_strncpyz(tr.screenshotJpegName, checkname, sizeof(tr.screenshotJpegName));
 	tr.screenshotJpeg = qtrue;
 	tr.screenshotJpegQuality = r_screenshotJpegQuality->integer;
-	tr.screenshot = qtrue;
 
 	if ( !silent ) {
 		ri.Printf (PRINT_ALL, "Wrote %s\n", checkname);
@@ -1534,7 +1532,8 @@ refexport_t *GetRefAPI ( int apiVersion, refimport_t *rimp ) {
 
 	re.GetBModelVerts = RE_GetBModelVerts;
 
-	re.CaptureFrame = RE_CaptureFrame;
+	re.CaptureFrameRaw = RE_CaptureFrameRaw;
+	re.CaptureFrameJPEG = RE_CaptureFrameJPEG;
 #endif //!DEDICATED
 	return &re;
 }

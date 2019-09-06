@@ -66,6 +66,7 @@ typedef struct aviFileData_s
   int           chunkStackTop;
 
   byte			*frameBuffer;
+  int			frameBufferSize;
 } aviFileData_t;
 
 static aviFileData_t afd;
@@ -357,10 +358,11 @@ qboolean CL_OpenAVIForWriting( const char *fileName )
 
   if ( afd.frameBuffer ) {
 	  Z_Free( afd.frameBuffer );
+	  afd.frameBuffer = NULL;
   }
 
-  int bufSize = afd.height * PAD(afd.width * 3, AVI_LINE_PADDING);
-  afd.frameBuffer = (byte *)Z_Malloc( bufSize, TAG_AVI );
+  afd.frameBufferSize = PAD(afd.width * 3, AVI_LINE_PADDING) * afd.height;
+  afd.frameBuffer = (byte *)Z_Malloc( afd.frameBufferSize, TAG_AVI );
 
   if( cl_aviMotionJpeg->integer )
     afd.motionJpeg = qtrue;
@@ -580,8 +582,11 @@ void CL_TakeVideoFrame( void )
   if( !afd.fileOpen )
     return;
 
-  size = re.CaptureFrame( afd.frameBuffer, AVI_LINE_PADDING,
-	  afd.motionJpeg, cl_aviMotionJpegQuality->integer );
+  if ( afd.motionJpeg ) {
+	  size = re.CaptureFrameJPEG( afd.frameBuffer, afd.frameBufferSize, cl_aviMotionJpegQuality->integer );
+  } else {
+	  size = re.CaptureFrameRaw( afd.frameBuffer, afd.frameBufferSize, AVI_LINE_PADDING );
+  }
 
   CL_WriteAVIVideoFrame( afd.frameBuffer, size );
 }
@@ -607,6 +612,8 @@ qboolean CL_CloseAVI( void )
 
   if ( afd.frameBuffer ) {
 	  Z_Free( afd.frameBuffer );
+	  afd.frameBuffer = NULL;
+	  afd.frameBufferSize = 0;
   }
 
   FS_Seek( afd.idxF, 4, FS_SEEK_SET );
