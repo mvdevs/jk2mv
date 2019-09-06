@@ -749,10 +749,8 @@ the menu system, sampled down from full screen distorted images
 */
 static void R_LevelShot( void ) {
 
-	Com_sprintf(tr.levelshotName, sizeof(tr.screenshotName), "levelshots/%s.tga", tr.world->baseName);
+	Com_sprintf(tr.levelshotName, sizeof(tr.levelshotName), "levelshots/%s.tga", tr.world->baseName);
 	tr.levelshot = qtrue;
-
-	ri.Printf( PRINT_ALL, "Wrote %s\n", tr.levelshotName );
 }
 
 /*
@@ -813,12 +811,9 @@ void R_ScreenShotTGA_f (void) {
 		lastNumber++;
 	}
 
-	Q_strncpyz(tr.screenshotName, checkname, sizeof(tr.screenshotName));
-	tr.screenshot = qfalse;
-
-	if ( !silent ) {
-		ri.Printf (PRINT_ALL, "Wrote %s\n", checkname);
-	}
+	Q_strncpyz(tr.screenshotTGAName, checkname, sizeof(tr.screenshotTGAName));
+	tr.screenshotTGA = qtrue;
+	tr.screenshotTGASilent = silent;
 }
 
 //jpeg  vession
@@ -867,13 +862,10 @@ void R_ScreenShot_f (void) {
 		lastNumber++;
 	}
 
-	Q_strncpyz(tr.screenshotJpegName, checkname, sizeof(tr.screenshotJpegName));
-	tr.screenshotJpeg = qtrue;
-	tr.screenshotJpegQuality = r_screenshotJpegQuality->integer;
-
-	if ( !silent ) {
-		ri.Printf (PRINT_ALL, "Wrote %s\n", checkname);
-	}
+	Q_strncpyz(tr.screenshotJPEGName, checkname, sizeof(tr.screenshotJPEGName));
+	tr.screenshotJPEG = qtrue;
+	tr.screenshotJPEGQuality = r_screenshotJpegQuality->integer;
+	tr.screenshotJPEGSilent = silent;
 }
 
 //============================================================================

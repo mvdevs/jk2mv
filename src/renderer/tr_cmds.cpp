@@ -468,14 +468,14 @@ void RE_SwapBuffers( int *frontEndMsec, int *backEndMsec ) {
 		return;
 	}
 
-	if (tr.screenshot) {
-		tr.screenshot = qfalse;
-		RE_TakeScreenshotTGA(tr.screenshotName);
+	if (tr.screenshotTGA) {
+		tr.screenshotTGA = qfalse;
+		RE_TakeScreenshotTGA(tr.screenshotTGAName, tr.screenshotTGASilent);
 	}
-	
-	if (tr.screenshotJpeg) {
-		tr.screenshotJpeg = qfalse;
-		RE_TakeScreenshotJPEG(tr.screenshotJpegName, tr.screenshotJpegQuality);
+
+	if (tr.screenshotJPEG) {
+		tr.screenshotJPEG = qfalse;
+		RE_TakeScreenshotJPEG(tr.screenshotJPEGName, tr.screenshotJPEGQuality, tr.screenshotJPEGSilent);
 	}
 
 	if (tr.levelshot) {
@@ -648,7 +648,7 @@ void RE_GammaCorrection( void )
 RE_TakeScreenshotJPEG
 =============
 */
-void RE_TakeScreenshotJPEG( const char *filename, int quality )
+void RE_TakeScreenshotJPEG( const char *filename, int quality, qboolean silent )
 {
 	int		width = glConfig.vidWidth;
 	int		height = glConfig.vidHeight;
@@ -662,6 +662,10 @@ void RE_TakeScreenshotJPEG( const char *filename, int quality )
 	size = RE_CaptureFrameJPEG(buffer, bufSize, quality);
 	ri.FS_WriteFile(filename, buffer, size);
 
+	if ( !silent ) {
+		ri.Printf (PRINT_ALL, "Wrote %s\n", filename);
+	}
+
 	ri.Hunk_FreeTempMemory(buffer);
 }
 
@@ -670,7 +674,7 @@ void RE_TakeScreenshotJPEG( const char *filename, int quality )
 RE_TakeScreenshotTGA
 =============
 */
-void RE_TakeScreenshotTGA( const char *filename )
+void RE_TakeScreenshotTGA( const char *filename, qboolean silent )
 {
 	int		width, height;
 	byte	*buffer;
@@ -698,6 +702,10 @@ void RE_TakeScreenshotTGA( const char *filename )
 
 	RE_CaptureFrameRaw(captureBuffer, captureBufSize, 1);
 	ri.FS_WriteFile(filename, buffer, bufSize);
+
+	if (!silent) {
+		ri.Printf (PRINT_ALL, "Wrote %s\n", filename);
+	}
 
 	ri.Hunk_FreeTempMemory(buffer);
 }
@@ -761,6 +769,8 @@ void RE_TakeLevelshot( const char *filename )
 	}
 
 	ri.FS_WriteFile(filename, buffer, bufferSize );
+
+	ri.Printf( PRINT_ALL, "Wrote %s\n", filename );
 
 	ri.Hunk_FreeTempMemory( buffer );
 	ri.Hunk_FreeTempMemory( captureBuffer );

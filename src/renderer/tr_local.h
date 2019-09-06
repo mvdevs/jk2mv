@@ -1113,12 +1113,14 @@ typedef struct {
 	float					inverseSawToothTable[FUNCTABLE_SIZE];
 	float					fogTable[FOG_TABLE_SIZE];
 
-	qboolean				screenshot;
-	char					screenshotName[MAX_OSPATH];
+	qboolean				screenshotTGA;
+	qboolean				screenshotTGASilent;
+	char					screenshotTGAName[MAX_OSPATH];
 
-	qboolean				screenshotJpeg;
-	int						screenshotJpegQuality;
-	char					screenshotJpegName[MAX_OSPATH];
+	qboolean				screenshotJPEG;
+	qboolean				screenshotJPEGSilent;
+	char					screenshotJPEGName[MAX_OSPATH];
+	int						screenshotJPEGQuality;
 
 	qboolean				levelshot;
 	char					levelshotName[MAX_OSPATH];
@@ -1891,8 +1893,8 @@ size_t SaveJPGToBuffer(byte *buffer, size_t bufSize, int quality, int image_widt
 	int image_height, byte *image_buffer, int padding);
 int RE_CaptureFrameRaw( byte *buffer, int bufSize, int padding );
 int RE_CaptureFrameJPEG( byte *buffer, int bufSize, int quality );
-void RE_TakeScreenshotJPEG( const char *filename, int quality );
-void RE_TakeScreenshotTGA( const char *filename );
+void RE_TakeScreenshotJPEG( const char *filename, int quality, qboolean silent );
+void RE_TakeScreenshotTGA( const char *filename, qboolean silent );
 void RE_TakeLevelshot( const char *filename );
 
 /*
