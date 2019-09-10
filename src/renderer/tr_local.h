@@ -1437,8 +1437,6 @@ float	R_SumOfUsedImages( qboolean bUseFormat );
 void	R_InitSkins( void );
 skin_t	*R_GetSkinByHandle( qhandle_t hSkin );
 
-byte *RB_ReadPixels(byte *buffer, int x, int y, int width, int height, size_t *offset, qboolean swapRB, int packAlign);
-
 //
 // tr_shader.c
 //
