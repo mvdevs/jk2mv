@@ -2912,6 +2912,15 @@ static void FS_Which_f( void ) {
 	Com_Printf( "File not found: \"%s\"\n", filename );
 }
 
+/*
+============
+FS_Flush_f
+============
+*/
+static void FS_Flush_f( void ) {
+	fflush(NULL);
+}
+
 //===========================================================================
 
 
@@ -3276,6 +3285,7 @@ void FS_Shutdown( qboolean closemfp ) {
 	Cmd_RemoveCommand( "fdir" );
 	Cmd_RemoveCommand( "touchFile" );
 	Cmd_RemoveCommand( "which" );
+	Cmd_RemoveCommand( "flushFiles" );
 }
 
 /*
@@ -3361,6 +3371,7 @@ static void FS_Startup( const char *gameName ) {
 	Cmd_AddCommand ("fdir", FS_NewDir_f );
 	Cmd_AddCommand ("touchFile", FS_TouchFile_f );
 	Cmd_AddCommand ("which", FS_Which_f );
+	Cmd_AddCommand ("flushFiles", FS_Flush_f );
 
 	// print the current search paths
 	FS_Path_f();
