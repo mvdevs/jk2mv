@@ -177,6 +177,14 @@ static qboolean strgtr(const char *s0, const char *s1) {
 	return qfalse;
 }
 
+/*
+================
+Sys_ListFiles
+
+Both level pointers in return value must be freed using Z_Free()
+unless they are NULL pointers
+================
+*/
 const char **Sys_ListFiles(const char *directory, const char *extension, char *filter, int *numfiles, qboolean wantsubs) {
 	char		search[MAX_OSPATH];
 	int			nfiles;

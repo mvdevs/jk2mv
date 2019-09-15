@@ -2424,8 +2424,6 @@ int	FS_GetFileList(  const char *path, const char *extension, char *listbuf, int
 	return nFiles;
 }
 
-// NOTE: could prolly turn out useful for the win32 version too, but it's used only by linux and Mac OS X
-//#if defined(__linux__) || defined(MACOS_X)
 /*
 =======================
 Sys_ConcatenateFileLists
@@ -2437,7 +2435,7 @@ bk001129 - from cvs1.17 (mkv)
 FIXME TTimo those two should move to common.c next to Sys_ListFiles
 =======================
  */
-static unsigned int Sys_CountFileList(const char **list)
+static unsigned int FS_CountFileList(const char **list)
 {
   int i = 0;
 
@@ -2452,14 +2450,14 @@ static unsigned int Sys_CountFileList(const char **list)
   return i;
 }
 
-static const char** Sys_ConcatenateFileLists( const char **list0, const char **list1, const char **list2 )
+static const char** FS_ConcatenateFileLists( const char **list0, const char **list1, const char **list2 )
 {
 	int totalLength = 0;
 	const char** cat = NULL, **dst, **src;
 
-	totalLength += Sys_CountFileList(list0);
-	totalLength += Sys_CountFileList(list1);
-	totalLength += Sys_CountFileList(list2);
+	totalLength += FS_CountFileList(list0);
+	totalLength += FS_CountFileList(list1);
+	totalLength += FS_CountFileList(list2);
 
 	/* Create new list. */
 	dst = cat = (const char **)Z_Malloc( ( totalLength + 1 ) * sizeof( char* ), TAG_FILESYS, qtrue );
@@ -2489,7 +2487,6 @@ static const char** Sys_ConcatenateFileLists( const char **list0, const char **l
 
 	return cat;
 }
-//#endif
 
 /*
 ================
@@ -2521,8 +2518,8 @@ int	FS_GetModList( char *listbuf, int bufsize ) {
   pFiles1 = Sys_ListFiles( fs_basepath->string, NULL, NULL, &dummy, qtrue );
   // we searched for mods in the three paths
   // it is likely that we have duplicate names now, which we will cleanup below
-  pFiles = Sys_ConcatenateFileLists( pFiles0, pFiles1, pFiles2 );
-  nPotential = Sys_CountFileList(pFiles);
+  pFiles = FS_ConcatenateFileLists( pFiles0, pFiles1, pFiles2 );
+  nPotential = FS_CountFileList(pFiles);
 
   for ( i = 0 ; i < nPotential ; i++ ) {
     name = pFiles[i];
@@ -2707,35 +2704,22 @@ int FS_PathCmp( const char *s1, const char *s2 ) {
 	return 0;		// strings are equal
 }
 
+static int QDECL FS_PathCmpSort( const void *a, const void *b ) {
+	const char	*aa, *bb;
+
+	aa = *(const char * const *)a;
+	bb = *(const char * const *)b;
+
+	return FS_PathCmp(aa, bb);
+}
+
 /*
 ================
 FS_SortFileList
 ================
 */
-void FS_SortFileList(const char **filelist, int numfiles) {
-	int i, j, k, numsortedfiles;
-	const char **sortedlist;
-
-	if (numfiles <= 0)
-		return;
-
-	sortedlist = (const char **)Z_Malloc( ( numfiles + 1 ) * sizeof( *sortedlist ), TAG_FILESYS, qtrue );
-	sortedlist[0] = NULL;
-	numsortedfiles = 0;
-	for (i = 0; i < numfiles; i++) {
-		for (j = 0; j < numsortedfiles; j++) {
-			if (FS_PathCmp(filelist[i], sortedlist[j]) < 0) {
-				break;
-			}
-		}
-		for (k = numsortedfiles; k > j; k--) {
-			sortedlist[k] = sortedlist[k-1];
-		}
-		sortedlist[j] = filelist[i];
-		numsortedfiles++;
-	}
-	Com_Memcpy(filelist, sortedlist, numfiles * sizeof( *filelist ) );
-	Z_Free(sortedlist);
+static void FS_SortFileList(const char **filelist, int numfiles) {
+	qsort( filelist, numfiles, sizeof(void *), FS_PathCmpSort);
 }
 
 /*
@@ -2964,7 +2948,6 @@ static void FS_AddGameDirectory( const char *path, const char *dir, qboolean ass
 	char			*pakfile;
 	int				numfiles;
 	const char		**pakfiles;
-	const char		*sorted[MAX_PAKFILES];
 	const char		*filename;
 
 	// this fixes the case where fs_basepath is the same as fs_cdpath
@@ -3007,14 +2990,11 @@ static void FS_AddGameDirectory( const char *path, const char *dir, qboolean ass
 	if ( numfiles > MAX_PAKFILES ) {
 		numfiles = MAX_PAKFILES;
 	}
-	for ( i = 0 ; i < numfiles ; i++ ) {
-		sorted[i] = pakfiles[i];
-	}
 
-	qsort( sorted, numfiles, sizeof(size_t), paksort );
+	qsort( pakfiles, numfiles, sizeof(void *), paksort );
 
 	for ( i = 0 ; i < numfiles ; i++ ) {
-		pakfile = FS_BuildOSPath( path, dir, sorted[i] );
+		pakfile = FS_BuildOSPath( path, dir, pakfiles[i] );
 		filename = get_filename(pakfile);
 
 		if (assetsOnly) {
@@ -3024,7 +3004,7 @@ static void FS_AddGameDirectory( const char *path, const char *dir, qboolean ass
 			}
 		}
 
-		if ( ( pak = FS_LoadZipFile( pakfile, sorted[i] ) ) == 0 )
+		if ( ( pak = FS_LoadZipFile( pakfile, pakfiles[i] ) ) == 0 )
 			continue;
 
 #ifndef DEDICATED

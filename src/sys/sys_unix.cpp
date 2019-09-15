@@ -150,6 +150,14 @@ static void Sys_ListFilteredFiles( const char *basedir, char *subdirs, char *fil
 	closedir(fdir);
 }
 
+/*
+================
+Sys_ListFiles
+
+Both level pointers in return value must be freed using Z_Free()
+unless they are NULL pointers
+================
+*/
 // bk001129 - in 1.17 this used to be
 // char **Sys_ListFiles( const char *directory, const char *extension, int *numfiles, qboolean wantsubs )
 const char **Sys_ListFiles( const char *directory, const char *extension, char *filter, int *numfiles, qboolean wantsubs )
