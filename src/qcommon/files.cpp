@@ -2136,6 +2136,8 @@ DIRECTORY SCANNING FUNCTIONS
 =================================================================================
 */
 
+static void FS_SortFileList(const char **filelist, int numfiles);
+
 #define	MAX_FOUND_FILES	0x1000
 
 static int FS_ReturnPath( const char *zname, char *zpath, int *depth ) {
@@ -2319,6 +2321,7 @@ static const char **FS_ListFilteredFiles( const char *path, const char *extensio
 			{
 				netpath = FS_BuildOSPath( search->dir->path, search->dir->gamedir, path );
 				sysFiles = Sys_ListFiles( netpath, extension, filter, &numSysFiles, qfalse );
+				FS_SortFileList(sysFiles, numSysFiles);
 				for ( i = 0 ; i < numSysFiles ; i++ ) {
 					// unique the match
 					name = sysFiles[i];
