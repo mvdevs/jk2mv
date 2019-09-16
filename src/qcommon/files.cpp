@@ -298,6 +298,8 @@ static const char * const moduleName[MODULE_MAX] = {
 	"UI"
 };
 
+static int FS_PathCmp( const char *s1, const char *s2 );
+
 static inline qboolean FS_CheckHandle(const char *fname, fileHandle_t f, module_t module) {
 	if ( f < 1 || f >= MAX_FILE_HANDLES ) {
 		Com_DPrintf( S_COLOR_YELLOW "%s (%s module): handle out of range\n",
@@ -2501,7 +2503,7 @@ The directories are searched in base path, cd path and home path
 ================
 */
 int	FS_GetModList( char *listbuf, int bufsize ) {
-  int		nMods, i, j, nTotal, nLen, nPaks, nPotential, nDescLen;
+  int		nMods, i, nTotal, nLen, nPaks, nPotential, nDescLen;
   const char **pFiles = NULL;
   const char **pPaks = NULL;
   const char *name, *path;
@@ -2512,7 +2514,6 @@ int	FS_GetModList( char *listbuf, int bufsize ) {
   const char **pFiles0 = NULL;
   const char **pFiles1 = NULL;
   const char **pFiles2 = NULL;
-  qboolean bDrop = qfalse;
 
   *listbuf = 0;
   nMods = nPotential = nTotal = 0;
@@ -2524,24 +2525,15 @@ int	FS_GetModList( char *listbuf, int bufsize ) {
   pFiles = FS_ConcatenateFileLists( pFiles0, pFiles1, pFiles2 );
   nPotential = FS_CountFileList(pFiles);
 
+  FS_SortFileList(pFiles, nPotential);
+
   for ( i = 0 ; i < nPotential ; i++ ) {
     name = pFiles[i];
     // NOTE: cleaner would involve more changes
     // ignore duplicate mod directories
-    if (i!=0) {
-      bDrop = qfalse;
-      for(j=0; j<i; j++)
-      {
-        if (Q_stricmp(pFiles[j],name)==0) {
-          // this one can be dropped
-          bDrop = qtrue;
-          break;
-        }
-      }
-    }
-    if (bDrop) {
-      continue;
-    }
+	if (i > 0 && !FS_PathCmp(pFiles[i], pFiles[i - 1])) {
+	  continue;
+	}
     // we drop "base" "." and ".."
     if (Q_stricmp(name, "base") && Q_stricmpn(name, ".", 1)) {
       // now we need to find some .pk3 files to validate the mod
@@ -2675,7 +2667,7 @@ FS_PathCmp
 Ignore case and seprator char distinctions
 ===========
 */
-int FS_PathCmp( const char *s1, const char *s2 ) {
+static int FS_PathCmp( const char *s1, const char *s2 ) {
 	int		c1, c2;
 
 	do {
