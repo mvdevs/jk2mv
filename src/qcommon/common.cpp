@@ -1343,10 +1343,13 @@ const char *CopyString( const char *in ) {
 	return out;
 }
 
+const char *CopyString( const char *in, memtag_t eTag ) {
+	char	*out;
 
-
-
-
+	out = (char *)Z_Malloc(strlen(in) + 1, eTag);
+	strcpy(out, in);
+	return out;
+}
 
 
 /*

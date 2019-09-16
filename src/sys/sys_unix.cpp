@@ -143,7 +143,7 @@ static void Sys_ListFilteredFiles( const char *basedir, char *subdirs, char *fil
 		Com_sprintf( filename, sizeof(filename), "%s/%s", subdirs, d->d_name );
 		if (!Com_FilterPath( filter, filename, qfalse ))
 			continue;
-		list[ *numfiles ] = CopyString( filename );
+		list[ *numfiles ] = CopyString( filename, TAG_LISTFILES );
 		(*numfiles)++;
 	}
 
@@ -233,7 +233,7 @@ const char **Sys_ListFiles( const char *directory, const char *extension, char *
 
 		if ( nfiles == MAX_FOUND_FILES - 1 )
 			break;
-		list[ nfiles ] = CopyString( d->d_name );
+		list[ nfiles ] = CopyString( d->d_name, TAG_LISTFILES );
 		nfiles++;
 	}
 
