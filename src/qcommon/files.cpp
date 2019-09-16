@@ -4098,8 +4098,16 @@ void FS_FilenameCompletion( const char *dir, const char *ext, qboolean stripExt,
 		FS_FilenameCompletion(dir, pch + 1, stripExt, callback);
 }
 
+static int QDECL FS_DLFileCmpSort(const void *a, const void *b) {
+	const dlfile_t *fa = (const dlfile_t *)a;
+	const dlfile_t *fb = (const dlfile_t *)b;
+
+	return FS_PathCmp(fa->name, fb->name);
+}
+
 int FS_GetDLList(dlfile_t *files, const int maxfiles) {
 	const char **dirs, **pakfiles;
+	dlfile_t *file;
 	int c, d, paknum, dirnum, filesnum;
 	char *gamepath;
 	int ret = 0;
@@ -4110,7 +4118,7 @@ int FS_GetDLList(dlfile_t *files, const int maxfiles) {
 		return qfalse;
 	}
 
-	for (filesnum = 0, d = 0; d < dirnum; d++) {
+	for (filesnum = 0, d = 0, file = files; d < dirnum; d++) {
 		if (!strcmp(dirs[d], ".") || !strcmp(dirs[d], "..")) {
 			continue;
 		}
@@ -4126,16 +4134,19 @@ int FS_GetDLList(dlfile_t *files, const int maxfiles) {
 				continue;
 			}
 
-			Com_sprintf(files->name, sizeof(files->name), "%s/%s", dirs[d], pakfiles[c]);
-			files->blacklisted = qfalse;
+			Com_sprintf(file->name, sizeof(file->name), "%s/%s", dirs[d], pakfiles[c]);
+			file->blacklisted = qfalse;
 
-			files++; ret++;
+			file++; ret++;
 		}
 
 		Sys_FreeFileList(pakfiles);
 	}
 
 	Sys_FreeFileList(dirs);
+
+	qsort(files, ret, sizeof(*files), FS_DLFileCmpSort);
+
 	return ret;
 }
 
