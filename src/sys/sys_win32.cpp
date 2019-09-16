@@ -156,27 +156,6 @@ static void Sys_ListFilteredFiles(const char *basedir, char *subdirs, char *filt
 	FindClose(findhandle);
 }
 
-static qboolean strgtr(const char *s0, const char *s1) {
-	int l0, l1, i;
-
-	l0 = (int)strlen(s0);
-	l1 = (int)strlen(s1);
-
-	if (l1<l0) {
-		l0 = l1;
-	}
-
-	for (i = 0; i<l0; i++) {
-		if (s1[i] > s0[i]) {
-			return qtrue;
-		}
-		if (s1[i] < s0[i]) {
-			return qfalse;
-		}
-	}
-	return qfalse;
-}
-
 /*
 ================
 Sys_ListFiles
@@ -264,18 +243,6 @@ const char **Sys_ListFiles(const char *directory, const char *extension, char *f
 		listCopy[i] = list[i];
 	}
 	listCopy[i] = NULL;
-
-	do {
-		flag = 0;
-		for (i = 1; i<nfiles; i++) {
-			if (strgtr(listCopy[i - 1], listCopy[i])) {
-				const char *temp = listCopy[i];
-				listCopy[i] = listCopy[i - 1];
-				listCopy[i - 1] = temp;
-				flag = 1;
-			}
-		}
-	} while (flag);
 
 	return listCopy;
 }
