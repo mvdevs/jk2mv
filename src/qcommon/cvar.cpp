@@ -804,7 +804,7 @@ with the archive flag set to qtrue.
 ============
 */
 
-static int Cvar_CvarCmp(const void *p1, const void *p2) {
+static int QDECL Cvar_CvarCmp(const void *p1, const void *p2) {
     const cvar_t * const *e1 = (const cvar_t * const *)p1;
     const cvar_t * const *e2 = (const cvar_t * const *)p2;
 

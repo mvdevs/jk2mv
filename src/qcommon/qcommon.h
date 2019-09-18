@@ -770,6 +770,7 @@ MISC
 
 
 const char	*CopyString( const char *in );
+const char	*CopyString( const char *in, memtag_t eTag );
 void		Info_Print( const char *s );
 
 void		Com_BeginRedirect (char *buffer, size_t buffersize, void (*flush)(char *), qboolean silent);

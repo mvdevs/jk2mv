@@ -149,34 +149,21 @@ static void Sys_ListFilteredFiles(const char *basedir, char *subdirs, char *filt
 		Com_sprintf(filename, sizeof(filename), "%s\\%s", subdirs, findinfo.cFileName);
 		if (!Com_FilterPath(filter, filename, qfalse))
 			continue;
-		psList[*numfiles] = CopyString(filename);
+		psList[*numfiles] = CopyString(filename, TAG_LISTFILES);
 		(*numfiles)++;
 	} while (FindNextFileA(findhandle, &findinfo) != 0);
 
 	FindClose(findhandle);
 }
 
-static qboolean strgtr(const char *s0, const char *s1) {
-	int l0, l1, i;
+/*
+================
+Sys_ListFiles
 
-	l0 = (int)strlen(s0);
-	l1 = (int)strlen(s1);
-
-	if (l1<l0) {
-		l0 = l1;
-	}
-
-	for (i = 0; i<l0; i++) {
-		if (s1[i] > s0[i]) {
-			return qtrue;
-		}
-		if (s1[i] < s0[i]) {
-			return qfalse;
-		}
-	}
-	return qfalse;
-}
-
+Both level pointers in return value must be freed using Z_Free()
+unless they are NULL pointers
+================
+*/
 const char **Sys_ListFiles(const char *directory, const char *extension, char *filter, int *numfiles, qboolean wantsubs) {
 	char		search[MAX_OSPATH];
 	int			nfiles;
@@ -235,7 +222,7 @@ const char **Sys_ListFiles(const char *directory, const char *extension, char *f
 			if (nfiles == MAX_FOUND_FILES - 1) {
 				break;
 			}
-			list[nfiles] = CopyString(findinfo.cFileName);
+			list[nfiles] = CopyString(findinfo.cFileName, TAG_LISTFILES);
 			nfiles++;
 		}
 	} while (FindNextFileA(findhandle, &findinfo) != 0);
@@ -256,18 +243,6 @@ const char **Sys_ListFiles(const char *directory, const char *extension, char *f
 		listCopy[i] = list[i];
 	}
 	listCopy[i] = NULL;
-
-	do {
-		flag = 0;
-		for (i = 1; i<nfiles; i++) {
-			if (strgtr(listCopy[i - 1], listCopy[i])) {
-				const char *temp = listCopy[i];
-				listCopy[i] = listCopy[i - 1];
-				listCopy[i - 1] = temp;
-				flag = 1;
-			}
-		}
-	} while (flag);
 
 	return listCopy;
 }

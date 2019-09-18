@@ -298,6 +298,8 @@ static const char * const moduleName[MODULE_MAX] = {
 	"UI"
 };
 
+static int FS_PathCmp( const char *s1, const char *s2 );
+
 static inline qboolean FS_CheckHandle(const char *fname, fileHandle_t f, module_t module) {
 	if ( f < 1 || f >= MAX_FILE_HANDLES ) {
 		Com_DPrintf( S_COLOR_YELLOW "%s (%s module): handle out of range\n",
@@ -2136,6 +2138,8 @@ DIRECTORY SCANNING FUNCTIONS
 =================================================================================
 */
 
+static void FS_SortFileList(const char **filelist, int numfiles);
+
 #define	MAX_FOUND_FILES	0x1000
 
 static int FS_ReturnPath( const char *zname, char *zpath, int *depth ) {
@@ -2319,6 +2323,7 @@ static const char **FS_ListFilteredFiles( const char *path, const char *extensio
 			{
 				netpath = FS_BuildOSPath( search->dir->path, search->dir->gamedir, path );
 				sysFiles = Sys_ListFiles( netpath, extension, filter, &numSysFiles, qfalse );
+				FS_SortFileList(sysFiles, numSysFiles);
 				for ( i = 0 ; i < numSysFiles ; i++ ) {
 					// unique the match
 					name = sysFiles[i];
@@ -2424,8 +2429,6 @@ int	FS_GetFileList(  const char *path, const char *extension, char *listbuf, int
 	return nFiles;
 }
 
-// NOTE: could prolly turn out useful for the win32 version too, but it's used only by linux and Mac OS X
-//#if defined(__linux__) || defined(MACOS_X)
 /*
 =======================
 Sys_ConcatenateFileLists
@@ -2437,7 +2440,7 @@ bk001129 - from cvs1.17 (mkv)
 FIXME TTimo those two should move to common.c next to Sys_ListFiles
 =======================
  */
-static unsigned int Sys_CountFileList(const char **list)
+static unsigned int FS_CountFileList(const char **list)
 {
   int i = 0;
 
@@ -2452,14 +2455,14 @@ static unsigned int Sys_CountFileList(const char **list)
   return i;
 }
 
-static const char** Sys_ConcatenateFileLists( const char **list0, const char **list1, const char **list2 )
+static const char** FS_ConcatenateFileLists( const char **list0, const char **list1, const char **list2 )
 {
 	int totalLength = 0;
 	const char** cat = NULL, **dst, **src;
 
-	totalLength += Sys_CountFileList(list0);
-	totalLength += Sys_CountFileList(list1);
-	totalLength += Sys_CountFileList(list2);
+	totalLength += FS_CountFileList(list0);
+	totalLength += FS_CountFileList(list1);
+	totalLength += FS_CountFileList(list2);
 
 	/* Create new list. */
 	dst = cat = (const char **)Z_Malloc( ( totalLength + 1 ) * sizeof( char* ), TAG_FILESYS, qtrue );
@@ -2489,7 +2492,6 @@ static const char** Sys_ConcatenateFileLists( const char **list0, const char **l
 
 	return cat;
 }
-//#endif
 
 /*
 ================
@@ -2501,7 +2503,7 @@ The directories are searched in base path, cd path and home path
 ================
 */
 int	FS_GetModList( char *listbuf, int bufsize ) {
-  int		nMods, i, j, nTotal, nLen, nPaks, nPotential, nDescLen;
+  int		nMods, i, nTotal, nLen, nPaks, nPotential, nDescLen;
   const char **pFiles = NULL;
   const char **pPaks = NULL;
   const char *name, *path;
@@ -2512,7 +2514,6 @@ int	FS_GetModList( char *listbuf, int bufsize ) {
   const char **pFiles0 = NULL;
   const char **pFiles1 = NULL;
   const char **pFiles2 = NULL;
-  qboolean bDrop = qfalse;
 
   *listbuf = 0;
   nMods = nPotential = nTotal = 0;
@@ -2521,27 +2522,18 @@ int	FS_GetModList( char *listbuf, int bufsize ) {
   pFiles1 = Sys_ListFiles( fs_basepath->string, NULL, NULL, &dummy, qtrue );
   // we searched for mods in the three paths
   // it is likely that we have duplicate names now, which we will cleanup below
-  pFiles = Sys_ConcatenateFileLists( pFiles0, pFiles1, pFiles2 );
-  nPotential = Sys_CountFileList(pFiles);
+  pFiles = FS_ConcatenateFileLists( pFiles0, pFiles1, pFiles2 );
+  nPotential = FS_CountFileList(pFiles);
+
+  FS_SortFileList(pFiles, nPotential);
 
   for ( i = 0 ; i < nPotential ; i++ ) {
     name = pFiles[i];
     // NOTE: cleaner would involve more changes
     // ignore duplicate mod directories
-    if (i!=0) {
-      bDrop = qfalse;
-      for(j=0; j<i; j++)
-      {
-        if (Q_stricmp(pFiles[j],name)==0) {
-          // this one can be dropped
-          bDrop = qtrue;
-          break;
-        }
-      }
-    }
-    if (bDrop) {
-      continue;
-    }
+	if (i > 0 && !FS_PathCmp(pFiles[i], pFiles[i - 1])) {
+	  continue;
+	}
     // we drop "base" "." and ".."
     if (Q_stricmp(name, "base") && Q_stricmpn(name, ".", 1)) {
       // now we need to find some .pk3 files to validate the mod
@@ -2675,7 +2667,7 @@ FS_PathCmp
 Ignore case and seprator char distinctions
 ===========
 */
-int FS_PathCmp( const char *s1, const char *s2 ) {
+static int FS_PathCmp( const char *s1, const char *s2 ) {
 	int		c1, c2;
 
 	do {
@@ -2707,35 +2699,22 @@ int FS_PathCmp( const char *s1, const char *s2 ) {
 	return 0;		// strings are equal
 }
 
+static int QDECL FS_PathCmpSort( const void *a, const void *b ) {
+	const char	*aa, *bb;
+
+	aa = *(const char * const *)a;
+	bb = *(const char * const *)b;
+
+	return FS_PathCmp(aa, bb);
+}
+
 /*
 ================
 FS_SortFileList
 ================
 */
-void FS_SortFileList(const char **filelist, int numfiles) {
-	int i, j, k, numsortedfiles;
-	const char **sortedlist;
-
-	if (numfiles <= 0)
-		return;
-
-	sortedlist = (const char **)Z_Malloc( ( numfiles + 1 ) * sizeof( *sortedlist ), TAG_FILESYS, qtrue );
-	sortedlist[0] = NULL;
-	numsortedfiles = 0;
-	for (i = 0; i < numfiles; i++) {
-		for (j = 0; j < numsortedfiles; j++) {
-			if (FS_PathCmp(filelist[i], sortedlist[j]) < 0) {
-				break;
-			}
-		}
-		for (k = numsortedfiles; k > j; k--) {
-			sortedlist[k] = sortedlist[k-1];
-		}
-		sortedlist[j] = filelist[i];
-		numsortedfiles++;
-	}
-	Com_Memcpy(filelist, sortedlist, numfiles * sizeof( *filelist ) );
-	Z_Free(sortedlist);
+static void FS_SortFileList(const char **filelist, int numfiles) {
+	qsort( filelist, numfiles, sizeof(void *), FS_PathCmpSort);
 }
 
 /*
@@ -2964,7 +2943,6 @@ static void FS_AddGameDirectory( const char *path, const char *dir, qboolean ass
 	char			*pakfile;
 	int				numfiles;
 	const char		**pakfiles;
-	const char		*sorted[MAX_PAKFILES];
 	const char		*filename;
 
 	// this fixes the case where fs_basepath is the same as fs_cdpath
@@ -3007,14 +2985,11 @@ static void FS_AddGameDirectory( const char *path, const char *dir, qboolean ass
 	if ( numfiles > MAX_PAKFILES ) {
 		numfiles = MAX_PAKFILES;
 	}
-	for ( i = 0 ; i < numfiles ; i++ ) {
-		sorted[i] = pakfiles[i];
-	}
 
-	qsort( sorted, numfiles, sizeof(size_t), paksort );
+	qsort( pakfiles, numfiles, sizeof(void *), paksort );
 
 	for ( i = 0 ; i < numfiles ; i++ ) {
-		pakfile = FS_BuildOSPath( path, dir, sorted[i] );
+		pakfile = FS_BuildOSPath( path, dir, pakfiles[i] );
 		filename = get_filename(pakfile);
 
 		if (assetsOnly) {
@@ -3024,7 +2999,7 @@ static void FS_AddGameDirectory( const char *path, const char *dir, qboolean ass
 			}
 		}
 
-		if ( ( pak = FS_LoadZipFile( pakfile, sorted[i] ) ) == 0 )
+		if ( ( pak = FS_LoadZipFile( pakfile, pakfiles[i] ) ) == 0 )
 			continue;
 
 #ifndef DEDICATED
@@ -4115,8 +4090,16 @@ void FS_FilenameCompletion( const char *dir, const char *ext, qboolean stripExt,
 		FS_FilenameCompletion(dir, pch + 1, stripExt, callback);
 }
 
+static int QDECL FS_DLFileCmpSort(const void *a, const void *b) {
+	const dlfile_t *fa = (const dlfile_t *)a;
+	const dlfile_t *fb = (const dlfile_t *)b;
+
+	return FS_PathCmp(fa->name, fb->name);
+}
+
 int FS_GetDLList(dlfile_t *files, const int maxfiles) {
 	const char **dirs, **pakfiles;
+	dlfile_t *file;
 	int c, d, paknum, dirnum, filesnum;
 	char *gamepath;
 	int ret = 0;
@@ -4127,7 +4110,7 @@ int FS_GetDLList(dlfile_t *files, const int maxfiles) {
 		return qfalse;
 	}
 
-	for (filesnum = 0, d = 0; d < dirnum; d++) {
+	for (filesnum = 0, d = 0, file = files; d < dirnum; d++) {
 		if (!strcmp(dirs[d], ".") || !strcmp(dirs[d], "..")) {
 			continue;
 		}
@@ -4143,16 +4126,19 @@ int FS_GetDLList(dlfile_t *files, const int maxfiles) {
 				continue;
 			}
 
-			Com_sprintf(files->name, sizeof(files->name), "%s/%s", dirs[d], pakfiles[c]);
-			files->blacklisted = qfalse;
+			Com_sprintf(file->name, sizeof(file->name), "%s/%s", dirs[d], pakfiles[c]);
+			file->blacklisted = qfalse;
 
-			files++; ret++;
+			file++; ret++;
 		}
 
 		Sys_FreeFileList(pakfiles);
 	}
 
 	Sys_FreeFileList(dirs);
+
+	qsort(files, ret, sizeof(*files), FS_DLFileCmpSort);
+
 	return ret;
 }
 

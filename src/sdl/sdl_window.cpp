@@ -386,7 +386,7 @@ void WIN_Present( window_t *window )
 GLimp_CompareModes
 ===============
 */
-static int GLimp_CompareModes( const void *a, const void *b )
+static int QDECL GLimp_CompareModes( const void *a, const void *b )
 {
 	const float ASPECT_EPSILON = 0.001f;
 	const SDL_Rect *modeA = (const SDL_Rect *)a;
