@@ -10,7 +10,7 @@ cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release -DUseInternalLibs=OFF -DBui
 make
 make install DESTDIR=vinstall
 
-wget -q https://raw.githubusercontent.com/AppImage/AppImages/9249a99e653272416c8ee8f42cecdde12573ba3e/functions.sh -O ./functions.sh
+wget -q https://raw.githubusercontent.com/AppImage/pkg2appimage/master/functions.sh -O ./functions.sh
 . ./functions.sh
 
 APP="jk2mv"
