@@ -398,6 +398,16 @@ Server-Side
 
 ..
 
+:Name: mv_resetServerTime
+:Valid: "0", "1"
+:Default: "0"
+:Description:
+   Reset internal server time on map restart. Helps to avoid high
+   server time bugs with legacy mods but breaks queue in duel
+   gametype.
+
+..
+
 :Name: sv_autoWhitelist
 :Values: "0", "1"
 :Default: "1"

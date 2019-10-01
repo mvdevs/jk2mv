@@ -50,6 +50,9 @@ cvar_t	*mv_blockspeedhack;
 cvar_t	*mv_fixsaberstealing;
 cvar_t	*mv_fixplayerghosting;
 
+// jk2mv engine flags
+cvar_t	*mv_resetServerTime;
+
 /*
 =============================================================================
 

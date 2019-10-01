@@ -551,7 +551,8 @@ Ghoul2 Insert End
 		SV_CloseDownload( &svs.clients[i] );
 	}
 
-	resetTime = (qboolean)!!(sv.engineFlags & G_MVFLAG_RESETTIME);
+	// check engine flag before clearing sv
+	resetTime = (qboolean)!!(mv_resetServerTime->integer || (sv.engineFlags & G_MVFLAG_RESETTIME));
 
 	// wipe the entire per-level structure
 	SV_ClearServer();
@@ -782,6 +783,8 @@ void SV_Init (void) {
 	mv_blockspeedhack = Cvar_Get("mv_blockspeedhack", "1", CVAR_ARCHIVE);
 	mv_fixsaberstealing = Cvar_Get("mv_fixsaberstealing", "1", CVAR_ARCHIVE);
 	mv_fixplayerghosting = Cvar_Get("mv_fixplayerghosting", "1", CVAR_ARCHIVE);
+
+	mv_resetServerTime = Cvar_Get("mv_resetServerTime", "0", CVAR_ARCHIVE);
 
 	// serverinfo vars
 	Cvar_Get ("dmflags", "0", CVAR_SERVERINFO);

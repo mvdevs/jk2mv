@@ -268,6 +268,9 @@ extern	cvar_t	*mv_blockspeedhack;
 extern	cvar_t	*mv_fixsaberstealing;
 extern	cvar_t	*mv_fixplayerghosting;
 
+// jk2mv engine flags
+extern	cvar_t	*mv_resetServerTime;
+
 //===========================================================
 
 //
