@@ -47,10 +47,7 @@ typedef enum {
 	MVFIX_WPGLOWING           = (1 << 16),
 } mvfix_t;
 
-typedef enum {
-	MVGFLAG_NONE              = 0,
-	MVGFLAG_RESETTIME         = (1 << 0),
-} mvGameFlag_t;
+#define G_MVFLAG_RESETTIME    (1 << 0)
 
 typedef enum {
 	VERSION_UNDEF = 0,
@@ -79,9 +76,6 @@ typedef enum
 
 // void trap_MVAPI_SetVersion(mvversion_t version);
 #define MVAPI_SET_VERSION 709                    /* asm: -710 */
-
-// void trap_MVAPI_EngineFlags(int flags);
-#define MVAPI_ENGINE_FLAGS 710                   /* asm: -711 */
 
 // ******** VMCALLS ******** //
 
@@ -126,7 +120,10 @@ typedef struct {
 #define G_MVAPI_LOCATE_GAME_DATA 702               /* asm: -703 */
 
 // qboolean trap_MVAPI_DisableStructConversion(qboolean disable);
-#define G_MVAPI_DISABLE_STRUCT_CONVERSION 705		/* asm: -706 */
+#define G_MVAPI_DISABLE_STRUCT_CONVERSION 705      /* asm: -706 */
+
+// void trap_MVAPI_EngineFlags(int flags);
+#define G_MVAPI_ENGINE_FLAGS 706                   /* asm: -707 */
 
 // ******** VMCALLS ******** //
 

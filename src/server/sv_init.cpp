@@ -551,7 +551,7 @@ Ghoul2 Insert End
 		SV_CloseDownload( &svs.clients[i] );
 	}
 
-	resetTime = (qboolean)!!(sv.engineFlags & MVGFLAG_RESETTIME);
+	resetTime = (qboolean)!!(sv.engineFlags & G_MVFLAG_RESETTIME);
 
 	// wipe the entire per-level structure
 	SV_ClearServer();

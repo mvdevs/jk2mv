@@ -1085,7 +1085,7 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 
 	if (VM_MVAPILevel(gvm) >= 4) {
 		switch(args[0]) {
-		case MVAPI_ENGINE_FLAGS:
+		case G_MVAPI_ENGINE_FLAGS:
 			return SV_MVAPI_EngineFlags(args[1]);
 		}
 	}
@@ -1269,7 +1269,7 @@ int SV_MVAPI_EngineFlags(int flags) {
 
 	switch (VM_MVAPILevel(gvm)) {
 	case 4:
-		mask |= MVGFLAG_RESETTIME;
+		mask |= G_MVFLAG_RESETTIME;
 	}
 
 	return sv.engineFlags = (flags & mask);
