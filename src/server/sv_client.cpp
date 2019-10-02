@@ -1048,10 +1048,16 @@ void SV_UserinfoChanged( client_t *cl ) {
 	// if the client is on the same subnet as the server and we aren't running an
 	// internet public server, assume they don't need a rate choke
 	if ( Sys_IsLANAddress( cl->netchan.remoteAddress ) && com_dedicated->integer != 2 ) {
-		cl->rate = 99999;	// lans should not rate limit
+		cl->rate = 100000;	// lans should not rate limit
 	} else {
 		val = Info_ValueForKey (cl->userinfo, "rate");
-		if (strlen(val)) {
+		if (sv_ratePolicy->integer == 1)
+		{
+			// NOTE: what if server sets some dumb sv_clientRate value?
+			cl->rate = sv_clientRate->integer;
+		}
+		else if (sv_ratePolicy->integer == 2)
+		{
 			i = atoi(val);
 			cl->rate = i;
 			if (cl->rate < 1000) {
@@ -1059,10 +1065,9 @@ void SV_UserinfoChanged( client_t *cl ) {
 			} else if (cl->rate > 90000) {
 				cl->rate = 90000;
 			}
-		} else {
-			cl->rate = 3000;
 		}
 	}
+
 	val = Info_ValueForKey (cl->userinfo, "handicap");
 	if (strlen(val)) {
 		i = atoi(val);
@@ -1072,17 +1077,32 @@ void SV_UserinfoChanged( client_t *cl ) {
 	}
 
 	// snaps command
-	val = Info_ValueForKey (cl->userinfo, "snaps");
-	if (strlen(val)) {
-		i = atoi(val);
-		if ( i < 1 ) {
-			i = 1;
-		} else if ( i > 30 ) {
-			i = 30;
+	//Note: cl->snapshotMsec is also validated in sv_main.cpp -> SV_CheckCvars if sv_fps, sv_snapsMin or sv_snapsMax is changed
+	int minSnaps = sv_snapsMin->integer > 0 ? Com_Clampi(1, sv_snapsMax->integer, sv_snapsMin->integer) : 1; // between 1 and sv_snapsMax ( 1 <-> 40 )
+	int maxSnaps = sv_snapsMax->integer > 0 ? MIN(sv_fps->integer, sv_snapsMax->integer) : sv_fps->integer; // can't produce more than sv_fps snapshots/sec, but can send less than sv_fps snapshots/sec
+
+	val = Info_ValueForKey(cl->userinfo, "snaps");
+	cl->wishSnaps = atoi(val);
+	if (!cl->wishSnaps)
+		cl->wishSnaps = maxSnaps;
+	if (sv_snapsPolicy->integer == 1)
+	{
+		cl->wishSnaps = sv_fps->integer;
+		i = 1000 / sv_fps->integer;
+		if (i != cl->snapshotMsec) {
+			// Reset next snapshot so we avoid desync between server frame time and snapshot send time
+			cl->nextSnapshotTime = -1;
+			cl->snapshotMsec = i;
 		}
-		cl->snapshotMsec = 1000/i;
-	} else {
-		cl->snapshotMsec = 50;
+	}
+	else if (sv_snapsPolicy->integer == 2)
+	{
+		i = 1000 / Com_Clampi(minSnaps, maxSnaps, cl->wishSnaps);
+		if (i != cl->snapshotMsec) {
+			// Reset next snapshot so we avoid desync between server frame time and snapshot send time
+			cl->nextSnapshotTime = -1;
+			cl->snapshotMsec = i;
+		}
 	}
 
 	if (mv_fixnamecrash->integer && !(sv.fixes & MVFIX_NAMECRASH)) {

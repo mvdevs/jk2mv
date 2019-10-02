@@ -159,6 +159,7 @@ typedef struct client_s {
 	int				ping;
 	int				rate;				// bytes / second
 	int				snapshotMsec;		// requests a snapshot every snapshotMsec unless rate choked
+	int				wishSnaps;			// requested snapshot/sec rate
 	int				pureAuthentic;
 	netchan_t		netchan;
 	int				oldServerTime;		// client server time before map change
@@ -241,6 +242,12 @@ extern	cvar_t	*sv_killserver;
 extern	cvar_t	*sv_mapname;
 extern	cvar_t	*sv_mapChecksum;
 extern	cvar_t	*sv_serverid;
+extern	cvar_t	*sv_snapsMin;
+extern	cvar_t	*sv_snapsMax;
+extern	cvar_t	*sv_snapsPolicy;
+extern	cvar_t	*sv_ratePolicy;
+extern	cvar_t	*sv_clientRate;
+extern	cvar_t	*sv_minRate;
 extern	cvar_t	*sv_maxRate;
 extern	cvar_t	*sv_maxOOBRate;
 extern	cvar_t	*sv_minPing;
