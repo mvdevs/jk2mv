@@ -24,11 +24,9 @@ cvar_t	*sv_killserver;			// menu system can set to 1 to shut server down
 cvar_t	*sv_mapname;
 cvar_t	*sv_mapChecksum;
 cvar_t	*sv_serverid;
-cvar_t	*sv_snapsMin;			// minimum snapshots/sec a client can request, also limited by sv_snapsMax
-cvar_t	*sv_snapsMax;			// maximum snapshots/sec a client can request, also limited by sv_fps
-cvar_t	*sv_snapsPolicy;		// 0-2
-cvar_t	*sv_ratePolicy;			// 1-2
-cvar_t	*sv_clientRate;
+cvar_t	*sv_minSnaps;			// minimum snapshots/sec a client can request, also limited by sv_maxSnaps
+cvar_t	*sv_maxSnaps;			// maximum snapshots/sec a client can request, also limited by sv_fps
+cvar_t	*sv_enforceSnaps;
 cvar_t	*sv_minRate;
 cvar_t	*sv_maxRate;
 cvar_t	*sv_maxOOBRate;
@@ -1049,8 +1047,7 @@ qboolean SV_CheckPaused( void ) {
 
 void SV_CheckCvars(void) {
 	static int lastModHostname = -1, lastModFramerate = -1, lastModSnapsMin = -1, lastModSnapsMax = -1;
-	static int lastModSnapsPolicy = -1, lastModRatePolicy = -1, lastModClientRate = -1;
-	static int lastModMaxRate = -1, lastModMinRate = -1;
+	static int lastModEnforceSnaps = -1;
 	qboolean changed = qfalse;
 
 	if (sv_hostname->modificationCount != lastModHostname) {
@@ -1074,100 +1071,29 @@ void SV_CheckCvars(void) {
 		}
 	}
 
-	// check limits on client "rate" values based on server settings
-	if ( sv_clientRate->modificationCount != lastModClientRate ||
-		 sv_minRate->modificationCount != lastModMinRate ||
-		 sv_maxRate->modificationCount != lastModMaxRate ||
-		 sv_ratePolicy->modificationCount != lastModRatePolicy )
-	{
-		sv_clientRate->modificationCount = lastModClientRate;
-		sv_maxRate->modificationCount = lastModMaxRate;
-		sv_minRate->modificationCount = lastModMinRate;
-		sv_ratePolicy->modificationCount = lastModRatePolicy;
-		if (sv_ratePolicy->integer == 1)
-		{
-			// NOTE: what if server sets some dumb sv_clientRate value?
-			client_t *cl = NULL;
-			int i = 0;
-			for (i = 0, cl = svs.clients; i < sv_maxclients->integer; i++, cl++) {
-				// if the client is on the same subnet as the server and we aren't running an
-				// internet public server, assume they don't need a rate choke
-				if (Sys_IsLANAddress(cl->netchan.remoteAddress) && com_dedicated->integer != 2) {
-					cl->rate = 100000;	// lans should not rate limit
-				}
-				else {
-					int val = sv_clientRate->integer;
-					if (val != cl->rate) {
-						cl->rate = val;
-					}
-				}
-			}
-		}
-		else if (sv_ratePolicy->integer == 2)
-		{
-			// NOTE: what if server sets some dumb sv_clientRate value?
-			client_t *cl = NULL;
-			int i = 0;
-			for (i = 0, cl = svs.clients; i < sv_maxclients->integer; i++, cl++) {
-				// if the client is on the same subnet as the server and we aren't running an
-				// internet public server, assume they don't need a rate choke
-				if (Sys_IsLANAddress(cl->netchan.remoteAddress) && com_dedicated->integer != 2) {
-					cl->rate = 100000;	// lans should not rate limit
-				}
-				else {
-					int val = cl->rate;
-					if (!val) {
-						val = sv_maxRate->integer;
-					}
-					val = Com_Clampi( 1000, 90000, val );
-					val = Com_Clampi( sv_minRate->integer, sv_maxRate->integer, val );
-					if (val != cl->rate) {
-						cl->rate = val;
-					}
-				}
-			}
-		}
-	}
-
 	// check limits on client "snaps" value based on server framerate and snapshot rate
 	if (sv_fps->modificationCount != lastModFramerate ||
-		sv_snapsMin->modificationCount != lastModSnapsMin ||
-		sv_snapsMax->modificationCount != lastModSnapsMax ||
-		sv_snapsPolicy->modificationCount != lastModSnapsPolicy)
+		sv_minSnaps->modificationCount != lastModSnapsMin ||
+		sv_maxSnaps->modificationCount != lastModSnapsMax ||
+		sv_enforceSnaps->modificationCount != lastModEnforceSnaps)
 	{
+		client_t *cl;
+		int minSnaps = sv_minSnaps->integer > 0 ? Com_Clampi(1, sv_maxSnaps->integer, sv_minSnaps->integer) : 1; // between 1 and sv_maxSnaps ( 1 <-> 40 )
+		int maxSnaps = sv_maxSnaps->integer > 0 ? MIN(sv_fps->integer, sv_maxSnaps->integer) : sv_fps->integer;  // can't produce more than sv_fps snapshots/sec, but can send less than sv_fps snapshots/sec
+		int i, val;
+
 		lastModFramerate = sv_fps->modificationCount;
-		lastModSnapsMin = sv_snapsMin->modificationCount;
-		lastModSnapsMax = sv_snapsMax->modificationCount;
-		lastModSnapsPolicy = sv_snapsPolicy->modificationCount;
+		lastModSnapsMin = sv_minSnaps->modificationCount;
+		lastModSnapsMax = sv_maxSnaps->modificationCount;
+		lastModEnforceSnaps = sv_enforceSnaps->modificationCount;
 
-		if (sv_snapsPolicy->integer == 1)
-		{
-			client_t *cl = NULL;
-			int i = 0;
+		for (i = 0, cl = svs.clients; i < sv_maxclients->integer; i++, cl++) {
+			val = 1000/Com_Clampi(minSnaps, maxSnaps, (sv_enforceSnaps->integer ? sv_fps->integer : cl->wishSnaps) );
 
-			for (i = 0, cl = svs.clients; i < sv_maxclients->integer; i++, cl++) {
-				int val = 1000 / sv_fps->integer;
-				if (val != cl->snapshotMsec) {
-					// Reset last sent snapshot so we avoid desync between server frame time and snapshot send time
-					cl->nextSnapshotTime = -1;
-					cl->snapshotMsec = val;
-				}
-			}
-		}
-		else if (sv_snapsPolicy->integer == 2)
-		{
-			client_t *cl = NULL;
-			int i = 0;
-			int minSnaps = sv_snapsMin->integer > 0 ? Com_Clampi(1, sv_snapsMax->integer, sv_snapsMin->integer) : 1; // between 1 and sv_snapsMax ( 1 <-> 40 )
-			int maxSnaps = sv_snapsMax->integer > 0 ? MIN(sv_fps->integer, sv_snapsMax->integer) : sv_fps->integer; // can't produce more than sv_fps snapshots/sec, but can send less than sv_fps snapshots/sec
-
-			for (i = 0, cl = svs.clients; i < sv_maxclients->integer; i++, cl++) {
-				int val = 1000 / Com_Clampi(minSnaps, maxSnaps, cl->wishSnaps);
-				if (val != cl->snapshotMsec) {
-					// Reset last sent snapshot so we avoid desync between server frame time and snapshot send time
-					cl->nextSnapshotTime = -1;
-					cl->snapshotMsec = val;
-				}
+			if (val != cl->snapshotMsec) {
+				// Reset last sent snapshot so we avoid desync between server frame time and snapshot send time
+				cl->nextSnapshotTime = -1;
+				cl->snapshotMsec = val;
 			}
 		}
 	}

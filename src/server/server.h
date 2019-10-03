@@ -242,11 +242,9 @@ extern	cvar_t	*sv_killserver;
 extern	cvar_t	*sv_mapname;
 extern	cvar_t	*sv_mapChecksum;
 extern	cvar_t	*sv_serverid;
-extern	cvar_t	*sv_snapsMin;
-extern	cvar_t	*sv_snapsMax;
-extern	cvar_t	*sv_snapsPolicy;
-extern	cvar_t	*sv_ratePolicy;
-extern	cvar_t	*sv_clientRate;
+extern	cvar_t	*sv_minSnaps;
+extern	cvar_t	*sv_maxSnaps;
+extern	cvar_t	*sv_enforceSnaps;
 extern	cvar_t	*sv_minRate;
 extern	cvar_t	*sv_maxRate;
 extern	cvar_t	*sv_maxOOBRate;
@@ -333,6 +331,8 @@ void SV_ClientThink (int client, const usercmd_t *cmd);
 
 void SV_WriteDownloadToClient( client_t *cl , msg_t *msg );
 void SV_CloseDownload( client_t *cl );
+
+int SV_ClientRate( client_t *client );
 
 //
 // sv_ccmds.c

@@ -795,15 +795,7 @@ void SV_WriteDownloadToClient( client_t *cl , msg_t *msg )
 
 	// based on the rate, how many bytes can we fit in the snapMsec time of the client
 	// normal rate / snapshotMsec calculation
-	rate = cl->rate;
-	if ( sv_maxRate->integer ) {
-		if ( sv_maxRate->integer < 1000 ) {
-			Cvar_Set( "sv_MaxRate", "1000" );
-		}
-		if ( sv_maxRate->integer < rate ) {
-			rate = sv_maxRate->integer;
-		}
-	}
+	rate = SV_ClientRate(cl);
 
 	if (!rate) {
 		blockspersnap = 1;
@@ -1047,25 +1039,9 @@ void SV_UserinfoChanged( client_t *cl ) {
 
 	// if the client is on the same subnet as the server and we aren't running an
 	// internet public server, assume they don't need a rate choke
-	if ( Sys_IsLANAddress( cl->netchan.remoteAddress ) && com_dedicated->integer != 2 ) {
-		cl->rate = 100000;	// lans should not rate limit
-	} else {
-		val = Info_ValueForKey (cl->userinfo, "rate");
-		if (sv_ratePolicy->integer == 1)
-		{
-			// NOTE: what if server sets some dumb sv_clientRate value?
-			cl->rate = sv_clientRate->integer;
-		}
-		else if (sv_ratePolicy->integer == 2)
-		{
-			i = atoi(val);
-			cl->rate = i;
-			if (cl->rate < 1000) {
-				cl->rate = 1000;
-			} else if (cl->rate > 90000) {
-				cl->rate = 90000;
-			}
-		}
+	cl->rate = atoi( Info_ValueForKey(cl->userinfo, "rate") );
+	if ( Sys_IsLANAddress( cl->netchan.remoteAddress ) && com_dedicated->integer != 2 && cl->rate < 99999 ) {
+		cl->rate = 99999;	// lans should not rate limit
 	}
 
 	val = Info_ValueForKey (cl->userinfo, "handicap");
@@ -1077,32 +1053,21 @@ void SV_UserinfoChanged( client_t *cl ) {
 	}
 
 	// snaps command
-	//Note: cl->snapshotMsec is also validated in sv_main.cpp -> SV_CheckCvars if sv_fps, sv_snapsMin or sv_snapsMax is changed
-	int minSnaps = sv_snapsMin->integer > 0 ? Com_Clampi(1, sv_snapsMax->integer, sv_snapsMin->integer) : 1; // between 1 and sv_snapsMax ( 1 <-> 40 )
-	int maxSnaps = sv_snapsMax->integer > 0 ? MIN(sv_fps->integer, sv_snapsMax->integer) : sv_fps->integer; // can't produce more than sv_fps snapshots/sec, but can send less than sv_fps snapshots/sec
+	//Note: cl->snapshotMsec is also validated in sv_main.cpp -> SV_CheckCvars if sv_fps, sv_minSnaps or sv_maxSnaps is changed
+	int minSnaps = sv_minSnaps->integer > 0 ? Com_Clampi(1, sv_maxSnaps->integer, sv_minSnaps->integer) : 1; // between 1 and sv_maxSnaps ( 1 <-> 40 )
+	int maxSnaps = sv_maxSnaps->integer > 0 ? MIN(sv_fps->integer, sv_maxSnaps->integer) : sv_fps->integer;  // can't produce more than sv_fps snapshots/sec, but can send less than sv_fps snapshots/sec
 
 	val = Info_ValueForKey(cl->userinfo, "snaps");
 	cl->wishSnaps = atoi(val);
 	if (!cl->wishSnaps)
 		cl->wishSnaps = maxSnaps;
-	if (sv_snapsPolicy->integer == 1)
-	{
-		cl->wishSnaps = sv_fps->integer;
-		i = 1000 / sv_fps->integer;
-		if (i != cl->snapshotMsec) {
-			// Reset next snapshot so we avoid desync between server frame time and snapshot send time
-			cl->nextSnapshotTime = -1;
-			cl->snapshotMsec = i;
-		}
-	}
-	else if (sv_snapsPolicy->integer == 2)
-	{
-		i = 1000 / Com_Clampi(minSnaps, maxSnaps, cl->wishSnaps);
-		if (i != cl->snapshotMsec) {
-			// Reset next snapshot so we avoid desync between server frame time and snapshot send time
-			cl->nextSnapshotTime = -1;
-			cl->snapshotMsec = i;
-		}
+
+	i = 1000 / Com_Clampi(minSnaps, maxSnaps, (sv_enforceSnaps->integer ? sv_fps->integer : cl->wishSnaps) );
+
+	if (i != cl->snapshotMsec) {
+		// Reset next snapshot so we avoid desync between server frame time and snapshot send time
+		cl->nextSnapshotTime = -1;
+		cl->snapshotMsec = i;
 	}
 
 	if (mv_fixnamecrash->integer && !(sv.fixes & MVFIX_NAMECRASH)) {
@@ -1671,5 +1636,36 @@ void SV_ExecuteClientMessage( client_t *cl, msg_t *msg ) {
 //	if ( msg->readcount != msg->cursize ) {
 //		Com_Printf( "WARNING: Junk at end of packet for client %i\n", cl - svs.clients );
 //	}
+}
+
+int SV_ClientRate( client_t *client )
+{
+	int rate = client->rate;
+
+	if ( sv_maxRate->integer ) {
+		if ( sv_maxRate->integer < 1000 ) {
+			Cvar_Set( "sv_maxRate", "1000" );
+		}
+		if ( sv_maxRate->integer < rate ) {
+			rate = sv_maxRate->integer;
+		}
+	}
+	else if ( 90000 < rate ) { // Special case for sv_maxRate 0: "unlimited" was hardcoded to 90000 in jk2ded
+		rate = 90000;
+	}
+
+	if ( sv_minRate->integer ) {
+		if ( sv_minRate->integer < 1000 ) {
+			Cvar_Set( "sv_minRate", "1000" );
+		}
+		if ( sv_minRate->integer > rate ) {
+			rate = sv_minRate->integer;
+		}
+	}
+	else if ( 1000 > rate ) { // minimum was hardcoded to 1000 in jk2ded
+		rate = 1000;
+	}
+
+	return rate;
 }
 

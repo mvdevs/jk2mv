@@ -637,7 +637,7 @@ static void SV_Status_f( void )
 			svs.time - cl->lastPacketTime,
 			s,
 			cl->netchan.qport,
-			cl->rate
+			SV_ClientRate(cl)
 			);
 	}
 	Com_Printf ("\n");
