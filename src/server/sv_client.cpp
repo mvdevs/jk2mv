@@ -1640,32 +1640,17 @@ void SV_ExecuteClientMessage( client_t *cl, msg_t *msg ) {
 
 int SV_ClientRate( client_t *client )
 {
-	int rate = client->rate;
+	int minRate = sv_minRate->integer;
+	int maxRate = sv_maxRate->integer;
 
-	if ( sv_maxRate->integer ) {
-		if ( sv_maxRate->integer < 1000 ) {
-			Cvar_Set( "sv_maxRate", "1000" );
-		}
-		if ( sv_maxRate->integer < rate ) {
-			rate = sv_maxRate->integer;
-		}
-	}
-	else if ( 90000 < rate ) { // Special case for sv_maxRate 0: "unlimited" was hardcoded to 90000 in jk2ded
-		rate = 90000;
-	}
+	// Special case for sv_maxRate 0: "unlimited" was hardcoded to 90000 in jk2ded
+	if ( !maxRate ) maxRate = 90000;
 
-	if ( sv_minRate->integer ) {
-		if ( sv_minRate->integer < 1000 ) {
-			Cvar_Set( "sv_minRate", "1000" );
-		}
-		if ( sv_minRate->integer > rate ) {
-			rate = sv_minRate->integer;
-		}
-	}
-	else if ( 1000 > rate ) { // minimum was hardcoded to 1000 in jk2ded
-		rate = 1000;
-	}
+	// Never allow rates below 1000 (was already hardcoded to 1000 in jk2ded)
+	if ( minRate < 1000 ) minRate = 1000;
+	if ( maxRate < 1000 ) maxRate = 1000;
 
-	return rate;
+	// Ensure the rate is within the allowed range
+	return Com_Clampi( minRate, maxRate, client->rate );
 }
 
