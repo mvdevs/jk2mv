@@ -43,9 +43,9 @@ install: |
       docker exec bc apt -y install git cmake zip wget libfuse2 build-essential libsdl2-dev libgl1-mesa-dev libopenal-dev libjpeg-dev libpng-dev libminizip-dev
   else
       cd ~
-      curl -O https://www.libsdl.org/release/SDL2-2.0.8.tar.gz
-      tar xzf SDL2-2.0.8.tar.gz
-      cd SDL2-2.0.8/Xcode/SDL
+      curl -O https://www.libsdl.org/release/SDL2-2.0.10.tar.gz
+      tar xzf SDL2-2.0.10.tar.gz
+      cd SDL2-2.0.10/Xcode/SDL
       sed -i -e 's/@rpath//g' SDL.xcodeproj/project.pbxproj
       xcodebuild -configuration Release
       mkdir -p ~/Library/Frameworks/
