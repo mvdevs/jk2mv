@@ -337,7 +337,7 @@ qboolean FS_PakIsPure( pack_t *pack ) {
 	int i;
 
 	// actually, I created a bypass for sv_pure here but since jk2 is opensource I really don't see a point in supporting pure
-	if (!Q_stricmp(pack->pakBasename, "assets2") || !Q_stricmp(pack->pakBasename, "assets5") || !Q_stricmp(pack->pakBasename, "assetsmv") || !Q_stricmp(pack->pakBasename, "assetsmv2"))
+	if (!Q_stricmp(pack->pakBasename, "assets2") || !Q_stricmp(pack->pakBasename, "assets5") || !Q_stricmp(pack->pakBasename, "assetsmv"))
 		return qtrue;
 
 	if ( fs_numServerPaks ) {
@@ -1398,8 +1398,11 @@ int FS_FOpenFileReadHash(const char *filename, fileHandle_t *file, qboolean uniq
 						// 1. A .bsp file is loaded from it (and thus it is expected to be a map)
 						// 2. cgame.qvm or ui.qvm is loaded from it (expected to be a clientside)
 						// 3. pk3 is located in fs_game != base (standard jk2 behavior)
+						// 4. All retail assets from base directory (for sv_pure servers)
 						// All others need to be referenced manually by the use of reflists.
-						
+
+						const char *baseName = pak->pakBasename;
+
 						if (!Q_stricmp(get_filename_ext(filename), "bsp")) {
 							pak->referenced |= FS_GENERAL_REF;
 						}
@@ -1410,6 +1413,13 @@ int FS_FOpenFileReadHash(const char *filename, fileHandle_t *file, qboolean uniq
 
 						if (!Q_stricmp(filename, "vm/ui.qvm")) {
 							pak->referenced |= FS_UI_REF;
+						}
+
+						if (!Q_stricmpn(pak->pakGamename, BASEGAME, (int)strlen(BASEGAME))) {
+							if (!Q_stricmp(baseName, "assets0") || !Q_stricmp(baseName, "assets1") ||
+								!Q_stricmp(baseName, "assets2") || !Q_stricmp(baseName, "assets5")) {
+								pak->referenced |= FS_GENERAL_REF;
+							}
 						}
 					}
 
