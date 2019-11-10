@@ -337,7 +337,7 @@ qboolean FS_PakIsPure( pack_t *pack ) {
 	int i;
 
 	// actually, I created a bypass for sv_pure here but since jk2 is opensource I really don't see a point in supporting pure
-	if (!Q_stricmp(pack->pakBasename, "assets2") || !Q_stricmp(pack->pakBasename, "assets5") || !Q_stricmp(pack->pakBasename, "assetsmv"))
+	if (!Q_stricmp(pack->pakBasename, "assetsmv"))
 		return qtrue;
 
 	if ( fs_numServerPaks ) {
@@ -2130,11 +2130,6 @@ static pack_t *FS_LoadZipFile( char *zipfile, const char *basename )
 		pack->gvc = PACKGVC_1_03 | PACKGVC_1_04;
 	} else if (!Q_stricmp(pack->pakBasename, "assets5")) {
 		pack->gvc = PACKGVC_1_04;
-	}
-
-	// never reference assetsmv files
-	if (!Q_stricmpn(pack->pakBasename, "assetsmv", 8)) {
-		pack->noref = qtrue;
 	}
 
 	return pack;
