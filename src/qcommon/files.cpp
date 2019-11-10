@@ -3074,11 +3074,6 @@ qboolean FS_idPakPath(const char *pak, const char *base) {
 		return qtrue;
 	}
 
-	Com_sprintf(path, sizeof(path), "%s/assetsmv2", base);
-	if (!FS_FilenameCompare(pak, path)) {
-		return qtrue;
-	}
-
 	return qfalse;
 }
 
