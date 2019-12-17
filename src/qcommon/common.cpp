@@ -1510,10 +1510,10 @@ void Com_Meminfo_f( void ) {
 	Com_Printf( "%8i unused highwater\n", unused );
 	Com_Printf( "\n" );
 //	Com_Printf( "%8i bytes in %i zone blocks\n", zoneBytes, zoneBlocks	);
-	Com_Printf( "		%8i bytes in dynamic botlib\n", botlibBytes );
-	Com_Printf( "		%8i bytes in dynamic renderer\n", rendererBytes );
-//	Com_Printf( "		%8i bytes in dynamic other\n", zoneBytes - ( botlibBytes + rendererBytes ) );
-//	Com_Printf( "		%8i bytes in small Zone memory\n", smallZoneBytes );
+	Com_Printf( "%8i bytes in dynamic botlib\n", botlibBytes );
+	Com_Printf( "%8i bytes in dynamic renderer\n", rendererBytes );
+//	Com_Printf( "%8i bytes in dynamic other\n", zoneBytes - ( botlibBytes + rendererBytes ) );
+//	Com_Printf( "%8i bytes in small Zone memory\n", smallZoneBytes );
 }
 
 /*

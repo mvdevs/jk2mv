@@ -2775,9 +2775,9 @@ void FS_Path_f( void ) {
 
 			if ( fs_numServerPaks ) {
 				if ( !FS_PakIsPure(s->pack) ) {
-					Com_Printf( "	not on the pure list\n" );
+					Com_Printf( "    not on the pure list\n" );
 				} else {
-					Com_Printf( "	on the pure list\n" );
+					Com_Printf( "    on the pure list\n" );
 				}
 			}
 		} else {

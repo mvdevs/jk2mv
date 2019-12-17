@@ -2974,11 +2974,11 @@ void S_SoundList_f( void ) {
 	total = 0;
 
 	Com_Printf("\n");
-	Com_Printf("					InMemory?\n");
-	Com_Printf("					|\n");
-	Com_Printf("					|  LevelLastUsedOn\n");
-	Com_Printf("					|  |\n");
-	Com_Printf("					|  |\n");
+	Com_Printf("                    InMemory?\n");
+	Com_Printf("                    |\n");
+	Com_Printf("                    |  LevelLastUsedOn\n");
+	Com_Printf("                    |  |\n");
+	Com_Printf("                    |  |\n");
 	Com_Printf(" Slot   Bytes Type  |  |   Name\n");
 //	Com_Printf(" Slot   Bytes Type  InMem?   Name\n");
 
