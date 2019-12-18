@@ -2893,6 +2893,8 @@ void UpdateRawSamples()
 		alGetSourcei(s_channels[0].alSource, AL_SOURCE_STATE, &state);
 		if (state != AL_PLAYING)
 		{
+			// Stopped playing ... due to buffer underrun
+			// Restart playback - old buffers were already unqueued
 			alSourcePlay(s_channels[0].alSource);
 		}
 	}
