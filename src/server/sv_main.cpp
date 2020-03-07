@@ -24,6 +24,10 @@ cvar_t	*sv_killserver;			// menu system can set to 1 to shut server down
 cvar_t	*sv_mapname;
 cvar_t	*sv_mapChecksum;
 cvar_t	*sv_serverid;
+cvar_t	*sv_minSnaps;			// minimum snapshots/sec a client can request, also limited by sv_maxSnaps
+cvar_t	*sv_maxSnaps;			// maximum snapshots/sec a client can request, also limited by sv_fps
+cvar_t	*sv_enforceSnaps;
+cvar_t	*sv_minRate;
 cvar_t	*sv_maxRate;
 cvar_t	*sv_maxOOBRate;
 cvar_t	*sv_minPing;
@@ -1041,6 +1045,54 @@ qboolean SV_CheckPaused( void ) {
 	return qtrue;
 }
 
+void SV_CheckCvars(void) {
+	static int lastModHostname = -1, lastModFramerate = -1, lastModSnapsMin = -1, lastModSnapsMax = -1;
+	static int lastModEnforceSnaps = -1;
+	qboolean changed = qfalse;
+
+	if (sv_hostname->modificationCount != lastModHostname) {
+		char hostname[MAX_INFO_STRING];
+		char *c = hostname;
+		lastModHostname = sv_hostname->modificationCount;
+
+		strcpy(hostname, sv_hostname->string);
+		while (*c)
+		{
+			if ((*c == '\\') || (*c == ';') || (*c == '"'))
+			{
+				*c = '.';
+				changed = qtrue;
+			}
+			c++;
+		}
+		if (changed)
+		{
+			Cvar_Set("sv_hostname", hostname);
+		}
+	}
+
+	// check limits on client "snaps" value based on server framerate and snapshot rate
+	if (sv_fps->modificationCount != lastModFramerate ||
+		sv_minSnaps->modificationCount != lastModSnapsMin ||
+		sv_maxSnaps->modificationCount != lastModSnapsMax ||
+		sv_enforceSnaps->modificationCount != lastModEnforceSnaps)
+	{
+		client_t *cl;
+		int i;
+
+		lastModFramerate = sv_fps->modificationCount;
+		lastModSnapsMin = sv_minSnaps->modificationCount;
+		lastModSnapsMax = sv_maxSnaps->modificationCount;
+		lastModEnforceSnaps = sv_enforceSnaps->modificationCount;
+
+		for (i = 0, cl = svs.clients; i < sv_maxclients->integer; i++, cl++) {
+			if ( cl->state >= CS_CONNECTED ) {
+				SV_ClientUpdateSnaps( cl );
+			}
+		}
+	}
+}
+
 /*
 ==================
 SV_FrameMsec
@@ -1203,6 +1255,8 @@ void SV_Frame( int msec ) {
 
 	// send messages back to the clients
 	SV_SendClientMessages();
+
+	SV_CheckCvars();
 
 	// send a heartbeat to the master if needed
 	SV_MasterHeartbeat();

@@ -410,6 +410,15 @@ Server-Side
 
 ..
 
+:Name: sv_enforceSnaps
+:Values: "0", "1"
+:Default: "0"
+:Description:
+   Ignore the client preference for "snaps" and try to send a snapshot per
+   server frame (sv_fps) if sv_maxSnaps and the client rate permit it.
+
+..
+
 :Name: sv_floodProtect
 :Values: Integer >= 0
 :Default: "3"
@@ -447,6 +456,42 @@ Server-Side
 :Description:
    Max out-of-bound requests handled per second. Increasing rate
    improves server responsiveness at the cost of higher CPU usage.
+
+..
+
+:Name: sv_maxRate
+:Valid: "0", Integer >= 1000
+:Default: "90000"
+:Description:
+   Maximum rate for each client. The client rate limits the maximum amount of
+   snapshots sent to a client.
+
+..
+
+:Name: sv_maxSnaps
+:Valid: Integer > 0
+:Default: "30"
+:Description:
+   Maximum amount of snapshots each client should receive. This can also be
+   limited by the client rate.
+
+..
+
+:Name: sv_minRate
+:Valid: Integer >= 1000
+:Default: "1000"
+:Description:
+   Minimum rate for each client. The client rate limits the maximum amount of
+   snapshots sent to a client.
+
+..
+
+:Name: sv_minSnaps
+:Valid: Integer > 0
+:Default: "1"
+:Description:
+   Minimum amount of snapshots each client should receive. This can also be
+   limited by the client rate.
 
 ..
 
