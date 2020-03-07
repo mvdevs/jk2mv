@@ -27,6 +27,24 @@ New and Modified Cvars
 :Description:
    Print timestamps in qconsole.log and system console.
 
+..
+
+:Name: fs_forcegame
+:Values: Foldername
+:Default: "" (Not set)
+:Description:
+   Overrides the active folder, allowing a server/client to store configs and
+   other data in a specific folder independent of the active mod (``fs_game``).
+   All new configs, screenshots, demos, etc. stored by the game end up in the
+   specified folder. This folder may also be "base".
+
+   Load order:
+
+   | ``base``
+   | ``fs_basegame cvar``
+   | ``fs_game cvar``
+   | ``fs_forcegame cvar``
+
 -----------
 Client-Side
 -----------
