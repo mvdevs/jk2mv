@@ -159,7 +159,6 @@ typedef struct client_s {
 	int				ping;
 	int				rate;				// bytes / second
 	int				snapshotMsec;		// requests a snapshot every snapshotMsec unless rate choked
-	int				wishSnaps;			// requested snapshot/sec rate
 	int				pureAuthentic;
 	netchan_t		netchan;
 	int				oldServerTime;		// client server time before map change
@@ -333,6 +332,8 @@ void SV_WriteDownloadToClient( client_t *cl , msg_t *msg );
 void SV_CloseDownload( client_t *cl );
 
 int SV_ClientRate( client_t *client );
+int SV_ClientSnaps( client_t *client );
+void SV_ClientUpdateSnaps( client_t *client );
 
 //
 // sv_ccmds.c

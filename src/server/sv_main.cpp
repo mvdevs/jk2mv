@@ -1078,9 +1078,7 @@ void SV_CheckCvars(void) {
 		sv_enforceSnaps->modificationCount != lastModEnforceSnaps)
 	{
 		client_t *cl;
-		int minSnaps = sv_minSnaps->integer > 0 ? Com_Clampi(1, sv_maxSnaps->integer, sv_minSnaps->integer) : 1; // between 1 and sv_maxSnaps ( 1 <-> 40 )
-		int maxSnaps = sv_maxSnaps->integer > 0 ? MIN(sv_fps->integer, sv_maxSnaps->integer) : sv_fps->integer;  // can't produce more than sv_fps snapshots/sec, but can send less than sv_fps snapshots/sec
-		int i, val;
+		int i;
 
 		lastModFramerate = sv_fps->modificationCount;
 		lastModSnapsMin = sv_minSnaps->modificationCount;
@@ -1088,12 +1086,8 @@ void SV_CheckCvars(void) {
 		lastModEnforceSnaps = sv_enforceSnaps->modificationCount;
 
 		for (i = 0, cl = svs.clients; i < sv_maxclients->integer; i++, cl++) {
-			val = 1000/Com_Clampi(minSnaps, maxSnaps, (sv_enforceSnaps->integer ? sv_fps->integer : cl->wishSnaps) );
-
-			if (val != cl->snapshotMsec) {
-				// Reset last sent snapshot so we avoid desync between server frame time and snapshot send time
-				cl->nextSnapshotTime = -1;
-				cl->snapshotMsec = val;
+			if ( cl->state >= CS_CONNECTED ) {
+				SV_ClientUpdateSnaps( cl );
 			}
 		}
 	}

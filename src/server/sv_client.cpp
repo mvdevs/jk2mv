@@ -1052,23 +1052,7 @@ void SV_UserinfoChanged( client_t *cl ) {
 		}
 	}
 
-	// snaps command
-	//Note: cl->snapshotMsec is also validated in sv_main.cpp -> SV_CheckCvars if sv_fps, sv_minSnaps or sv_maxSnaps is changed
-	int minSnaps = sv_minSnaps->integer > 0 ? Com_Clampi(1, sv_maxSnaps->integer, sv_minSnaps->integer) : 1; // between 1 and sv_maxSnaps ( 1 <-> 40 )
-	int maxSnaps = sv_maxSnaps->integer > 0 ? MIN(sv_fps->integer, sv_maxSnaps->integer) : sv_fps->integer;  // can't produce more than sv_fps snapshots/sec, but can send less than sv_fps snapshots/sec
-
-	val = Info_ValueForKey(cl->userinfo, "snaps");
-	cl->wishSnaps = atoi(val);
-	if (!cl->wishSnaps)
-		cl->wishSnaps = maxSnaps;
-
-	i = 1000 / Com_Clampi(minSnaps, maxSnaps, (sv_enforceSnaps->integer ? sv_fps->integer : cl->wishSnaps) );
-
-	if (i != cl->snapshotMsec) {
-		// Reset next snapshot so we avoid desync between server frame time and snapshot send time
-		cl->nextSnapshotTime = -1;
-		cl->snapshotMsec = i;
-	}
+	SV_ClientUpdateSnaps( cl );
 
 	if (mv_fixnamecrash->integer && !(sv.fixes & MVFIX_NAMECRASH)) {
 		char name[61], cleanedName[61]; // 60 because some mods increased this
@@ -1650,7 +1634,33 @@ int SV_ClientRate( client_t *client )
 	if ( minRate < 1000 ) minRate = 1000;
 	if ( maxRate < 1000 ) maxRate = 1000;
 
+	// If the minimum is higher than the maximum settle for the lower value
+	if ( minRate > maxRate ) minRate = maxRate;
+
 	// Ensure the rate is within the allowed range
 	return Com_Clampi( minRate, maxRate, client->rate );
+}
+
+int SV_ClientSnaps( client_t *client )
+{
+	int maxSnaps = Com_Clampi( 1, sv_fps->integer, sv_maxSnaps->integer );
+	int minSnaps = Com_Clampi( 1, maxSnaps, sv_minSnaps->integer );
+
+	// Get the desired snaps value (either sv_fps or the value from the userinfo)
+	int wishSnaps = sv_enforceSnaps->integer ? sv_fps->integer : atoi(Info_ValueForKey(client->userinfo, "snaps"));
+
+	// Ensure the snaps value is within the allowed range
+	return Com_Clampi( minSnaps, maxSnaps, wishSnaps );
+}
+
+void SV_ClientUpdateSnaps( client_t *client )
+{
+	int snapsMsec = 1000 / SV_ClientSnaps( client );
+
+	if ( snapsMsec != client->snapshotMsec ) {
+		// Reset next snapshot so we avoid desync between server frame time and snapshot send time
+		client->nextSnapshotTime = -1;
+		client->snapshotMsec = snapsMsec;
+	}
 }
 
