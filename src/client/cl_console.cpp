@@ -751,6 +751,8 @@ void Con_DrawSolidConsole( float frac ) {
 			(lines-(con.charHeight+con.charHeight/2)), vertext[x] );
 	}
 
+	// draw the input prompt, user text, and cursor if desired
+	Con_DrawInput ();
 
 	// draw the text
 	con.vislines = lines;
@@ -840,9 +842,6 @@ void Con_DrawSolidConsole( float frac ) {
 			}
 		}
 	}
-
-	// draw the input prompt, user text, and cursor if desired
-	Con_DrawInput ();
 
 	re.SetColor( NULL );
 }
