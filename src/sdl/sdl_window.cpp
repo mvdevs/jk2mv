@@ -542,10 +542,12 @@ static rserr_t GLimp_SetMode(glconfig_t *glConfig, const windowDesc_t *windowDes
 	int samples;
 	int i = 0;
 	SDL_Surface *icon = NULL;
-	Uint32 flags = SDL_WINDOW_SHOWN;
+	Uint32 flags = SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI;
 	SDL_DisplayMode desktopMode;
 	int display = 0;
 	int x = SDL_WINDOWPOS_CENTERED, y = SDL_WINDOWPOS_CENTERED;
+	int winWidth = 0; // window dimensions in screen coordinates (divided by desktop scaling)
+	int winHeight = 0;
 
 	if ( windowDesc->api == GRAPHICS_API_OPENGL )
 	{
@@ -571,6 +573,14 @@ static rserr_t GLimp_SetMode(glconfig_t *glConfig, const windowDesc_t *windowDes
 		{
 			Com_DPrintf( "SDL_GetWindowDisplayIndex() failed: %s\n", SDL_GetError() );
 		}
+
+		SDL_GetWindowPosition( screen, &x, &y );
+		Com_DPrintf( "Existing window at %dx%d before being destroyed\n", x, y );
+		SDL_DestroyWindow( screen );
+		screen = NULL;
+	} else {
+		if ( GLimp_GetSavedWindowPosition( &display, &x, &y ) )
+			Com_DPrintf( "Found saved window at %dx%d display %d\n", x, y, display );
 	}
 
 	if( display >= 0 && SDL_GetDesktopDisplayMode( display, &desktopMode ) == 0 )
@@ -593,42 +603,31 @@ static rserr_t GLimp_SetMode(glconfig_t *glConfig, const windowDesc_t *windowDes
 		// use desktop video resolution
 		if( desktopMode.h > 0 )
 		{
-			glConfig->vidWidth = desktopMode.w;
-			glConfig->vidHeight = desktopMode.h;
+			winWidth = desktopMode.w;
+			winHeight = desktopMode.h;
 		}
 		else
 		{
-			glConfig->vidWidth = 640;
-			glConfig->vidHeight = 480;
+			winWidth = 640;
+			winHeight = 480;
 			Com_Printf( "Cannot determine display resolution, assuming 640x480\n" );
 		}
 
 		//glConfig.windowAspect = (float)glConfig.vidWidth / (float)glConfig.vidHeight;
 	}
-	else if ( !R_GetModeInfo( &glConfig->vidWidth, &glConfig->vidHeight, /*&glConfig.windowAspect,*/ mode ) )
+	else if ( !R_GetModeInfo( &winWidth, &winHeight, /*&glConfig.windowAspect,*/ mode ) )
 	{
 		Com_Printf( " invalid mode\n" );
 		SDL_FreeSurface(icon);
 		return RSERR_INVALID_MODE;
 	}
-	Com_Printf( " %d %d\n", glConfig->vidWidth, glConfig->vidHeight);
+	Com_Printf( " %d %d\n", winWidth, winHeight);
 
 	// Destroy existing state if it exists
 	if( opengl_context != NULL )
 	{
 		SDL_GL_DeleteContext( opengl_context );
 		opengl_context = NULL;
-	}
-
-	if( screen != NULL )
-	{
-		SDL_GetWindowPosition( screen, &x, &y );
-		Com_DPrintf( "Existing window at %dx%d before being destroyed\n", x, y );
-		SDL_DestroyWindow( screen );
-		screen = NULL;
-	} else {
-		if ( GLimp_GetSavedWindowPosition( &display, &x, &y ) )
-			Com_DPrintf( "Found saved window at %dx%d display %d\n", x, y, display );
 	}
 
 	if ( r_centerWindow->integer )
@@ -786,14 +785,14 @@ static rserr_t GLimp_SetMode(glconfig_t *glConfig, const windowDesc_t *windowDes
 			SDL_GL_SetAttribute( SDL_GL_ACCELERATED_VISUAL, !r_allowsoftwaregl->integer);
 
 			if( ( screen = SDL_CreateWindow( windowTitle, x, y,
-					glConfig->vidWidth, glConfig->vidHeight, flags ) ) == NULL )
+					winWidth, winHeight, flags ) ) == NULL )
 			{
 				if ( samples > 0 ) {
 					SDL_GL_SetAttribute( SDL_GL_MULTISAMPLEBUFFERS, 0 );
 					SDL_GL_SetAttribute( SDL_GL_MULTISAMPLESAMPLES, 0 );
 
 					screen = SDL_CreateWindow( windowTitle, x, y,
-						glConfig->vidWidth, glConfig->vidHeight, flags );
+						winWidth, winHeight, flags );
 				}
 			}
 
@@ -801,7 +800,6 @@ static rserr_t GLimp_SetMode(glconfig_t *glConfig, const windowDesc_t *windowDes
 				Com_DPrintf( "SDL_CreateWindow failed: %s\n", SDL_GetError( ) );
 				continue;
 			}
-
 
 #ifndef MACOS_X
 			SDL_SetWindowIcon(screen, icon);
@@ -818,8 +816,8 @@ static rserr_t GLimp_SetMode(glconfig_t *glConfig, const windowDesc_t *windowDes
 					default: Com_DPrintf( "testColorBits is %d, can't fullscreen\n", testColorBits ); continue;
 				}
 
-				mode.w = glConfig->vidWidth;
-				mode.h = glConfig->vidHeight;
+				mode.w = winWidth;
+				mode.h = winHeight;
 				mode.refresh_rate = glConfig->displayFrequency = r_displayRefresh->integer;
 				mode.driverdata = NULL;
 
@@ -859,7 +857,7 @@ static rserr_t GLimp_SetMode(glconfig_t *glConfig, const windowDesc_t *windowDes
 	{
 		// Just create a regular window
 		if( ( screen = SDL_CreateWindow( windowTitle, x, y,
-				glConfig->vidWidth, glConfig->vidHeight, flags ) ) == NULL )
+				winWidth, winHeight, flags ) ) == NULL )
 		{
 			Com_DPrintf( "SDL_CreateWindow failed: %s\n", SDL_GetError( ) );
 		}
@@ -878,6 +876,9 @@ static rserr_t GLimp_SetMode(glconfig_t *glConfig, const windowDesc_t *windowDes
 			}
 		}
 	}
+
+	SDL_GL_GetDrawableSize(screen, &glConfig->vidWidth, &glConfig->vidHeight);
+	Com_Printf("...renderer size: %d %d\n", glConfig->vidWidth, glConfig->vidHeight);
 
 	glConfig->displayScale = GLimp_GetDisplayScale(display);
 
