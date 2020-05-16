@@ -3170,26 +3170,46 @@ qboolean FS_ComparePaks( char *neededpaks, int len, int *chksums, size_t maxchks
 			}
 
 			if (dlstring) {
+				char st[MAX_ZPATH];
+
+				// To make sure we don't cut anything off we build the string for the current pak in a separate buffer,
+				// which must be able to hold fs_serverReferencedPakNames[i], the result of st and 6 more characters. As
+				// st is at least 8 characters longer than fs_serverReferencedPakNames[i] the doubled size of st should
+				// be enough.
+				char currentPak[MAX_ZPATH*2];
+				*currentPak = 0;
+
 				// Remote name
-				Q_strcat( neededpaks, len, "@");
-				Q_strcat( neededpaks, len, fs_serverReferencedPakNames[i] );
-				Q_strcat( neededpaks, len, ".pk3" );
+				Q_strcat( currentPak, sizeof(currentPak), "@");
+				Q_strcat( currentPak, sizeof(currentPak), fs_serverReferencedPakNames[i] );
+				Q_strcat( currentPak, sizeof(currentPak), ".pk3" );
 
 				// Local name
-				Q_strcat( neededpaks, len, "@");
+				Q_strcat( currentPak, sizeof(currentPak), "@");
 				// Do we have one with the same name?
 				if (FS_SV_FileExists(va("%s/dl_%s.pk3", moddir, filename))) {
-					char st[MAX_ZPATH];
 					// We already have one called this, we need to download it to another name
 					// Make something up with the checksum in it
 					Com_sprintf(st, sizeof(st), "%s/dl_%s.%08x.pk3", moddir, filename, fs_serverReferencedPaks[i]);
-					Q_strcat( neededpaks, len, st );
+					Q_strcat( currentPak, sizeof(currentPak), st );
 				} else {
-					char st[MAX_ZPATH];
-
 					Com_sprintf(st, sizeof(st), "%s/dl_%s.pk3", moddir, filename);
-					Q_strcat(neededpaks, len, st);
+					Q_strcat(currentPak, sizeof(currentPak), st);
 				}
+
+				// If the currentPak buffer is full we probably cut something off
+				if ( strlen(currentPak) >= sizeof(currentPak)-1 ) {
+					Com_Printf( S_COLOR_YELLOW "WARNING (FS_ComparePaks): referenced pk3 files cut off due to too long individual file (%s)\n", fs_serverPakNames[i] );
+					break;
+				}
+
+				// If the currentPak doesn't fit the neededpaks buffer we are likely running into issues
+				if ( strlen(neededpaks) + strlen(currentPak) >= (size_t)len ) {
+					Com_Printf( S_COLOR_YELLOW "WARNING (FS_ComparePaks): referenced pk3 files cut off due to too long total length\n" );
+					break;
+				}
+
+				Q_strcat( neededpaks, len, currentPak );
 
 				if (chksums && i < (int)maxchksums) {
 					chksums[i] = fs_serverReferencedPaks[i];
