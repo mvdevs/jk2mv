@@ -27,6 +27,24 @@ New and Modified Cvars
 :Description:
    Print timestamps in qconsole.log and system console.
 
+..
+
+:Name: fs_forcegame
+:Values: Foldername
+:Default: "" (Not set)
+:Description:
+   Overrides the active folder, allowing a server/client to store configs and
+   other data in a specific folder independent of the active mod (``fs_game``).
+   All new configs, screenshots, demos, etc. stored by the game end up in the
+   specified folder. This folder may also be "base".
+
+   Load order:
+
+   | ``base``
+   | ``fs_basegame cvar``
+   | ``fs_game cvar``
+   | ``fs_forcegame cvar``
+
 -----------
 Client-Side
 -----------
@@ -424,6 +442,15 @@ Server-Side
 
 ..
 
+:Name: sv_enforceSnaps
+:Values: "0", "1"
+:Default: "0"
+:Description:
+   Ignore the client preference for "snaps" and try to send a snapshot per
+   server frame (sv_fps) if sv_maxSnaps and the client rate permit it.
+
+..
+
 :Name: sv_floodProtect
 :Values: Integer >= 0
 :Default: "3"
@@ -461,6 +488,42 @@ Server-Side
 :Description:
    Max out-of-bound requests handled per second. Increasing rate
    improves server responsiveness at the cost of higher CPU usage.
+
+..
+
+:Name: sv_maxRate
+:Valid: "0", Integer >= 1000
+:Default: "90000"
+:Description:
+   Maximum rate for each client. The client rate limits the maximum amount of
+   snapshots sent to a client.
+
+..
+
+:Name: sv_maxSnaps
+:Valid: Integer > 0
+:Default: "30"
+:Description:
+   Maximum amount of snapshots each client should receive. This can also be
+   limited by the client rate.
+
+..
+
+:Name: sv_minRate
+:Valid: Integer >= 1000
+:Default: "1000"
+:Description:
+   Minimum rate for each client. The client rate limits the maximum amount of
+   snapshots sent to a client.
+
+..
+
+:Name: sv_minSnaps
+:Valid: Integer > 0
+:Default: "1"
+:Description:
+   Minimum amount of snapshots each client should receive. This can also be
+   limited by the client rate.
 
 ..
 

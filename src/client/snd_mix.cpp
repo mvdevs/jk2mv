@@ -349,7 +349,9 @@ void S_PaintChannels( int endtime ) {
 		}
 
 		// transfer out according to DMA format
+		SNDDMA_BeginPainting ();
 		S_TransferPaintBuffer( end );
+		SNDDMA_Submit ();
 		s_paintedtime = end;
 	}
 }

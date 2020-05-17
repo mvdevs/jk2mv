@@ -1375,7 +1375,16 @@ void RenderSurfaces(CRenderSurface &RS)
 		// yes - ok, processing time.
 		if (boltNum != -1)
 		{
-			G2_ProcessSurfaceBolt(RS.bonePtr, surface, boltNum, RS.boltList, surfOverride, RS.currentModel);
+			mdxmSurface_t *processSurface = surface;
+
+			if (surface->numVerts == 0) {
+				// workaround for JKA models - some of them store bolt
+				// surface data only in LOD 0 surface, where others
+				// are empty. JKA engine uses only LOD 0 bolt surfaces.
+				processSurface = (mdxmSurface_t *)G2_FindSurface((void *)RS.currentModel, RS.surfaceNum, 0);
+			}
+
+			G2_ProcessSurfaceBolt(RS.bonePtr, processSurface, boltNum, RS.boltList, surfOverride, RS.currentModel);
 		}
 	}
 

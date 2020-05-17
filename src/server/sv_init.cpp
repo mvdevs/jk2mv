@@ -813,7 +813,11 @@ void SV_Init (void) {
 	sv_privateClients = Cvar_Get ("sv_privateClients", "0", CVAR_SERVERINFO);
 	sv_hostname = Cvar_Get ("sv_hostname", "noname", CVAR_SERVERINFO | CVAR_ARCHIVE );
 	sv_maxclients = Cvar_Get ("sv_maxclients", "8", CVAR_SERVERINFO | CVAR_LATCH);
-	sv_maxRate = Cvar_Get ("sv_maxRate", "0", CVAR_ARCHIVE | CVAR_SERVERINFO );
+	sv_minSnaps = Cvar_Get("sv_minSnaps", "1", CVAR_ARCHIVE);                        // jk2ded hardcoded min: 1
+	sv_maxSnaps = Cvar_Get("sv_maxSnaps", "30", CVAR_ARCHIVE);                       // jk2ded hardcoded max: 30
+	sv_enforceSnaps = Cvar_Get("sv_enforceSnaps", "0", CVAR_ARCHIVE);                // 0: users choice (limited by min/max snaps); 1: sv_fps (limited by min/max snaps)	
+	sv_minRate = Cvar_Get("sv_minRate", "1000", CVAR_ARCHIVE | CVAR_SERVERINFO );    // jk2ded hardcoded min: 1000
+	sv_maxRate = Cvar_Get ("sv_maxRate", "90000", CVAR_ARCHIVE | CVAR_SERVERINFO );  // jk2ded hardcoded max: 90000
 	sv_maxOOBRate = Cvar_Get ("sv_maxOOBRate", "20", CVAR_ARCHIVE | CVAR_GLOBAL );
 	sv_minPing = Cvar_Get ("sv_minPing", "0", CVAR_ARCHIVE | CVAR_SERVERINFO );
 	sv_maxPing = Cvar_Get ("sv_maxPing", "0", CVAR_ARCHIVE | CVAR_SERVERINFO );

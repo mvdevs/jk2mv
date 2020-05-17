@@ -54,6 +54,12 @@ typedef enum {
 	VERSION_1_04 = 4,
 } mvversion_t;
 
+typedef enum {
+	PROTOCOL_UNDEF = 0,
+	PROTOCOL15 = 15,
+	PROTOCOL16 = 16,
+} mvprotocol_t;
+
 typedef enum
 {
 	FLOCK_SH,
@@ -123,10 +129,16 @@ typedef struct {
 // void trap_MVAPI_ResetServerTime(qboolean enable)
 #define G_MVAPI_RESET_SERVER_TIME 706              /* asm: -707 */
 
+// qboolean trap_MVAPI_EnablePlayerSnapshots(qboolean enable);
+#define G_MVAPI_ENABLE_PLAYERSNAPSHOTS 707			/* asm: -708 */
+
 // ******** VMCALLS ******** //
 
 // vmMain(GAME_MVAPI_RECV_CONNECTIONLESSPACKET, ...)
 #define GAME_MVAPI_RECV_CONNECTIONLESSPACKET 101
+
+// vmMain(GAME_MVAPI_PLAYERSNAPSHOT, ...)
+#define GAME_MVAPI_PLAYERSNAPSHOT 102
 
 // ------------------------------------------ UI ------------------------------------------- //
 

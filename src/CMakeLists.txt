@@ -261,6 +261,7 @@ if (BuildMVMP OR BuildMVDED)
 	
 	set(MVMPDEDApiFiles
 		"api/mvapi.h"
+		"api/mvmenu.h"
 	)
 	source_group("api" FILES ${MVMPDEDApiFiles})
 	set(MVMPDEDFiles ${MVMPDEDFiles} ${MVMPDEDApiFiles})
@@ -550,7 +551,75 @@ if (BuildMVMP)
 		add_dependencies(${MVMP} assetsmv2)
 	endif()
 
-	add_subdirectory("menu")
+	# mvmenu is now built from source conainted in the mvsdk submodule
+	set(MVMENUDefines "GAME_EXPORTS")
+	set(MVMENUDefines "JK2MV_MENU")
+	set(MVMENUIncludeDirs ${MVGLOBALIncludeDirs})
+
+	set(MVMENUFiles
+		"mvsdk/code/api/mvapi.h"
+
+		"mvsdk/code/ui/keycodes.h"
+		"mvsdk/code/ui/ui_force.h"
+		"mvsdk/code/ui/ui_local.h"
+		"mvsdk/code/ui/ui_public.h"
+		"mvsdk/code/ui/ui_shared.h"
+		"mvsdk/code/ui/ui_multiversion.h"
+		"mvsdk/code/ui/ui_multiversion_syscalls.h"
+
+		"mvsdk/code/game/bg_weapons.h"
+		"mvsdk/code/game/q_shared.h"
+		"mvsdk/code/game/bg_multiversion.h"
+
+		"mvsdk/code/ui/ui_main.c" # keep this on top (qvm compiler needs VM_Main as the first compiled function)
+		"mvsdk/code/ui/ui_atoms.c"
+		"mvsdk/code/ui/ui_force.c"
+		"mvsdk/code/ui/ui_gameinfo.c"
+		"mvsdk/code/ui/ui_shared.c"
+		"mvsdk/code/ui/ui_multiversion.c"
+
+		"mvsdk/code/game/bg_misc.c"
+		"mvsdk/code/game/bg_weapons.c"
+		"mvsdk/code/game/q_math.c"
+		"mvsdk/code/game/q_shared.c"
+		"mvsdk/code/ui/ui_multiversion_syscalls.c"
+		"mvsdk/code/game/bg_multiversion.c"
+
+		"mvsdk/code/ui/ui_syscalls.c"
+	)
+
+	add_library(${MVMENU} SHARED ${MVMENUFiles})
+
+
+	set_target_properties(${MVMENU} PROPERTIES PREFIX "") # remove "lib" prefix for library files
+
+	target_compile_definitions(${MVMENU}
+		PRIVATE ${GlobalDefines} ${MVMENUDefines}
+		PRIVATE $<$<CONFIG:Debug>:${DebugDefines}>
+		PRIVATE $<$<CONFIG:Release>:${ReleaseDefines}>
+		PRIVATE $<$<CONFIG:RelWithDebInfo>:${ReleaseDefines}>
+	)
+
+	set_target_properties(${MVMENU} PROPERTIES C_STANDARD 90)
+	set_target_properties(${MVMENU} PROPERTIES INCLUDE_DIRECTORIES "${MVMENUIncludeDirs}")
+	set_target_properties(${MVMENU} PROPERTIES PROJECT_LABEL "jk2mvmenu")
+
+	if(BuildPortableVersion)
+		if(WIN32)
+			install(TARGETS ${MVMENU} RUNTIME DESTINATION ".")
+		else()
+			install(TARGETS ${MVMENU} LIBRARY DESTINATION ".")
+		endif()
+	else()
+		if(WIN32)
+			install(TARGETS ${MVMENU} RUNTIME DESTINATION ".")
+			install(FILES $<TARGET_PDB_FILE:${MVMENU}> DESTINATION "." OPTIONAL)
+		elseif(APPLE)
+			install(TARGETS ${MVMENU} LIBRARY DESTINATION "${MVMP}.app/Contents/MacOS")
+		else()
+			install(TARGETS ${MVMENU} LIBRARY DESTINATION "lib")
+		endif()
+	endif()
 endif()
 
 # jk2mvded

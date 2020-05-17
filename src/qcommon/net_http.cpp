@@ -191,7 +191,7 @@ static struct clientDL_t {
 } cldls[MAX_PARALLEL_DOWNLOADS];
 
 static void NET_HTTP_DownloadProcessEvent() {
-	std::lock_guard<std::mutex> lk(m_cldls);
+	m_cldls.lock();
 
 	for (size_t i = 0; i < ARRAY_LEN(cldls); i++) {
 		clientDL_t *cldl = &cldls[i];
@@ -203,12 +203,16 @@ static void NET_HTTP_DownloadProcessEvent() {
 				}
 			} else {
 				// download ended
-
 				NET_HTTP_StopDownload((dlHandle_t)i);
+
+				m_cldls.unlock();
 				cldl->ended_callback((dlHandle_t)i, (qboolean)(!cldl->error), cldl->err_msg);
+				m_cldls.lock();
 			}
 		}
 	}
+
+	m_cldls.unlock();
 }
 
 static void NET_HTTP_DownloadRecvData(struct mbuf *io, struct mg_connection *nc, std::unique_lock<std::mutex> *lock) {

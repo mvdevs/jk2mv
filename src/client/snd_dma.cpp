@@ -1538,6 +1538,31 @@ void S_StopAllSounds(void)
 }
 
 /*
+===============
+S_Activate
+
+(De)activates sound playback
+===============
+*/
+void S_Activate(qboolean activate)
+{
+	if (activate) {
+		S_ClearSoundBuffer();
+	}
+
+#ifdef USE_OPENAL
+	if (s_UseOpenAL)
+	{
+		S_MuteAllSounds((qboolean)!activate);
+	}
+	else
+#endif
+	{
+		SNDDMA_Activate(activate);
+	}
+}
+
+/*
 ==============================================================
 
 continuous looping sounds are added each frame
@@ -2534,13 +2559,7 @@ void S_Update_(void) {
 		if (endtime - s_soundtime > samps)
 			endtime = s_soundtime + samps;
 
-
-
-		SNDDMA_BeginPainting ();
-
 		S_PaintChannels (endtime);
-
-		SNDDMA_Submit ();
 
 		lastTime = thisTime;
 	}
@@ -2875,20 +2894,7 @@ void UpdateRawSamples()
 		if (state != AL_PLAYING)
 		{
 			// Stopped playing ... due to buffer underrun
-			// Unqueue any buffers still on the Source (they will be PROCESSED), and restart playback
-			alGetSourcei(s_channels[0].alSource, AL_BUFFERS_PROCESSED, &processed);
-
-			while (processed)
-			{
-				alSourceUnqueueBuffers(s_channels[0].alSource, 1, &buffer);
-				processed--;
-				alGetBufferi(buffer, AL_SIZE, &size);
-				alDeleteBuffers(1, &buffer);
-
-				// Update sg.soundtime (+= number of samples played (number of bytes / 4))
-				s_soundtime += (size >> 2);
-			}
-
+			// Restart playback - old buffers were already unqueued
 			alSourcePlay(s_channels[0].alSource);
 		}
 	}
@@ -2955,11 +2961,11 @@ void S_SoundList_f( void ) {
 	total = 0;
 
 	Com_Printf("\n");
-	Com_Printf("					InMemory?\n");
-	Com_Printf("					|\n");
-	Com_Printf("					|  LevelLastUsedOn\n");
-	Com_Printf("					|  |\n");
-	Com_Printf("					|  |\n");
+	Com_Printf("                    InMemory?\n");
+	Com_Printf("                    |\n");
+	Com_Printf("                    |  LevelLastUsedOn\n");
+	Com_Printf("                    |  |\n");
+	Com_Printf("                    |  |\n");
 	Com_Printf(" Slot   Bytes Type  |  |   Name\n");
 //	Com_Printf(" Slot   Bytes Type  InMem?   Name\n");
 

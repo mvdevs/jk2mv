@@ -88,7 +88,7 @@ void R_IssueRenderCommands( qboolean runPerformanceCounters ) {
 	}
 
 	// actually start the commands going
-	if (!r_skipBackEnd->integer && !com_minimized->integer) {
+	if (!tr.skipBackend) {
 		// let it start on the new batch
 		RB_ExecuteRenderCommands(cmdList->cmds);
 	}
@@ -314,7 +314,7 @@ If running in stereo, RE_BeginFrame will be called twice
 for each RE_EndFrame
 ====================
 */
-void RE_BeginFrame( stereoFrame_t stereoFrame ) {
+void RE_BeginFrame( stereoFrame_t stereoFrame, qboolean skipBackend ) {
 	drawBufferCommand_t	*cmd;
 
 	if ( !tr.registered ) {
@@ -324,6 +324,8 @@ void RE_BeginFrame( stereoFrame_t stereoFrame ) {
 
 	tr.frameCount++;
 	tr.frameSceneNum = 0;
+
+	tr.skipBackend = (qboolean)(r_skipBackEnd->integer || skipBackend);
 
 	//
 	// do overdraw measurement
@@ -445,15 +447,44 @@ void RE_BeginFrame( stereoFrame_t stereoFrame ) {
 =============
 RE_EndFrame
 
+This must be called when drawing is done after RE_BeginFrame
+=============
+*/
+void RE_EndFrame( void ) {
+	if (r_gammamethod->integer == GAMMA_POSTPROCESSING) {
+		RE_GammaCorrection();
+	}
+}
+
+/*
+=============
+RE_SwapBuffers
+
 Returns the number of msec spent in the back end
 =============
 */
-void RE_EndFrame( int *frontEndMsec, int *backEndMsec ) {
+void RE_SwapBuffers( int *frontEndMsec, int *backEndMsec ) {
 	swapBuffersCommand_t	*cmd;
 
 	if ( !tr.registered ) {
 		return;
 	}
+
+	if (tr.screenshotTGA) {
+		tr.screenshotTGA = qfalse;
+		RE_TakeScreenshotTGA(tr.screenshotTGAName, tr.screenshotTGASilent);
+	}
+
+	if (tr.screenshotJPEG) {
+		tr.screenshotJPEG = qfalse;
+		RE_TakeScreenshotJPEG(tr.screenshotJPEGName, tr.screenshotJPEGQuality, tr.screenshotJPEGSilent);
+	}
+
+	if (tr.levelshot) {
+		tr.levelshot = qfalse;
+		RE_TakeLevelshot(tr.levelshotName);
+	}
+
 	cmd = (swapBuffersCommand_t *)R_GetCommandBufferReserved( sizeof( *cmd ), 0 );
 	if (!cmd) {
 		return;
@@ -474,29 +505,269 @@ void RE_EndFrame( int *frontEndMsec, int *backEndMsec ) {
 	backEnd.pc.msec = 0;
 }
 
+/*
+=============
+RE_CaptureFrameRAW
+
+Capture current frame buffer as raw BGR data. Returns data size.
+=============
+*/
+int RE_CaptureFrameRaw( byte *buffer, int bufSize, int padding )
+{
+	readPixelsCommand_t	*cmd;
+	int		size;
+
+	if( !tr.registered ) {
+		return 0;
+	}
+
+	cmd = (readPixelsCommand_t *)R_GetCommandBuffer( sizeof( *cmd ) );
+	if( !cmd ) {
+		return 0;
+	}
+
+	size = PAD(glConfig.vidWidth * 3, padding) * glConfig.vidHeight;
+
+	// Get raw pixels from backend
+	cmd->commandId = RC_READ_PIXELS;
+
+	cmd->buffer = buffer;
+	cmd->bufSize = bufSize;
+	cmd->padding = padding;
+	cmd->format = GL_BGR;
+
+	R_SyncRenderThread();
+	//
+
+	if (r_gammamethod->integer == GAMMA_HARDWARE)
+		R_GammaCorrect(buffer, size);
+
+	return size;
+}
 
 /*
 =============
-RE_TakeVideoFrame
+RE_CaptureFrameJPEG
+
+Capture current frame buffer as JPEG image. Returns JPEG size.
 =============
 */
-void RE_TakeVideoFrame( int width, int height, qboolean motionJpeg, int motionJpegQuality )
+int RE_CaptureFrameJPEG( byte *buffer, int bufSize, int quality )
 {
-	videoFrameCommand_t	*cmd;
+	readPixelsCommand_t	*cmd;
+	byte	*captureBuffer;
+	int		width, height;
+	size_t	memcount;
+	int		size;
+
+	if( !tr.registered ) {
+		return 0;
+	}
+
+	cmd = (readPixelsCommand_t *)R_GetCommandBuffer( sizeof( *cmd ) );
+	if( !cmd ) {
+		return 0;
+	}
+
+	width = glConfig.vidWidth;
+	height = glConfig.vidHeight;
+	memcount = width * height * 3;
+
+	captureBuffer = (byte *)ri.Hunk_AllocateTempMemory(memcount);
+
+	// Get raw pixels from backend
+	cmd->commandId = RC_READ_PIXELS;
+
+	cmd->buffer = captureBuffer;
+	cmd->bufSize = memcount;
+	cmd->padding = 1;
+	cmd->format = GL_RGB;
+
+	R_SyncRenderThread();
+	//
+
+	if (r_gammamethod->integer == GAMMA_HARDWARE)
+		R_GammaCorrect(captureBuffer, memcount);
+
+	size = SaveJPGToBuffer(buffer, bufSize,
+		quality, width, height, captureBuffer, 0);
+
+	ri.Hunk_FreeTempMemory(captureBuffer);
+
+	return size;
+}
+
+/*
+=============
+RE_RenderWorldEffects
+=============
+*/
+void RE_RenderWorldEffects( void )
+{
+	worldEffectsCommand_t	*cmd;
 
 	if( !tr.registered ) {
 		return;
 	}
 
-	cmd = (videoFrameCommand_t *)R_GetCommandBuffer( sizeof( *cmd ) );
+	cmd = (worldEffectsCommand_t *)R_GetCommandBuffer( sizeof( *cmd ) );
 	if( !cmd ) {
 		return;
 	}
 
-	cmd->commandId = RC_VIDEOFRAME;
+	cmd->commandId = RC_WORLD_EFFECTS;
+}
 
-	cmd->width = width;
-	cmd->height = height;
-	cmd->motionJpeg = motionJpeg;
-	cmd->motionJpegQuality = motionJpegQuality;
+/*
+=============
+RE_GammaCorrection
+=============
+*/
+void RE_GammaCorrection( void )
+{
+	gammaCorrectionCommand_t	*cmd;
+
+	if( !tr.registered ) {
+		return;
+	}
+
+	cmd = (gammaCorrectionCommand_t *)R_GetCommandBuffer( sizeof( *cmd ) );
+	if( !cmd ) {
+		return;
+	}
+
+	cmd->commandId = RC_GAMMA_CORRECTION;
+}
+
+/*
+=============
+RE_TakeScreenshotJPEG
+=============
+*/
+void RE_TakeScreenshotJPEG( const char *filename, int quality, qboolean silent )
+{
+	int		width = glConfig.vidWidth;
+	int		height = glConfig.vidHeight;
+	byte	*buffer;
+	int		bufSize;
+	int		size;
+
+	bufSize = width * height * 3;
+	buffer = (byte *)ri.Hunk_AllocateTempMemory(bufSize);
+
+	size = RE_CaptureFrameJPEG(buffer, bufSize, quality);
+	ri.FS_WriteFile(filename, buffer, size);
+
+	if ( !silent ) {
+		ri.Printf (PRINT_ALL, "Wrote %s\n", filename);
+	}
+
+	ri.Hunk_FreeTempMemory(buffer);
+}
+
+/*
+=============
+RE_TakeScreenshotTGA
+=============
+*/
+void RE_TakeScreenshotTGA( const char *filename, qboolean silent )
+{
+	int		width, height;
+	byte	*buffer;
+	byte	*captureBuffer;
+	int		bufSize;
+	int		captureBufSize;
+
+	width = glConfig.vidWidth;
+	height = glConfig.vidHeight;
+
+	captureBufSize = width * height * 3;
+	bufSize = captureBufSize + 18;
+
+	buffer = (byte *)ri.Hunk_AllocateTempMemory(bufSize);
+
+	Com_Memset (buffer, 0, 18);
+	buffer[2] = 2;		// uncompressed type
+	buffer[12] = width & 255;
+	buffer[13] = width >> 8;
+	buffer[14] = height & 255;
+	buffer[15] = height >> 8;
+	buffer[16] = 24;	// pixel size
+
+	captureBuffer = buffer + 18;
+
+	RE_CaptureFrameRaw(captureBuffer, captureBufSize, 1);
+	ri.FS_WriteFile(filename, buffer, bufSize);
+
+	if (!silent) {
+		ri.Printf (PRINT_ALL, "Wrote %s\n", filename);
+	}
+
+	ri.Hunk_FreeTempMemory(buffer);
+}
+
+/*
+=============
+RE_TakeLevelshot
+=============
+*/
+void RE_TakeLevelshot( const char *filename )
+{
+	int		width = glConfig.vidWidth;
+	int		height = glConfig.vidHeight;
+	byte	*captureBuffer;
+	byte	*buffer;
+	int		captureBufferSize;
+	int		bufferSize;
+	byte	*src;
+	byte	*dst;
+	int		x, y;
+	int		r, g, b;
+	float	xScale, yScale;
+	int		xx, yy;
+
+	const int LEVELSHOTSIZE = 256;
+
+	captureBufferSize = width * height * 3;
+	captureBuffer = (byte *)ri.Hunk_AllocateTempMemory(captureBufferSize);
+	bufferSize = LEVELSHOTSIZE * LEVELSHOTSIZE*3 + 18;
+	buffer = (byte *)ri.Hunk_AllocateTempMemory(bufferSize);
+
+	RE_CaptureFrameRaw(captureBuffer, captureBufferSize, 1);
+
+	Com_Memset (buffer, 0, 18);
+	buffer[2] = 2;		// uncompressed type
+	buffer[12] = LEVELSHOTSIZE & 255;
+	buffer[13] = LEVELSHOTSIZE >> 8;
+	buffer[14] = LEVELSHOTSIZE & 255;
+	buffer[15] = LEVELSHOTSIZE >> 8;
+	buffer[16] = 24;	// pixel size
+
+	// resample from source
+	xScale = width / (4.0*LEVELSHOTSIZE);
+	yScale = height / (3.0*LEVELSHOTSIZE);
+	for ( y = 0 ; y < LEVELSHOTSIZE ; y++ ) {
+		for ( x = 0 ; x < LEVELSHOTSIZE ; x++ ) {
+			r = g = b = 0;
+			for ( yy = 0 ; yy < 3 ; yy++ ) {
+				for ( xx = 0 ; xx < 4 ; xx++ ) {
+					src = captureBuffer + 3 * ( width * (int)( (y*3+yy)*yScale ) + (int)( (x*4+xx)*xScale ) );
+					b += src[0];
+					g += src[1];
+					r += src[2];
+				}
+			}
+			dst = buffer + 18 + 3 * ( y * LEVELSHOTSIZE + x );
+			dst[0] = b / 12;
+			dst[1] = g / 12;
+			dst[2] = r / 12;
+		}
+	}
+
+	ri.FS_WriteFile(filename, buffer, bufferSize );
+
+	ri.Printf( PRINT_ALL, "Wrote %s\n", filename );
+
+	ri.Hunk_FreeTempMemory( buffer );
+	ri.Hunk_FreeTempMemory( captureBuffer );
 }

@@ -36,12 +36,12 @@ Clone the JK2MV repository including submodules (required if you also want to bu
  	* Windows: Requires at least Visual Studio 2013, required libraries are shipped with JK2MV in the `libs` directory.
 		* If you plan to build the installer package get NSIS from http://nsis.sourceforge.net
 	* Linux/FreeBSD: OpenGL, OpenAL, SDL2 and depending on your configuration libjpeg, libpng, libminizip, zlib.
-		* Ubuntu/Debian: `apt-get install git debhelper devscripts libsdl2-dev libgl1-mesa-dev libopenal-dev libjpeg8-dev libpng12-dev zlib1g-dev libminizip-dev`
+		* Ubuntu/Debian: `apt-get install git debhelper devscripts libsdl2-dev libgl1-mesa-dev libopenal-dev libjpeg-dev libpng-dev zlib1g-dev libminizip-dev`
 		* Fedora: `dnf install git SDL2-devel mesa-libGL-devel openal-soft-devel libjpeg-turbo-devel libpng-devel zlib-devel minizip-devel`
-	* MacOSX: XCode on MacOSX >= 10.6
+	* MacOSX: XCode on MacOSX >= 10.9
 		* Configure / Build SDL2:
-			1. `curl -O https://www.libsdl.org/release/SDL2-2.0.8.tar.gz`
-			2. `tar xzf SDL2-2.0.8.tar.gz && cd SDL2-2.0.8/Xcode/SDL`
+			1. `curl -O https://www.libsdl.org/release/SDL2-2.0.10.tar.gz`
+			2. `tar xzf SDL2-2.0.10.tar.gz && cd SDL2-2.0.10/Xcode/SDL`
 			4. `sed -i -e 's/@rpath//g' SDL.xcodeproj/project.pbxproj` (packaging fails otherwise)
 			5. `xcodebuild -configuration Release`
 			6. `mkdir -p ~/Library/Frameworks/`

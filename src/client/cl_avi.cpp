@@ -64,11 +64,17 @@ typedef struct aviFileData_s
 
   int           chunkStack[ MAX_RIFF_CHUNKS ];
   int           chunkStackTop;
+
+  byte			*frameBuffer;
+  int			frameBufferSize;
 } aviFileData_t;
 
 static aviFileData_t afd;
 
 #define MAX_AVI_BUFFER 2048
+
+// AVI files have the start of pixel lines 4 byte-aligned
+#define AVI_LINE_PADDING 4
 
 static byte buffer[ MAX_AVI_BUFFER ];
 static int  bufIndex;
@@ -350,6 +356,14 @@ qboolean CL_OpenAVIForWriting( const char *fileName )
   afd.height = cls.glconfig.vidHeight;
   afd.isFifo = FS_IsFifo( afd.fileName );
 
+  if ( afd.frameBuffer ) {
+	  Z_Free( afd.frameBuffer );
+	  afd.frameBuffer = NULL;
+  }
+
+  afd.frameBufferSize = PAD(afd.width * 3, AVI_LINE_PADDING) * afd.height;
+  afd.frameBuffer = (byte *)Z_Malloc( afd.frameBufferSize, TAG_AVI );
+
   if( cl_aviMotionJpeg->integer )
     afd.motionJpeg = qtrue;
   else
@@ -562,11 +576,19 @@ CL_TakeVideoFrame
 */
 void CL_TakeVideoFrame( void )
 {
+  int size;
+
   // AVI file isn't open
   if( !afd.fileOpen )
     return;
 
-  re.TakeVideoFrame( afd.width, afd.height, afd.motionJpeg, cl_aviMotionJpegQuality->integer );
+  if ( afd.motionJpeg ) {
+	  size = re.CaptureFrameJPEG( afd.frameBuffer, afd.frameBufferSize, cl_aviMotionJpegQuality->integer );
+  } else {
+	  size = re.CaptureFrameRaw( afd.frameBuffer, afd.frameBufferSize, AVI_LINE_PADDING );
+  }
+
+  CL_WriteAVIVideoFrame( afd.frameBuffer, size );
 }
 
 /*
@@ -587,6 +609,12 @@ qboolean CL_CloseAVI( void )
     return qfalse;
 
   afd.fileOpen = qfalse;
+
+  if ( afd.frameBuffer ) {
+	  Z_Free( afd.frameBuffer );
+	  afd.frameBuffer = NULL;
+	  afd.frameBufferSize = 0;
+  }
 
   FS_Seek( afd.idxF, 4, FS_SEEK_SET );
   bufIndex = 0;

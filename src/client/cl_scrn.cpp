@@ -417,7 +417,9 @@ This will be called twice if rendering in stereo mode
 ==================
 */
 void SCR_DrawScreenField( stereoFrame_t stereoFrame ) {
-	re.BeginFrame( stereoFrame );
+	qboolean skipBackend = (qboolean)(com_minimized->integer && !CL_VideoRecording());
+
+	re.BeginFrame( stereoFrame, skipBackend );
 
 	if ( !uivm ) {
 		Com_DPrintf("draw screen without UI loaded\n");
@@ -484,6 +486,8 @@ void SCR_DrawScreenField( stereoFrame_t stereoFrame ) {
 	if ( cl_debuggraph->integer || cl_timegraph->integer || cl_debugMove->integer ) {
 		SCR_DrawDebugGraph ();
 	}
+
+	re.EndFrame();
 }
 
 /*
@@ -514,10 +518,12 @@ void SCR_UpdateScreen( void ) {
 		SCR_DrawScreenField( STEREO_CENTER );
 	}
 
+	CL_TakeVideoFrame();
+
 	if ( com_speeds->integer ) {
-		re.EndFrame( &time_frontend, &time_backend );
+		re.SwapBuffers( &time_frontend, &time_backend );
 	} else {
-		re.EndFrame( NULL, NULL );
+		re.SwapBuffers( NULL, NULL );
 	}
 
 	recursive = 0;

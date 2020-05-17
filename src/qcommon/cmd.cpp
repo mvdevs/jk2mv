@@ -557,7 +557,7 @@ Cmd_List_f
 ============
 */
 
-static int Cmd_CommandCmp(const void *p1, const void *p2) {
+static int QDECL Cmd_CommandCmp(const void *p1, const void *p2) {
     const cmd_function_t * const *e1 = (const cmd_function_t * const *)p1;
     const cmd_function_t * const *e2 = (const cmd_function_t * const *)p2;
 

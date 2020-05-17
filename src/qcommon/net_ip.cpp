@@ -871,7 +871,7 @@ static qboolean NET_GetCvars( void ) {
 	modified += net_socksPassword->modified;
 	net_socksPassword->modified = qfalse;
 
-	net_dropsim = Cvar_Get( "net_dropsim", "", CVAR_TEMP);
+	net_dropsim = Cvar_Get( "net_dropsim", "", CVAR_TEMP | CVAR_CHEAT);
 
 	return modified ? qtrue : qfalse;
 }

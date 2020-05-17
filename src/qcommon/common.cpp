@@ -52,7 +52,6 @@ cvar_t	*com_developer;
 cvar_t	*com_dedicated;
 cvar_t	*com_timescale;
 cvar_t	*com_fixedtime;
-cvar_t	*com_dropsim;		// 0.0 to 1.0, simulated packet drops
 cvar_t	*com_journal;
 cvar_t	*com_timedemo;
 cvar_t	*com_sv_running;
@@ -1343,10 +1342,13 @@ const char *CopyString( const char *in ) {
 	return out;
 }
 
+const char *CopyString( const char *in, memtag_t eTag ) {
+	char	*out;
 
-
-
-
+	out = (char *)Z_Malloc(strlen(in) + 1, eTag);
+	strcpy(out, in);
+	return out;
+}
 
 
 /*
@@ -1507,10 +1509,10 @@ void Com_Meminfo_f( void ) {
 	Com_Printf( "%8i unused highwater\n", unused );
 	Com_Printf( "\n" );
 //	Com_Printf( "%8i bytes in %i zone blocks\n", zoneBytes, zoneBlocks	);
-	Com_Printf( "		%8i bytes in dynamic botlib\n", botlibBytes );
-	Com_Printf( "		%8i bytes in dynamic renderer\n", rendererBytes );
-//	Com_Printf( "		%8i bytes in dynamic other\n", zoneBytes - ( botlibBytes + rendererBytes ) );
-//	Com_Printf( "		%8i bytes in small Zone memory\n", smallZoneBytes );
+	Com_Printf( "%8i bytes in dynamic botlib\n", botlibBytes );
+	Com_Printf( "%8i bytes in dynamic renderer\n", rendererBytes );
+//	Com_Printf( "%8i bytes in dynamic other\n", zoneBytes - ( botlibBytes + rendererBytes ) );
+//	Com_Printf( "%8i bytes in small Zone memory\n", smallZoneBytes );
 }
 
 /*
@@ -2507,7 +2509,6 @@ void Com_Init( char *commandLine ) {
 	com_timescale = Cvar_Get ("timescale", "1", CVAR_CHEAT | CVAR_SYSTEMINFO );
 	com_fixedtime = Cvar_Get ("fixedtime", "0", CVAR_CHEAT);
 	com_showtrace = Cvar_Get ("com_showtrace", "0", CVAR_CHEAT);
-	com_dropsim = Cvar_Get ("com_dropsim", "0", CVAR_CHEAT);
 	com_viewlog = Cvar_Get( "viewlog", "0", CVAR_CHEAT );
 	com_speeds = Cvar_Get ("com_speeds", "0", 0);
 	com_timedemo = Cvar_Get ("timedemo", "0", 0);

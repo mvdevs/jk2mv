@@ -230,6 +230,10 @@ int main(int argc, char* argv[]) {
 		argc = 1;
 #endif
 
+#if defined(DEBUG_SDL) && !defined(DEDICATED)
+	SDL_LogSetAllPriority(SDL_LOG_PRIORITY_VERBOSE);
+#endif
+
 	// Concatenate the command line for passing to Com_Init
 	for (i = 1; i < argc; i++) {
 		const bool containsSpaces = (strchr(argv[i], ' ') != NULL);

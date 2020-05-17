@@ -1160,17 +1160,17 @@ Ghoul2 Insert End
 		}
 	}
 
-	if (VM_MVMenu(uivm)) {
+	if (VM_MVMenuLevel(uivm) >= 2) {
 		switch (args[0]) {
 			// download popup
-		case UI_MV_CONTINUE_DOWNLOAD:
+		case UI_MVAPI_CONTINUE_DOWNLOAD:
 			CL_ContinueCurrentDownload((dldecision_t)args[1]);
 			return qtrue;
-		case UI_MV_GETDLLIST:
+		case UI_MVAPI_GETDLLIST:
 			return UI_ConcatDLList(VMAA(1, dlfile_t, args[2]), args[2]);
-		case UI_MV_RMDLPREFIX:
+		case UI_MVAPI_RMDLPREFIX:
 			return FS_RMDLPrefix(VMAS(1));
-		case UI_MV_DELDLFILE:
+		case UI_MVAPI_DELDLFILE:
 			return UI_DeleteDLFile(VMAV(1, const dlfile_t));
 		}
 	}
@@ -1206,23 +1206,31 @@ void CL_InitUI(qboolean mainMenu) {
 	int v;
 	int apilevel = MIN(mv_apienabled->integer, MV_APILEVEL);
 
-	Cvar_Get("ui_menulevel", "0", CVAR_ROM | CVAR_INTERNAL, qfalse);
+	// mv_menuOverride  1 -> force ui module everywhere
+	// mv_menuOverride  0 -> mvmenu on main menu; ui module ingame
+	// mv_menuOverride -1 -> force mvmenu everywhere
+
+	cvar_t *ui_menulevel = Cvar_Get("ui_menulevel", "0", CVAR_ROM | CVAR_INTERNAL, qfalse);
 	Cvar_Set("ui_menulevel", "0");
 
-	if (mainMenu && mv_menuOverride->integer == 0) {
-		apilevel = MV_APILEVEL;
-
-		uivm = VM_Create("jk2mvmenu", qtrue, CL_UISystemCalls, VMI_NATIVE);
-		VM_SetGameversion(uivm, VERSION_UNDEF);
-	} else {
+	if ( (!mainMenu || mv_menuOverride->integer == 1) && mv_menuOverride->integer != -1 ) {
 		if (cl_connectedToPureServer != 0) {
 			// if sv_pure is set we only allow qvms to be loaded
 			interpret = VMI_COMPILED;
 		} else {
 			interpret = (vmInterpret_t)(int)Cvar_VariableValue("vm_ui");
 		}
-		uivm = VM_Create("ui", qfalse, CL_UISystemCalls, interpret);
+		uivm = VM_Create("ui", (qboolean)!!mv_menuOverride->integer, CL_UISystemCalls, interpret);
 	}
+
+	// Load the mvmenu if we want the mainMenu or failed to load a ui module earlier
+	if ( (mainMenu && !mv_menuOverride->integer) || mv_menuOverride->integer == -1 || !uivm ) {
+		apilevel = MV_APILEVEL;
+
+		uivm = VM_Create("jk2mvmenu", qtrue, CL_UISystemCalls, VMI_NATIVE);
+		VM_SetGameversion(uivm, VERSION_UNDEF);
+	}
+
 	if ( !uivm ) {
 		Com_Error( ERR_FATAL, "VM_Create on UI failed" );
 	}
@@ -1230,12 +1238,30 @@ void CL_InitUI(qboolean mainMenu) {
 	cls.uiStarted = qtrue;
 
 	// sanity check
-	v = VM_Call( uivm, UI_GETAPIVERSION );
+	v = VM_Call( uivm, UI_GETAPIVERSION, 0, 0, 0, 0, 0, 0, 0 ,0 ,0 ,0 ,0, (mainMenu ? MV_MENULEVEL_MAX : 0) );
 	if (v != UI_API_16_VERSION && v != UI_API_15_VERSION) {
 		CL_ShutdownUI();
 		Com_Error(ERR_DROP, "User Interface is version %d, expected %d or %d", v, UI_API_16_VERSION, UI_API_15_VERSION);
 	} else {
 		int apireq;
+
+		// Using a cvar to deliver the wishlevel so we can just tunnel the menulevel through UI_GETAPIVERSION
+		// We initialise the cvar with 0 whenever we load a module; the mvmenu and mvsdk ui set a value != 0 to signal
+		// that they support the menu api;
+		if ( mainMenu && ui_menulevel->integer )
+		{
+			if ( ui_menulevel->integer < MV_MENULEVEL_MIN )
+				Com_Error(ERR_DROP, "Trying to load a menu with too low level (%d < %d)", ui_menulevel->integer, MV_MENULEVEL_MIN);
+			else if ( ui_menulevel->integer <= MV_MENULEVEL_MAX )
+				VM_SetMVMenuLevel( uivm, ui_menulevel->integer );
+			else
+				VM_SetMVMenuLevel( uivm, 0 );
+		}
+		else
+		{
+			if ( mainMenu ) Com_Printf("WARNING: Using unsupported module as mainMenu\n");
+			VM_SetMVMenuLevel( uivm, 0 );
+		}
 
 		apireq = VM_Call( uivm, UI_INIT, mainMenu ? qfalse : (cls.state >= CA_AUTHORIZING && cls.state <= CA_ACTIVE), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, apilevel );
 		if (apireq > apilevel) {
@@ -1258,7 +1284,7 @@ Swap UI with mvmenu if it's not loaded already
 ====================
 */
 void CL_InitMVMenu( void ) {
-	if ( !VM_MVMenu(uivm) ) {
+	if ( !VM_MVMenuLevel(uivm) ) {
 		CL_ShutdownUI();
 		CL_InitUI(qtrue);
 	}
@@ -1302,7 +1328,6 @@ int UI_ConcatDLList(dlfile_t *files, const int maxfiles) {
 	CL_ReadBlacklistFile();
 	for (i = 0; i < cls.downloadBlacklistLen && i < maxfiles; i++) {
 		Q_strncpyz(files->name, cls.downloadBlacklist[i].name, sizeof(files->name));
-		files->time = cls.downloadBlacklist[i].time;
 		files->checkksum = cls.downloadBlacklist[i].checksum;
 		files->blacklisted = qtrue;
 

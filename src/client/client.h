@@ -8,6 +8,7 @@
 #include "../cgame/cg_public.h"
 #include "../game/bg_public.h"
 #include "../api/mvapi.h"
+#include "../api/mvmenu.h"
 
 #define	RETRANSMIT_TIMEOUT	3000	// time between connection packet retransmits
 

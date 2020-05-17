@@ -804,7 +804,7 @@ with the archive flag set to qtrue.
 ============
 */
 
-static int Cvar_CvarCmp(const void *p1, const void *p2) {
+static int QDECL Cvar_CvarCmp(const void *p1, const void *p2) {
     const cvar_t * const *e1 = (const cvar_t * const *)p1;
     const cvar_t * const *e2 = (const cvar_t * const *)p2;
 
@@ -1096,7 +1096,7 @@ void	Cvar_Update( vmCvar_t *vmCvar ) {
 	vmCvar->modificationCount = cv->modificationCount;
 	// bk001129 - mismatches.
 	if ( strlen(cv->string)+1 > MAX_CVAR_VALUE_STRING )
-	  Com_Error( ERR_DROP, "Cvar_Update: src %s length %d exceeds MAX_CVAR_VALUE_STRING",
+	  Com_Printf( "Cvar_Update: src \"%s\" length %d exceeds MAX_CVAR_VALUE_STRING\n",
 		  cv->string,
 		  (int)strlen(cv->string) );
 	// bk001212 - Q_strncpyz guarantees zero padding and dest[MAX_CVAR_VALUE_STRING-1]==0

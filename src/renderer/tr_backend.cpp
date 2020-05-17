@@ -1205,55 +1205,10 @@ const void	*RB_SwapBuffers( const void *data ) {
 		RB_EndSurface();
 	}
 
-	// gamma correction
-	if (r_gammamethod->integer == GAMMA_POSTPROCESSING) {
-		RB_SetGL2D();
-
-		qglEnable(GL_VERTEX_PROGRAM_ARB);
-		qglBindProgramARB(GL_VERTEX_PROGRAM_ARB, tr.gammaVertexShader);
-		qglEnable(GL_FRAGMENT_PROGRAM_ARB);
-		qglBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, tr.gammaPixelShader);
-
-		GL_SelectTexture(0);
-		qglEnable(GL_TEXTURE_RECTANGLE_ARB);
-		qglBindTexture(GL_TEXTURE_RECTANGLE_ARB, tr.sceneImage);
-		qglCopyTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA, 0, 0, glConfig.vidWidth, glConfig.vidHeight, 0);
-		qglDisable(GL_TEXTURE_RECTANGLE_ARB);
-
-		GL_SelectTexture(1);
-		qglEnable(GL_TEXTURE_3D);
-		qglBindTexture(GL_TEXTURE_3D, tr.gammaLUTImage);
-
-		qglClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-		qglClear(GL_COLOR_BUFFER_BIT);
-
-		qglBegin(GL_QUADS);
-			qglTexCoord2f(0.0f, 0.0f);
-			qglVertex2f(-1.0f, -1.0f);
-
-			qglTexCoord2f(0.0f, (float)glConfig.vidHeight);
-			qglVertex2f(-1.0f, 1.0f);
-
-			qglTexCoord2f((float)glConfig.vidWidth, (float)glConfig.vidHeight);
-			qglVertex2f(1.0f, 1.0f);
-
-			qglTexCoord2f((float)glConfig.vidWidth, 0.0f);
-			qglVertex2f(1.0f, -1.0f);
-		qglEnd();
-
-		qglDisable(GL_VERTEX_PROGRAM_ARB);
-		qglDisable(GL_FRAGMENT_PROGRAM_ARB);
-
-		qglDisable(GL_TEXTURE_3D);
-		GL_SelectTexture(0);
-	}
-
 	// texture swapping test
 	if (r_showImages->integer) {
 		RB_ShowImages();
 	}
-
-	RB_RenderWorldEffects();
 
 	cmd = (const swapBuffersCommand_t *)data;
 
@@ -1288,75 +1243,112 @@ const void	*RB_SwapBuffers( const void *data ) {
 	return (const void *)(cmd + 1);
 }
 
-
 /*
 ==================
-RB_TakeVideoFrameCmd
+RB_WorldEffects
 ==================
 */
-const void *RB_TakeVideoFrameCmd( const void *data )
+const void *RB_WorldEffects( const void *data )
 {
-	const videoFrameCommand_t	*cmd;
-	byte	*buffer;
-	byte	*captureBuffer;
-	size_t	offset;
-	size_t	memcount, linelen;
-	int		padwidth, padlen;
+	const worldEffectsCommand_t	*cmd;
 
-	cmd = (const videoFrameCommand_t *)data;
+	cmd = (const worldEffectsCommand_t *)data;
 
-	offset = 0;
-	buffer = RB_ReadPixels(0, 0, cmd->width, cmd->height, &offset,
-		(qboolean) !cmd->motionJpeg, AVI_LINE_PADDING);
-	captureBuffer = buffer + offset;
-
-	// AVI line padding
-	linelen = cmd->width * 3;
-	padwidth = PAD(linelen, AVI_LINE_PADDING);
-	padlen = padwidth - linelen;
-	memcount = padwidth * cmd->height;
-
-	if(cmd->motionJpeg)
-	{
-		byte	*buffer2;
-		byte	*encodeBuffer;
-
-		buffer2 = (byte *)ri.Hunk_AllocateTempMemory(memcount + AVI_LINE_PADDING - 1);
-		encodeBuffer = (byte *)PADP(buffer2, AVI_LINE_PADDING);
-
-		memcount = SaveJPGToBuffer(encodeBuffer, linelen * cmd->height,
-			cmd->motionJpegQuality,
-			cmd->width, cmd->height, captureBuffer, padlen);
-
-		ri.CL_WriteAVIVideoFrame(encodeBuffer, memcount);
-
-		ri.Hunk_FreeTempMemory(buffer2);
-	}
-	else
-	{
-		ri.CL_WriteAVIVideoFrame(captureBuffer, memcount);
+	// finish any 2D drawing if needed
+	if ( tess.numIndexes ) {
+		RB_EndSurface();
 	}
 
-	ri.Hunk_FreeTempMemory(buffer);
+	RB_RenderWorldEffects();
 
 	return (const void *)(cmd + 1);
 }
 
 /*
 ==================
-RB_TakeScreenshotCmd
+RB_GammaCorrection
 ==================
 */
-const void *RB_TakeScreenshotCmd( const void *data )
+const void *RB_GammaCorrection( const void *data )
 {
-	const screenshotCommand_t	*cmd;
+	const gammaCorrectionCommand_t	*cmd;
 
-	cmd = (const screenshotCommand_t *)data;
+	cmd = (const gammaCorrectionCommand_t *)data;
 
-	if (cmd->jpeg)
-		RB_TakeScreenshotJPEG(cmd->x, cmd->y, cmd->width, cmd->height, cmd->fileName);
-	else
-		RB_TakeScreenshot(cmd->x, cmd->y, cmd->width, cmd->height, cmd->fileName);
+	// finish any 2D drawing if needed
+	if ( tess.numIndexes ) {
+		RB_EndSurface();
+	}
+
+	RB_SetGL2D();
+
+	qglEnable(GL_VERTEX_PROGRAM_ARB);
+	qglBindProgramARB(GL_VERTEX_PROGRAM_ARB, tr.gammaVertexShader);
+	qglEnable(GL_FRAGMENT_PROGRAM_ARB);
+	qglBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, tr.gammaPixelShader);
+
+	GL_SelectTexture(0);
+	qglEnable(GL_TEXTURE_RECTANGLE_ARB);
+	qglBindTexture(GL_TEXTURE_RECTANGLE_ARB, tr.sceneImage);
+	qglCopyTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA, 0, 0, glConfig.vidWidth, glConfig.vidHeight, 0);
+	qglDisable(GL_TEXTURE_RECTANGLE_ARB);
+
+	GL_SelectTexture(1);
+	qglEnable(GL_TEXTURE_3D);
+	qglBindTexture(GL_TEXTURE_3D, tr.gammaLUTImage);
+
+	qglClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+	qglClear(GL_COLOR_BUFFER_BIT);
+
+	qglBegin(GL_QUADS);
+	qglTexCoord2f(0.0f, 0.0f);
+	qglVertex2f(-1.0f, -1.0f);
+
+	qglTexCoord2f(0.0f, (float)glConfig.vidHeight);
+	qglVertex2f(-1.0f, 1.0f);
+
+	qglTexCoord2f((float)glConfig.vidWidth, (float)glConfig.vidHeight);
+	qglVertex2f(1.0f, 1.0f);
+
+	qglTexCoord2f((float)glConfig.vidWidth, 0.0f);
+	qglVertex2f(1.0f, -1.0f);
+	qglEnd();
+
+	qglDisable(GL_VERTEX_PROGRAM_ARB);
+	qglDisable(GL_FRAGMENT_PROGRAM_ARB);
+
+	qglDisable(GL_TEXTURE_3D);
+	GL_SelectTexture(0);
+
+	return (const void *)(cmd + 1);
+}
+
+/*
+==================
+RB_ReadPixels
+==================
+*/
+const void *RB_ReadPixels( const void *data )
+{
+	const readPixelsCommand_t	*cmd;
+	int		memcount;
+
+	cmd = (const readPixelsCommand_t *)data;
+
+	// finish any 2D drawing if needed
+	if ( tess.numIndexes ) {
+		RB_EndSurface();
+	}
+
+	memcount = PAD(glConfig.vidWidth * 3, cmd->padding) * glConfig.vidHeight;
+
+	if ( cmd->bufSize < memcount ) {
+		ri.Error( ERR_DROP, "RB_ReadPixels: buffer too small\n" );
+	}
+
+	qglPixelStorei(GL_PACK_ALIGNMENT, cmd->padding);
+	qglReadPixels(0, 0, glConfig.vidWidth, glConfig.vidHeight,
+		cmd->format, GL_UNSIGNED_BYTE, cmd->buffer);
 
 	return (const void *)(cmd + 1);
 }
@@ -1370,14 +1362,11 @@ smp extensions, or asyncronously by another thread.
 ====================
 */
 void RB_ExecuteRenderCommands( const void *data ) {
-	const void	*dataOrig = data;
-	qboolean	firstPassDone = qfalse;
-	qboolean	secondPassDone = qtrue;
 	int			t1, t2;
 
 	t1 = ri.Milliseconds()*Cvar_VariableValue("timescale");
 
-	while (!firstPassDone) {
+	while ( 1 ) {
 		data = PADP( data, sizeof( void * ) );
 
 		switch ( *(const int *)data ) {
@@ -1399,62 +1388,24 @@ void RB_ExecuteRenderCommands( const void *data ) {
 		case RC_SWAP_BUFFERS:
 			data = RB_SwapBuffers( data );
 			break;
-		case RC_VIDEOFRAME:
-			secondPassDone = qfalse;
-			data = (videoFrameCommand_t *)data + 1;
+		case RC_WORLD_EFFECTS:
+			data = RB_WorldEffects( data );
 			break;
-		case RC_SCREENSHOT:
-			secondPassDone = qfalse;
-			data = (screenshotCommand_t *)data + 1;
+		case RC_GAMMA_CORRECTION:
+			data = RB_GammaCorrection( data );
+			break;
+		case RC_READ_PIXELS:
+			data = RB_ReadPixels( data );
+			break;
 		case RC_END_OF_LIST:
-			firstPassDone = qtrue;
-			break;
+			// stop rendering
+			t2 = ri.Milliseconds()*Cvar_VariableValue("timescale");
+			backEnd.pc.msec = t2 - t1;
+			return;
 		default:
 			ri.Error(ERR_DROP, "Unknown render command");
 		}
 	}
-
-	data = dataOrig;
-
-	while (!secondPassDone) {
-		data = PADP( data, sizeof( void * ) );
-
-		switch ( *(const int *)data ) {
-		case RC_SET_COLOR:
-			data = (setColorCommand_t *)data + 1;
-			break;
-		case RC_STRETCH_PIC:
-			data = (stretchPicCommand_t *)data + 1;
-			break;
-		case RC_TRANSFORM_PIC:
-			data = (transformPicCommand_t *)data + 1;
-			break;
-		case RC_DRAW_SURFS:
-			data =(drawSurfsCommand_t *)data + 1;
-			break;
-		case RC_DRAW_BUFFER:
-			data = (drawBufferCommand_t *)data + 1;
-			break;
-		case RC_SWAP_BUFFERS:
-			data = (swapBuffersCommand_t *)data + 1;
-			break;
-		case RC_VIDEOFRAME:
-			data = RB_TakeVideoFrameCmd( data );
-			break;
-		case RC_SCREENSHOT:
-			data = RB_TakeScreenshotCmd( data );
-			break;
-		case RC_END_OF_LIST:
-			secondPassDone = qtrue;
-			break;
-		default:
-			ri.Error(ERR_DROP, "Unknown render command");
-		}
-	}
-
-	// stop rendering
-	t2 = ri.Milliseconds()*Cvar_VariableValue("timescale");
-	backEnd.pc.msec = t2 - t1;
 }
 
 // What Pixel Shader type is currently active (regcoms or fragment programs).
