@@ -551,11 +551,13 @@ Ghoul2 Insert End
 		SV_CloseDownload( &svs.clients[i] );
 	}
 
-	// check engine flag before clearing sv
+	// check sv.resetServerTime before clearing sv struct
 	if (sv.resetServerTime) {
 		resetTime = (qboolean)(sv.resetServerTime == 1);
+	} else if (mv_resetServerTime->integer == 1) {
+		resetTime = (qboolean)(sv_gametype->integer != GT_TOURNAMENT);
 	} else {
-		resetTime = (qboolean)mv_resetServerTime->integer;
+		resetTime = (qboolean)(mv_resetServerTime->integer == 2);
 	}
 
 	// wipe the entire per-level structure
@@ -788,7 +790,7 @@ void SV_Init (void) {
 	mv_fixsaberstealing = Cvar_Get("mv_fixsaberstealing", "1", CVAR_ARCHIVE);
 	mv_fixplayerghosting = Cvar_Get("mv_fixplayerghosting", "1", CVAR_ARCHIVE);
 
-	mv_resetServerTime = Cvar_Get("mv_resetServerTime", "0", CVAR_ARCHIVE);
+	mv_resetServerTime = Cvar_Get("mv_resetServerTime", "1", CVAR_ARCHIVE);
 
 	// serverinfo vars
 	Cvar_Get ("dmflags", "0", CVAR_SERVERINFO);
