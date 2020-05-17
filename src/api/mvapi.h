@@ -126,10 +126,16 @@ typedef struct {
 // qboolean trap_MVAPI_DisableStructConversion(qboolean disable);
 #define G_MVAPI_DISABLE_STRUCT_CONVERSION 705		/* asm: -706 */
 
+// qboolean trap_MVAPI_EnablePlayerSnapshots(qboolean enable);
+#define G_MVAPI_ENABLE_PLAYERSNAPSHOTS 707			/* asm: -708 */
+
 // ******** VMCALLS ******** //
 
 // vmMain(GAME_MVAPI_RECV_CONNECTIONLESSPACKET, ...)
 #define GAME_MVAPI_RECV_CONNECTIONLESSPACKET 101
+
+// vmMain(GAME_MVAPI_PLAYERSNAPSHOT, ...)
+#define GAME_MVAPI_PLAYERSNAPSHOT 102
 
 // ------------------------------------------ UI ------------------------------------------- //
 

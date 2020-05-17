@@ -696,8 +696,16 @@ void SV_SendClientMessages( void ) {
 			continue;
 		}
 
+		if ( sv.vmPlayerSnapshots && !VM_Call(gvm, GAME_MVAPI_PLAYERSNAPSHOT, i) ) {
+			continue;
+		}
+
 		// generate and send a new message
 		SV_SendClientSnapshot( c );
+	}
+
+	if ( sv.vmPlayerSnapshots ) {
+		VM_Call( gvm, GAME_MVAPI_PLAYERSNAPSHOT, -1 );
 	}
 }
 

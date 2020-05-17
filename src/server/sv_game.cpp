@@ -1083,6 +1083,13 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 		}
 	}
 
+	if (VM_MVAPILevel(gvm) >= 4) {
+		switch (args[0]) {
+		case G_MVAPI_ENABLE_PLAYERSNAPSHOTS:
+			return (int)SV_MVAPI_EnablePlayerSnapshots((qboolean)!!args[1]);
+		}
+	}
+
 	Com_Error( ERR_DROP, "Bad game system trap: %lli", (long long int)args[0] );
 	return -1;
 }
@@ -1102,6 +1109,7 @@ void SV_ShutdownGameProgs( void ) {
 	VM_Free( gvm );
 	gvm = NULL;
 	sv.fixes = MVFIX_NONE;
+	sv.vmPlayerSnapshots = qfalse;
 }
 
 /*
@@ -1247,5 +1255,17 @@ qboolean SV_MVAPI_ControlFixes(int fixes) {
 
 	sv.fixes = fixes & mask;
 
+	return qfalse;
+}
+
+/*
+====================
+SV_MVAPI_EnablePlayerSnapshots
+
+enable / disable whether to call the gvm before generating each snapshot
+====================
+*/
+qboolean SV_MVAPI_EnablePlayerSnapshots(qboolean enable) {
+	sv.vmPlayerSnapshots = enable;
 	return qfalse;
 }

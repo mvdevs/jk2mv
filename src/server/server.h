@@ -72,6 +72,7 @@ typedef struct {
 	int				  gentitySizeMV;
 
 	int				fixes;
+	qboolean		vmPlayerSnapshots;
 } server_t;
 
 typedef struct {
@@ -365,6 +366,7 @@ void		SV_RestartGameProgs( void );
 qboolean	SV_inPVS (const vec3_t p1, const vec3_t p2);
 
 qboolean SV_MVAPI_ControlFixes(int fixes);
+qboolean SV_MVAPI_EnablePlayerSnapshots(qboolean enable);
 
 //
 // sv_bot.c
