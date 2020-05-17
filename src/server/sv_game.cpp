@@ -321,6 +321,16 @@ qboolean MVAPI_LocateGameData(mvsharedEntity_t *mvEnts, int numGEntities, int si
 	return qfalse;
 }
 
+/*
+====================
+SV_MVAPI_ResetServerTime
+
+Reset server time on map change
+====================
+*/
+static void SV_MVAPI_ResetServerTime(qboolean enable) {
+	sv.resetServerTime = enable ? 1 : 2;
+}
 
 /*
 ===============
@@ -1085,8 +1095,9 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 
 	if (VM_MVAPILevel(gvm) >= 4) {
 		switch(args[0]) {
-		case G_MVAPI_ENGINE_FLAGS:
-			return SV_MVAPI_EngineFlags(args[1]);
+		case G_MVAPI_RESET_SERVER_TIME:
+			SV_MVAPI_ResetServerTime((qboolean)!!args[1]);
+			return 0;
 		}
 	}
 
@@ -1255,22 +1266,4 @@ qboolean SV_MVAPI_ControlFixes(int fixes) {
 	sv.fixes = fixes & mask;
 
 	return qfalse;
-}
-
-/*
-====================
-SV_MVAPI_EngineFlags
-
-Set JK2MV-specific engine flags requested by game module
-====================
-*/
-int SV_MVAPI_EngineFlags(int flags) {
-	int mask = 0;
-
-	switch (VM_MVAPILevel(gvm)) {
-	case 4:
-		mask |= G_MVFLAG_RESETTIME;
-	}
-
-	return sv.engineFlags = (flags & mask);
 }

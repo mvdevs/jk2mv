@@ -47,8 +47,6 @@ typedef enum {
 	MVFIX_WPGLOWING           = (1 << 16),
 } mvfix_t;
 
-#define G_MVFLAG_RESETTIME    (1 << 0)
-
 typedef enum {
 	VERSION_UNDEF = 0,
 	VERSION_1_02 = 2,
@@ -122,8 +120,8 @@ typedef struct {
 // qboolean trap_MVAPI_DisableStructConversion(qboolean disable);
 #define G_MVAPI_DISABLE_STRUCT_CONVERSION 705      /* asm: -706 */
 
-// void trap_MVAPI_EngineFlags(int flags);
-#define G_MVAPI_ENGINE_FLAGS 706                   /* asm: -707 */
+// void trap_MVAPI_ResetServerTime(qboolean enable)
+#define G_MVAPI_RESET_SERVER_TIME 706              /* asm: -707 */
 
 // ******** VMCALLS ******** //
 

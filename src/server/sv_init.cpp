@@ -552,7 +552,11 @@ Ghoul2 Insert End
 	}
 
 	// check engine flag before clearing sv
-	resetTime = (qboolean)!!(mv_resetServerTime->integer || (sv.engineFlags & G_MVFLAG_RESETTIME));
+	if (sv.resetServerTime) {
+		resetTime = (qboolean)(sv.resetServerTime == 1);
+	} else {
+		resetTime = (qboolean)mv_resetServerTime->integer;
+	}
 
 	// wipe the entire per-level structure
 	SV_ClearServer();
