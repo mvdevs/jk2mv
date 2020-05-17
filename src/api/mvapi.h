@@ -126,7 +126,7 @@ typedef struct {
 // qboolean trap_MVAPI_DisableStructConversion(qboolean disable);
 #define G_MVAPI_DISABLE_STRUCT_CONVERSION 705      /* asm: -706 */
 
-// void trap_MVAPI_ResetServerTime(qboolean enable)
+// qboolean trap_MVAPI_ResetServerTime(qboolean enable)
 #define G_MVAPI_RESET_SERVER_TIME 706              /* asm: -707 */
 
 // qboolean trap_MVAPI_EnablePlayerSnapshots(qboolean enable);

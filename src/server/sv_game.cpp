@@ -328,8 +328,9 @@ SV_MVAPI_ResetServerTime
 Reset server time on map change
 ====================
 */
-static void SV_MVAPI_ResetServerTime(qboolean enable) {
+static qboolean SV_MVAPI_ResetServerTime(qboolean enable) {
 	sv.resetServerTime = enable ? 1 : 2;
+	return qfalse;
 }
 
 /*
@@ -1096,8 +1097,7 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 	if (VM_MVAPILevel(gvm) >= 4) {
 		switch(args[0]) {
 		case G_MVAPI_RESET_SERVER_TIME:
-			SV_MVAPI_ResetServerTime((qboolean)!!args[1]);
-			return 0;
+			return (int)SV_MVAPI_ResetServerTime((qboolean)!!args[1]);
 		case G_MVAPI_ENABLE_PLAYERSNAPSHOTS:
 			return (int)SV_MVAPI_EnablePlayerSnapshots((qboolean)!!args[1]);
 		}
