@@ -963,7 +963,7 @@ void GfxInfo_f( void )
 		ri.Printf( PRINT_ALL, "N/A\n" );
 	}
 
-	ri.Printf(PRINT_ALL, "Display DPI: %f\n", glConfig.displayDPI);
+	ri.Printf(PRINT_ALL, "Display Scale: %d%%\n", (int)glConfig.displayScale * 100);
 
 	// gamma correction
 	if (r_gammamethod->integer == GAMMA_POSTPROCESSING) {

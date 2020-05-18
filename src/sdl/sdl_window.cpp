@@ -499,6 +499,23 @@ static bool GLimp_DetectAvailableModes(void)
 	return true;
 }
 
+static float GLimp_GetDisplayScale(int display)
+{
+	float scale = 1.0f;
+
+#if SDL_VERSION_ATLEAST(2, 0, 4)
+	if (!strcmp(SDL_GetCurrentVideoDriver(), "windows")) {
+		float ddpi;
+
+		if (!SDL_GetDisplayDPI(display, &ddpi, NULL, NULL)) {
+			scale = ddpi / 96.0f;
+		}
+	}
+#endif
+
+	return scale;
+}
+
 /*
 ===============
 GLimp_SetMode
@@ -848,14 +865,7 @@ static rserr_t GLimp_SetMode(glconfig_t *glConfig, const windowDesc_t *windowDes
 		}
 	}
 
-	glConfig->displayDPI = 96.0f;
-#if SDL_VERSION_ATLEAST(2, 0, 4)
-	float ddpi;
-	if (!SDL_GetDisplayDPI(display, &ddpi, NULL, NULL)) {
-		glConfig->displayDPI = ddpi;
-	}
-	Com_DPrintf("SDL_CreateWindow: Screen DPI: %f\n", glConfig->displayDPI);
-#endif
+	glConfig->displayScale = GLimp_GetDisplayScale(display);
 
 	SDL_FreeSurface(icon);
 

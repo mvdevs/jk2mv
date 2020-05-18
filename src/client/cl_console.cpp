@@ -358,9 +358,8 @@ void Con_CheckResize (void)
 
 	assert(SMALLCHAR_HEIGHT >= SMALLCHAR_WIDTH);
 
-	// round to 100%, 150%, 200% etc.
-	scale = roundf(4 * cls.glconfig.displayDPI / 96.0f) / 4;
-	scale *= (con_scale->value > 0.0f) ? con_scale->value : 1.0f;
+	scale = cls.glconfig.displayScale *
+		((con_scale->value > 0.0f) ? con_scale->value : 1.0f);
 	charWidth = scale * SMALLCHAR_WIDTH;
 
 	if (charWidth < 1) {
