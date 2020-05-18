@@ -504,12 +504,26 @@ static float GLimp_GetDisplayScale(int display)
 	float scale = 1.0f;
 
 #if SDL_VERSION_ATLEAST(2, 0, 4)
-	if (!strcmp(SDL_GetCurrentVideoDriver(), "windows")) {
+	const char *driver = SDL_GetCurrentVideoDriver();
+
+	if (!strcmp(driver, "windows")) {
 		float ddpi;
 
+		// on windows driver dpi is always 96 * desktop scaling
 		if (!SDL_GetDisplayDPI(display, &ddpi, NULL, NULL)) {
 			scale = ddpi / 96.0f;
 		}
+	} else if (!strcmp(driver, "x11")) {
+		float ddpi;
+
+		// this is a hack: some environments return real display DPI,
+		// others synthetic, based on desktop scaling. Not sure if 96
+		// is universal synthetic 1:1 neither. x11 has no fractional
+		// scaling so round to integer.
+		if (!SDL_GetDisplayDPI(display, &ddpi, NULL, NULL)) {
+			scale = roundf(ddpi / 96.0f);
+		}
+
 	}
 #endif
 
