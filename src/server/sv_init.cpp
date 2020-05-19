@@ -429,6 +429,7 @@ void SV_SpawnServer( char *server, qboolean killBots, ForceReload_e eForceReload
 	qboolean	isBot;
 	char		systemInfo[16384];
 	const char	*p;
+	qboolean	resetTime;
 
 	Com_Printf("------ Server Initialization ------\n");
 	Com_Printf("Server: %s\n", server);
@@ -550,10 +551,24 @@ Ghoul2 Insert End
 		SV_CloseDownload( &svs.clients[i] );
 	}
 
+	// check sv.resetServerTime before clearing sv struct
+	if (sv.resetServerTime) {
+		resetTime = (qboolean)(sv.resetServerTime == 1);
+	} else if (mv_resetServerTime->integer == 1) {
+		resetTime = (qboolean)(sv_gametype->integer != GT_TOURNAMENT);
+	} else {
+		resetTime = (qboolean)(mv_resetServerTime->integer == 2);
+	}
+
 	// wipe the entire per-level structure
 	SV_ClearServer();
 	for ( i = 0 ; i < MAX_CONFIGSTRINGS ; i++ ) {
 		sv.configstrings[i] = CopyString("");
+	}
+
+	if (!resetTime) {
+		// Keep old game module time as original engine did
+		sv.time = svs.time;
 	}
 
 	// decide which serverversion to host
@@ -774,6 +789,8 @@ void SV_Init (void) {
 	mv_blockspeedhack = Cvar_Get("mv_blockspeedhack", "1", CVAR_ARCHIVE);
 	mv_fixsaberstealing = Cvar_Get("mv_fixsaberstealing", "1", CVAR_ARCHIVE);
 	mv_fixplayerghosting = Cvar_Get("mv_fixplayerghosting", "1", CVAR_ARCHIVE);
+
+	mv_resetServerTime = Cvar_Get("mv_resetServerTime", "1", CVAR_ARCHIVE);
 
 	// serverinfo vars
 	Cvar_Get ("dmflags", "0", CVAR_SERVERINFO);

@@ -321,6 +321,17 @@ qboolean MVAPI_LocateGameData(mvsharedEntity_t *mvEnts, int numGEntities, int si
 	return qfalse;
 }
 
+/*
+====================
+SV_MVAPI_ResetServerTime
+
+Reset server time on map change
+====================
+*/
+static qboolean SV_MVAPI_ResetServerTime(qboolean enable) {
+	sv.resetServerTime = enable ? 1 : 2;
+	return qfalse;
+}
 
 /*
 ===============
@@ -1084,7 +1095,9 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 	}
 
 	if (VM_MVAPILevel(gvm) >= 4) {
-		switch (args[0]) {
+		switch(args[0]) {
+		case G_MVAPI_RESET_SERVER_TIME:
+			return (int)SV_MVAPI_ResetServerTime((qboolean)!!args[1]);
 		case G_MVAPI_ENABLE_PLAYERSNAPSHOTS:
 			return (int)SV_MVAPI_EnablePlayerSnapshots((qboolean)!!args[1]);
 		}

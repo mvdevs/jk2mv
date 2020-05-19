@@ -72,6 +72,8 @@ typedef struct {
 	int				  gentitySizeMV;
 
 	int				fixes;
+	int				resetServerTime;	// Reset sv.time on map change.
+										// 0 = cvar, 1 = always, 2 = never
 	qboolean		vmPlayerSnapshots;
 } server_t;
 
@@ -271,6 +273,9 @@ extern	cvar_t	*mv_blockchargejump;
 extern	cvar_t	*mv_blockspeedhack;
 extern	cvar_t	*mv_fixsaberstealing;
 extern	cvar_t	*mv_fixplayerghosting;
+
+// jk2mv engine flags
+extern	cvar_t	*mv_resetServerTime;
 
 //===========================================================
 

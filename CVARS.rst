@@ -416,6 +416,20 @@ Server-Side
 
 ..
 
+:Name: mv_resetServerTime
+:Valid: "0", "1", "2"
+:Default: "1"
+:Description:
+   Reset internal server time on map restart. Helps to avoid high
+   server time bugs. Breaks queue in duel gametype on basejk. May
+   cause issues with other mods.
+
+   | 0: Never (compatible)
+   | 1: Always except in Duel gametype
+   | 2: Always
+
+..
+
 :Name: sv_autoWhitelist
 :Values: "0", "1"
 :Default: "1"

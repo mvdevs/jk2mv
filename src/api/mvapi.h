@@ -124,7 +124,10 @@ typedef struct {
 #define G_MVAPI_LOCATE_GAME_DATA 702               /* asm: -703 */
 
 // qboolean trap_MVAPI_DisableStructConversion(qboolean disable);
-#define G_MVAPI_DISABLE_STRUCT_CONVERSION 705		/* asm: -706 */
+#define G_MVAPI_DISABLE_STRUCT_CONVERSION 705      /* asm: -706 */
+
+// qboolean trap_MVAPI_ResetServerTime(qboolean enable)
+#define G_MVAPI_RESET_SERVER_TIME 706              /* asm: -707 */
 
 // qboolean trap_MVAPI_EnablePlayerSnapshots(qboolean enable);
 #define G_MVAPI_ENABLE_PLAYERSNAPSHOTS 707			/* asm: -708 */
