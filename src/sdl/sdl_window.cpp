@@ -881,6 +881,7 @@ static rserr_t GLimp_SetMode(glconfig_t *glConfig, const windowDesc_t *windowDes
 	Com_Printf("...renderer size: %d %d\n", glConfig->vidWidth, glConfig->vidHeight);
 
 	glConfig->displayScale = GLimp_GetDisplayScale(display);
+	glConfig->displayScale *= glConfig->vidHeight / winHeight;
 
 	SDL_FreeSurface(icon);
 
