@@ -533,6 +533,18 @@ Server-Side
 :Description:
    Enable more accurate and bug-free ping calculation.
 
+..
+
+:Name: sv_dynamicSnapshots
+:Values: "0", "1"
+:Default: "1"
+:Description:
+   Try to send partial snapshots if a snapshot message would otherwise overflow.
+   This should help to avoid clients from dropping due to
+   ``CL_ParseServerMessage: read past end of server message`` when maps or mods
+   cause a lot of commands to be sent to a client in a short interval on a busy
+   server.
+
 ==================
 Undocumented Cvars
 ==================
