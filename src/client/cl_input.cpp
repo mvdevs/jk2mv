@@ -406,7 +406,7 @@ Sets the usercmd_t based on key states
 */
 void CL_KeyMove( usercmd_t *cmd ) {
 	int		movespeed;
-	int		forward, side, up;
+	int		forward, side, up, u, d;
 
 	//
 	// adjust for speed key / running
@@ -432,9 +432,10 @@ void CL_KeyMove( usercmd_t *cmd ) {
 	side += movespeed * CL_KeyState (&in_moveright);
 	side -= movespeed * CL_KeyState (&in_moveleft);
 
-
-	up += movespeed * CL_KeyState (&in_up);
-	up -= movespeed * CL_KeyState (&in_down);
+	//valar new up+down input handling, if both are pressed send only up input.
+	u = movespeed * CL_KeyState (&in_up);
+	d = movespeed * CL_KeyState (&in_down);
+	up = (u >= d ? u : -d);
 
 	forward += movespeed * CL_KeyState (&in_forward);
 	forward -= movespeed * CL_KeyState (&in_back);
