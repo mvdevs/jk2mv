@@ -319,8 +319,12 @@ typedef enum {
 #define STR(x) #x
 #define XSTR(x) STR(x)
 
+#ifndef MIN
 #define MIN(x,y)	((x)<(y)?(x):(y))
+#endif
+#ifndef MAX
 #define MAX(x,y)	((x)>(y)?(x):(y))
+#endif
 #define CTRL(a)		((a)-'a'+1)
 
 #define PAD(base, alignment)	(((base)+(alignment)-1) & ~((alignment)-1))
