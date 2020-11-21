@@ -1658,6 +1658,9 @@ void CL_ContinueCurrentDownload(dldecision_t decision) {
 			Com_DPrintf("HTTP URL: %s\n", remotepath);
 
 			char *tmp_os_path = FS_BuildOSPath(Cvar_VariableString("fs_homepath"), clc.downloadTempName);
+
+			// Try to create the destination folder
+			FS_CreatePath(tmp_os_path);
 			
 			clc.httpHandle = NET_HTTP_StartDownload(remotepath, tmp_os_path, CL_EndHTTPDownload, CL_ProcessHTTPDownload, Q3_VERSION, va("jk2://%s", NET_AdrToString(clc.serverAddress)));
 		} else {
