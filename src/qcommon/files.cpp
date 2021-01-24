@@ -3773,8 +3773,6 @@ void FS_PureServerSetReferencedPaks( const char *pakSums, const char *pakNames )
 		c = MAX_SEARCH_PATHS;
 	}
 
-	fs_numServerReferencedPaks = c;
-
 	for ( i = 0 ; i < c ; i++ ) {
 		fs_serverReferencedPaks[i] = atoi( Cmd_Argv( i ) );
 	}
@@ -3797,6 +3795,12 @@ void FS_PureServerSetReferencedPaks( const char *pakSums, const char *pakNames )
 			fs_serverReferencedPakNames[i] = CopyString( Cmd_Argv( i ) );
 		}
 	}
+
+	if ( c != d ) {
+		Com_Printf(S_COLOR_YELLOW "WARNING: Corrupted server pak references\n");
+	}
+
+	fs_numServerReferencedPaks = MIN(c, d);
 }
 
 /*
