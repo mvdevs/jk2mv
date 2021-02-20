@@ -1808,7 +1808,11 @@ void CL_CheckForResend( void ) {
 
 	case CA_CHALLENGING:
 		if (MV_GetCurrentGameversion() == VERSION_UNDEF || ( ( !clc.httpdlvalid || clc.udpdl == -1 ) && com_dedicated->integer) )
+		{
+			NET_OutOfBandPrint(NS_CLIENT, clc.serverAddress, "getinfo"); // for mvhttp
+			NET_OutOfBandPrint(NS_CLIENT, clc.serverAddress, "getstatus"); // for sv_allowdownload
 			break;
+		}
 
 		// sending back the challenge
 		port = (int) Cvar_VariableValue ("net_qport");
@@ -3134,7 +3138,7 @@ void CL_ServerInfoPacket( netadr_t from, msg_t *msg ) {
 	}
 
 	// multiprotocol support
-	if (cls.state == CA_CONNECTING && NET_CompareAdr(from, clc.serverAddress)) {
+	if ((cls.state == CA_CONNECTING || cls.state == CA_CHALLENGING) && NET_CompareAdr(from, clc.serverAddress)) {
 		if ( MV_GetCurrentGameversion() == VERSION_UNDEF )
 		{
 			switch ( prot )
@@ -3399,7 +3403,7 @@ void CL_ServerStatusResponse( netadr_t from, msg_t *msg ) {
 	}
 
 	// multiprotocol support
-	if (cls.state == CA_CONNECTING && NET_CompareAdr(from, clc.serverAddress))
+	if ((cls.state == CA_CONNECTING || cls.state == CA_CHALLENGING) && NET_CompareAdr(from, clc.serverAddress))
 	{
 		char *versionString;
 		versionString = Info_ValueForKey(s, "version");
