@@ -795,6 +795,10 @@ void CL_MapLoading( void ) {
 		CL_Disconnect( qtrue );
 		Q_strncpyz( cls.servername, "localhost", sizeof(cls.servername) );
 		cls.state = CA_CHALLENGING;		// so the connect screen is drawn
+		clc.gotInfo = qfalse;
+		clc.gotStatus = qfalse;
+		clc.udpdl = 0;
+		clc.httpdl[0] = 0;
 		cls.keyCatchers = 0;
 		SCR_UpdateScreen();
 		clc.connectTime = -RETRANSMIT_TIMEOUT;
@@ -1109,6 +1113,10 @@ void CL_Connect_f( void ) {
 	} else {
 		cls.state = CA_CONNECTING;
 	}
+	clc.gotInfo = qfalse;
+	clc.gotStatus = qfalse;
+	clc.udpdl = 0;
+	clc.httpdl[0] = 0;
 
 
 
@@ -1795,22 +1803,19 @@ void CL_CheckForResend( void ) {
 	switch ( cls.state ) {
 	case CA_CONNECTING:
 		// requesting a challenge
-		clc.httpdl[0] = 0;
-		clc.httpdlvalid = qfalse;
-		clc.udpdl = -1;
 #ifdef MV_MFDOWNLOADS
 		NET_OutOfBandPrint(NS_CLIENT, clc.serverAddress, "jk2mfport");
 #endif
-		NET_OutOfBandPrint(NS_CLIENT, clc.serverAddress, "getinfo"); // for mvhttp
-		NET_OutOfBandPrint(NS_CLIENT, clc.serverAddress, "getstatus"); // for sv_allowdownload
+		if ( !clc.gotInfo ) NET_OutOfBandPrint(NS_CLIENT, clc.serverAddress, "getinfo"); // mvhttp + protocol detection
+		if ( !clc.gotStatus ) NET_OutOfBandPrint(NS_CLIENT, clc.serverAddress, "getstatus"); // version detection
 		NET_OutOfBandPrint(NS_CLIENT, clc.serverAddress, "getchallenge");
 		break;
 
 	case CA_CHALLENGING:
-		if (MV_GetCurrentGameversion() == VERSION_UNDEF || ( ( !clc.httpdlvalid || clc.udpdl == -1 ) && com_dedicated->integer) )
-		{
-			NET_OutOfBandPrint(NS_CLIENT, clc.serverAddress, "getinfo"); // for mvhttp
-			NET_OutOfBandPrint(NS_CLIENT, clc.serverAddress, "getstatus"); // for sv_allowdownload
+		if ( MV_GetCurrentGameversion() == VERSION_UNDEF || !clc.gotInfo || (!clc.gotStatus && MV_GetCurrentProtocol() != PROTOCOL16) )
+		{ // We need to know the gameversion of the server and we need the infoResponse for mvhttp infos. In case we're dealing with PROTOCOL15 we also need the statusResponse for version 1.03 detection.
+			if ( !clc.gotInfo ) NET_OutOfBandPrint(NS_CLIENT, clc.serverAddress, "getinfo"); // mvhttp + protocol detection
+			if ( !clc.gotStatus ) NET_OutOfBandPrint(NS_CLIENT, clc.serverAddress, "getstatus"); // version detection
 			break;
 		}
 
@@ -3139,6 +3144,8 @@ void CL_ServerInfoPacket( netadr_t from, msg_t *msg ) {
 
 	// multiprotocol support
 	if ((cls.state == CA_CONNECTING || cls.state == CA_CHALLENGING) && NET_CompareAdr(from, clc.serverAddress)) {
+		clc.gotInfo = qtrue;
+
 		if ( MV_GetCurrentGameversion() == VERSION_UNDEF )
 		{
 			switch ( prot )
@@ -3171,8 +3178,6 @@ void CL_ServerInfoPacket( netadr_t from, msg_t *msg ) {
 					clc.httpdl[len - 1] = 0;
 				}
 			}
-
-			clc.httpdlvalid = qtrue;
 		}
 
 		return;
@@ -3405,8 +3410,9 @@ void CL_ServerStatusResponse( netadr_t from, msg_t *msg ) {
 	// multiprotocol support
 	if ((cls.state == CA_CONNECTING || cls.state == CA_CHALLENGING) && NET_CompareAdr(from, clc.serverAddress))
 	{
-		char *versionString;
-		versionString = Info_ValueForKey(s, "version");
+		char *versionString = Info_ValueForKey( s, "version" );
+
+		clc.gotStatus = qtrue;
 
 		// We used to seperate "1.02" and "1.04" by protocol "15" and "16". As "1.03" is using protocol "15", too we just look at the "version" to detect "1.03". If we don't find "1.03" we handle by protocol again.
 		if ( versionString && CL_ServerVersionIs103(versionString) )
@@ -3429,9 +3435,6 @@ void CL_ServerStatusResponse( netadr_t from, msg_t *msg ) {
 					break;
 			}
 		}
-
-		clc.udpdl = atoi(Info_ValueForKey(s, "sv_allowdownload"));
-
 		return;
 	}
 
