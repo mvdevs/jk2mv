@@ -869,6 +869,7 @@ void SV_Init (void) {
 	mv_apiConnectionless = Cvar_Get("mv_apiConnectionless", "1", CVAR_ARCHIVE | CVAR_INIT | CVAR_VM_NOWRITE);
 	sv_pingFix = Cvar_Get("sv_pingFix", "1", CVAR_ARCHIVE);
 	sv_autoWhitelist = Cvar_Get("sv_autoWhitelist", "1", CVAR_ARCHIVE | CVAR_GLOBAL);
+	sv_dynamicSnapshots = Cvar_Get("sv_dynamicSnapshots", "1", CVAR_ARCHIVE);
 
 	SP_Register("str_server",SP_REGISTER_REQUIRED);
 

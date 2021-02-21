@@ -42,6 +42,7 @@ cvar_t  *sv_hibernateFps;
 cvar_t	*mv_apiConnectionless;
 cvar_t	*sv_pingFix;
 cvar_t	*sv_autoWhitelist;
+cvar_t	*sv_dynamicSnapshots;
 
 // jk2mv's toggleable fixes
 cvar_t	*mv_fixnamecrash;
