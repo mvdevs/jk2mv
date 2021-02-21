@@ -211,7 +211,6 @@ typedef struct {
 	dlHandle_t	httpHandle;
 
 	char httpdl[128];
-	qboolean httpdlvalid;
 	int udpdl;
 
 	// demo information
@@ -229,6 +228,9 @@ typedef struct {
 
 	// big stuff at end of structure so most offsets are 15 bits or less
 	netchan_t	netchan;
+
+	qboolean	gotInfo;
+	qboolean	gotStatus;
 } clientConnection_t;
 
 extern	clientConnection_t clc;
