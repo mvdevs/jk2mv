@@ -1814,9 +1814,19 @@ void CL_CheckForResend( void ) {
 	case CA_CHALLENGING:
 		if ( MV_GetCurrentGameversion() == VERSION_UNDEF || !clc.gotInfo || (!clc.gotStatus && MV_GetCurrentProtocol() != PROTOCOL16) )
 		{ // We need to know the gameversion of the server and we need the infoResponse for mvhttp infos. In case we're dealing with PROTOCOL15 we also need the statusResponse for version 1.03 detection.
-			if ( !clc.gotInfo ) NET_OutOfBandPrint(NS_CLIENT, clc.serverAddress, "getinfo"); // mvhttp + protocol detection
+			static int lastGetinfo;
+
+			if ( !clc.gotInfo )
+			{
+				lastGetinfo = clc.connectPacketCount;
+				NET_OutOfBandPrint(NS_CLIENT, clc.serverAddress, "getinfo"); // mvhttp + protocol detection
+			}
+			else if ( clc.connectPacketCount == 1 ) lastGetinfo = 1;
 			if ( !clc.gotStatus ) NET_OutOfBandPrint(NS_CLIENT, clc.serverAddress, "getstatus"); // version detection
-			break;
+
+			// If we received an infoResponse, but no statusResponse retry 3 more times to get the status. If that doesn't work try to connect anyway. Maybe the server is unable to send a statusResponse...
+			if ( !(MV_GetCurrentGameversion() != VERSION_UNDEF && clc.gotInfo && clc.connectPacketCount - lastGetinfo > 3) )
+				break;
 		}
 
 		// sending back the challenge
