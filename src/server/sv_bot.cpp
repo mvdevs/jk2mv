@@ -232,6 +232,15 @@ char *BotImport_BSPEntityData(void) {
 
 /*
 ==================
+BotImport_BSPNumInlineModels
+==================
+*/
+int BotImport_BSPNumInlineModels(void) {
+	return CM_NumInlineModels();
+}
+
+/*
+==================
 BotImport_BSPModelMinsMaxsOrigin
 ==================
 */
@@ -596,6 +605,8 @@ void SV_BotInitBotLib(void) {
 	//debug polygons
 	botlib_import.DebugPolygonCreate = BotImport_DebugPolygonCreate;
 	botlib_import.DebugPolygonDelete = BotImport_DebugPolygonDelete;
+
+	botlib_import.BSPNumInlineModels = BotImport_BSPNumInlineModels;
 
 	botlib_export = (botlib_export_t *)GetBotLibAPI( BOTLIB_API_VERSION, &botlib_import );
 	assert(botlib_export);	// bk001129 - somehow we end up with a zero import.

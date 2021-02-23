@@ -485,6 +485,12 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 		SV_GetUsercmd( args[1], VMAV(2, usercmd_t) );
 		return 0;
 	case G_GET_ENTITY_TOKEN:
+		// If the game module didn't announce it can handle more submodels than the default 256, but tries to load
+		// entities we want to abort now
+		if ( CM_NumInlineModels() > MAX_SUBMODELS && !sv.submodelBypass ) {
+			Com_Error( ERR_DROP, "MAX_SUBMODELS exceeded (game module doesn't support submodel bypass)" );
+		}
+		else
 		{
 			const char	*s;
 
@@ -1100,6 +1106,8 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 			return (int)SV_MVAPI_ResetServerTime((qboolean)!!args[1]);
 		case G_MVAPI_ENABLE_PLAYERSNAPSHOTS:
 			return (int)SV_MVAPI_EnablePlayerSnapshots((qboolean)!!args[1]);
+		case G_MVAPI_ENABLE_SUBMODELBYPASS:
+			return SV_MVAPI_EnableSubmodelBypass( (qboolean)!!args[1] );
 		}
 	}
 
@@ -1123,6 +1131,7 @@ void SV_ShutdownGameProgs( void ) {
 	gvm = NULL;
 	sv.fixes = MVFIX_NONE;
 	sv.vmPlayerSnapshots = qfalse;
+	sv.submodelBypass = qfalse;
 }
 
 /*
@@ -1281,4 +1290,14 @@ enable / disable whether to call the gvm before generating each snapshot
 qboolean SV_MVAPI_EnablePlayerSnapshots(qboolean enable) {
 	sv.vmPlayerSnapshots = enable;
 	return qfalse;
+}
+
+/*
+====================
+SV_MVAPI_EnableSubmodelBypass
+====================
+*/
+qboolean SV_MVAPI_EnableSubmodelBypass(qboolean enable) {
+	sv.submodelBypass = enable;
+	return sv.submodelBypass;
 }

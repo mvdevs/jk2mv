@@ -1057,4 +1057,6 @@ void MV_SetCurrentGameversion(mvversion_t version);
 mvversion_t MV_GetCurrentGameversion();
 mvprotocol_t MV_GetCurrentProtocol();
 
+#define	MAX_SUBMODELS			256
+
 #endif // _QCOMMON_H_

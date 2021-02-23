@@ -4,10 +4,6 @@
 #include "cm_public.h"
 #include "cm_polylib.h"
 
-#define	MAX_SUBMODELS			256
-#define	BOX_MODEL_HANDLE		255
-#define CAPSULE_MODEL_HANDLE	254
-
 
 typedef struct {
 	cplane_t	*plane;
@@ -129,6 +125,9 @@ typedef struct {
 
 	int			floodvalid;
 	int			checkcount;					// incremented on each trace
+
+	int			boxModelHandle;
+	int			capsuleModelHandle;
 } clipMap_t;
 
 
