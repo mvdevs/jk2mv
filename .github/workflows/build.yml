@@ -6,10 +6,76 @@ on:
     branches: actions
   pull_request:
     branches: actions
+  release:
+    types: [created]
 
 jobs:
+  vs2019-installer:
+    name: Build VS 2019 (Installer), ${{ matrix.build_type }}, ${{ matrix.arch }}
+    runs-on: windows-2019
+    strategy:
+      matrix:
+        build_type: [RelWithDebInfo]
+        arch: [Win32]
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: true
+        fetch-depth: 0
+
+    - name: Add msbuild to PATH
+      uses: microsoft/setup-msbuild@v1.0.2
+
+    - name: Create Build Environment
+      run: cmake -E make_directory ${{github.workspace}}/build/actions
+
+    - name: Configure CMake
+      shell: bash
+      working-directory: ${{github.workspace}}/build/actions
+      run: cmake $GITHUB_WORKSPACE -A ${{ matrix.arch }} -DBuildPortableVersion=OFF
+
+    - name: Build
+      working-directory: ${{github.workspace}}/build/actions
+      shell: cmd
+      run: msbuild /m /p:Configuration=${{ matrix.build_type }} PACKAGE.vcxproj
+
+    #- uses: 'actions/upload-artifact@v2'
+    #  with:
+    #    name: Windows Binaries (Installer), ${{ matrix.build_type }}, ${{ matrix.arch }}
+    #    path: ${{github.workspace}}/build/actions/out/${{ matrix.build_type }}/*
+
+    - uses: 'actions/upload-artifact@v2'
+      with:
+        name: Windows Package (Installer), ${{ matrix.build_type }}, ${{ matrix.arch }}
+        path: ${{github.workspace}}/build/actions/out/*.exe
+
+    # As actions/upload-release-asset seems to demand exact filenames and content types we use a script instead
+    - name: Upload Release
+      if: ${{ github.event_name == 'release' && matrix.build_type == 'RelWithDebInfo' }}
+      uses: actions/github-script@v4
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const fs = require('fs').promises;
+          for ( let filename of await fs.readdir(String.raw`${{github.workspace}}/build/actions/out/`) )
+          {
+            if ( filename.endsWith('.exe') )
+            {
+              await github.repos.uploadReleaseAsset(
+                {
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  release_id: ${{ github.event.release.id }},
+                  name: filename,
+                  data: await fs.readFile( String.raw`${{github.workspace}}/build/actions/out/` + filename )
+                }
+              );
+            }
+          }
+
   vs2019:
-    name: Build VS 2019, ${{ matrix.build_type }}, ${{ matrix.arch }}
+    name: Build VS 2019 (Portable), ${{ matrix.build_type }}, ${{ matrix.arch }}
     runs-on: windows-2019
     strategy:
       matrix:
@@ -18,103 +84,293 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+      with:
+        submodules: true
+        fetch-depth: 0
 
     - name: Add msbuild to PATH
       uses: microsoft/setup-msbuild@v1.0.2
 
     - name: Create Build Environment
-      run: cmake -E make_directory ${{runner.workspace}}/build/actions
+      run: cmake -E make_directory ${{github.workspace}}/build/actions
 
     - name: Configure CMake
       shell: bash
-      working-directory: ${{runner.workspace}}/build/actions
-      run: cmake $GITHUB_WORKSPACE -A ${{ matrix.arch }}
+      working-directory: ${{github.workspace}}/build/actions
+      run: cmake $GITHUB_WORKSPACE -A ${{ matrix.arch }} -DBuildPortableVersion=ON
 
     - name: Build
-      working-directory: ${{runner.workspace}}/build/actions
-      shell: bash
-      run: cmake --build . --config ${{ matrix.build_type }}
+      working-directory: ${{github.workspace}}/build/actions
+      shell: cmd
+      run: msbuild /m /p:Configuration=${{ matrix.build_type }} PACKAGE.vcxproj
+
+    #- uses: 'actions/upload-artifact@v2'
+    #  with:
+    #    name: Windows Binaries (Portable), ${{ matrix.build_type }}, ${{ matrix.arch }}
+    #    path: ${{github.workspace}}/build/actions/out/${{ matrix.build_type }}/*
+
+    - uses: 'actions/upload-artifact@v2'
+      if: ${{ matrix.build_type == 'RelWithDebInfo' }}
+      with:
+        name: Windows Package (Portable), ${{ matrix.build_type }}, ${{ matrix.arch }}
+        path: ${{github.workspace}}/build/actions/out/*.zip
+
+    # As actions/upload-release-asset seems to demand exact filenames and content types we use a script instead
+    - name: Upload Release
+      if: ${{ github.event_name == 'release' && matrix.build_type == 'RelWithDebInfo' }}
+      uses: actions/github-script@v4
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const fs = require('fs').promises;
+          for ( let filename of await fs.readdir(String.raw`${{github.workspace}}/build/actions/out/`) )
+          {
+            if ( filename.endsWith('.zip') )
+            {
+              await github.repos.uploadReleaseAsset(
+                {
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  release_id: ${{ github.event.release.id }},
+                  name: filename,
+                  data: await fs.readFile( String.raw`${{github.workspace}}/build/actions/out/` + filename )
+                }
+              );
+            }
+          }
 
   vs2017_xp:
-    name: Build VS 2017, Windows XP
+    name: Build VS 2017 (Portable - WinXP), ${{ matrix.build_type }}
     runs-on: windows-2016
+    strategy:
+      matrix:
+        build_type: [Debug, RelWithDebInfo]
 
     steps:
     - uses: actions/checkout@v2
+      with:
+        submodules: true
+        fetch-depth: 0
 
     - name: Add msbuild to PATH
       uses: microsoft/setup-msbuild@v1.0.2
 
     - name: Create Build Environment
-      run: cmake -E make_directory ${{runner.workspace}}/build/actions
+      run: cmake -E make_directory ${{github.workspace}}/build/actions
 
     - name: Configure CMake
       shell: bash
-      working-directory: ${{runner.workspace}}/build/actions
-      run: cmake $GITHUB_WORKSPACE -A Win32 -T v141_xp
+      working-directory: ${{github.workspace}}/build/actions
+      run: cmake $GITHUB_WORKSPACE -A Win32 -T v141_xp -DBuildPortableVersion=ON
 
     - name: Build
-      working-directory: ${{runner.workspace}}/build/actions
-      shell: bash
-      run: cmake --build . --config RelWithDebInfo
+      working-directory: ${{github.workspace}}/build/actions
+      shell: cmd
+      run: msbuild /m /p:Configuration=${{ matrix.build_type }} PACKAGE.vcxproj
+
+    #- uses: 'actions/upload-artifact@v2'
+    #  with:
+    #    name: Windows Binaries (Portable - WinXP), ${{ matrix.build_type }}
+    #    path: ${{github.workspace}}/build/actions/out/${{ matrix.build_type }}/*
+
+    - uses: 'actions/upload-artifact@v2'
+      if: ${{ matrix.build_type == 'RelWithDebInfo' }}
+      with:
+        name: Windows Package (Portable - WinXP), ${{ matrix.build_type }}
+        path: ${{github.workspace}}/build/actions/out/*.zip
+
+    # As actions/upload-release-asset seems to demand exact filenames and content types we use a script instead
+    - name: Upload Release
+      if: ${{ github.event_name == 'release' && matrix.build_type == 'RelWithDebInfo' }}
+      uses: actions/github-script@v4
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const fs = require('fs').promises;
+          for ( let filename of await fs.readdir(String.raw`${{github.workspace}}/build/actions/out/`) )
+          {
+            if ( filename.endsWith('.zip') )
+            {
+              await github.repos.uploadReleaseAsset(
+                {
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  release_id: ${{ github.event.release.id }},
+                  name: filename.split('.').slice(0, -1).join('.') + "-winxp.zip",
+                  data: await fs.readFile( String.raw`${{github.workspace}}/build/actions/out/` + filename )
+                }
+              );
+            }
+          }
 
   macos:
-    name: Build macOS AppleClang
+    name: Build macOS (${{ matrix.portable }}), ${{ matrix.build_type }}
     runs-on: macos-10.15
+    env:
+        DEVELOPER_DIR: /Applications/Xcode_11.7.app/Contents/Developer
     strategy:
       matrix:
-        portable: [ON, OFF]
+        build_type: [Debug, Release]
+        portable: [Portable, Non-Portable]
 
     steps:
     - uses: actions/checkout@v2
+      with:
+        submodules: true
+        fetch-depth: 0
+
+    - name: Set CMake parameters
+      id: cmakeargs
+      shell: bash
+      run: |
+        if [ "${{ matrix.portable }}" == "Portable" ]; then
+          echo '::set-output name=PORTABLE::-DBuildPortableVersion=ON'
+        else
+          echo '::set-output name=PORTABLE::-DBuildPortableVersion=OFF'
+        fi
 
     - name: Create Build Environment
       run: |
         brew install sdl2
-        mkdir -p ${{runner.workspace}}/build/actions
+        mkdir -p ${{github.workspace}}/build/actions
 
     - name: Configure CMake
       shell: bash
-      working-directory: ${{runner.workspace}}/build/actions
-      run: cmake -G "Unix Makefiles" -DUseInternalLibs=ON -DBuildPortableVersion=${{ matrix.portable }} ../..
+      working-directory: ${{github.workspace}}/build/actions
+      run: cmake -G "Unix Makefiles" -DUseInternalLibs=ON ${{ steps.cmakeargs.outputs.PORTABLE }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} $GITHUB_WORKSPACE
 
     - name: Build
-      working-directory: ${{runner.workspace}}/build/actions
+      working-directory: ${{github.workspace}}/build/actions
       shell: bash
       run: make
 
     - name: Package
-      working-directory: ${{runner.workspace}}/build/actions
+      working-directory: ${{github.workspace}}/build/actions
       shell: bash
       run: make package
 
+    #- uses: 'actions/upload-artifact@v2'
+    #  with:
+    #    name: macOS Binaries (${{ matrix.portable }}), ${{ matrix.build_type }}
+    #    path: ${{github.workspace}}/build/actions/out/${{ matrix.build_type }}/*
+
+    - uses: 'actions/upload-artifact@v2'
+      if: ${{ matrix.build_type == 'Release' }}
+      with:
+        name: macOS Package (${{ matrix.portable }}), ${{ matrix.build_type }}
+        path: |
+          ${{github.workspace}}/build/actions/out/*.tar.gz
+          ${{github.workspace}}/build/actions/out/*.dmg
+
+    # As actions/upload-release-asset seems to demand exact filenames and content types we use a script instead
+    - name: Upload Release
+      if: ${{ github.event_name == 'release' && matrix.build_type == 'Release' }}
+      uses: actions/github-script@v4
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const fs = require('fs').promises;
+          for ( let filename of await fs.readdir('${{github.workspace}}/build/actions/out/') )
+          {
+            if ( filename.endsWith('.tar.gz') || filename.endsWith('.dmg') )
+            {
+              await github.repos.uploadReleaseAsset(
+                {
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  release_id: ${{ github.event.release.id }},
+                  name: filename,
+                  data: await fs.readFile( "${{github.workspace}}/build/actions/out/" + filename )
+                }
+              );
+            }
+          }
+
   linux:
-    name: Build Linux, ${{ matrix.build_type }}
+    name: Build Linux (${{ matrix.portable }} - ${{ matrix.container_image }}), ${{ matrix.build_type }}
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        options: [-DUseInternalLibs=ON -DBuildPortableVersion=ON, -DUseInternalLibs=OFF -DBuildPortableVersion=OFF]
+        container_image: ["ubuntu:16.04", "i386/ubuntu:16.04"]
+        build_type: [Debug, Release]
+        portable: [Portable, Non-Portable]
 
     steps:
     - uses: actions/checkout@v2
+      with:
+        submodules: true
+        fetch-depth: 0
+
+    - name: Determine parameters
+      id: parameters
+      shell: bash
+      run: |
+        if [ "${{ matrix.portable }}" == "Portable" ]; then
+          OPTIONS="-DUseInternalLibs=ON -DBuildPortableVersion=ON"
+        else
+          OPTIONS="-DUseInternalLibs=OFF -DBuildPortableVersion=OFF"
+        fi
+        [[ "${{ matrix.container_image}}" == i386* ]] && OPTIONS="$OPTIONS -DSystemProcessor=i386"
+        echo "::set-output name=OPTIONS::$OPTIONS"
+        BINARTIFACTNAME=$(echo "Linux Binaries (${{ matrix.portable }} - ${{ matrix.container_image }}), ${{ matrix.build_type }}" | tr ":/" "-")
+        echo "::set-output name=BINARTIFACTNAME::$BINARTIFACTNAME"
+        PKGARTIFACTNAME=$(echo "Linux Package (${{ matrix.portable }} - ${{ matrix.container_image }}), ${{ matrix.build_type }}" | tr ":/" "-")
+        echo "::set-output name=PKGARTIFACTNAME::$PKGARTIFACTNAME"
 
     - name: Create Build Environment
       run: |
-        sudo apt-get update
-        sudo apt-get install git zip wget libfuse2 build-essential libsdl2-dev libgl1-mesa-dev libopenal-dev libjpeg-dev libpng-dev libminizip-dev
-        mkdir -p ${{runner.workspace}}/build/actions
+        podman pull docker.io/${{ matrix.container_image }}
+        podman run --name buildenv -v ${{github.workspace}}:/jk2mv -td docker.io/${{ matrix.container_image }} /bin/bash
+        podman exec buildenv apt-get update
+        podman exec buildenv apt-get install -y git zip wget libfuse2 build-essential libsdl2-dev libgl1-mesa-dev libopenal-dev libjpeg-dev libpng-dev libminizip-dev cmake rpm
+        mkdir -p ${{github.workspace}}/build/actions
 
     - name: Configure CMake
       shell: bash
-      working-directory: ${{runner.workspace}}/build/actions
-      run: cmake ${{ matrix.options }} ../..
+      run: podman exec -w /jk2mv/build/actions buildenv cmake -G "Unix Makefiles" ${{ steps.parameters.outputs.OPTIONS }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} /jk2mv
 
     - name: Build
-      working-directory: ${{runner.workspace}}/build/actions
       shell: bash
-      run: build
+      run: podman exec -w /jk2mv/build/actions buildenv make
 
     - name: Package
-      working-directory: ${{runner.workspace}}/build/actions
       shell: bash
-      run: build
+      run: podman exec -w /jk2mv/build/actions buildenv make package
+
+    #- uses: 'actions/upload-artifact@v2'
+    #  with:
+    #    name: ${{ steps.parameters.outputs.BINARTIFACTNAME }}
+    #    path: ${{github.workspace}}/build/actions/out/${{ matrix.build_type }}/*
+
+    - uses: 'actions/upload-artifact@v2'
+      if: ${{ matrix.build_type == 'Release' }}
+      with:
+        name: ${{ steps.parameters.outputs.PKGARTIFACTNAME }}
+        path: |
+          ${{github.workspace}}/build/actions/out/*.tar.gz
+          ${{github.workspace}}/build/actions/out/*.deb
+          ${{github.workspace}}/build/actions/out/*.rpm
+
+    # As actions/upload-release-asset seems to demand exact filenames and content types we use a script instead
+    - name: Upload Release
+      if: ${{ github.event_name == 'release' && matrix.build_type == 'Release' }}
+      uses: actions/github-script@v4
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const fs = require('fs').promises;
+          for ( let filename of await fs.readdir('${{github.workspace}}/build/actions/out/') )
+          {
+            if ( filename.endsWith('.tar.gz') || filename.endsWith('.deb') || filename.endsWith('.rpm') )
+            {
+              await github.repos.uploadReleaseAsset(
+                {
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  release_id: ${{ github.event.release.id }},
+                  name: filename,
+                  data: await fs.readFile( "${{github.workspace}}/build/actions/out/" + filename )
+                }
+              );
+            }
+          }
