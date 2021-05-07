@@ -137,6 +137,7 @@ void Sys_PrintBacktrace(void);
 
 char *Sys_ResolvePath( char *path );
 char *Sys_RealPath( char *path );
+int Sys_FindFunctions( void );
 
 typedef enum graphicsApi_e
 {

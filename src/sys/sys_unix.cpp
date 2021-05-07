@@ -1316,3 +1316,17 @@ char *Sys_RealPath( char *path )
 		return realPath;
 	return path;
 }
+
+/*
+===============
+Sys_FindFunctions
+===============
+*/
+int Sys_FindFunctions( void )
+{
+	// We only use this function on Windows to find functions that might not be
+	// available on all OS versions, but that may be required for some Sys_
+	// functions to be fully operational. On unix we can just return 0.
+
+	return 0;
+}

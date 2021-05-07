@@ -676,29 +676,52 @@ char *Sys_ResolvePath( char *path )
 Sys_RealPath
 ===============
 */
+
+typedef DWORD (WINAPI *_GetFinalPathNameByHandleA)( _In_ HANDLE, _Out_writes_(cchFilePath) LPSTR, _In_ DWORD, _In_ DWORD );
+_GetFinalPathNameByHandleA Win_GetFinalPathNameByHandleA;
 char *Sys_RealPath( char *path )
 {
 	static char realPath[MAX_PATH];
 	HANDLE fileHandle;
 	DWORD len;
 
+	// Return the original path if the system doesn't support GetFinalPathNameByHandleA
+	if ( !Win_GetFinalPathNameByHandleA ) return path;
+
 	// Get a handle to later resolve symlinks
 	fileHandle = CreateFileA( (LPCSTR)path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL );
 
 	// If we can't access it return the original instead
-	if( fileHandle == INVALID_HANDLE_VALUE)
+	if( fileHandle == INVALID_HANDLE_VALUE )
 		return path;
 
 	// Get the resolvedName from the handle
-	len = GetFinalPathNameByHandleA( fileHandle, (LPSTR)realPath, sizeof(realPath), VOLUME_NAME_NT );
+	len = Win_GetFinalPathNameByHandleA( fileHandle, (LPSTR)realPath, sizeof(realPath), VOLUME_NAME_NT );
+
+	// Close the handle
+	CloseHandle( fileHandle );
 
 	// If it's longer than we can store return "" to disable access
 	if( len >= sizeof(realPath) )
 		return "";
 
-	// Close the handle
-	CloseHandle( fileHandle );
-
 	return realPath;
+}
+
+/*
+===============
+Sys_FindFunctions
+===============
+*/
+int Sys_FindFunctions( void )
+{
+	int missingFuncs = 0;
+
+	// Get the kernel32 handle and try to find the function "GetFinalPathNameByHandleA"
+	HINSTANCE handle = GetModuleHandleA( "KERNEL32" );
+	if ( handle ) Win_GetFinalPathNameByHandleA = (_GetFinalPathNameByHandleA)GetProcAddress( handle, "GetFinalPathNameByHandleA" );
+	if ( !Win_GetFinalPathNameByHandleA ) missingFuncs++;
+
+	return missingFuncs;
 }
 
