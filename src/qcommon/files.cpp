@@ -3734,23 +3734,22 @@ void FS_PureServerSetLoadedPaks( const char *pakSums, const char *pakNames ) {
 		Com_DPrintf( "Connected to a pure server.\n" );
 	}
 
-	for ( i = 0 ; i < c ; i++ ) {
+	for ( i = 0 ; i < (int)ARRAY_LEN(fs_serverPakNames) ; i++ ) {
 		if (fs_serverPakNames[i]) {
 			Z_Free((void *)fs_serverPakNames[i]);
 		}
 		fs_serverPakNames[i] = NULL;
 	}
-	if ( pakNames && *pakNames ) {
-		Cmd_TokenizeString( pakNames );
 
-		d = Cmd_Argc();
-		if ( d > MAX_SEARCH_PATHS ) {
-			d = MAX_SEARCH_PATHS;
-		}
+	Cmd_TokenizeString( pakNames );
 
-		for ( i = 0 ; i < d ; i++ ) {
-			fs_serverPakNames[i] = CopyString( Cmd_Argv( i ) );
-		}
+	d = Cmd_Argc();
+	if ( d > MAX_SEARCH_PATHS ) {
+		d = MAX_SEARCH_PATHS;
+	}
+
+	for ( i = 0 ; i < d ; i++ ) {
+		fs_serverPakNames[i] = CopyString( Cmd_Argv( i ) );
 	}
 }
 
@@ -3777,23 +3776,22 @@ void FS_PureServerSetReferencedPaks( const char *pakSums, const char *pakNames )
 		fs_serverReferencedPaks[i] = atoi( Cmd_Argv( i ) );
 	}
 
-	for ( i = 0 ; i < c ; i++ ) {
+	for ( i = 0 ; i < (int)ARRAY_LEN(fs_serverReferencedPakNames) ; i++ ) {
 		if (fs_serverReferencedPakNames[i]) {
 			Z_Free((void *)fs_serverReferencedPakNames[i]);
 		}
 		fs_serverReferencedPakNames[i] = NULL;
 	}
-	if ( pakNames && *pakNames ) {
-		Cmd_TokenizeString( pakNames );
 
-		d = Cmd_Argc();
-		if ( d > MAX_SEARCH_PATHS ) {
-			d = MAX_SEARCH_PATHS;
-		}
+	Cmd_TokenizeString( pakNames );
 
-		for ( i = 0 ; i < d ; i++ ) {
-			fs_serverReferencedPakNames[i] = CopyString( Cmd_Argv( i ) );
-		}
+	d = Cmd_Argc();
+	if ( d > MAX_SEARCH_PATHS ) {
+		d = MAX_SEARCH_PATHS;
+	}
+
+	for ( i = 0 ; i < d ; i++ ) {
+		fs_serverReferencedPakNames[i] = CopyString( Cmd_Argv( i ) );
 	}
 
 	if ( c != d ) {
