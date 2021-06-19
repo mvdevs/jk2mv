@@ -1745,7 +1745,12 @@ void CL_InitDownloads(void) {
 	clc.downloadIndex = 0;
 
 	if (cls.ignoreNextDownloadList) {
-	  cls.ignoreNextDownloadList = qfalse;
+		cls.ignoreNextDownloadList = qfalse;
+	} else if ( clc.demoplaying ) {
+		if (FS_ComparePaks( missingfiles, sizeof( missingfiles ), NULL, 0, qfalse ) ) {
+			Com_Printf( S_COLOR_YELLOW "WARNING: You are missing some files referenced by the demo:\n%s"
+				S_COLOR_YELLOW "It may fail to play back correctly\n", missingfiles );
+		}
 	} else if ( !mv_allowDownload->integer ) {
 		// autodownload is disabled on the client
 		// but it's possible that some referenced files on the server are missing

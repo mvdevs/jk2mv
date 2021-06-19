@@ -321,7 +321,11 @@ void CL_SystemInfoChanged( void ) {
 	systemInfo = cl.gameState.stringData + cl.gameState.stringOffsets[ CS_SYSTEMINFO ];
 	cl.serverId = atoi( Info_ValueForKey( systemInfo, "sv_serverid" ) );
 
-	// don't set any vars when playing a demo
+	s = Info_ValueForKey( systemInfo, "sv_referencedPaks" );
+	t = Info_ValueForKey( systemInfo, "sv_referencedPakNames" );
+	FS_PureServerSetReferencedPaks( s, t );
+
+	// don't set any other vars when playing a demo
 	if ( clc.demoplaying ) {
 		return;
 	}
@@ -336,10 +340,6 @@ void CL_SystemInfoChanged( void ) {
 	s = Info_ValueForKey( systemInfo, "sv_paks" );
 	t = Info_ValueForKey( systemInfo, "sv_pakNames" );
 	FS_PureServerSetLoadedPaks( s, t );
-
-	s = Info_ValueForKey( systemInfo, "sv_referencedPaks" );
-	t = Info_ValueForKey( systemInfo, "sv_referencedPakNames" );
-	FS_PureServerSetReferencedPaks( s, t );
 
 	gameSet = qfalse;
 	// scan through all the variables in the systeminfo and locally set cvars to match
