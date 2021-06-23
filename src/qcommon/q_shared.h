@@ -75,6 +75,12 @@
 #define idarm32	0
 #endif
 
+#if defined(ARCH_ARM64) && !defined __LCC__
+#define idarm64	1
+#else
+#define idarm64	0
+#endif
+
 #if (defined(powerc) || defined(powerpc) || defined(ppc) || defined(__ppc) || defined(__ppc__)) && !defined __LCC__
 #define idppc	1
 #else
@@ -209,6 +215,9 @@
 #define Q_LITTLE_ENDIAN
 #elif idarm32
 #define ARCH_STRING "arm"
+#define Q_LITTLE_ENDIAN
+#elif idarm64
+#define ARCH_STRING "arm64"
 #define Q_LITTLE_ENDIAN
 #elif idppc
 #define ARCH_STRING "ppc"
