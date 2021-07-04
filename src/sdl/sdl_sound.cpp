@@ -310,5 +310,9 @@ SNDDMA_BeginPainting
 */
 void SNDDMA_Activate(qboolean activate)
 {
-	SDL_PauseAudioDevice(dev, !activate);
+	qboolean isActive = (qboolean)(SDL_GetAudioDeviceStatus(dev) == SDL_AUDIO_PLAYING);
+
+	if (isActive != activate) {
+		SDL_PauseAudioDevice(dev, !activate);
+	}
 }
