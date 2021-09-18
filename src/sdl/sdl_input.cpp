@@ -294,9 +294,9 @@ static void IN_ActivateMouse( void )
 	}
 
 	// in_nograb makes no sense in fullscreen mode
-	if( !(SDL_GetWindowFlags( SDL_window ) & SDL_WINDOW_FULLSCREEN) )
+	if( in_nograb->modified || !mouseActive )
 	{
-		if( in_nograb->modified || !mouseActive )
+		if( !(SDL_GetWindowFlags( SDL_window ) & SDL_WINDOW_FULLSCREEN) )
 		{
 			if( in_nograb->integer )
 			{
@@ -308,9 +308,9 @@ static void IN_ActivateMouse( void )
 				SDL_SetRelativeMouseMode( SDL_TRUE );
 				SDL_SetWindowGrab( SDL_window, SDL_TRUE );
 			}
-
-			in_nograb->modified = qfalse;
 		}
+
+		in_nograb->modified = qfalse;
 	}
 
 	mouseActive = qtrue;
