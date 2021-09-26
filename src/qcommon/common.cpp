@@ -2439,6 +2439,7 @@ void Com_Init( char *commandLine ) {
 	// bk001129 - do this before anything else decides to push events
 	Com_InitPushEvent();
 
+	Com_InitZoneMemory();
 	Cvar_Init ();
 
 	// prepare enough of the subsystems to handle
@@ -2448,7 +2449,6 @@ void Com_Init( char *commandLine ) {
 //	Swap_Init ();
 	Cbuf_Init ();
 
-	Com_InitZoneMemory();
 	Cmd_Init ();
 
 	// override anything from the config files with command line args
@@ -2937,6 +2937,7 @@ void MSG_shutdownHuffman();
 void Com_Shutdown (void)
 {
 	CM_ClearMap();
+	SP_Shutdown ();
 
 	// write config file if anything changed
 	Com_WriteConfiguration();
