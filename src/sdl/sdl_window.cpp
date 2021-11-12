@@ -34,6 +34,7 @@ static cvar_t	*r_stereo;
 cvar_t			*r_mode;
 cvar_t			*r_displayRefresh;
 static cvar_t	*r_savedWindows;
+static cvar_t	*r_highdpi;
 
 // Window surface cvars
 static cvar_t	*r_stencilbits;
@@ -542,7 +543,7 @@ static rserr_t GLimp_SetMode(glconfig_t *glConfig, const windowDesc_t *windowDes
 	int samples;
 	int i = 0;
 	SDL_Surface *icon = NULL;
-	Uint32 flags = SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI;
+	Uint32 flags = SDL_WINDOW_SHOWN;
 	SDL_DisplayMode desktopMode;
 	int display = 0;
 	int x = SDL_WINDOWPOS_CENTERED, y = SDL_WINDOWPOS_CENTERED;
@@ -552,6 +553,11 @@ static rserr_t GLimp_SetMode(glconfig_t *glConfig, const windowDesc_t *windowDes
 	if ( windowDesc->api == GRAPHICS_API_OPENGL )
 	{
 		flags |= SDL_WINDOW_OPENGL;
+	}
+
+	if ( r_highdpi->integer )
+	{
+		flags |= SDL_WINDOW_ALLOW_HIGHDPI;
 	}
 
 	Com_Printf( "Initializing display\n");
@@ -975,6 +981,7 @@ window_t WIN_Init( const windowDesc_t *windowDesc, glconfig_t *glConfig )
 	r_mode				= Cvar_Get( "r_mode",				"-2",		CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH );
 	r_displayRefresh	= Cvar_Get( "r_displayRefresh",		"0",		CVAR_LATCH );
 	r_savedWindows		= Cvar_Get( "r_savedWindows",		" ",		CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_ROM );
+	r_highdpi			= Cvar_Get( "r_highdpi",			"0",		CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH );
 
 	// Window render surface cvars
 	r_stencilbits		= Cvar_Get( "r_stencilbits",		"8",		CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH );
