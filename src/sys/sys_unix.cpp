@@ -649,7 +649,7 @@ Sys_LoadModuleLibrary
 Used to load a module (jk2mpgame, cgame, ui) so/dylib
 =================
 */
-void *Sys_LoadModuleLibrary(const char *name, qboolean mvOverride, intptr_t(QDECL **entryPoint)(int, ...), intptr_t(QDECL *systemcalls)(intptr_t, ...)) {
+void *Sys_LoadModuleLibrary(const char *name, qboolean mvOverride, VM_EntryPoint_t *entryPoint, intptr_t(QDECL *systemcalls)(intptr_t, ...)) {
 	void (*dllEntry)(intptr_t(*syscallptr)(intptr_t, ...));
 	char filename[MAX_QPATH];
 	const char *path, *filePath;
@@ -703,7 +703,7 @@ void *Sys_LoadModuleLibrary(const char *name, qboolean mvOverride, intptr_t(QDEC
 	}
 
 	dllEntry = (void (*)(intptr_t (*)(intptr_t,...))) dlsym(libHandle, "dllEntry");
-	*entryPoint = (intptr_t(*)(int,...))dlsym(libHandle, "vmMain");
+	*entryPoint = (VM_EntryPoint_t)dlsym(libHandle, "vmMain");
 	if ( !*entryPoint ) {
 		Com_DPrintf("Could not find vmMain in %s\n", filename);
 		dlclose(libHandle);

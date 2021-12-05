@@ -71,7 +71,12 @@ sysEvent_t	Sys_GetEvent( void );
 
 void	Sys_Init (void);
 
-void	*Sys_LoadModuleLibrary(const char *name, qboolean mvOverride, intptr_t(QDECL **entryPoint)(int, ...), intptr_t(QDECL *systemcalls)(intptr_t, ...));
+// NOTE: arm64 mac has a different calling convention for fixed parameters vs. variadic parameters.
+//       As the module entryPoints (vmMain) in jk2 use fixed arg0 to arg11 we can't use "..." around here or we end up with undefined behavior.
+//       See: https://developer.apple.com/documentation/apple-silicon/addressing-architectural-differences-in-your-macos-code
+typedef intptr_t (QDECL *VM_EntryPoint_t)( int, intptr_t, intptr_t, intptr_t, intptr_t, intptr_t, intptr_t, intptr_t, intptr_t, intptr_t, intptr_t, intptr_t, intptr_t );
+
+void	*Sys_LoadModuleLibrary(const char *name, qboolean mvOverride, VM_EntryPoint_t *entryPoint, intptr_t(QDECL *systemcalls)(intptr_t, ...));
 void	Sys_UnloadModuleLibrary(void *dllHandle);
 
 char	*Sys_GetCurrentUser( void );
