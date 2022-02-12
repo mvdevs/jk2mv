@@ -341,7 +341,7 @@ qboolean Netchan_Process(netchan_t *chan, msg_t *msg) {
 		msg->bit = 32;	// past the sequence number
 
 						// but I am a wuss -mw
-						// chan->incomingSequence = sequence;   // lets not accept any more with this sequence number -gil
+		chan->incomingSequence = sequence;   // lets not accept any more with this sequence number -gil
 		return qtrue;
 	}
 
