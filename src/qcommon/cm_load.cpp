@@ -283,6 +283,10 @@ void CMod_LoadLeafs (lump_t *l)
 
 	cm.areas = (cArea_t *)Hunk_Alloc( cm.numAreas * sizeof( *cm.areas ), h_high );
 	cm.areaPortals = (int *)Hunk_Alloc( cm.numAreas * cm.numAreas * sizeof( *cm.areaPortals ), h_high );
+
+	if (cm.numAreas > MAX_MAP_AREA_BYTES * 8) {
+		Com_DPrintf(S_COLOR_YELLOW "WARNING: Map has %d areaportal areas but only up to %d are supported\n", cm.numAreas, MAX_MAP_AREA_BYTES * 8);
+	}
 }
 
 /*
