@@ -185,7 +185,7 @@ for any reason, no changes to the state will be made at all.
 ================
 */
 void CL_ParseSnapshot( msg_t *msg ) {
-	int			len;
+	int			len, len2;
 	clSnapshot_t	*old;
 	clSnapshot_t	newSnap;
 	int			deltaNum;
@@ -242,7 +242,9 @@ void CL_ParseSnapshot( msg_t *msg ) {
 
 	// read areamask
 	len = MSG_ReadByte( msg );
-	MSG_ReadData( msg, &newSnap.areamask, len);
+	len2 = MIN(len, (int)sizeof(newSnap.areamask));
+	MSG_ReadData( msg, &newSnap.areamask, len2);
+	MSG_SkipData( msg, len - len2);
 
 	// read playerinfo
 	SHOWNET( msg, "playerstate" );
