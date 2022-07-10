@@ -1485,6 +1485,15 @@ static qboolean ParseStage( shaderStage_t *stage, const char **text )
 			{
 				stage->rgbGen = CGEN_LIGHTING_DIFFUSE;
 			}
+			else if ( !Q_stricmp( token, "lightingDiffuseEntity" ) )
+			{
+				if (shader.lightmapIndex[0] != LIGHTMAP_NONE)
+				{
+					ri.Printf( PRINT_ALL, S_COLOR_RED "ERROR: rgbGen lightingDiffuseEntity used on a misc_model! in shader '%s'\n", shader.name );
+				}
+				stage->rgbGen = CGEN_LIGHTING_DIFFUSE_ENTITY;
+
+			}
 			else if ( !Q_stricmp( token, "oneMinusVertex" ) )
 			{
 				stage->rgbGen = CGEN_ONE_MINUS_VERTEX;

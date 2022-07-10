@@ -225,6 +225,7 @@ typedef enum {
 	CGEN_ONE_MINUS_VERTEX,
 	CGEN_WAVEFORM,			// programmatically generated
 	CGEN_LIGHTING_DIFFUSE,
+	CGEN_LIGHTING_DIFFUSE_ENTITY, //diffuse lighting * entity
 	CGEN_FOG,				// standard fog
 	CGEN_CONST,				// fixed color
 	CGEN_LIGHTMAP0,
@@ -1727,6 +1728,7 @@ void	RB_CalcColorFromEntity( uint32_t *dstColors );
 void	RB_CalcColorFromOneMinusEntity( uint32_t *dstColors );
 void	RB_CalcSpecularAlpha( unsigned char *alphas );
 void	RB_CalcDiffuseColor( unsigned char *colors );
+void	RB_CalcDiffuseEntityColor( unsigned char *colors );
 void	RB_CalcDisintegrateColors( unsigned char *colors );
 void	RB_CalcDisintegrateVertDeform( void );
 

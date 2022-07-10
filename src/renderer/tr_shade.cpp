@@ -788,6 +788,9 @@ static void ComputeColors( shaderStage_t *pStage, int forceRGBGen )
 		case CGEN_LIGHTING_DIFFUSE:
 			RB_CalcDiffuseColor( ( unsigned char * ) tess.svars.colors );
 			break;
+		case CGEN_LIGHTING_DIFFUSE_ENTITY:
+			RB_CalcDiffuseEntityColor( ( unsigned char * ) tess.svars.colors );
+			break;
 		case CGEN_EXACT_VERTEX:
 			Com_Memcpy( tess.svars.colors, tess.vertexColors, tess.numVertexes * sizeof( tess.vertexColors[0] ) );
 			break;

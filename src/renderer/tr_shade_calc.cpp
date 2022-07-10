@@ -1151,6 +1151,77 @@ void RB_CalcDiffuseColor( unsigned char *colors )
 	}
 }
 
+/*
+** RB_CalcDiffuseColorEntity
+**
+** The basic vertex lighting calc * Entity Color
+*/
+void RB_CalcDiffuseEntityColor( unsigned char *colors )
+{
+	int				i;
+	float			*v, *normal;
+	float			incoming;
+	trRefEntity_t	*ent;
+	int				ambientLightInt;
+	vec3_t			ambientLight;
+	vec3_t			lightDir;
+	vec3_t			directedLight;
+	int				numVertexes;
+	float			j,r,g,b;
+
+	if ( !backEnd.currentEntity )
+	{//error, use the normal lighting
+		RB_CalcDiffuseColor(colors);
+	}
+
+	ent = backEnd.currentEntity;
+	VectorCopy( ent->ambientLight, ambientLight );
+	VectorCopy( ent->directedLight, directedLight );
+	VectorCopy( ent->lightDir, lightDir );
+
+	r = backEnd.currentEntity->e.shaderRGBA[0]/255.0f;
+	g = backEnd.currentEntity->e.shaderRGBA[1]/255.0f;
+	b = backEnd.currentEntity->e.shaderRGBA[2]/255.0f;
+
+	((byte *)&ambientLightInt)[0] = Q_ftol( r*ent->ambientLight[0] );
+	((byte *)&ambientLightInt)[1] = Q_ftol( g*ent->ambientLight[1] );
+	((byte *)&ambientLightInt)[2] = Q_ftol( b*ent->ambientLight[2] );
+	((byte *)&ambientLightInt)[3] = backEnd.currentEntity->e.shaderRGBA[3];
+
+	v = tess.xyz[0];
+	normal = tess.normal[0];
+
+	numVertexes = tess.numVertexes;
+
+	for ( i = 0 ; i < numVertexes ; i++, v += 4, normal += 4)
+	{
+		incoming = DotProduct (normal, lightDir);
+		if ( incoming <= 0 ) {
+			*(int *)&colors[i*4] = ambientLightInt;
+			continue;
+		}
+		j = ( ambientLight[0] + incoming * directedLight[0] );
+		if ( j > 255 ) {
+			j = 255;
+		}
+		colors[i*4+0] = Q_ftol(j*r);
+
+		j = ( ambientLight[1] + incoming * directedLight[1] );
+		if ( j > 255 ) {
+			j = 255;
+		}
+		colors[i*4+1] = Q_ftol(j*g);
+
+		j = ( ambientLight[2] + incoming * directedLight[2] );
+		if ( j > 255 ) {
+			j = 255;
+		}
+		colors[i*4+2] = Q_ftol(j*b);
+
+		colors[i*4+3] = backEnd.currentEntity->e.shaderRGBA[3];
+	}
+}
+
 //---------------------------------------------------------
 void RB_CalcDisintegrateColors( unsigned char *colors )
 {
