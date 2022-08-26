@@ -2890,6 +2890,10 @@ void Com_Frame( void ) {
 		if ( com_speeds->integer ) {
 			timeAfter = Sys_Milliseconds ();
 		}
+	} else {
+		if ( com_speeds->integer ) {
+			timeAfter = timeBeforeEvents = timeBeforeClient = Sys_Milliseconds();
+		}
 	}
 
 	//
@@ -2900,7 +2904,7 @@ void Com_Frame( void ) {
 
 		all = timeAfter - timeBeforeServer;
 		sv = timeBeforeEvents - timeBeforeServer;
-		ev = timeBeforeServer - timeBeforeFirstEvents + timeBeforeClient - timeBeforeEvents;
+		ev = (timeBeforeServer - timeBeforeFirstEvents) + (timeBeforeClient - timeBeforeEvents);
 		cl = timeAfter - timeBeforeClient;
 		sv -= time_game;
 		cl -= time_frontend + time_backend;
