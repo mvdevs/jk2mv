@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.1.0)
 
+# Link directly against libGL.so instead of using GLVND
+cmake_policy(SET CMP0072 OLD)
+
 # For checks in subdirectories
 set(InMV TRUE)
 
