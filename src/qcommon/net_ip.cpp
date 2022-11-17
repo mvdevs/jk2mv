@@ -415,6 +415,14 @@ static SOCKET NET_IPSocket( const char *net_interface, int port, int *err ) {
 		return newsocket;
 	}
 
+	// happens when there are too many pk3 files
+	if ( newsocket >= FD_SETSIZE ) {
+		Com_Printf( "WARNING: NET_IPSocket: file descriptor too high\n" );
+		*err = 0;
+		closesocket( newsocket );
+		return INVALID_SOCKET;
+	}
+
 	// make it non-blocking
 	if( ioctlsocket( newsocket, FIONBIO, &_true ) == SOCKET_ERROR ) {
 		Com_Printf( "WARNING: NET_IPSocket: ioctl FIONBIO: %s\n", NET_ErrorString() );
