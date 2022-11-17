@@ -2720,7 +2720,9 @@ FS_SortFileList
 ================
 */
 static void FS_SortFileList(const char **filelist, int numfiles) {
-	qsort( filelist, numfiles, sizeof(void *), FS_PathCmpSort);
+	if (numfiles > 1) {
+		qsort( filelist, numfiles, sizeof(void *), FS_PathCmpSort);
+	}
 }
 
 /*
@@ -2992,7 +2994,9 @@ static void FS_AddGameDirectory( const char *path, const char *dir, qboolean ass
 		numfiles = MAX_PAKFILES;
 	}
 
-	qsort( pakfiles, numfiles, sizeof(void *), paksort );
+	if ( numfiles > 1 ) {
+		qsort( pakfiles, numfiles, sizeof(void *), paksort );
+	}
 
 	for ( i = 0 ; i < numfiles ; i++ ) {
 		pakfile = FS_BuildOSPath( path, dir, pakfiles[i] );
@@ -4175,7 +4179,9 @@ int FS_GetDLList(dlfile_t *files, const int maxfiles) {
 
 	Sys_FreeFileList(dirs);
 
-	qsort(files, ret, sizeof(*files), FS_DLFileCmpSort);
+	if (ret > 1) {
+		qsort(files, ret, sizeof(*files), FS_DLFileCmpSort);
+	}
 
 	return ret;
 }
