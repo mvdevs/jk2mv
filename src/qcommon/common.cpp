@@ -169,7 +169,7 @@ static void Com_Puts_Ext( qboolean extendedColors, const char *msg )
 
 		// logfile
 		if ( com_logfile && com_logfile->integer ) {
-			if ( !logfile ) {
+			if ( logfile == 0 ) {
 				struct tm *newtime;
 				time_t aclock;
 
@@ -177,14 +177,20 @@ static void Com_Puts_Ext( qboolean extendedColors, const char *msg )
 				newtime = localtime( &aclock );
 
 				logfile = FS_FOpenFileWrite( "qconsole.log" );
-				Com_Printf( "logfile opened on %s\n", asctime( newtime ) );
-				if ( com_logfile->integer > 1 ) {
-					// force it to not buffer so we get valid
-					// data even if we are crashing
-					FS_ForceFlush(logfile);
+				if ( logfile ) {
+					Com_Printf( "logfile opened on %s\n", asctime( newtime ) );
+
+					if ( com_logfile->integer > 1 ) {
+						// force it to not buffer so we get valid
+						// data even if we are crashing
+						FS_ForceFlush(logfile);
+					}
+				} else {
+					logfile = -1;
+					Com_Printf( "Couldn't open qconsole.log\n");
 				}
 			}
-			if ( logfile && FS_Initialized()) {
+			if ( logfile > 0 && FS_Initialized()) {
 				FS_Write(line, lineLen, logfile);
 			}
 		}
@@ -1589,7 +1595,7 @@ void Hunk_Log( void) {
 	char		buf[4096];
 	int size, numBlocks;
 
-	if (!logfile || !FS_Initialized())
+	if (logfile <= 0 || !FS_Initialized())
 		return;
 	size = 0;
 	numBlocks = 0;
@@ -1619,7 +1625,7 @@ void Hunk_SmallLog( void) {
 	char		buf[4096];
 	int size, locsize, numBlocks;
 
-	if (!logfile || !FS_Initialized())
+	if (logfile <= 0 || !FS_Initialized())
 		return;
 	for (block = hunkblocks ; block; block = block->next) {
 		block->printed = qfalse;
@@ -2946,7 +2952,7 @@ void Com_Shutdown (void)
 	// write config file if anything changed
 	Com_WriteConfiguration();
 
-	if (logfile) {
+	if (logfile > 0) {
 		FS_FCloseFile (logfile);
 		logfile = 0;
 		com_logfile->integer = 0;//don't open up the log file again!!
