@@ -2942,7 +2942,6 @@ const char *get_filename(const char *path) {
 	return slash + 1;
 }
 
-#define	MAX_PAKFILES	1024
 static void FS_AddGameDirectory( const char *path, const char *dir, qboolean assetsOnly ) {
 	searchpath_t	*sp;
 	int				i;
@@ -2990,10 +2989,6 @@ static void FS_AddGameDirectory( const char *path, const char *dir, qboolean ass
 
 	// sort them so that later alphabetic matches override
 	// earlier ones.  This makes pak1.pk3 override pak0.pk3
-	if ( numfiles > MAX_PAKFILES ) {
-		numfiles = MAX_PAKFILES;
-	}
-
 	if ( numfiles > 1 ) {
 		qsort( pakfiles, numfiles, sizeof(void *), paksort );
 	}
