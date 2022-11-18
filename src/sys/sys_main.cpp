@@ -250,8 +250,6 @@ int main(int argc, char* argv[]) {
 
 	Com_Init(commandLine);
 
-	NET_Init();
-
 	// main game loop
 	while (!sys_signal) {
 		if (com_busyWait->integer) {

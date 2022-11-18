@@ -2466,6 +2466,9 @@ void Com_Init( char *commandLine ) {
 	// done early so bind command exists
 	CL_InitKeyCommands();
 
+	// before FS_InitFilesystem() so that ip_socket
+	// fd is lower than 1024 when there is a lot of pk3 files
+	NET_Init();
 	FS_InitFilesystem ();
 
 	Com_InitJournaling();
