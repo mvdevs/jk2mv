@@ -415,13 +415,16 @@ static SOCKET NET_IPSocket( const char *net_interface, int port, int *err ) {
 		return newsocket;
 	}
 
+#ifdef __GNUC__
 	// happens when there are too many pk3 files
+	// FD_SET macro can not be used with fd equal or greater than FD_SETSIZE
 	if ( newsocket >= FD_SETSIZE ) {
 		Com_Printf( "WARNING: NET_IPSocket: file descriptor too high\n" );
 		*err = 0;
 		closesocket( newsocket );
 		return INVALID_SOCKET;
 	}
+#endif
 
 	// make it non-blocking
 	if( ioctlsocket( newsocket, FIONBIO, &_true ) == SOCKET_ERROR ) {
