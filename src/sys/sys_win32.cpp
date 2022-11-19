@@ -396,6 +396,8 @@ static UINT timerResolution = 0;
 
 ITaskbarList3 *win_taskbar;
 
+#define MAX_OPEN_FILES	4096
+
 void Sys_PlatformInit(int argc, char *argv[]) {
 	TIMECAPS ptc;
 	if (timeGetDevCaps(&ptc, sizeof(ptc)) == MMSYSERR_NOERROR)
@@ -409,8 +411,18 @@ void Sys_PlatformInit(int argc, char *argv[]) {
 		}
 
 		timeBeginPeriod(timerResolution);
-	} else
+	} else {
 		timerResolution = 0;
+	}
+
+	// raise open file limit to allow more pk3 files
+	int maxstdio = _getmaxstdio();
+	maxstdio = MAX(maxstdio, MAX_OPEN_FILES);
+	maxstdio = _setmaxstdio(maxstdio);
+
+	if (maxstdio == -1) {
+		Com_Printf("Warning: Failed to increase open file limit. %s\n", strerror(errno));
+	}
 
 #ifndef DEDICATED
 	// Win7+ Taskbar features
