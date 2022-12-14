@@ -129,7 +129,7 @@ void demoAutoSave_f(void) {
 	}
 
 	if (strstr(cl_autoDemoFormat->string, "%t"))
-		while (demoAuto.timeStamps[t] && t < MAX_TIMESTAMPS)
+		while (demoAuto.timeStamps[t] && t < MAX_TIMESTAMPS - 1)
 			t++;
 	demoAuto.timeStamps[t] = cl.serverTime - atoi(cl.gameState.stringData + cl.gameState.stringOffsets[CS_LEVEL_START_TIME]);
 
