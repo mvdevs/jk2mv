@@ -542,123 +542,51 @@ qboolean FS_CreatePath (char *OSPath) {
 =================
 FS_CopyFile
 
-Copy a fully specified file from one place to another
+Copy file from home path to another location in home path. Does not
+check for restricted file names, extensions etc. Overwrites file if it
+exists.
 =================
 */
-qboolean FS_CopyFile( char *fromOSPath, char *toOSPath, char *newOSPath, const int newSize ) {
-	FILE	*f;
-	long	len;
-	byte	*buf;
-	int		fileCount = 1;
-	char	*lExt, nExt[MAX_OSPATH];
-	char	stripped[MAX_OSPATH];
+qboolean FS_CopyFile( const char *fromFile, const char *toFile, module_t module ) {
+	FILE *fo, *to;
+	char *fospath, *tospath;
+	int bytes;
+	char buffer[4096];
 
-	Com_DPrintf( "copy %s to %s\n", fromOSPath, toOSPath );
+	if ( !fs_searchpaths ) {
+		Com_Error( ERR_FATAL, "Filesystem call made without initialization" );
+	}
 
-	if (strstr(fromOSPath, "journal.dat") || strstr(fromOSPath, "journaldata.dat")) {
-		Com_Printf( "Ignoring journal files\n");
+	fospath = FS_BuildOSPath( fs_homepath->string, fs_gamedir, fromFile );
+	tospath = FS_BuildOSPath( fs_homepath->string, fs_gamedir, toFile );
+
+	if ( fs_debug->integer ) {
+		Com_Printf( "FS_CopyFile: %s %s\n", fospath, tospath );
+	}
+
+	fo = fopen( fospath, "rb" );
+	if ( !fo ) {
 		return qfalse;
 	}
 
-	f = fopen( fromOSPath, "rb" );
-	if ( !f ) {
-		char *testpath = FS_BuildOSPath( fs_homepath->string, fs_gamedir, fromOSPath );
-		f = fopen( testpath, "rb" );
-		if ( !f ) {
-			return qfalse;
-		}
-	}
-	fseek (f, 0, SEEK_END);
-	len = ftell (f);
-	if (len < 0)
-		Com_Error( ERR_FATAL, "ftell() error in FS_Copyfiles()" );
-	fseek (f, 0, SEEK_SET);
-
-	// we are using direct malloc instead of Z_Malloc here, so it
-	// probably won't work on a mac... Its only for developers anyway...
-	buf = (byte *)Z_Malloc( len, TAG_FILESYS, qfalse );
-	if (fread( buf, 1, len, f ) != (size_t)len)
-		Com_Error( ERR_FATAL, "Short read in FS_Copyfiles()" );
-	fclose( f );
-
-	if( FS_CreatePath( toOSPath ) ) {
-		char *testpath = FS_BuildOSPath( fs_homepath->string, fs_gamedir, toOSPath );
-		if( FS_CreatePath( testpath ) ) {
-			Z_Free(buf);
-			return qfalse;
-		}
-	}
-	
-	f = fopen( toOSPath, "rb" );
-	if ( !f ) {
-		char *testpath = FS_BuildOSPath( fs_homepath->string, fs_gamedir, toOSPath );
-		f = fopen( testpath, "rb" );
-	}
-
-	// if the file exists then create a new one with (N)
-	if (f && newOSPath && newSize > 0) {
-		qboolean localFound = qfalse;
-		fclose(f);
-		lExt = strchr(toOSPath, '.');
-		if (!lExt) {
-			lExt = "";
-		}
-		while (strchr(lExt+1, '.')) {
-			lExt = strchr(lExt+1, '.');
-		}
-		Q_strncpyz(nExt, lExt, sizeof(nExt));
-		COM_StripExtension(toOSPath, stripped, sizeof(stripped));
-		fileCount++;
-		while ((f = fopen(va("%s (%i)%s", stripped, fileCount, nExt), "rb")) != NULL) {
-			fileCount++;
-			fclose(f);
-			localFound = qtrue;
-		}
-		if (!localFound) {
-			char *testpath = FS_BuildOSPath( fs_homepath->string, fs_gamedir, toOSPath );
-			COM_StripExtension(testpath, stripped, sizeof(stripped));
-			while ((f = fopen(va("%s (%i)%s", stripped, fileCount, nExt), "rb")) != NULL) {
-				fileCount++;
-				fclose(f);
-			}
-		}
-	}
-	if (fileCount > 1 && newOSPath && newSize > 0) {
-		Q_strncpyz(newOSPath, va("%s (%i)%s", stripped, fileCount, nExt), newSize);
-		f = fopen(newOSPath, "wb");
-		if ( !f ) {
-			char *testpath = FS_BuildOSPath( fs_homepath->string, fs_gamedir, newOSPath );
-			f = fopen(testpath, "wb");
-		}
-	} else {
-		if (newOSPath && newSize > 0) {
-			Q_strncpyz(newOSPath, "", newSize);
-		}
-		f = fopen(toOSPath, "wb");
-		if ( !f ) {
-			char *testpath = FS_BuildOSPath( fs_homepath->string, fs_gamedir, toOSPath );
-			f = fopen(testpath, "wb");
-		}
-	}
-	if ( !f ) {
-		Z_Free(buf);
+	if( FS_CreatePath( tospath ) ) {
 		return qfalse;
 	}
-	if (fwrite( buf, 1, len, f ) != (size_t)len)
-		Com_Error( ERR_FATAL, "Short write in FS_Copyfiles()" );
-	fclose( f );
-	Z_Free( buf );
+
+	to = fopen( tospath, "wb" );
+	if ( !to ) {
+		fclose( fo );
+		return qfalse;
+	}
+
+	while ( (bytes = fread(buffer, sizeof(char), sizeof(buffer), fo)) ) {
+		fwrite( buffer, sizeof(char), bytes, to );
+	}
+
+	fclose( fo );
+	fclose( to );
+
 	return qtrue;
-}
-
-/*
-===========
-FS_Remove
-
-===========
-*/
-static void FS_Remove( const char *osPath ) {
-	remove( osPath );
 }
 
 /*
@@ -962,11 +890,7 @@ void FS_SV_Rename( const char *from, const char *to ) {
 		Com_Printf( "FS_SV_Rename: %s --> %s\n", from_ospath, to_ospath );
 	}
 
-	if (rename( from_ospath, to_ospath )) {
-		// Failed, try copying it and deleting the original
-		FS_CopyFile ( from_ospath, to_ospath );
-		FS_Remove ( from_ospath );
-	}
+	rename( from_ospath, to_ospath );
 }
 
 
@@ -994,11 +918,7 @@ void FS_Rename( const char *from, const char *to ) {
 		Com_Printf( "FS_Rename: %s --> %s\n", from_ospath, to_ospath );
 	}
 
-	if (rename( from_ospath, to_ospath )) {
-		// Failed, try copying it and deleting the original
-		FS_CopyFile ( from_ospath, to_ospath );
-		FS_Remove ( from_ospath );
-	}
+	rename( from_ospath, to_ospath );
 }
 
 /*

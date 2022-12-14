@@ -601,8 +601,6 @@ typedef enum {
 	MODULE_MAX
 } module_t;
 
-qboolean FS_CopyFile( char *fromOSPath, char *toOSPath, char *newOSPath = NULL, const int newSize = 0 );
-
 qboolean FS_Initialized();
 
 void	FS_InitFilesystem (void);
@@ -737,6 +735,7 @@ qboolean FS_DeleteDLFile(const char *qpath);
 void FS_HomeRemove( const char *homePath );
 qboolean FS_IsFifo( const char *filename );
 int FS_FLock( fileHandle_t h, flockCmd_t cmd, qboolean nb, module_t module = MODULE_MAIN );
+qboolean FS_CopyFile( const char *fromFile, const char *toFile, module_t module = MODULE_MAIN );
 
 /*
 ==============================================================
