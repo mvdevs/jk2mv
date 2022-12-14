@@ -1296,7 +1296,7 @@ exit_failure:
 Sys_ResolvePath
 ===============
 */
-char *Sys_ResolvePath( char *path )
+const char *Sys_ResolvePath( const char *path )
 {	// There seems to be no function to resolve paths of files that don't exist
 	// on unix, so we just return the input path. This shouldn't be an issue,
 	// as we just need to resolve paths for those on windows anyway.
@@ -1309,7 +1309,7 @@ char *Sys_ResolvePath( char *path )
 Sys_RealPath
 ===============
 */
-char *Sys_RealPath( char *path )
+const char *Sys_RealPath( const char *path )
 {
 	static char realPath[PATH_MAX+1];
 	if ( realpath(path, realPath) )

@@ -135,8 +135,8 @@ void Sys_SetProcessorAffinity( void );
 int Sys_FLock(int fd, flockCmd_t cmd, qboolean nb);
 void Sys_PrintBacktrace(void);
 
-char *Sys_ResolvePath( char *path );
-char *Sys_RealPath( char *path );
+const char *Sys_ResolvePath( const char *path );
+const char *Sys_RealPath( const char *path );
 
 typedef enum graphicsApi_e
 {

@@ -288,6 +288,8 @@ char lastValidBase[MAX_OSPATH];
 char lastValidGame[MAX_OSPATH];
 
 qboolean FS_idPak(pack_t *pack);
+qboolean FS_IsInvalidWriteOSPath(const char *ospath);
+qboolean FS_ContainsInvalidCharacters( const char *filename );
 
 static const char * const moduleName[MODULE_MAX] = {
 	"Main",
@@ -557,8 +559,17 @@ qboolean FS_CopyFile( const char *fromFile, const char *toFile, module_t module 
 		Com_Error( ERR_FATAL, "Filesystem call made without initialization" );
 	}
 
+	if ( FS_ContainsInvalidCharacters(toFile) ) {
+		Com_Printf( "FS_CopyFile: invalid filename (%s)\n", toFile );
+		return qfalse;
+	}
+
 	fospath = FS_BuildOSPath( fs_homepath->string, fs_gamedir, fromFile );
 	tospath = FS_BuildOSPath( fs_homepath->string, fs_gamedir, toFile );
+
+	if ( FS_IsInvalidWriteOSPath( tospath ) ) {
+		Com_Error( ERR_DROP, "FS_CopyFile: blocked illegal write path\n" );
+	}
 
 	if ( fs_debug->integer ) {
 		Com_Printf( "FS_CopyFile: %s %s\n", fospath, tospath );
@@ -3877,6 +3888,25 @@ qboolean FS_ContainsInvalidCharacters( const char *filename ) {
 	return qfalse;
 }
 
+qboolean FS_IsInvalidWriteOSPath(const char *ospath) {
+	const char *resolved;
+	const char *realPath;
+
+	// Resolve paths
+	resolved = Sys_ResolvePath( ospath );
+	if ( !strlen(resolved) ) return qtrue;
+	realPath = Sys_RealPath( resolved );
+	if ( !strlen(realPath) ) return qtrue;
+
+	// Check both, the resolved and the real path, in case there is a symlink
+	if ( FS_IsInvalidExtension(get_filename_ext(resolved)) || FS_IsInvalidExtension(get_filename_ext(realPath)) ) {
+		Com_Printf( "FS_IsInvalidWriteOSPath: blocked writing binary file (%s) [%s].\n", resolved, realPath );
+		return qtrue;
+	}
+
+	return qfalse;
+}
+
 int FS_FOpenFileByMode(const char *qpath, fileHandle_t *f, fsMode_t mode, module_t module) {
 	return FS_FOpenFileByModeHash(qpath, f, mode, NULL, module);
 }
@@ -3884,8 +3914,6 @@ int FS_FOpenFileByMode(const char *qpath, fileHandle_t *f, fsMode_t mode, module
 int FS_FOpenFileByModeHash( const char *qpath, fileHandle_t *f, fsMode_t mode, unsigned long *hash, module_t module ) {
 	int		r;
 	qboolean	sync;
-	char *resolved;
-	char *realPath;
 
 	sync = qfalse;
 
@@ -3896,19 +3924,9 @@ int FS_FOpenFileByModeHash( const char *qpath, fileHandle_t *f, fsMode_t mode, u
 	}
 
 	// Prevent writing to files with some extensions to prevent bypassing several restrictions
-	if ( mode != FS_READ ) {
-		// Resolve paths
-		resolved = Sys_ResolvePath( FS_BuildOSPath(fs_homepath->string, fs_gamedir, qpath) );
-		if ( !strlen(resolved) ) return -1;
-		realPath = Sys_RealPath( resolved );
-		if ( !strlen(realPath) ) return -1;
-
-		// Check both, the resolved and the real path, in case there is a symlink
-		if ( FS_IsInvalidExtension(get_filename_ext(resolved)) || FS_IsInvalidExtension(get_filename_ext(realPath)) ) {
-			Com_Printf( "FS_FOpenFileByMode: blocked writing binary file (%s) [%s].\n", resolved, realPath );
-			Com_Error( ERR_DROP, "FS_FOpenFileByMode: blocked writing binary file.\n" );
-			return -1;
-		}
+	if ( mode != FS_READ  &&
+		FS_IsInvalidWriteOSPath(FS_BuildOSPath(fs_homepath->string, fs_gamedir, qpath)) ) {
+		Com_Error( ERR_DROP, "FS_FOpenFileByMode: blocked illegal write path\n" );
 	}
 
 	switch( mode ) {
