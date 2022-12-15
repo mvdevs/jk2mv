@@ -460,6 +460,8 @@ extern void		Sys_SigHandler( int signal );
 static void		Sys_SigHandlerFatal(int sig, siginfo_t *info, void *context);
 static Q_NORETURN void Sys_CrashLogger(int fd, int argc, char *argv[]);
 
+// Max open file descriptors. Mostly used by pk3 files with
+// MAX_SEARCH_PATHS limit.
 #define MAX_OPEN_FILES	4096
 
 void Sys_PlatformInit( int argc, char *argv[] )
@@ -521,11 +523,18 @@ skip_crash:
 	}
 
 	// raise open file limit to allow more pk3 files
-	struct rlimit rlim;
 	int retval;
+	struct rlimit rlim;
+	rlim_t maxfds = MAX_OPEN_FILES;
+
+	for (int i = 1; i + 1 < argc; i++) {
+		if (!Q_stricmp(argv[i], "-maxfds")) {
+			maxfds = atoi(argv[i + 1]);
+		}
+	}
 
 	getrlimit(RLIMIT_NOFILE, &rlim);
-	rlim.rlim_cur = MAX(rlim.rlim_cur, MIN(MAX_OPEN_FILES, rlim.rlim_max));
+	rlim.rlim_cur = MIN(maxfds, rlim.rlim_max);
 	retval = setrlimit(RLIMIT_NOFILE, &rlim);
 
 	if (retval == -1) {
