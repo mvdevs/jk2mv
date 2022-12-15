@@ -137,7 +137,29 @@ void demoAutoSave_f(void) {
 		Q_strncpyz(demoAuto.customName, Cmd_Argv( 1 ), sizeof(demoAuto.customName));
 	}
 	Com_sprintf(demoAuto.demoName, sizeof(demoAuto.demoName), "%s", demoAutoFormat(demoAuto.customName));
-	Com_Printf(S_COLOR_WHITE "Demo will be saved into " S_COLOR_GREEN "%s%s\n", demoAuto.demoName, demoAuto.ext);
+	if (demoAuto.demoName[0]) {
+		Com_Printf(S_COLOR_WHITE "Demo will be saved into " S_COLOR_GREEN "%s%s\n", demoAuto.demoName, demoAuto.ext);
+	} else {
+		Com_Printf(S_COLOR_YELLOW "WARNING: Demo will not be saved because name is empty. Check cl_autoDemoFormat cvar\n");
+	}
+}
+
+qboolean demoFindFreePath(char *path, int size, const char *name) {
+	int		i;
+
+	Com_sprintf(path, size, "demos/%s", name);
+	COM_SanitizeExtension(path, size, demoAuto.ext);
+
+	for (i = 1; i < 1000 && FS_FileExists(path); i++) {
+		Com_sprintf(path, size, "demos/%s (%d)", name, i);
+		COM_SanitizeExtension(path, size, demoAuto.ext);
+	}
+
+	if (i == 1000) {
+		return qfalse;
+	}
+
+	return qtrue;
 }
 
 void demoAutoSaveLast_f(void) {
@@ -156,6 +178,11 @@ void demoAutoSaveLast_f(void) {
 	Com_sprintf(autoDemoPath, sizeof(autoDemoPath), "demos/%s", autoDemoName);
 	COM_SanitizeExtension(autoDemoPath, sizeof(autoDemoPath), demoAuto.ext);
 
+	if (!demoFindFreePath(autoDemoPath, sizeof(autoDemoPath), autoDemoName)) {
+		Com_Printf(S_COLOR_RED "Could not find free demo name: %s\n", autoDemoPath);
+		return;
+	}
+
 	if (FS_FileExists(autoDemoPath)) {
 		Com_Printf("Demo file already exists! %s\n", autoDemoPath);
 		return;
@@ -172,22 +199,13 @@ extern void CL_StopRecord_f( void );
 void demoAutoComplete(void) {
 	char	currDemoPath[MAX_QPATH];
 	char	lastDemoPath[MAX_QPATH];
-	int		i;
 
 	CL_StopRecord_f();
 
 	Com_sprintf(currDemoPath, sizeof(lastDemoPath), "demos/%s%s", DEFAULT_NAME, demoAuto.ext);
 
 	if (demoAuto.demoName[0]) {
-		Com_sprintf(lastDemoPath, sizeof(lastDemoPath), "demos/%s", demoAuto.demoName);
-		COM_SanitizeExtension(lastDemoPath, sizeof(lastDemoPath), demoAuto.ext);
-
-		for (i = 1; i < 1000 && FS_FileExists(lastDemoPath); i++) {
-			Com_sprintf(lastDemoPath, sizeof(lastDemoPath), "demos/%s (%d)", demoAuto.demoName, i);
-			COM_SanitizeExtension(lastDemoPath, sizeof(lastDemoPath), demoAuto.ext);
-		}
-
-		if (i == 1000) {
+		if (!demoFindFreePath(lastDemoPath, sizeof(lastDemoPath), demoAuto.demoName)) {
 			Com_Printf(S_COLOR_RED "Could not find free demo name: %s\n", lastDemoPath);
 			return;
 		}
