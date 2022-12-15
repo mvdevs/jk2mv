@@ -198,7 +198,7 @@ void demoAutoComplete(void) {
 
 	if (!FS_CopyFile(currDemoPath, lastDemoPath)) {
 		Com_Printf(S_COLOR_RED "Demo has failed to save\n");
-	} else if (demoAuto.demoName[0]) {
+	} else if (!demoAuto.demoName[0]) {
 		Com_Printf(S_COLOR_GREEN "Demo temporarily saved into %s\n", lastDemoPath);
 	} else {
 		Com_Printf(S_COLOR_GREEN "Demo successfully saved into %s\n", lastDemoPath);
