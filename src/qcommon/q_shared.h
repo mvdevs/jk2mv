@@ -49,6 +49,7 @@
 #include <limits.h>
 #include <stdint.h>
 #include <sys/stat.h>
+#include <errno.h>
 
 #ifdef __cplusplus
 #	include <cstddef>

@@ -912,7 +912,7 @@ FS_Rename
 
 ===========
 */
-void FS_Rename( const char *from, const char *to ) {
+qboolean FS_Rename( const char *from, const char *to ) {
 	char			*from_ospath, *to_ospath;
 
 	if ( !fs_searchpaths ) {
@@ -929,7 +929,16 @@ void FS_Rename( const char *from, const char *to ) {
 		Com_Printf( "FS_Rename: %s --> %s\n", from_ospath, to_ospath );
 	}
 
-	rename( from_ospath, to_ospath );
+	if ( rename( from_ospath, to_ospath ) ) {
+		int errnum = errno;
+		if ( fs_debug->integer && strerror(errnum) ) {
+			Com_Printf( "FS_Rename: %s\n", strerror(errnum) );
+		}
+
+		return qfalse;
+	}
+
+	return qtrue;
 }
 
 /*
