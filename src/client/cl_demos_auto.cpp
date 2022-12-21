@@ -183,16 +183,17 @@ void demoAutoSaveLast_f(void) {
 		return;
 	}
 
-	if (FS_FileExists(autoDemoPath)) {
-		Com_Printf("Demo file already exists! %s\n", autoDemoPath);
+	if (!FS_FileExists(lastDemoPath)) {
+		Com_Printf("LastDemo has been saved already\n");
 		return;
 	}
 
-	if (FS_CopyFile(lastDemoPath, autoDemoPath)) {
-		Com_Printf(S_COLOR_GREEN "LastDemo successfully saved into %s\n", autoDemoPath);
-	} else {
+	if (!FS_Rename(lastDemoPath, autoDemoPath)) {
 		Com_Printf(S_COLOR_RED "LastDemo has failed to save into %s\n", autoDemoPath);
+		return;
 	}
+
+	Com_Printf(S_COLOR_GREEN "LastDemo successfully saved into %s\n", autoDemoPath);
 }
 
 extern void CL_StopRecord_f( void );
@@ -202,7 +203,7 @@ void demoAutoComplete(void) {
 
 	CL_StopRecord_f();
 
-	Com_sprintf(currDemoPath, sizeof(lastDemoPath), "demos/%s%s", DEFAULT_NAME, demoAuto.ext);
+	Com_sprintf(currDemoPath, sizeof(currDemoPath), "demos/%s%s", DEFAULT_NAME, demoAuto.ext);
 
 	if (demoAuto.demoName[0]) {
 		if (!demoFindFreePath(lastDemoPath, sizeof(lastDemoPath), demoAuto.demoName)) {
@@ -214,7 +215,7 @@ void demoAutoComplete(void) {
 		COM_SanitizeExtension(lastDemoPath, sizeof(lastDemoPath), demoAuto.ext);
 	}
 
-	if (!FS_CopyFile(currDemoPath, lastDemoPath)) {
+	if (!FS_Rename(currDemoPath, lastDemoPath)) {
 		Com_Printf(S_COLOR_RED "Demo has failed to save\n");
 	} else if (!demoAuto.demoName[0]) {
 		Com_Printf(S_COLOR_GREEN "Demo temporarily saved into %s\n", lastDemoPath);
