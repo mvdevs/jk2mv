@@ -2720,7 +2720,9 @@ FS_SortFileList
 ================
 */
 static void FS_SortFileList(const char **filelist, int numfiles) {
-	qsort( filelist, numfiles, sizeof(void *), FS_PathCmpSort);
+	if (numfiles > 1) {
+		qsort( filelist, numfiles, sizeof(void *), FS_PathCmpSort);
+	}
 }
 
 /*
@@ -2940,7 +2942,6 @@ const char *get_filename(const char *path) {
 	return slash + 1;
 }
 
-#define	MAX_PAKFILES	1024
 static void FS_AddGameDirectory( const char *path, const char *dir, qboolean assetsOnly ) {
 	searchpath_t	*sp;
 	int				i;
@@ -2988,11 +2989,9 @@ static void FS_AddGameDirectory( const char *path, const char *dir, qboolean ass
 
 	// sort them so that later alphabetic matches override
 	// earlier ones.  This makes pak1.pk3 override pak0.pk3
-	if ( numfiles > MAX_PAKFILES ) {
-		numfiles = MAX_PAKFILES;
+	if ( numfiles > 1 ) {
+		qsort( pakfiles, numfiles, sizeof(void *), paksort );
 	}
-
-	qsort( pakfiles, numfiles, sizeof(void *), paksort );
 
 	for ( i = 0 ; i < numfiles ; i++ ) {
 		pakfile = FS_BuildOSPath( path, dir, pakfiles[i] );
@@ -4175,7 +4174,9 @@ int FS_GetDLList(dlfile_t *files, const int maxfiles) {
 
 	Sys_FreeFileList(dirs);
 
-	qsort(files, ret, sizeof(*files), FS_DLFileCmpSort);
+	if (ret > 1) {
+		qsort(files, ret, sizeof(*files), FS_DLFileCmpSort);
+	}
 
 	return ret;
 }

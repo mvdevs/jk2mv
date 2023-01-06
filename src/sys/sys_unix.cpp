@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <sys/mman.h>
 #include <sys/time.h>
+#include <sys/resource.h>
 #include <pwd.h>
 #include <pthread.h>
 #include <fenv.h>
@@ -459,6 +460,10 @@ extern void		Sys_SigHandler( int signal );
 static void		Sys_SigHandlerFatal(int sig, siginfo_t *info, void *context);
 static Q_NORETURN void Sys_CrashLogger(int fd, int argc, char *argv[]);
 
+// Max open file descriptors. Mostly used by pk3 files with
+// MAX_SEARCH_PATHS limit.
+#define MAX_OPEN_FILES	4096
+
 void Sys_PlatformInit( int argc, char *argv[] )
 {
 	int		crashfd[2];
@@ -511,10 +516,30 @@ skip_crash:
 
 	const char* term = getenv( "TERM" );
 
-    if (isatty( STDIN_FILENO ) && !( term && ( !strcmp( term, "raw" ) || !strcmp( term, "dumb" ) ) ))
+    if (isatty( STDIN_FILENO ) && !( term && ( !strcmp( term, "raw" ) || !strcmp( term, "dumb" ) ) )) {
 		stdinIsATTY = qtrue;
-    else
+    } else {
         stdinIsATTY = qfalse;
+	}
+
+	// raise open file limit to allow more pk3 files
+	int retval;
+	struct rlimit rlim;
+	rlim_t maxfds = MAX_OPEN_FILES;
+
+	for (int i = 1; i + 1 < argc; i++) {
+		if (!Q_stricmp(argv[i], "-maxfds")) {
+			maxfds = atoi(argv[i + 1]);
+		}
+	}
+
+	getrlimit(RLIMIT_NOFILE, &rlim);
+	rlim.rlim_cur = MIN(maxfds, rlim.rlim_max);
+	retval = setrlimit(RLIMIT_NOFILE, &rlim);
+
+	if (retval == -1) {
+		Com_Printf("Warning: Failed to raise open file limit. %s\n", strerror(errno));
+	}
 }
 
 void Sys_PlatformExit( void )

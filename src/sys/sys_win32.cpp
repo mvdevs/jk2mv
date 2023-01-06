@@ -396,6 +396,10 @@ static UINT timerResolution = 0;
 
 ITaskbarList3 *win_taskbar;
 
+// Max open file descriptors. Mostly used by pk3 files with
+// MAX_SEARCH_PATHS limit.
+#define MAX_OPEN_FILES	4096
+
 void Sys_PlatformInit(int argc, char *argv[]) {
 	TIMECAPS ptc;
 	if (timeGetDevCaps(&ptc, sizeof(ptc)) == MMSYSERR_NOERROR)
@@ -409,8 +413,24 @@ void Sys_PlatformInit(int argc, char *argv[]) {
 		}
 
 		timeBeginPeriod(timerResolution);
-	} else
+	} else {
 		timerResolution = 0;
+	}
+
+	// raise open file limit to allow more pk3 files
+	int maxfds = MAX_OPEN_FILES;
+
+	for (int i = 1; i + 1 < argc; i++) {
+		if (!Q_stricmp(argv[i], "-maxfds")) {
+			maxfds = atoi(argv[i + 1]);
+		}
+	}
+
+	maxfds = _setmaxstdio(maxfds);
+
+	if (maxfds == -1) {
+		Com_Printf("Warning: Failed to increase open file limit. %s\n", strerror(errno));
+	}
 
 #ifndef DEDICATED
 	// Win7+ Taskbar features
