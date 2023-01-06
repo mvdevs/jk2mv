@@ -681,7 +681,7 @@ void Sys_WriteCrashlog() {
 Sys_ResolvePath
 ===============
 */
-char *Sys_ResolvePath( char *path )
+const char *Sys_ResolvePath( const char *path )
 {
 	static char resolvedPath[MAX_PATH];
 
@@ -696,7 +696,7 @@ char *Sys_ResolvePath( char *path )
 Sys_RealPath
 ===============
 */
-char *Sys_RealPath( char *path )
+const char *Sys_RealPath( const char *path )
 {
 	static char realPath[MAX_PATH];
 	HANDLE fileHandle;
