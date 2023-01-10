@@ -1211,6 +1211,13 @@ fail:
 	// we still keep the model_t around, so if the model name is asked for
 	// again, we won't bother scanning the filesystem
 	mod->type = MOD_BAD;
+
+	// Make sure the index is set to 0 so future attempts to register the model are considered as failure, too
+	mod->index = 0;
+
+	// Add hash or it would be pointless to keep the model around (we can't free hunk at this point anyway)
+	RE_InsertModelIntoHash(name, mod);
+
 	return 0;
 }
 
