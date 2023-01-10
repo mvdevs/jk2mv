@@ -300,6 +300,14 @@ Client-Side
 :Description:
    Mute all sounds when client window is unfocused.
 
+..
+
+:Name: r_printMissingModels
+:Values: "0", "1"
+:Default: "1"
+:Description:
+   Print a warning when a model fails to load.
+
 -----------
 Server-Side
 -----------

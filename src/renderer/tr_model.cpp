@@ -1201,11 +1201,9 @@ Ghoul2 Insert Start
 Ghoul2 Insert End
 */
 	}
-#ifdef _DEBUG
-	else {
+	else if ( r_printMissingModels->integer ) {
 		ri.Printf (PRINT_WARNING,"RE_RegisterModel: couldn't load %s\n", name);
 	}
-#endif
 
 fail:
 	// we still keep the model_t around, so if the model name is asked for
