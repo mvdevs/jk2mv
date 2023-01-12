@@ -169,7 +169,7 @@ static void Com_Puts_Ext( qboolean extendedColors, const char *msg )
 
 		// logfile
 		if ( com_logfile && com_logfile->integer ) {
-			if ( !logfile ) {
+			if ( logfile == 0 ) {
 				struct tm *newtime;
 				time_t aclock;
 
@@ -177,14 +177,20 @@ static void Com_Puts_Ext( qboolean extendedColors, const char *msg )
 				newtime = localtime( &aclock );
 
 				logfile = FS_FOpenFileWrite( "qconsole.log" );
-				Com_Printf( "logfile opened on %s\n", asctime( newtime ) );
-				if ( com_logfile->integer > 1 ) {
-					// force it to not buffer so we get valid
-					// data even if we are crashing
-					FS_ForceFlush(logfile);
+				if ( logfile ) {
+					Com_Printf( "logfile opened on %s\n", asctime( newtime ) );
+
+					if ( com_logfile->integer > 1 ) {
+						// force it to not buffer so we get valid
+						// data even if we are crashing
+						FS_ForceFlush(logfile);
+					}
+				} else {
+					logfile = -1;
+					Com_Printf( "Couldn't open qconsole.log\n");
 				}
 			}
-			if ( logfile && FS_Initialized()) {
+			if ( logfile > 0 && FS_Initialized()) {
 				FS_Write(line, lineLen, logfile);
 			}
 		}
@@ -1589,7 +1595,7 @@ void Hunk_Log( void) {
 	char		buf[4096];
 	int size, numBlocks;
 
-	if (!logfile || !FS_Initialized())
+	if (logfile <= 0 || !FS_Initialized())
 		return;
 	size = 0;
 	numBlocks = 0;
@@ -1619,7 +1625,7 @@ void Hunk_SmallLog( void) {
 	char		buf[4096];
 	int size, locsize, numBlocks;
 
-	if (!logfile || !FS_Initialized())
+	if (logfile <= 0 || !FS_Initialized())
 		return;
 	for (block = hunkblocks ; block; block = block->next) {
 		block->printed = qfalse;
@@ -2439,6 +2445,7 @@ void Com_Init( char *commandLine ) {
 	// bk001129 - do this before anything else decides to push events
 	Com_InitPushEvent();
 
+	Com_InitZoneMemory();
 	Cvar_Init ();
 
 	// prepare enough of the subsystems to handle
@@ -2448,7 +2455,6 @@ void Com_Init( char *commandLine ) {
 //	Swap_Init ();
 	Cbuf_Init ();
 
-	Com_InitZoneMemory();
 	Cmd_Init ();
 
 	// override anything from the config files with command line args
@@ -2460,6 +2466,9 @@ void Com_Init( char *commandLine ) {
 	// done early so bind command exists
 	CL_InitKeyCommands();
 
+	// before FS_InitFilesystem() so that ip_socket
+	// fd is lower than 1024 when there is a lot of pk3 files
+	NET_Init();
 	FS_InitFilesystem ();
 
 	Com_InitJournaling();
@@ -2890,6 +2899,10 @@ void Com_Frame( void ) {
 		if ( com_speeds->integer ) {
 			timeAfter = Sys_Milliseconds ();
 		}
+	} else {
+		if ( com_speeds->integer ) {
+			timeAfter = timeBeforeEvents = timeBeforeClient = Sys_Milliseconds();
+		}
 	}
 
 	//
@@ -2900,7 +2913,7 @@ void Com_Frame( void ) {
 
 		all = timeAfter - timeBeforeServer;
 		sv = timeBeforeEvents - timeBeforeServer;
-		ev = timeBeforeServer - timeBeforeFirstEvents + timeBeforeClient - timeBeforeEvents;
+		ev = (timeBeforeServer - timeBeforeFirstEvents) + (timeBeforeClient - timeBeforeEvents);
 		cl = timeAfter - timeBeforeClient;
 		sv -= time_game;
 		cl -= time_frontend + time_backend;
@@ -2937,11 +2950,12 @@ void MSG_shutdownHuffman();
 void Com_Shutdown (void)
 {
 	CM_ClearMap();
+	SP_Shutdown ();
 
 	// write config file if anything changed
 	Com_WriteConfiguration();
 
-	if (logfile) {
+	if (logfile > 0) {
 		FS_FCloseFile (logfile);
 		logfile = 0;
 		com_logfile->integer = 0;//don't open up the log file again!!

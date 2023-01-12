@@ -109,6 +109,7 @@ int			numLoopChannels;
 
 static qboolean	s_soundStarted;
 qboolean		s_soundMuted;
+static int		s_lastMuteModCount;
 
 dma_t		dma;
 
@@ -139,7 +140,8 @@ cvar_t		*s_musicMult;
 cvar_t		*s_separation;
 cvar_t		*s_doppler;
 cvar_t		*s_s_language;
-
+cvar_t		*s_muteWhenMinimized;
+cvar_t		*s_muteWhenUnfocused;
 
 static loopSound_t		loopSounds[MAX_GENTITIES];
 static	channel_t		*freelist = NULL;
@@ -303,6 +305,10 @@ void S_Init( void )
 	s_testsound = Cvar_Get ("s_testsound", "0", CVAR_CHEAT);
 
 	s_s_language = Cvar_Get("s_language", "english", CVAR_ARCHIVE | CVAR_NORESTART | CVAR_GLOBAL);
+	s_muteWhenUnfocused = Cvar_Get("s_muteWhenUnfocused", "1", CVAR_ARCHIVE | CVAR_GLOBAL);
+	s_muteWhenMinimized = Cvar_Get("s_muteWhenMinimized", "1", CVAR_ARCHIVE | CVAR_GLOBAL);
+
+	s_lastMuteModCount = -1;
 
 	MP3_InitCvars();
 
@@ -583,9 +589,9 @@ void S_Shutdown( void )
 
     Cmd_RemoveCommand("play");
 	Cmd_RemoveCommand("music");
-	Cmd_RemoveCommand("stopsound");
 	Cmd_RemoveCommand("soundlist");
 	Cmd_RemoveCommand("soundinfo");
+	Cmd_RemoveCommand("soundstop");
 }
 
 
@@ -1546,10 +1552,6 @@ S_Activate
 */
 void S_Activate(qboolean activate)
 {
-	if (activate) {
-		S_ClearSoundBuffer();
-	}
-
 #ifdef USE_OPENAL
 	if (s_UseOpenAL)
 	{
@@ -1559,6 +1561,22 @@ void S_Activate(qboolean activate)
 #endif
 	{
 		SNDDMA_Activate(activate);
+	}
+}
+
+void S_CheckMuteWhenMinimized(void)
+{
+	if (com_minimized->modificationCount +
+		com_unfocused->modificationCount != s_lastMuteModCount)
+	{
+		int disable =
+			(com_minimized->integer && s_muteWhenMinimized->integer) ||
+			(com_unfocused->integer && s_muteWhenUnfocused->integer);
+
+		S_Activate((qboolean)!disable);
+
+		s_lastMuteModCount = com_minimized->modificationCount +
+			com_unfocused->modificationCount;
 	}
 }
 
@@ -2230,6 +2248,8 @@ void S_Update( void ) {
 		Com_DPrintf ("not started or muted\n");
 		return;
 	}
+
+	S_CheckMuteWhenMinimized();
 
 #ifdef USE_OPENAL
 	if (s_UseOpenAL)

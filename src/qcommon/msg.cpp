@@ -516,6 +516,13 @@ void MSG_ReadData(msg_t *msg, void *data, int len) {
 	}
 }
 
+void MSG_SkipData(msg_t *msg, int len) {
+	int		i;
+
+	for (i = 0; i<len; i++) {
+		MSG_ReadByte(msg);
+	}
+}
 
 /*
 =============================================================================

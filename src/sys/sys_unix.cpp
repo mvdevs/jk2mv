@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <sys/mman.h>
 #include <sys/time.h>
+#include <sys/resource.h>
 #include <pwd.h>
 #include <pthread.h>
 #include <fenv.h>
@@ -459,6 +460,10 @@ extern void		Sys_SigHandler( int signal );
 static void		Sys_SigHandlerFatal(int sig, siginfo_t *info, void *context);
 static Q_NORETURN void Sys_CrashLogger(int fd, int argc, char *argv[]);
 
+// Max open file descriptors. Mostly used by pk3 files with
+// MAX_SEARCH_PATHS limit.
+#define MAX_OPEN_FILES	4096
+
 void Sys_PlatformInit( int argc, char *argv[] )
 {
 	int		crashfd[2];
@@ -511,10 +516,30 @@ skip_crash:
 
 	const char* term = getenv( "TERM" );
 
-    if (isatty( STDIN_FILENO ) && !( term && ( !strcmp( term, "raw" ) || !strcmp( term, "dumb" ) ) ))
+    if (isatty( STDIN_FILENO ) && !( term && ( !strcmp( term, "raw" ) || !strcmp( term, "dumb" ) ) )) {
 		stdinIsATTY = qtrue;
-    else
+    } else {
         stdinIsATTY = qfalse;
+	}
+
+	// raise open file limit to allow more pk3 files
+	int retval;
+	struct rlimit rlim;
+	rlim_t maxfds = MAX_OPEN_FILES;
+
+	for (int i = 1; i + 1 < argc; i++) {
+		if (!Q_stricmp(argv[i], "-maxfds")) {
+			maxfds = atoi(argv[i + 1]);
+		}
+	}
+
+	getrlimit(RLIMIT_NOFILE, &rlim);
+	rlim.rlim_cur = MIN(maxfds, rlim.rlim_max);
+	retval = setrlimit(RLIMIT_NOFILE, &rlim);
+
+	if (retval == -1) {
+		Com_Printf("Warning: Failed to raise open file limit. %s\n", strerror(errno));
+	}
 }
 
 void Sys_PlatformExit( void )
@@ -649,7 +674,7 @@ Sys_LoadModuleLibrary
 Used to load a module (jk2mpgame, cgame, ui) so/dylib
 =================
 */
-void *Sys_LoadModuleLibrary(const char *name, qboolean mvOverride, intptr_t(QDECL **entryPoint)(int, ...), intptr_t(QDECL *systemcalls)(intptr_t, ...)) {
+void *Sys_LoadModuleLibrary(const char *name, qboolean mvOverride, VM_EntryPoint_t *entryPoint, intptr_t(QDECL *systemcalls)(intptr_t, ...)) {
 	void (*dllEntry)(intptr_t(*syscallptr)(intptr_t, ...));
 	char filename[MAX_QPATH];
 	const char *path, *filePath;
@@ -703,7 +728,7 @@ void *Sys_LoadModuleLibrary(const char *name, qboolean mvOverride, intptr_t(QDEC
 	}
 
 	dllEntry = (void (*)(intptr_t (*)(intptr_t,...))) dlsym(libHandle, "dllEntry");
-	*entryPoint = (intptr_t(*)(int,...))dlsym(libHandle, "vmMain");
+	*entryPoint = (VM_EntryPoint_t)dlsym(libHandle, "vmMain");
 	if ( !*entryPoint ) {
 		Com_DPrintf("Could not find vmMain in %s\n", filename);
 		dlclose(libHandle);
@@ -1296,7 +1321,7 @@ exit_failure:
 Sys_ResolvePath
 ===============
 */
-char *Sys_ResolvePath( char *path )
+const char *Sys_ResolvePath( const char *path )
 {	// There seems to be no function to resolve paths of files that don't exist
 	// on unix, so we just return the input path. This shouldn't be an issue,
 	// as we just need to resolve paths for those on windows anyway.
@@ -1309,7 +1334,7 @@ char *Sys_ResolvePath( char *path )
 Sys_RealPath
 ===============
 */
-char *Sys_RealPath( char *path )
+const char *Sys_RealPath( const char *path )
 {
 	static char realPath[PATH_MAX+1];
 	if ( realpath(path, realPath) )

@@ -288,6 +288,8 @@ char lastValidBase[MAX_OSPATH];
 char lastValidGame[MAX_OSPATH];
 
 qboolean FS_idPak(pack_t *pack);
+qboolean FS_IsInvalidWriteOSPath(const char *ospath);
+qboolean FS_ContainsInvalidCharacters( const char *filename );
 
 static const char * const moduleName[MODULE_MAX] = {
 	"Main",
@@ -542,123 +544,60 @@ qboolean FS_CreatePath (char *OSPath) {
 =================
 FS_CopyFile
 
-Copy a fully specified file from one place to another
+Copy file from home path to another location in home path. Does not
+check for restricted file names, extensions etc. Overwrites file if it
+exists.
 =================
 */
-qboolean FS_CopyFile( char *fromOSPath, char *toOSPath, char *newOSPath, const int newSize ) {
-	FILE	*f;
-	long	len;
-	byte	*buf;
-	int		fileCount = 1;
-	char	*lExt, nExt[MAX_OSPATH];
-	char	stripped[MAX_OSPATH];
+qboolean FS_CopyFile( const char *fromFile, const char *toFile, module_t module ) {
+	FILE *fo, *to;
+	char *fospath, *tospath;
+	int bytes;
+	char buffer[4096];
 
-	Com_DPrintf( "copy %s to %s\n", fromOSPath, toOSPath );
+	if ( !fs_searchpaths ) {
+		Com_Error( ERR_FATAL, "Filesystem call made without initialization" );
+	}
 
-	if (strstr(fromOSPath, "journal.dat") || strstr(fromOSPath, "journaldata.dat")) {
-		Com_Printf( "Ignoring journal files\n");
+	if ( FS_ContainsInvalidCharacters(toFile) ) {
+		Com_Printf( "FS_CopyFile: invalid filename (%s)\n", toFile );
 		return qfalse;
 	}
 
-	f = fopen( fromOSPath, "rb" );
-	if ( !f ) {
-		char *testpath = FS_BuildOSPath( fs_homepath->string, fs_gamedir, fromOSPath );
-		f = fopen( testpath, "rb" );
-		if ( !f ) {
-			return qfalse;
-		}
-	}
-	fseek (f, 0, SEEK_END);
-	len = ftell (f);
-	if (len < 0)
-		Com_Error( ERR_FATAL, "ftell() error in FS_Copyfiles()" );
-	fseek (f, 0, SEEK_SET);
+	fospath = FS_BuildOSPath( fs_homepath->string, fs_gamedir, fromFile );
+	tospath = FS_BuildOSPath( fs_homepath->string, fs_gamedir, toFile );
 
-	// we are using direct malloc instead of Z_Malloc here, so it
-	// probably won't work on a mac... Its only for developers anyway...
-	buf = (byte *)Z_Malloc( len, TAG_FILESYS, qfalse );
-	if (fread( buf, 1, len, f ) != (size_t)len)
-		Com_Error( ERR_FATAL, "Short read in FS_Copyfiles()" );
-	fclose( f );
-
-	if( FS_CreatePath( toOSPath ) ) {
-		char *testpath = FS_BuildOSPath( fs_homepath->string, fs_gamedir, toOSPath );
-		if( FS_CreatePath( testpath ) ) {
-			Z_Free(buf);
-			return qfalse;
-		}
-	}
-	
-	f = fopen( toOSPath, "rb" );
-	if ( !f ) {
-		char *testpath = FS_BuildOSPath( fs_homepath->string, fs_gamedir, toOSPath );
-		f = fopen( testpath, "rb" );
+	if ( FS_IsInvalidWriteOSPath( tospath ) ) {
+		Com_Error( ERR_DROP, "FS_CopyFile: blocked illegal write path\n" );
 	}
 
-	// if the file exists then create a new one with (N)
-	if (f && newOSPath && newSize > 0) {
-		qboolean localFound = qfalse;
-		fclose(f);
-		lExt = strchr(toOSPath, '.');
-		if (!lExt) {
-			lExt = "";
-		}
-		while (strchr(lExt+1, '.')) {
-			lExt = strchr(lExt+1, '.');
-		}
-		Q_strncpyz(nExt, lExt, sizeof(nExt));
-		COM_StripExtension(toOSPath, stripped, sizeof(stripped));
-		fileCount++;
-		while ((f = fopen(va("%s (%i)%s", stripped, fileCount, nExt), "rb")) != NULL) {
-			fileCount++;
-			fclose(f);
-			localFound = qtrue;
-		}
-		if (!localFound) {
-			char *testpath = FS_BuildOSPath( fs_homepath->string, fs_gamedir, toOSPath );
-			COM_StripExtension(testpath, stripped, sizeof(stripped));
-			while ((f = fopen(va("%s (%i)%s", stripped, fileCount, nExt), "rb")) != NULL) {
-				fileCount++;
-				fclose(f);
-			}
-		}
+	if ( fs_debug->integer ) {
+		Com_Printf( "FS_CopyFile: %s %s\n", fospath, tospath );
 	}
-	if (fileCount > 1 && newOSPath && newSize > 0) {
-		Q_strncpyz(newOSPath, va("%s (%i)%s", stripped, fileCount, nExt), newSize);
-		f = fopen(newOSPath, "wb");
-		if ( !f ) {
-			char *testpath = FS_BuildOSPath( fs_homepath->string, fs_gamedir, newOSPath );
-			f = fopen(testpath, "wb");
-		}
-	} else {
-		if (newOSPath && newSize > 0) {
-			Q_strncpyz(newOSPath, "", newSize);
-		}
-		f = fopen(toOSPath, "wb");
-		if ( !f ) {
-			char *testpath = FS_BuildOSPath( fs_homepath->string, fs_gamedir, toOSPath );
-			f = fopen(testpath, "wb");
-		}
-	}
-	if ( !f ) {
-		Z_Free(buf);
+
+	fo = fopen( fospath, "rb" );
+	if ( !fo ) {
 		return qfalse;
 	}
-	if (fwrite( buf, 1, len, f ) != (size_t)len)
-		Com_Error( ERR_FATAL, "Short write in FS_Copyfiles()" );
-	fclose( f );
-	Z_Free( buf );
+
+	if( FS_CreatePath( tospath ) ) {
+		return qfalse;
+	}
+
+	to = fopen( tospath, "wb" );
+	if ( !to ) {
+		fclose( fo );
+		return qfalse;
+	}
+
+	while ( (bytes = fread(buffer, sizeof(char), sizeof(buffer), fo)) ) {
+		fwrite( buffer, sizeof(char), bytes, to );
+	}
+
+	fclose( fo );
+	fclose( to );
+
 	return qtrue;
-}
-
-/*
-===========
-FS_Remove
-
-===========
-*/
-static void FS_Remove( const char *osPath ) {
-	remove( osPath );
 }
 
 /*
@@ -962,11 +901,7 @@ void FS_SV_Rename( const char *from, const char *to ) {
 		Com_Printf( "FS_SV_Rename: %s --> %s\n", from_ospath, to_ospath );
 	}
 
-	if (rename( from_ospath, to_ospath )) {
-		// Failed, try copying it and deleting the original
-		FS_CopyFile ( from_ospath, to_ospath );
-		FS_Remove ( from_ospath );
-	}
+	rename( from_ospath, to_ospath );
 }
 
 
@@ -977,7 +912,7 @@ FS_Rename
 
 ===========
 */
-void FS_Rename( const char *from, const char *to ) {
+qboolean FS_Rename( const char *from, const char *to ) {
 	char			*from_ospath, *to_ospath;
 
 	if ( !fs_searchpaths ) {
@@ -994,11 +929,16 @@ void FS_Rename( const char *from, const char *to ) {
 		Com_Printf( "FS_Rename: %s --> %s\n", from_ospath, to_ospath );
 	}
 
-	if (rename( from_ospath, to_ospath )) {
-		// Failed, try copying it and deleting the original
-		FS_CopyFile ( from_ospath, to_ospath );
-		FS_Remove ( from_ospath );
+	if ( rename( from_ospath, to_ospath ) ) {
+		int errnum = errno;
+		if ( fs_debug->integer && strerror(errnum) ) {
+			Com_Printf( "FS_Rename: %s\n", strerror(errnum) );
+		}
+
+		return qfalse;
 	}
+
+	return qtrue;
 }
 
 /*
@@ -2720,7 +2660,9 @@ FS_SortFileList
 ================
 */
 static void FS_SortFileList(const char **filelist, int numfiles) {
-	qsort( filelist, numfiles, sizeof(void *), FS_PathCmpSort);
+	if (numfiles > 1) {
+		qsort( filelist, numfiles, sizeof(void *), FS_PathCmpSort);
+	}
 }
 
 /*
@@ -2940,7 +2882,6 @@ const char *get_filename(const char *path) {
 	return slash + 1;
 }
 
-#define	MAX_PAKFILES	1024
 static void FS_AddGameDirectory( const char *path, const char *dir, qboolean assetsOnly ) {
 	searchpath_t	*sp;
 	int				i;
@@ -2988,11 +2929,9 @@ static void FS_AddGameDirectory( const char *path, const char *dir, qboolean ass
 
 	// sort them so that later alphabetic matches override
 	// earlier ones.  This makes pak1.pk3 override pak0.pk3
-	if ( numfiles > MAX_PAKFILES ) {
-		numfiles = MAX_PAKFILES;
+	if ( numfiles > 1 ) {
+		qsort( pakfiles, numfiles, sizeof(void *), paksort );
 	}
-
-	qsort( pakfiles, numfiles, sizeof(void *), paksort );
 
 	for ( i = 0 ; i < numfiles ; i++ ) {
 		pakfile = FS_BuildOSPath( path, dir, pakfiles[i] );
@@ -3734,23 +3673,22 @@ void FS_PureServerSetLoadedPaks( const char *pakSums, const char *pakNames ) {
 		Com_DPrintf( "Connected to a pure server.\n" );
 	}
 
-	for ( i = 0 ; i < c ; i++ ) {
+	for ( i = 0 ; i < (int)ARRAY_LEN(fs_serverPakNames) ; i++ ) {
 		if (fs_serverPakNames[i]) {
 			Z_Free((void *)fs_serverPakNames[i]);
 		}
 		fs_serverPakNames[i] = NULL;
 	}
-	if ( pakNames && *pakNames ) {
-		Cmd_TokenizeString( pakNames );
 
-		d = Cmd_Argc();
-		if ( d > MAX_SEARCH_PATHS ) {
-			d = MAX_SEARCH_PATHS;
-		}
+	Cmd_TokenizeString( pakNames );
 
-		for ( i = 0 ; i < d ; i++ ) {
-			fs_serverPakNames[i] = CopyString( Cmd_Argv( i ) );
-		}
+	d = Cmd_Argc();
+	if ( d > MAX_SEARCH_PATHS ) {
+		d = MAX_SEARCH_PATHS;
+	}
+
+	for ( i = 0 ; i < d ; i++ ) {
+		fs_serverPakNames[i] = CopyString( Cmd_Argv( i ) );
 	}
 }
 
@@ -3777,23 +3715,22 @@ void FS_PureServerSetReferencedPaks( const char *pakSums, const char *pakNames )
 		fs_serverReferencedPaks[i] = atoi( Cmd_Argv( i ) );
 	}
 
-	for ( i = 0 ; i < c ; i++ ) {
+	for ( i = 0 ; i < (int)ARRAY_LEN(fs_serverReferencedPakNames) ; i++ ) {
 		if (fs_serverReferencedPakNames[i]) {
 			Z_Free((void *)fs_serverReferencedPakNames[i]);
 		}
 		fs_serverReferencedPakNames[i] = NULL;
 	}
-	if ( pakNames && *pakNames ) {
-		Cmd_TokenizeString( pakNames );
 
-		d = Cmd_Argc();
-		if ( d > MAX_SEARCH_PATHS ) {
-			d = MAX_SEARCH_PATHS;
-		}
+	Cmd_TokenizeString( pakNames );
 
-		for ( i = 0 ; i < d ; i++ ) {
-			fs_serverReferencedPakNames[i] = CopyString( Cmd_Argv( i ) );
-		}
+	d = Cmd_Argc();
+	if ( d > MAX_SEARCH_PATHS ) {
+		d = MAX_SEARCH_PATHS;
+	}
+
+	for ( i = 0 ; i < d ; i++ ) {
+		fs_serverReferencedPakNames[i] = CopyString( Cmd_Argv( i ) );
 	}
 
 	if ( c != d ) {
@@ -3959,6 +3896,25 @@ qboolean FS_ContainsInvalidCharacters( const char *filename ) {
 	return qfalse;
 }
 
+qboolean FS_IsInvalidWriteOSPath(const char *ospath) {
+	const char *resolved;
+	const char *realPath;
+
+	// Resolve paths
+	resolved = Sys_ResolvePath( ospath );
+	if ( !strlen(resolved) ) return qtrue;
+	realPath = Sys_RealPath( resolved );
+	if ( !strlen(realPath) ) return qtrue;
+
+	// Check both, the resolved and the real path, in case there is a symlink
+	if ( FS_IsInvalidExtension(get_filename_ext(resolved)) || FS_IsInvalidExtension(get_filename_ext(realPath)) ) {
+		Com_Printf( "FS_IsInvalidWriteOSPath: blocked writing binary file (%s) [%s].\n", resolved, realPath );
+		return qtrue;
+	}
+
+	return qfalse;
+}
+
 int FS_FOpenFileByMode(const char *qpath, fileHandle_t *f, fsMode_t mode, module_t module) {
 	return FS_FOpenFileByModeHash(qpath, f, mode, NULL, module);
 }
@@ -3966,8 +3922,6 @@ int FS_FOpenFileByMode(const char *qpath, fileHandle_t *f, fsMode_t mode, module
 int FS_FOpenFileByModeHash( const char *qpath, fileHandle_t *f, fsMode_t mode, unsigned long *hash, module_t module ) {
 	int		r;
 	qboolean	sync;
-	char *resolved;
-	char *realPath;
 
 	sync = qfalse;
 
@@ -3978,19 +3932,9 @@ int FS_FOpenFileByModeHash( const char *qpath, fileHandle_t *f, fsMode_t mode, u
 	}
 
 	// Prevent writing to files with some extensions to prevent bypassing several restrictions
-	if ( mode != FS_READ ) {
-		// Resolve paths
-		resolved = Sys_ResolvePath( FS_BuildOSPath(fs_homepath->string, fs_gamedir, qpath) );
-		if ( !strlen(resolved) ) return -1;
-		realPath = Sys_RealPath( resolved );
-		if ( !strlen(realPath) ) return -1;
-
-		// Check both, the resolved and the real path, in case there is a symlink
-		if ( FS_IsInvalidExtension(get_filename_ext(resolved)) || FS_IsInvalidExtension(get_filename_ext(realPath)) ) {
-			Com_Printf( "FS_FOpenFileByMode: blocked writing binary file (%s) [%s].\n", resolved, realPath );
-			Com_Error( ERR_DROP, "FS_FOpenFileByMode: blocked writing binary file.\n" );
-			return -1;
-		}
+	if ( mode != FS_READ  &&
+		FS_IsInvalidWriteOSPath(FS_BuildOSPath(fs_homepath->string, fs_gamedir, qpath)) ) {
+		Com_Error( ERR_DROP, "FS_FOpenFileByMode: blocked illegal write path\n" );
 	}
 
 	switch( mode ) {
@@ -4177,7 +4121,9 @@ int FS_GetDLList(dlfile_t *files, const int maxfiles) {
 
 	Sys_FreeFileList(dirs);
 
-	qsort(files, ret, sizeof(*files), FS_DLFileCmpSort);
+	if (ret > 1) {
+		qsort(files, ret, sizeof(*files), FS_DLFileCmpSort);
+	}
 
 	return ret;
 }

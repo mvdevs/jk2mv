@@ -294,7 +294,7 @@ Sys_LoadModuleLibrary
 Used to load a module (jk2mpgame, cgame, ui) dll
 =================
 */
-void *Sys_LoadModuleLibrary(const char *name, qboolean mvOverride, intptr_t(QDECL **entryPoint)(int, ...), intptr_t(QDECL *systemcalls)(intptr_t, ...)) {
+void *Sys_LoadModuleLibrary(const char *name, qboolean mvOverride, VM_EntryPoint_t *entryPoint, intptr_t(QDECL *systemcalls)(intptr_t, ...)) {
 	HMODULE	libHandle;
 	void	(QDECL *dllEntry)(intptr_t(QDECL *syscallptr)(intptr_t, ...));
 	const char	*path, *filePath;
@@ -340,7 +340,8 @@ void *Sys_LoadModuleLibrary(const char *name, qboolean mvOverride, intptr_t(QDEC
 	}
 
 	dllEntry = (void (QDECL *)(intptr_t(QDECL *)(intptr_t, ...)))GetProcAddress(libHandle, "dllEntry");
-	*entryPoint = (intptr_t(QDECL *)(int, ...))GetProcAddress(libHandle, "vmMain");
+	*entryPoint = (VM_EntryPoint_t)GetProcAddress(libHandle, "vmMain");
+
 	if (!*entryPoint) {
 		Com_DPrintf("Could not find vmMain in %s\n", filename);
 		FreeLibrary(libHandle);
@@ -396,6 +397,10 @@ static UINT timerResolution = 0;
 
 ITaskbarList3 *win_taskbar;
 
+// Max open file descriptors. Mostly used by pk3 files with
+// MAX_SEARCH_PATHS limit.
+#define MAX_OPEN_FILES	4096
+
 void Sys_PlatformInit(int argc, char *argv[]) {
 	TIMECAPS ptc;
 	if (timeGetDevCaps(&ptc, sizeof(ptc)) == MMSYSERR_NOERROR)
@@ -409,8 +414,24 @@ void Sys_PlatformInit(int argc, char *argv[]) {
 		}
 
 		timeBeginPeriod(timerResolution);
-	} else
+	} else {
 		timerResolution = 0;
+	}
+
+	// raise open file limit to allow more pk3 files
+	int maxfds = MAX_OPEN_FILES;
+
+	for (int i = 1; i + 1 < argc; i++) {
+		if (!Q_stricmp(argv[i], "-maxfds")) {
+			maxfds = atoi(argv[i + 1]);
+		}
+	}
+
+	maxfds = _setmaxstdio(maxfds);
+
+	if (maxfds == -1) {
+		Com_Printf("Warning: Failed to increase open file limit. %s\n", strerror(errno));
+	}
 
 #ifndef DEDICATED
 	// Win7+ Taskbar features
@@ -661,7 +682,7 @@ void Sys_WriteCrashlog() {
 Sys_ResolvePath
 ===============
 */
-char *Sys_ResolvePath( char *path )
+const char *Sys_ResolvePath( const char *path )
 {
 	static char resolvedPath[MAX_PATH];
 
@@ -679,7 +700,7 @@ Sys_RealPath
 
 typedef DWORD (WINAPI *_GetFinalPathNameByHandleA)( _In_ HANDLE, _Out_writes_(cchFilePath) LPSTR, _In_ DWORD, _In_ DWORD );
 _GetFinalPathNameByHandleA Win_GetFinalPathNameByHandleA;
-char *Sys_RealPath( char *path )
+const char *Sys_RealPath( const char *path )
 {
 	static char realPath[MAX_PATH];
 	HANDLE fileHandle;

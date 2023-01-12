@@ -284,6 +284,30 @@ Client-Side
    quality video drivers. Small negative values (eg "-0.2") can help
    with distant textures appearing blurry.
 
+..
+
+:Name: s_muteWhenMinimized
+:Values: "0", "1"
+:Default: "1"
+:Description:
+   Mute all sounds when client window is minimized.
+
+..
+
+:Name: s_muteWhenUnfocused
+:Values: "0", "1"
+:Default: "1"
+:Description:
+   Mute all sounds when client window is unfocused.
+
+..
+
+:Name: r_printMissingModels
+:Values: "0", "1"
+:Default: "1"
+:Description:
+   Print a warning when a model fails to load.
+
 -----------
 Server-Side
 -----------

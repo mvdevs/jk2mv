@@ -1757,6 +1757,11 @@ void SP_Init(void)
 	SP_Register("keynames", 0/*SP_REGISTER_REQUIRED*/);	//reference is KEYNAMES
 }
 
+void SP_Shutdown(void)
+{
+	SP_Unload(SP_REGISTER_CLIENT | SP_REGISTER_SERVER | SP_REGISTER_MENU | SP_REGISTER_REQUIRED);
+}
+
 // called in Com_Frame, so don't take up any time! (can also be called during dedicated)
 //
 void SP_CheckForLanguageUpdates(void)

@@ -299,6 +299,7 @@ const qboolean			SP_VMGetStringText(const char *Reference, char *dst, size_t dst
 
 // Initialization
 void					SP_Init(void);
+void					SP_Shutdown(void);
 
 #endif
 

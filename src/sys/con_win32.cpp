@@ -608,7 +608,12 @@ void CON_WindowsColorPrint( const char *msg, bool extendedColors )
 			if( length >= MAXPRINTMSG - 1 )
 				break;
 
-			buffer[ length ] = *msg;
+			// Limit to printable range
+			if ( *msg >= ' ' && *msg <= '~' )
+				buffer[ length ] = *msg;
+			else
+				buffer[ length ] = '.';
+
 			length++;
 			msg++;
 		}
