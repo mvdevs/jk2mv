@@ -19,13 +19,13 @@ jobs:
         arch: [Win32]
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         submodules: true
         fetch-depth: 0
 
     - name: Add msbuild to PATH
-      uses: microsoft/setup-msbuild@v1.0.2
+      uses: microsoft/setup-msbuild@v1.1
 
     - name: Create Build Environment
       run: cmake -E make_directory ${{github.workspace}}/build/actions
@@ -40,12 +40,12 @@ jobs:
       shell: cmd
       run: msbuild /m /p:Configuration=${{ matrix.build_type }} PACKAGE.vcxproj
 
-    #- uses: 'actions/upload-artifact@v2'
+    #- uses: 'actions/upload-artifact@v3'
     #  with:
     #    name: Windows Binaries (Installer), ${{ matrix.build_type }}, ${{ matrix.arch }}
     #    path: ${{github.workspace}}/build/actions/out/${{ matrix.build_type }}/*
 
-    - uses: 'actions/upload-artifact@v2'
+    - uses: 'actions/upload-artifact@v3'
       with:
         name: Windows Package (Installer), ${{ matrix.build_type }}, ${{ matrix.arch }}
         path: ${{github.workspace}}/build/actions/out/*.exe
@@ -83,13 +83,13 @@ jobs:
         arch: [Win32, x64]
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         submodules: true
         fetch-depth: 0
 
     - name: Add msbuild to PATH
-      uses: microsoft/setup-msbuild@v1.0.2
+      uses: microsoft/setup-msbuild@v1.1
 
     - name: Create Build Environment
       run: cmake -E make_directory ${{github.workspace}}/build/actions
@@ -104,12 +104,12 @@ jobs:
       shell: cmd
       run: msbuild /m /p:Configuration=${{ matrix.build_type }} PACKAGE.vcxproj
 
-    #- uses: 'actions/upload-artifact@v2'
+    #- uses: 'actions/upload-artifact@v3'
     #  with:
     #    name: Windows Binaries (Portable), ${{ matrix.build_type }}, ${{ matrix.arch }}
     #    path: ${{github.workspace}}/build/actions/out/${{ matrix.build_type }}/*
 
-    - uses: 'actions/upload-artifact@v2'
+    - uses: 'actions/upload-artifact@v3'
       if: ${{ matrix.build_type == 'RelWithDebInfo' }}
       with:
         name: Windows Package (Portable), ${{ matrix.build_type }}, ${{ matrix.arch }}
@@ -147,7 +147,7 @@ jobs:
         build_type: [Debug, RelWithDebInfo]
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         submodules: true
         fetch-depth: 0
@@ -159,7 +159,7 @@ jobs:
         Start-Process -FilePath vs_installer.exe -ArgumentList "modify", "--installPath", "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise", "--add Microsoft.VisualStudio.Component.WinXP", "--quiet", "--norestart", "--nocache" -Wait -PassThru -WindowStyle Hidden
 
     - name: Add msbuild to PATH
-      uses: microsoft/setup-msbuild@v1.0.2
+      uses: microsoft/setup-msbuild@v1.1
 
     - name: Create Build Environment
       run: cmake -E make_directory ${{github.workspace}}/build/actions
@@ -174,12 +174,12 @@ jobs:
       shell: cmd
       run: msbuild /m /p:Configuration=${{ matrix.build_type }} PACKAGE.vcxproj
 
-    #- uses: 'actions/upload-artifact@v2'
+    #- uses: 'actions/upload-artifact@v3'
     #  with:
     #    name: Windows Binaries (Portable - WinXP), ${{ matrix.build_type }}
     #    path: ${{github.workspace}}/build/actions/out/${{ matrix.build_type }}/*
 
-    - uses: 'actions/upload-artifact@v2'
+    - uses: 'actions/upload-artifact@v3'
       if: ${{ matrix.build_type == 'RelWithDebInfo' }}
       with:
         name: Windows Package (Portable - WinXP), ${{ matrix.build_type }}
@@ -218,7 +218,7 @@ jobs:
         portable: [Portable, Non-Portable]
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         submodules: true
         fetch-depth: 0
@@ -228,9 +228,9 @@ jobs:
       shell: bash
       run: |
         if [ "${{ matrix.portable }}" == "Portable" ]; then
-          echo '::set-output name=PORTABLE::-DBuildPortableVersion=ON'
+          echo 'PORTABLE=-DBuildPortableVersion=ON' >> $GITHUB_OUTPUT
         else
-          echo '::set-output name=PORTABLE::-DBuildPortableVersion=OFF'
+          echo 'PORTABLE-DBuildPortableVersion=OFF' >> $GITHUB_OUTPUT
         fi
 
     - name: Create Build Environment
@@ -253,12 +253,12 @@ jobs:
       shell: bash
       run: make package
 
-    #- uses: 'actions/upload-artifact@v2'
+    #- uses: 'actions/upload-artifact@v3'
     #  with:
     #    name: macOS Binaries (${{ matrix.portable }}), ${{ matrix.build_type }}
     #    path: ${{github.workspace}}/build/actions/out/${{ matrix.build_type }}/*
 
-    - uses: 'actions/upload-artifact@v2'
+    - uses: 'actions/upload-artifact@v3'
       if: ${{ matrix.build_type == 'Release' }}
       with:
         name: macOS Package (${{ matrix.portable }}), ${{ matrix.build_type }}
@@ -300,7 +300,7 @@ jobs:
         portable: [Portable, Non-Portable]
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         submodules: true
         fetch-depth: 0
@@ -315,11 +315,11 @@ jobs:
           OPTIONS="-DUseInternalLibs=OFF -DBuildPortableVersion=OFF"
         fi
         [[ "${{ matrix.container_image}}" == i386* ]] && OPTIONS="$OPTIONS -DSystemProcessor=i386"
-        echo "::set-output name=OPTIONS::$OPTIONS"
+        echo "OPTIONS=$OPTIONS" >> $GITHUB_OUTPUT
         BINARTIFACTNAME=$(echo "Linux Binaries (${{ matrix.portable }} - ${{ matrix.container_image }}), ${{ matrix.build_type }}" | tr ":/" "-")
-        echo "::set-output name=BINARTIFACTNAME::$BINARTIFACTNAME"
+        echo "BINARTIFACTNAME=$BINARTIFACTNAME" >> $GITHUB_OUTPUT
         PKGARTIFACTNAME=$(echo "Linux Package (${{ matrix.portable }} - ${{ matrix.container_image }}), ${{ matrix.build_type }}" | tr ":/" "-")
-        echo "::set-output name=PKGARTIFACTNAME::$PKGARTIFACTNAME"
+        echo "PKGARTIFACTNAME=$PKGARTIFACTNAME" >> $GITHUB_OUTPUT
 
     - name: Create Build Environment
       run: |
@@ -341,12 +341,12 @@ jobs:
       shell: bash
       run: podman exec -w /jk2mv/build/actions buildenv make package
 
-    #- uses: 'actions/upload-artifact@v2'
+    #- uses: 'actions/upload-artifact@v3'
     #  with:
     #    name: ${{ steps.parameters.outputs.BINARTIFACTNAME }}
     #    path: ${{github.workspace}}/build/actions/out/${{ matrix.build_type }}/*
 
-    - uses: 'actions/upload-artifact@v2'
+    - uses: 'actions/upload-artifact@v3'
       if: ${{ matrix.build_type == 'Release' }}
       with:
         name: ${{ steps.parameters.outputs.PKGARTIFACTNAME }}
@@ -358,7 +358,7 @@ jobs:
     # As actions/upload-release-asset seems to demand exact filenames and content types we use a script instead
     - name: Upload Release
       if: ${{ github.event_name == 'release' && matrix.build_type == 'Release' }}
-      uses: actions/github-script@v4
+      uses: actions/github-script@v6
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
