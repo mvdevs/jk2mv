@@ -294,7 +294,7 @@ Sys_LoadModuleLibrary
 Used to load a module (jk2mpgame, cgame, ui) dll
 =================
 */
-void *Sys_LoadModuleLibrary(const char *name, qboolean mvOverride, intptr_t(QDECL **entryPoint)(int, ...), intptr_t(QDECL *systemcalls)(intptr_t, ...)) {
+void *Sys_LoadModuleLibrary(const char *name, qboolean mvOverride, VM_EntryPoint_t *entryPoint, intptr_t(QDECL *systemcalls)(intptr_t, ...)) {
 	HMODULE	libHandle;
 	void	(QDECL *dllEntry)(intptr_t(QDECL *syscallptr)(intptr_t, ...));
 	const char	*path, *filePath;
@@ -340,7 +340,8 @@ void *Sys_LoadModuleLibrary(const char *name, qboolean mvOverride, intptr_t(QDEC
 	}
 
 	dllEntry = (void (QDECL *)(intptr_t(QDECL *)(intptr_t, ...)))GetProcAddress(libHandle, "dllEntry");
-	*entryPoint = (intptr_t(QDECL *)(int, ...))GetProcAddress(libHandle, "vmMain");
+	*entryPoint = (VM_EntryPoint_t)GetProcAddress(libHandle, "vmMain");
+
 	if (!*entryPoint) {
 		Com_DPrintf("Could not find vmMain in %s\n", filename);
 		FreeLibrary(libHandle);
