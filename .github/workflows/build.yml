@@ -3,16 +3,16 @@ name: Build
 on:
   workflow_dispatch:
   push:
-    branches: actions
+    branches: actions-rebase
   pull_request:
-    branches: actions
+    branches: actions-rebase
   release:
     types: [created]
 
 jobs:
-  vs2019-installer:
-    name: Build VS 2019 (Installer), ${{ matrix.build_type }}, ${{ matrix.arch }}
-    runs-on: windows-2019
+  vs2022-installer:
+    name: Build VS 2022 (Installer), ${{ matrix.build_type }}, ${{ matrix.arch }}
+    runs-on: windows-2022
     strategy:
       matrix:
         build_type: [RelWithDebInfo]
@@ -74,9 +74,9 @@ jobs:
             }
           }
 
-  vs2019:
-    name: Build VS 2019 (Portable), ${{ matrix.build_type }}, ${{ matrix.arch }}
-    runs-on: windows-2019
+  vs2022:
+    name: Build VS 2022 (Portable), ${{ matrix.build_type }}, ${{ matrix.arch }}
+    runs-on: windows-2022
     strategy:
       matrix:
         build_type: [Debug, RelWithDebInfo]
@@ -139,9 +139,9 @@ jobs:
             }
           }
 
-  vs2017_xp:
-    name: Build VS 2017 (Portable - WinXP), ${{ matrix.build_type }}
-    runs-on: windows-2016
+  vs2019_xp:
+    name: Build VS 2019 (Portable - WinXP), ${{ matrix.build_type }}
+    runs-on: windows-2019
     strategy:
       matrix:
         build_type: [Debug, RelWithDebInfo]
@@ -151,6 +151,12 @@ jobs:
       with:
         submodules: true
         fetch-depth: 0
+
+    - name: Install WinXP Toolset
+      shell: powershell
+      run: |
+        Set-Location "C:\Program Files (x86)\Microsoft Visual Studio\Installer\"
+        Start-Process -FilePath vs_installer.exe -ArgumentList "modify", "--installPath", "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise", "--add Microsoft.VisualStudio.Component.WinXP", "--quiet", "--norestart", "--nocache" -Wait -PassThru -WindowStyle Hidden
 
     - name: Add msbuild to PATH
       uses: microsoft/setup-msbuild@v1.0.2
@@ -205,9 +211,7 @@ jobs:
 
   macos:
     name: Build macOS (${{ matrix.portable }}), ${{ matrix.build_type }}
-    runs-on: macos-10.15
-    env:
-        DEVELOPER_DIR: /Applications/Xcode_11.7.app/Contents/Developer
+    runs-on: macos-12
     strategy:
       matrix:
         build_type: [Debug, Release]
@@ -288,7 +292,7 @@ jobs:
 
   linux:
     name: Build Linux (${{ matrix.portable }} - ${{ matrix.container_image }}), ${{ matrix.build_type }}
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         container_image: ["ubuntu:16.04", "i386/ubuntu:16.04"]
