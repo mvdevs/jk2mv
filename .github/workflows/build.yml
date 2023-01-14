@@ -140,11 +140,12 @@ jobs:
           }
 
   vs2019_xp:
-    name: Build VS 2019 (Portable - WinXP), ${{ matrix.build_type }}
+    name: Build VS 2019 (Portable - WinXP), ${{ matrix.build_type }}, ${{ matrix.arch }}
     runs-on: windows-2019
     strategy:
       matrix:
         build_type: [Debug, RelWithDebInfo]
+        arch: [Win32]
 
     steps:
     - uses: actions/checkout@v3
@@ -167,7 +168,7 @@ jobs:
     - name: Configure CMake
       shell: bash
       working-directory: ${{github.workspace}}/build/actions
-      run: cmake $GITHUB_WORKSPACE -A Win32 -T v141_xp -DBuildPortableVersion=ON
+      run: cmake $GITHUB_WORKSPACE -A ${{ matrix.arch }} -T v141_xp -DBuildPortableVersion=ON
 
     - name: Build
       working-directory: ${{github.workspace}}/build/actions
@@ -176,13 +177,13 @@ jobs:
 
     #- uses: 'actions/upload-artifact@v3'
     #  with:
-    #    name: Windows Binaries (Portable - WinXP), ${{ matrix.build_type }}
+    #    name: Windows Binaries (Portable - WinXP), ${{ matrix.build_type }}, ${{ matrix.arch }}
     #    path: ${{github.workspace}}/build/actions/out/${{ matrix.build_type }}/*
 
     - uses: 'actions/upload-artifact@v3'
       if: ${{ matrix.build_type == 'RelWithDebInfo' }}
       with:
-        name: Windows Package (Portable - WinXP), ${{ matrix.build_type }}
+        name: Windows Package (Portable - WinXP), ${{ matrix.build_type }}, ${{ matrix.arch }}
         path: ${{github.workspace}}/build/actions/out/*.zip
 
     # As actions/upload-release-asset seems to demand exact filenames and content types we use a script instead
@@ -210,12 +211,13 @@ jobs:
           }
 
   macos:
-    name: Build macOS (${{ matrix.portable }}), ${{ matrix.build_type }}
+    name: Build macOS (${{ matrix.portable }}), ${{ matrix.build_type }}, ${{ matrix.arch }}
     runs-on: macos-12
     strategy:
       matrix:
         build_type: [Debug, Release]
         portable: [Portable, Non-Portable]
+        arch: [x86_64]
 
     steps:
     - uses: actions/checkout@v3
@@ -255,13 +257,13 @@ jobs:
 
     #- uses: 'actions/upload-artifact@v3'
     #  with:
-    #    name: macOS Binaries (${{ matrix.portable }}), ${{ matrix.build_type }}
+    #    name: macOS Binaries (${{ matrix.portable }}), ${{ matrix.build_type }}, ${{ matrix.arch }}
     #    path: ${{github.workspace}}/build/actions/out/${{ matrix.build_type }}/*
 
     - uses: 'actions/upload-artifact@v3'
       if: ${{ matrix.build_type == 'Release' }}
       with:
-        name: macOS Package (${{ matrix.portable }}), ${{ matrix.build_type }}
+        name: macOS Package (${{ matrix.portable }}), ${{ matrix.build_type }}, ${{ matrix.arch }}
         path: |
           ${{github.workspace}}/build/actions/out/*.tar.gz
           ${{github.workspace}}/build/actions/out/*.dmg
