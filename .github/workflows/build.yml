@@ -53,7 +53,7 @@ jobs:
     # As actions/upload-release-asset seems to demand exact filenames and content types we use a script instead
     - name: Upload Release
       if: ${{ github.event_name == 'release' && matrix.build_type == 'RelWithDebInfo' }}
-      uses: actions/github-script@v4
+      uses: actions/github-script@v6
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
@@ -62,7 +62,7 @@ jobs:
           {
             if ( filename.endsWith('.exe') )
             {
-              await github.repos.uploadReleaseAsset(
+              await github.rest.repos.uploadReleaseAsset(
                 {
                   owner: context.repo.owner,
                   repo: context.repo.repo,
@@ -118,7 +118,7 @@ jobs:
     # As actions/upload-release-asset seems to demand exact filenames and content types we use a script instead
     - name: Upload Release
       if: ${{ github.event_name == 'release' && matrix.build_type == 'RelWithDebInfo' }}
-      uses: actions/github-script@v4
+      uses: actions/github-script@v6
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
@@ -127,7 +127,7 @@ jobs:
           {
             if ( filename.endsWith('.zip') )
             {
-              await github.repos.uploadReleaseAsset(
+              await github.rest.repos.uploadReleaseAsset(
                 {
                   owner: context.repo.owner,
                   repo: context.repo.repo,
@@ -189,7 +189,7 @@ jobs:
     # As actions/upload-release-asset seems to demand exact filenames and content types we use a script instead
     - name: Upload Release
       if: ${{ github.event_name == 'release' && matrix.build_type == 'RelWithDebInfo' }}
-      uses: actions/github-script@v4
+      uses: actions/github-script@v6
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
@@ -198,7 +198,7 @@ jobs:
           {
             if ( filename.endsWith('.zip') )
             {
-              await github.repos.uploadReleaseAsset(
+              await github.rest.repos.uploadReleaseAsset(
                 {
                   owner: context.repo.owner,
                   repo: context.repo.repo,
@@ -271,7 +271,7 @@ jobs:
     # As actions/upload-release-asset seems to demand exact filenames and content types we use a script instead
     - name: Upload Release
       if: ${{ github.event_name == 'release' && matrix.build_type == 'Release' }}
-      uses: actions/github-script@v4
+      uses: actions/github-script@v6
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
@@ -280,7 +280,7 @@ jobs:
           {
             if ( filename.endsWith('.tar.gz') || filename.endsWith('.dmg') )
             {
-              await github.repos.uploadReleaseAsset(
+              await github.rest.repos.uploadReleaseAsset(
                 {
                   owner: context.repo.owner,
                   repo: context.repo.repo,
@@ -369,7 +369,7 @@ jobs:
           {
             if ( filename.endsWith('.tar.gz') || filename.endsWith('.deb') || filename.endsWith('.rpm') )
             {
-              await github.repos.uploadReleaseAsset(
+              await github.rest.repos.uploadReleaseAsset(
                 {
                   owner: context.repo.owner,
                   repo: context.repo.repo,
