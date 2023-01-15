@@ -232,7 +232,7 @@ jobs:
         if [ "${{ matrix.portable }}" == "Portable" ]; then
           echo 'PORTABLE=-DBuildPortableVersion=ON' >> $GITHUB_OUTPUT
         else
-          echo 'PORTABLE-DBuildPortableVersion=OFF' >> $GITHUB_OUTPUT
+          echo 'PORTABLE=-DBuildPortableVersion=OFF' >> $GITHUB_OUTPUT
         fi
 
     - name: Create Build Environment
