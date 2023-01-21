@@ -3,9 +3,9 @@ name: Build
 on:
   workflow_dispatch:
   push:
-    branches: actions-rebase
+    branches: master
   pull_request:
-    branches: actions-rebase
+    branches: master
   release:
     types: [created]
 
