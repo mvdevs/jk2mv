@@ -21,11 +21,9 @@ Main Features:
 # Automated Builds
 These builds are automatically generated on every push to the repository. For testing purposes only.
 
-| Windows | Linux / OSX | Codacy |
-|---------|-------------| ------ |
-| [![Windows Build Status](https://ci.appveyor.com/api/projects/status/bwkb8nfl5w6s53u4?svg=true)](https://ci.appveyor.com/project/ouned/jk2mv/history) | [![Linux/OSX Build Status](https://api.travis-ci.org/mvdevs/jk2mv.svg)](https://travis-ci.org/mvdevs/jk2mv/builds) | [![Codacy Badge](https://api.codacy.com/project/badge/Grade/872b979ad7dc46aebb6c63d66c1cea77)](https://www.codacy.com/app/mvdevs/jk2mv?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=mvdevs/jk2mv&amp;utm_campaign=Badge_Grade)
-
- [ ![Download](https://api.bintray.com/packages/mvdevs/jk2mv/jk2mv-dev/images/download.svg) ](https://bintray.com/mvdevs/jk2mv/jk2mv-dev/_latestVersion/#files)
+| GitHub Actions | Codacy |
+| -------------- | ------ |
+| [![GitHub Actions Badge](https://github.com/mvdevs/jk2mv/actions/workflows/build.yml/badge.svg)](https://github.com/mvdevs/jk2mv/actions?query=branch%3Amaster) | [![Codacy Badge](https://api.codacy.com/project/badge/Grade/872b979ad7dc46aebb6c63d66c1cea77)](https://www.codacy.com/app/mvdevs/jk2mv?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=mvdevs/jk2mv&amp;utm_campaign=Badge_Grade)
 
 # Howto Build JK2MV
 1. Clone the JK2MV repository
