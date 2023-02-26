@@ -945,10 +945,10 @@ qboolean CROFFSystem::ClearLerp( SROFFEntity *roff_ent )
 	vec_t			*origin, *angle;
 
 #ifndef DEDICATED
+	vec3_t			originTemp, angleTemp;
 	// always false on dedicated
 	if (roff_ent->mIsClient)
 	{
-		vec3_t		originTemp, angleTemp;
 		originTrajectory = (trajectory_t *)VM_Call( cgvm, CG_GET_ORIGIN_TRAJECTORY, roff_ent->mEntID );
 		angleTrajectory = (trajectory_t *)VM_Call( cgvm, CG_GET_ANGLE_TRAJECTORY, roff_ent->mEntID );
 		VM_Call( cgvm, CG_GET_ORIGIN, roff_ent->mEntID, originTemp );
