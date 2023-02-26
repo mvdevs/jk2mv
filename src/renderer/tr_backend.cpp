@@ -1121,7 +1121,40 @@ const void	*RB_DrawBuffer( const void *data ) {
 		qglClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 	}
 	else if ( r_clear->integer ) {
-		qglClearColor( 1, 0, 0.5, 1 );
+		int i = r_clear->integer;
+		if (i == 42) {
+			i = Q_irand(0,8);
+		}
+		switch (i)
+		{
+		default:
+			qglClearColor( 1, 0, 0.5, 1 );
+			break;
+		case 1:
+			qglClearColor( 1.0, 0.0, 0.0, 1.0); //red
+			break;
+		case 2:
+			qglClearColor( 0.0, 1.0, 0.0, 1.0); //green
+			break;
+		case 3:
+			qglClearColor( 1.0, 1.0, 0.0, 1.0); //yellow
+			break;
+		case 4:
+			qglClearColor( 0.0, 0.0, 1.0, 1.0); //blue
+			break;
+		case 5:
+			qglClearColor( 0.0, 1.0, 1.0, 1.0); //cyan
+			break;
+		case 6:
+			qglClearColor( 1.0, 0.0, 1.0, 1.0); //magenta
+			break;
+		case 7:
+			qglClearColor( 1.0, 1.0, 1.0, 1.0); //white
+			break;
+		case 8:
+			qglClearColor( 0.0, 0.0, 0.0, 1.0); //black
+			break;
+		}
 		qglClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 	}
 
