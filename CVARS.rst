@@ -308,6 +308,13 @@ Client-Side
 :Description:
    Print a warning when a model fails to load.
 
+..
+
+:Name: con_opacity
+:Values: 1 >= Decimal >= 0
+:Description:
+   Opacity of the in-game console.
+
 -----------
 Server-Side
 -----------

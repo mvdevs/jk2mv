@@ -13,6 +13,7 @@ cvar_t		*con_notifytime;
 cvar_t		*con_scale;
 cvar_t		*con_speed;
 cvar_t		*con_timestamps;
+cvar_t		*con_opacity;
 
 #define	DEFAULT_CONSOLE_WIDTH	78
 #define CON_BLANK_CHAR			' '
@@ -403,6 +404,7 @@ void Con_Init (void) {
 	con_speed = Cvar_Get ("con_speed", "3", CVAR_GLOBAL | CVAR_ARCHIVE);
 	con_scale = Cvar_Get ("con_scale", "1", CVAR_GLOBAL | CVAR_ARCHIVE);
 	con_timestamps = Cvar_Get ("con_timestamps", "0", CVAR_GLOBAL | CVAR_ARCHIVE);
+	con_opacity = Cvar_Get ("con_opacity", "1.0", CVAR_GLOBAL | CVAR_ARCHIVE);
 
 	Field_Clear( &kg.g_consoleField );
 	kg.g_consoleField.widthInChars = DEFAULT_CONSOLE_WIDTH - 1; // Command prompt
@@ -736,6 +738,9 @@ void Con_DrawSolidConsole( float frac ) {
 		y = 0;
 	}
 	else {
+		static vec4_t consoleShaderColor = { 1.0f, 1.0f, 1.0f, 1.0f };
+		consoleShaderColor[3] = Com_Clamp( 0.0f, 1.0f, con_opacity->value );
+		re.SetColor( consoleShaderColor );
 		SCR_DrawPic( 0, 0, SCREEN_WIDTH, (float) y, cls.consoleShader );
 	}
 
