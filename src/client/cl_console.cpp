@@ -14,6 +14,7 @@ cvar_t		*con_scale;
 cvar_t		*con_speed;
 cvar_t		*con_timestamps;
 cvar_t		*con_opacity;
+cvar_t		*con_skipNotifyKeyword;
 
 #define	DEFAULT_CONSOLE_WIDTH	78
 #define CON_BLANK_CHAR			' '
@@ -405,6 +406,7 @@ void Con_Init (void) {
 	con_scale = Cvar_Get ("con_scale", "1", CVAR_GLOBAL | CVAR_ARCHIVE);
 	con_timestamps = Cvar_Get ("con_timestamps", "0", CVAR_GLOBAL | CVAR_ARCHIVE);
 	con_opacity = Cvar_Get ("con_opacity", "1.0", CVAR_GLOBAL | CVAR_ARCHIVE);
+	con_skipNotifyKeyword = Cvar_Get ("con_skipNotifyKeyword", "", CVAR_ARCHIVE); // NOT global, because it's made for compatibility with some mods
 
 	Field_Clear( &kg.g_consoleField );
 	kg.g_consoleField.widthInChars = DEFAULT_CONSOLE_WIDTH - 1; // Command prompt
@@ -428,7 +430,7 @@ void Con_Init (void) {
 Con_Linefeed
 ===============
 */
-void Con_Linefeed (void)
+void Con_Linefeed ( qboolean skipNotify )
 {
 	int		i;
 	int		line = (con.current % con.totallines) * con.rowwidth;
@@ -450,7 +452,7 @@ void Con_Linefeed (void)
 
 	// mark time for transparent overlay
 	if (con.current >= 0)
-		con.times[con.current % NUM_CON_TIMES] = cls.realtime;
+		con.times[con.current % NUM_CON_TIMES] = skipNotify ? 0 : cls.realtime;
 
 	con.x = 0;
 
@@ -477,6 +479,15 @@ void CL_ConsolePrint( const char *txt, qboolean extendedColors ) {
 	unsigned char	color;
 	char			c;
 	int				y;
+	qboolean		skipNotify = qfalse;
+
+	if ( con_skipNotifyKeyword && con_skipNotifyKeyword->string && con_skipNotifyKeyword->string[0] ) {
+		int keywordLength = strlen( con_skipNotifyKeyword->string );
+		if ( !Q_strncmp(txt, con_skipNotifyKeyword->string, keywordLength) ) {
+			txt += keywordLength;
+			skipNotify = qtrue;
+		}
+	}
 
 	// for some demos we don't want to ever show anything on the console
 	if ( cl_noprint && cl_noprint->integer ) {
@@ -507,7 +518,7 @@ void CL_ConsolePrint( const char *txt, qboolean extendedColors ) {
 		switch (c)
 		{
 		case '\n':
-			Con_Linefeed ();
+			Con_Linefeed( skipNotify );
 			break;
 		case '\r':
 			con.x = 0;
@@ -517,7 +528,7 @@ void CL_ConsolePrint( const char *txt, qboolean extendedColors ) {
 
 			if (con.x == con.rowwidth - CON_TIMESTAMP_LEN - 1) {
 				con.text[y * con.rowwidth + CON_TIMESTAMP_LEN + con.x] = CON_WRAP;
-				Con_Linefeed();
+				Con_Linefeed( skipNotify );
 				y = con.current % con.totallines;
 			}
 

@@ -315,6 +315,17 @@ Client-Side
 :Description:
    Opacity of the in-game console.
 
+..
+
+:Name: con_skipNotifyKeyword
+:Values: String
+:Default: "" (Not set)
+:Description:
+   Keyword used by modules to print messags into the console that
+   should not appear as notifications. JKA uses the builtin keyword
+   ``[skipnotify]`` and some mods seem to have adopted this. To increase
+   compatibility with those mods this cvar can be used.
+
 -----------
 Server-Side
 -----------
