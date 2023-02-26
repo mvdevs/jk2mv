@@ -163,6 +163,10 @@ R_LoadLightmaps
 ===============
 */
 #define	LIGHTMAP_SIZE	128
+#define	LIGHTMAP_ATLAS_SIZE 2048
+#define	LIGHTMAPS_PER_ATLAS_DIMENSION (LIGHTMAP_ATLAS_SIZE / LIGHTMAP_SIZE)
+#define	LIGHTMAPS_PER_ATLAS (LIGHTMAPS_PER_ATLAS_DIMENSION * LIGHTMAPS_PER_ATLAS_DIMENSION)
+
 static	void R_LoadLightmaps( lump_t *l, const char *psMapName ) {
 	byte		*buf, *buf_p;
 	int			len;
@@ -177,6 +181,13 @@ static	void R_LoadLightmaps( lump_t *l, const char *psMapName ) {
 	}
 	buf = fileBase + l->fileofs;
 
+	if (glConfig.maxTextureSize < LIGHTMAP_ATLAS_SIZE)
+	{
+		tr.numLightmaps = 0;
+		ri.Printf(PRINT_WARNING, "Lightmaps disabled because the current graphics adapter doesn't support the image size of the lightmap atlas.\n");
+		return;
+	}
+
 	// we are about to upload textures
 	R_SyncRenderThread();
 
@@ -189,7 +200,21 @@ static	void R_LoadLightmaps( lump_t *l, const char *psMapName ) {
 	}
 
 	char sMapName[MAX_QPATH];
-	COM_StripExtension(psMapName,sMapName, sizeof(sMapName));	// will already by MAX_QPATH legal, so no length check
+	COM_StripExtension(psMapName, sMapName, sizeof(sMapName));	// will already by MAX_QPATH legal, so no length check
+
+	// create empty lightmap atlases
+	int numberOfAtlases = ceil(tr.numLightmaps / (float)LIGHTMAPS_PER_ATLAS);
+	byte *emptyAtlas = (byte*)ri.Hunk_AllocateTempMemory(LIGHTMAP_ATLAS_SIZE * LIGHTMAP_ATLAS_SIZE * 4);
+	for (i = 0; i < numberOfAtlases; i++)
+		tr.lightmaps[i] = R_CreateImage(
+			va("*%s/lmAtlas%d", sMapName, i),
+			emptyAtlas,
+			LIGHTMAP_ATLAS_SIZE, LIGHTMAP_ATLAS_SIZE,
+			qfalse,
+			qfalse,
+			(qboolean)!!r_ext_compressed_lightmaps->integer,
+			GL_CLAMP);
+	ri.Hunk_FreeTempMemory(emptyAtlas);
 
 	for ( i = 0 ; i < tr.numLightmaps ; i++ ) {
 		// expand the 24 bit on-disk to 32 bit
@@ -230,14 +255,51 @@ static	void R_LoadLightmaps( lump_t *l, const char *psMapName ) {
 				image[j*4+3] = 255;
 			}
 		}
-		tr.lightmaps[i] = R_CreateImage( va("*%s/lightmap%d",sMapName,i), image,
-										 LIGHTMAP_SIZE, LIGHTMAP_SIZE, qfalse, qfalse,
-										 (qboolean) !!r_ext_compressed_lightmaps->integer, GL_CLAMP );
+
+		// vanilla hardcoded the maximum number of lightmaps to 256
+		// ideally, we use a 2048x2048 atlas to store all of those in one texture
+		int currentAtlas = i / LIGHTMAPS_PER_ATLAS;
+		int currentAtlasLightmap = i % LIGHTMAPS_PER_ATLAS;
+		int xoff = (currentAtlasLightmap % LIGHTMAPS_PER_ATLAS_DIMENSION) * LIGHTMAP_SIZE;
+		int yoff = (currentAtlasLightmap / LIGHTMAPS_PER_ATLAS_DIMENSION) * LIGHTMAP_SIZE;
+
+		// bind atlas for current lightmap and update the atlas with the lightmap data
+		GL_Bind(tr.lightmaps[currentAtlas]);
+		qglTexSubImage2D(
+			GL_TEXTURE_2D,
+			0,
+			xoff,
+			yoff,
+			LIGHTMAP_SIZE,
+			LIGHTMAP_SIZE,
+			GL_RGBA,
+			GL_UNSIGNED_BYTE,
+			image
+		);
 	}
 
 	if ( r_lightmap->integer == 2 )	{
 		ri.Printf( PRINT_ALL, "Brightest lightmap value: %d\n", ( int ) ( maxIntensity * 255 ) );
 	}
+}
+
+/*
+===============
+AtlasPackUV
+
+Lightmapnum must be the lightmap index inside an atlas, not the actual lightmap index
+===============
+*/
+static void R_AtlasPackUV(vec2_t input, int lightmapnum, float *outvec)
+{
+	if (lightmapnum < 0)
+		return;
+
+	const int lightmapXOffset = lightmapnum % LIGHTMAPS_PER_ATLAS_DIMENSION;
+	const int lightmapYOffset = lightmapnum / LIGHTMAPS_PER_ATLAS_DIMENSION;
+	const float invLightmapSide = 1.0f / LIGHTMAPS_PER_ATLAS_DIMENSION;
+	outvec[0] = (lightmapXOffset * invLightmapSide) + (input[0] * invLightmapSide);
+	outvec[1] = (lightmapYOffset * invLightmapSide) + (input[1] * invLightmapSide);
 }
 
 
@@ -342,12 +404,18 @@ static void ParseFace( dsurface_t *ds, mapVert_t *verts, msurface_t *surf, int *
 	srfSurfaceFace_t	*cv;
 	int					numPoints, numIndexes;
 	int					lightmapNum[MAXLIGHTMAPS];
+	int					atlasLightmapNum[MAXLIGHTMAPS]; // lightmap index inside of the atlas
 	size_t				sfaceSize;
 	int				 ofsIndexes;
 
 	for(i = 0; i < MAXLIGHTMAPS; i++)
 	{
-		lightmapNum[i] = LittleLong( ds->lightmapNum[i] );
+		atlasLightmapNum[i] = lightmapNum[i] = LittleLong( ds->lightmapNum[i] );
+		if (lightmapNum[i] > 0)
+		{
+			atlasLightmapNum[i] = lightmapNum[i] % LIGHTMAPS_PER_ATLAS;
+			lightmapNum[i] = lightmapNum[i] / LIGHTMAPS_PER_ATLAS;
+		}
 	}
 
 	// get fog volume
@@ -386,13 +454,10 @@ static void ParseFace( dsurface_t *ds, mapVert_t *verts, msurface_t *surf, int *
 		}
 		for ( j = 0 ; j < 2 ; j++ ) {
 			cv->points[i][3+j] = LittleFloat( verts[i].st[j] );
-			for(k=0;k<MAXLIGHTMAPS;k++)
-			{
-				cv->points[i][VERTEX_LM+j+(k*2)] = LittleFloat( verts[i].lightmap[k][j] );
-			}
 		}
 		for(k=0;k<MAXLIGHTMAPS;k++)
 		{
+			R_AtlasPackUV(verts[i].lightmap[k], atlasLightmapNum[k], &cv->points[i][VERTEX_LM + (k * 2)]);
 			R_ColorShiftLightingBytes( verts[i].color[k], (byte *)&cv->points[i][VERTEX_COLOR+k] );
 		}
 	}
@@ -425,13 +490,19 @@ static void ParseMesh ( dsurface_t *ds, mapVert_t *verts, msurface_t *surf ) {
 	int						width, height, numPoints;
 	drawVert_t				points[MAX_PATCH_SIZE*MAX_PATCH_SIZE];
 	int						lightmapNum[MAXLIGHTMAPS];
+	int						atlasLightmapNum[MAXLIGHTMAPS]; // lightmap index inside of the atlas
 	vec3_t					bounds[2];
 	vec3_t					tmpVec;
 	static surfaceType_t	skipData = SF_SKIP;
 
 	for(i=0;i<MAXLIGHTMAPS;i++)
 	{
-		lightmapNum[i] = LittleLong( ds->lightmapNum[i] );
+		atlasLightmapNum[i] = lightmapNum[i] = LittleLong(ds->lightmapNum[i]);
+		if (lightmapNum[i] > 0)
+		{
+			atlasLightmapNum[i] = lightmapNum[i] % LIGHTMAPS_PER_ATLAS;
+			lightmapNum[i] = lightmapNum[i] / LIGHTMAPS_PER_ATLAS;
+		}
 	}
 
 	// get fog volume
@@ -462,13 +533,10 @@ static void ParseMesh ( dsurface_t *ds, mapVert_t *verts, msurface_t *surf ) {
 		}
 		for ( j = 0 ; j < 2 ; j++ ) {
 			points[i].st[j] = LittleFloat( verts[i].st[j] );
-			for(k=0;k<MAXLIGHTMAPS;k++)
-			{
-				points[i].lightmap[k][j] = LittleFloat( verts[i].lightmap[k][j] );
-			}
 		}
 		for(k=0;k<MAXLIGHTMAPS;k++)
 		{
+			R_AtlasPackUV(verts[i].lightmap[k], atlasLightmapNum[k], points[i].lightmap[k]);
 			R_ColorShiftLightingBytes( verts[i].color[k], points[i].color[k] );
 		}
 	}
