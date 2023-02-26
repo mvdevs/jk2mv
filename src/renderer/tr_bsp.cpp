@@ -181,6 +181,13 @@ static	void R_LoadLightmaps( lump_t *l, const char *psMapName ) {
 	}
 	buf = fileBase + l->fileofs;
 
+	if (glConfig.maxTextureSize < LIGHTMAP_ATLAS_SIZE)
+	{
+		tr.numLightmaps = 0;
+		ri.Printf(PRINT_WARNING, "Lightmaps disabled because the current graphics adapter doesn't support the image size of the lightmap atlas.\n");
+		return;
+	}
+
 	// we are about to upload textures
 	R_SyncRenderThread();
 
