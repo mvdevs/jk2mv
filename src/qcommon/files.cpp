@@ -2732,7 +2732,7 @@ void FS_Path_f( void ) {
 	Com_Printf( "\n" );
 	for ( i = 1 ; i < MAX_FILE_HANDLES ; i++ ) {
 		if ( fsh[i].handleFiles.file.o ) {
-			Com_Printf( "handle %i: %s\n", i, fsh[i].name );
+			Com_Printf( "handle %i: %s (module: %s)%s\n", i, fsh[i].name, moduleName[fsh[i].module], fsh[i].zipFile ? " [in pak]" : "" );
 		}
 	}
 }
@@ -2846,6 +2846,35 @@ FS_Flush_f
 */
 static void FS_Flush_f( void ) {
 	fflush(NULL);
+}
+
+/*
+============
+FS_Restart_f
+============
+*/
+static qboolean FS_CanRestartInPlace( void ) {
+	int i;
+	for ( i = 1; i < MAX_FILE_HANDLES; i++ ) {
+		switch (fsh[i].module) {
+			case MODULE_GAME:
+			case MODULE_CGAME:
+			case MODULE_UI:
+				// If we have an active filehandle for a module that references a zip file we cannot restart.
+				if ( fsh[i].zipFile ) return qfalse;
+				break;
+			default:
+				break;
+		}
+	}
+	return qtrue;
+}
+static void FS_Restart_f( void ) {
+	if ( !FS_CanRestartInPlace() ) {
+		Com_Printf( "^3WARNING: Cannot restart file system due to active file handles for pk3 files inside of modules.\n" );
+		return;
+	}
+	FS_Restart2( fs_checksumFeed, qtrue );
 }
 
 //===========================================================================
@@ -3181,7 +3210,7 @@ FS_Shutdown
 Frees all resources and closes all files
 ================
 */
-void FS_Shutdown( qboolean closemfp ) {
+void FS_Shutdown( qboolean closemfp, qboolean keepModuleFiles ) {
 	searchpath_t	*p, *next;
 	int	i;
 
@@ -3190,7 +3219,8 @@ void FS_Shutdown( qboolean closemfp ) {
 		case MODULE_GAME:
 		case MODULE_CGAME:
 		case MODULE_UI:
-			FS_FCloseFile(i, fsh[i].module);
+			if ( !keepModuleFiles ) FS_FCloseFile(i, fsh[i].module);
+			else if ( fsh[i].zipFile ) Com_Error(ERR_FATAL, "FS_Shutdown: tried to keep module files when at least one module file is inside of a pak");
 			break;
 		default:
 			break;
@@ -3221,6 +3251,7 @@ void FS_Shutdown( qboolean closemfp ) {
 	Cmd_RemoveCommand( "touchFile" );
 	Cmd_RemoveCommand( "which" );
 	Cmd_RemoveCommand( "flushFiles" );
+	Cmd_RemoveCommand( "fs_restart" );
 }
 
 /*
@@ -3321,6 +3352,7 @@ static void FS_Startup( const char *gameName ) {
 	Cmd_AddCommand ("touchFile", FS_TouchFile_f );
 	Cmd_AddCommand ("which", FS_Which_f );
 	Cmd_AddCommand ("flushFiles", FS_Flush_f );
+	Cmd_AddCommand ("fs_restart", FS_Restart_f );
 
 	// print the current search paths
 	FS_Path_f();
@@ -3786,10 +3818,10 @@ void FS_InitFilesystem( void ) {
 FS_Restart
 ================
 */
-void FS_Restart( int checksumFeed ) {
+void FS_Restart2( int checksumFeed, qboolean inPlace ) {
 
 	// free anything we currently have loaded
-	FS_Shutdown(qfalse);
+	FS_Shutdown(qfalse, inPlace);
 
 	// set the checksum feed
 	fs_checksumFeed = checksumFeed;
@@ -3834,6 +3866,10 @@ void FS_Restart( int checksumFeed ) {
 	Q_strncpyz(lastValidBase, fs_basepath->string, sizeof(lastValidBase));
 	Q_strncpyz(lastValidGame, fs_gamedirvar->string, sizeof(lastValidGame));
 
+}
+
+void FS_Restart( int checksumFeed ) {
+	FS_Restart2( checksumFeed, qfalse );
 }
 
 /*

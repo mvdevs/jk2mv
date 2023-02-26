@@ -381,7 +381,7 @@ void Com_Quit_f( void ) {
 		CL_Shutdown ();
 		VM_Forced_Unload_Done();
 		Com_Shutdown ();
-		FS_Shutdown(qtrue);
+		FS_Shutdown(qtrue, qfalse);
 	}
 	Sys_Quit ();
 }
@@ -400,7 +400,7 @@ Q_NORETURN void Com_Quit( int signal ) {
 	CL_Shutdown ();
 	VM_Forced_Unload_Done();
 	Com_Shutdown ();
-	FS_Shutdown(qtrue);
+	FS_Shutdown(qtrue, qfalse);
 	Sys_Quit ();
 }
 

@@ -605,9 +605,10 @@ typedef enum {
 qboolean FS_Initialized();
 
 void	FS_InitFilesystem (void);
-void	FS_Shutdown( qboolean closemfp );
+void	FS_Shutdown( qboolean closemfp, qboolean keepModuleFiles );
 
 qboolean	FS_ConditionalRestart( int checksumFeed );
+void	FS_Restart2( int checksumFeed, qboolean inPlace );
 void	FS_Restart( int checksumFeed );
 // shutdown and restart the filesystem so changes to fs_gamedir can take effect
 
