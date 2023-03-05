@@ -415,9 +415,14 @@ static SOCKET NET_IPSocket( const char *net_interface, int port, int *err ) {
 		return newsocket;
 	}
 
-#ifdef __GNUC__
-	// happens when there are too many pk3 files
-	// FD_SET macro can not be used with fd equal or greater than FD_SETSIZE
+#if defined(__GNUC__) && !defined(__MINGW32__)
+	// GLIBC FD_SET macro can not be used with fd equal or greater
+	// than FD_SETSIZE. MinGW and MSVC have their own fd_set
+	// structs and FD_SET macros. In their implementation FD_SET
+	// is limited to FD_SETSIZE elements, but there is no limit on
+	// values. This is necessary on Windows because winsock2.h
+	// socket() returns SOCKET object which may have some large
+	// value.
 	if ( newsocket >= FD_SETSIZE ) {
 		Com_Printf( "WARNING: NET_IPSocket: file descriptor too high\n" );
 		*err = 0;
