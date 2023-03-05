@@ -42,6 +42,11 @@ ipch/
 # ReSharper is a .NET coding add-in
 _ReSharper*
 
+# CMake plugin
+/.vs
+/out
+*.json
+
 #################
 ## Eclipse
 #################
