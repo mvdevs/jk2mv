@@ -7,11 +7,13 @@
 #include <mv_setup.h>
 #include <signal.h>
 #include <string>
-#include <StackWalker.h>
 #include "con_local.h"
 #include "../qcommon/vm_local.h"
 #include "../qcommon/q_shared.h"
 #include "../qcommon/qcommon.h"
+#ifdef _MSC_VER
+#include <StackWalker.h>
+#endif
 
 void Sys_CrashSignalHandler(int signal);
 
