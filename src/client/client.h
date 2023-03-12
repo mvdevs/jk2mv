@@ -351,6 +351,7 @@ typedef struct {
 	qboolean ignoreNextDownloadList;
 
 	int			fixes;
+	qboolean	submodelBypass;
 } clientStatic_t;
 
 #define	CON_TEXTSIZE	131072 // increased in jk2mv

@@ -64,6 +64,7 @@ typedef struct bsp_s
 	//bsp entities
 	int numentities;
 	bsp_entity_t entities[MAX_BSPENTITIES];
+	int numinlinemodels;
 } bsp_t;
 
 //global bsp
@@ -463,8 +464,14 @@ int AAS_LoadBSPFile(void)
 	AAS_DumpBSPData();
 	bspworld.entdatasize = (int)strlen(botimport.BSPEntityData()) + 1;
 	bspworld.dentdata = (char *) GetClearedHunkMemory(bspworld.entdatasize);
+	bspworld.numinlinemodels = botimport.BSPNumInlineModels();
 	Com_Memcpy(bspworld.dentdata, botimport.BSPEntityData(), bspworld.entdatasize);
 	AAS_ParseBSPEntities();
 	bspworld.loaded = qtrue;
 	return BLERR_NOERROR;
 } //end of the function AAS_LoadBSPFile
+
+int AAS_BSPNumInlineModels(void)
+{
+	return bspworld.numinlinemodels;
+}

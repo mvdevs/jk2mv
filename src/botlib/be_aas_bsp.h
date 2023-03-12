@@ -69,4 +69,6 @@ int AAS_VectorForBSPEpairKey(int ent, const char *key, vec3_t v);
 int AAS_FloatForBSPEpairKey(int ent, const char *key, float *value);
 //get an integer for the BSP epair key
 int AAS_IntForBSPEpairKey(int ent, const char *key, int *value);
+//get the amount of inlinemodels
+int AAS_BSPNumInlineModels(void);
 

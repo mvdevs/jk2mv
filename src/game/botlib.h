@@ -203,6 +203,8 @@ typedef struct botlib_import_s
 	//
 	int			(*DebugPolygonCreate)(int color, int numPoints, const vec3_t *points);
 	void		(*DebugPolygonDelete)(int id);
+
+	int			(*BSPNumInlineModels)(void);
 } botlib_import_t;
 
 typedef struct aas_export_s

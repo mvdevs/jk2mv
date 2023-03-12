@@ -97,7 +97,7 @@ libvar_t *offhandgrapple;
 libvar_t *cmd_grappleoff;
 libvar_t *cmd_grappleon;
 //type of model, func_plat or func_bobbing
-int modeltypes[MAX_MODELS];
+int *modeltypes;
 
 bot_movestate_t *botmovestates[MAX_CLIENTS+1];
 
@@ -497,8 +497,10 @@ void BotSetBrushModelTypes(void)
 {
 	int ent, modelnum;
 	char classname[MAX_EPAIRKEY], model[MAX_EPAIRKEY];
+	int numinlinmodels = AAS_BSPNumInlineModels();
 
-	Com_Memset(modeltypes, 0, MAX_MODELS * sizeof(int));
+	if ( modeltypes ) FreeMemory( modeltypes );
+	modeltypes = (int*)GetClearedMemory( numinlinmodels * sizeof(int) );
 	//
 	for (ent = AAS_NextBSPEntity(0); ent; ent = AAS_NextBSPEntity(ent))
 	{
@@ -507,7 +509,7 @@ void BotSetBrushModelTypes(void)
 		if (model[0]) modelnum = atoi(model+1);
 		else modelnum = 0;
 
-		if (modelnum < 0 || modelnum > MAX_MODELS)
+		if (modelnum < 0 || modelnum >= numinlinmodels)
 		{
 			botimport.Print(PRT_MESSAGE, "entity %s model number out of range\n", classname);
 			continue;
@@ -3076,7 +3078,7 @@ void BotMoveToGoal(bot_moveresult_t *result, int movestate, const bot_goal_t *go
 		if (ent != -1)
 		{
 			modelnum = AAS_EntityModelindex(ent);
-			if (modelnum >= 0 && modelnum < MAX_MODELS)
+			if (modelnum >= 0 && modelnum < AAS_BSPNumInlineModels())
 			{
 				modeltype = modeltypes[modelnum];
 

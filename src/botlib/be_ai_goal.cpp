@@ -175,6 +175,7 @@ campspot_t *campspots = NULL; // bk001206 - init
 int bot_g_gametype = 0; // bk001206 - init
 //additional dropped item weight
 libvar_t *droppedweight = NULL; // bk001206 - init
+extern int *modeltypes;
 
 //========================================================================
 //
@@ -1790,6 +1791,9 @@ void BotShutdownGoalAI(void)
 	freelevelitems = NULL;
 	levelitems = NULL;
 	numlevelitems = 0;
+
+	if (modeltypes) FreeMemory(modeltypes);
+	modeltypes = NULL;
 
 	BotFreeInfoEntities();
 

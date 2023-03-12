@@ -1251,18 +1251,18 @@ void CM_Trace( trace_t *results, const vec3_t start, const vec3_t end,
 	if (start[0] == end[0] && start[1] == end[1] && start[2] == end[2]) {
 		if ( model ) {
 #ifdef ALWAYS_BBOX_VS_BBOX // bk010201 - FIXME - compile time flag?
-			if ( model == BOX_MODEL_HANDLE || model == CAPSULE_MODEL_HANDLE) {
+			if ( model == cm.boxModelHandle || model == cm.capsuleModelHandle) {
 				tw.sphere.use = qfalse;
 				CM_TestInLeaf( &tw, &cmod->leaf );
 			}
 			else
 #elif defined(ALWAYS_CAPSULE_VS_CAPSULE)
-			if ( model == BOX_MODEL_HANDLE || model == CAPSULE_MODEL_HANDLE) {
+			if ( model == cm.boxModelHandle || model == cm.capsuleModelHandle) {
 				CM_TestCapsuleInCapsule( &tw, model );
 			}
 			else
 #endif
-			if ( model == CAPSULE_MODEL_HANDLE ) {
+			if ( model == cm.capsuleModelHandle ) {
 				if ( tw.sphere.use ) {
 					CM_TestCapsuleInCapsule( &tw, model );
 				}
@@ -1295,18 +1295,18 @@ void CM_Trace( trace_t *results, const vec3_t start, const vec3_t end,
 		//
 		if ( model ) {
 #ifdef ALWAYS_BBOX_VS_BBOX
-			if ( model == BOX_MODEL_HANDLE || model == CAPSULE_MODEL_HANDLE) {
+			if ( model == cm.boxModelHandle || model == cm.capsuleModelHandle) {
 				tw.sphere.use = qfalse;
 				CM_TraceThroughLeaf( &tw, &cmod->leaf );
 			}
 			else
 #elif defined(ALWAYS_CAPSULE_VS_CAPSULE)
-			if ( model == BOX_MODEL_HANDLE || model == CAPSULE_MODEL_HANDLE) {
+			if ( model == cm.boxModelHandle || model == cm.capsuleModelHandle) {
 				CM_TraceCapsuleThroughCapsule( &tw, model );
 			}
 			else
 #endif
-			if ( model == CAPSULE_MODEL_HANDLE ) {
+			if ( model == cm.capsuleModelHandle ) {
 				if ( tw.sphere.use ) {
 					CM_TraceCapsuleThroughCapsule( &tw, model );
 				}
@@ -1398,7 +1398,7 @@ void CM_TransformedBoxTrace( trace_t *results, const vec3_t start, const vec3_t 
 	VectorSubtract( end_l, origin, end_l );
 
 	// rotate start and end into the models frame of reference
-	if ( model != BOX_MODEL_HANDLE &&
+	if ( model != cm.boxModelHandle &&
 		(angles[0] || angles[1] || angles[2]) ) {
 		rotated = qtrue;
 	} else {
