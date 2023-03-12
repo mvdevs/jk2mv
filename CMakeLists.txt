@@ -215,8 +215,8 @@ if(MSVC)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4244 /wd4996 /wd4267")
 	
 	# Multithreaded
-	set(CMAKE_CXX_FLAGS_RELEASE "/MT" CACHE INTERNAL "" FORCE)
-	set(CMAKE_C_FLAGS_RELEASE "/MT" CACHE INTERNAL "" FORCE)
+	set(CMAKE_CXX_FLAGS_RELEASE "/MT")
+	set(CMAKE_C_FLAGS_RELEASE "/MT")
 
 	# Platform
 	set(GlobalDefines ${GlobalDefines} "UNICODE" "_UNICODE")
