@@ -72,6 +72,13 @@ typedef enum
     FLOCK_UN
 } flockCmd_t;
 
+typedef enum
+{
+    MVPRINT_NONE                = 0,
+
+    MVPRINT_SKIPNOTIFY          = (1 << 0),
+} mvprintFlag_t;
+
 
 // ----------------------------------------- GAME ------------------------------------------ //
 
@@ -155,7 +162,10 @@ typedef enum
 
     // -713: qboolean trap_MVAPI_EnableSubmodelBypass(qboolean enable);
     CG_MVAPI_ENABLE_SUBMODELBYPASS,                                             // CGAME
-    G_MVAPI_ENABLE_SUBMODELBYPASS = CG_MVAPI_ENABLE_SUBMODELBYPASS              // GAME
+    G_MVAPI_ENABLE_SUBMODELBYPASS = CG_MVAPI_ENABLE_SUBMODELBYPASS,             // GAME
+
+    // -714: void trap_MVAPI_Print( int flags, const char *string );
+    MVAPI_PRINT,                                                                // SHARED
 } mvSyscall_t;
 // ----------------------------------------------------------------------------------------- //
 

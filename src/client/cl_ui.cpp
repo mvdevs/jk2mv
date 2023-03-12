@@ -1160,6 +1160,14 @@ Ghoul2 Insert End
 		}
 	}
 
+	if (VM_MVAPILevel(uivm) >= 4) {
+		switch (args[0]) {
+		case MVAPI_PRINT:
+			Com_Printf_MV( args[1], "%s", VMAS(2) );
+			return 0;
+		}
+	}
+
 	if (VM_MVMenuLevel(uivm) >= 2) {
 		switch (args[0]) {
 			// download popup

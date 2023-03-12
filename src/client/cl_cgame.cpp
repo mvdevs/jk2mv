@@ -1319,6 +1319,9 @@ Ghoul2 Insert End
 		switch (args[0]) {
 		case CG_MVAPI_ENABLE_SUBMODELBYPASS:
 			return CL_CgameEnableSubmodelBypass( (qboolean)!!args[1] );
+		case MVAPI_PRINT:
+			Com_Printf_MV( args[1], "%s", VMAS(2) );
+			return 0;
 		}
 	}
 

@@ -120,7 +120,7 @@ void Com_EndRedirect (void)
 	rd_flush = NULL;
 }
 
-static void Com_Puts_Ext( qboolean extendedColors, const char *msg )
+static void Com_Puts_Ext( qboolean extendedColors, qboolean skipNotify, const char *msg )
 {
 	const char *p = msg;
 
@@ -135,7 +135,7 @@ static void Com_Puts_Ext( qboolean extendedColors, const char *msg )
 
 	// echo to console if we're not a dedicated server
 	if ( com_dedicated && !com_dedicated->integer && !rd_silent ) {
-		CL_ConsolePrint( msg, extendedColors );
+		CL_ConsolePrint( msg, extendedColors, skipNotify );
 	}
 
 	while (*p) {
@@ -224,7 +224,7 @@ void QDECL Com_Printf( const char *fmt, ... )
 	Q_vsnprintf (msg,sizeof(msg),fmt,argptr);
 	va_end (argptr);
 
-	Com_Puts_Ext( qfalse, msg );
+	Com_Puts_Ext( qfalse, qfalse, msg );
 }
 
 void QDECL Com_Printf_Ext( qboolean extendedColors, const char *fmt, ... )
@@ -236,7 +236,19 @@ void QDECL Com_Printf_Ext( qboolean extendedColors, const char *fmt, ... )
 	Q_vsnprintf (msg,sizeof(msg),fmt,argptr);
 	va_end (argptr);
 
-	Com_Puts_Ext( extendedColors, msg);
+	Com_Puts_Ext( extendedColors, qfalse, msg);
+}
+
+void QDECL Com_Printf_MV( int flags, const char *fmt, ... )
+{
+	va_list		argptr;
+	char		msg[MAXPRINTMSG];
+
+	va_start (argptr,fmt);
+	Q_vsnprintf (msg,sizeof(msg),fmt,argptr);
+	va_end (argptr);
+
+	Com_Puts_Ext( qfalse, (qboolean)(flags & MVPRINT_SKIPNOTIFY), msg );
 }
 
 
@@ -259,7 +271,7 @@ void QDECL Com_DPrintf( const char *fmt, ...) {
 	Q_vsnprintf (msg,sizeof(msg),fmt,argptr);
 	va_end (argptr);
 
-	Com_Puts_Ext (qfalse, msg);
+	Com_Puts_Ext (qfalse, qfalse, msg);
 }
 
 // Outputs to the VC / Windows Debug window (only in debug compile)

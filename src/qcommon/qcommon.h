@@ -778,6 +778,7 @@ void		Com_BeginRedirect (char *buffer, size_t buffersize, void (*flush)(char *),
 void		Com_EndRedirect( void );
 void 		QDECL Com_Printf( const char *fmt, ... ) __attribute__ ((format (printf, 1, 2)));
 void		QDECL Com_Printf_Ext( qboolean extendedColors, const char *msg, ... ) __attribute__ ((format (printf, 2, 3)));
+void		QDECL Com_Printf_MV( int flags, const char *msg, ... ) __attribute__ ((format (printf, 2, 3)));
 void 		QDECL Com_DPrintf( const char *fmt, ... ) __attribute__ ((format (printf, 1, 2)));
 void		QDECL Com_OPrintf( const char *fmt, ...) __attribute__ ((format (printf, 1, 2))); // Outputs to the VC / Windows Debug window (only in debug compile)
 Q_NORETURN void QDECL  Com_Error( errorParm_t code, const char *fmt, ... ) __attribute__ ((format (printf, 2, 3)));
@@ -953,7 +954,7 @@ void CL_JoystickEvent( int axis, int value, int time );
 
 void CL_PacketEvent( netadr_t from, msg_t *msg );
 
-void CL_ConsolePrint( const char *text, qboolean extendedColors );
+void CL_ConsolePrint( const char *text, qboolean extendedColors, qboolean skipNotify );
 
 void CL_MapLoading( void );
 // do a screen update before starting to load a map

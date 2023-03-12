@@ -1108,6 +1108,9 @@ intptr_t SV_GameSystemCalls( intptr_t *args ) {
 			return (int)SV_MVAPI_EnablePlayerSnapshots((qboolean)!!args[1]);
 		case G_MVAPI_ENABLE_SUBMODELBYPASS:
 			return SV_MVAPI_EnableSubmodelBypass( (qboolean)!!args[1] );
+		case MVAPI_PRINT:
+			Com_Printf_MV( args[1], "%s", VMAS(2) );
+			return 0;
 		}
 	}
 

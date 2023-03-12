@@ -475,11 +475,10 @@ All console printing must go through this in order to be logged to disk
 If no console is visible, the text will appear at the top of the game window
 ================
 */
-void CL_ConsolePrint( const char *txt, qboolean extendedColors ) {
+void CL_ConsolePrint( const char *txt, qboolean extendedColors, qboolean skipNotify ) {
 	unsigned char	color;
 	char			c;
 	int				y;
-	qboolean		skipNotify = qfalse;
 
 	if ( con_skipNotifyKeyword && con_skipNotifyKeyword->string && con_skipNotifyKeyword->string[0] ) {
 		int keywordLength = strlen( con_skipNotifyKeyword->string );
