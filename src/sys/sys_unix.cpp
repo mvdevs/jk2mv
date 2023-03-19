@@ -453,6 +453,53 @@ char *Sys_DefaultAssetsPath() {
 #endif
 }
 
+// Try to find assets from /Applications (Appstore JKA) or Steam.
+// If neither worked try to find them in the same directory the jk2mv app is in.
+char *Sys_DefaultAssetsPathJKA() {
+#if defined(MACOS_X) && defined(INSTALLED)
+    static char path[MAX_OSPATH];
+    char *ptr;
+
+    // AppStore version (App name not verified, because the AppStore version
+	// doesn't support 32-bit and can't easily be obtained from the AppStore
+	// on modern Mac anymore; name guessed based on Steam version)
+    if (access("/Applications/SWJKJA.app/Contents/base/assets0.pk3", F_OK) != -1) {
+        return "/Applications/SWJKJA.app/Contents";
+    }
+
+    // Steam version
+    if (access(va("%s/Library/Application Support/Steam/steamapps/common/Jedi Academy/SWJKJA.app/Contents/base/assets0.pk3", getenv("HOME")), F_OK) != -1) {
+        Q_strncpyz(path, va("%s/Library/Application Support/Steam/steamapps/common/Jedi Academy/SWJKJA.app/Contents", getenv("HOME")), sizeof(path));
+        return path;
+    }
+
+    uint32_t size = sizeof(path);
+    if (_NSGetExecutablePath(path, &size)) {
+        return NULL;
+    }
+
+    ptr = last_strstr(path, ".app/");
+    if (!ptr) {
+        return NULL;
+    }
+    *ptr = 0;
+
+    ptr = last_strstr(path, "/");
+    if (!ptr) {
+        return NULL;
+    }
+
+    strcpy(ptr, "/SWJKA.app/Contents");
+    if (access(va("%s/base/assets0.pk3", path), F_OK) == -1) {
+        return NULL;
+    }
+
+    return path;
+#else
+    return NULL;
+#endif
+}
+
 qboolean stdin_active = qtrue;
 qboolean stdinIsATTY = qfalse;
 int crashlogfd;

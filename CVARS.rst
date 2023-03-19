@@ -45,6 +45,23 @@ New and Modified Cvars
    | ``fs_game cvar``
    | ``fs_forcegame cvar``
 
+..
+
+:Name: fs_assetsPathJKA
+:Values: Foldername
+:Default: "" (Not set on portable); autodetected for non-portable
+:Description:
+   Sets the path to load JKA assets from.
+
+..
+
+:Name: fs_noJKA
+:Values: "0", "1"
+:Default: "0"
+:Description:
+   Disables loading of JKA assets even when fs_assetsPathJKA point to a valid
+   JKA folder.
+
 -----------
 Client-Side
 -----------

@@ -80,6 +80,35 @@ char *Sys_DefaultAssetsPath() {
 #endif
 }
 
+// read the path from the registry on windows... apply the same workaround for the InstallPath as for jk2
+char *Sys_DefaultAssetsPathJKA() {
+#ifdef INSTALLED
+	HKEY hKey;
+	static char installPath[MAX_OSPATH];
+	DWORD installPathSize;
+
+	// force 32bit registry
+	if (RegOpenKeyExA(HKEY_LOCAL_MACHINE, "SOFTWARE\\LucasArts\\Star Wars Jedi Knight Jedi Academy\\1.0",
+		0, KEY_WOW64_32KEY|KEY_QUERY_VALUE, &hKey) != ERROR_SUCCESS) {
+		return NULL;
+	}
+
+	installPathSize = sizeof(installPath);
+	if (RegQueryValueExA(hKey, "Install Path", NULL, NULL, (LPBYTE)installPath, &installPathSize) != ERROR_SUCCESS) {
+		if (RegQueryValueExA(hKey, "InstallPath", NULL, NULL, (LPBYTE)installPath, &installPathSize) != ERROR_SUCCESS) {
+			RegCloseKey(hKey);
+			return NULL;
+		}
+	}
+
+	RegCloseKey(hKey);
+	Q_strcat(installPath, sizeof(installPath), "\\GameData");
+	return installPath;
+#else
+	return NULL;
+#endif
+}
+
 char *Sys_DefaultInstallPath(void)
 {
 	return Sys_Cwd();
