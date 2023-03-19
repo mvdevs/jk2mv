@@ -206,7 +206,7 @@ void R_RemapShader(const char *shaderName, const char *newShaderName, const char
 	qhandle_t	h;
 
 	if ( r_newRemaps->integer ) {
-		R_RemapShaderWithLightmaps( shaderName, newShaderName, timeOffset );
+		R_RemapShaderAdvanced( shaderName, newShaderName, timeOffset, SHADERREMAP_LIGHTMAP_PRESERVE, SHADERREMAP_STYLE_PRESERVE );
 		return;
 	}
 
@@ -237,10 +237,15 @@ void R_RemapShader(const char *shaderName, const char *newShaderName, const char
 	hash = generateHashValue(strippedName, FILE_HASH_SIZE);
 	for (sh = hashTable[hash]; sh; sh = sh->next) {
 		if (Q_stricmp(sh->name, strippedName) == 0) {
-			if (sh != sh2) {
+			if (sh->remappedShader && sh->advancedRemap) {
+				// Advanced remaps take priority over the old ones
+				continue;
+			} else if (sh != sh2) {
 				sh->remappedShader = sh2;
+				sh->advancedRemap = qfalse;
 			} else {
 				sh->remappedShader = NULL;
+				sh->advancedRemap = qfalse;
 			}
 		}
 	}
@@ -249,13 +254,15 @@ void R_RemapShader(const char *shaderName, const char *newShaderName, const char
 	}
 }
 
-void R_RemapShaderWithLightmaps(const char *shaderName, const char *newShaderName, const char *timeOffset) {
+void R_RemapShaderAdvanced(const char *shaderName, const char *newShaderName, const char *timeOffset, shaderRemapLightmapType_t lightmapMode, shaderRemapStyleType_t styleMode) {
 	char		strippedName[MAX_QPATH];
 	int			hash;
-	shader_t	*sh, *sh2;
+	shader_t	*sh, *sh2 = NULL;
 	float		timeOffsetFloat = timeOffset ? atof( timeOffset ) : 0.0f;
 	qhandle_t	h;
 	int			failed = 0;
+	const int	*lightmapIndex = NULL;
+	const byte	*styles = NULL;
 
 	// Check if at least one instance of the original exists
 	sh = R_FindShaderByName( shaderName );
@@ -264,16 +271,45 @@ void R_RemapShaderWithLightmaps(const char *shaderName, const char *newShaderNam
 		sh = R_GetShaderByHandle(h);
 	}
 	if (sh == NULL || sh == tr.defaultShader || sh->defaultShader) {
-		ri.Printf( PRINT_WARNING, "WARNING: R_RemapShaderWithLightmaps: shader %s not found\n", shaderName );
+		ri.Printf( PRINT_WARNING, "WARNING: R_RemapShaderAdvanced: shader %s not found\n", shaderName );
 		return;
 	}
 
-	// remap all the shaders with the given name and copy over the lightmap + styles
+	// Lightmap
+	if ( lightmapMode == SHADERREMAP_LIGHTMAP_FULLBRIGHT ) {
+		lightmapIndex = lightmapsFullBright;
+	} else if ( lightmapMode == SHADERREMAP_LIGHTMAP_NONE ) {
+		lightmapIndex = lightmapsNone;
+	} else if ( lightmapMode == SHADERREMAP_LIGHTMAP_2D ) {
+		lightmapIndex = lightmaps2d;
+	} else if ( lightmapMode == SHADERREMAP_LIGHTMAP_VERTEX ) {
+		lightmapIndex = lightmapsVertex;
+	}
+
+	// Style
+	if ( styleMode == SHADERREMAP_STYLE_DEFAULT ) {
+		styles = stylesDefault;
+	}
+
+	if ( lightmapIndex && lightmapMode != SHADERREMAP_LIGHTMAP_VERTEX ) {
+		// For fullbright, none and 2d we only need one new shader
+		sh2 = R_FindShader( newShaderName, lightmapIndex, stylesDefault, qtrue );
+
+		if ( !sh2 || sh2 == tr.defaultShader || sh2->defaultShader ) {
+			ri.Printf( PRINT_WARNING, "WARNING: R_RemapShaderAdvanced: new shader %s not found\n", newShaderName );
+			return;
+		}
+	}
+
+	// Remap all the shaders with the given name and copy over the lightmap + styles
 	COM_StripExtension( shaderName, strippedName, sizeof(strippedName) );
 	hash = generateHashValue(strippedName, FILE_HASH_SIZE);
 	for (sh = hashTable[hash]; sh; sh = sh->next) {
 		if (Q_stricmp(sh->name, strippedName) == 0) {
-			sh2 = R_FindShader( newShaderName, sh->lightmapIndex, sh->styles, (qboolean)!sh->upload.noMipMaps );
+			if ( lightmapMode == SHADERREMAP_LIGHTMAP_PRESERVE || lightmapMode == SHADERREMAP_LIGHTMAP_VERTEX ) {
+				// When preserving lightmaps we need to use the correct lightmap index (+styles)
+				sh2 = R_FindShader( newShaderName, lightmapIndex ? lightmapIndex : sh->lightmapIndex, styles ? styles : sh->styles, (qboolean)!sh->upload.noMipMaps );
+			}
 
 			if ( !sh2 || sh2 == tr.defaultShader || sh2->defaultShader ) {
 				failed++;
@@ -283,12 +319,14 @@ void R_RemapShaderWithLightmaps(const char *shaderName, const char *newShaderNam
 
 			if (sh != sh2) {
 				sh->remappedShader = sh2;
+				sh->advancedRemap = qtrue;
 			} else {
 				sh->remappedShader = NULL;
+				sh->advancedRemap = qfalse;
 			}
 		}
 	}
-	if ( failed ) ri.Printf( PRINT_WARNING, "WARNING: R_RemapShaderWithLightmaps: new shader %s not found (x%i)\n", newShaderName, failed );
+	if ( failed ) ri.Printf( PRINT_WARNING, "WARNING: R_RemapShaderAdvanced: new shader %s not found (x%i)\n", newShaderName, failed );
 }
 
 /*

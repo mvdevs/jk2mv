@@ -100,6 +100,17 @@ Ghoul2 Insert End
 #error overflow: (CS_MAX) > MAX_CONFIGSTRINGS
 #endif
 
+
+// Using highest available configstring for new mv configstring, because mods should add own configstrings between
+// CS_STRING_PACKAGES and CS_MAX, making them come from the bottom.
+#define CS_MV_REMAPS            (MAX_CONFIGSTRINGS-1)
+#define CS_MV_MIN               (CS_MV_REMAPS)
+
+// Make sure CS_MAX and CS_MV_MIN don't overlap
+#if (CS_MAX) > (CS_MV_MIN)
+#error overflow: (CS_MAX) > (CS_MV_MIN)
+#endif
+
 typedef enum {
 	G2_MODELPART_HEAD = 10,
 	G2_MODELPART_WAIST,

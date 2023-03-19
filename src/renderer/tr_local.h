@@ -492,6 +492,8 @@ Ghoul2 Insert End
 	// True if this shader has a stage with glow in it (just an optimization).
 	qboolean hasGlow;
 
+	qboolean advancedRemap;
+
 	struct shader_s *remappedShader;                  // current shader this one is remapped too
 
 	struct	shader_s	*next;
@@ -1460,7 +1462,7 @@ shader_t *R_FindShaderByName( const char *name );
 void		R_InitShaders( void );
 void		R_ShaderList_f( void );
 void	R_RemapShader(const char *oldShader, const char *newShader, const char *timeOffset);
-void R_RemapShaderWithLightmaps(const char *shaderName, const char *newShaderName, const char *timeOffset);
+void R_RemapShaderAdvanced(const char *shaderName, const char *newShaderName, const char *timeOffset, shaderRemapLightmapType_t lightmapMode, shaderRemapStyleType_t styleMode);
 
 /*
 ====================================================================

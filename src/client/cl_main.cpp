@@ -1324,6 +1324,9 @@ void CL_Vid_Restart_f( void ) {
 		// send pure checksums
 		CL_SendPureChecksums();
 	}
+
+	// Reapply mvremaps to override classic ones
+	CL_ShaderStateChanged();
 }
 
 /*
@@ -4042,4 +4045,129 @@ void CL_GetVMGLConfig(vmglconfig_t *vmglconfig) {
 	vmglconfig->isFullscreen = cls.glconfig.isFullscreen;
 	vmglconfig->stereoEnabled = cls.glconfig.stereoEnabled;
 	vmglconfig->smpActive = cls.glconfig.smpActive;
+}
+
+void CL_ShaderStateChanged( void ) {
+	// Originally copied from CG_ShaderStateChanged, but rewritten to avoid issues of the original implementation and to
+	// support settings
+	char originalShader[MAX_QPATH];
+	char newShader[MAX_QPATH];
+	char settings[32];
+	char *timeOffset;
+	char *lightmapMode;
+	char *styleMode;
+
+	shaderRemapLightmapType_t lightmapModeValue;
+	shaderRemapStyleType_t styleModeValue;
+
+	const char *curPos = cl.gameState.stringData + cl.gameState.stringOffsets[ CS_MV_REMAPS ];
+	const char *endPos = curPos + strlen( curPos );
+
+	// Check configstring for prefix to avoid misinterpreting configstrings from mods
+	if ( !curPos || !*curPos || strncmp(curPos, "mvremap:", 8) ) return;
+
+	// Handling of these is really ugly. I originally wanted to handle them like the base game/cgame modules do, but
+	// those are prone to injections. Summary of delimeter issues:
+	//  - base uses '=', ':' an '@', all of them can be used in shader names
+	//  - .shader files don't seem to support spaces in shader names, but texture paths support spaces
+	//  - .shader files allow most other characters, including backspace '\'
+	//  -> using a delimeter is not a reliable option
+
+	// The next best thing seemed to be to give the length of the shader before its name to allow all characters to be
+	// used. As I don't want to waste any space (configstrings containing shader paths are wasteful as it is), I decided
+	// to encode the length in a single byte (MAX_QPATH is 80, so a single byte can easily hold the length). However the
+	// netcode and the handling of quotes lead to other issues:
+	//  - 34 maps to 32, thus 32 could mean either of these numbers while 34 doesn't exist
+	//  - 37 and >127 map to 46, thus 37 doesn't exist and 46 could mean 37, 46 or >127
+	//  -> the biggest amount of consecutive numbers without multiple meanings spans from 47 to 127; as MAX_QPATH is 80
+	//     this should fix exactly
+	//  -> could also use the range from 38 to 127, because - when isolating the range - there are no duplicates within
+	//     it; this would allow for a size of up to 89, which is unlikely to be useful if MAX_QPATH ever gets increased
+	//  -> using 47 to 127
+
+	// Skip prefix
+	curPos += 8;
+
+	int length;
+
+	// Parse configstring
+	while ( curPos && *curPos )
+	{
+		// Read original shader
+		if ( curPos >= endPos ) break;
+		length = *(curPos++);
+		length -= 47;
+		if ( length < 0 ) break;
+		Q_strncpyz( originalShader, curPos, MIN((unsigned int)length+1, sizeof(originalShader)) );
+		curPos += length;
+
+		// Read new shader
+		if ( curPos >= endPos ) break;
+		length = *(curPos++);
+		length -= 47;
+		if ( length < 0 ) break;
+		Q_strncpyz( newShader, curPos, MIN((unsigned int)length+1, sizeof(newShader)) );
+		curPos += length;
+
+		// Read settings
+		if ( curPos >= endPos ) break;
+		length = *(curPos++);
+		length -= 47;
+		if ( length < 0 ) break;
+		Q_strncpyz( settings, curPos, MIN((unsigned int)length+1, sizeof(settings)) );
+		curPos += length;
+
+		// Get values from settings
+		timeOffset = strtok( settings, ";" );
+		lightmapMode = strtok( NULL, ";" );
+		styleMode = strtok( NULL, ";" );
+
+		// Pick lightmap value
+		if ( lightmapMode && *lightmapMode )
+		{
+			switch( *lightmapMode )
+			{
+				case 'p': // preserve
+					lightmapModeValue = SHADERREMAP_LIGHTMAP_PRESERVE;
+					break;
+				case 'n': // none
+					lightmapModeValue = SHADERREMAP_LIGHTMAP_NONE;
+					break;
+				case 'f': // fullbright
+					lightmapModeValue = SHADERREMAP_LIGHTMAP_FULLBRIGHT;
+					break;
+				case 'v': // vertex
+					lightmapModeValue = SHADERREMAP_LIGHTMAP_VERTEX;
+					break;
+				case '2': // 2d
+					lightmapModeValue = SHADERREMAP_LIGHTMAP_2D;
+					break;
+				default: // fallback to preserve
+					lightmapModeValue = SHADERREMAP_LIGHTMAP_PRESERVE;
+					break;
+			}
+		}
+		else lightmapModeValue = SHADERREMAP_LIGHTMAP_PRESERVE; // fallback to preserve
+
+		// Pick style value
+		if ( styleMode && *styleMode )
+		{
+			switch( *styleMode )
+			{
+				case 'p': // preserve
+					styleModeValue = SHADERREMAP_STYLE_PRESERVE;
+					break;
+				case 'd': // default style
+					styleModeValue = SHADERREMAP_STYLE_DEFAULT;
+					break;
+				default: // fallback to preserve
+					styleModeValue = SHADERREMAP_STYLE_PRESERVE;
+					break;
+			}
+		}
+		else styleModeValue = SHADERREMAP_STYLE_PRESERVE; // fallback to preserve
+
+		// Apply remap
+		re.RemapShaderAdvanced( originalShader, newShader, timeOffset, lightmapModeValue, styleModeValue );
+	}
 }
