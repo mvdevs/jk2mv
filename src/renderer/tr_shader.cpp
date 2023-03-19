@@ -205,6 +205,11 @@ void R_RemapShader(const char *shaderName, const char *newShaderName, const char
 	shader_t	*sh, *sh2;
 	qhandle_t	h;
 
+	if ( r_newRemaps->integer ) {
+		R_RemapShaderWithLightmaps( shaderName, newShaderName, timeOffset );
+		return;
+	}
+
 	sh = R_FindShaderByName( shaderName );
 	if (sh == NULL || sh == tr.defaultShader) {
 		h = RE_RegisterShaderLightMap(shaderName, lightmapsNone, stylesDefault);
@@ -242,6 +247,48 @@ void R_RemapShader(const char *shaderName, const char *newShaderName, const char
 	if (timeOffset) {
 		sh2->timeOffset = atof(timeOffset);
 	}
+}
+
+void R_RemapShaderWithLightmaps(const char *shaderName, const char *newShaderName, const char *timeOffset) {
+	char		strippedName[MAX_QPATH];
+	int			hash;
+	shader_t	*sh, *sh2;
+	float		timeOffsetFloat = timeOffset ? atof( timeOffset ) : 0.0f;
+	qhandle_t	h;
+	int			failed = 0;
+
+	// Check if at least one instance of the original exists
+	sh = R_FindShaderByName( shaderName );
+	if (sh == NULL || sh == tr.defaultShader || sh->defaultShader) {
+		h = RE_RegisterShaderLightMap(shaderName, lightmapsNone, stylesDefault);
+		sh = R_GetShaderByHandle(h);
+	}
+	if (sh == NULL || sh == tr.defaultShader || sh->defaultShader) {
+		ri.Printf( PRINT_WARNING, "WARNING: R_RemapShaderWithLightmaps: shader %s not found\n", shaderName );
+		return;
+	}
+
+	// remap all the shaders with the given name and copy over the lightmap + styles
+	COM_StripExtension( shaderName, strippedName, sizeof(strippedName) );
+	hash = generateHashValue(strippedName, FILE_HASH_SIZE);
+	for (sh = hashTable[hash]; sh; sh = sh->next) {
+		if (Q_stricmp(sh->name, strippedName) == 0) {
+			sh2 = R_FindShader( newShaderName, sh->lightmapIndex, sh->styles, (qboolean)!sh->upload.noMipMaps );
+
+			if ( !sh2 || sh2 == tr.defaultShader || sh2->defaultShader ) {
+				failed++;
+				continue;
+			}
+			if ( timeOffset ) sh2->timeOffset = timeOffsetFloat;
+
+			if (sh != sh2) {
+				sh->remappedShader = sh2;
+			} else {
+				sh->remappedShader = NULL;
+			}
+		}
+	}
+	if ( failed ) ri.Printf( PRINT_WARNING, "WARNING: R_RemapShaderWithLightmaps: new shader %s not found (x%i)\n", newShaderName, failed );
 }
 
 /*

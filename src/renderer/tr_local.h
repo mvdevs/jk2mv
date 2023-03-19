@@ -1297,6 +1297,7 @@ extern	cvar_t *r_textureLODBias;
 extern	cvar_t *r_saberGlow;
 extern	cvar_t *r_environmentMapping;
 extern	cvar_t *r_printMissingModels;
+extern	cvar_t *r_newRemaps;
 //====================================================================
 
 float R_NoiseGet4f( float x, float y, float z, double t );
@@ -1459,6 +1460,7 @@ shader_t *R_FindShaderByName( const char *name );
 void		R_InitShaders( void );
 void		R_ShaderList_f( void );
 void	R_RemapShader(const char *oldShader, const char *newShader, const char *timeOffset);
+void R_RemapShaderWithLightmaps(const char *shaderName, const char *newShaderName, const char *timeOffset);
 
 /*
 ====================================================================
