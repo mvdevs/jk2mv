@@ -20,6 +20,8 @@ enum rserr_t
 static SDL_Window *screen = NULL;
 static SDL_GLContext opengl_context;
 static float displayAspect;
+static int	displayIndex;
+static float displayBaseScale;
 
 static cvar_t *r_sdlDriver;
 
@@ -43,6 +45,8 @@ static cvar_t	*r_colorbits;
 static cvar_t	*r_ext_multisample;
 static cvar_t	*r_allowsoftwaregl;
 cvar_t			*r_gammamethod;
+
+static float GLimp_GetDisplayScale(int display);
 
 /*
 ** R_GetModeInfo
@@ -380,6 +384,25 @@ void WIN_Present( window_t *window )
 
 		r_fullscreen->modified = qfalse;
 	}
+}
+
+void WIN_UpdateGLConfig( glconfig_t *glConfig ) {
+	// display index may change when moving window
+	int display = SDL_GetWindowDisplayIndex(screen);
+
+	if (displayIndex != display)
+	{
+		displayIndex = display;
+		displayBaseScale = GLimp_GetDisplayScale(display);
+	}
+
+	// OpenGL context drawable size may change on high dpi-enabled SDL
+	// video driver while window dimensions should remain the
+	// same. This can happen when switching windowed/fullscreen,
+	// moving window to another monitor with different scaling,
+	// changing scaling in display settings.
+	SDL_GL_GetDrawableSize(screen, &glConfig->vidWidth, &glConfig->vidHeight);
+	glConfig->displayScale = displayBaseScale * glConfig->vidHeight / glConfig->winHeight;
 }
 
 /*
@@ -883,11 +906,15 @@ static rserr_t GLimp_SetMode(glconfig_t *glConfig, const windowDesc_t *windowDes
 		}
 	}
 
-	SDL_GL_GetDrawableSize(screen, &glConfig->vidWidth, &glConfig->vidHeight);
-	Com_Printf("...renderer size: %d %d\n", glConfig->vidWidth, glConfig->vidHeight);
+	glConfig->winWidth = winWidth;
+	glConfig->winHeight = winHeight;
 
-	glConfig->displayScale = GLimp_GetDisplayScale(display);
-	glConfig->displayScale *= glConfig->vidHeight / winHeight;
+	displayIndex = -1;
+	WIN_UpdateGLConfig( glConfig );
+
+	Com_Printf("...window size: %d %d\n", glConfig->winWidth, glConfig->winHeight);
+	Com_Printf("...renderer size: %d %d\n", glConfig->vidWidth, glConfig->vidHeight);
+	Com_Printf("...display scale: %d%%\n", (int)roundf(glConfig->displayScale * 100.0f));
 
 	SDL_FreeSurface(icon);
 

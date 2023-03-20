@@ -2621,6 +2621,18 @@ void CL_InitRenderer( void ) {
 }
 
 /*
+============
+CL_UpdateGLConfig
+============
+*/
+void CL_UpdateRefConfig( void ) {
+	re.UpdateGLConfig( &cls.glconfig );
+
+	cls.xadjust = (float) SCREEN_WIDTH / cls.glconfig.vidWidth;
+	cls.yadjust = (float) SCREEN_HEIGHT / cls.glconfig.vidHeight;
+}
+
+/*
 ============================
 CL_StartHunkUsers
 
@@ -4036,8 +4048,10 @@ void CL_GetVMGLConfig(vmglconfig_t *vmglconfig) {
 	vmglconfig->textureFilterAnisotropicAvailable = cls.glconfig.textureFilterAnisotropicMax == 0.0f ? qfalse : qtrue;
 	vmglconfig->clampToEdgeAvailable = cls.glconfig.clampToEdgeAvailable;
 
-	vmglconfig->vidWidth = cls.glconfig.vidWidth;
-	vmglconfig->vidHeight = cls.glconfig.vidHeight;
+	// pass window size instead of drawable size because original
+	// modules don't support changing vidWidth/vidHeight
+	vmglconfig->vidWidth = cls.glconfig.winWidth;
+	vmglconfig->vidHeight = cls.glconfig.winHeight;
 	vmglconfig->windowAspect = cls.glconfig.windowAspect;
 	vmglconfig->displayFrequency = cls.glconfig.displayFrequency;
 	vmglconfig->isFullscreen = cls.glconfig.isFullscreen;

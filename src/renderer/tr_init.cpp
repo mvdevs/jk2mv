@@ -953,7 +953,8 @@ void GfxInfo_f( void )
 	ri.Printf( PRINT_ALL, "GL_MAX_TEXTURE_SIZE: %d\n", glConfig.maxTextureSize );
 	ri.Printf( PRINT_ALL, "GL_MAX_ACTIVE_TEXTURES_ARB: %d\n", glConfig.maxActiveTextures );
 	ri.Printf( PRINT_ALL, "\nPIXELFORMAT: color(%d-bits) Z(%d-bit) stencil(%d-bits)\n", glConfig.colorBits, glConfig.depthBits, glConfig.stencilBits );
-	ri.Printf( PRINT_ALL, "MODE: %d, %d x %d %s hz:", r_mode->integer, glConfig.vidWidth, glConfig.vidHeight, fsstrings[r_fullscreen->integer == 1] );
+	ri.Printf( PRINT_ALL, "MODE: %d, %d x %d %s hz:", r_mode->integer, glConfig.winWidth, glConfig.winHeight, fsstrings[r_fullscreen->integer == 1] );
+
 	if ( glConfig.displayFrequency )
 	{
 		ri.Printf( PRINT_ALL, "%d\n", glConfig.displayFrequency );
@@ -963,7 +964,8 @@ void GfxInfo_f( void )
 		ri.Printf( PRINT_ALL, "N/A\n" );
 	}
 
-	ri.Printf(PRINT_ALL, "Display Scale: %d%%\n", (int)glConfig.displayScale * 100);
+	ri.Printf( PRINT_ALL, "renderer size: %d x %d\n", glConfig.vidWidth, glConfig.vidHeight );
+	ri.Printf( PRINT_ALL, "display scale: %d%%\n", (int)roundf(glConfig.displayScale * 100.0f));
 
 	// gamma correction
 	if (r_gammamethod->integer == GAMMA_POSTPROCESSING) {
@@ -1448,6 +1450,14 @@ void RE_SetLightStyle(int style, int color)
 	memcpy(styleColors[style], &color, 4);
 }
 
+void RE_UpdateGLConfig( glconfig_t *glconfigOut ) {
+	WIN_UpdateGLConfig( &glConfig );
+
+	glconfigOut->vidWidth = glConfig.vidWidth;
+	glconfigOut->vidHeight = glConfig.vidHeight;
+	glconfigOut->displayScale = glConfig.displayScale;
+}
+
 #endif //!DEDICATED
 /*
 @@@@@@@@@@@@@@@@@@@@@
@@ -1481,6 +1491,7 @@ refexport_t *GetRefAPI ( int apiVersion, refimport_t *rimp ) {
 	re.SetWorldVisData = RE_SetWorldVisData;
 	re.EndRegistration = RE_EndRegistration;
 
+	re.UpdateGLConfig = RE_UpdateGLConfig;
 	re.BeginFrame = RE_BeginFrame;
 	re.EndFrame = RE_EndFrame;
 	re.SwapBuffers = RE_SwapBuffers;
