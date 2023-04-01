@@ -2493,6 +2493,54 @@ static void R_CreateDefaultImage( void ) {
 	tr.defaultImage = R_CreateImage("*default", (byte *)data, DEFAULT_SIZE, DEFAULT_SIZE, qtrue, qfalse, qfalse, GL_REPEAT );
 }
 
+static void R_BindGlowImages( void ) {
+	// Update dynamic glow textures when vidWidth/vidHeight changes
+
+	qglDisable( GL_TEXTURE_2D );
+	qglEnable( GL_TEXTURE_RECTANGLE_ARB );
+
+	if (tr.screenGlow) {
+		// Create the scene glow image. - AReis
+		qglBindTexture( GL_TEXTURE_RECTANGLE_ARB, tr.screenGlow );
+		qglTexImage2D( GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA16, glConfig.vidWidth, glConfig.vidHeight, 0, GL_RGB, GL_FLOAT, 0 );
+		qglTexParameteri( GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+		qglTexParameteri( GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+		qglTexParameteri( GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP );
+		qglTexParameteri( GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP );
+	}
+	if (tr.sceneImage) {
+		// Create the scene image. - AReis
+		qglBindTexture( GL_TEXTURE_RECTANGLE_ARB, tr.sceneImage );
+		qglTexImage2D( GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA16, glConfig.vidWidth, glConfig.vidHeight, 0, GL_RGB, GL_FLOAT, 0 );
+		qglTexParameteri( GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+		qglTexParameteri( GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+		qglTexParameteri( GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP );
+		qglTexParameteri( GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP );
+	}
+
+	if ( r_DynamicGlowWidth->integer > glConfig.vidWidth  )
+	{
+		r_DynamicGlowWidth->integer = glConfig.vidWidth;
+	}
+	if ( r_DynamicGlowHeight->integer > glConfig.vidHeight  )
+	{
+		r_DynamicGlowHeight->integer = glConfig.vidHeight;
+	}
+
+	if (tr.blurImage) {
+		// Create the minimized scene blur image.
+		qglBindTexture( GL_TEXTURE_RECTANGLE_ARB, tr.blurImage );
+		qglTexImage2D( GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA16, r_DynamicGlowWidth->integer, r_DynamicGlowHeight->integer, 0, GL_RGB, GL_FLOAT, 0 );
+		qglTexParameteri( GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+		qglTexParameteri( GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+		qglTexParameteri( GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP );
+		qglTexParameteri( GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP );
+	}
+
+	qglDisable( GL_TEXTURE_RECTANGLE_ARB );
+	qglEnable( GL_TEXTURE_2D );
+}
+
 /*
 ==================
 R_CreateBuiltinImages
@@ -2508,44 +2556,11 @@ void R_CreateBuiltinImages( void ) {
 	Com_Memset( data, 255, sizeof( data ) );
 	tr.whiteImage = R_CreateImage("*white", (byte *)data, 8, 8, qfalse, qfalse, qfalse, GL_REPEAT );
 
-	// Create the scene glow image. - AReis
 	tr.screenGlow = 1024 + giTextureBindNum++;
-	qglDisable( GL_TEXTURE_2D );
-	qglEnable( GL_TEXTURE_RECTANGLE_ARB );
-	qglBindTexture( GL_TEXTURE_RECTANGLE_ARB, tr.screenGlow );
-	qglTexImage2D( GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA16, glConfig.vidWidth, glConfig.vidHeight, 0, GL_RGB, GL_FLOAT, 0 );
-	qglTexParameteri( GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-	qglTexParameteri( GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-	qglTexParameteri( GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP );
-	qglTexParameteri( GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP );
-
-	// Create the scene image. - AReis
 	tr.sceneImage = 1024 + giTextureBindNum++;
-	qglBindTexture( GL_TEXTURE_RECTANGLE_ARB, tr.sceneImage );
-	qglTexImage2D( GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA16, glConfig.vidWidth, glConfig.vidHeight, 0, GL_RGB, GL_FLOAT, 0 );
-	qglTexParameteri( GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-	qglTexParameteri( GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-	qglTexParameteri( GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP );
-	qglTexParameteri( GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP );
-
-	// Create the minimized scene blur image.
-	if ( r_DynamicGlowWidth->integer > glConfig.vidWidth  )
-	{
-		r_DynamicGlowWidth->integer = glConfig.vidWidth;
-	}
-	if ( r_DynamicGlowHeight->integer > glConfig.vidHeight  )
-	{
-		r_DynamicGlowHeight->integer = glConfig.vidHeight;
-	}
 	tr.blurImage = 1024 + giTextureBindNum++;
-	qglBindTexture( GL_TEXTURE_RECTANGLE_ARB, tr.blurImage );
-	qglTexImage2D( GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA16, r_DynamicGlowWidth->integer, r_DynamicGlowHeight->integer, 0, GL_RGB, GL_FLOAT, 0 );
-	qglTexParameteri( GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-	qglTexParameteri( GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-	qglTexParameteri( GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP );
-	qglTexParameteri( GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP );
-	qglDisable( GL_TEXTURE_RECTANGLE_ARB );
-	qglEnable( GL_TEXTURE_2D );
+
+	R_BindGlowImages( );
 
 	// with overbright bits active, we need an image which is some fraction of full color,
 	// for default lightmaps, etc
@@ -2578,6 +2593,16 @@ void R_CreateBuiltinImages( void ) {
 	R_CreateFogImage();
 }
 
+/*
+===============
+R_UpdateImages
+
+Update images when renderer size changes
+===============
+*/
+void R_UpdateImages( void ) {
+	R_BindGlowImages();
+}
 
 /*
 ===============

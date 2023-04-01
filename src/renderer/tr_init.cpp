@@ -1451,7 +1451,14 @@ void RE_SetLightStyle(int style, int color)
 }
 
 void RE_UpdateGLConfig( glconfig_t *glconfigOut ) {
+	int		oldWidth = glConfig.vidWidth;
+	int		oldHeight = glConfig.vidHeight;
+
 	WIN_UpdateGLConfig( &glConfig );
+
+	if (oldWidth != glConfig.vidWidth || oldHeight != glConfig.vidHeight) {
+		R_UpdateImages();
+	}
 
 	glconfigOut->vidWidth = glConfig.vidWidth;
 	glconfigOut->vidHeight = glConfig.vidHeight;
