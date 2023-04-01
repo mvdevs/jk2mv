@@ -269,10 +269,10 @@ Client-Side
 
 :Name: r_highdpi
 :Values: "0", "1"
-:Default: "0"
+:Default: "1"
 :Description:
    Enable / Disable high DPI rendering when desktop scaling is
-   enabled. Not very well supported, results may vary.
+   enabled.
 
 ..
 

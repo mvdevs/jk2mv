@@ -1008,7 +1008,7 @@ window_t WIN_Init( const windowDesc_t *windowDesc, glconfig_t *glConfig )
 	r_mode				= Cvar_Get( "r_mode",				"-2",		CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH );
 	r_displayRefresh	= Cvar_Get( "r_displayRefresh",		"0",		CVAR_LATCH );
 	r_savedWindows		= Cvar_Get( "r_savedWindows",		" ",		CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_ROM );
-	r_highdpi			= Cvar_Get( "r_highdpi",			"0",		CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH );
+	r_highdpi			= Cvar_Get( "r_highdpi",			"1",		CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH );
 
 	// Window render surface cvars
 	r_stencilbits		= Cvar_Get( "r_stencilbits",		"8",		CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH );
