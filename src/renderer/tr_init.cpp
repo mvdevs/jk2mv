@@ -1457,6 +1457,7 @@ void RE_UpdateGLConfig( glconfig_t *glconfigOut ) {
 	WIN_UpdateGLConfig( &glConfig );
 
 	if (oldWidth != glConfig.vidWidth || oldHeight != glConfig.vidHeight) {
+		R_SyncRenderThread();
 		R_UpdateImages();
 	}
 
