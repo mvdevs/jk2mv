@@ -30,5 +30,7 @@
 	<string>${MACOSX_BUNDLE_COPYRIGHT}</string>
 	<key>CFBundleDisplayName</key>
 	<string>${MACOSX_BUNDLE_DISPLAY_NAME}</string>
+	<key>NSHighResolutionCapable</key>
+	<true/>
 </dict>
 </plist>

@@ -374,6 +374,7 @@ to handle mirrors,
 void RE_RenderScene( const refdef_t *fd ) {
 	viewParms_t		parms;
 	int				startTime;
+	float			xscale, yscale;
 	static	int		lastTime = 0;
 
 	if ( !tr.registered ) {
@@ -393,10 +394,15 @@ void RE_RenderScene( const refdef_t *fd ) {
 
 	Com_Memcpy( tr.refdef.text, fd->text, sizeof( tr.refdef.text ) );
 
-	tr.refdef.x = fd->x;
-	tr.refdef.y = fd->y;
-	tr.refdef.width = fd->width;
-	tr.refdef.height = fd->height;
+	// with fractional scale, aspect ratio and positioning may be
+	// slightly off because of rounding. It is possible to restore it
+	// by adjusting projection matrix.
+	xscale = (float)glConfig.vidWidth / glConfig.winWidth;
+	yscale = (float)glConfig.vidHeight / glConfig.winHeight;
+	tr.refdef.x = (int)roundf(fd->x * xscale);
+	tr.refdef.y = (int)roundf(fd->y * yscale);
+	tr.refdef.width = (int)roundf(fd->width * xscale);
+	tr.refdef.height = (int)roundf(fd->height * yscale);
 	tr.refdef.fov_x = fd->fov_x;
 	tr.refdef.fov_y = fd->fov_y;
 

@@ -582,6 +582,11 @@ void CL_TakeVideoFrame( void )
 	if( !afd.fileOpen )
 		return;
 
+	if ( afd.width != cls.glconfig.vidWidth || afd.height != cls.glconfig.vidHeight ) {
+		CL_CloseAVI();
+		Com_Error( ERR_DROP, "ERROR: Renderer output dimensions changed while capturing AVI video" );
+	}
+
 	if ( afd.motionJpeg ) {
 		size = re.CaptureFrameJPEG( afd.frameBuffer, afd.frameBufferSize, cl_aviMotionJpegQuality->integer );
 	} else {
