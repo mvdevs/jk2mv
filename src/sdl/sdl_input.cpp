@@ -481,14 +481,30 @@ void IN_Init( void *windowData )
 
 	mouseAvailable = (qboolean)( in_mouse->value != 0 );
 
+	if (in_mouse->integer == 0) {
+		Com_DPrintf("IN_Init: Mouse input disabled\n");
+	}
+
+	if (in_mouse->integer == 1) {
+		Com_DPrintf("IN_Init: Using raw mouse input\n");
+	}
+
 	if (in_mouse->integer == 2) {
 		Com_DPrintf("IN_Init: Not using raw input\n");
 		SDL_SetHint(SDL_HINT_MOUSE_RELATIVE_MODE_WARP, "1");
-	}
-	else {
-		Com_DPrintf("IN_Init: Using raw mouse input\n");
+	} else {
 		SDL_SetHint(SDL_HINT_MOUSE_RELATIVE_MODE_WARP, "0");
 	}
+
+#if SDL_VERSION_ATLEAST(2, 0, 6)
+	if (in_mouse->integer == 3) {
+		Com_DPrintf("IN_Init: Using raw mouse input with system scaling\n");
+		// low latency of raw mouse input with system mouse scaling
+		SDL_SetHint(SDL_HINT_MOUSE_RELATIVE_SYSTEM_SCALE, "1");
+	} else {
+		SDL_SetHint(SDL_HINT_MOUSE_RELATIVE_SYSTEM_SCALE, "0");
+	}
+#endif
 
 	IN_DeactivateMouse( );
 
