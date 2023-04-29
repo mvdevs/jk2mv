@@ -237,7 +237,7 @@ static	cvar_t		*fs_homepath;
 static	cvar_t		*fs_basepath;
 static	cvar_t		*fs_assetspath;
 static	cvar_t		*fs_assetspathJKA;
-static	cvar_t		*fs_noJKA;
+static	cvar_t		*fs_loadJKA;
 static	cvar_t		*fs_basegame;
 static	cvar_t		*fs_copyfiles;
 static	cvar_t		*fs_gamedirvar;
@@ -3332,7 +3332,7 @@ static void FS_Startup( const char *gameName ) {
 
 	assetsPathJKA = Sys_DefaultAssetsPathJKA();
 	fs_assetspathJKA = Cvar_Get("fs_assetspathJKA", assetsPathJKA ? assetsPathJKA : "", CVAR_INIT | CVAR_VM_NOWRITE);
-	fs_noJKA = Cvar_Get("fs_noJKA", "0", CVAR_ARCHIVE);
+	fs_loadJKA = Cvar_Get("fs_loadJKA", "1", CVAR_ARCHIVE);
 
 	if (!FS_AllPath_Base_FileExists("assets5.pk3")) {
 		// assets files found in none of the paths
@@ -3351,7 +3351,7 @@ static void FS_Startup( const char *gameName ) {
 	}
 
 	// Try to load JKA assets if a path has been specified
-	if (fs_assetspathJKA->string[0] && !fs_noJKA->integer) {
+	if (fs_assetspathJKA->string[0] && !fs_loadJKA->integer) {
 		FS_AddAssetsDirectoryJKA(fs_assetspathJKA->string, BASEGAME);
 	}
 
@@ -3846,7 +3846,7 @@ void FS_InitFilesystem( void ) {
 	Com_StartupVariable( "fs_basepath" );
 	Com_StartupVariable( "fs_homepath" );
 	Com_StartupVariable( "fs_assetspathJKA" );
-	Com_StartupVariable( "fs_noJKA" );
+	Com_StartupVariable( "fs_loadJKA" );
 #if !defined(PORTABLE)
 	Com_StartupVariable( "fs_assetspath" );
 #endif
