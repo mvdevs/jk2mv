@@ -1981,13 +1981,10 @@ static pack_t *FS_LoadZipFile( char *zipfile, const char *basename, qboolean ass
 		if ( assetsJKA ) {
 			// Ugly workaround: rename academy shader files to avoid collisions
 			if ( strLength > 7 && !Q_stricmp(filename_inzip + strLength - 7, ".shader") ) {
-				len += strLength + 5; // "_jka" + 1
-			} else {
-				len += strlen(filename_inzip) + 1;
+				len += 4; // "_jka"
 			}
-		} else {
-			len += strlen(filename_inzip) + 1;
 		}
+		len += strLength + 1;
 		unzGoToNextFile(uf);
 	}
 
