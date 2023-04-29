@@ -2941,7 +2941,7 @@ const char *get_filename(const char *path) {
 	return slash + 1;
 }
 
-static void FS_AddGameDirectory2( const char *path, const char *dir, qboolean assetsOnly, qboolean assetsJKA ) {
+static void FS_AddGameDirectory( const char *path, const char *dir, qboolean assetsJK2 = qfalse, qboolean assetsJKA = qfalse ) {
 	searchpath_t	*sp;
 	int				i;
 	searchpath_t	*search;
@@ -2970,7 +2970,7 @@ static void FS_AddGameDirectory2( const char *path, const char *dir, qboolean as
 	//
 	// add the directory to the search path
 	//
-	if (!assetsOnly && !assetsJKA) {
+	if (!assetsJK2 && !assetsJKA) {
 		search = (struct searchpath_s *)Z_Malloc(sizeof(searchpath_t), TAG_FILESYS, qtrue);
 		search->dir = (directory_t *)Z_Malloc(sizeof(*search->dir), TAG_FILESYS, qtrue);
 
@@ -2996,7 +2996,7 @@ static void FS_AddGameDirectory2( const char *path, const char *dir, qboolean as
 		pakfile = FS_BuildOSPath( path, dir, pakfiles[i] );
 		filename = get_filename(pakfile);
 
-		if (assetsOnly) {
+		if (assetsJK2) {
 			if (strcmp(filename, "assets0.pk3") && strcmp(filename, "assets1.pk3") &&
 				strcmp(filename, "assets2.pk3") && strcmp(filename, "assets5.pk3")) {
 				continue;
@@ -3056,8 +3056,12 @@ static void FS_AddGameDirectory2( const char *path, const char *dir, qboolean as
 	Sys_FreeFileList( pakfiles );
 }
 
-static void FS_AddGameDirectory( const char *path, const char *dir, qboolean assetsOnly ) {
-	FS_AddGameDirectory2( path, dir, assetsOnly, qfalse );
+static void FS_AddAssetsDirectoryJK2( const char *path, const char *dir ) {
+	FS_AddGameDirectory( path, dir, qtrue, qfalse );
+}
+
+static void FS_AddAssetsDirectoryJKA( const char *path, const char *dir ) {
+	FS_AddGameDirectory( path, dir, qfalse, qtrue );
 }
 
 /*
@@ -3346,41 +3350,41 @@ static void FS_Startup( const char *gameName ) {
 
 	// Try to load JKA assets if a path has been specified
 	if (fs_assetspathJKA->string[0] && !fs_noJKA->integer) {
-		FS_AddGameDirectory2(fs_assetspathJKA->string, BASEGAME, qfalse, qtrue);
+		FS_AddAssetsDirectoryJKA(fs_assetspathJKA->string, BASEGAME);
 	}
 
 	// don't use the assetspath if assets files already found in fs_basepath or fs_homepath
 	if (fs_assetspath->string[0] && !FS_BaseHome_Base_FileExists("assets5.pk3")) {
-		FS_AddGameDirectory(fs_assetspath->string, BASEGAME, qtrue);
+		FS_AddAssetsDirectoryJK2(fs_assetspath->string, BASEGAME);
 	}
 
 	// add search path elements in reverse priority order
 	if (fs_basepath->string[0]) {
-		FS_AddGameDirectory(fs_basepath->string, gameName, qfalse);
+		FS_AddGameDirectory(fs_basepath->string, gameName);
 	}
   // fs_homepath is somewhat particular to *nix systems, only add if relevant
   // NOTE: same filtering below for mods and basegame
 	if (fs_basepath->string[0] && Q_stricmp(fs_homepath->string,fs_basepath->string)) {
-		FS_AddGameDirectory(fs_homepath->string, gameName, qfalse);
+		FS_AddGameDirectory(fs_homepath->string, gameName);
 	}
 
 	// check for additional base game so mods can be based upon other mods
 	if ( fs_basegame->string[0] && !Q_stricmp( gameName, BASEGAME ) && Q_stricmp( fs_basegame->string, gameName ) ) {
 		if (fs_basepath->string[0]) {
-			FS_AddGameDirectory(fs_basepath->string, fs_basegame->string, qfalse);
+			FS_AddGameDirectory(fs_basepath->string, fs_basegame->string);
 		}
 		if (fs_homepath->string[0] && Q_stricmp(fs_homepath->string,fs_basepath->string)) {
-			FS_AddGameDirectory(fs_homepath->string, fs_basegame->string, qfalse);
+			FS_AddGameDirectory(fs_homepath->string, fs_basegame->string);
 		}
 	}
 
 	// check for additional game folder for mods
 	if ( fs_gamedirvar->string[0] && !Q_stricmp( gameName, BASEGAME ) && Q_stricmp( fs_gamedirvar->string, gameName ) ) {
 		if (fs_basepath->string[0]) {
-			FS_AddGameDirectory(fs_basepath->string, fs_gamedirvar->string, qfalse);
+			FS_AddGameDirectory(fs_basepath->string, fs_gamedirvar->string);
 		}
 		if (fs_homepath->string[0] && Q_stricmp(fs_homepath->string,fs_basepath->string)) {
-			FS_AddGameDirectory(fs_homepath->string, fs_gamedirvar->string, qfalse);
+			FS_AddGameDirectory(fs_homepath->string, fs_gamedirvar->string);
 		}
 	}
 
@@ -3388,10 +3392,10 @@ static void FS_Startup( const char *gameName ) {
 	if ( fs_forcegame->string[0] && Q_stricmp(fs_forcegame->string, fs_gamedir) ) {
 		if ( !fs_basegame->string[0] || Q_stricmp(fs_forcegame->string, fs_basegame->string) ) {
 			if (fs_basepath->string[0]) {
-				FS_AddGameDirectory(fs_basepath->string, fs_forcegame->string, qfalse);
+				FS_AddGameDirectory(fs_basepath->string, fs_forcegame->string);
 			}
 			if (fs_homepath->string[0] && Q_stricmp(fs_homepath->string,fs_basepath->string)) {
-				FS_AddGameDirectory(fs_homepath->string, fs_forcegame->string, qfalse);
+				FS_AddGameDirectory(fs_homepath->string, fs_forcegame->string);
 			}
 		}
 		Q_strncpyz( fs_gamedir, fs_forcegame->string, sizeof( fs_gamedir ) );
