@@ -2093,14 +2093,16 @@ static pack_t *FS_LoadZipFile( char *zipfile, const char *basename, qboolean ass
 	}
 
 	// assets are hardcoded
-	if (!Q_stricmp(pack->pakBasename, "assets0")) {
-		pack->gvc = PACKGVC_1_02 | PACKGVC_1_03 | PACKGVC_1_04;
-	} else if (!Q_stricmp(pack->pakBasename, "assets1")) {
-		pack->gvc = PACKGVC_1_02 | PACKGVC_1_03 | PACKGVC_1_04;
-	} else if (!Q_stricmp(pack->pakBasename, "assets2")) {
-		pack->gvc = PACKGVC_1_03 | PACKGVC_1_04;
-	} else if (!Q_stricmp(pack->pakBasename, "assets5")) {
-		pack->gvc = PACKGVC_1_04;
+	if ( !assetsJKA ) {
+		if (!Q_stricmp(pack->pakBasename, "assets0")) {
+			pack->gvc = PACKGVC_1_02 | PACKGVC_1_03 | PACKGVC_1_04;
+		} else if (!Q_stricmp(pack->pakBasename, "assets1")) {
+			pack->gvc = PACKGVC_1_02 | PACKGVC_1_03 | PACKGVC_1_04;
+		} else if (!Q_stricmp(pack->pakBasename, "assets2")) {
+			pack->gvc = PACKGVC_1_03 | PACKGVC_1_04;
+		} else if (!Q_stricmp(pack->pakBasename, "assets5")) {
+			pack->gvc = PACKGVC_1_04;
+		}
 	}
 
 	return pack;
