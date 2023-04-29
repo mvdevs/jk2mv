@@ -47,7 +47,7 @@ New and Modified Cvars
 
 ..
 
-:Name: fs_assetsPathJKA
+:Name: fs_assetspathjka
 :Values: Foldername
 :Default: "" (Not set on portable); autodetected for non-portable
 :Description:
@@ -55,11 +55,11 @@ New and Modified Cvars
 
 ..
 
-:Name: fs_loadJKA
+:Name: fs_loadjka
 :Values: "0", "1"
 :Default: "1"
 :Description:
-   Enables loading of JKA assets when fs_assetsPathJKA point to a valid JKA
+   Enables loading of JKA assets when fs_assetspathjka point to a valid JKA
    folder.
 
 -----------
