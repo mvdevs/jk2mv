@@ -3351,7 +3351,7 @@ static void FS_Startup( const char *gameName ) {
 	}
 
 	// Try to load JKA assets if a path has been specified
-	if (fs_assetspathjka->string[0] && !fs_loadjka->integer) {
+	if (fs_assetspathjka->string[0] && fs_loadjka->integer) {
 		FS_AddAssetsDirectoryJKA(fs_assetspathjka->string, BASEGAME);
 	}
 
