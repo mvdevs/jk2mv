@@ -3332,7 +3332,7 @@ static void FS_Startup( const char *gameName ) {
 
 	assetsPathJKA = Sys_DefaultAssetsPathJKA();
 	fs_assetspathjka = Cvar_Get("fs_assetspathjka", assetsPathJKA ? assetsPathJKA : "", CVAR_INIT | CVAR_VM_NOWRITE);
-	fs_loadjka = Cvar_Get("fs_loadjka", "1", CVAR_ARCHIVE);
+	fs_loadjka = Cvar_Get("fs_loadjka", "1", CVAR_ARCHIVE | CVAR_LATCH);
 
 	if (!FS_AllPath_Base_FileExists("assets5.pk3")) {
 		// assets files found in none of the paths
