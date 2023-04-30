@@ -237,6 +237,7 @@ static	cvar_t		*fs_homepath;
 static	cvar_t		*fs_basepath;
 static	cvar_t		*fs_assetspath;
 static	cvar_t		*fs_assetspathjka;
+static	cvar_t		*fs_basejka;
 static	cvar_t		*fs_loadjka;
 static	cvar_t		*fs_basegame;
 static	cvar_t		*fs_copyfiles;
@@ -699,6 +700,20 @@ qboolean FS_BaseHome_Base_FileExists(const char *file) {
 	}
 
 	testpath = FS_BuildOSPath(fs_homepath->string, BASEGAME, file);
+	f = fopen(testpath, "rb");
+	if (f) {
+		fclose(f);
+		return qtrue;
+	}
+
+	return qfalse;
+}
+
+qboolean FS_FileExistsIn(const char *base, const char *game, const char *qpath) {
+	FILE *f;
+	char *testpath;
+
+	testpath = FS_BuildOSPath(base, game, qpath);
 	f = fopen(testpath, "rb");
 	if (f) {
 		fclose(f);
@@ -3332,6 +3347,8 @@ static void FS_Startup( const char *gameName ) {
 
 	assetsPathJKA = Sys_DefaultAssetsPathJKA();
 	fs_assetspathjka = Cvar_Get("fs_assetspathjka", assetsPathJKA ? assetsPathJKA : "", CVAR_INIT | CVAR_VM_NOWRITE);
+	fs_basejka = Cvar_Get("fs_basejka", fs_assetspathjka->string[0] ? "base" : "basejka", CVAR_INIT | CVAR_VM_NOWRITE);
+
 	fs_loadjka = Cvar_Get("fs_loadjka", "1", CVAR_ARCHIVE | CVAR_LATCH);
 
 	if (!FS_AllPath_Base_FileExists("assets5.pk3")) {
@@ -3351,8 +3368,18 @@ static void FS_Startup( const char *gameName ) {
 	}
 
 	// Try to load JKA assets if a path has been specified
-	if (fs_assetspathjka->string[0] && fs_loadjka->integer) {
-		FS_AddAssetsDirectoryJKA(fs_assetspathjka->string, BASEGAME);
+	if ( fs_loadjka->integer && fs_basejka->string[0] ) {
+		if (fs_assetspathjka->string[0]) {
+			// Got a JKA GameData path
+			FS_AddAssetsDirectoryJKA(fs_assetspathjka->string, fs_basejka->string);
+		} else {
+			// Try to find assets inside of a fs_basejka folder in any of the other paths
+			if (fs_basepath->string[0] && FS_FileExistsIn(fs_basepath->string, fs_basejka->string, "assets0.pk3")) {
+				FS_AddAssetsDirectoryJKA(fs_basepath->string, fs_basejka->string);
+			} else if (fs_homepath->string[0] && FS_FileExistsIn(fs_homepath->string, fs_basejka->string, "assets0.pk3")) {
+				FS_AddAssetsDirectoryJKA(fs_homepath->string, fs_basejka->string);
+			}
+		}
 	}
 
 	// don't use the assetspath if assets files already found in fs_basepath or fs_homepath
