@@ -4168,6 +4168,6 @@ void CL_ShaderStateChanged( void ) {
 		else styleModeValue = SHADERREMAP_STYLE_PRESERVE; // fallback to preserve
 
 		// Apply remap
-		re.RemapShaderAdvanced( originalShader, newShader, timeOffset, lightmapModeValue, styleModeValue );
+		re.RemapShaderAdvanced( originalShader, newShader, atoi(timeOffset), lightmapModeValue, styleModeValue );
 	}
 }

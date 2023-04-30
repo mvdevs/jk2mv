@@ -106,7 +106,7 @@ typedef struct {
 	unsigned int (*AnyLanguage_ReadCharFromString)( const char *psText, int *piAdvanceCount, qboolean *pbIsTrailingPunctuation/* = NULL*/ );
 
 	void	(*RemapShader)(const char *oldShader, const char *newShader, const char *offsetTime);
-	void	(*RemapShaderAdvanced)(const char *oldShader, const char *newShader, const char *offsetTime, shaderRemapLightmapType_t lightmapMode, shaderRemapStyleType_t styleMode);
+	void	(*RemapShaderAdvanced)(const char *oldShader, const char *newShader, int offsetTime, shaderRemapLightmapType_t lightmapMode, shaderRemapStyleType_t styleMode);
 	qboolean (*GetEntityToken)( char *buffer, int size );
 	qboolean (*inPVS)( const vec3_t p1, const vec3_t p2 );
 

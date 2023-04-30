@@ -206,7 +206,7 @@ void R_RemapShader(const char *shaderName, const char *newShaderName, const char
 	qhandle_t	h;
 
 	if ( r_newRemaps->integer ) {
-		R_RemapShaderAdvanced( shaderName, newShaderName, timeOffset, SHADERREMAP_LIGHTMAP_PRESERVE, SHADERREMAP_STYLE_PRESERVE );
+		R_RemapShaderAdvanced( shaderName, newShaderName, (int)(atof(timeOffset)*1000), SHADERREMAP_LIGHTMAP_PRESERVE, SHADERREMAP_STYLE_PRESERVE );
 		return;
 	}
 
@@ -254,11 +254,10 @@ void R_RemapShader(const char *shaderName, const char *newShaderName, const char
 	}
 }
 
-void R_RemapShaderAdvanced(const char *shaderName, const char *newShaderName, const char *timeOffset, shaderRemapLightmapType_t lightmapMode, shaderRemapStyleType_t styleMode) {
+void R_RemapShaderAdvanced(const char *shaderName, const char *newShaderName, int timeOffset, shaderRemapLightmapType_t lightmapMode, shaderRemapStyleType_t styleMode) {
 	char		strippedName[MAX_QPATH];
 	int			hash;
 	shader_t	*sh, *sh2 = NULL;
-	float		timeOffsetFloat = timeOffset ? atof( timeOffset ) : 0.0f;
 	qhandle_t	h;
 	int			failed = 0;
 	const int	*lightmapIndex = NULL;
@@ -315,7 +314,7 @@ void R_RemapShaderAdvanced(const char *shaderName, const char *newShaderName, co
 				failed++;
 				continue;
 			}
-			if ( timeOffset ) sh2->timeOffset = timeOffsetFloat;
+			if ( timeOffset ) sh2->timeOffset = timeOffset * 0.001;
 
 			if (sh != sh2) {
 				sh->remappedShader = sh2;
