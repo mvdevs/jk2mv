@@ -45,6 +45,33 @@ New and Modified Cvars
    | ``fs_game cvar``
    | ``fs_forcegame cvar``
 
+..
+
+:Name: fs_assetspathjka
+:Values: Foldername
+:Default: "" (Not set on portable); autodetected for non-portable
+:Description:
+   Sets the path to load JKA assets from.
+
+..
+
+:Name: fs_basejka
+:Values: Foldername
+:Default: "basejka" (if fs_assetspathjka is empty); "base" (if fs_assetspathjka is set)
+:Description:
+   Name of the folder containing the JKA assets within fs_assetspathjka. If
+   fs_assetspathjka is not set the game tries to load assets from the specified
+   folder in fs_basepath and fs_homepath.
+
+..
+
+:Name: fs_loadjka
+:Values: "0", "1"
+:Default: "1"
+:Description:
+   Enables loading of JKA assets when fs_assetspathjka point to a valid JKA
+   folder.
+
 -----------
 Client-Side
 -----------

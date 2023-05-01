@@ -22,8 +22,8 @@ using namespace std;
 #include <jpeglib.h>
 #include <png.h>
 
-static void LoadTGA( const char *name, byte **pic, int *width, int *height );
-static void LoadJPG( const char *name, byte **pic, int *width, int *height );
+static void LoadTGA( const char *name, byte **pic, int *width, int *height, qboolean skipJKA );
+static void LoadJPG( const char *name, byte **pic, int *width, int *height, qboolean skipJKA );
 
 static byte			 s_intensitytable[256];
 static unsigned char s_gammatable[256];
@@ -1205,7 +1205,7 @@ typedef struct
 //  returns false if found but had a format error, else true for either OK or not-found (there's a reason for this)
 //
 
-void LoadTGA ( const char *name, byte **pic, int *width, int *height)
+void LoadTGA ( const char *name, byte **pic, int *width, int *height, qboolean skipJKA)
 {
 	char sErrorString[1024];
 	bool bFormatErrors = false;
@@ -1226,7 +1226,8 @@ void LoadTGA ( const char *name, byte **pic, int *width, int *height)
 	// load the file
 	//
 	byte *pTempLoadedBuffer = 0;
-	ri.FS_ReadFile ( name, (void **)&pTempLoadedBuffer);
+	if ( skipJKA ) ri.FS_ReadFileSkipJKA( name, (void**)&pTempLoadedBuffer );
+	else           ri.FS_ReadFile ( name, (void **)&pTempLoadedBuffer);
 	if (!pTempLoadedBuffer) {
 		return;
 	}
@@ -1556,7 +1557,7 @@ static void R_JPGOutputMessage( j_common_ptr cinfo )
 	Com_Printf("%s\n", buffer);
 }
 
-void LoadJPG( const char *filename, unsigned char **pic, int *width, int *height ) {
+void LoadJPG( const char *filename, unsigned char **pic, int *width, int *height, qboolean skipJKA ) {
 	/* This struct contains the JPEG decompression parameters and pointers to
 	* working space (which is allocated as needed by the JPEG library).
 	*/
@@ -1591,7 +1592,9 @@ void LoadJPG( const char *filename, unsigned char **pic, int *width, int *height
 	* requires it in order to read binary files.
 	*/
 
-	int len = ri.FS_ReadFile ( filename, &fbuffer.v);
+	int len;
+	if ( skipJKA ) len = ri.FS_ReadFileSkipJKA ( filename, &fbuffer.v );
+	else           len = ri.FS_ReadFile ( filename, &fbuffer.v);
 	if (!fbuffer.b || len < 0) {
 		return;
 	}
@@ -2093,10 +2096,12 @@ void user_read_data(png_structp png_ptr, png_bytep data, png_size_t length) {
 }
 
 // Loads a PNG image from file.
-void LoadPNG(const char *filename, byte **data, int *width, int *height)
+void LoadPNG(const char *filename, byte **data, int *width, int *height, qboolean skipJKA)
 {
 	char *buf = NULL;
-	int len = ri.FS_ReadFile(filename, (void **)&buf);
+	int len;
+	if ( skipJKA ) len = ri.FS_ReadFileSkipJKA(filename, (void**)&buf);
+	else           len = ri.FS_ReadFile(filename, (void **)&buf);
 	if (len < 0 || buf == NULL)
 	{
 		return;
@@ -2125,23 +2130,47 @@ void R_LoadImage( const char *shortname, byte **pic, int *width, int *height )
 	*width = 0;
 	*height = 0;
 
+	// First try without JKA assets
 	COM_StripExtension(shortname,name,sizeof(name));
 	COM_DefaultExtension(name, sizeof(name), ".jpg");
-	LoadJPG( name, pic, width, height );
+	LoadJPG( name, pic, width, height, qtrue );
 	if (*pic) {
 		return;
 	}
 
 	COM_StripExtension(shortname,name,sizeof(name));
 	COM_DefaultExtension(name, sizeof(name), ".png");
-	LoadPNG( name, pic, width, height ); 			// try png first
+	LoadPNG( name, pic, width, height, qtrue ); 			// try png first
 	if (*pic){
 		return;
 	}
 
 	COM_StripExtension(shortname,name,sizeof(name));
 	COM_DefaultExtension(name, sizeof(name), ".tga");
-	LoadTGA( name, pic, width, height );            // try tga first
+	LoadTGA( name, pic, width, height, qtrue );            // try tga first
+	if (*pic){
+		return;
+	}
+
+
+	// Retry with JKA assets
+	COM_StripExtension(shortname,name,sizeof(name));
+	COM_DefaultExtension(name, sizeof(name), ".jpg");
+	LoadJPG( name, pic, width, height, qfalse );
+	if (*pic) {
+		return;
+	}
+
+	COM_StripExtension(shortname,name,sizeof(name));
+	COM_DefaultExtension(name, sizeof(name), ".png");
+	LoadPNG( name, pic, width, height, qfalse ); 			// try png first
+	if (*pic){
+		return;
+	}
+
+	COM_StripExtension(shortname,name,sizeof(name));
+	COM_DefaultExtension(name, sizeof(name), ".tga");
+	LoadTGA( name, pic, width, height, qfalse );            // try tga first
 	if (*pic){
 		return;
 	}

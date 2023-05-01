@@ -116,6 +116,7 @@ int			Sys_PID( void );
 
 char *Sys_DefaultInstallPath(void);
 char *Sys_DefaultAssetsPath();
+char *Sys_DefaultAssetsPathJKA();
 char *Sys_DefaultHomePath(void);
 
 #ifdef MACOS_X

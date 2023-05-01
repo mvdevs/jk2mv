@@ -3888,12 +3888,12 @@ a single large text block that can be scanned for shader names
 #define	MAX_SHADER_FILES	4096
 static void ScanAndLoadShaderFiles( const char *path )
 {
-	const char **shaderFiles[2];
+	const char **shaderFiles[3];
 	char *buffers[MAX_SHADER_FILES];
 	const char *p;
 	char *pw;
 	int numShaderFiles;
-	int numShaderFilesType[2];
+	int numShaderFilesType[3];
 	int i, j, type;
 	const char *oldp, *token;
 	char *hashMem;
@@ -3903,6 +3903,7 @@ static void ScanAndLoadShaderFiles( const char *path )
 	// scan for shader files
 	shaderFiles[0] = ri.FS_ListFiles( path, ".shader_mv", &numShaderFilesType[0] );
 	shaderFiles[1] = ri.FS_ListFiles( path, ".shader", &numShaderFilesType[1] );
+	shaderFiles[2] = ri.FS_ListFiles( path, ".shader_jka", &numShaderFilesType[2] );
 
 	if ( !shaderFiles[0] )
 	{
@@ -3912,23 +3913,28 @@ static void ScanAndLoadShaderFiles( const char *path )
 	{
 		numShaderFilesType[1] = 0;
 	}
-
-	if ( numShaderFilesType[0] + numShaderFilesType[1] > MAX_SHADER_FILES ) {
-		ri.Printf( PRINT_WARNING, "WARNING: too many shader files, truncating...\n" );
-		numShaderFilesType[0] = MIN(numShaderFilesType[0], MAX_SHADER_FILES);
-		numShaderFilesType[1] = MAX_SHADER_FILES - numShaderFilesType[0];
+	if ( !shaderFiles[2] )
+	{
+		numShaderFilesType[2] = 0;
 	}
 
-	numShaderFiles = numShaderFilesType[0] + numShaderFilesType[1];
+	if ( numShaderFilesType[0] + numShaderFilesType[1] + numShaderFilesType[2] > MAX_SHADER_FILES ) {
+		ri.Printf( PRINT_WARNING, "WARNING: too many shader files, truncating...\n" );
+		numShaderFilesType[0] = MIN(numShaderFilesType[0], MAX_SHADER_FILES);
+		numShaderFilesType[1] = MIN(numShaderFilesType[1], MAX_SHADER_FILES - numShaderFilesType[0]);
+		numShaderFilesType[2] = MIN(numShaderFilesType[2], MAX_SHADER_FILES - numShaderFilesType[0] - numShaderFilesType[1]);
+	}
+
+	numShaderFiles = numShaderFilesType[0] + numShaderFilesType[1] + numShaderFilesType[2];
 
 	if (numShaderFiles == 0) {
 			ri.Error( ERR_FATAL, "ERROR: no shader files found" );
 	}
 
-	assert(numShaderFilesType[0] > 0 || numShaderFilesType[1] > 0);
+	assert(numShaderFilesType[0] > 0 || numShaderFilesType[1] > 0 || numShaderFilesType[2] > 0);
 	sum = 0;
 	// load and parse shader files
-	for ( type = 0, j = 0; type < 2; type++ ) {
+	for ( type = 0, j = 0; type < 3; type++ ) {
 		for ( i = 0; i < numShaderFilesType[type]; i++, j++ )
 		{
 			char filename[MAX_QPATH];
@@ -3957,6 +3963,7 @@ static void ScanAndLoadShaderFiles( const char *path )
 	// free up memory
 	ri.FS_FreeFileList( shaderFiles[0] );
 	ri.FS_FreeFileList( shaderFiles[1] );
+	ri.FS_FreeFileList( shaderFiles[2] );
 
 	Com_Memset(shaderTextHashTableSizes, 0, sizeof(shaderTextHashTableSizes));
 	size = 0;

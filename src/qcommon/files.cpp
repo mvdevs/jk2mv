@@ -216,6 +216,7 @@ typedef struct {
 	fileInPack_t*	*hashTable;					// hash table
 	fileInPack_t*	buildBuffer;				// buffer with the filenames etc.
 	int				gvc;						// game-version compatibility
+	qboolean		isJKA;						// jka assets
 } pack_t;
 
 typedef struct {
@@ -235,6 +236,9 @@ static	cvar_t		*fs_debug;
 static	cvar_t		*fs_homepath;
 static	cvar_t		*fs_basepath;
 static	cvar_t		*fs_assetspath;
+static	cvar_t		*fs_assetspathjka;
+static	cvar_t		*fs_basejka;
+static	cvar_t		*fs_loadjka;
 static	cvar_t		*fs_basegame;
 static	cvar_t		*fs_copyfiles;
 static	cvar_t		*fs_gamedirvar;
@@ -696,6 +700,20 @@ qboolean FS_BaseHome_Base_FileExists(const char *file) {
 	}
 
 	testpath = FS_BuildOSPath(fs_homepath->string, BASEGAME, file);
+	f = fopen(testpath, "rb");
+	if (f) {
+		fclose(f);
+		return qtrue;
+	}
+
+	return qfalse;
+}
+
+qboolean FS_FileExistsIn(const char *base, const char *game, const char *qpath) {
+	FILE *f;
+	char *testpath;
+
+	testpath = FS_BuildOSPath(base, game, qpath);
 	f = fopen(testpath, "rb");
 	if (f) {
 		fclose(f);
@@ -1222,11 +1240,11 @@ separate file or a ZIP file.
 */
 extern qboolean		com_fullyInitialized;
 
-int FS_FOpenFileRead(const char *filename, fileHandle_t *file, qboolean uniqueFILE, module_t module) {
-	return FS_FOpenFileReadHash(filename, file, uniqueFILE, NULL, module);
+int FS_FOpenFileRead(const char *filename, fileHandle_t *file, qboolean uniqueFILE, module_t module, qboolean skipJKA) {
+	return FS_FOpenFileReadHash(filename, file, uniqueFILE, NULL, module, skipJKA);
 }
 
-int FS_FOpenFileReadHash(const char *filename, fileHandle_t *file, qboolean uniqueFILE, unsigned long *filehash, module_t module) {
+int FS_FOpenFileReadHash(const char *filename, fileHandle_t *file, qboolean uniqueFILE, unsigned long *filehash, module_t module, qboolean skipJKA) {
 	bool			isLocalConfig;
 	searchpath_t	*search;
 	char			*netpath;
@@ -1281,6 +1299,10 @@ int FS_FOpenFileReadHash(const char *filename, fileHandle_t *file, qboolean uniq
 	for ( search = fs_searchpaths ; search ; search = search->next ) {
 		//
 		if ( isLocalConfig && search->pack ) {
+			continue;
+		}
+		// Skip JKA assets if desired
+		if ( search->pack && search->pack->isJKA && skipJKA ) {
 			continue;
 		}
 		//
@@ -1732,7 +1754,7 @@ Filename are relative to the quake search path
 a null buffer will just return the file length without loading
 ============
 */
-int FS_ReadFile( const char *qpath, void **buffer ) {
+int FS_ReadFile_real( const char *qpath, void **buffer, qboolean skipJKA ) {
 	fileHandle_t	h;
 	byte*			buf;
 	qboolean		isConfig;
@@ -1794,7 +1816,7 @@ int FS_ReadFile( const char *qpath, void **buffer ) {
 	}
 
 	// look for it in the filesystem or pack files
-	len = FS_FOpenFileRead( qpath, &h, qfalse );
+	len = FS_FOpenFileRead( qpath, &h, qfalse, MODULE_MAIN, skipJKA );
 	if ( h == 0 ) {
 		if ( buffer ) {
 			*buffer = NULL;
@@ -1845,6 +1867,14 @@ int FS_ReadFile( const char *qpath, void **buffer ) {
 		FS_Flush( com_journalDataFile );
 	}
 	return len;
+}
+
+int FS_ReadFile( const char *qpath, void **buffer ) {
+	return FS_ReadFile_real( qpath, buffer, qfalse );
+}
+
+int FS_ReadFileSkipJKA( const char *qpath, void **buffer ) {
+	return FS_ReadFile_real( qpath, buffer, qtrue );
 }
 
 /*
@@ -1927,7 +1957,7 @@ Creates a new pak_t in the search chain for the contents
 of a zip file.
 =================
 */
-static pack_t *FS_LoadZipFile( char *zipfile, const char *basename )
+static pack_t *FS_LoadZipFile( char *zipfile, const char *basename, qboolean assetsJKA )
 {
 	fileInPack_t	*buildBuffer;
 	pack_t			*pack;
@@ -1942,6 +1972,7 @@ static pack_t *FS_LoadZipFile( char *zipfile, const char *basename )
 	int				fs_numHeaderLongs;
 	int				*fs_headerLongs;
 	char			*namePtr;
+	int				strLength;
 
 	fs_numHeaderLongs = 0;
 
@@ -1961,7 +1992,14 @@ static pack_t *FS_LoadZipFile( char *zipfile, const char *basename )
 		if (err != UNZ_OK) {
 			break;
 		}
-		len += strlen(filename_inzip) + 1;
+		strLength = strlen(filename_inzip);
+		if ( assetsJKA ) {
+			// Ugly workaround: rename academy shader files to avoid collisions
+			if ( strLength > 7 && !Q_stricmp(filename_inzip + strLength - 7, ".shader") ) {
+				len += 4; // "_jka"
+			}
+		}
+		len += strLength + 1;
 		unzGoToNextFile(uf);
 	}
 
@@ -2004,6 +2042,13 @@ static pack_t *FS_LoadZipFile( char *zipfile, const char *basename )
 		}
 		if (file_info.uncompressed_size > 0) {
 			fs_headerLongs[fs_numHeaderLongs++] = LittleLong(file_info.crc);
+		}
+		if ( assetsJKA ) {
+			// Ugly workaround: rename academy shader files to avoid collisions
+			strLength = strlen( filename_inzip );
+			if ( strLength > 7 && !Q_stricmp(filename_inzip + strLength - 7, ".shader") ) {
+				Q_strcat( filename_inzip, sizeof(filename_inzip), "_jka" );
+			}
 		}
 		Q_strlwr( filename_inzip );
 		hash = FS_HashFileName(filename_inzip, pack->hashSize);
@@ -2063,14 +2108,16 @@ static pack_t *FS_LoadZipFile( char *zipfile, const char *basename )
 	}
 
 	// assets are hardcoded
-	if (!Q_stricmp(pack->pakBasename, "assets0")) {
-		pack->gvc = PACKGVC_1_02 | PACKGVC_1_03 | PACKGVC_1_04;
-	} else if (!Q_stricmp(pack->pakBasename, "assets1")) {
-		pack->gvc = PACKGVC_1_02 | PACKGVC_1_03 | PACKGVC_1_04;
-	} else if (!Q_stricmp(pack->pakBasename, "assets2")) {
-		pack->gvc = PACKGVC_1_03 | PACKGVC_1_04;
-	} else if (!Q_stricmp(pack->pakBasename, "assets5")) {
-		pack->gvc = PACKGVC_1_04;
+	if ( !assetsJKA ) {
+		if (!Q_stricmp(pack->pakBasename, "assets0")) {
+			pack->gvc = PACKGVC_1_02 | PACKGVC_1_03 | PACKGVC_1_04;
+		} else if (!Q_stricmp(pack->pakBasename, "assets1")) {
+			pack->gvc = PACKGVC_1_02 | PACKGVC_1_03 | PACKGVC_1_04;
+		} else if (!Q_stricmp(pack->pakBasename, "assets2")) {
+			pack->gvc = PACKGVC_1_03 | PACKGVC_1_04;
+		} else if (!Q_stricmp(pack->pakBasename, "assets5")) {
+			pack->gvc = PACKGVC_1_04;
+		}
 	}
 
 	return pack;
@@ -2911,7 +2958,7 @@ const char *get_filename(const char *path) {
 	return slash + 1;
 }
 
-static void FS_AddGameDirectory( const char *path, const char *dir, qboolean assetsOnly ) {
+static void FS_AddGameDirectory( const char *path, const char *dir, qboolean assetsJK2 = qfalse, qboolean assetsJKA = qfalse ) {
 	searchpath_t	*sp;
 	int				i;
 	searchpath_t	*search;
@@ -2940,7 +2987,7 @@ static void FS_AddGameDirectory( const char *path, const char *dir, qboolean ass
 	//
 	// add the directory to the search path
 	//
-	if (!assetsOnly) {
+	if (!assetsJK2 && !assetsJKA) {
 		search = (struct searchpath_s *)Z_Malloc(sizeof(searchpath_t), TAG_FILESYS, qtrue);
 		search->dir = (directory_t *)Z_Malloc(sizeof(*search->dir), TAG_FILESYS, qtrue);
 
@@ -2966,14 +3013,19 @@ static void FS_AddGameDirectory( const char *path, const char *dir, qboolean ass
 		pakfile = FS_BuildOSPath( path, dir, pakfiles[i] );
 		filename = get_filename(pakfile);
 
-		if (assetsOnly) {
+		if (assetsJK2) {
 			if (strcmp(filename, "assets0.pk3") && strcmp(filename, "assets1.pk3") &&
 				strcmp(filename, "assets2.pk3") && strcmp(filename, "assets5.pk3")) {
 				continue;
 			}
+		} else if ( assetsJKA ) {
+			if (strcmp(filename, "assets0.pk3") && strcmp(filename, "assets1.pk3") &&
+			    strcmp(filename, "assets2.pk3") && strcmp(filename, "assets3.pk3")) {
+				continue;
+			}
 		}
 
-		if ( ( pak = FS_LoadZipFile( pakfile, pakfiles[i] ) ) == 0 )
+		if ( ( pak = FS_LoadZipFile( pakfile, pakfiles[i], assetsJKA ) ) == 0 )
 			continue;
 
 #ifndef DEDICATED
@@ -3008,6 +3060,9 @@ static void FS_AddGameDirectory( const char *path, const char *dir, qboolean ass
 			pak->referenced |= FS_GENERAL_REF;
 		}
 
+		// Mark jka assets as such
+		pak->isJKA = assetsJKA;
+
 		search = (searchpath_s *)Z_Malloc (sizeof(searchpath_t), TAG_FILESYS, qtrue);
 		search->pack = pak;
 		search->next = fs_searchpaths;
@@ -3016,6 +3071,14 @@ static void FS_AddGameDirectory( const char *path, const char *dir, qboolean ass
 
 	// done
 	Sys_FreeFileList( pakfiles );
+}
+
+static void FS_AddAssetsDirectoryJK2( const char *path, const char *dir ) {
+	FS_AddGameDirectory( path, dir, qtrue, qfalse );
+}
+
+static void FS_AddAssetsDirectoryJKA( const char *path, const char *dir ) {
+	FS_AddGameDirectory( path, dir, qfalse, qtrue );
 }
 
 /*
@@ -3261,6 +3324,7 @@ FS_Startup
 */
 static void FS_Startup( const char *gameName ) {
 	const char *assetsPath;
+	const char *assetsPathJKA;
 	// Silence clang, they do get initialized
 	char *mv_whitelist = NULL, *mv_blacklist = NULL, *mv_forcelist = NULL;
 	fileHandle_t f_w, f_b, f_f;
@@ -3281,6 +3345,12 @@ static void FS_Startup( const char *gameName ) {
 	assetsPath = Sys_DefaultAssetsPath();
 	fs_assetspath = Cvar_Get("fs_assetspath", assetsPath ? assetsPath : "", CVAR_INIT | CVAR_VM_NOWRITE);
 
+	assetsPathJKA = Sys_DefaultAssetsPathJKA();
+	fs_assetspathjka = Cvar_Get("fs_assetspathjka", assetsPathJKA ? assetsPathJKA : "", CVAR_INIT | CVAR_VM_NOWRITE);
+	fs_basejka = Cvar_Get("fs_basejka", fs_assetspathjka->string[0] ? "base" : "basejka", CVAR_INIT | CVAR_VM_NOWRITE);
+
+	fs_loadjka = Cvar_Get("fs_loadjka", "1", CVAR_ARCHIVE | CVAR_LATCH);
+
 	if (!FS_AllPath_Base_FileExists("assets5.pk3")) {
 		// assets files found in none of the paths
 #if defined(INSTALLED)
@@ -3297,38 +3367,53 @@ static void FS_Startup( const char *gameName ) {
 		return;
 	}
 
+	// Try to load JKA assets if a path has been specified
+	if ( fs_loadjka->integer && fs_basejka->string[0] ) {
+		if (fs_assetspathjka->string[0]) {
+			// Got a JKA GameData path
+			FS_AddAssetsDirectoryJKA(fs_assetspathjka->string, fs_basejka->string);
+		} else {
+			// Try to find assets inside of a fs_basejka folder in any of the other paths
+			if (fs_basepath->string[0] && FS_FileExistsIn(fs_basepath->string, fs_basejka->string, "assets0.pk3")) {
+				FS_AddAssetsDirectoryJKA(fs_basepath->string, fs_basejka->string);
+			} else if (fs_homepath->string[0] && FS_FileExistsIn(fs_homepath->string, fs_basejka->string, "assets0.pk3")) {
+				FS_AddAssetsDirectoryJKA(fs_homepath->string, fs_basejka->string);
+			}
+		}
+	}
+
 	// don't use the assetspath if assets files already found in fs_basepath or fs_homepath
-	if (assetsPath && !FS_BaseHome_Base_FileExists("assets5.pk3")) {
-		FS_AddGameDirectory(assetsPath, BASEGAME, qtrue);
+	if (fs_assetspath->string[0] && !FS_BaseHome_Base_FileExists("assets5.pk3")) {
+		FS_AddAssetsDirectoryJK2(fs_assetspath->string, BASEGAME);
 	}
 
 	// add search path elements in reverse priority order
 	if (fs_basepath->string[0]) {
-		FS_AddGameDirectory(fs_basepath->string, gameName, qfalse);
+		FS_AddGameDirectory(fs_basepath->string, gameName);
 	}
   // fs_homepath is somewhat particular to *nix systems, only add if relevant
   // NOTE: same filtering below for mods and basegame
 	if (fs_basepath->string[0] && Q_stricmp(fs_homepath->string,fs_basepath->string)) {
-		FS_AddGameDirectory(fs_homepath->string, gameName, qfalse);
+		FS_AddGameDirectory(fs_homepath->string, gameName);
 	}
 
 	// check for additional base game so mods can be based upon other mods
 	if ( fs_basegame->string[0] && !Q_stricmp( gameName, BASEGAME ) && Q_stricmp( fs_basegame->string, gameName ) ) {
 		if (fs_basepath->string[0]) {
-			FS_AddGameDirectory(fs_basepath->string, fs_basegame->string, qfalse);
+			FS_AddGameDirectory(fs_basepath->string, fs_basegame->string);
 		}
 		if (fs_homepath->string[0] && Q_stricmp(fs_homepath->string,fs_basepath->string)) {
-			FS_AddGameDirectory(fs_homepath->string, fs_basegame->string, qfalse);
+			FS_AddGameDirectory(fs_homepath->string, fs_basegame->string);
 		}
 	}
 
 	// check for additional game folder for mods
 	if ( fs_gamedirvar->string[0] && !Q_stricmp( gameName, BASEGAME ) && Q_stricmp( fs_gamedirvar->string, gameName ) ) {
 		if (fs_basepath->string[0]) {
-			FS_AddGameDirectory(fs_basepath->string, fs_gamedirvar->string, qfalse);
+			FS_AddGameDirectory(fs_basepath->string, fs_gamedirvar->string);
 		}
 		if (fs_homepath->string[0] && Q_stricmp(fs_homepath->string,fs_basepath->string)) {
-			FS_AddGameDirectory(fs_homepath->string, fs_gamedirvar->string, qfalse);
+			FS_AddGameDirectory(fs_homepath->string, fs_gamedirvar->string);
 		}
 	}
 
@@ -3336,10 +3421,10 @@ static void FS_Startup( const char *gameName ) {
 	if ( fs_forcegame->string[0] && Q_stricmp(fs_forcegame->string, fs_gamedir) ) {
 		if ( !fs_basegame->string[0] || Q_stricmp(fs_forcegame->string, fs_basegame->string) ) {
 			if (fs_basepath->string[0]) {
-				FS_AddGameDirectory(fs_basepath->string, fs_forcegame->string, qfalse);
+				FS_AddGameDirectory(fs_basepath->string, fs_forcegame->string);
 			}
 			if (fs_homepath->string[0] && Q_stricmp(fs_homepath->string,fs_basepath->string)) {
-				FS_AddGameDirectory(fs_homepath->string, fs_forcegame->string, qfalse);
+				FS_AddGameDirectory(fs_homepath->string, fs_forcegame->string);
 			}
 		}
 		Q_strncpyz( fs_gamedir, fs_forcegame->string, sizeof( fs_gamedir ) );
@@ -3787,6 +3872,8 @@ void FS_InitFilesystem( void ) {
 	// has already been initialized
 	Com_StartupVariable( "fs_basepath" );
 	Com_StartupVariable( "fs_homepath" );
+	Com_StartupVariable( "fs_assetspathjka" );
+	Com_StartupVariable( "fs_loadjka" );
 #if !defined(PORTABLE)
 	Com_StartupVariable( "fs_assetspath" );
 #endif
