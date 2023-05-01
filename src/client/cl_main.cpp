@@ -4063,6 +4063,8 @@ void CL_ShaderStateChanged( void ) {
 	const char *curPos = cl.gameState.stringData + cl.gameState.stringOffsets[ CS_MV_REMAPS ];
 	const char *endPos = curPos + strlen( curPos );
 
+	int length;
+
 	// Check configstring for prefix to avoid misinterpreting configstrings from mods
 	if ( !curPos || !*curPos || strncmp(curPos, "mvremap:", 8) ) return;
 
@@ -4088,32 +4090,41 @@ void CL_ShaderStateChanged( void ) {
 	// Skip prefix
 	curPos += 8;
 
-	int length;
-
 	// Parse configstring
-	while ( curPos && *curPos )
+	while ( curPos < endPos )
 	{
 		// Read original shader
-		if ( curPos >= endPos ) break;
 		length = *(curPos++);
-		length -= 47;
-		if ( length < 0 ) break;
+		length -= 47; // Length is increased by 47 to workaround netchan limits
+		if ( length < 0 )
+		{
+			Com_DPrintf( "CL_ShaderStateChanged: invalid length encoding for source shader\n" );
+			break;
+		}
 		Q_strncpyz( originalShader, curPos, MIN((unsigned int)length+1, sizeof(originalShader)) );
 		curPos += length;
 
 		// Read new shader
 		if ( curPos >= endPos ) break;
 		length = *(curPos++);
-		length -= 47;
-		if ( length < 0 ) break;
+		length -= 47; // Length is increased by 47 to workaround netchan limits
+		if ( length < 0 )
+		{
+			Com_DPrintf( "CL_ShaderStateChanged: invalid length encoding for destination shader\n" );
+			break;
+		}
 		Q_strncpyz( newShader, curPos, MIN((unsigned int)length+1, sizeof(newShader)) );
 		curPos += length;
 
 		// Read settings
 		if ( curPos >= endPos ) break;
 		length = *(curPos++);
-		length -= 47;
-		if ( length < 0 ) break;
+		length -= 47; // Length is increased by 47 to workaround netchan limits
+		if ( length < 0 )
+		{
+			Com_DPrintf( "CL_ShaderStateChanged: invalid length encoding for settings\n" );
+			break;
+		}
 		Q_strncpyz( settings, curPos, MIN((unsigned int)length+1, sizeof(settings)) );
 		curPos += length;
 
@@ -4168,6 +4179,6 @@ void CL_ShaderStateChanged( void ) {
 		else styleModeValue = SHADERREMAP_STYLE_PRESERVE; // fallback to preserve
 
 		// Apply remap
-		re.RemapShaderAdvanced( originalShader, newShader, atoi(timeOffset), lightmapModeValue, styleModeValue );
+		re.RemapShaderAdvanced( originalShader, newShader, timeOffset ? atoi(timeOffset) : 0, lightmapModeValue, styleModeValue );
 	}
 }
