@@ -4090,6 +4090,17 @@ void CL_ShaderStateChanged( void ) {
 	// Skip prefix
 	curPos += 8;
 
+	// Example input (after skipping the "mvremap:" prefix above): "6console4clear929300;p;p;":
+	//  - "6" -> ascii 54 -> 54 - 47 = 7 -> the next 7 characters are the source shader name
+	//  - "console" -> source shader (7 characters)
+	//  - "4" -> ascii 52 -> 52 - 47 = 5 -> the next 5 characters are the destination shader name
+	//  - "clear" -> destination shader (5 characters)
+	//  - "9" -> ascii 57 -> 57 - 47 = 10 -> the next 10 characters are the options
+	//  - "29300;p;p;"
+	//    - "29300" -> timeOffset
+	//    - "p" -> lightmapMode
+	//    - "p" -> styleMode
+
 	// Parse configstring
 	while ( curPos < endPos )
 	{
