@@ -55,6 +55,16 @@ New and Modified Cvars
 
 ..
 
+:Name: fs_basejka
+:Values: Foldername
+:Default: "basejka" (if fs_assetspathjka is empty); "base" (if fs_assetspathjka is set)
+:Description:
+   Name of the folder containing the JKA assets within fs_assetspathjka. If
+   fs_assetspathjka is not set the game tries to load assets from the specified
+   folder in fs_basepath and fs_homepath.
+
+..
+
 :Name: fs_loadjka
 :Values: "0", "1"
 :Default: "1"
