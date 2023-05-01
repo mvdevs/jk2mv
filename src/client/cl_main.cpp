@@ -4107,7 +4107,7 @@ void CL_ShaderStateChanged( void ) {
 		// Read original shader
 		length = *(curPos++);
 		length -= 47; // Length is increased by 47 to workaround netchan limits
-		if ( length < 0 )
+		if ( length < 1 )
 		{
 			Com_DPrintf( "CL_ShaderStateChanged: invalid length encoding for source shader\n" );
 			break;
@@ -4119,7 +4119,7 @@ void CL_ShaderStateChanged( void ) {
 		if ( curPos >= endPos ) break;
 		length = *(curPos++);
 		length -= 47; // Length is increased by 47 to workaround netchan limits
-		if ( length < 0 )
+		if ( length < 1 )
 		{
 			Com_DPrintf( "CL_ShaderStateChanged: invalid length encoding for destination shader\n" );
 			break;
@@ -4131,7 +4131,7 @@ void CL_ShaderStateChanged( void ) {
 		if ( curPos >= endPos ) break;
 		length = *(curPos++);
 		length -= 47; // Length is increased by 47 to workaround netchan limits
-		if ( length < 0 )
+		if ( length < 1 )
 		{
 			Com_DPrintf( "CL_ShaderStateChanged: invalid length encoding for settings\n" );
 			break;
