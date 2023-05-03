@@ -395,10 +395,10 @@ void RE_GetBModelVerts( int bmodelIndex, vec3_t *verts, vec3_t normal )
 	}
 
 	// Calculate total camera-facing area of each surface group
-	float *grpArea = (float *)ri.Hunk_AllocateTempMemory(grpNum * sizeof(float));
+	float *grpScore = (float *)ri.Hunk_AllocateTempMemory(grpNum * sizeof(float));
 
 	for (int i = 0; i < grpNum; i++)
-		grpArea[i] = 0.0f;
+		grpScore[i] = 0.0f;
 
 	for (int i = 0; i < bmodel->numSurfaces; i++)
 	{
@@ -422,18 +422,21 @@ void RE_GetBModelVerts( int bmodelIndex, vec3_t *verts, vec3_t normal )
 			faceArea += VectorLength(cross);
 		}
 
-		// Calculate camera-facing area (with sign) and add to total
-		grpArea[surfaceGrp[i]] -= faceArea * DotProduct( face->plane.normal, tr.refdef.viewaxis[0] );
+		// Score gives precedence to surfaces oriented towards camera,
+		// but when there is a big difference in area size (area)
+		// orientation becomes irrelevant and bigger surface will be
+		// selected.
+		grpScore[surfaceGrp[i]] += faceArea * (1.0f - 0.1f * DotProduct(face->plane.normal, tr.refdef.viewaxis[0]));
 	}
 
 	int bestGrp = 0;
 	for (int i = 1; i < grpNum; i++)
 	{
-		if (grpArea[i] > grpArea[bestGrp])
+		if (grpScore[i] > grpScore[bestGrp])
 			bestGrp = i;
 	}
 
-	ri.Hunk_FreeTempMemory(grpArea);
+	ri.Hunk_FreeTempMemory(grpScore);
 
 	// Now find best quad surface representing the group. The
 	// algorithm makes assumption that combined surfaces within a
