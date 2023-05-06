@@ -328,6 +328,21 @@ void R_RemapShaderAdvanced(const char *shaderName, const char *newShaderName, in
 	if ( failed ) ri.Printf( PRINT_WARNING, "WARNING: R_RemapShaderAdvanced: new shader %s not found (x%i)\n", newShaderName, failed );
 }
 
+void R_RemoveAdvancedRemaps( void ) {
+	int i;
+	shader_t *cur;
+	for ( i = 0; i < (int)ARRAY_LEN(hashTable); i++ ) {
+		cur = hashTable[i];
+		while ( cur ) {
+			if ( cur->advancedRemap ) {
+				cur->remappedShader = NULL;
+				cur->advancedRemap = qfalse;
+			}
+			cur = cur->next;
+		}
+	}
+}
+
 /*
 ===============
 ParseVector

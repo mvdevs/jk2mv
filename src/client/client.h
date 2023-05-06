@@ -352,6 +352,8 @@ typedef struct {
 
 	int			fixes;
 	qboolean	submodelBypass;
+
+	int			cs_remaps;
 } clientStatic_t;
 
 #define	CON_TEXTSIZE	131072 // increased in jk2mv

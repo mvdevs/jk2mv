@@ -453,7 +453,7 @@ void CL_ConfigstringModified( void ) {
 	}
 
 	// Shader Remaps
-	if ( index == CS_MV_REMAPS ) {
+	if ( index == cls.cs_remaps ) {
 		CL_ShaderStateChanged();
 	}
 }

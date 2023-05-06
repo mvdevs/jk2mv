@@ -4060,13 +4060,19 @@ void CL_ShaderStateChanged( void ) {
 	shaderRemapLightmapType_t lightmapModeValue;
 	shaderRemapStyleType_t styleModeValue;
 
-	const char *curPos = cl.gameState.stringData + cl.gameState.stringOffsets[ CS_MV_REMAPS ];
-	const char *endPos = curPos + strlen( curPos );
+	const char *curPos;
+	const char *endPos;
 
 	int length;
 
-	// Check configstring for prefix to avoid misinterpreting configstrings from mods
-	if ( !curPos || !*curPos || strncmp(curPos, "mvremap:", 8) ) return;
+	// Make sure it's a valid configstring index
+	if ( cls.cs_remaps < CS_SYSTEMINFO || cls.cs_remaps >= MAX_CONFIGSTRINGS ) return;
+
+	// Clear any active remaps. We are going to reapply those that should stay below when parsing the string anyway.
+	re.RemoveAdvancedRemaps();
+
+	curPos = cl.gameState.stringData + cl.gameState.stringOffsets[ cls.cs_remaps ];
+	endPos = curPos + strlen( curPos );
 
 	// Handling of these is really ugly. I originally wanted to handle them like the base game/cgame modules do, but
 	// those are prone to injections. Summary of delimeter issues:
@@ -4087,10 +4093,7 @@ void CL_ShaderStateChanged( void ) {
 	//     it; this would allow for a size of up to 89, which is unlikely to be useful if MAX_QPATH ever gets increased
 	//  -> using 47 to 127
 
-	// Skip prefix
-	curPos += 8;
-
-	// Example input (after skipping the "mvremap:" prefix above): "6console4clear929300;p;p;":
+	// Example input: "6console4clear929300;p;p;":
 	//  - "6" -> ascii 54 -> 54 - 47 = 7 -> the next 7 characters are the source shader name
 	//  - "console" -> source shader (7 characters)
 	//  - "4" -> ascii 52 -> 52 - 47 = 5 -> the next 5 characters are the destination shader name

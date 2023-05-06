@@ -842,6 +842,12 @@ void SV_Init (void) {
 	Cvar_Get ("sv_referencedPaks", "", CVAR_SYSTEMINFO | CVAR_ROM );
 	Cvar_Get ("sv_referencedPakNames", "", CVAR_SYSTEMINFO | CVAR_ROM );
 
+	// The mv_cs_remaps systeminfo cvar can be used by game module mods to
+	// announce the index of the configstring used for mvremaps. Registering the
+	// cvar here is not actually required. We just register it here to ensure
+	// the right flags are set on it.
+	Cvar_Get ("mv_cs_remaps", "", CVAR_SYSTEMINFO | CVAR_ROM | CVAR_INTERNAL );
+
 	// server vars
 	sv_rconPassword = Cvar_Get ("rconPassword", "", CVAR_TEMP );
 	sv_privatePassword = Cvar_Get ("sv_privatePassword", "", CVAR_TEMP );

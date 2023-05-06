@@ -1523,6 +1523,7 @@ refexport_t *GetRefAPI ( int apiVersion, refimport_t *rimp ) {
 
 	re.RemapShader = R_RemapShader;
 	re.RemapShaderAdvanced = R_RemapShaderAdvanced;
+	re.RemoveAdvancedRemaps = R_RemoveAdvancedRemaps;
 	re.GetEntityToken = R_GetEntityToken;
 	re.inPVS = R_inPVS;
 

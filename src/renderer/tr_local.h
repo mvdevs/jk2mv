@@ -1463,6 +1463,7 @@ void		R_InitShaders( void );
 void		R_ShaderList_f( void );
 void	R_RemapShader(const char *oldShader, const char *newShader, const char *timeOffset);
 void R_RemapShaderAdvanced(const char *shaderName, const char *newShaderName, int timeOffset, shaderRemapLightmapType_t lightmapMode, shaderRemapStyleType_t styleMode);
+void R_RemoveAdvancedRemaps( void );
 
 /*
 ====================================================================
