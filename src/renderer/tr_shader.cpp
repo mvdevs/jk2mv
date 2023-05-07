@@ -103,6 +103,7 @@ static	qboolean		deferLoad;
 
 #define FILE_HASH_SIZE		1024
 static	shader_t*		hashTable[FILE_HASH_SIZE];
+static	shader_t*		advancedRemapShadersHashTable[FILE_HASH_SIZE];
 
 #define MAX_SHADERTEXT_HASH		2048
 static const char **shaderTextHashTable[MAX_SHADERTEXT_HASH];
@@ -237,15 +238,10 @@ void R_RemapShader(const char *shaderName, const char *newShaderName, const char
 	hash = generateHashValue(strippedName, FILE_HASH_SIZE);
 	for (sh = hashTable[hash]; sh; sh = sh->next) {
 		if (Q_stricmp(sh->name, strippedName) == 0) {
-			if (sh->remappedShader && sh->advancedRemap) {
-				// Advanced remaps take priority over the old ones
-				continue;
-			} else if (sh != sh2) {
+			if (sh != sh2) {
 				sh->remappedShader = sh2;
-				sh->advancedRemap = qfalse;
 			} else {
 				sh->remappedShader = NULL;
-				sh->advancedRemap = qfalse;
 			}
 		}
 	}
@@ -292,7 +288,7 @@ void R_RemapShaderAdvanced(const char *shaderName, const char *newShaderName, in
 
 	if ( lightmapIndex && lightmapMode != SHADERREMAP_LIGHTMAP_VERTEX ) {
 		// For fullbright, none and 2d we only need one new shader
-		sh2 = R_FindShader( newShaderName, lightmapIndex, stylesDefault, qtrue );
+		sh2 = R_FindAdvancedRemapShader( newShaderName, lightmapIndex, stylesDefault, qtrue );
 
 		if ( !sh2 || sh2 == tr.defaultShader || sh2->defaultShader ) {
 			ri.Printf( PRINT_WARNING, "WARNING: R_RemapShaderAdvanced: new shader %s not found\n", newShaderName );
@@ -307,7 +303,7 @@ void R_RemapShaderAdvanced(const char *shaderName, const char *newShaderName, in
 		if (Q_stricmp(sh->name, strippedName) == 0) {
 			if ( lightmapMode == SHADERREMAP_LIGHTMAP_PRESERVE || lightmapMode == SHADERREMAP_LIGHTMAP_VERTEX ) {
 				// When preserving lightmaps we need to use the correct lightmap index (+styles)
-				sh2 = R_FindShader( newShaderName, lightmapIndex ? lightmapIndex : sh->lightmapIndex, styles ? styles : sh->styles, (qboolean)!sh->upload.noMipMaps );
+				sh2 = R_FindAdvancedRemapShader( newShaderName, lightmapIndex ? lightmapIndex : sh->lightmapIndex, styles ? styles : sh->styles, (qboolean)!sh->upload.noMipMaps );
 			}
 
 			if ( !sh2 || sh2 == tr.defaultShader || sh2->defaultShader ) {
@@ -317,11 +313,9 @@ void R_RemapShaderAdvanced(const char *shaderName, const char *newShaderName, in
 			if ( timeOffset ) sh2->timeOffset = timeOffset * 0.001;
 
 			if (sh != sh2) {
-				sh->remappedShader = sh2;
-				sh->advancedRemap = qtrue;
+				sh->remappedShaderAdvanced = sh2;
 			} else {
-				sh->remappedShader = NULL;
-				sh->advancedRemap = qfalse;
+				sh->remappedShaderAdvanced = NULL;
 			}
 		}
 	}
@@ -330,16 +324,8 @@ void R_RemapShaderAdvanced(const char *shaderName, const char *newShaderName, in
 
 void R_RemoveAdvancedRemaps( void ) {
 	int i;
-	shader_t *cur;
-	for ( i = 0; i < (int)ARRAY_LEN(hashTable); i++ ) {
-		cur = hashTable[i];
-		while ( cur ) {
-			if ( cur->advancedRemap ) {
-				cur->remappedShader = NULL;
-				cur->advancedRemap = qfalse;
-			}
-			cur = cur->next;
-		}
+	for ( i = 0; i < tr.numShaders; i++ ) {
+		tr.shaders[i]->remappedShaderAdvanced = NULL;
 	}
 }
 
@@ -2891,7 +2877,7 @@ static shader_t *GeneratePermanentShader( void ) {
 	int			i, b;
 	int			size, hash;
 
-	if ( tr.numShaders == MAX_SHADERS ) {
+	if ( (!shader.isAdvancedRemap && tr.numShaders == MAX_SHADERS) || (shader.isAdvancedRemap && tr.numAdvancedRemapShaders == MAX_SHADERS) ) {
 		ri.Printf( PRINT_WARNING, "WARNING: GeneratePermanentShader - MAX_SHADERS hit\n");
 		return tr.defaultShader;
 	}
@@ -2928,13 +2914,19 @@ static shader_t *GeneratePermanentShader( void ) {
 		newShader->fogPass = FP_LE;
 	}
 
-	tr.shaders[ tr.numShaders ] = newShader;
-	newShader->index = tr.numShaders;
+	if ( newShader->isAdvancedRemap ) {
+		// If the shader has been created by the advanced remaps system we store it in a separate list
+		tr.advancedRemapShaders[ tr.numAdvancedRemapShaders ] = newShader;
+		tr.numAdvancedRemapShaders++;
+	} else {
+		tr.shaders[ tr.numShaders ] = newShader;
+		newShader->index = tr.numShaders;
 
-	tr.sortedShaders[ tr.numShaders ] = newShader;
-	newShader->sortedIndex = tr.numShaders;
+		tr.sortedShaders[ tr.numShaders ] = newShader;
+		newShader->sortedIndex = tr.numShaders;
 
-	tr.numShaders++;
+		tr.numShaders++;
+	}
 
 	for ( i = 0 ; i < newShader->numUnfoggedPasses ; i++ ) {
 		if ( !stages[i].active ) {
@@ -2952,11 +2944,18 @@ static shader_t *GeneratePermanentShader( void ) {
 		}
 	}
 
-	SortNewShader();
-
 	hash = generateHashValue(newShader->name, FILE_HASH_SIZE);
-	newShader->next = hashTable[hash];
-	hashTable[hash] = newShader;
+
+	if ( newShader->isAdvancedRemap ) {
+		// We want to keep the advanced remaps separate
+		newShader->next = advancedRemapShadersHashTable[hash];
+		advancedRemapShadersHashTable[hash] = newShader;
+	} else {
+		SortNewShader();
+
+		newShader->next = hashTable[hash];
+		hashTable[hash] = newShader;
+	}
 
 	return newShader;
 }
@@ -3530,7 +3529,7 @@ most world construction surfaces.
 
 ===============
 */
-shader_t *R_FindShader( const char *name, const int *lightmapIndex, const byte *styles, qboolean mipRawImage )
+shader_t *R_FindShader( const char *name, const int *lightmapIndex, const byte *styles, qboolean mipRawImage, qboolean isAdvancedRemap )
 {
 	char		strippedName[MAX_QPATH];
 	char		fileName[MAX_QPATH];
@@ -3559,7 +3558,7 @@ shader_t *R_FindShader( const char *name, const int *lightmapIndex, const byte *
 	//
 	// see if the shader is already loaded
 	//
-	for (sh = hashTable[hash]; sh; sh = sh->next) {
+	for (sh = isAdvancedRemap ? advancedRemapShadersHashTable[hash] : hashTable[hash]; sh; sh = sh->next) {
 		// NOTE: if there was no shader or image available with the name strippedName
 		// then a default shader is created with lightmapIndex == LIGHTMAP_NONE, so we
 		// have to check all default shaders otherwise for every call to R_FindShader
@@ -3580,6 +3579,9 @@ shader_t *R_FindShader( const char *name, const int *lightmapIndex, const byte *
 	for ( i = 0 ; i < MAX_SHADER_STAGES ; i++ ) {
 		stages[i].bundle[0].texMods = texMods[i];
 	}
+
+	// Mark shader as advanced remap if it is
+	shader.isAdvancedRemap = isAdvancedRemap;
 
 	// FIXME: set these "need" values apropriately
 	shader.needsNormal = qtrue;
@@ -3691,6 +3693,10 @@ shader_t *R_FindShader( const char *name, const int *lightmapIndex, const byte *
 
 	return FinishShader();
 #endif //!DEDICATED
+}
+
+shader_t *R_FindAdvancedRemapShader( const char *name, const int *lightmapIndex, const byte *styles, qboolean mipRawImage ) {
+	return R_FindShader( name, lightmapIndex, styles, mipRawImage, qtrue );
 }
 
 #if 0
@@ -4219,6 +4225,7 @@ CreateInternalShaders
 */
 static void CreateInternalShaders( void ) {
 	tr.numShaders = 0;
+	tr.numAdvancedRemapShaders = 0;
 
 	// init the default shader
 	Com_Memset( &shader, 0, sizeof( shader ) );
@@ -4346,6 +4353,7 @@ void R_InitShaders( void ) {
 	ri.Printf( PRINT_ALL, "Initializing Shaders\n" );
 
 	Com_Memset(hashTable, 0, sizeof(hashTable));
+	Com_Memset(advancedRemapShadersHashTable, 0, sizeof(advancedRemapShadersHashTable));
 
 	deferLoad = qfalse;
 
