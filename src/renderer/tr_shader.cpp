@@ -254,21 +254,10 @@ void R_RemapShaderAdvanced(const char *shaderName, const char *newShaderName, in
 	char		strippedName[MAX_QPATH];
 	int			hash;
 	shader_t	*sh, *sh2 = NULL;
-	qhandle_t	h;
 	int			failed = 0;
 	const int	*lightmapIndex = NULL;
 	const byte	*styles = NULL;
-
-	// Check if at least one instance of the original exists
-	sh = R_FindShaderByName( shaderName );
-	if (sh == NULL || sh == tr.defaultShader || sh->defaultShader) {
-		h = RE_RegisterShaderLightMap(shaderName, lightmapsNone, stylesDefault);
-		sh = R_GetShaderByHandle(h);
-	}
-	if (sh == NULL || sh == tr.defaultShader || sh->defaultShader) {
-		ri.Printf( PRINT_WARNING, "WARNING: R_RemapShaderAdvanced: shader %s not found\n", shaderName );
-		return;
-	}
+	qboolean	foundShader = qfalse;
 
 	// Lightmap
 	if ( lightmapMode == SHADERREMAP_LIGHTMAP_FULLBRIGHT ) {
@@ -301,6 +290,8 @@ void R_RemapShaderAdvanced(const char *shaderName, const char *newShaderName, in
 	hash = generateHashValue(strippedName, FILE_HASH_SIZE);
 	for (sh = hashTable[hash]; sh; sh = sh->next) {
 		if (Q_stricmp(sh->name, strippedName) == 0) {
+			foundShader = qtrue;
+
 			if ( lightmapMode == SHADERREMAP_LIGHTMAP_PRESERVE || lightmapMode == SHADERREMAP_LIGHTMAP_VERTEX ) {
 				// When preserving lightmaps we need to use the correct lightmap index (+styles)
 				sh2 = R_FindAdvancedRemapShader( newShaderName, lightmapIndex ? lightmapIndex : sh->lightmapIndex, styles ? styles : sh->styles, (qboolean)!sh->upload.noMipMaps );
@@ -319,6 +310,7 @@ void R_RemapShaderAdvanced(const char *shaderName, const char *newShaderName, in
 			}
 		}
 	}
+	if ( !foundShader ) ri.Printf( PRINT_WARNING, "WARNING: R_RemapShaderAdvanced: shader %s not found\n", shaderName );
 	if ( failed ) ri.Printf( PRINT_WARNING, "WARNING: R_RemapShaderAdvanced: new shader %s not found (x%i)\n", newShaderName, failed );
 }
 
@@ -3462,18 +3454,15 @@ inline qboolean IsShader(shader_t *sh, const char *name, const int *lightmapInde
 		return qfalse;
 	}
 
-	if (!sh->defaultShader)
+	for(i=0;i<MAXLIGHTMAPS;i++)
 	{
-		for(i=0;i<MAXLIGHTMAPS;i++)
+		if (sh->lightmapIndex[i] != lightmapIndex[i])
 		{
-			if (sh->lightmapIndex[i] != lightmapIndex[i])
-			{
-				return qfalse;
-			}
-			if (sh->styles[i] != styles[i])
-			{
-				return qfalse;
-			}
+			return qfalse;
+		}
+		if (sh->styles[i] != styles[i])
+		{
+			return qfalse;
 		}
 	}
 
@@ -3637,7 +3626,8 @@ shader_t *R_FindShader( const char *name, const int *lightmapIndex, const byte *
 	if ( !image ) {
 		ri.Printf( PRINT_DEVELOPER, "Couldn't find image for shader %s\n", name );
 		shader.defaultShader = qtrue;
-		return FinishShader();
+		//return FinishShader();
+		image = tr.defaultImage;
 	}
 
 	//
@@ -3815,15 +3805,6 @@ qhandle_t RE_RegisterShaderLightMap( const char *name, const int *lightmapIndex,
 
 	sh = R_FindShader( name, lightmapIndex, styles, qtrue );
 
-	// we want to return 0 if the shader failed to
-	// load for some reason, but R_FindShader should
-	// still keep a name allocated for it, so if
-	// something calls RE_RegisterShader again with
-	// the same name, we don't try looking for it again
-	if ( sh->defaultShader ) {
-		return 0;
-	}
-
 	return sh->index;
 }
 
@@ -3849,15 +3830,6 @@ qhandle_t RE_RegisterShader( const char *name ) {
 
 	sh = R_FindShader( name, lightmaps2d, stylesDefault, qtrue );
 
-	// we want to return 0 if the shader failed to
-	// load for some reason, but R_FindShader should
-	// still keep a name allocated for it, so if
-	// something calls RE_RegisterShader again with
-	// the same name, we don't try looking for it again
-	if ( sh->defaultShader ) {
-		return 0;
-	}
-
 	return sh->index;
 }
 
@@ -3878,15 +3850,6 @@ qhandle_t RE_RegisterShaderNoMip( const char *name ) {
 	}
 
 	sh = R_FindShader( name, lightmaps2d, stylesDefault, qfalse );
-
-	// we want to return 0 if the shader failed to
-	// load for some reason, but R_FindShader should
-	// still keep a name allocated for it, so if
-	// something calls RE_RegisterShader again with
-	// the same name, we don't try looking for it again
-	if ( sh->defaultShader ) {
-		return 0;
-	}
 
 	return sh->index;
 }
