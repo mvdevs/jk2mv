@@ -1,7 +1,7 @@
 ORI_HASH 1929369531
 
 LINES_REPLACE 245 [
-			descText			@MV_GAME_VERSION_BROWSER_INFO
+			descText	@MV_GAME_VERSION_BROWSER_INFO
 ]
 
 LINES_DELETE 403 450
@@ -9,52 +9,52 @@ LINES_INSERT 402 [
 		// ouned: botfilter
 		itemDef
 		{
-			name				botfilter_button
-			group				none
-			style				WINDOW_STYLE_SHADER
-			rect				460 72 150 24
-			background			"gfx/menus/menu_blendbox3"
-			forecolor			1 1 1 1
-			visible				0
+			name		botfilter_button
+			group		none
+			style			WINDOW_STYLE_SHADER
+			rect			460 72 150 24
+			background	"gfx/menus/menu_blendbox3"
+			forecolor		1 1 1 1
+			visible		0
 			decoration
 		}
 
 		itemDef
 		{
-			name				botfilter
-			type				ITEM_TYPE_MULTI
-			text				@MV_BOTFILTER
-			descText			@MV_BOTFILTER_INFO
-			cvar				"ui_botfilter"
+			name	botfilter
+			type		ITEM_TYPE_MULTI
+			text		@MV_BOTFILTER
+			descText	@MV_BOTFILTER_INFO
+			cvar		"ui_botfilter"
 			cvarFloatList
 			{
 				"@MENUS0_NO"	1
 				"@MENUS0_YES"	0
 			}
 
-			textscale			.80
-			rect				460 72 150 24
-			textalign			0
-			textalignx			0
-			textaligny			-2
-			textalign			ITEM_ALIGN_LEFT
-			forecolor			1 1 1 1
-			visible				1
+			textscale	.80
+			rect		460 72 150 24
+			textalign	0
+			textalignx	0
+			textaligny	-2
+			textalign	ITEM_ALIGN_LEFT
+			forecolor	1 1 1 1
+			visible	1
 
 			action
 			{
-				play			"sound/interface/button1.wav"
-				uiScript		RefreshFilter
+				play		"sound/interface/button1.wav"
+				uiScript	RefreshFilter
 			}
 
-			mouseenter
+			mouseEnter
 			{
-				show			botfilter_button
+				show botfilter_button
 			}
 
-			mouseexit
+			mouseExit
 			{
-				hide			botfilter_button
+				hide	botfilter_button
 			}
 		}
 ]

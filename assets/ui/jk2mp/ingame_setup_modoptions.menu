@@ -1,20 +1,18 @@
 {
-	menuDef
-	{
-		name                    "ingame_setup_modoptions"
-		fullscreen              0
-		rect                    245 81 300 250
-		focusColor              1 1 1 1
-		style                   1
-		border                  1
-		descX                   305
-		descY                   335
-		descScale               0.7
-		descColor               .235 .882 .847 1
-		descAlignment           ITEM_ALIGN_CENTER
-		onClose 
-		{
-			close					ingame_setup ;
+	menuDef {
+		name		"ingame_setup_modoptions"
+		fullscreen		0
+		rect			245 81 300 250
+		focusColor	1 1 1 1
+		style			1
+		border		1
+		descX		305
+		descY		335
+		descScale		0.7
+		descColor	.235 .882 .847 1
+		descAlignment	ITEM_ALIGN_CENTER
+		onClose {
+			close	ingame_setup ;
 		}
 
 		//----------------------------------------------------------------------------------------------
@@ -22,159 +20,146 @@
 		// HIGHLIGHT BARS
 		//
 		//----------------------------------------------------------------------------------------------
-		itemDef
-		{
-			name                    highlight1
-			group                   highlights
-			style                   WINDOW_STYLE_SHADER
-			rect                    20 0 300 20
-			background              "gfx/menus/menu_blendbox"
-			forecolor               1 1 1 1
-			visible                 0
+		itemDef {
+			name		highlight1
+			group		highlights
+			style			WINDOW_STYLE_SHADER
+			rect			20 0 300 20
+			background	"gfx/menus/menu_blendbox"
+			forecolor		1 1 1 1
+			visible		0
 			decoration
 		}
 
-		itemDef
-		{
-			name                    highlight2
-			group                   highlights
-			style                   WINDOW_STYLE_SHADER
-			rect                    20 20 300 20
-			background              "gfx/menus/menu_blendbox"
-			forecolor               1 1 1 1
-			visible                 0
+		itemDef {
+			name		highlight2
+			group		highlights
+			style			WINDOW_STYLE_SHADER
+			rect			20 20 300 20
+			background	"gfx/menus/menu_blendbox"
+			forecolor		1 1 1 1
+			visible		0
 			decoration
 		}
 
-		itemDef
-		{
-			name                    highlight3
-			group                   highlights
-			style                   WINDOW_STYLE_SHADER
-			rect                    20 40 300 20
-			background              "gfx/menus/menu_blendbox"
-			forecolor               1 1 1 1
-			visible                 0
+		itemDef {
+			name		highlight3
+			group		highlights
+			style			WINDOW_STYLE_SHADER
+			rect			20 40 300 20
+			background	"gfx/menus/menu_blendbox"
+			forecolor		1 1 1 1
+			visible		0
 			decoration
 		}
 
-		itemDef
-		{
-			name                    highlight4
-			group                   highlights
-			style                   WINDOW_STYLE_SHADER
-			rect                    20 60 300 20
-			background              "gfx/menus/menu_blendbox"
-			forecolor               1 1 1 1
-			visible                 0
+		itemDef {
+			name		highlight4
+			group		highlights
+			style			WINDOW_STYLE_SHADER
+			rect			20 60 300 20
+			background	"gfx/menus/menu_blendbox"
+			forecolor		1 1 1 1
+			visible		0
 			decoration
 		}
 
-		itemDef
-		{
-			name                    highlight5
-			group                   highlights
-			style                   WINDOW_STYLE_SHADER
-			rect                    20 80 300 20
-			background              "gfx/menus/menu_blendbox"
-			forecolor               1 1 1 1
-			visible                 0
+		itemDef {
+			name		highlight5
+			group		highlights
+			style			WINDOW_STYLE_SHADER
+			rect			20 80 300 20
+			background	"gfx/menus/menu_blendbox"
+			forecolor		1 1 1 1
+			visible		0
 			decoration
 		}
 
-		itemDef
-		{
-			name                    highlight6
-			group                   highlights
-			style                   WINDOW_STYLE_SHADER
-			rect                    20 100 300 20
-			background              "gfx/menus/menu_blendbox"
-			forecolor               1 1 1 1
-			visible                 0
+		itemDef {
+			name		highlight6
+			group		highlights
+			style			WINDOW_STYLE_SHADER
+			rect			20 100 300 20
+			background	"gfx/menus/menu_blendbox"
+			forecolor		1 1 1 1
+			visible		0
 			decoration
 		}
 
-		itemDef
-		{
-			name                    highlight7
-			group                   highlights
-			style                   WINDOW_STYLE_SHADER
-			rect                    20 120 300 20
-			background              "gfx/menus/menu_blendbox"
-			forecolor               1 1 1 1
-			visible                 0
+		itemDef {
+			name		highlight7
+			group		highlights
+			style			WINDOW_STYLE_SHADER
+			rect			20 120 300 20
+			background	"gfx/menus/menu_blendbox"
+			forecolor		1 1 1 1
+			visible		0
 			decoration
 		}
 
-		itemDef
-		{
-			name                    highlight8
-			group                   highlights
-			style                   WINDOW_STYLE_SHADER
-			rect                    20 140 300 20
-			background              "gfx/menus/menu_blendbox"
-			forecolor               1 1 1 1
-			visible                 0
+		itemDef {
+			name		highlight8
+			group		highlights
+			style			WINDOW_STYLE_SHADER
+			rect			20 140 300 20
+			background	"gfx/menus/menu_blendbox"
+			forecolor		1 1 1 1
+			visible		0
 			decoration
 		}
 
-		itemDef
-		{
-			name                    highlight9
-			group                   highlights
-			style                   WINDOW_STYLE_SHADER
-			rect                    20 160 300 20
-			background              "gfx/menus/menu_blendbox"
-			forecolor               1 1 1 1
-			visible                 0
+		itemDef {
+			name		highlight9
+			group		highlights
+			style			WINDOW_STYLE_SHADER
+			rect			20 160 300 20
+			background	"gfx/menus/menu_blendbox"
+			forecolor		1 1 1 1
+			visible		0
 			decoration
 		}
 
-		itemDef
-		{
-			name                    highlight10
-			group                   highlights
-			style                   WINDOW_STYLE_SHADER
-			rect                    20 180 300 20
-			background              "gfx/menus/menu_blendbox"
-			forecolor               1 1 1 1
-			visible                 0
+		itemDef {
+			name		highlight10
+			group		highlights
+			style			WINDOW_STYLE_SHADER
+			rect			20 180 300 20
+			background	"gfx/menus/menu_blendbox"
+			forecolor		1 1 1 1
+			visible		0
 			decoration
 		}
 
-		itemDef
-		{
-			name                    highlight11
-			group                   highlights
-			style                   WINDOW_STYLE_SHADER
-			rect                    20 200 300 20
-			background              "gfx/menus/menu_blendbox"
-			forecolor               1 1 1 1
-			visible                 0
+		itemDef {
+			name		highlight11
+			group		highlights
+			style			WINDOW_STYLE_SHADER
+			rect			20 200 300 20
+			background	"gfx/menus/menu_blendbox"
+			forecolor		1 1 1 1
+			visible		0
 			decoration
 		}
 
-		itemDef
-		{
-			name                    highlight12
-			group                   highlights
-			style                   WINDOW_STYLE_SHADER
-			rect                    20 220 300 20
-			background              "gfx/menus/menu_blendbox"
-			forecolor               1 1 1 1
-			visible                 0
+		itemDef {
+			name		highlight12
+			group		highlights
+			style			WINDOW_STYLE_SHADER
+			rect			20 220 300 20
+			background	"gfx/menus/menu_blendbox"
+			forecolor		1 1 1 1
+			visible		0
 			decoration
 		}
 
-		itemDef
-		{
-			name                    highlight13
-			group                   highlights
-			style                   WINDOW_STYLE_SHADER
-			rect                    165 220 120 32
-			background              "gfx/menus/menu_blendbox"
-			forecolor               1 1 1 1
-			visible                 0
+		itemDef {
+			name		highlight13
+			group		highlights
+			style			WINDOW_STYLE_SHADER
+			rect			165 220 120 32
+			background	"gfx/menus/menu_blendbox"
+			forecolor		1 1 1 1
+			visible		0
 			decoration
 		}
 
@@ -185,17 +170,16 @@
 		//----------------------------------------------------------------------------------------------
 
 		// Placeholder text, remove when adding your own options
-		itemDef
-		{
-			text				@MV_MOD_OPTIONS_EMPTY
-			type				ITEM_TYPE_TEXT
-			textalign           ITEM_ALIGN_LEFT
-			rect				20 20 300 20
-			font				2
-			textscale			.7
-			backcolor			0 0 1 0
-			forecolor			.433 .703 .722 1
-			visible				1
+		itemDef {
+			text			@MV_MOD_OPTIONS_EMPTY
+			type			ITEM_TYPE_TEXT
+			textalign		ITEM_ALIGN_LEFT
+			rect			20 20 300 20
+			font			2
+			textscale		.7
+			backcolor		0 0 1 0
+			forecolor		.433 .703 .722 1
+			visible		1
 			autowrapped
 		}
 	}

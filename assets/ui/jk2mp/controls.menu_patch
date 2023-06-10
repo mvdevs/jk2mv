@@ -4,18 +4,18 @@ LINES_DELETE 3255 3258
 
 LINES_DELETE 3262 3265
 LINES_INSERT 3261 [
-			group				joycontrols
-			type				ITEM_TYPE_MULTI
-			text				@MV_MOUSE_RAW
-			cvar				"in_mouse"
-			cvarFloatList		{ @MENUS0_ON 1 @MENUS0_OFF 2 }
+			group		joycontrols
+			type			ITEM_TYPE_MULTI
+			text			@MV_MOUSE_RAW
+			cvar			"in_mouse"
+			cvarFloatList	{ @MENUS0_ON 1 @MENUS0_OFF 2 }
 ]
 
 LINES_REPLACE 3275 [
-			descText			@MV_MOUSE_RAW_INFO
+			descText	@MV_MOUSE_RAW_INFO
 ]
 
 LINES_INSERT 3288 [
-				exec			in_restart
+				exec	in_restart
 ]
 

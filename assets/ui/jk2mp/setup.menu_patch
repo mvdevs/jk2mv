@@ -1,589 +1,536 @@
 ORI_HASH 1700153493
 
 LINES_INSERT 35 [
-			hide			mvoptions   ;
+			hide	mvoptions ;
 ]
 
 LINES_INSERT 38 [
-			hide			downloads ;
+			hide	downloads ;
 ]
 
 LINES_REPLACE 527 [
-			rect				120 173 170 24
+			rect	120 173 170 24
 ]
 
 LINES_REPLACE 541 [
-			rect				120 173 170 24
+			rect	120 173 170 24
 ]
 
 LINES_REPLACE 545 [
-			textaligny			1
+			textaligny	1
 ]
 
 LINES_INSERT 573 [
-				hide			mvoptions   ;
+				hide	mvoptions ;
 ]
 
 LINES_INSERT 575 [
-				hide			downloads ;
+				hide	downloads ;
 ]
 
 LINES_REPLACE 588 [
-			rect				120 197 170 24
+			rect	120 197 170 24
 ]
 
 LINES_REPLACE 603 [
-			rect				120 197 170 24
+			rect	120 197 170 24
 ]
 
 LINES_REPLACE 607 [
-			textaligny			1
+			textaligny	1
 ]
 
 LINES_INSERT 637 [
-				hide			mvoptions   ;
+				hide	mvoptions ;
 ]
 
 LINES_INSERT 639 [
-				hide			downloads ;
+				hide	downloads ;
 ]
 
 LINES_REPLACE 652 [
-			rect				120 221 170 24
+			rect	120 221 170 24
 ]
 
 LINES_REPLACE 667 [
-			rect				120 221 170 24
+			rect	120 221 170 24
 ]
 
 LINES_REPLACE 671 [
-			textaligny			1
+			textaligny	1
 ]
 
 LINES_INSERT 699 [
-				hide			mvoptions   ;
+				hide	mvoptions ;
 ]
 
 LINES_INSERT 701 [
-				hide			downloads ;
+				hide	downloads ;
 ]
 
 LINES_REPLACE 714 [
-			rect				120 245 170 24
+			rect	120 245 170 24
 ]
 
 LINES_REPLACE 729 [
-			rect				120 245 170 24
+			rect	120 245 170 24
 ]
 
 LINES_REPLACE 733 [
-			textaligny			1
+			textaligny	1
 ]
 
 LINES_INSERT 761 [
-				hide			mvoptions   ;
+				hide	mvoptions ;
 ]
 
 LINES_INSERT 763 [
-				hide			downloads ;
+				hide	downloads ;
 ]
 
 LINES_REPLACE 776 [
-			rect				120 269 170 24
+			rect	120 269 170 24
 ]
 
 LINES_REPLACE 791 [
-			rect				120 269 170 24
+			rect	120 269 170 24
 ]
 
 LINES_REPLACE 795 [
-			textaligny			1
+			textaligny	1
 ]
 
 LINES_INSERT 822 [
-				hide			mvoptions
+				hide	mvoptions
 ]
 
 LINES_INSERT 825 [
-				hide			downloads
+				hide	downloads
 ]
 
 LINES_REPLACE 832 [
 		// mvoptions button
-		itemDef
-		{
-			name				mvoptionsbutton_glow
+		itemDef {
+			name	mvoptionsbutton_glow
 ]
 
 LINES_REPLACE 838 [
-			rect				120 293 170 24
+			rect	120 293 170 24
 ]
 
 LINES_REPLACE 848 [
-			name				mvoptionsbutton
+			name	mvoptionsbutton
 ]
 
 LINES_REPLACE 850 [
-			text				@MV_JK2MV
+			text		@MV_JK2MV
 ]
 
 LINES_REPLACE 853 [
-			rect				120 293 170 24
+			rect	120 293 170 24
 ]
 
 LINES_REPLACE 857 [
-			textaligny			1
+			textaligny	1
 ]
 
 LINES_REPLACE 861 [
-			visible			1
-			descText			@MV_JK2MV_CONFIGURE_OPTIONS
+			visible	1
+			descText	@MV_JK2MV_CONFIGURE_OPTIONS
 ]
 
 LINES_REPLACE 866 [
-				show			mvoptionsbutton_glow
+				show	mvoptionsbutton_glow
 ]
 
 LINES_REPLACE 870 [
-				hide			mvoptionsbutton_glow
+				hide	mvoptionsbutton_glow
 			}
-			action
-			{
-				play			"sound/interface/button1.wav" ;
+			action {
+				play	"sound/interface/button1.wav" ;
 ]
 
 LINES_DELETE 877 877
 
 LINES_DELETE 887 887
 LINES_INSERT 886 [
-				show			mvoptions ;
-				hide			mods	;
+				show mvoptions ;
+				hide	mods ;
 ]
 
 LINES_INSERT 888 [
-				hide			downloads ;
+				hide	downloads ;
 ]
 
 LINES_REPLACE 891 [
-				setitemcolor	mvoptionsbutton		forecolor	1 1 1 1 ;
+				setitemcolor mvoptionsbutton forecolor 1 1 1 1 ;
 			}
 		}
 
-		// mods  button
-		itemDef
-		{
-			name				modsbutton_glow
+		// mods button
+		itemDef {
+			name	modsbutton_glow
 ]
 
 LINES_REPLACE 901 [
-			rect				120 317 170 24
+			rect	120 317 170 24
 ]
 
 LINES_REPLACE 911 [
-			name				modsmenubutton
+			name	modsmenubutton
 ]
 
 LINES_REPLACE 913 [
-			text				@MENUS1_MODS
+			text	@MENUS1_MODS
 ]
 
 LINES_REPLACE 916 [
-			rect				120 317 170 24
+			rect	120 317 170 24
 ]
 
 LINES_REPLACE 920 [
-			textaligny			1
+			textaligny	1
 ]
 
 LINES_REPLACE 924 [
-			visible				1
-			descText			@MENUS0_CONFIGURE_GAME_OPTIONS
+			visible	1
+			descText	@MENUS0_CONFIGURE_GAME_OPTIONS
 ]
 
 LINES_REPLACE 929 [
-				show			modsbutton_glow
+				show modsbutton_glow
 ]
 
 LINES_REPLACE 933 [
-				hide			modsbutton_glow
+				hide	modsbutton_glow
 			}
-			action
-			{
-				play			"sound/interface/button1.wav" ;  // This sound may be cut out by the loadmods, so we play it later too.
+			action {
+				play	"sound/interface/button1.wav" ;	// This sound may be cut out by the loadmods, so we play it later too.
 ]
 
 LINES_INSERT 939 [
-				uiScript		loadMods ;
+				uiScript loadMods ;
 ]
 
 LINES_INSERT 948 [
-				hide			mvoptions   ;
-				show			mods	;
-				hide			defaults ;
-				hide			downloads ;
+				hide	mvoptions ;
+				show mods	;
+				hide	defaults ;
+				hide	downloads ;
 
-				setitemcolor	setup_submenu		forecolor	0.65 0.65 1 1 ;
-				setitemcolor	modsmenubutton		forecolor	1 1 1 1 ;
+				setitemcolor setup_submenu	forecolor	0.65 0.65 1 1 ;
+				setitemcolor modsmenubutton	forecolor	1 1 1 1 ;
 			}
 		}
 
 		// gamedefaults button
-		itemDef
-		{
-			name				gamedefaultsbutton_glow
-			group				highlights
-			style				WINDOW_STYLE_SHADER
-			rect				120 365 170 24
-			background			"gfx/menus/menu_blendbox2"			// Frame around button
-			forecolor			1 1 1 1
-			visible			0
-			// appearance_slot		1
+		itemDef {
+			name	gamedefaultsbutton_glow
+			group	highlights
+			style		WINDOW_STYLE_SHADER
+			rect	120 365 170 24
+			background	"gfx/menus/menu_blendbox2"	// Frame around button
+			forecolor	1 1 1 1
+			visible	0
+			// appearance_slot	1
 			decoration
 		}
 
-		itemDef
-		{
-			name				gamedefaultsmenubutton
-			group				setup_submenu
-			text				@MENUS1_DEFAULTS
-			type				ITEM_TYPE_BUTTON
-			style				WINDOW_STYLE_EMPTY
-			rect				120 365 170 24
-			font				3
-			textscale			0.9
-			textalignx			170
-			textaligny			1
-			textalign			ITEM_ALIGN_RIGHT
-			textstyle			3
-			forecolor			0.65 0.65 1 1
-			visible			1
-			descText			@MENUS0_RESTORE_DEFAULT_SETTINGS
+		itemDef {
+			name	gamedefaultsmenubutton
+			group	setup_submenu
+			text		@MENUS1_DEFAULTS
+			type		ITEM_TYPE_BUTTON
+			style		WINDOW_STYLE_EMPTY
+			rect		120 365 170 24
+			font		3
+			textscale	0.9
+			textalignx	170
+			textaligny	1
+			textalign	ITEM_ALIGN_RIGHT
+			textstyle	3
+			forecolor	0.65 0.65 1 1
+			visible	1
+			descText	@MENUS0_RESTORE_DEFAULT_SETTINGS
 
-			mouseEnter
-			{
-				show			gamedefaultsbutton_glow
+			mouseEnter {
+				show gamedefaultsbutton_glow
 			}
-			mouseExit
-			{
-				hide			gamedefaultsbutton_glow
+			mouseExit {
+				hide	gamedefaultsbutton_glow
 			}
-			action
-			{
-				play			"sound/interface/button1.wav" ;
+			action {
+				play	"sound/interface/button1.wav" ;
 
-				defer			VideoSetup	videowarningMenu ;
+				defer VideoSetup videowarningMenu ;
 
-				show			setup_background ;
-				hide 			video ;
-				hide			applyChanges ;
-				hide			player ;
-				hide			video2 ;
-				hide			vidrestart	;
-				hide			sound	;
-				hide			options ;
-				hide			mvoptions   ;
+				show setup_background ;
+				hide 	video ;
+				hide	applyChanges ;
+				hide	player ;
+				hide	video2 ;
+				hide	vidrestart	;
+				hide	sound	;
+				hide	options	;
+				hide	mvoptions ;
 ]
 
 LINES_INSERT 950 [
-				hide			downloads ;
+				hide	downloads ;
 ]
 
 LINES_INSERT 1094 [
-			name				highlightsound1
-			group				highlights
-			style				WINDOW_STYLE_SHADER
-			rect				305 381 300 20
-			background			"gfx/menus/menu_blendbox"
-			forecolor			1 1 1 1
-			visible			0
+			name	highlightsound1
+			group	highlights
+			style		WINDOW_STYLE_SHADER
+			rect	305 381 300 20
+			background	"gfx/menus/menu_blendbox"
+			forecolor	1 1 1 1
+			visible	0
 			decoration
 		}
 
-		itemDef
-		{
-			name				highlightsound2
-			group				highlights
-			style				WINDOW_STYLE_SHADER
-			rect				305 401 300 20
-			background			"gfx/menus/menu_blendbox"
-			forecolor			1 1 1 1
-			visible			0
+		itemDef {
+			name	highlightsound2
+			group	highlights
+			style		WINDOW_STYLE_SHADER
+			rect	305 401 300 20
+			background	"gfx/menus/menu_blendbox"
+			forecolor	1 1 1 1
+			visible	0
 			decoration
 		}
 
-		itemDef
-		{
+		itemDef {
 ]
 
 LINES_REPLACE 1119 [
-			name				langapplyhighlight
+			name	langapplyhighlight
 ]
 
 LINES_DELETE 1122 1122
 LINES_INSERT 1121 [
-			rect				405 391 160 20
-			background			"gfx/menus/menu_blendbox"
-			forecolor			1 1 1 1
-			visible				0
+			rect	405 391 160 20
+			background "gfx/menus/menu_blendbox"
+			forecolor	1 1 1 1
+			visible	0
 			decoration
 		}
 
-		itemDef
-		{
-			name				applyhighlight13
-			group				highlights
-			style				WINDOW_STYLE_SHADER
-			rect				405 411 160 32
+		itemDef {
+			name	applyhighlight13
+			group	highlights
+			style		WINDOW_STYLE_SHADER
+			rect	405 411 160 32
 ]
 
 LINES_DELETE 1179 1182
 LINES_INSERT 1178 [
-        // ouned: Resolutions
+		// ouned: Resolutions
 
-		itemDef
-		{
-			name				aspect_ratio
+		itemDef {
+			name	aspect_ratio
 ]
 
 LINES_DELETE 1185 1187
 LINES_INSERT 1184 [
-			text				@MV_ASPECT_RATIO
-			cvarFloatList
-            {
-                @MV_RES_NATIVE -1
-                "4:3" 0
-                "16:9" 1
-                "16:10" 2
-            }
-			cvar				"ui_r_aspectratio"
+			text	@MV_ASPECT_RATIO
+			cvarFloatList {
+				@MV_RES_NATIVE -1
+				"4:3" 0
+				"16:9" 1
+				"16:10" 2
+			}
+			cvar "ui_r_aspectratio"
 ]
 
 LINES_INSERT 1198 [
-            cvarTest			"ui_r_aspectratio"
-			hideCvar
-			{
-				"-1"
-			}
+			cvarTest	"ui_r_aspectratio"
+			hideCvar { "-1" }
 ]
 
 LINES_INSERT 1211 [
-                uiScript update "ui_r_aspectratio" ;
+			uiScript update "ui_r_aspectratio" ;
 ]
 
 LINES_REPLACE 1219 [
-			name				aspect_ratio
+			name	aspect_ratio
 ]
 
 LINES_DELETE 1221 1222
 LINES_INSERT 1220 [
-      		type				ITEM_TYPE_MULTI
-			text				@MENUS0_VIDEO_MODE
-			cvarFloatList
-            {
-                @MV_RES_NATIVE -1
-                "4:3" 0
-                "16:9" 1
-                "16:10" 2
-            }
-			cvar				"ui_r_aspectratio"
-
-			rect				305 211 300 20
-			textalign			ITEM_ALIGN_RIGHT
-			textalignx			165
-			textaligny			-2
-			font				2
-			textscale 			0.8
-			forecolor			1 1 1 1
-			descText			@MENUS1_CHANGE_THE_DISPLAY_RESOLUTION
-
-			visible				0
-            cvarTest			"ui_r_aspectratio"
-			showCvar
-			{
-				"-1"
+			type	ITEM_TYPE_MULTI
+			text	@MENUS0_VIDEO_MODE
+			cvarFloatList {
+				@MV_RES_NATIVE -1
+				"4:3" 0
+				"16:9" 1
+				"16:10" 2
 			}
+			cvar	"ui_r_aspectratio"
+			rect	305 211 300 20
+			textalign	ITEM_ALIGN_RIGHT
+			textalignx	165
+			textaligny	-2
+			font		2
+			textscale 	0.8
+			forecolor	1 1 1 1
+			descText	@MENUS1_CHANGE_THE_DISPLAY_RESOLUTION
 
-			mouseenter
-			{
-				show			highlight3
+			visible	0
+			cvarTest	"ui_r_aspectratio"
+			showCvar { "-1" }
+
+			mouseEnter {
+				show	highlight3
 			}
-			mouseexit
-			{
-				hide			highlight3
+			mouseExit {
+				hide	highlight3
 			}
-			action
-			{
-				play			"sound/interface/button1.wav" ;
-				uiScript		glCustom ;
-                uiScript update "ui_r_aspectratio" ;
-				setcvar			ui_r_modified	1 ;
-				show			applyChanges
+			action {
+				play	"sound/interface/button1.wav" ;
+				uiScript glCustom ;
+				uiScript update "ui_r_aspectratio" ;
+				setcvar ui_r_modified 1 ;
+				show applyChanges
 			}
 		}
 
-		itemDef
-		{
-			name				video_mode
-			group				video
-      		type				ITEM_TYPE_MULTI
-			text				@MENUS0_VIDEO_MODE
-			cvarFloatList
-            {
-                "320 X 240"     0
-                "400 X 300"     1
-                "512 X 384"     2
-                "640 X 480"     3
-                "800 X 600"     4
-                "960 X 720"     5
-                "1024 X 768"    6
-                "1152 X 864"    7
-                "1280 X 1024"   8
-                "1600 X 1200"   9
-                "2048 X 1536"   10
-            }
-			cvar				"ui_r_mode"
-
-            cvarTest			"ui_r_aspectratio"
-			showCvar
-			{
-				"0"
+		itemDef {
+			name	video_mode
+			group	video
+			type		ITEM_TYPE_MULTI
+			text		@MENUS0_VIDEO_MODE
+			cvarFloatList {
+				"320 X 240"	0
+				"400 X 300"	1
+				"512 X 384"	2
+				"640 X 480"	3
+				"800 X 600"	4
+				"960 X 720"	5
+				"1024 X 768"	6
+				"1152 X 864"	7
+				"1280 X 1024"	8
+				"1600 X 1200"	9
+				"2048 X 1536"	10
 			}
+			cvar	"ui_r_mode"
+			cvarTest	"ui_r_aspectratio"
+			showCvar { "0" }
 
 ]
 
 LINES_DELETE 1230 1233
 LINES_INSERT 1229 [
-			descText			@MENUS1_CHANGE_THE_DISPLAY_RESOLUTION
+			descText	@MENUS1_CHANGE_THE_DISPLAY_RESOLUTION
 ]
 
 LINES_DELETE 1249 1249
 
 LINES_DELETE 1257 1257
 LINES_INSERT 1256 [
-			name				video_mode
-			group				video
-      		type				ITEM_TYPE_MULTI
-			text				@MENUS0_VIDEO_MODE
-			cvarFloatList
-            {
-                "960 X 540"     11
-                "960 X 544"     12
-                "1024 X 576"    13
-                "1024 X 600"    14
-                "1136 X 640"    15
-                "1280 X 720"    16
-                "1366 X 768"    17
-                "1600 X 900"    18
-                "1920 X 1080"   19
-                "2048 X 1152"   20
-                "2560 X 1440"   21
-                "2880 X 1620"   22
-                "3200 X 1800"   23
-                "3840 X 2160"   24
-                "4096 X 2304"   25
-                "5120 X 2880"   26
-            }
-			cvar				"ui_r_mode"
-
-            cvarTest			"ui_r_aspectratio"
-			showCvar
-			{
-				"1"
+			name	video_mode
+			group	video
+			type		ITEM_TYPE_MULTI
+			text		@MENUS0_VIDEO_MODE
+			cvarFloatList {
+				"960 X 540"	11
+				"960 X 544"	12
+				"1024 X 576"	13
+				"1024 X 600"	14
+				"1136 X 640"	15
+				"1280 X 720"	16
+				"1366 X 768"	17
+				"1600 X 900"	18
+				"1920 X 1080"	19
+				"2048 X 1152"	20
+				"2560 X 1440"	21
+				"2880 X 1620"	22
+				"3200 X 1800"	23
+				"3840 X 2160"	24
+				"4096 X 2304"	25
+				"5120 X 2880"	26
 			}
+			cvar	"ui_r_mode"
+			cvarTest	"ui_r_aspectratio"
+			showCvar { "1" }
+			rect	305 231 300 20
+			textalign	ITEM_ALIGN_RIGHT
+			textalignx	165
+			textaligny	-2
+			font		2
+			textscale 	0.8
+			forecolor	1 1 1 1
+			descText	@MENUS1_CHANGE_THE_DISPLAY_RESOLUTION
+			visible	0
 
-			rect				305 231 300 20
-			textalign			ITEM_ALIGN_RIGHT
-			textalignx			165
-			textaligny			-2
-			font				2
-			textscale 			0.8
-			forecolor			1 1 1 1
-			descText			@MENUS1_CHANGE_THE_DISPLAY_RESOLUTION
-
-			visible				0
-
-			mouseenter
-			{
-				show			highlight4
+			mouseEnter {
+				show	highlight4
 			}
-			mouseexit
-			{
-				hide			highlight4
+			mouseExit {
+				hide	highlight4
 			}
-			action
-			{
-				play			"sound/interface/button1.wav" ;
-				uiScript		glCustom ;
-				setcvar			ui_r_modified	1 ;
-				show			applyChanges
+			action {
+				play	"sound/interface/button1.wav" ;
+				uiScript glCustom ;
+				setcvar ui_r_modified 1 ;
+				show applyChanges
 			}
 		}
 
-		itemDef
-		{
-			name				video_mode
-			group				video
-      		type				ITEM_TYPE_MULTI
-			text				@MENUS0_VIDEO_MODE
-			cvarFloatList
-            {
-                "1280 X 800"    27
-                "1440 X 900"    28
-                "1680 X 1050"   29
-                "1920 X 1200"   30
-                "2560 X 1600"   31
-            }
-			cvar				"ui_r_mode"
-
-            cvarTest			"ui_r_aspectratio"
-			showCvar
-			{
-				"2"
+		itemDef {
+			name	video_mode
+			group	video
+			type		ITEM_TYPE_MULTI
+			text		@MENUS0_VIDEO_MODE
+			cvarFloatList {
+				"1280 X 800"	27
+				"1440 X 900"	28
+				"1680 X 1050"	29
+				"1920 X 1200"	30
+				"2560 X 1600"	31
 			}
+			cvar	"ui_r_mode"
+			cvarTest	"ui_r_aspectratio"
+			showCvar { "2" }
+			rect	305 231 300 20
+			textalign	ITEM_ALIGN_RIGHT
+			textalignx	165
+			textaligny	-2
+			font		2
+			textscale 	0.8
+			forecolor	1 1 1 1
+			descText	@MENUS1_CHANGE_THE_DISPLAY_RESOLUTION
 
-			rect				305 231 300 20
-			textalign			ITEM_ALIGN_RIGHT
-			textalignx			165
-			textaligny			-2
-			font				2
-			textscale 			0.8
-			forecolor			1 1 1 1
-			descText			@MENUS1_CHANGE_THE_DISPLAY_RESOLUTION
+			visible	0
 
-			visible				0
-
-			mouseenter
-			{
-				show			highlight4
+			mouseEnter {
+				show highlight4
 			}
-			mouseexit
-			{
-				hide			highlight4
+			mouseExit {
+				hide	highlight4
 			}
-			action
-			{
-				play			"sound/interface/button1.wav" ;
-				uiScript		glCustom ;
-				setcvar			ui_r_modified	1 ;
-				show			applyChanges
+			action {
+				play	"sound/interface/button1.wav" ;
+				uiScript glCustom ;
+				setcvar ui_r_modified 1 ;
+				show applyChanges
 			}
 		}
 
-		itemDef
-		{
-			name				color_depth
+		itemDef {
+			name	color_depth
 ]
 
 LINES_REPLACE 1260 [
-			text				@MENUS0_COLOR_DEPTH
+			text		@MENUS0_COLOR_DEPTH
 ]
 
 LINES_REPLACE 1269 [
-			cvarFloatList		{  @MENUS0_DEFAULT 0 @MENUS0_16_BIT 16 @MENUS0_32_BIT 32 }
-			descText			@MENUS1_CHANGE_THE_NUMBER_OF
-			cvar				"ui_r_colorbits"
-
-			visible				0
+			cvarFloatList { @MENUS0_DEFAULT 0 @MENUS0_16_BIT 16 @MENUS0_32_BIT 32 }
+			descText	@MENUS1_CHANGE_THE_NUMBER_OF
+			cvar		"ui_r_colorbits"
+			visible	0
 ]
 
 LINES_INSERT 1286 [
@@ -591,37 +538,36 @@ LINES_INSERT 1286 [
 ]
 
 LINES_REPLACE 1294 [
-			name				fullscreen
+			name	fullscreen
 ]
 
 LINES_REPLACE 1297 [
-			text				@MENUS0_FULL_SCREEN
+			text	@MENUS0_FULL_SCREEN
 ]
 
 LINES_DELETE 1305 1309
 LINES_INSERT 1304 [
 
-			cvarFloatList		{  @MENUS0_OFF 0 @MENUS0_ON 1 }
-			descText			@MENUS1_TOGGLE_BETWEEN_FULL_SCREEN
-			cvar				"ui_r_fullscreen"
-
-			visible			0
+			cvarFloatList { @MENUS0_OFF 0 @MENUS0_ON 1 }
+			descText	@MENUS1_TOGGLE_BETWEEN_FULL_SCREEN
+			cvar		"ui_r_fullscreen"
+			visible	0
 ]
 
 LINES_DELETE 1323 1323
 
 LINES_REPLACE 1331 [
-			name				geometric_detail
+			name	geometric_detail
 ]
 
 LINES_REPLACE 1334 [
-			text				@MENUS0_GEOMETRIC_DETAIL
+			text	@MENUS0_GEOMETRIC_DETAIL
 ]
 
 LINES_REPLACE 1342 [
-			cvarFloatList		{  @MENUS0_LOW 2 @MENUS0_MEDIUM 1 @MENUS0_HIGH 0 }
-			descText			@MENUS1_ADJUST_THE_NUMBER_OF
-			cvar				"ui_r_lodbias"
+			cvarFloatList { @MENUS0_LOW 2 @MENUS0_MEDIUM 1 @MENUS0_HIGH 0 }
+			descText	@MENUS1_ADJUST_THE_NUMBER_OF
+			cvar		"ui_r_lodbias"
 ]
 
 LINES_INSERT 1359 [
@@ -629,256 +575,238 @@ LINES_INSERT 1359 [
 ]
 
 LINES_REPLACE 1367 [
-			name				texture_detail
+			name	texture_detail
 ]
 
 LINES_REPLACE 1370 [
-			text				@MENUS0_TEXTURE_DETAIL
+			text	@MENUS0_TEXTURE_DETAIL
 ]
 
 LINES_REPLACE 1378 [
-			cvarFloatList		{  @MENUS0_LOW 3 @MENUS0_MEDIUM 2 @MENUS0_HIGH 1 @MENUS0_VERY_HIGH 0 }
-			descText			@MENUS1_SELECT_THE_RESOLUTION
-			cvar				"ui_r_picmip"
+			cvarFloatList { @MENUS0_LOW 3 @MENUS0_MEDIUM 2 @MENUS0_HIGH 1 @MENUS0_VERY_HIGH 0 }
+			descText	@MENUS1_SELECT_THE_RESOLUTION
+			cvar	"ui_r_picmip"
 ]
 
 LINES_REPLACE 1403 [
-			name				texture_quality
+			name	texture_quality
 ]
 
 LINES_REPLACE 1406 [
-			text				@MENUS0_TEXTURE_QUALITY
+			text	@MENUS0_TEXTURE_QUALITY
 ]
 
 LINES_REPLACE 1414 [
-			cvarFloatList		{  @MENUS0_DEFAULT 0 @MENUS0_16_BIT 16 @MENUS0_32_BIT 32 }
-			descText			@MENUS1_SELECT_THE_NUMBER_OF
-			cvar				"ui_r_texturebits"
+			cvarFloatList { @MENUS0_DEFAULT 0 @MENUS0_16_BIT 16 @MENUS0_32_BIT 32 }
+			descText	@MENUS1_SELECT_THE_NUMBER_OF
+			cvar		"ui_r_texturebits"
 ]
 
 LINES_REPLACE 1439 [
-			name				texture_filter
+			name	texture_filter
 ]
 
 LINES_REPLACE 1442 [
-			text				@MENUS0_TEXTURE_FILTER
+			text	@MENUS0_TEXTURE_FILTER
 ]
 
 LINES_REPLACE 1450 [
-			cvarStrList		{  @MENUS1_BILINEAR , "GL_LINEAR_MIPMAP_NEAREST" , @MENUS1_TRILINEAR , "GL_LINEAR_MIPMAP_LINEAR" }
-			descText			@MENUS1_ADJUST_HOW_WELL_THE_TEXTURES
-			cvar				"ui_r_texturemode"
+			cvarStrList { @MENUS1_BILINEAR , "GL_LINEAR_MIPMAP_NEAREST" , @MENUS1_TRILINEAR , "GL_LINEAR_MIPMAP_LINEAR" }
+			descText	@MENUS1_ADJUST_HOW_WELL_THE_TEXTURES
+			cvar		"ui_r_texturemode"
 ]
 
 LINES_REPLACE 1475 [
-			name				simple_shaders
-			group				video
+			name	simple_shaders
+			group	video
 ]
 
 LINES_REPLACE 1478 [
-			text				@MENUS0_DETAILED_SHADERS
+			text	@MENUS0_DETAILED_SHADERS
 ]
 
 LINES_INSERT 1486 [
-			descText			@MENUS1_HIDE_OR_UNHIDE_TEXTURES
-			cvar				"ui_r_detailtextures"
+			descText	@MENUS1_HIDE_OR_UNHIDE_TEXTURES
+			cvar		"ui_r_detailtextures"
+			visible	0
 
-			visible				0
-
-			mouseenter
-			{
-				show			highlight11
+			mouseEnter {
+				show highlight11
 			}
-			mouseexit
-			{
-				hide			highlight11
+			mouseExit {
+				hide	highlight11
 			}
-			action
-			{
-				play			"sound/interface/button1.wav" ;
-				uiScript		glCustom ;
-				setcvar			ui_r_modified	1 ;
-				show			applyChanges
+			action {
+				play	"sound/interface/button1.wav" ;
+				uiScript glCustom ;
+				setcvar ui_r_modified 1 ;
+				show applyChanges
 			}
 		}
 
-		itemDef
-		{
-			name				multisample
-			group				video
-			type				ITEM_TYPE_MULTI
-			text				@MV_ANTIALIASING
-			rect				305 391 300 20
-			textalign			ITEM_ALIGN_RIGHT
-			textalignx			165
-			textaligny			-2
-			font				2
-			textscale 			0.8
-			forecolor			1 1 1 1
-			cvarFloatList
-			{
-				@MENUS0_OFF			0
+		itemDef {
+			name	multisample
+			group	video
+			type		ITEM_TYPE_MULTI
+			text		@MV_ANTIALIASING
+			rect		305 391 300 20
+			textalign	ITEM_ALIGN_RIGHT
+			textalignx	165
+			textaligny	-2
+			font		2
+			textscale 	0.8
+			forecolor	1 1 1 1
+			cvarFloatList {
+				@MENUS0_OFF	0
 				"2x"				2
 				"4x"				4
 				"8x"				8
-				"16x"				16
+				"16x"			16
 			}
-			descText			@MV_MULTISAMPLE_ANTIALIASING
-			cvar				"ui_r_ext_multisample"
+			descText	@MV_MULTISAMPLE_ANTIALIASING
+			cvar		"ui_r_ext_multisample"
+			visible	0
 
-			visible				0
-
-			mouseenter
-			{
-				show			highlight12
+			mouseEnter {
+				show highlight12
 			}
-			mouseexit
-			{
-				hide			highlight12
+			mouseExit {
+				hide	highlight12
 			}
-			action
-			{
-				play			"sound/interface/button1.wav" ;
-				setcvar			ui_r_modified	1 ;
-				show			applyChanges
+			action {
+				play	"sound/interface/button1.wav" ;
+				setcvar ui_r_modified 1 ;
+				show applyChanges
 			}
 		}
 
-		itemDef
-		{
-			name				compress_textures
-			group				video_obsolete
-			type				ITEM_TYPE_MULTI
-			text				@MENUS0_COMPRESSED_TEXTURES
-			rect				305 491 300 20
-			textalign			ITEM_ALIGN_RIGHT
-			textalignx			165
-			textaligny			-2
-			font				2
-			textscale 			0.8
-			forecolor			1 1 1 1
-			cvarFloatList		{  @MENUS0_OFF 0 @MENUS0_ON 1 }
+		itemDef {
+			name	compress_textures
+			group	video_obsolete
+			type		ITEM_TYPE_MULTI
+			text		@MENUS0_COMPRESSED_TEXTURES
+			rect		305 491 300 20
+			textalign	ITEM_ALIGN_RIGHT
+			textalignx	165
+			textaligny	-2
+			font		2
+			textscale 	0.8
+			forecolor	1 1 1 1
+			cvarFloatList { @MENUS0_OFF 0 @MENUS0_ON 1 }
 ]
 
 LINES_REPLACE 1494 [
-				show			highlight12
+				show highlight12
 			}
-			mouseexit
-			{
-				hide			highlight12
+			mouseExit {
+				hide	highlight12
 ]
 
 LINES_REPLACE 1515 [
-			rect				120 389 170 24
+			rect	120 389 170 24
 ]
 
 LINES_REPLACE 1529 [
-			rect				120 389 170 24
+			rect	120 389 170 24
 ]
 
 LINES_REPLACE 1533 [
-			textaligny			1
+			textaligny	1
 ]
 
 LINES_DELETE 1922 1922
 LINES_INSERT 1921 [
-			cvarFloatList
-			{
-				@MENUS0_OFF			0
+			cvarFloatList {
+				@MENUS0_OFF	0
 				"2x"				2
 				"4x"				4
 				"8x"				8
-				"16x"				16
+				"16x"			16
 			}
 ]
 
 LINES_REPLACE 1950 [
-			name				dynamicglow
-			group				video2
+			name	dynamicglow
+			group	video2
 ]
 
 LINES_DELETE 1953 1955
 LINES_INSERT 1952 [
-			text				@MV_DYNAMIC_GLOW
-			descText			@MV_DYNAMIC_GLOW_INFO
-			cvar				"r_dynamicglow"
-			cvarFloatList
-			{
-				@MENUS0_OFF	 	0
-				@MENUS0_ON 		1
+			text	@MV_DYNAMIC_GLOW
+			descText	@MV_DYNAMIC_GLOW_INFO
+			cvar		"r_dynamicglow"
+			cvarFloatList {
+				@MENUS0_OFF	0
+				@MENUS0_ON	1
 			}
 ]
 
 LINES_DELETE 1963 1965
 LINES_INSERT 1962 [
-			visible			1
+			visible	1
 ]
 
 LINES_REPLACE 2020 [
-				play			"sound/interface/button1.wav"
+				play	"sound/interface/button1.wav"
 ]
 
 LINES_REPLACE 2100 [
-			cvarFloatList		{ @MENUS0_LOW 11  @MENUS0_MEDIUM 22 @MENUS0_HIGH 44 }
+			cvarFloatList { @MENUS0_LOW 11 @MENUS0_MEDIUM 22 @MENUS0_HIGH 44 }
 ]
 
 LINES_REPLACE 2496 [
-			name				voice
+			name	voice
 ]
 
 LINES_DELETE 2499 2505
 LINES_INSERT 2498 [
-			text				@MENUS1_VOICE
-			cvar				"s_language"
-			cvarStrList
-			{
-				English   english
-				Francais  francais
-				Deutsch   deutsch
-				"Español"   espanol
+			text	@MENUS1_VOICE
+			cvar	"s_language"
+			cvarStrList {
+				English	english
+				Francais	francais
+				Deutsch	deutsch
+				"Español"	espanol
 ]
 
 LINES_DELETE 2514 2549
 
 LINES_REPLACE 2561 [
-				show			highlight9
+				show	highlight9
 			}
-			mouseexit
-			{
-				hide			highlight9
+			mouseExit {
+				hide	highlight9
 ]
 
 LINES_REPLACE 2585 [
-			rect				305 351 300 20
+			rect	305 351 300 20
 ]
 
 LINES_REPLACE 2602 [
-				show			highlight10
+				show	highlight10
 			}
-			mouseexit
-			{
-				hide			highlight10
+			mouseExit {
+				hide	highlight10
 ]
 
 LINES_REPLACE 2623 [
-			rect				305 351 300 20
+			rect	305 351 300 20
 ]
 
 LINES_REPLACE 2640 [
-				show			highlight10
+				show	highlight10
 			}
-			mouseexit
-			{
-				hide			highlight10
+			mouseExit {
+				hide	highlight10
 ]
 
 LINES_REPLACE 2674 [
-				show			langapplyhighlight
+				show	langapplyhighlight
 ]
 
 LINES_DELETE 2678 2680
 LINES_INSERT 2677 [
-				hide			langapplyhighlight
+				hide	langapplyhighlight
 			}
 
 		}
@@ -888,360 +816,299 @@ LINES_INSERT 2677 [
 		//	JK2MV OPTIONS FIELDS
 		//
 		//----------------------------------------------------------------------------------------------
-		itemDef
-		{
-			name                    nameshadows
-			group                   mvoptions
-			type                    ITEM_TYPE_MULTI
-			text                    @MV_COLORED_TEXT_SHADOWS
-			descText                @MV_COLORED_TEXT_SHADOWS_INFO
-			cvar                    "mv_coloredTextShadows"
-			cvarFloatList
-			{
-				@MENUS0_OFF             0
-				@MENUS0_ON              1
-				@MENUS0_DEFAULT         2
+		itemDef {
+			name		nameshadows
+			group		mvoptions
+			type			ITEM_TYPE_MULTI
+			text			@MV_COLORED_TEXT_SHADOWS
+			descText		@MV_COLORED_TEXT_SHADOWS_INFO
+			cvar			"mv_coloredTextShadows"
+			cvarFloatList {
+				@MENUS0_OFF		0
+				@MENUS0_ON		1
+				@MENUS0_DEFAULT	2
 			}
 
-			rect                    305 191 300 20
-			textalign               ITEM_ALIGN_RIGHT
-			textalignx              165
-			textaligny              -2
-			font                    2
-			textscale               0.8
-			forecolor               1 1 1 1
-			visible                 0
+			rect			305 191 300 20
+			textalign		ITEM_ALIGN_RIGHT
+			textalignx		165
+			textaligny		-2
+			font			2
+			textscale		0.8
+			forecolor		1 1 1 1
+			visible		0
 
-			action
-			{
-				play                    "sound/interface/button1.wav"
+			action {
+				play	"sound/interface/button1.wav"
 			}
-
-			mouseenter
-			{
-				show                    highlight2
+			mouseEnter {
+				show highlight2
 			}
-
-			mouseexit
-			{
-				hide                    highlight2
+			mouseExit {
+				hide	highlight2
 			}
 		}
 
-		itemDef
-		{
-			name                    autodemo
-			group                   mvoptions
-			type                    ITEM_TYPE_MULTI
-			text                    @MV_AUTO_DEMO
-			descText                @MV_AUTO_DEMO_INFO
-			cvar                    "cl_autoDemo"
-			cvarFloatList
-			{
-				@MENUS0_OFF             0
-				@MENUS0_ON              1
+		itemDef {
+			name	autodemo
+			group	mvoptions
+			type		ITEM_TYPE_MULTI
+			text		@MV_AUTO_DEMO
+			descText	@MV_AUTO_DEMO_INFO
+			cvar		"cl_autoDemo"
+			cvarFloatList {
+				@MENUS0_OFF	0
+				@MENUS0_ON	1
 			}
 
-			rect                    305 231 300 20
-			textalign               ITEM_ALIGN_RIGHT
-			textalignx              165
-			textaligny              -2
-			font                    2
-			textscale               0.8
-			forecolor               1 1 1 1
-			visible                 0
+			rect		305 231 300 20
+			textalign	ITEM_ALIGN_RIGHT
+			textalignx	165
+			textaligny	-2
+			font		2
+			textscale	0.8
+			forecolor	1 1 1 1
+			visible	0
 
-			action
-			{
-				play                    "sound/interface/button1.wav"
+			action {
+				play	"sound/interface/button1.wav"
 			}
-
-			mouseenter
-			{
-				show                    highlight4
+			mouseEnter {
+				show highlight4
 			}
-
-			mouseexit
-			{
-				hide                    highlight4
+			mouseExit {
+				hide	highlight4
 			}
 		}
 
-		itemDef
-		{
-			name                    drawrecording
-			group                   mvoptions
-			type                    ITEM_TYPE_MULTI
-			text                    @MV_DEMO_INDICATOR
-			descText                @MV_DEMO_INDICATOR_INFO
-			cvar                    "cl_drawRecording"
-			cvarFloatList
-			{
-				@MENUS0_OFF             0
-				@MV_DETAILED            1
-				@MV_RED_DOT             2
+		itemDef {
+			name	drawrecording
+			group	mvoptions
+			type		ITEM_TYPE_MULTI
+			text		@MV_DEMO_INDICATOR
+			descText	@MV_DEMO_INDICATOR_INFO
+			cvar		"cl_drawRecording"
+			cvarFloatList {
+				@MENUS0_OFF	0
+				@MV_DETAILED	1
+				@MV_RED_DOT	2
 			}
 
-			rect                    305 251 300 20
-			textalign               ITEM_ALIGN_RIGHT
-			textalignx              165
-			textaligny              -2
-			font                    2
-			textscale               0.8
-			forecolor               1 1 1 1
-			visible                 0
+			rect		305 251 300 20
+			textalign	ITEM_ALIGN_RIGHT
+			textalignx	165
+			textaligny	-2
+			font		2
+			textscale	0.8
+			forecolor	1 1 1 1
+			visible	0
 
-			action
-			{
-				play                    "sound/interface/button1.wav"
+			action {
+				play	"sound/interface/button1.wav"
 			}
-
-			mouseenter
-			{
-				show                    highlight5
+			mouseEnter {
+				show highlight5
 			}
-
-			mouseexit
-			{
-				hide                    highlight5
+			mouseExit {
+				hide	highlight5
 			}
 		}
 
-		itemDef
-		{
-			name                    savedemobind
-			group                   mvoptions
-			type                    ITEM_TYPE_BIND
-			text                    @MV_SAVE_DEMO_KEY
-			descText                @MV_SAVE_DEMO_KEY_INFO
-			cvar                    "saveDemo"
-			rect                    305 271 300 20
-			textalign               ITEM_ALIGN_RIGHT
-			textalignx              165
-			textaligny              -2
-			font                    2
-			textscale               0.8
-			forecolor               1 1 1 1
-			visible                 0
+		itemDef {
+			name	savedemobind
+			group	mvoptions
+			type		ITEM_TYPE_BIND
+			text		@MV_SAVE_DEMO_KEY
+			descText	@MV_SAVE_DEMO_KEY_INFO
+			cvar		"saveDemo"
+			rect		305 271 300 20
+			textalign	ITEM_ALIGN_RIGHT
+			textalignx	165
+			textaligny	-2
+			font		2
+			textscale	0.8
+			forecolor	1 1 1 1
+			visible	0
 
-			action
-			{
-				play                    "sound/interface/button1.wav"
+			action {
+				play	"sound/interface/button1.wav"
 			}
-
-			mouseenter
-			{
-				show                    highlight6
-				show                    keybindstatus
+			mouseEnter {
+				show highlight6
+				show keybindstatus
 			}
-
-			mouseexit
-			{
-				hide                    highlight6
-				show                    keybindstatus
+			mouseExit {
+				hide	highlight6
+				show keybindstatus
 			}
 		}
 
-		itemDef
-		{
-			name                    savelastdemobind
-			group                   mvoptions
-			type                    ITEM_TYPE_BIND
-			text                    @MV_SAVE_LAST_DEMO_KEY
-			descText                @MV_SAVE_LAST_DEMO_KEY_INFO
-			cvar                    "saveDemoLast"
-			rect                    305 291 300 20
-			textalign               ITEM_ALIGN_RIGHT
-			textalignx              165
-			textaligny              -2
-			font                    2
-			textscale               0.8
-			forecolor               1 1 1 1
-			visible                 0
+		itemDef {
+			name	savelastdemobind
+			group	mvoptions
+			type		ITEM_TYPE_BIND
+			text		@MV_SAVE_LAST_DEMO_KEY
+			descText	@MV_SAVE_LAST_DEMO_KEY_INFO
+			cvar		"saveDemoLast"
+			rect		305 291 300 20
+			textalign	ITEM_ALIGN_RIGHT
+			textalignx	165
+			textaligny	-2
+			font		2
+			textscale	0.8
+			forecolor	1 1 1 1
+			visible	0
 
-			action
-			{
-				play                    "sound/interface/button1.wav"
+			action {
+				play	"sound/interface/button1.wav"
 			}
-
-			mouseenter
-			{
-				show                    highlight7
-				show                    keybindstatus
+			mouseEnter {
+				show highlight7
+				show keybindstatus
 			}
-
-			mouseexit
-			{
-				hide                    highlight7
-				show                    keybindstatus
+			mouseExit {
+				hide	highlight7
+				show keybindstatus
 			}
 		}
 
-		itemDef
-		{
-			name                    consolefont
-			group                   mvoptions
-			type                    ITEM_TYPE_MULTI
-			text                    @MV_CONSOLE_FONT
-			descText                @MV_SELECT_CONSOLE_FONT
-			cvar                    "r_consoleFont"
-			cvarFloatList
-			{
-				@MV_ORIGINAL            0
-				"Code New Roman"        1
-				"M+ 1M Bold"            2
+		itemDef {
+			name	consolefont
+			group	mvoptions
+			type		ITEM_TYPE_MULTI
+			text		@MV_CONSOLE_FONT
+			descText	@MV_SELECT_CONSOLE_FONT
+			cvar		"r_consoleFont"
+			cvarFloatList {
+				@MV_ORIGINAL	0
+				"Code New Roman"	1
+				"M+ 1M Bold"		2
 			}
 
-			rect                    305 331 300 20
-			textalign               ITEM_ALIGN_RIGHT
-			textalignx              165
-			textaligny              -2
-			font                    2
-			textscale               0.8
-			forecolor               1 1 1 1
-			visible                 0
+			rect		305 331 300 20
+			textalign	ITEM_ALIGN_RIGHT
+			textalignx	165
+			textaligny	-2
+			font		2
+			textscale	0.8
+			forecolor	1 1 1 1
+			visible	0
 
-			action
-			{
-				play                    "sound/interface/button1.wav"
+			action {
+				play	"sound/interface/button1.wav"
 			}
-
-			mouseenter
-			{
-				show                    highlight9
+			mouseEnter {
+				show highlight9
 			}
-
-			mouseexit
-			{
-				hide                    highlight9
+			mouseExit {
+				hide	highlight9
 			}
 		}
 
-		itemDef
-		{
-			name                    consolescale
-			group                   mvoptions
-			type                    ITEM_TYPE_SLIDER
-			text                    @MV_FONT_SIZE
-			descText                @MV_ADJUST_CONSOLE_FONT_SIZE
-			cvarFloat               "con_scale" 1 1 3
-			rect                    305 351 300 20
-			textalign               ITEM_ALIGN_RIGHT
-			textalignx              165
-			textaligny              -2
-			font                    2
-			textscale               0.8
-			forecolor               1 1 1 1
-			visible                 0
+		itemDef {
+			name	consolescale
+			group	mvoptions
+			type		ITEM_TYPE_SLIDER
+			text		@MV_FONT_SIZE
+			descText	@MV_ADJUST_CONSOLE_FONT_SIZE
+			cvarFloat	"con_scale" 1 1 3
+			rect		305 351 300 20
+			textalign	ITEM_ALIGN_RIGHT
+			textalignx	165
+			textaligny	-2
+			font		2
+			textscale	0.8
+			forecolor	1 1 1 1
+			visible	0
 
-			action
-			{
-				play                    "sound/interface/button1.wav"
+			action {
+				play	"sound/interface/button1.wav"
 			}
-
-			mouseenter
-			{
-				show                    highlight10
+			mouseEnter {
+				show highlight10
 			}
-
-			mouseexit
-			{
-				hide                    highlight10
+			mouseExit {
+				hide	highlight10
 			}
 		}
 
-		itemDef
-		{
-			name                    consoletimestamps
-			group                   mvoptions
-			type                    ITEM_TYPE_MULTI
-			text                    @MV_CONSOLE_TIMESTAMPS
-			descText                @MV_PRINT_TIMESTAMPS
-			cvar                    "con_timestamps"
-			cvarFloatList
-			{
-				@MENUS0_ON              1
-				@MENUS0_OFF             0
+		itemDef {
+			name	consoletimestamps
+			group	mvoptions
+			type		ITEM_TYPE_MULTI
+			text		@MV_CONSOLE_TIMESTAMPS
+			descText	@MV_PRINT_TIMESTAMPS
+			cvar		"con_timestamps"
+			cvarFloatList {
+				@MENUS0_ON	1
+				@MENUS0_OFF	0
 			}
 
-			rect                    305 371 300 20
-			textalign               ITEM_ALIGN_RIGHT
-			textalignx              165
-			textaligny              -2
-			font                    2
-			textscale               0.8
-			forecolor               1 1 1 1
-			visible                 0
+			rect		305 371 300 20
+			textalign	ITEM_ALIGN_RIGHT
+			textalignx	165
+			textaligny	-2
+			font		2
+			textscale	0.8
+			forecolor	1 1 1 1
+			visible	0
 
-			action
-			{
-				play                    "sound/interface/button1.wav"
+			action {
+				play	"sound/interface/button1.wav"
 			}
-
-			mouseenter
-			{
-				show                    highlight11
+			mouseEnter {
+				show highlight11
 			}
-
-			mouseexit
-			{
-				hide                    highlight11
+			mouseExit {
+				hide	highlight11
 			}
 		}
 
-		itemDef
-		{
-			name                    consoleshift
-			group                   mvoptions
-			type                    ITEM_TYPE_MULTI
-			text                    @MV_CONSOLE_SHIFT
-			descText                @MV_CONSOLE_SHIFT_INFO
-			cvar                    "mv_consoleShiftRequirement"
-			cvarFloatList
-			{
-				@MENUS0_OFF             0
-				@MV_CONSOLE_SHIFT_OPEN  1
-				@MV_CONSOLE_SHIFT_BOTH  2
+		itemDef {
+			name	consoleshift
+			group	mvoptions
+			type		ITEM_TYPE_MULTI
+			text		@MV_CONSOLE_SHIFT
+			descText	@MV_CONSOLE_SHIFT_INFO
+			cvar		"mv_consoleShiftRequirement"
+			cvarFloatList {
+				@MENUS0_OFF	0
+				@MV_CONSOLE_SHIFT_OPEN 1
+				@MV_CONSOLE_SHIFT_BOTH 2
 			}
 
-			rect                    305 391 300 20
-			textalign               ITEM_ALIGN_RIGHT
-			textalignx              165
-			textaligny              -2
-			font                    2
-			textscale               0.8
-			forecolor               1 1 1 1
-			visible                 0
+			rect		305 391 300 20
+			textalign	ITEM_ALIGN_RIGHT
+			textalignx	165
+			textaligny	-2
+			font		2
+			textscale	0.8
+			forecolor	1 1 1 1
+			visible	0
 
-			action
-			{
-				play                    "sound/interface/button1.wav"
+			action {
+				play	"sound/interface/button1.wav"
 			}
-
-			mouseenter
-			{
-				show                    highlight12
+			mouseEnter {
+				show highlight12
 			}
-
-			mouseexit
-			{
-				hide                    highlight12
+			mouseExit {
+				hide	highlight12
 			}
 		}
 
-		itemDef
-		{
-			name                    keyBindStatus
-			group                   none
-			ownerdraw               250                     // UI_KEYBINDSTATUS
-			text                    @MENUS2_BLANK_1
-			rect                    375 425 0 0
-			textStyle               0
-			font                    2
-			textscale               .8
-			textalign               ITEM_ALIGN_CENTER
-			forecolor               1 1 0 1
-			visible                 0
+		itemDef {
+			name		keyBindStatus
+			group		none
+			ownerdraw	250	// UI_KEYBINDSTATUS
+			text			@MENUS2_BLANK_1
+			rect			375 425 0 0
+			textStyle		0
+			font			2
+			textscale		.8
+			textalign		ITEM_ALIGN_CENTER
+			forecolor		1 1 0 1
+			visible		0
 			decoration
 ]
 
@@ -1256,67 +1123,62 @@ LINES_INSERT 3053 [
 		//	Downloads Menu
 		//
 		//----------------------------------------------------------------------------------------------
-		itemDef
-		{
-			name				downloadsbutton_glow
-			group				highlights
-			style				WINDOW_STYLE_SHADER
-			rect				120 341 170 24
-			background			"gfx/menus/menu_blendbox2"			// Frame around button
-			forecolor			1 1 1 1
-			visible			0
-			// appearance_slot		1
+		itemDef {
+			name	downloadsbutton_glow
+			group	highlights
+			style		WINDOW_STYLE_SHADER
+			rect	120 341 170 24
+			background "gfx/menus/menu_blendbox2"	// Frame around button
+			forecolor	1 1 1 1
+			visible	0
+			// appearance_slot	1
 			decoration
 		}
 
-		itemDef
-		{
-			name				downloadsbutton
-			group				setup_submenu
-			text				@MV_DOWNLOADS
-			type				ITEM_TYPE_BUTTON
-			style				WINDOW_STYLE_EMPTY
-			rect				120 341 170 24
-			font				3
-			textscale			0.9
-			textalignx			170
-			textaligny			1
-			textalign			ITEM_ALIGN_RIGHT
-			textstyle			3
-			forecolor			0.65 0.65 1 1
-			visible			1
-			descText			@MV_DOWNLOADS_INFO
+		itemDef {
+			name	downloadsbutton
+			group	setup_submenu
+			text		@MV_DOWNLOADS
+			type		ITEM_TYPE_BUTTON
+			style		WINDOW_STYLE_EMPTY
+			rect		120 341 170 24
+			font		3
+			textscale	0.9
+			textalignx	170
+			textaligny	1
+			textalign	ITEM_ALIGN_RIGHT
+			textstyle	3
+			forecolor	0.65 0.65 1 1
+			visible	1
+			descText	@MV_DOWNLOADS_INFO
 
-			mouseEnter
-			{
-				show			downloadsbutton_glow
+			mouseEnter {
+				show	downloadsbutton_glow
 			}
-			mouseExit
-			{
-				hide			downloadsbutton_glow
+			mouseExit {
+				hide	downloadsbutton_glow
 			}
-			action
-			{
-				play			"sound/interface/button1.wav"
-				uiScript		LoadDLFiles;
+			action {
+				play	"sound/interface/button1.wav"
+				uiScript LoadDLFiles;
 
-				defer			VideoSetup	videowarningMenu
-				show			setup_background
-				hide 			video
-				hide			applyChanges
-				hide			player
-				hide			video2
-				hide			vidrestart
-				hide			sound
-				hide			options
-				hide			mvoptions
-				hide			langapply
-				hide			mods
-				hide			defaults
-				show			downloads
+				defer VideoSetup videowarningMenu
+				show setup_background
+				hide	video
+				hide	applyChanges
+				hide	player
+				hide	video2
+				hide	vidrestart
+				hide	sound
+				hide	options
+				hide	mvoptions
+				hide	langapply
+				hide	mods
+				hide	defaults
+				show downloads
 
-				setitemcolor	setup_submenu			forecolor	0.65 0.65 1 1 ;
-				setitemcolor	downloadsbutton	forecolor	1 1 1 1 ;
+				setitemcolor setup_submenu	forecolor	0.65 0.65 1 1 ;
+				setitemcolor downloadsbutton	forecolor	1 1 1 1 ;
 			}
 		}
 
@@ -1325,189 +1187,167 @@ LINES_INSERT 3053 [
 		//	Download Fields
 		//
 		//----------------------------------------------------------------------------------------------
-		itemDef
-		{
-			name				allowdownload
-			group				downloads
-      		type				ITEM_TYPE_MULTI
-			text				@MV_DOWNLOADS_BLOCKALL
-			descText			@MV_DOWNLOADS_BLOCKALL_INFO
-			cvar				"mv_allowDownload"
-			cvarFloatList
-			{
-				@MENUS0_OFF	 	1
-				@MENUS0_ON 		0
+		itemDef {
+			name	allowdownload
+			group	downloads
+			type		ITEM_TYPE_MULTI
+			text		@MV_DOWNLOADS_BLOCKALL
+			descText	@MV_DOWNLOADS_BLOCKALL_INFO
+			cvar		"mv_allowDownload"
+			cvarFloatList {
+				@MENUS0_OFF	1
+				@MENUS0_ON	0
 			}
-//			rect				305 331 300 20
-			rect				305 171 300 20
-	   		textalign			ITEM_ALIGN_RIGHT
-			textalignx			165
-			textaligny			-2
-			font 				2
-			textscale 			0.8
-			forecolor			1 1 1 1
-			visible			1
-			action
-			{
-				play			"sound/interface/button1.wav";
+//			rect	305 331 300 20
+			rect	305 171 300 20
+			textalign	ITEM_ALIGN_RIGHT
+			textalignx	165
+			textaligny	-2
+			font 		2
+			textscale 	0.8
+			forecolor	1 1 1 1
+			visible	1
+			action {
+				play	"sound/interface/button1.wav";
 			}
-			mouseenter
-			{
-				show			highlight1
+			mouseEnter {
+				show highlight1
 			}
-			mouseexit
-			{
-				hide			highlight1
+			mouseExit {
+				hide	highlight1
 			}
 		}
 
-		itemDef
-		{
-			name				downloads_list
-			group				downloads
-			rect				302 194 300 180
-			type				ITEM_TYPE_LISTBOX
-			style				WINDOW_STYLE_FILLED
-			elementwidth		120
-			elementheight		15
-			font				2
-			textscale			0.6
-			border				1
-			bordersize			1
-			bordercolor			.5 .5 .5 .5
-			forecolor			1 1 1 1
-			backcolor			0 0 .5 .25
-			outlinecolor		.5 .5 .5 .5
-			elementtype			LISTBOX_TEXT
-			feeder				17
+		itemDef {
+			name	downloads_list
+			group	downloads
+			rect		302 194 300 180
+			type			ITEM_TYPE_LISTBOX
+			style			WINDOW_STYLE_FILLED
+			elementwidth	120
+			elementheight	15
+			font			2
+			textscale		0.6
+			border		1
+			bordersize	1
+			bordercolor	.5 .5 .5 .5
+			forecolor		1 1 1 1
+			backcolor		0 0 .5 .25
+			outlinecolor	.5 .5 .5 .5
+			elementtype	LISTBOX_TEXT
+			feeder	17
 			notselectable
-			visible				0
-			columns				1	2 40 40
+			visible	0
+			columns	1	2 40 40
 		}
 
-		itemDef
-		{
-			name				dlinfo_button_glow
-			style				WINDOW_STYLE_SHADER
-			rect				325 385 80 25
-			background			"gfx/menus/menu_buttonback"
-			forecolor			1 1 1 1
-			visible				0
+		itemDef {
+			name	dlinfo_button_glow
+			style		WINDOW_STYLE_SHADER
+			rect		325 385 80 25
+			background "gfx/menus/menu_buttonback"
+			forecolor	1 1 1 1
+			visible	0
 			decoration
 		}
 
-		/*itemDef
-		{
-			name				dlinfo_button
-			group				downloads
-			text				@MV_DOWNLOADS_DLINFO
-			descText			@MV_DOWNLOADS_DLINFO_INFO
-			type				ITEM_TYPE_BUTTON
-			style				WINDOW_STYLE_EMPTY
-			rect				325 385 80 25
-			textalign			ITEM_ALIGN_CENTER
-			textalignx			40
-			font				2
-			textscale			0.8
-			forecolor			0.65 0.65 1 1
-			visible				0
-			action
-			{
-				play			"sound/interface/button1.wav" ;
-				uiScript		DLInfo;
+		/*itemDef {
+			name	dlinfo_button
+			group	downloads
+			text		@MV_DOWNLOADS_DLINFO
+			descText	@MV_DOWNLOADS_DLINFO_INFO
+			type		ITEM_TYPE_BUTTON
+			style		WINDOW_STYLE_EMPTY
+			rect		325 385 80 25
+			textalign	ITEM_ALIGN_CENTER
+			textalignx	40
+			font		2
+			textscale	0.8
+			forecolor	0.65 0.65 1 1
+			visible	0
+			action {
+				play	"sound/interface/button1.wav" ;
+				uiScript DLInfo;
 			}
-
-			mouseEnter
-			{
-				show			dlinfo_button_glow
+			mouseEnter {
+				show dlinfo_button_glow
 			}
-			mouseExit
-			{
-				hide			dlinfo_button_glow
+			mouseExit {
+				hide	dlinfo_button_glow
 			}
 		}*/
 
-		itemDef
-		{
-			name				dlpermanent_button_glow
-			style				WINDOW_STYLE_SHADER
-			rect				410 385 100 25
-			background			"gfx/menus/menu_buttonback"
-			forecolor			1 1 1 1
-			visible				0
+		itemDef {
+			name	dlpermanent_button_glow
+			style		WINDOW_STYLE_SHADER
+			rect		410 385 100 25
+			background "gfx/menus/menu_buttonback"
+			forecolor	1 1 1 1
+			visible	0
 			decoration
 		}
 
-		itemDef
-		{
-			name				dlpermanent_button
-			group				downloads
-			text				@MV_DOWNLOADS_DLPERMANENT
-			descText			@MV_DOWNLOADS_DLPERMANENT_INFO
-			type				ITEM_TYPE_BUTTON
-			style				WINDOW_STYLE_EMPTY
-			rect				410 385 100 25
-			textalign			ITEM_ALIGN_CENTER
-			textalignx			50
-			font				2
-			textscale			0.8
-			forecolor			0.65 0.65 1 1
-			visible				0
-			action
-			{
-				play			"sound/interface/button1.wav" ;
-				uiScript		DLPermanent;
+		itemDef {
+			name	dlpermanent_button
+			group	downloads
+			text		@MV_DOWNLOADS_DLPERMANENT
+			descText	@MV_DOWNLOADS_DLPERMANENT_INFO
+			type		ITEM_TYPE_BUTTON
+			style		WINDOW_STYLE_EMPTY
+			rect		410 385 100 25
+			textalign	ITEM_ALIGN_CENTER
+			textalignx	50
+			font		2
+			textscale	0.8
+			forecolor	0.65 0.65 1 1
+			visible	0
+			action {
+				play	"sound/interface/button1.wav" ;
+				uiScript DLPermanent;
 			}
 
-			mouseEnter
-			{
-				show			dlpermanent_button_glow
+			mouseEnter {
+				show dlpermanent_button_glow
 			}
-			mouseExit
-			{
-				hide			dlpermanent_button_glow
+			mouseExit {
+				hide	dlpermanent_button_glow
 			}
 		}
 
-		itemDef
-		{
-			name				dlremove_button_glow
-			style				WINDOW_STYLE_SHADER
-			rect				515 385 80 25
-			background			"gfx/menus/menu_buttonback"
-			forecolor			1 1 1 1
-			visible				0
+		itemDef {
+			name	dlremove_button_glow
+			style		WINDOW_STYLE_SHADER
+			rect		515 385 80 25
+			background "gfx/menus/menu_buttonback"
+			forecolor	1 1 1 1
+			visible	0
 			decoration
 		}
 
-		itemDef
-		{
-			name				dlremove_button
-			group				downloads
-			text				@MV_DOWNLOADS_DLREMOVE
-			descText			@MV_DOWNLOADS_DLREMOVE_INFO
-			type				ITEM_TYPE_BUTTON
-			style				WINDOW_STYLE_EMPTY
-			rect				515 385 80 25
-			textalign			ITEM_ALIGN_CENTER
-			textalignx			40
-			font				2
-			textscale			0.8
-			forecolor			0.65 0.65 1 1
-			visible				0
-			action
-			{
-				play			"sound/interface/button1.wav" ;
-				uiScript		DLRemove;
+		itemDef {
+			name	dlremove_button
+			group	downloads
+			text		@MV_DOWNLOADS_DLREMOVE
+			descText	@MV_DOWNLOADS_DLREMOVE_INFO
+			type		ITEM_TYPE_BUTTON
+			style		WINDOW_STYLE_EMPTY
+			rect		515 385 80 25
+			textalign	ITEM_ALIGN_CENTER
+			textalignx	40
+			font		2
+			textscale	0.8
+			forecolor	0.65 0.65 1 1
+			visible	0
+			action {
+				play	"sound/interface/button1.wav" ;
+				uiScript DLRemove;
 			}
 
-			mouseEnter
-			{
-				show			dlremove_button_glow
+			mouseEnter {
+				show dlremove_button_glow
 			}
-			mouseExit
-			{
-				hide			dlremove_button_glow
+			mouseExit {
+				hide	dlremove_button_glow
 			}
 		}
 ]
