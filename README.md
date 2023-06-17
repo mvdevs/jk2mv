@@ -6,28 +6,46 @@ JK2MV (Multi Version) is a modification for Jedi Knight II: Jedi Outcast. It sup
 Main Features:
 - Supports 1.02, 1.03 & 1.04 in a single executable
 - Supports most mods made for JK2 (maps, skins, (code)mods etc.)
+- Supports some original and custom Jedi Academy assets (maps, models etc.)
+- Raw mouse input
 - Fast ingame HTTP-Downloads with a dialogue asking you for permission before downloading files to your computer
 - Multiplatform: Windows, Linux, MacOSX, FreeBSD
-- Multiarchitecture: 32 and 64 bit support on all platforms
+- Multiarchitecture: x86, x86-64, ARM
 - Dynamic glow: Better looking lightsabers with the dynamic glow feature from JKA
 - EAX/OpenAL sound fixed
-- Support for modern screen resolutions
+- Supports modern screen resolutions and desktop scaling
 - Fixes for all known security bugs
 - Minimizer: Press the Windows key / Command key in fullscreen mode to minimize
 - Improved gamma correction
-- Tons of other fixes and improvements in the engine, see the changelog for detailed information
+- Performance improvements
+- High resolution fonts and widescreen UI
+- Fast AVI recording from demos
 - Opensource (GPLv2)
+- Engine extensions for JK2 modifications (maps, mods etc.)
+- Modernized, portable codebase and build system
+- Tons of other fixes and improvements in the engine, see the changelog for detailed information
 
 # Automated Builds
 These builds are automatically generated on every push to the repository. For testing purposes only.
 
-| GitHub Actions | Codacy |
-| -------------- | ------ |
-| [![GitHub Actions Badge](https://github.com/mvdevs/jk2mv/actions/workflows/build.yml/badge.svg)](https://github.com/mvdevs/jk2mv/actions?query=branch%3Amaster) | [![Codacy Badge](https://api.codacy.com/project/badge/Grade/872b979ad7dc46aebb6c63d66c1cea77)](https://www.codacy.com/app/mvdevs/jk2mv?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=mvdevs/jk2mv&amp;utm_campaign=Badge_Grade)
+| GitHub Actions |
+| -------------- |
+| [![GitHub Actions Badge](https://github.com/mvdevs/jk2mv/actions/workflows/build.yml/badge.svg)](https://github.com/mvdevs/jk2mv/actions?query=branch%3Amaster) |
+
+# Project Goals
+
+1. To provide an open source JK2 multiplayer client/server distribution for modern systems.
+2. To support all three major JK2 multiplayer versions: 1.02, 1.03 and 1.04.
+3. To benefit JK2 multiplayer community by providing necessary engine bugfixes, enchancements and changes to keep the game playable online using JK2MV.
+4. To benefit JK2 modding community by providing engine bugfixes, enchancements and documentation.
+5. To maintain compatibility with modifications created for original JK2 client/server.
+
+Note that MVSDK is a separate project with its own goals.
 
 # Howto Build JK2MV
+
 1. Clone the JK2MV repository
-Clone the JK2MV repository including submodules (required if you also want to build the [mvsdk](https://github.com/mvdevs/mvsdk) modules), e.g.:
+Clone the JK2MV repository including submodules:
 	* `git clone --recursive https://github.com/mvdevs/jk2mv`
 2. Get CMake from either https://cmake.org or, in case of Linux, from the repositories of your distribution.
 3. Dependencies
@@ -60,6 +78,16 @@ Clone the JK2MV repository including submodules (required if you also want to bu
 		* `make install` Installs JK2MV to `/usr` on Linux. On MacOSX it finishes the App-Package.
 		* `make package` Generates rpm/deb packages on Linux and a dmg image on MacOSX.
 
+# Contributing
+
+Code contributions are welcome as GitHub pull requests, however they must meet some conditions:
+
+1. Change must adhere to general project goals outlined earlier.
+2. Source code must pass a review from JK2MV maintainer.
+3. Source code must be published under GPL2 licence.
+
+When in doubt, it is best to ask JK2MV developers directly if your idea has a chance of being accepted.
+
 # License
 JK2MV is licensed under GPLv2 as free software. You are free to use, modify and redistribute JK2MV following the terms in the LICENSE file. Please be aware of the implications of the GPLv2 licence. In short, be prepared to share your code under the same GPLv2 licence.
 
@@ -68,3 +96,13 @@ JK2MV is licensed under GPLv2 as free software. You are free to use, modify and 
 - ioq3 (https://github.com/ioquake/ioq3/) (SDL port, x64 qvm, engine fixes, improvements etc.)
 - xLAva (https://github.com/xLAva/JediOutcastLinux) (openal fixes)
 - Thoroughbred-Of-Sin (http://thoroughbred-of-sin.deviantart.com/) (icon)
+
+# Maintainers
+
+- Daggo
+- fau
+- ouned
+
+JK2MV maintainers can be contacted on GitHub or on JK2 Discord server.
+
+![JK2 Discord](https://discordapp.com/api/guilds/220358272538902528/widget.png?style=banner2)
