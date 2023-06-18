@@ -169,11 +169,9 @@ Client-Side
    Mouse input mode
 
    | 0: Mouse disabled.
-   | 1: Same as in retail client - high latency, follows desktop mouse
-   speed and acceleration settings.
+   | 1: Same as in retail client - high latency, follows desktop mouse speed and acceleration settings.
    | 2: Raw, no acceleration, lowest latency.
-   | 3: Raw, lowest latency but with desktop mouse speed and
-  acceleration settings
+   | 3: Raw, lowest latency but with desktop mouse speed and acceleration settings.
 
 ..
 
