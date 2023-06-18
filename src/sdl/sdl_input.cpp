@@ -496,7 +496,7 @@ void IN_Init( void *windowData )
 		SDL_SetHint(SDL_HINT_MOUSE_RELATIVE_MODE_WARP, "0");
 	}
 
-#if SDL_VERSION_ATLEAST(2, 0, 6)
+#if SDL_VERSION_ATLEAST(2, 26, 0)
 	if (in_mouse->integer == 3) {
 		Com_DPrintf("IN_Init: Using raw mouse input with system scaling\n");
 		// low latency of raw mouse input with system mouse scaling
