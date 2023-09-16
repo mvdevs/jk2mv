@@ -2778,6 +2778,50 @@ void CL_SetForcePowers_f( void ) {
 #define G2_VERT_SPACE_CLIENT_SIZE 256
 #endif
 
+
+/*
+=================
+MV_UpdateClFlags
+
+Called by CL_Init. Updates the mv_clFlags accoding to the current settings
+
+At the time of initial implementation there is only two clFlags, one which is always active and one which could be determined at compile time, so the function is not required, yet.
+However in future versions users might be able to disable some of the features, so the clFlags need to be adjusted in such cases
+=================
+*/
+void MV_UpdateClFlags( void )
+{
+	// mv_clFlags - Used to inform the server about available jk2mv clientside features
+	static cvar_t *mv_clFlags;
+	char *value;
+	int intValue = 0;
+
+	// Check for the features and determine the flags
+	if ( MV_APILEVEL >= 4 ) intValue |= MV_CLFLAG_SUBMODEL_BYPASS;
+	intValue |= MV_CLFLAG_ADVANCED_REMAPS;
+
+	// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	// !!! Forks of JK2MV should NOT modify the mv_clFlags                             !!!
+	// !!! Removal, replacement or adding of new flags might lead to incompatibilities !!!
+	// !!! Forks should define their own userinfo cvar instead of modifying this       !!!
+	// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+	// If the current clFlags match the intValue we can return
+	if ( mv_clFlags && mv_clFlags->integer == intValue ) return;
+
+	// We need a string when registering/setting the cvar
+	value = va( "%i", intValue );
+
+	if ( !mv_clFlags )
+	{ // Register the cvar as rom, internal and userinfo for the server to see, but without users manually changing it
+		mv_clFlags = Cvar_Get( "mv_clFlags", value, CVAR_ROM|CVAR_INTERNAL|CVAR_USERINFO );
+	}
+	else
+	{ // Update the cvar
+		Cvar_Set( "mv_clFlags", value );
+	}
+}
+
 /*
 ====================
 CL_Init
@@ -2906,6 +2950,9 @@ void CL_Init( void ) {
 	cl_downloadCount = Cvar_Get("cl_downloadCount", "", CVAR_INTERNAL);
 	cl_downloadTime = Cvar_Get("cl_downloadTime", "", CVAR_INTERNAL);
 	cl_downloadProtocol = Cvar_Get("cl_downloadProtocol", "", CVAR_INTERNAL);
+
+	// Update cl flags userinfo
+	MV_UpdateClFlags();
 
 	//
 	// register our commands

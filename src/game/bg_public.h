@@ -42,6 +42,10 @@
 
 #define MAX_CLIENT_SCORE_SEND 20
 
+// mv_clflags - set by the client engine in the mv_clFlags userinfo cvar to inform the server about additional features
+#define MV_CLFLAG_SUBMODEL_BYPASS           (1)          // Indicates the client engine supports bypassing the MAX_SUBMODEL limit if the cgame module and the server support it, too.
+#define MV_CLFLAG_ADVANCED_REMAPS           (1 << 1)     // Indicates the client engine supports the new advanced shader remaps.
+
 //
 // config strings are a general means of communicating variable length strings
 // from the server to all connected clients.
