@@ -1994,8 +1994,12 @@ static pack_t *FS_LoadZipFile( char *zipfile, const char *basename, qboolean ass
 		}
 		strLength = strlen(filename_inzip);
 		if ( assetsJKA ) {
-			// Ugly workaround: rename academy shader files to avoid collisions
+			// Ugly workarounds:
+			//  - rename academy shader files to avoid collisions
+			//  - rename academy sounds.cfg files to prevent them from overriding sounds of jk2 models that don't have a sounds.cfg
 			if ( strLength > 7 && !Q_stricmp(filename_inzip + strLength - 7, ".shader") ) {
+				len += 4; // "_jka"
+			} else if ( strLength > 15 && !Q_stricmpn(filename_inzip, "models/players/", 15) && !Q_stricmp(filename_inzip + strLength - 11, "/sounds.cfg") ) {
 				len += 4; // "_jka"
 			}
 		}
@@ -2044,9 +2048,13 @@ static pack_t *FS_LoadZipFile( char *zipfile, const char *basename, qboolean ass
 			fs_headerLongs[fs_numHeaderLongs++] = LittleLong(file_info.crc);
 		}
 		if ( assetsJKA ) {
-			// Ugly workaround: rename academy shader files to avoid collisions
+			// Ugly workarounds:
+			//  - rename academy shader files to avoid collisions
+			//  - rename academy sounds.cfg files to prevent them from overriding sounds of jk2 models that don't have a sounds.cfg
 			strLength = strlen( filename_inzip );
 			if ( strLength > 7 && !Q_stricmp(filename_inzip + strLength - 7, ".shader") ) {
+				Q_strcat( filename_inzip, sizeof(filename_inzip), "_jka" );
+			} else if ( strLength > 15 && !Q_stricmpn(filename_inzip, "models/players/", 15) && !Q_stricmp(filename_inzip + strLength - 11, "/sounds.cfg") ) {
 				Q_strcat( filename_inzip, sizeof(filename_inzip), "_jka" );
 			}
 		}
