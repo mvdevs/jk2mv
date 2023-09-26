@@ -5,6 +5,22 @@
 
 #define	REF_API_VERSION		8
 
+
+typedef enum
+{
+	SHADERREMAP_LIGHTMAP_PRESERVE,
+	SHADERREMAP_LIGHTMAP_NONE,
+	SHADERREMAP_LIGHTMAP_FULLBRIGHT,
+	SHADERREMAP_LIGHTMAP_VERTEX,
+	SHADERREMAP_LIGHTMAP_2D,
+} shaderRemapLightmapType_t;
+
+typedef enum
+{
+	SHADERREMAP_STYLE_PRESERVE,
+	SHADERREMAP_STYLE_DEFAULT,
+} shaderRemapStyleType_t;
+
 //
 // these are the functions exported by the refresh module
 //
@@ -91,6 +107,8 @@ typedef struct {
 	unsigned int (*AnyLanguage_ReadCharFromString)( const char *psText, int *piAdvanceCount, qboolean *pbIsTrailingPunctuation/* = NULL*/ );
 
 	void	(*RemapShader)(const char *oldShader, const char *newShader, const char *offsetTime);
+	void	(*RemapShaderAdvanced)(const char *oldShader, const char *newShader, int offsetTime, shaderRemapLightmapType_t lightmapMode, shaderRemapStyleType_t styleMode);
+	void	(*RemoveAdvancedRemaps)(void);
 	qboolean (*GetEntityToken)( char *buffer, int size );
 	qboolean (*inPVS)( const vec3_t p1, const vec3_t p2 );
 

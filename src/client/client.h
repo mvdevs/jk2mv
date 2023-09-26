@@ -352,6 +352,8 @@ typedef struct {
 
 	int			fixes;
 	qboolean	submodelBypass;
+
+	int			cs_remaps;
 } clientStatic_t;
 
 #define	CON_TEXTSIZE	131072 // increased in jk2mv
@@ -502,6 +504,7 @@ int CL_ServerStatus( const char *serverAddress, char *serverStatusString, int ma
 
 void CL_GetVMGLConfig(vmglconfig_t *vmglconfig);
 int CL_ScaledMilliseconds(void);
+void CL_ShaderStateChanged( void );
 
 //
 // cl_input

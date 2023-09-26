@@ -1324,6 +1324,9 @@ void CL_Vid_Restart_f( void ) {
 		// send pure checksums
 		CL_SendPureChecksums();
 	}
+
+	// Reapply mvremaps to override classic ones
+	CL_ShaderStateChanged();
 }
 
 /*
@@ -2788,6 +2791,50 @@ void CL_SetForcePowers_f( void ) {
 #define G2_VERT_SPACE_CLIENT_SIZE 256
 #endif
 
+
+/*
+=================
+MV_UpdateClFlags
+
+Called by CL_Init. Updates the mv_clFlags accoding to the current settings
+
+At the time of initial implementation there is only two clFlags, one which is always active and one which could be determined at compile time, so the function is not required, yet.
+However in future versions users might be able to disable some of the features, so the clFlags need to be adjusted in such cases
+=================
+*/
+void MV_UpdateClFlags( void )
+{
+	// mv_clFlags - Used to inform the server about available jk2mv clientside features
+	static cvar_t *mv_clFlags;
+	char *value;
+	int intValue = 0;
+
+	// Check for the features and determine the flags
+	if ( MV_APILEVEL >= 4 ) intValue |= MV_CLFLAG_SUBMODEL_BYPASS;
+	intValue |= MV_CLFLAG_ADVANCED_REMAPS;
+
+	// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	// !!! Forks of JK2MV should NOT modify the mv_clFlags                             !!!
+	// !!! Removal, replacement or adding of new flags might lead to incompatibilities !!!
+	// !!! Forks should define their own userinfo cvar instead of modifying this       !!!
+	// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+	// If the current clFlags match the intValue we can return
+	if ( mv_clFlags && mv_clFlags->integer == intValue ) return;
+
+	// We need a string when registering/setting the cvar
+	value = va( "%i", intValue );
+
+	if ( !mv_clFlags )
+	{ // Register the cvar as rom, internal and userinfo for the server to see, but without users manually changing it
+		mv_clFlags = Cvar_Get( "mv_clFlags", value, CVAR_ROM|CVAR_INTERNAL|CVAR_USERINFO );
+	}
+	else
+	{ // Update the cvar
+		Cvar_Set( "mv_clFlags", value );
+	}
+}
+
 /*
 ====================
 CL_Init
@@ -2916,6 +2963,9 @@ void CL_Init( void ) {
 	cl_downloadCount = Cvar_Get("cl_downloadCount", "", CVAR_INTERNAL);
 	cl_downloadTime = Cvar_Get("cl_downloadTime", "", CVAR_INTERNAL);
 	cl_downloadProtocol = Cvar_Get("cl_downloadProtocol", "", CVAR_INTERNAL);
+
+	// Update cl flags userinfo
+	MV_UpdateClFlags();
 
 	//
 	// register our commands
@@ -4057,4 +4107,154 @@ void CL_GetVMGLConfig(vmglconfig_t *vmglconfig) {
 	vmglconfig->isFullscreen = cls.glconfig.isFullscreen;
 	vmglconfig->stereoEnabled = cls.glconfig.stereoEnabled;
 	vmglconfig->smpActive = cls.glconfig.smpActive;
+}
+
+void CL_ShaderStateChanged( void ) {
+	// Originally copied from CG_ShaderStateChanged, but rewritten to avoid issues of the original implementation and to
+	// support settings
+	char originalShader[MAX_QPATH];
+	char newShader[MAX_QPATH];
+	char settings[32];
+	char *timeOffset;
+	char *lightmapMode;
+	char *styleMode;
+
+	shaderRemapLightmapType_t lightmapModeValue;
+	shaderRemapStyleType_t styleModeValue;
+
+	const char *curPos;
+	const char *endPos;
+
+	int length;
+
+	// Make sure it's a valid configstring index
+	if ( cls.cs_remaps < CS_SYSTEMINFO || cls.cs_remaps >= MAX_CONFIGSTRINGS ) return;
+
+	// Clear any active remaps. We are going to reapply those that should stay below when parsing the string anyway.
+	re.RemoveAdvancedRemaps();
+
+	curPos = cl.gameState.stringData + cl.gameState.stringOffsets[ cls.cs_remaps ];
+	endPos = curPos + strlen( curPos );
+
+	// Handling of these is really ugly. I originally wanted to handle them like the base game/cgame modules do, but
+	// those are prone to injections. Summary of delimeter issues:
+	//  - base uses '=', ':' an '@', all of them can be used in shader names
+	//  - .shader files don't seem to support spaces in shader names, but texture paths support spaces
+	//  - .shader files allow most other characters, including backspace '\'
+	//  -> using a delimeter is not a reliable option
+
+	// The next best thing seemed to be to give the length of the shader before its name to allow all characters to be
+	// used. As I don't want to waste any space (configstrings containing shader paths are wasteful as it is), I decided
+	// to encode the length in a single byte (MAX_QPATH is 80, so a single byte can easily hold the length). However the
+	// netcode and the handling of quotes lead to other issues:
+	//  - 34 maps to 32, thus 32 could mean either of these numbers while 34 doesn't exist
+	//  - 37 and >127 map to 46, thus 37 doesn't exist and 46 could mean 37, 46 or >127
+	//  -> the biggest amount of consecutive numbers without multiple meanings spans from 47 to 127; as MAX_QPATH is 80
+	//     this should fix exactly
+	//  -> could also use the range from 38 to 127, because - when isolating the range - there are no duplicates within
+	//     it; this would allow for a size of up to 89, which is unlikely to be useful if MAX_QPATH ever gets increased
+	//  -> using 47 to 127
+
+	// Example input: "6console4clear929300;p;p;":
+	//  - "6" -> ascii 54 -> 54 - 47 = 7 -> the next 7 characters are the source shader name
+	//  - "console" -> source shader (7 characters)
+	//  - "4" -> ascii 52 -> 52 - 47 = 5 -> the next 5 characters are the destination shader name
+	//  - "clear" -> destination shader (5 characters)
+	//  - "9" -> ascii 57 -> 57 - 47 = 10 -> the next 10 characters are the options
+	//  - "29300;p;p;"
+	//    - "29300" -> timeOffset
+	//    - "p" -> lightmapMode
+	//    - "p" -> styleMode
+
+	// Parse configstring
+	while ( curPos < endPos )
+	{
+		// Read original shader
+		length = *(curPos++);
+		length -= 47; // Length is increased by 47 to workaround netchan limits
+		if ( length < 1 )
+		{
+			Com_DPrintf( "CL_ShaderStateChanged: invalid length encoding for source shader\n" );
+			break;
+		}
+		Q_strncpyz( originalShader, curPos, MIN((unsigned int)length+1, sizeof(originalShader)) );
+		curPos += length;
+
+		// Read new shader
+		if ( curPos >= endPos ) break;
+		length = *(curPos++);
+		length -= 47; // Length is increased by 47 to workaround netchan limits
+		if ( length < 1 )
+		{
+			Com_DPrintf( "CL_ShaderStateChanged: invalid length encoding for destination shader\n" );
+			break;
+		}
+		Q_strncpyz( newShader, curPos, MIN((unsigned int)length+1, sizeof(newShader)) );
+		curPos += length;
+
+		// Read settings
+		if ( curPos >= endPos ) break;
+		length = *(curPos++);
+		length -= 47; // Length is increased by 47 to workaround netchan limits
+		if ( length < 1 )
+		{
+			Com_DPrintf( "CL_ShaderStateChanged: invalid length encoding for settings\n" );
+			break;
+		}
+		Q_strncpyz( settings, curPos, MIN((unsigned int)length+1, sizeof(settings)) );
+		curPos += length;
+
+		// Get values from settings
+		timeOffset = strtok( settings, ";" );
+		lightmapMode = strtok( NULL, ";" );
+		styleMode = strtok( NULL, ";" );
+
+		// Pick lightmap value
+		if ( lightmapMode && *lightmapMode )
+		{
+			switch( *lightmapMode )
+			{
+				case 'p': // preserve
+					lightmapModeValue = SHADERREMAP_LIGHTMAP_PRESERVE;
+					break;
+				case 'n': // none
+					lightmapModeValue = SHADERREMAP_LIGHTMAP_NONE;
+					break;
+				case 'f': // fullbright
+					lightmapModeValue = SHADERREMAP_LIGHTMAP_FULLBRIGHT;
+					break;
+				case 'v': // vertex
+					lightmapModeValue = SHADERREMAP_LIGHTMAP_VERTEX;
+					break;
+				case '2': // 2d
+					lightmapModeValue = SHADERREMAP_LIGHTMAP_2D;
+					break;
+				default: // fallback to preserve
+					lightmapModeValue = SHADERREMAP_LIGHTMAP_PRESERVE;
+					break;
+			}
+		}
+		else lightmapModeValue = SHADERREMAP_LIGHTMAP_PRESERVE; // fallback to preserve
+
+		// Pick style value
+		if ( styleMode && *styleMode )
+		{
+			switch( *styleMode )
+			{
+				case 'p': // preserve
+					styleModeValue = SHADERREMAP_STYLE_PRESERVE;
+					break;
+				case 'd': // default style
+					styleModeValue = SHADERREMAP_STYLE_DEFAULT;
+					break;
+				default: // fallback to preserve
+					styleModeValue = SHADERREMAP_STYLE_PRESERVE;
+					break;
+			}
+		}
+		else styleModeValue = SHADERREMAP_STYLE_PRESERVE; // fallback to preserve
+
+		// Apply remap
+		re.RemapShaderAdvanced( originalShader, newShader, timeOffset ? atoi(timeOffset) : 0, lightmapModeValue, styleModeValue );
+	}
 }

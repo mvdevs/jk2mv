@@ -492,7 +492,10 @@ Ghoul2 Insert End
 	// True if this shader has a stage with glow in it (just an optimization).
 	qboolean hasGlow;
 
+	qboolean isAdvancedRemap;
+
 	struct shader_s *remappedShader;                  // current shader this one is remapped too
+	struct shader_s *remappedShaderAdvanced;          // current shader from the advanced remaps this one is remapped to
 
 	struct	shader_s	*next;
 } shader_t;
@@ -1104,6 +1107,9 @@ typedef struct {
 	shader_t				*shaders[MAX_SHADERS];
 	shader_t				*sortedShaders[MAX_SHADERS];
 
+	int						numAdvancedRemapShaders;
+	shader_t				*advancedRemapShaders[MAX_SHADERS];
+
 	int						numSkins;
 	skin_t					*skins[MAX_SKINS];
 
@@ -1297,6 +1303,7 @@ extern	cvar_t *r_textureLODBias;
 extern	cvar_t *r_saberGlow;
 extern	cvar_t *r_environmentMapping;
 extern	cvar_t *r_printMissingModels;
+extern	cvar_t *r_newRemaps;
 //====================================================================
 
 float R_NoiseGet4f( float x, float y, float z, double t );
@@ -1453,13 +1460,16 @@ qhandle_t		 RE_RegisterShader( const char *name );
 qhandle_t		 RE_RegisterShaderNoMip( const char *name );
 qhandle_t RE_RegisterShaderFromImage(const char *name, int *lightmapIndex, byte *styles, image_t *image, qboolean mipRawImage);
 
-shader_t	*R_FindShader( const char *name, const int *lightmapIndex, const byte *styles, qboolean mipRawImage );
+shader_t	*R_FindShader( const char *name, const int *lightmapIndex, const byte *styles, qboolean mipRawImage, qboolean isAdvancedRemap = qfalse );
+shader_t	*R_FindAdvancedRemapShader( const char *name, const int *lightmapIndex, const byte *styles, qboolean mipRawImage );
 shader_t	*R_GetShaderByHandle( qhandle_t hShader );
 // shader_t	*R_GetShaderByState( int index, int *cycleTime );
 shader_t *R_FindShaderByName( const char *name );
 void		R_InitShaders( void );
 void		R_ShaderList_f( void );
 void	R_RemapShader(const char *oldShader, const char *newShader, const char *timeOffset);
+void R_RemapShaderAdvanced(const char *shaderName, const char *newShaderName, int timeOffset, shaderRemapLightmapType_t lightmapMode, shaderRemapStyleType_t styleMode);
+void R_RemoveAdvancedRemaps( void );
 
 /*
 ====================================================================

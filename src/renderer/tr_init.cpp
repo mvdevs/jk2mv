@@ -191,6 +191,7 @@ cvar_t *r_textureLODBias;
 cvar_t *r_saberGlow;
 cvar_t *r_environmentMapping;
 cvar_t *r_printMissingModels;
+cvar_t *r_newRemaps;
 
 #ifndef DEDICATED
 PFNGLACTIVETEXTUREARBPROC qglActiveTextureARB;
@@ -1081,6 +1082,9 @@ void R_Register( void )
 	r_uiFullScreen = ri.Cvar_Get( "r_uifullscreen", "0", 0);
 	r_subdivisions = ri.Cvar_Get("r_subdivisions", "4", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);
 	r_ignoreFastPath = ri.Cvar_Get("r_ignoreFastPath", "1", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);
+	r_newRemaps = ri.Cvar_Get("r_newRemaps", "0", CVAR_CHEAT ); // Only used for testing. Classic remaps are supposed to remain fullbright,
+	                                                            // because that is how they have been used by maps and serverside mods for
+	                                                            // more than 20 years. Servers can set a configstring for "mvremap" now.
 
 	//
 	// temporary latched variables that can only change over a restart
@@ -1537,6 +1541,8 @@ refexport_t *GetRefAPI ( int apiVersion, refimport_t *rimp ) {
 	re.AnyLanguage_ReadCharFromString = AnyLanguage_ReadCharFromString;
 
 	re.RemapShader = R_RemapShader;
+	re.RemapShaderAdvanced = R_RemapShaderAdvanced;
+	re.RemoveAdvancedRemaps = R_RemoveAdvancedRemaps;
 	re.GetEntityToken = R_GetEntityToken;
 	re.inPVS = R_inPVS;
 
