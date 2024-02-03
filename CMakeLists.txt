@@ -50,7 +50,7 @@ option(BuildMVSDK "Whether to build and integrate the mvsdk modules" ON)
 
 set(SystemProcessor "${CMAKE_SYSTEM_PROCESSOR}" CACHE STRING "Option to override CMAKE_SYSTEM_PROCESSOR")
 
-if(NOT EXISTS "${CMAKE_SOURCE_DIR}/src/mvsdk/code/ui/CMakeLists.txt")
+if((BuildMVSDK OR BuildMVMP) AND NOT EXISTS "${CMAKE_SOURCE_DIR}/src/mvsdk/code/ui/CMakeLists.txt")
 	message(FATAL_ERROR "Could not find CMakeLists.txt in \"src/mvsdk/code/ui\". Unable to continue. Make sure you cloned jk2mv including submodules.")
 endif()
 
