@@ -6,6 +6,7 @@
 #include <mongoose.h>
 #include "q_shared.h"
 #include "qcommon.h"
+#include <mv_setup.h>
 
 #define POLL_MSEC 100
 
@@ -13,7 +14,7 @@ static size_t mgstr2str(char *out, size_t outlen, const struct mg_str *in) {
 	size_t cpylen = in->len;
 	if (cpylen > outlen - 1) cpylen = outlen - 1;
 
-	memcpy(out, in->p, cpylen);
+	memcpy(out, in->ptr, cpylen);
 	out[cpylen] = '\0';
 
 	return cpylen;
@@ -41,7 +42,7 @@ static struct {
 		bool processed;
 
 		char reqPath[MAX_OSPATH];
-		char rootPath[MAX_OSPATH];
+		char filePath[MAX_OSPATH];
 		bool allowed;
 	} event;
 } srv;
@@ -50,10 +51,10 @@ static void NET_HTTP_ServerProcessEvent() {
 	std::unique_lock<std::mutex> lk(srv.event.mutex);
 
 	if (!srv.event.processed) {
-		const char *rootPath = FS_MV_VerifyDownloadPath(srv.event.reqPath);
-		if (rootPath) {
+		const char *filePath = FS_MV_VerifyDownloadPath(srv.event.reqPath);
+		if (filePath) {
 			srv.event.allowed = true;
-			Q_strncpyz(srv.event.rootPath, rootPath, sizeof(srv.event.rootPath));
+			Q_strncpyz(srv.event.filePath, filePath, sizeof(srv.event.filePath));
 		} else {
 			srv.event.allowed = false;
 		}
@@ -66,8 +67,8 @@ static void NET_HTTP_ServerProcessEvent() {
 }
 
 static void NET_HTTP_ServerEvent(struct mg_connection *nc, int ev, void *ev_data) {
-	if (ev == MG_EV_HTTP_REQUEST) {
-		struct http_message *hm = (struct http_message *)ev_data;
+	if (ev == MG_EV_HTTP_MSG) {
+		struct mg_http_message *hm = (struct mg_http_message *)ev_data;
 
 		// wait for free event, set event, wait for result, free event
 		std::unique_lock<std::mutex> lk(srv.event.mutex);
@@ -79,15 +80,15 @@ static void NET_HTTP_ServerEvent(struct mg_connection *nc, int ev, void *ev_data
 		srv.event.cv_processed.wait(lk, [] { return srv.event.processed; });
 
 		if (srv.event.allowed) {
-			struct mg_serve_http_opts opts = {
-				srv.event.rootPath
-			};
+			struct mg_http_serve_opts opts = {};
 
-			mg_serve_http(nc, hm, opts);
+			mg_http_serve_file(nc, hm, srv.event.filePath, &opts);
 		} else {
-			mg_printf(nc, "HTTP/1.1 403 Forbidden\r\nContent-Type: text/html\r\n\r\n"
-				"<html><body><h1>403 Forbidden</h1></body></html>");
-			nc->flags |= MG_F_SEND_AND_CLOSE;
+			mg_http_reply(nc, 403,
+						  "Content-Type: text/html\r\n",
+						  "%s",
+						  "<html><body><h1>403 Forbidden</h1></body></html>");
+			nc->is_draining = 1;
 		}
 	}
 }
@@ -111,20 +112,18 @@ int NET_HTTP_StartServer(int port) {
 	if (srv.running)
 		return srv.port;
 
-	mg_mgr_init(&srv.mgr, NULL);
+	mg_mgr_init(&srv.mgr);
 
 	if (port) {
-		srv.con = mg_bind(&srv.mgr, va("%i", port), NET_HTTP_ServerEvent);
+		srv.con = mg_http_listen(&srv.mgr, va("0.0.0.0:%i", port), NET_HTTP_ServerEvent, NULL);
 	} else {
 		for (port = HTTPSRV_STDPORT; port <= HTTPSRV_STDPORT + 15; port++) {
-			srv.con = mg_bind(&srv.mgr, va("%i", port), NET_HTTP_ServerEvent);
+			srv.con = mg_http_listen(&srv.mgr, va("0.0.0.0:%i", port), NET_HTTP_ServerEvent, NULL);
 			if (srv.con) break;
 		}
 	}
 
 	if (srv.con) {
-		mg_set_protocol_http_websocket(srv.con);
-
 		// reset event
 		srv.event.processed = true;
 
@@ -186,6 +185,8 @@ static struct clientDL_t {
 	dl_ended_callback ended_callback;
 	dl_status_callback status_callback;
 
+	char url[MAX_STRING_CHARS];
+
 	bool error;
 	char err_msg[256];
 } cldls[MAX_PARALLEL_DOWNLOADS];
@@ -215,8 +216,8 @@ static void NET_HTTP_DownloadProcessEvent() {
 	m_cldls.unlock();
 }
 
-static void NET_HTTP_DownloadRecvData(struct mbuf *io, struct mg_connection *nc, std::unique_lock<std::mutex> *lock) {
-	clientDL_t *cldl = (clientDL_t *)nc->user_data;
+static void NET_HTTP_DownloadRecvData(struct mg_iobuf *io, struct mg_connection *nc, std::unique_lock<std::mutex> *lock) {
+	clientDL_t *cldl = (clientDL_t *)nc->fn_data;
 
 	size_t bytesAvailable = io->len;
 	if (cldl->downloaded_bytes + bytesAvailable > cldl->total_bytes) {
@@ -239,51 +240,61 @@ static void NET_HTTP_DownloadRecvData(struct mbuf *io, struct mg_connection *nc,
 		if (total < bytesAvailable) {
 			strcpy(cldl->err_msg, "HTTP Error: 0 bytes written to file\n");
 			cldl->error = true;
-			nc->flags |= MG_F_CLOSE_IMMEDIATELY;
+			nc->is_closing = 1;
 			return;
 		}
 
 		cldl->downloaded_bytes += bytesAvailable;
-		mbuf_remove(io, bytesAvailable);
+		mg_iobuf_del(io, 0, bytesAvailable);
 	}
 
 	if (cldl->downloaded_bytes == cldl->total_bytes) {
-		nc->flags |= MG_F_CLOSE_IMMEDIATELY;
+		nc->is_closing = 1;
 	}
 }
 
 static void NET_HTTP_DownloadEvent(struct mg_connection *nc, int ev, void *ev_data) {
-	std::unique_lock<std::mutex> lk(m_cldls);
-	clientDL_t *cldl = (clientDL_t *)nc->user_data;
+	clientDL_t *cldl = (clientDL_t *)nc->fn_data;
+
+	// mg_connect() sends MG_EV_OPEN synchronously and this would
+	// cause a deadlock on m_cldls if m_cldls was locked here
 
 	switch (ev) {
-	case MG_EV_CONNECT: {
-		if (*(int *)ev_data != 0) {
-			snprintf(cldl->err_msg, sizeof(cldl->err_msg), "connecting failed: %s", strerror(*(int *)ev_data));
-			cldl->error = true;
-			nc->flags |= MG_F_CLOSE_IMMEDIATELY;
-			return;
-		}
+	case MG_EV_ERROR: {
+		std::unique_lock<std::mutex> lk(m_cldls);
+		strncpy(cldl->err_msg, (char *)ev_data, sizeof(cldl->err_msg));
+		cldl->err_msg[sizeof(cldl->err_msg) - 1] = '\0';
+		cldl->error = true;
 		break;
-	} case MG_EV_RECV: {
-		struct mbuf *io = &nc->recv_mbuf;
+	}
+	case MG_EV_CONNECT: {
+		std::unique_lock<std::mutex> lk(m_cldls);
+		struct mg_str host = mg_url_host(cldl->url);
+		mg_printf(nc,
+			"GET %s HTTP/1.0\r\n"
+			"Host: %.*s\r\n"
+			"User-Agent: " Q3_VERSION "\r\n"
+			"\r\n",
+			mg_url_uri(cldl->url), (int) host.len, host.ptr);
+		break;
+	} case MG_EV_READ: {
+		std::unique_lock<std::mutex> lk(m_cldls);
+		struct mg_iobuf *io = &nc->recv;
+		struct mg_http_message msg;
 
-		struct http_message msg;
-		if (!cldl->total_bytes && mg_parse_http(io->buf, (int)io->len, &msg, 0)) {
-			if (msg.resp_code != 200) {
-				char tmp[128];
-
-				mgstr2str(tmp, sizeof(tmp), &msg.resp_status_msg);
-				snprintf(cldl->err_msg, sizeof(cldl->err_msg), "HTTP Error: %i %s", msg.resp_code, tmp);
+		if (!cldl->total_bytes && mg_http_parse((char *)io->buf, io->len, &msg)) {
+			if (strncmp(msg.uri.ptr, "200", 3)) {
+				snprintf(cldl->err_msg, sizeof(cldl->err_msg), "HTTP Error: %.*s %.*s", (int)msg.uri.len, msg.uri.ptr, (int)msg.proto.len, msg.proto.ptr);
+				cldl->err_msg[sizeof(cldl->err_msg) - 1] = '\0';
 				cldl->error = true;
-				nc->flags |= MG_F_CLOSE_IMMEDIATELY;
+				nc->is_closing = 1;
 				return;
 			}
 
-			if (msg.body.len && io->buf + io->len >= msg.body.p) {
+			if (msg.body.len && (char *)io->buf + io->len >= msg.body.ptr) {
 				cldl->total_bytes = msg.body.len;
 
-				mbuf_remove(io, msg.body.p - io->buf);
+				mg_iobuf_del(io, 0, msg.body.ptr - (char *)io->buf);
 				NET_HTTP_DownloadRecvData(io, nc, &lk);
 			}
 		} else {
@@ -291,6 +302,7 @@ static void NET_HTTP_DownloadEvent(struct mg_connection *nc, int ev, void *ev_da
 		}
 		break;
 	} case MG_EV_CLOSE: {
+		std::unique_lock<std::mutex> lk(m_cldls);
 		cldl->downloading = false;
 		break;
 	} default:
@@ -313,7 +325,7 @@ static void NET_HTTP_DownloadPollLoop(clientDL_t *cldl) {
 NET_HTTP_StartDownload
 ====================
 */
-dlHandle_t NET_HTTP_StartDownload(const char *url, const char *toPath, dl_ended_callback ended_callback, dl_status_callback status_callback, const char *userAgent, const char *referer) {
+dlHandle_t NET_HTTP_StartDownload(const char *url, const char *toPath, dl_ended_callback ended_callback, dl_status_callback status_callback) {
 	m_cldls.lock(); // Manually handle lock, because we don't return from Com_Error
 
 	// search for free dl slot
@@ -345,12 +357,18 @@ dlHandle_t NET_HTTP_StartDownload(const char *url, const char *toPath, dl_ended_
 	cldl->downloaded_bytes = cldl->total_bytes = 0;
 	cldl->ended_callback = ended_callback;
 	cldl->status_callback = status_callback;
+	Q_strncpyz(cldl->url, url, sizeof(cldl->url));
 
-	mg_mgr_init(&cldl->mgr, NULL);
+	mg_mgr_init(&cldl->mgr);
 
-	char headers[512];
-	Com_sprintf(headers, sizeof(headers), "User-Agent: %s\r\nReferer: %s\r\n", userAgent, referer);
-	cldl->con = mg_connect_http_opt(&cldl->mgr, NET_HTTP_DownloadEvent, {(void *)cldl}, url, headers, NULL);
+	// mg_http_connect() reads whole response to memory first and then
+	// sends MG_EV_HTTP_MSG with whole body. Its advantage is that it
+	// can read chunked responses automatically, but we don't need it
+	// as we limit ourselves to HTTP/1.0
+
+	// we want to stream data to file with each socket read so use
+	// mg_connect() and MG_EV_READ events instead.
+	cldl->con = mg_connect(&cldl->mgr, cldl->url, NET_HTTP_DownloadEvent, (void *)cldl);
 
 	cldl->end_poll_loop = false;
 	cldl->thread = std::thread(NET_HTTP_DownloadPollLoop, cldl);

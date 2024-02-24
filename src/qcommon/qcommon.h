@@ -185,7 +185,7 @@ void		NET_HTTP_Shutdown();
 void		NET_HTTP_ProcessEvents();
 int			NET_HTTP_StartServer(int port);
 void		NET_HTTP_StopServer();
-dlHandle_t	NET_HTTP_StartDownload(const char *url, const char *toPath, dl_ended_callback ended_callback, dl_status_callback status_callback, const char *userAgent, const char *referer);
+dlHandle_t	NET_HTTP_StartDownload(const char *url, const char *toPath, dl_ended_callback ended_callback, dl_status_callback status_callback);
 void		NET_HTTP_StopDownload(dlHandle_t handle);
 
 void		NET_SendPacket (netsrc_t sock, int length, const void *data, netadr_t to);

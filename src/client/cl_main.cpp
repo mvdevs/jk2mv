@@ -1673,7 +1673,7 @@ void CL_ContinueCurrentDownload(dldecision_t decision) {
 			// Try to create the destination folder
 			FS_CreatePath(tmp_os_path);
 			
-			clc.httpHandle = NET_HTTP_StartDownload(remotepath, tmp_os_path, CL_EndHTTPDownload, CL_ProcessHTTPDownload, Q3_VERSION, va("jk2://%s", NET_AdrToString(clc.serverAddress)));
+			clc.httpHandle = NET_HTTP_StartDownload(remotepath, tmp_os_path, CL_EndHTTPDownload, CL_ProcessHTTPDownload);
 		} else {
 			clc.downloadBlock = 0; // Starting new file
 			clc.downloadCount = 0;
