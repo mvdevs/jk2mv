@@ -142,7 +142,7 @@ static void NET_HTTP_ServerEvent(struct mg_connection *nc, int ev, void *ev_data
 		srv.event.cv_processed.wait(lk, [] { return srv.event.processed; });
 
 		if (srv.event.allowed) {
-			struct mg_http_serve_opts opts = {};
+			struct mg_http_serve_opts opts = { .mime_types = "pk3=application/octet-stream" };
 
 			mg_http_serve_file(nc, hm, srv.event.filePath, &opts);
 		} else {
