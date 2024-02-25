@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <chrono>
 #include <thread>
 #include <mutex>
 #include <atomic>
@@ -26,6 +27,9 @@ Webserver
 ========================================================
 */
 #define HTTPSRV_STDPORT 18200
+#define HTTPSRV_CONN_LIMIT 64 // simultaneous connections limit
+#define HTTPSRV_READ_LIMIT 2048	// HTTP request size limit
+#define HTTPSRV_TIMEOUT_MS 10000
 
 static struct {
 	std::thread thread;
@@ -45,6 +49,10 @@ static struct {
 		char filePath[MAX_OSPATH];
 		bool allowed;
 	} event;
+
+#ifndef NDEBUG
+	int poll_delay_ms;
+#endif
 } srv;
 
 static void NET_HTTP_ServerProcessEvent() {
@@ -67,7 +75,61 @@ static void NET_HTTP_ServerProcessEvent() {
 }
 
 static void NET_HTTP_ServerEvent(struct mg_connection *nc, int ev, void *ev_data) {
-	if (ev == MG_EV_HTTP_MSG) {
+	switch(ev) {
+	case MG_EV_ERROR: {
+		MG_ERROR(("EV_ERROR: %s", (char *)ev_data));
+		break;
+	}
+	case MG_EV_POLL: {
+		if (nc->is_accepted && !nc->is_resp && !nc->is_draining) {
+			int64_t last_progress;
+			memcpy(&last_progress, nc->data, sizeof(last_progress));
+			int64_t now = mg_millis();
+
+			if (now - last_progress > HTTPSRV_TIMEOUT_MS) {
+				mg_http_reply(nc, 408, "Connection: close\r\n", "");
+				nc->is_draining = 1;
+			}
+		}
+
+#ifndef NDEBUG
+		// debug rate limiting
+		std::this_thread::sleep_for(std::chrono::milliseconds(srv.poll_delay_ms));
+#endif
+		break;
+	}
+	case MG_EV_ACCEPT: {
+		int numconns = 0;
+		for (struct mg_connection *c = nc->mgr->conns; c != NULL; c = c->next)
+			numconns++;
+
+		if (numconns > HTTPSRV_CONN_LIMIT + 1) {
+			MG_ERROR(("Too many connections"));
+			mg_http_reply(nc, 503, NULL, "");
+			nc->is_draining = 1;
+			return;
+		}
+
+		// store last progress time in nc->data
+		int64_t now = mg_millis();
+		memcpy(nc->data, &now, sizeof(now));
+		break;
+	}
+	case MG_EV_READ: {
+		// MG_EV_READ events are received on socket reads.
+		// MG_EV_HTTP_MSG is only received once HTTP request has been
+		// read fully .
+		if (nc->recv.len > HTTPSRV_READ_LIMIT) {
+			MG_ERROR(("Msg too large"));
+			nc->is_draining = 1;
+		}
+
+		// store last progress time in nc->data
+		int64_t now = mg_millis();
+		memcpy(nc->data, &now, sizeof(now));
+		break;
+	}
+	case MG_EV_HTTP_MSG: {
 		struct mg_http_message *hm = (struct mg_http_message *)ev_data;
 
 		// wait for free event, set event, wait for result, free event
@@ -84,12 +146,11 @@ static void NET_HTTP_ServerEvent(struct mg_connection *nc, int ev, void *ev_data
 
 			mg_http_serve_file(nc, hm, srv.event.filePath, &opts);
 		} else {
-			mg_http_reply(nc, 403,
-						  "Content-Type: text/html\r\n",
-						  "%s",
-						  "<html><body><h1>403 Forbidden</h1></body></html>");
+			mg_http_reply(nc, 403, NULL, "");
 			nc->is_draining = 1;
 		}
+		break;
+	}
 	}
 }
 
@@ -410,6 +471,17 @@ void NET_HTTP_StopDownload(dlHandle_t handle) {
 ========================================================
 ========================================================
 */
+
+/*
+====================
+NET_HTTP_Init
+====================
+*/
+void NET_HTTP_Init() {
+	Com_DPrintf("Mongoose: " MG_VERSION "\n");
+	int loglevel = Cvar_VariableIntegerValue("mg_loglevel", qfalse);
+	mg_log_set(loglevel);
+}
 
 /*
 ====================
