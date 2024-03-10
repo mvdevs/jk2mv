@@ -283,7 +283,7 @@ static void NET_HTTP_DownloadEvent(struct mg_connection *nc, int ev, void *ev_da
 		struct mg_http_message msg;
 
 		if (!cldl->total_bytes && mg_http_parse((char *)io->buf, io->len, &msg)) {
-			if (strncmp(msg.uri.ptr, "200", 3)) {
+			if (mg_vcmp(&msg.uri, "200")) {
 				snprintf(cldl->err_msg, sizeof(cldl->err_msg), "HTTP Error: %.*s %.*s", (int)msg.uri.len, msg.uri.ptr, (int)msg.proto.len, msg.proto.ptr);
 				cldl->err_msg[sizeof(cldl->err_msg) - 1] = '\0';
 				cldl->error = true;
