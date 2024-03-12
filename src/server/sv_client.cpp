@@ -294,6 +294,7 @@ gotnewcl:
 
 	// save the address
 	Netchan_Setup (NS_SERVER, &newcl->netchan , from, qport);
+	NET_HTTP_AllowClient( clientNum, from );
 
 	// save the userinfo
 	Q_strncpyz( newcl->userinfo, userinfo, sizeof(newcl->userinfo) );
@@ -392,6 +393,7 @@ void SV_DropClient( client_t *drop, const char *reason ) {
 
 	// Kill any download
 	SV_CloseDownload( drop );
+	NET_HTTP_DenyClient( drop - svs.clients );
 
 	// tell everyone why they got dropped
 	SV_SendServerCommand( NULL, "print \"%s" S_COLOR_WHITE " %s\n\"", drop->name, reason );

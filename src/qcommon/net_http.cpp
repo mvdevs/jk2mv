@@ -50,9 +50,13 @@ static struct {
 		bool allowed;
 	} event;
 
-#ifndef NDEBUG
-	int poll_delay_ms;
-#endif
+	// connected clients. NA_BAD means slot is not used
+	std::mutex m_clients;
+	netadr_t clients[MAX_CLIENTS];
+
+	// debug
+	bool debug;
+	unsigned int poll_delay_ms;
 } srv;
 
 static void NET_HTTP_ServerProcessEvent() {
@@ -74,6 +78,44 @@ static void NET_HTTP_ServerProcessEvent() {
 	}
 }
 
+void NET_HTTP_AllowClient(int clientNum, netadr_t addr) {
+	if ( addr.type == NA_IP ) {
+		std::lock_guard<std::mutex> lk(srv.m_clients);
+		srv.clients[clientNum] = addr;
+	}
+}
+
+void NET_HTTP_DenyClient(int clientNum) {
+	std::lock_guard<std::mutex> lk(srv.m_clients);
+	srv.clients[clientNum].type = NA_BAD;
+}
+
+static bool NET_HTTP_IsMgAddrAllowed(const struct mg_addr *addr) {
+	const uint8_t loopback[4] = {127, 0, 0, 1};
+	std::lock_guard<std::mutex> lk(srv.m_clients);
+
+	if (!memcmp(addr->ip, loopback, 4)) {
+		return true;
+	}
+
+	for (unsigned int i = 0; i < ARRAY_LEN(srv.clients); i++) {
+		if (srv.clients[i].type == NA_IP &&
+			!memcmp(addr->ip, srv.clients[i].ip, 4)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+static int NET_HTTP_CountMgConnections(const struct mg_mgr *mgr) {
+		int numconns = 0;
+		for (struct mg_connection *c = mgr->conns; c != NULL; c = c->next) {
+			numconns++;
+		}
+		return numconns;
+}
+
 static void NET_HTTP_ServerEvent(struct mg_connection *nc, int ev, void *ev_data) {
 	switch(ev) {
 	case MG_EV_ERROR: {
@@ -87,25 +129,36 @@ static void NET_HTTP_ServerEvent(struct mg_connection *nc, int ev, void *ev_data
 			int64_t now = mg_millis();
 
 			if (now - last_progress > HTTPSRV_TIMEOUT_MS) {
+				MG_INFO(("Connection closed: timeout"));
 				mg_http_reply(nc, 408, "Connection: close\r\n", "");
 				nc->is_draining = 1;
 			}
 		}
 
-#ifndef NDEBUG
-		// debug rate limiting
-		std::this_thread::sleep_for(std::chrono::milliseconds(srv.poll_delay_ms));
-#endif
+		if (srv.poll_delay_ms > 0) {
+			// debug rate limiting
+			std::this_thread::sleep_for(std::chrono::milliseconds(srv.poll_delay_ms));
+		}
 		break;
 	}
 	case MG_EV_ACCEPT: {
-		int numconns = 0;
-		for (struct mg_connection *c = nc->mgr->conns; c != NULL; c = c->next)
-			numconns++;
+		if (nc->rem.is_ip6) {
+			MG_INFO(("Connection dropped: IPv6 not allowed"));
+			mg_http_reply(nc, 403, NULL, ""); // 403 - Forbidden
+			nc->is_draining = 1;
+			return;
+		}
 
-		if (numconns > HTTPSRV_CONN_LIMIT + 1) {
-			MG_ERROR(("Too many connections"));
-			mg_http_reply(nc, 503, NULL, "");
+		if (NET_HTTP_CountMgConnections(nc->mgr) > HTTPSRV_CONN_LIMIT + 1) {
+			MG_INFO(("Connection dropped: Too many connections"));
+			mg_http_reply(nc, 503, NULL, ""); // 503 - Service Unavailable
+			nc->is_draining = 1;
+			return;
+		}
+
+		if (!NET_HTTP_IsMgAddrAllowed(&nc->rem) && !srv.debug) {
+			MG_INFO(("Connection dropped: IP not connected to game server"));
+			mg_http_reply(nc, 403, NULL, ""); // 403 - Forbidden
 			nc->is_draining = 1;
 			return;
 		}
@@ -173,6 +226,9 @@ int NET_HTTP_StartServer(int port) {
 	if (srv.running)
 		return srv.port;
 
+	srv.debug = Cvar_VariableIntegerValue("mg_debug");
+	srv.poll_delay_ms = Cvar_VariableIntegerValue("mg_throttle");
+
 	mg_mgr_init(&srv.mgr);
 
 	if (port) {
@@ -187,6 +243,10 @@ int NET_HTTP_StartServer(int port) {
 	if (srv.con) {
 		// reset event
 		srv.event.processed = true;
+
+		for (unsigned int i = 0; i < ARRAY_LEN(srv.clients); i++) {
+			srv.clients[i].type = NA_BAD;
+		}
 
 		// start polling thread
 		srv.end_poll_loop = false;
