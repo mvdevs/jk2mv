@@ -4143,15 +4143,7 @@ const char *FS_MV_VerifyDownloadPath(const char *pk3file) {
 				return NULL;
 
 			if (search->pack->referenced) {
-				static char gameDataPath[MAX_OSPATH];
-				Q_strncpyz(gameDataPath, search->pack->pakFilename, sizeof(gameDataPath));
-
-				char *sp = strrchr(gameDataPath, PATH_SEP);
-				*sp = '\0';
-				sp = strrchr(gameDataPath, PATH_SEP);
-				*sp = '\0';
-
-				return gameDataPath;
+				return search->pack->pakFilename;
 			}
 		}
 	}
