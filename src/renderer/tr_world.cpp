@@ -317,39 +317,33 @@ void R_AddBrushModelSurfaces ( trRefEntity_t *ent ) {
 	}
 }
 
-float GetQuadArea( vec3_t v1, vec3_t v2, vec3_t v3, vec3_t v4 )
+static float GetQuadArea( const vec3_t v[4], const vec3_t normal )
 {
-	vec3_t	vec1, vec2, dis1, dis2;
+	// v are quad corners in clockwise order. When they don't form
+	// convex quad, area will be negative.
+	vec3_t	vec1, vec2, dis1, dis2, area;
 
-	// Get area of tri1
-	VectorSubtract( v1, v2, vec1 );
-	VectorSubtract( v1, v4, vec2 );
+	// area of v0, v1, v3 tri (may be negative when v[0] is concave)
+	VectorSubtract( v[3], v[0], vec1 );
+	VectorSubtract( v[1], v[0], vec2 );
 	CrossProduct( vec1, vec2, dis1 );
-	VectorScale( dis1, 0.25f, dis1 );
 
-	// Get area of tri2
-	VectorSubtract( v3, v2, vec1 );
-	VectorSubtract( v3, v4, vec2 );
+	// area of v1, v2, v3 tri (may be negative when v[2] is concave)
+	VectorSubtract( v[1], v[2], vec1 );
+	VectorSubtract( v[3], v[2], vec2 );
 	CrossProduct( vec1, vec2, dis2 );
-	VectorScale( dis2, 0.25f, dis2 );
 
-	// Return addition of disSqr of each tri area
-	return ( dis1[0] * dis1[0] + dis1[1] * dis1[1] + dis1[2] * dis1[2] +
-				dis2[0] * dis2[0] + dis2[1] * dis2[1] + dis2[2] * dis2[2] );
+	// dis1, dis2 are colinear because quad points are on a single
+	// plane
+	VectorAdd(dis1, dis2, area);
+
+	return DotProduct(normal, area);
 }
 
 void RE_GetBModelVerts( int bmodelIndex, vec3_t *verts, vec3_t normal )
 {
-	msurface_t			*surfs;
-	srfSurfaceFace_t	*face;
 	bmodel_t			*bmodel;
 	model_t				*pModel;
-	int					i;
-	//	Not sure if we really need to track the best two candidates
-	int					maxDist[2]={0,0};
-	int					maxIndx[2]={0,0};
-	int					dist = 0;
-	float				dot1, dot2;
 
 	pModel = R_GetModelByHandle( bmodelIndex );
 	bmodel = pModel->bmodel;
@@ -364,64 +358,152 @@ void RE_GetBModelVerts( int bmodelIndex, vec3_t *verts, vec3_t normal )
 		ri.Error(ERR_DROP, "RE_GetBModelVerts: model has no surfaces");
 	}
 
-	// Loop through all surfaces on the brush and find the best two candidates
-	for ( i = 0 ; i < bmodel->numSurfaces; i++ )
+	// Group surfaces laying on the same plane
+	int *surfaceGrp = (int *)ri.Hunk_AllocateTempMemory(bmodel->numSurfaces * sizeof(int));
+
+	for (int i = 0; i < bmodel->numSurfaces; i++)
+		surfaceGrp[i] = -1;
+
+	int grpNum = 0;
+	for (int i = 0; i < bmodel->numSurfaces; i++)
 	{
-		surfs = bmodel->firstSurface + i;
-		face = ( srfSurfaceFace_t *)surfs->data;
+		if (surfaceGrp[i] != -1)
+			continue;
 
-		// It seems that the safest way to handle this is by finding the area of the faces
-		dist = GetQuadArea( face->points[0], face->points[1], face->points[2], face->points[3] );
+		surfaceGrp[i] = grpNum;
 
-		// Check against the highest max
-		if ( dist > maxDist[0] )
+		msurface_t *surf = bmodel->firstSurface + i;
+		srfSurfaceFace_t *face = (srfSurfaceFace_t *)surf->data;
+
+		for (int j = i + 1; j < bmodel->numSurfaces; j++)
 		{
-			// Shuffle our current maxes down
-			maxDist[1] = maxDist[0];
-			maxIndx[1] = maxIndx[0];
+			if (surfaceGrp[j] != -1)
+				continue;
 
-			maxDist[0] = dist;
-			maxIndx[0] = i;
+			msurface_t *jsurf = bmodel->firstSurface + j;
+			srfSurfaceFace_t *jface = (srfSurfaceFace_t *)jsurf->data;
+
+			// that's a pretty big epsilon but 0.01f was not enough for duel_training
+			if (fabsf(face->plane.dist - jface->plane.dist) < 0.1f &&
+				DistanceSquared(face->plane.normal, jface->plane.normal) < 0.001f * 0.001f)
+			{
+				surfaceGrp[j] = grpNum;
+			}
 		}
-		// Check against the second highest max
-		else if ( dist >= maxDist[1] )
-		{
-			// just stomp the old
-			maxDist[1] = dist;
-			maxIndx[1] = i;
+
+		grpNum++;
+	}
+
+	// Calculate total camera-facing area of each surface group
+	float *grpScore = (float *)ri.Hunk_AllocateTempMemory(grpNum * sizeof(float));
+
+	for (int i = 0; i < grpNum; i++)
+		grpScore[i] = 0.0f;
+
+	for (int i = 0; i < bmodel->numSurfaces; i++)
+	{
+		msurface_t *surf = bmodel->firstSurface + i;
+		srfSurfaceFace_t *face = (srfSurfaceFace_t *)surf->data;
+		unsigned *indices = (unsigned *)(((char *)face) + face->ofsIndices );
+		int numTris = face->numIndices / 3;
+		float faceArea = 0.0f;
+
+		// Calculate area of face
+		for (int j = 0; j < numTris; j++) {
+			float *v1 = face->points[indices[3 * j + 0]];
+			float *v2 = face->points[indices[3 * j + 1]];
+			float *v3 = face->points[indices[3 * j + 2]];
+			vec3_t vec1, vec2, cross;
+
+			// Get area of tri (times 2)
+			VectorSubtract(v1, v2, vec1);
+			VectorSubtract(v1, v3, vec2);
+			CrossProduct(vec1, vec2, cross);
+			faceArea += VectorLength(cross);
+		}
+
+		// Score gives precedence to surfaces oriented towards camera,
+		// but when there is a big difference in area size (area)
+		// orientation becomes irrelevant and bigger surface will be
+		// selected.
+		grpScore[surfaceGrp[i]] += faceArea * (1.0f - 0.1f * DotProduct(face->plane.normal, tr.refdef.viewaxis[0]));
+	}
+
+	int bestGrp = 0;
+	for (int i = 1; i < grpNum; i++)
+	{
+		if (grpScore[i] > grpScore[bestGrp])
+			bestGrp = i;
+	}
+
+	ri.Hunk_FreeTempMemory(grpScore);
+
+	// Now find best quad surface representing the group. The
+	// algorithm makes assumption that combined surfaces within a
+	// group (on the same plane) are roughly the shape of a single
+	// convex quad. No holes or unconnected parts allowed.
+	vec3_t qverts[4];
+	float quadArea;
+	qboolean seeded = qfalse;
+
+	for (int i = 0; i < bmodel->numSurfaces; i++)
+	{
+		if (surfaceGrp[i] != bestGrp)
+			continue;
+
+		msurface_t *surf = bmodel->firstSurface + i;
+		srfSurfaceFace_t *face = (srfSurfaceFace_t *)surf->data;
+
+		// seed with empty quad
+		if (!seeded) {
+			seeded = qtrue;
+			VectorCopy(face->points[0], qverts[0]);
+			VectorCopy(face->points[1], qverts[1]);
+			VectorCopy(face->points[2], qverts[2]);
+			VectorCopy(face->points[2], qverts[3]); // degenerate
+			quadArea = GetQuadArea(qverts, face->plane.normal);
+			if (quadArea < 0.0f) {
+				// order qverts so that quadArea is positive
+				VectorCopy(face->points[2], qverts[1]);
+				VectorCopy(face->points[1], qverts[2]);
+				quadArea = - quadArea;
+			}
+		}
+
+		for (int j = 0; j < face->numPoints; j++) {
+			// Try to replace each corner in quad with surface point
+			// and see if quad area increased. For arbitrary convex
+			// surface result would depend heavily on initial seeding
+			// point, but under assumption that surface resembles quad
+			// result should be the same or very similar regardless
+			// where we start and cover the quad.
+			int bestCorner = -1;
+			int bestArea = quadArea;
+			for (int k = 0; k < 4; k++) {
+				vec3_t temp;
+				float area;
+				VectorCopy(qverts[k], temp);
+				VectorCopy(face->points[j], qverts[k]);
+				area = GetQuadArea(qverts, face->plane.normal);
+				if (area > bestArea) {
+					bestCorner = k;
+					bestArea = area;
+				}
+				VectorCopy(temp, qverts[k]);
+			}
+
+			if (bestCorner != -1) {
+				quadArea = bestArea;
+				VectorCopy(face->points[j], qverts[bestCorner]);
+			}
 		}
 	}
 
-	// Hopefully we've found two best case candidates.  Now we should see which of these faces the viewer
-	surfs = bmodel->firstSurface + maxIndx[0];
-	face = ( srfSurfaceFace_t *)surfs->data;
-	dot1 = DotProduct( face->plane.normal, tr.refdef.viewaxis[0] );
-
-	surfs = bmodel->firstSurface + maxIndx[1];
-	face = ( srfSurfaceFace_t *)surfs->data;
-	dot2 = DotProduct( face->plane.normal, tr.refdef.viewaxis[0] );
-
-	if ( dot2 < dot1 && dot2 < 0.0f )
-	{
-		i = maxIndx[1]; // use the second face
-	}
-	else if ( dot1 < dot2 && dot1 < 0.0f )
-	{
-		i = maxIndx[0]; // use the first face
-	}
-	else
-	{ // Possibly only have one face, so may as well use the first face, which also should be the best one
-		//i = rand() & 1; // ugh, we don't know which to use.  I'd hope this would never happen
-		i = maxIndx[0]; // use the first face
+	for (int i = 0; i < 4; i++) {
+		VectorCopy(qverts[i], verts[i]);
 	}
 
-	surfs = bmodel->firstSurface + i;
-	face = ( srfSurfaceFace_t *)surfs->data;
-
-	for ( int t = 0; t < 4; t++ )
-	{
-		VectorCopy(	face->points[t], verts[t] );
-	}
+	ri.Hunk_FreeTempMemory(surfaceGrp);
 }
 
 /*
