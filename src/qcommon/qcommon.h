@@ -733,6 +733,7 @@ qboolean FS_ComparePaks(char *neededpaks, int len, int *chksums, size_t maxchksu
 qboolean FS_Rename( const char *from, const char *to );
 
 const char *FS_MV_VerifyDownloadPath(const char *pk3file);
+qboolean FS_SV_VerifyZipFile( const char *zipfile, int *checksum );
 
 int FS_GetDLList(dlfile_t *files, int maxfiles);
 qboolean FS_RMDLPrefix(const char *qpath);
