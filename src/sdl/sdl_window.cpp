@@ -594,6 +594,13 @@ static rserr_t GLimp_SetMode(glconfig_t *glConfig, const windowDesc_t *windowDes
 		0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000
 		);
 
+	// Destroy existing state if it exists
+	if( opengl_context != NULL )
+	{
+		SDL_GL_DeleteContext( opengl_context );
+		opengl_context = NULL;
+	}
+
 	// If a window exists, note its display index
 	if ( screen != NULL )
 	{
@@ -651,13 +658,6 @@ static rserr_t GLimp_SetMode(glconfig_t *glConfig, const windowDesc_t *windowDes
 		return RSERR_INVALID_MODE;
 	}
 	Com_Printf( " %d %d\n", winWidth, winHeight);
-
-	// Destroy existing state if it exists
-	if( opengl_context != NULL )
-	{
-		SDL_GL_DeleteContext( opengl_context );
-		opengl_context = NULL;
-	}
 
 	if ( r_centerWindow->integer )
 	{
@@ -1090,8 +1090,17 @@ void WIN_Shutdown( void )
 
 	IN_Shutdown();
 
+	if ( opengl_context ) {
+		SDL_GL_DeleteContext( opengl_context );
+		opengl_context = NULL;
+	}
+
+	if ( screen ) {
+		SDL_DestroyWindow( screen );
+		screen = NULL;
+	}
+
 	SDL_QuitSubSystem( SDL_INIT_VIDEO );
-	screen = NULL;
 }
 
 void GLimp_EnableLogging( qboolean enable )
