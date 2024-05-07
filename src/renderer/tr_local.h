@@ -1280,6 +1280,7 @@ extern	cvar_t	*r_overBrightBits;
 
 extern	cvar_t	*r_debugSurface;
 extern	cvar_t	*r_simpleMipMaps;
+extern	cvar_t	*r_openglMipMaps;
 
 extern	cvar_t	*r_showImages;
 extern	cvar_t	*r_debugSort;

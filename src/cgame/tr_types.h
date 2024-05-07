@@ -298,6 +298,11 @@ typedef enum {
 	TC_S3TC_DXT
 } textureCompression_t;
 
+typedef enum {
+	QGL_VERSION_1_0,
+	QGL_VERSION_1_4
+} qglVersion_t;
+
 typedef struct {
 	char					renderer_string[MAX_STRING_CHARS];
 	char					vendor_string[MAX_STRING_CHARS];
@@ -336,6 +341,8 @@ typedef struct {
 	const char				*vendor_string;
 	const char				*version_string;
 	const char				*extensions_string;
+
+	qglVersion_t			glVersion;
 
 	int						maxTextureSize;			// queried from GL
 	int						maxActiveTextures;		// multitexture ability

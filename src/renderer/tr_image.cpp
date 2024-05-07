@@ -688,20 +688,29 @@ static void Upload32( byte * const *mipmaps, qboolean customMip, image_t *image,
 	if ( !upload->noMipMaps )
 	{
 		int			miplevel = 0;
-		qboolean	doLightScale = (qboolean)!upload->noLightScale;
+		qboolean	openglMipMaps = (qboolean)(r_openglMipMaps->integer && !r_colorMipLevels->integer && glConfig.glVersion >= QGL_VERSION_1_4);
+		qboolean	processData = qtrue;
+
+		if ( openglMipMaps )
+		{
+			qglTexParameteri( GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE );
+		}
 
 		while ( 1 ) {
-			if ( doLightScale )
+			if ( processData &&  !upload->noLightScale )
 			{
 				R_LightScaleTexture( data, width, height, qfalse );
-				doLightScale = qfalse;
 			}
+
 			if ( r_colorMipLevels->integer )
 			{
 				R_BlendOverTexture( data, width * height, mipBlendColors[miplevel] );
 			}
 
-			qglTexImage2D( GL_TEXTURE_2D, miplevel, image->internalFormat, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data );
+			if ( !openglMipMaps || processData )
+			{
+				qglTexImage2D( GL_TEXTURE_2D, miplevel, image->internalFormat, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data );
+			}
 
 			if ( width == 1 && height == 1 )
 			{
@@ -711,11 +720,16 @@ static void Upload32( byte * const *mipmaps, qboolean customMip, image_t *image,
 			if ( customMip && level < MAX_MIP_LEVELS && mipmaps[level] )
 			{
 				data = mipmaps[level];
-				doLightScale = (qboolean)!upload->noLightScale;
+				processData = qtrue;
 			}
-			else
+			else if ( !openglMipMaps )
 			{
 				R_MipMap( data, width, height );
+				processData = qfalse;
+			}
+			else // openglMipMaps
+			{
+				processData = qfalse;
 			}
 
 			width = max(width >> 1, 1);
