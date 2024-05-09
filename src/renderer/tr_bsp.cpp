@@ -213,7 +213,8 @@ static	void R_LoadLightmaps( lump_t *l, const char *psMapName ) {
 			qfalse,
 			qfalse,
 			(qboolean)!!r_ext_compressed_lightmaps->integer,
-			GL_CLAMP);
+			GL_CLAMP,
+			PXF_RGBA);
 	ri.Hunk_FreeTempMemory(emptyAtlas);
 
 	for ( i = 0 ; i < tr.numLightmaps ; i++ ) {

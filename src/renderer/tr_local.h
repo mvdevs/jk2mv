@@ -128,6 +128,11 @@ typedef struct image_s {
 
 } image_t;
 
+typedef enum {
+	PXF_RGB,
+	PXF_RGBA
+} pixelFormat_t;
+
 //===============================================================================
 
 typedef enum {
@@ -1421,14 +1426,14 @@ qboolean	R_GetEntityToken( char *buffer, int size );
 model_t		*R_AllocModel( void );
 
 void		R_Init( void );
-void R_LoadImage( const char *name, byte **pic, int *width, int *height );
+void R_LoadImage( const char *name, byte **pic, int *width, int *height, pixelFormat_t *format );
 image_t		*R_FindImageFile( const char *name, qboolean mipmap, qboolean allowPicmip, qboolean allowTC, int glWrapClampMode );
 image_t		*R_FindImageFileNew( const char *name, const upload_t *upload, int glWrapClampMode );
 
-image_t		*R_CreateImage( const char *name, byte *data, int width, int height, qboolean mipmap
-					, qboolean allowPicmip, qboolean allowTC, int wrapClampMode );
+image_t		*R_CreateImage( const char *name, byte *data, int width, int height, qboolean mipmap,
+	qboolean allowPicmip, qboolean allowTC, int wrapClampMode, pixelFormat_t format );
 image_t *R_CreateImageNew( const char *name, byte * const *mipmaps, qboolean customMip, int width, int height,
-	const upload_t *upload, int glWrapClampMode );
+	const upload_t *upload, int glWrapClampMode, pixelFormat_t format );
 qboolean	R_GetModeInfo( int *width, int *height, float *windowAspect, int mode );
 
 void		R_SetColorMappings( void );
