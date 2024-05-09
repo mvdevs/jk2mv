@@ -22,7 +22,7 @@ using namespace std;
 #include <jpeglib.h>
 #include <png.h>
 
-static void LoadTGA( const char *name, byte **pic, int *width, int *height, qboolean skipJKA );
+static void LoadTGA( const char *name, byte **pic, int *width, int *height, pixelFormat_t *format, qboolean skipJKA );
 static void LoadJPG( const char *name, byte **pic, int *width, int *height, pixelFormat_t *format, qboolean skipJKA );
 
 static byte			 s_intensitytable[256];
@@ -310,7 +310,7 @@ lighting range
 ================
 */
 template<int s>
-void R_LightScaleTexture (byte *in, int inwidth, int inheight, qboolean only_gamma )
+static void R_LightScaleTexture (byte *in, int inwidth, int inheight, qboolean only_gamma )
 {
 	if ( only_gamma )
 	{
@@ -355,6 +355,52 @@ void R_LightScaleTexture (byte *in, int inwidth, int inheight, qboolean only_gam
 				p[0] = s_gammatable[s_intensitytable[p[0]]];
 				p[1] = s_gammatable[s_intensitytable[p[1]]];
 				p[2] = s_gammatable[s_intensitytable[p[2]]];
+			}
+		}
+	}
+}
+
+static void R_LightScaleTextureGray (byte *in, int inwidth, int inheight, qboolean only_gamma )
+{
+	const int s = 1;
+
+	if ( only_gamma )
+	{
+		if ( r_gammamethod->integer == GAMMA_NONE )
+		{
+			int		i, c;
+			byte	*p;
+
+			p = in;
+
+			c = inwidth*inheight;
+			for (i=0 ; i<c ; i++, p+=s)
+			{
+				p[0] = s_gammatable[p[0]];
+			}
+		}
+	}
+	else
+	{
+		int		i, c;
+		byte	*p;
+
+		p = in;
+
+		c = inwidth*inheight;
+
+		if ( r_gammamethod->integer )
+		{
+			for (i=0 ; i<c ; i++, p+=s)
+			{
+				p[0] = s_intensitytable[p[0]];
+			}
+		}
+		else
+		{
+			for (i=0 ; i<c ; i++, p+=s)
+			{
+				p[0] = s_gammatable[s_intensitytable[p[0]]];
 			}
 		}
 	}
@@ -469,11 +515,13 @@ static void R_MipMap (byte *in, int width, int height, pixelFormat_t format) {
 
 	if (r_simpleMipMaps->integer) {
 		switch (format) {
+		case PXF_GRAY: R_MipMapBox<1>(in, width, height); break;
 		case PXF_RGB:  R_MipMapBox<3>(in, width, height); break;
 		case PXF_RGBA: R_MipMapBox<4>(in, width, height); break;
 		}
 	} else {
 		switch (format) {
+		case PXF_GRAY: R_MipMapBilinear<1>(in, width, height); break;
 		case PXF_RGB:  R_MipMapBilinear<3>(in, width, height); break;
 		case PXF_RGBA: R_MipMapBilinear<4>(in, width, height); break;
 		}
@@ -629,6 +677,10 @@ static void Upload32( byte * const *mipmaps, qboolean customMip, image_t *image,
 	}
 
 	switch (format) {
+	case PXF_GRAY:
+		glFormat = GL_LUMINANCE;
+		samples = 1;
+		break;
 	case PXF_RGB:
 		glFormat = GL_RGB;
 		samples = 3;
@@ -640,7 +692,7 @@ static void Upload32( byte * const *mipmaps, qboolean customMip, image_t *image,
 	}
 
 	// select proper internal format
-	if ( samples == 3 )
+	if ( samples == 3 || samples == 1 )
 	{
 		int texturebits;
 
@@ -711,6 +763,7 @@ static void Upload32( byte * const *mipmaps, qboolean customMip, image_t *image,
 			if ( processData &&  !upload->noLightScale )
 			{
 				switch (format) {
+				case PXF_GRAY: R_LightScaleTextureGray( data, width, height, qfalse ); break;
 				case PXF_RGB:  R_LightScaleTexture<3>( data, width, height, qfalse ); break;
 				case PXF_RGBA: R_LightScaleTexture<4>( data, width, height, qfalse ); break;
 				}
@@ -1232,7 +1285,7 @@ typedef struct
 //  returns false if found but had a format error, else true for either OK or not-found (there's a reason for this)
 //
 
-void LoadTGA ( const char *name, byte **pic, int *width, int *height, qboolean skipJKA)
+void LoadTGA ( const char *name, byte **pic, int *width, int *height, pixelFormat_t *format, qboolean skipJKA)
 {
 	char sErrorString[1024];
 	bool bFormatErrors = false;
@@ -1376,7 +1429,24 @@ void LoadTGA ( const char *name, byte **pic, int *width, int *height, qboolean s
 	if (height)
 		*height = pHeader->wImageHeight;
 
-	pRGBA	= (byte *) ri.Malloc (pHeader->wImageWidth * pHeader->wImageHeight * 4, TAG_TEMP_WORKSPACE, qfalse);
+	int samples;
+
+	switch (pHeader->byImagePlanes) {
+	case 8:
+		samples = 1;
+		*format = PXF_GRAY;
+		break;
+	case 24:
+		samples = 3;
+		*format = PXF_RGB;
+		break;
+	case 32:
+		samples = 4;
+		*format = PXF_RGBA;
+		break;
+	}
+
+	pRGBA	= (byte *) ri.Malloc (pHeader->wImageWidth * pHeader->wImageHeight * samples, TAG_TEMP_WORKSPACE, qfalse);
 	*pic	= pRGBA;
 	pOut	= pRGBA;
 	pIn		= pTempLoadedBuffer + sizeof(*pHeader);
@@ -1387,25 +1457,20 @@ void LoadTGA ( const char *name, byte **pic, int *width, int *height, qboolean s
 	if (pHeader->byIDFieldLength != 0)
 		pIn += pHeader->byIDFieldLength;	// skip TARGA image comment
 
-	byte red,green,blue,alpha;
+	byte gray,red,green,blue,alpha;
 
 	if ( pHeader->byImageType == 2 || pHeader->byImageType == 3 )	// RGB or greyscale
 	{
 		for (int y=iYStart, iYCount=0; iYCount<pHeader->wImageHeight; y+=iYStep, iYCount++)
 		{
-			pOut = pRGBA + y * pHeader->wImageWidth *4;
+			pOut = pRGBA + y * pHeader->wImageWidth * samples;
 			for (int x=iXStart, iXCount=0; iXCount<pHeader->wImageWidth; x+=iXStep, iXCount++)
 			{
 				switch (pHeader->byImagePlanes)
 				{
 					case 8:
-						blue	= *pIn++;
-						green	= blue;
-						red		= blue;
-						*pOut++ = red;
-						*pOut++ = green;
-						*pOut++ = blue;
-						*pOut++ = 255;
+						gray    = *pIn++;
+						*pOut++ = gray;
 						break;
 
 					case 24:
@@ -1415,7 +1480,6 @@ void LoadTGA ( const char *name, byte **pic, int *width, int *height, qboolean s
 						*pOut++ = red;
 						*pOut++ = green;
 						*pOut++ = blue;
-						*pOut++ = 255;
 						break;
 
 					case 32:
@@ -1447,7 +1511,7 @@ void LoadTGA ( const char *name, byte **pic, int *width, int *height, qboolean s
 
 		for (int y = pHeader->wImageHeight-1; y >= 0; y--)
 		{
-			pOut = pRGBA + y * pHeader->wImageWidth *4;
+			pOut = pRGBA + y * pHeader->wImageWidth * samples;
 			for (int x=0; x<pHeader->wImageWidth;)
 			{
 				packetHeader = *pIn++;
@@ -1483,7 +1547,8 @@ void LoadTGA ( const char *name, byte **pic, int *width, int *height, qboolean s
 						*pOut++	= red;
 						*pOut++	= green;
 						*pOut++	= blue;
-						*pOut++	= alpha;
+						if (samples == 4)
+							*pOut++	= alpha;
 						x++;
 						if (x == pHeader->wImageWidth)  // run spans across rows
 						{
@@ -1492,7 +1557,7 @@ void LoadTGA ( const char *name, byte **pic, int *width, int *height, qboolean s
 								y--;
 							else
 								goto breakOut;
-							pOut = pRGBA + y * pHeader->wImageWidth * 4;
+							pOut = pRGBA + y * pHeader->wImageWidth * samples;
 						}
 					}
 				}
@@ -1511,7 +1576,6 @@ void LoadTGA ( const char *name, byte **pic, int *width, int *height, qboolean s
 								*pOut++ = red;
 								*pOut++ = green;
 								*pOut++ = blue;
-								*pOut++ = 255;
 								break;
 
 							case 32:
@@ -1538,7 +1602,7 @@ void LoadTGA ( const char *name, byte **pic, int *width, int *height, qboolean s
 								y--;
 							else
 								goto breakOut;
-							pOut = pRGBA + y * pHeader->wImageWidth * 4;
+							pOut = pRGBA + y * pHeader->wImageWidth * samples;
 						}
 					}
 				}
@@ -1968,7 +2032,7 @@ struct PNGFileReader
 		png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
 	}
 
-	int Read(byte **data, int *width, int *height)
+	int Read(byte **data, int *width, int *height, pixelFormat_t *format)
 	{
 		// Setup the pointers
 		*data = NULL;
@@ -2037,17 +2101,22 @@ struct PNGFileReader
 			return 0;
 		}
 
+		int samples;
 		// Read the png data
-		if (colortype == PNG_COLOR_TYPE_RGB)
-		{
-			// Expand RGB -> RGBA
-			png_set_add_alpha(png_ptr, 0xff, PNG_FILLER_AFTER);
+		switch (colortype) {
+		case PNG_COLOR_TYPE_RGB:
+			*format = PXF_RGB;
+			samples = 3;
+			break;
+		case PNG_COLOR_TYPE_RGBA:
+			*format = PXF_RGBA;
+			samples = 4;
+			break;
 		}
 
 		png_read_update_info(png_ptr, info_ptr);
 
-		// We always assume there are 4 channels. RGB channels are expanded to RGBA when read.
-		byte *tempData = (byte *)ri.Malloc(width_ * height_ * 4, TAG_IMAGE_T, qfalse);
+		byte *tempData = (byte *)ri.Malloc(width_ * height_ * samples, TAG_IMAGE_T, qfalse);
 		if (!tempData)
 		{
 			ri.Printf(PRINT_ERROR, "Could not allocate enough memory to load the image.");
@@ -2073,9 +2142,9 @@ struct PNGFileReader
 			return 0;
 		}
 
-		for (unsigned int i = 0, j = 0; i < height_; i++, j += 4)
+		for (unsigned int i = 0; i < height_; i++)
 		{
-			row_pointers[i] = tempData + j * width_;
+			row_pointers[i] = tempData + i * samples * width_;
 		}
 
 		png_read_image(png_ptr, row_pointers);
@@ -2113,7 +2182,7 @@ void user_read_data(png_structp png_ptr, png_bytep data, png_size_t length) {
 }
 
 // Loads a PNG image from file.
-void LoadPNG(const char *filename, byte **data, int *width, int *height, qboolean skipJKA)
+void LoadPNG(const char *filename, byte **data, int *width, int *height, pixelFormat_t *format, qboolean skipJKA)
 {
 	char *buf = NULL;
 	int len;
@@ -2125,7 +2194,7 @@ void LoadPNG(const char *filename, byte **data, int *width, int *height, qboolea
 	}
 
 	PNGFileReader reader(buf);
-	reader.Read(data, width, height);
+	reader.Read(data, width, height, format);
 }
 
 
@@ -2158,14 +2227,14 @@ void R_LoadImage( const char *shortname, byte **pic, int *width, int *height, pi
 
 	COM_StripExtension(shortname,name,sizeof(name));
 	COM_DefaultExtension(name, sizeof(name), ".png");
-	LoadPNG( name, pic, width, height, qtrue ); 			// try png first
+	LoadPNG( name, pic, width, height, format, qtrue ); 			// try png first
 	if (*pic){
 		return;
 	}
 
 	COM_StripExtension(shortname,name,sizeof(name));
 	COM_DefaultExtension(name, sizeof(name), ".tga");
-	LoadTGA( name, pic, width, height, qtrue );            // try tga first
+	LoadTGA( name, pic, width, height, format, qtrue );            // try tga first
 	if (*pic){
 		return;
 	}
@@ -2181,14 +2250,14 @@ void R_LoadImage( const char *shortname, byte **pic, int *width, int *height, pi
 
 	COM_StripExtension(shortname,name,sizeof(name));
 	COM_DefaultExtension(name, sizeof(name), ".png");
-	LoadPNG( name, pic, width, height, qfalse ); 			// try png first
+	LoadPNG( name, pic, width, height, format, qfalse ); 			// try png first
 	if (*pic){
 		return;
 	}
 
 	COM_StripExtension(shortname,name,sizeof(name));
 	COM_DefaultExtension(name, sizeof(name), ".tga");
-	LoadTGA( name, pic, width, height, qfalse );            // try tga first
+	LoadTGA( name, pic, width, height, format, qfalse );            // try tga first
 	if (*pic){
 		return;
 	}
