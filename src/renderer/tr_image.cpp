@@ -310,98 +310,54 @@ lighting range
 ================
 */
 template<int s>
-static void R_LightScaleTexture (byte *in, int inwidth, int inheight, qboolean only_gamma )
+static void R_LightScaleTexture (byte *in, int inwidth, int inheight )
 {
-	if ( only_gamma )
+	int		i, c;
+	byte	*p;
+
+	p = in;
+	c = inwidth*inheight;
+
+	if ( r_gammamethod->integer )
 	{
-		if ( r_gammamethod->integer == GAMMA_NONE )
+		for (i=0 ; i<c ; i++, p+=s)
 		{
-			int		i, c;
-			byte	*p;
-
-			p = in;
-
-			c = inwidth*inheight;
-			for (i=0 ; i<c ; i++, p+=s)
-			{
-				p[0] = s_gammatable[p[0]];
-				p[1] = s_gammatable[p[1]];
-				p[2] = s_gammatable[p[2]];
-			}
+			p[0] = s_intensitytable[p[0]];
+			p[1] = s_intensitytable[p[1]];
+			p[2] = s_intensitytable[p[2]];
 		}
 	}
 	else
 	{
-		int		i, c;
-		byte	*p;
-
-		p = in;
-
-		c = inwidth*inheight;
-
-		if ( r_gammamethod->integer )
+		for (i=0 ; i<c ; i++, p+=s)
 		{
-			for (i=0 ; i<c ; i++, p+=s)
-			{
-				p[0] = s_intensitytable[p[0]];
-				p[1] = s_intensitytable[p[1]];
-				p[2] = s_intensitytable[p[2]];
-			}
-		}
-		else
-		{
-			for (i=0 ; i<c ; i++, p+=s)
-			{
-				p[0] = s_gammatable[s_intensitytable[p[0]]];
-				p[1] = s_gammatable[s_intensitytable[p[1]]];
-				p[2] = s_gammatable[s_intensitytable[p[2]]];
-			}
+			p[0] = s_gammatable[s_intensitytable[p[0]]];
+			p[1] = s_gammatable[s_intensitytable[p[1]]];
+			p[2] = s_gammatable[s_intensitytable[p[2]]];
 		}
 	}
 }
 
-static void R_LightScaleTextureGray (byte *in, int inwidth, int inheight, qboolean only_gamma )
+static void R_LightScaleTextureGray (byte *in, int inwidth, int inheight )
 {
-	const int s = 1;
+	int		i, c;
+	byte	*p;
 
-	if ( only_gamma )
+	p = in;
+	c = inwidth * inheight;
+
+	if ( r_gammamethod->integer )
 	{
-		if ( r_gammamethod->integer == GAMMA_NONE )
+		for (i = 0; i < c; i++)
 		{
-			int		i, c;
-			byte	*p;
-
-			p = in;
-
-			c = inwidth*inheight;
-			for (i=0 ; i<c ; i++, p+=s)
-			{
-				p[0] = s_gammatable[p[0]];
-			}
+			p[i] = s_intensitytable[p[i]];
 		}
 	}
 	else
 	{
-		int		i, c;
-		byte	*p;
-
-		p = in;
-
-		c = inwidth*inheight;
-
-		if ( r_gammamethod->integer )
+		for (i = 0; i < c; i++)
 		{
-			for (i=0 ; i<c ; i++, p+=s)
-			{
-				p[0] = s_intensitytable[p[0]];
-			}
-		}
-		else
-		{
-			for (i=0 ; i<c ; i++, p+=s)
-			{
-				p[0] = s_gammatable[s_intensitytable[p[0]]];
-			}
+			p[i] = s_gammatable[s_intensitytable[p[i]]];
 		}
 	}
 }
@@ -763,9 +719,9 @@ static void Upload32( byte * const *mipmaps, qboolean customMip, image_t *image,
 			if ( processData &&  !upload->noLightScale )
 			{
 				switch (format) {
-				case PXF_GRAY: R_LightScaleTextureGray( data, width, height, qfalse ); break;
-				case PXF_RGB:  R_LightScaleTexture<3>( data, width, height, qfalse ); break;
-				case PXF_RGBA: R_LightScaleTexture<4>( data, width, height, qfalse ); break;
+				case PXF_GRAY: R_LightScaleTextureGray( data, width, height ); break;
+				case PXF_RGB:  R_LightScaleTexture<3>( data, width, height ); break;
+				case PXF_RGBA: R_LightScaleTexture<4>( data, width, height ); break;
 				}
 			}
 
