@@ -2461,7 +2461,7 @@ R_CreateDlightImage
 #define	DLIGHT_SIZE	16
 static void R_CreateDlightImage( void ) {
 	int		x,y;
-	byte	data[DLIGHT_SIZE][DLIGHT_SIZE][4];
+	byte	data[DLIGHT_SIZE][DLIGHT_SIZE];
 	int		b;
 
 	// make a centered inverse-square falloff blob for dynamic lighting
@@ -2477,13 +2477,10 @@ static void R_CreateDlightImage( void ) {
 			} else if ( b < 75 ) {
 				b = 0;
 			}
-			data[y][x][0] =
-			data[y][x][1] =
-			data[y][x][2] = b;
-			data[y][x][3] = 255;
+			data[y][x] = b;
 		}
 	}
-	tr.dlightImage = R_CreateImage("*dlight", (byte *)data, DLIGHT_SIZE, DLIGHT_SIZE, qfalse, qfalse, qfalse, GL_CLAMP, PXF_RGBA );
+	tr.dlightImage = R_CreateImage("*dlight", (byte *)data, DLIGHT_SIZE, DLIGHT_SIZE, qfalse, qfalse, qfalse, GL_CLAMP, PXF_GRAY );
 }
 
 
@@ -2589,32 +2586,20 @@ R_CreateDefaultImage
 #define	DEFAULT_SIZE	16
 static void R_CreateDefaultImage( void ) {
 	int		x;
-	byte	data[DEFAULT_SIZE][DEFAULT_SIZE][4];
+	byte	data[DEFAULT_SIZE][DEFAULT_SIZE];
 
 	// the default image will be a box, to allow you to see the mapping coordinates
 	Com_Memset( data, 32, sizeof( data ) );
 	for ( x = 0 ; x < DEFAULT_SIZE ; x++ ) {
-		data[0][x][0] =
-		data[0][x][1] =
-		data[0][x][2] =
-		data[0][x][3] = 255;
+		data[0][x] = 255;
 
-		data[x][0][0] =
-		data[x][0][1] =
-		data[x][0][2] =
-		data[x][0][3] = 255;
+		data[x][0] = 255;
 
-		data[DEFAULT_SIZE-1][x][0] =
-		data[DEFAULT_SIZE-1][x][1] =
-		data[DEFAULT_SIZE-1][x][2] =
-		data[DEFAULT_SIZE-1][x][3] = 255;
+		data[DEFAULT_SIZE-1][x] = 255;
 
-		data[x][DEFAULT_SIZE-1][0] =
-		data[x][DEFAULT_SIZE-1][1] =
-		data[x][DEFAULT_SIZE-1][2] =
-		data[x][DEFAULT_SIZE-1][3] = 255;
+		data[x][DEFAULT_SIZE-1] = 255;
 	}
-	tr.defaultImage = R_CreateImage("*default", (byte *)data, DEFAULT_SIZE, DEFAULT_SIZE, qtrue, qfalse, qfalse, GL_REPEAT, PXF_RGBA );
+	tr.defaultImage = R_CreateImage("*default", (byte *)data, DEFAULT_SIZE, DEFAULT_SIZE, qtrue, qfalse, qfalse, GL_REPEAT, PXF_GRAY );
 }
 
 static void R_BindGlowImages( void ) {
@@ -2672,13 +2657,13 @@ R_CreateBuiltinImages
 */
 void R_CreateBuiltinImages( void ) {
 	int		x,y;
-	byte	data[DEFAULT_SIZE][DEFAULT_SIZE][4];
+	byte	data[DEFAULT_SIZE][DEFAULT_SIZE];
 
 	R_CreateDefaultImage();
 
 	// we use a solid white image instead of disabling texturing
 	Com_Memset( data, 255, sizeof( data ) );
-	tr.whiteImage = R_CreateImage("*white", (byte *)data, 8, 8, qfalse, qfalse, qfalse, GL_REPEAT, PXF_RGBA );
+	tr.whiteImage = R_CreateImage("*white", (byte *)data, 8, 8, qfalse, qfalse, qfalse, GL_REPEAT, PXF_GRAY );
 
 	tr.screenGlow = 1024 + giTextureBindNum++;
 	tr.sceneImage = 1024 + giTextureBindNum++;
@@ -2690,20 +2675,17 @@ void R_CreateBuiltinImages( void ) {
 	// for default lightmaps, etc
 	for (x=0 ; x<DEFAULT_SIZE ; x++) {
 		for (y=0 ; y<DEFAULT_SIZE ; y++) {
-			data[y][x][0] =
-			data[y][x][1] =
-			data[y][x][2] = tr.identityLightByte;
-			data[y][x][3] = 255;
+			data[y][x] = tr.identityLightByte;
 		}
 	}
 
 
-	tr.identityLightImage = R_CreateImage("*identityLight", (byte *)data, 8, 8, qfalse, qfalse, qfalse, GL_REPEAT, PXF_RGBA );
+	tr.identityLightImage = R_CreateImage("*identityLight", (byte *)data, 8, 8, qfalse, qfalse, qfalse, GL_REPEAT, PXF_GRAY );
 
 
 	for(x=0;x<32;x++) {
 		// scratchimage is usually used for cinematic drawing
-		tr.scratchImage[x] = R_CreateImage(va("*scratch%d",x), (byte *)data, DEFAULT_SIZE, DEFAULT_SIZE, qfalse, qtrue, qfalse, GL_CLAMP, PXF_RGBA );
+		tr.scratchImage[x] = R_CreateImage(va("*scratch%d",x), (byte *)data, DEFAULT_SIZE, DEFAULT_SIZE, qfalse, qtrue, qfalse, GL_CLAMP, PXF_GRAY );
 	}
 
 	if (r_newDLights->integer)
