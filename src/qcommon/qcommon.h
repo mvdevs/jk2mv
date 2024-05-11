@@ -1027,6 +1027,11 @@ typedef struct {
 	node_t*		lhead;
 	node_t*		ltail;
 	node_t*		loc[HMAX+1];
+	// freelist is a head of linked list of nodePtrs
+	// elements. nodePtrs element type is overloaded and may hold
+	// node_t* pointer pointing to nodeList element or node_t**
+	// pointer pointing to another nodePtrs element when part of
+	// freelist!
 	node_t**	freelist;
 
 	node_t		nodeList[768];
