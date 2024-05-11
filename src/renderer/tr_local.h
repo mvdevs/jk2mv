@@ -131,7 +131,9 @@ typedef struct image_s {
 typedef enum {
 	PXF_GRAY,
 	PXF_RGB,
-	PXF_RGBA
+	PXF_BGR,
+	PXF_RGBA,
+	PXF_BGRA
 } pixelFormat_t;
 
 //===============================================================================

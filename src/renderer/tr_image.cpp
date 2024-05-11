@@ -473,13 +473,17 @@ static void R_MipMap (byte *in, int width, int height, pixelFormat_t format) {
 		switch (format) {
 		case PXF_GRAY: R_MipMapBox<1>(in, width, height); break;
 		case PXF_RGB:  R_MipMapBox<3>(in, width, height); break;
+		case PXF_BGR:  R_MipMapBox<3>(in, width, height); break;
 		case PXF_RGBA: R_MipMapBox<4>(in, width, height); break;
+		case PXF_BGRA: R_MipMapBox<4>(in, width, height); break;
 		}
 	} else {
 		switch (format) {
 		case PXF_GRAY: R_MipMapBilinear<1>(in, width, height); break;
 		case PXF_RGB:  R_MipMapBilinear<3>(in, width, height); break;
+		case PXF_BGR:  R_MipMapBilinear<3>(in, width, height); break;
 		case PXF_RGBA: R_MipMapBilinear<4>(in, width, height); break;
+		case PXF_BGRA: R_MipMapBilinear<4>(in, width, height); break;
 		}
 	}
 }
@@ -641,8 +645,16 @@ static void Upload32( byte * const *mipmaps, qboolean customMip, image_t *image,
 		glFormat = GL_RGB;
 		samples = 3;
 		break;
+	case PXF_BGR:
+		glFormat = GL_BGR;
+		samples = 3;
+		break;
 	case PXF_RGBA:
 		glFormat = GL_RGBA;
+		samples = 4;
+		break;
+	case PXF_BGRA:
+		glFormat = GL_BGRA;
 		samples = 4;
 		break;
 	}
@@ -721,7 +733,9 @@ static void Upload32( byte * const *mipmaps, qboolean customMip, image_t *image,
 				switch (format) {
 				case PXF_GRAY: R_LightScaleTextureGray( data, width, height ); break;
 				case PXF_RGB:  R_LightScaleTexture<3>( data, width, height ); break;
+				case PXF_BGR:  R_LightScaleTexture<3>( data, width, height ); break;
 				case PXF_RGBA: R_LightScaleTexture<4>( data, width, height ); break;
+				case PXF_BGRA: R_LightScaleTexture<4>( data, width, height ); break;
 				}
 			}
 
@@ -1236,6 +1250,105 @@ typedef struct
 #pragma pack(pop)
 
 
+/*
+=================
+ReadTGAData
+
+Templates for reading TGA data
+samples - 1, 3 or 4 for grayscale, BGR, BGRA
+xSwap - 0 for left-right, 1 for right-left TGA pixel order
+ySwap - 0 for top-bottom, 1 for bottom-top TGA pixel order
+=================
+*/
+// extra fast template for left-right top-bottom (second most common in base assets)
+template<int samples>
+static void ReadTGAData_LRTB(const byte * __restrict in, byte * __restrict out, int width, int height) {
+	memcpy(out, in, width * height * samples);
+}
+
+// extra fast template for left-right bottom-top (most common in base assets)
+template<int samples>
+static void ReadTGAData_LRBT(const byte * __restrict in, byte * __restrict out, int width, int height) {
+	const int rowlen = width * samples;
+	const byte *pIn = in + rowlen * (height - 1);
+	byte *pOut = out;
+
+	for (int y = 0; y < height; y++) {
+		memcpy(pOut, pIn, rowlen);
+		pOut += rowlen;
+		pIn  -= rowlen;
+	}
+}
+
+// universal templates
+template<int xSwap, int ySwap>
+static void ReadTGAData_Gray(const byte * __restrict in, byte * __restrict out, int width, int height) {
+	const int samples = 1;
+	const int rowlen = width * samples;
+	const int xStep = samples * (1 - 2 * xSwap);
+	const int yStep = (xSwap - ySwap) * 2 * rowlen;
+    const byte *pIn = in
+		+ xSwap * rowlen - samples
+		+ ySwap * rowlen * (height - 1);
+	byte *pOut = out;
+
+    for (int y = 0; y < height; y++) {
+		for (int x = 0; x < width; x++) {
+			pOut[0] = pIn[0];
+			pOut += samples;
+			pIn += xStep;
+		}
+		pIn += yStep;
+	}
+}
+
+template<int xSwap, int ySwap>
+static void ReadTGAData_BGR(const byte * __restrict in, byte * __restrict out, int width, int height) {
+	const int samples = 3;
+	const int rowlen = width * samples;
+	const int xStep = samples * (1 - 2 * xSwap);
+	const int yStep = (xSwap - ySwap) * 2 * rowlen;
+    const byte *pIn = in
+		+ xSwap * rowlen - samples
+		+ ySwap * rowlen * (height - 1);
+	byte *pOut = out;
+
+    for (int y = 0; y < height; y++) {
+		for (int x = 0; x < width; x++) {
+			pOut[0] = pIn[0];
+			pOut[1] = pIn[1];
+			pOut[2] = pIn[2];
+			pOut += samples;
+			pIn += xStep;
+		}
+		pIn += yStep;
+	}
+}
+
+template<int xSwap, int ySwap>
+static void ReadTGAData_BGRA(const byte * __restrict in, byte * __restrict out, int width, int height) {
+	const int samples = 4;
+	const int rowlen = width * samples;
+	const int xStep = samples * (1 - 2 * xSwap);
+	const int yStep = (xSwap - ySwap) * 2 * rowlen;
+    const byte *pIn = in
+		+ xSwap * rowlen - samples
+		+ ySwap * rowlen * (height - 1);
+	byte *pOut = out;
+
+    for (int y = 0; y < height; y++) {
+		for (int x = 0; x < width; x++) {
+			pOut[0] = pIn[0];
+			pOut[1] = pIn[1];
+			pOut[2] = pIn[2];
+			pOut[3] = pIn[3];
+			pOut += samples;
+			pIn += xStep;
+		}
+		pIn += yStep;
+	}
+}
+
 // *pic == pic, else NULL for failed.
 //
 //  returns false if found but had a format error, else true for either OK or not-found (there's a reason for this)
@@ -1295,9 +1408,9 @@ void LoadTGA ( const char *name, byte **pic, int *width, int *height, pixelForma
 		TGA_FORMAT_ERROR("LoadTGA: ColourMapEntrySize must be either 0 or 24\n" );
 	}
 
-	if ( ( pHeader->byImagePlanes != 24 && pHeader->byImagePlanes != 32) && (pHeader->byImagePlanes != 8 && pHeader->byImageType != 3))
+	if (pHeader->byImagePlanes != 24 && pHeader->byImagePlanes != 32 && pHeader->byImagePlanes != 8)
 	{
-		TGA_FORMAT_ERROR("LoadTGA: Only type 2 (RGB), 3 (gray), and 10 (RGB) TGA images supported\n");
+		TGA_FORMAT_ERROR("LoadTGA: Only 8, 24 and 32 bit TGA images supported\n");
 	}
 
 	if ((pHeader->byScanLineOrder&0x30)!=0x00 &&
@@ -1332,51 +1445,6 @@ void LoadTGA ( const char *name, byte **pic, int *width, int *height, pixelForma
 	// bits 4-5 = pixel order/dir
 	// bits 6-7 scan line interleave (00b=none,01b=2way interleave,10b=4way)
 	//
-	int iYStart,iXStart,iYStep,iXStep;
-
-	switch(pHeader->byScanLineOrder & 0x30)
-	{
-		default:	// default case stops the compiler complaining about using uninitialised vars
-		case 0x00:					//	left to right, bottom to top
-
-			iXStart = 0;
-			iXStep  = 1;
-
-			iYStart = pHeader->wImageHeight-1;
-			iYStep  = -1;
-
-			break;
-
-		case 0x10:					//  right to left, bottom to top
-
-			iXStart = pHeader->wImageWidth-1;
-			iXStep  = -1;
-
-			iYStart = pHeader->wImageHeight-1;
-			iYStep	= -1;
-
-			break;
-
-		case 0x20:					//  left to right, top to bottom
-
-			iXStart = 0;
-			iXStep  = 1;
-
-			iYStart = 0;
-			iYStep  = 1;
-
-			break;
-
-		case 0x30:					//  right to left, top to bottom
-
-			iXStart = pHeader->wImageWidth-1;
-			iXStep  = -1;
-
-			iYStart = 0;
-			iYStep  = 1;
-
-			break;
-	}
 
 	// feed back the results...
 	//
@@ -1394,11 +1462,11 @@ void LoadTGA ( const char *name, byte **pic, int *width, int *height, pixelForma
 		break;
 	case 24:
 		samples = 3;
-		*format = PXF_RGB;
+		*format = PXF_BGR;
 		break;
 	case 32:
 		samples = 4;
-		*format = PXF_RGBA;
+		*format = PXF_BGRA;
 		break;
 	}
 
@@ -1413,48 +1481,40 @@ void LoadTGA ( const char *name, byte **pic, int *width, int *height, pixelForma
 	if (pHeader->byIDFieldLength != 0)
 		pIn += pHeader->byIDFieldLength;	// skip TARGA image comment
 
-	byte gray,red,green,blue,alpha;
-
 	if ( pHeader->byImageType == 2 || pHeader->byImageType == 3 )	// RGB or greyscale
 	{
-		for (int y=iYStart, iYCount=0; iYCount<pHeader->wImageHeight; y+=iYStep, iYCount++)
-		{
-			pOut = pRGBA + y * pHeader->wImageWidth * samples;
-			for (int x=iXStart, iXCount=0; iXCount<pHeader->wImageWidth; x+=iXStep, iXCount++)
-			{
-				switch (pHeader->byImagePlanes)
-				{
-					case 8:
-						gray    = *pIn++;
-						*pOut++ = gray;
-						break;
+		int type = ((pHeader->byScanLineOrder & 0x30) << 8) | pHeader->byImagePlanes;
+		int w = pHeader->wImageWidth;
+		int h = pHeader->wImageHeight;
 
-					case 24:
-						blue	= *pIn++;
-						green	= *pIn++;
-						red		= *pIn++;
-						*pOut++ = red;
-						*pOut++ = green;
-						*pOut++ = blue;
-						break;
+		// type first component (byScanLineOrder & 0x30):
+		// 0x00 - left-right bottom-top
+		// 0x10 - right-left bottom-top
+		// 0x20 - left-right top-bottom
+		// 0x30 - right-left top-bottom
 
-					case 32:
-						blue	= *pIn++;
-						green	= *pIn++;
-						red		= *pIn++;
-						alpha	= *pIn++;
-						*pOut++ = red;
-						*pOut++ = green;
-						*pOut++ = blue;
-						*pOut++ = alpha;
-						break;
+		// type second component (byImagePlanes):
+		// 0x08 -  8bit (gray)
+		// 0x18 - 24bit (BGR)
+		// 0x20 - 32bit (BGRA)
 
-					default:
-						assert(0);	// if we ever hit this, someone deleted a header check higher up
-						TGA_FORMAT_ERROR("LoadTGA: Image can only have 8, 24 or 32 planes for RGB/greyscale\n");
-						break;
-				}
-			}
+		switch (type) {
+		case 0x0008: ReadTGAData_LRBT<1>   (pIn, pOut, w, h); break;
+		case 0x0018: ReadTGAData_LRBT<3>   (pIn, pOut, w, h); break;
+		case 0x0020: ReadTGAData_LRBT<4>   (pIn, pOut, w, h); break;
+		case 0x1008: ReadTGAData_Gray<1, 1>(pIn, pOut, w, h); break;
+		case 0x1018: ReadTGAData_BGR <1, 1>(pIn, pOut, w, h); break;
+		case 0x1020: ReadTGAData_BGRA<1, 1>(pIn, pOut, w, h); break;
+		case 0x2008: ReadTGAData_LRTB<1>   (pIn, pOut, w, h); break;
+		case 0x2018: ReadTGAData_LRTB<3>   (pIn, pOut, w, h); break;
+		case 0x2020: ReadTGAData_LRTB<4>   (pIn, pOut, w, h); break;
+		case 0x3008: ReadTGAData_Gray<1, 0>(pIn, pOut, w, h); break;
+		case 0x3018: ReadTGAData_BGR <1, 0>(pIn, pOut, w, h); break;
+		case 0x3020: ReadTGAData_BGRA<1, 0>(pIn, pOut, w, h); break;
+		default:
+			assert(0);	// if we ever hit this, someone deleted a header check higher up
+			TGA_FORMAT_ERROR("LoadTGA: Image can only have 8, 24 or 32 planes for RGB/greyscale\n");
+			break;
 		}
 	}
 	else
@@ -1470,6 +1530,7 @@ void LoadTGA ( const char *name, byte **pic, int *width, int *height, pixelForma
 			pOut = pRGBA + y * pHeader->wImageWidth * samples;
 			for (int x=0; x<pHeader->wImageWidth;)
 			{
+				byte red, green, blue, alpha;
 				packetHeader = *pIn++;
 				packetSize   = 1 + (packetHeader & 0x7f);
 				if (packetHeader & 0x80)		 // run-length packet
@@ -1500,9 +1561,9 @@ void LoadTGA ( const char *name, byte **pic, int *width, int *height, pixelForma
 
 					for (j=0; j<packetSize; j++)
 					{
-						*pOut++	= red;
-						*pOut++	= green;
 						*pOut++	= blue;
+						*pOut++	= green;
+						*pOut++	= red;
 						if (samples == 4)
 							*pOut++	= alpha;
 						x++;
@@ -1529,9 +1590,9 @@ void LoadTGA ( const char *name, byte **pic, int *width, int *height, pixelForma
 								blue	= *pIn++;
 								green	= *pIn++;
 								red		= *pIn++;
-								*pOut++ = red;
-								*pOut++ = green;
 								*pOut++ = blue;
+								*pOut++ = green;
+								*pOut++ = red;
 								break;
 
 							case 32:
@@ -1539,9 +1600,9 @@ void LoadTGA ( const char *name, byte **pic, int *width, int *height, pixelForma
 								green	= *pIn++;
 								red		= *pIn++;
 								alpha	= *pIn++;
-								*pOut++ = red;
-								*pOut++ = green;
 								*pOut++ = blue;
+								*pOut++ = green;
+								*pOut++ = red;
 								*pOut++ = alpha;
 								break;
 
