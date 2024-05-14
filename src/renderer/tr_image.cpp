@@ -368,10 +368,70 @@ R_MipMapBox
 
 Box filter
 template parameter s is number of 8bit color samples per pixel (1, 3, 4)
+
+Implementing all specializations only because GCC won't unwind the inner loop
 ================
 */
 template<int s>
 static void R_MipMapBox(byte *in, int width, int height) {
+	int		i, j, k;
+	byte	*out;
+	int		row;
+
+	row = width * s;
+	out = in;
+	width >>= 1;
+	height >>= 1;
+
+	if ( width == 0 || height == 0 ) {
+		width += height;	// get largest
+		for (i=0 ; i<width ; i++, out+=s, in+=2*s ) {
+			for (k=0 ; k<s ; k++) {
+				out[k] = ( in[k] + in[s+k] )>>1;
+			}
+		}
+		return;
+	}
+
+	for (i=0 ; i<height ; i++, in+=row) {
+		for (j=0 ; j<width ; j++, out+=s, in+=2*s) {
+			for (k=0 ; k<s ; k++) {
+				out[k] = (in[k] + in[s+k] + in[row+k] + in[row+s+k])>>2;
+			}
+		}
+	}
+}
+
+template<>
+void R_MipMapBox<1>(byte *in, int width, int height) {
+	const int s = 1;
+	int		i, j;
+	byte	*out;
+	int		row;
+
+	row = width * s;
+	out = in;
+	width >>= 1;
+	height >>= 1;
+
+	if ( width == 0 || height == 0 ) {
+		width += height;	// get largest
+		for (i=0 ; i<width ; i++, out+=s, in+=2*s ) {
+			out[0] = ( in[0] + in[s+0] )>>1;
+		}
+		return;
+	}
+
+	for (i=0 ; i<height ; i++, in+=row) {
+		for (j=0 ; j<width ; j++, out+=s, in+=2*s) {
+			out[0] = (in[0] + in[s+0] + in[row+0] + in[row+s+0])>>2;
+		}
+	}
+}
+
+template<>
+void R_MipMapBox<3>(byte *in, int width, int height) {
+	const int s = 3;
 	int		i, j;
 	byte	*out;
 	int		row;
@@ -396,6 +456,39 @@ static void R_MipMapBox(byte *in, int width, int height) {
 			out[0] = (in[0] + in[s+0] + in[row+0] + in[row+s+0])>>2;
 			out[1] = (in[1] + in[s+1] + in[row+1] + in[row+s+1])>>2;
 			out[2] = (in[2] + in[s+2] + in[row+2] + in[row+s+2])>>2;
+		}
+	}
+}
+
+template<>
+void R_MipMapBox<4>(byte *in, int width, int height) {
+	const int s = 4;
+	int		i, j;
+	byte	*out;
+	int		row;
+
+	row = width * s;
+	out = in;
+	width >>= 1;
+	height >>= 1;
+
+	if ( width == 0 || height == 0 ) {
+		width += height;	// get largest
+		for (i=0 ; i<width ; i++, out+=s, in+=2*s ) {
+			out[0] = ( in[0] + in[s+0] )>>1;
+			out[1] = ( in[1] + in[s+1] )>>1;
+			out[2] = ( in[2] + in[s+2] )>>1;
+			out[3] = ( in[3] + in[s+3] )>>1;
+		}
+		return;
+	}
+
+	for (i=0 ; i<height ; i++, in+=row) {
+		for (j=0 ; j<width ; j++, out+=s, in+=2*s) {
+			out[0] = (in[0] + in[s+0] + in[row+0] + in[row+s+0])>>2;
+			out[1] = (in[1] + in[s+1] + in[row+1] + in[row+s+1])>>2;
+			out[2] = (in[2] + in[s+2] + in[row+2] + in[row+s+2])>>2;
+			out[3] = (in[3] + in[s+3] + in[row+3] + in[row+s+3])>>2;
 		}
 	}
 }
