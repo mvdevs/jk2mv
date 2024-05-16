@@ -808,6 +808,7 @@ static void Upload32( byte * const *mipmaps, qboolean customMip, image_t *image,
 	image->uploadWidth = width;
 	image->uploadHeight = height;
 
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
 	if ( !upload->noMipMaps )
 	{
