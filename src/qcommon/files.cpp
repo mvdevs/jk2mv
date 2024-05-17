@@ -3273,6 +3273,7 @@ qboolean FS_ComparePaks( char *neededpaks, int len, int *chksums, size_t maxchks
 	searchpath_t	*sp;
 	qboolean havepak, badchecksum, badname;
 	int i;
+	int paknum; // number of paks in neededpaks string (not counting dl_ duplicates)
 
 	if ( !fs_numServerReferencedPaks ) {
 		return qfalse; // Server didn't send any pack information along
@@ -3280,6 +3281,7 @@ qboolean FS_ComparePaks( char *neededpaks, int len, int *chksums, size_t maxchks
 
 	*neededpaks = 0;
 	badname = qfalse;
+	paknum = 0;
 
 	for ( i = 0 ; i < fs_numServerReferencedPaks ; i++ ) {
 		// Ok, see if we have this pak file
@@ -3355,11 +3357,14 @@ qboolean FS_ComparePaks( char *neededpaks, int len, int *chksums, size_t maxchks
 					break;
 				}
 
-				Q_strcat( neededpaks, len, currentPak );
-
-				if (chksums && i < (int)maxchksums) {
-					chksums[i] = fs_serverReferencedPaks[i];
+				if (paknum + 1 >= (int)maxchksums) {
+					Com_Printf( S_COLOR_YELLOW "WARNING (FS_ComparePaks): referenced pk3 files cut off because there are too many\n" );
+					break;
 				}
+
+				Q_strcat( neededpaks, len, currentPak );
+				chksums[paknum] = fs_serverReferencedPaks[i];
+				paknum++;
 			} else {
 				char st[MAX_ZPATH];
 
@@ -3370,6 +3375,7 @@ qboolean FS_ComparePaks( char *neededpaks, int len, int *chksums, size_t maxchks
 				if ( FS_SV_FileExists(va("%s/dl_%s.pk3", moddir, filename)) ) {
 					Q_strcat( neededpaks, len, " (local file exists with wrong checksum)");
 				}
+
 				Q_strcat( neededpaks, len, "\n");
 			}
 		}
