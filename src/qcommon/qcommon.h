@@ -1056,9 +1056,18 @@ extern huffman_t clientHuffTables;
 #define	CL_ENCODE_START		12
 #define CL_DECODE_START		4
 
+typedef enum {
+	MAPVERSION_UNDEF,
+	MAPVERSION_JK2,
+	MAPVERSION_JKA
+} mapversion_t;
+
 void MV_SetCurrentGameversion(mvversion_t version);
 mvversion_t MV_GetCurrentGameversion();
 mvprotocol_t MV_GetCurrentProtocol();
+void MV_SetCurrentMapVersion(mapversion_t version);
+mapversion_t MV_GetCurrentMapVersion();
+const char *MV_GetMapVersionString(mapversion_t mapversion);
 
 #define	MAX_SUBMODELS			256
 

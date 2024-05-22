@@ -199,7 +199,7 @@ enum {
 	PACKGVC_UNKNOWN = 0,
 	PACKGVC_1_02 = 1,
 	PACKGVC_1_03 = 2,
-	PACKGVC_1_04 = 4,
+	PACKGVC_1_04 = 4
 };
 
 typedef struct {
@@ -291,7 +291,7 @@ static const char	*fs_serverReferencedPakNames[MAX_SEARCH_PATHS];		// pk3 names
 char lastValidBase[MAX_OSPATH];
 char lastValidGame[MAX_OSPATH];
 
-qboolean FS_idPak(pack_t *pack);
+qboolean FS_idPak(const pack_t *pack);
 qboolean FS_IsInvalidWriteOSPath(const char *ospath);
 qboolean FS_ContainsInvalidCharacters( const char *filename );
 
@@ -340,7 +340,7 @@ qboolean FS_Initialized() {
 FS_PakIsPure
 =================
 */
-qboolean FS_PakIsPure( pack_t *pack ) {
+qboolean FS_PakIsPure( const pack_t *pack ) {
 	int i;
 
 	// actually, I created a bypass for sv_pure here but since jk2 is opensource I really don't see a point in supporting pure
@@ -1227,7 +1227,6 @@ int FS_PakReadFile(pack_t *pak, const char *filename, char *buffer, int bufferle
 	return 0;
 }
 
-
 /*
 ===========
 FS_FOpenFileRead
@@ -1322,7 +1321,8 @@ int FS_FOpenFileReadHash(const char *filename, fileHandle_t *file, qboolean uniq
 				!((search->pack->gvc & PACKGVC_1_02 && MV_GetCurrentGameversion() == VERSION_1_02) ||
 				  (search->pack->gvc & PACKGVC_1_03 && MV_GetCurrentGameversion() == VERSION_1_03) ||
 				  (search->pack->gvc & PACKGVC_1_04 && MV_GetCurrentGameversion() == VERSION_1_04) ||
-				  (Q_stricmp(search->pack->pakGamename, BASEGAME) && search->pack->gvc == PACKGVC_UNKNOWN) ||
+				  (search->pack->isJKA && MV_GetCurrentMapVersion() == MAPVERSION_JKA) ||
+				  (search->pack->gvc & PACKGVC_UNKNOWN && Q_stricmp(search->pack->pakGamename, BASEGAME)) ||
 				  (MV_GetCurrentGameversion() == VERSION_UNDEF))) {
 
 				// prevent loading unsupported qvm's
@@ -1330,7 +1330,7 @@ int FS_FOpenFileReadHash(const char *filename, fileHandle_t *file, qboolean uniq
 					continue;
 
 				// incompatible pk3
-				if (search->pack->gvc != PACKGVC_UNKNOWN && !FS_idPak(search->pack))
+				if (!(search->pack->gvc & PACKGVC_UNKNOWN) && !FS_idPak(search->pack))
 					continue;
 			}
 
@@ -2089,7 +2089,10 @@ static pack_t *FS_LoadZipFile( char *zipfile, const char *basename, qboolean ass
 		pack->gvc = PACKGVC_1_03;
 	} else if (!Q_stricmpn(basename, "o104_", 5)) {
 		pack->gvc = PACKGVC_1_04;
+	} else if (!Q_stricmpn(basename, "ojka_", 5) || !Q_stricmpn(basename, "dl_ojka_", 8)) {
+		pack->isJKA = qtrue;
 	}
+
 
 	// mv.info file in root directory of pk3 file
 	char cversion[128];
@@ -2113,6 +2116,10 @@ static pack_t *FS_LoadZipFile( char *zipfile, const char *basename, qboolean ass
 		if (Q_stristr(cversion, "compatible all")) {
 			pack->gvc = PACKGVC_1_02 | PACKGVC_1_03 | PACKGVC_1_04;
 		}
+
+		if (Q_stristr(cversion, "compatible jka")) {
+			pack->isJKA = qtrue;
+		}
 	}
 
 	// assets are hardcoded
@@ -2126,6 +2133,8 @@ static pack_t *FS_LoadZipFile( char *zipfile, const char *basename, qboolean ass
 		} else if (!Q_stricmp(pack->pakBasename, "assets5")) {
 			pack->gvc = PACKGVC_1_04;
 		}
+	} else {
+		pack->isJKA = qtrue;
 	}
 
 	return pack;
@@ -2252,11 +2261,12 @@ static const char **FS_ListFilteredFiles( const char *path, const char *extensio
 				!((search->pack->gvc & PACKGVC_1_02 && MV_GetCurrentGameversion() == VERSION_1_02) ||
 				 (search->pack->gvc & PACKGVC_1_03 && MV_GetCurrentGameversion() == VERSION_1_03) ||
 				 (search->pack->gvc & PACKGVC_1_04 && MV_GetCurrentGameversion() == VERSION_1_04) ||
-				 (Q_stricmp(search->pack->pakGamename, BASEGAME) && search->pack->gvc == PACKGVC_UNKNOWN) ||
+				 (search->pack->isJKA && MV_GetCurrentMapVersion() == MAPVERSION_JKA) ||
+				 (search->pack->gvc & PACKGVC_UNKNOWN && Q_stricmp(search->pack->pakGamename, BASEGAME)) ||
 				 (MV_GetCurrentGameversion() == VERSION_UNDEF))) {
 
 				// incompatible pk3
-				if (search->pack->gvc != PACKGVC_UNKNOWN && !FS_idPak(search->pack))
+				if (!(search->pack->gvc & PACKGVC_UNKNOWN) && !FS_idPak(search->pack))
 					continue;
 			}
 
@@ -2765,11 +2775,12 @@ void FS_Path_f( void ) {
 	Com_Printf ("Current search path:\n");
 	for (s = fs_searchpaths; s; s = s->next) {
 		if (s->pack) {
-			Com_Printf ("%s (%i files) [ %s%s%s%s]\n", s->pack->pakFilename, s->pack->numfiles,
+			Com_Printf ("%s (%i files) [ %s%s%s%s%s]\n", s->pack->pakFilename, s->pack->numfiles,
 				s->pack->gvc == PACKGVC_UNKNOWN ? "unknown " : "",
 				s->pack->gvc & PACKGVC_1_02 ? "1.02 " : "",
 				s->pack->gvc & PACKGVC_1_03 ? "1.03 " : "",
-				s->pack->gvc & PACKGVC_1_04 ? "1.04 " : "");
+				s->pack->gvc & PACKGVC_1_04 ? "1.04 " : "",
+				s->pack->isJKA ? "JKA " : "");
 
 			if ( fs_numServerPaks ) {
 				if ( !FS_PakIsPure(s->pack) ) {
@@ -3117,7 +3128,7 @@ qboolean FS_idPakPath(const char *pak, const char *base) {
 	return qfalse;
 }
 
-qboolean FS_idPak(pack_t *pak) {
+qboolean FS_idPak(const pack_t *pak) {
 	char path[MAX_OSPATH];
 	Com_sprintf(path, sizeof(path), "%s/%s", pak->pakGamename, pak->pakBasename);
 	

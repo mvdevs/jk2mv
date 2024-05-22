@@ -61,6 +61,16 @@ void	CM_FloodAreaConnections (void);
 ===============================================================================
 */
 
+mapversion_t CM_MapVersion(const char *name) {
+	if (FS_ReadFileSkipJKA(name, NULL) != -1) {
+		return MAPVERSION_JK2;
+	} else if (FS_ReadFile(name, NULL) != -1) {
+		return MAPVERSION_JKA;
+	} else {
+		return MAPVERSION_UNDEF;
+	}
+}
+
 /*
 =================
 CMod_LoadShaders

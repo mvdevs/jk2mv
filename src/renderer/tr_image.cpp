@@ -2645,7 +2645,11 @@ void R_SetColorMappings( void ) {
 	int		shift;
 
 	// setup the overbright lighting
-	tr.overbrightBits = r_overBrightBits->integer;
+	if (tr.mapversion == MAPVERSION_JKA) {
+		tr.overbrightBits = r_overBrightBitsJKA->integer;
+	} else {
+		tr.overbrightBits = r_overBrightBits->integer;
+	}
 
 	if (r_gammamethod->integer == GAMMA_NONE)
 	{

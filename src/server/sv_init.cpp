@@ -470,6 +470,10 @@ Ghoul2 Insert End
 	// clear the whole hunk because we're (re)loading the server
 	Hunk_Clear();
 
+	mapversion_t mapversion = CM_MapVersion(va("maps/%s.bsp", server));
+	MV_SetCurrentMapVersion(mapversion);
+	Com_Printf("mapversion set to %s\n", MV_GetMapVersionString(mapversion));
+
 /*
 Ghoul2 Insert Start
 */

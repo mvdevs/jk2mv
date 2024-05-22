@@ -1358,6 +1358,10 @@ void CL_InitCGame( void ) {
 	mapname = Info_ValueForKey( info, "mapname" );
 	Com_sprintf( cl.mapname, sizeof( cl.mapname ), "maps/%s.bsp", mapname );
 
+	mapversion_t mapversion = CM_MapVersion(cl.mapname);
+	MV_SetCurrentMapVersion(mapversion);
+	Com_Printf("mapversion set to %s\n", MV_GetMapVersionString(mapversion));
+
 	// load the dll or bytecode
 	if ( cl_connectedToPureServer != 0 ) {
 		// if sv_pure is set we only allow qvms to be loaded
