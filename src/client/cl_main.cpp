@@ -750,6 +750,7 @@ void CL_FlushMemory( qboolean disconnecting ) {
 
 	if (disconnecting && !com_sv_running->integer) {
 		MV_SetCurrentGameversion(VERSION_UNDEF);
+		MV_SetCurrentMapVersion(MAPVERSION_UNDEF);
 
 		FS_PureServerSetReferencedPaks("", "");
 		// change checksum feed so that next FS_ConditionalRestart()

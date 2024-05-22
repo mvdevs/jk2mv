@@ -405,7 +405,8 @@ void MV_DrawConnectingInfo( void )
 	Com_sprintf(txtbuf, sizeof(txtbuf), "^1[ ^7JK2MV " JK2MV_VERSION " " PLATFORM_STRING " ^1]");
 	SCR_DrawStringExt(320 - SCR_Strlen(txtbuf) * 4, yPos + (line * 0), 8, txtbuf, g_color_table[7], qfalse);
 
-	Com_sprintf(txtbuf, sizeof(txtbuf), "Game-Version^1: ^71.%02d", (int)MV_GetCurrentGameversion());
+	const char *mapverstr = MV_GetMapVersionString(MV_GetCurrentMapVersion());
+	Com_sprintf(txtbuf, sizeof(txtbuf), "Game-Version^1: ^71.%02d Map-Version^1: ^7%s", (int)MV_GetCurrentGameversion(), mapverstr);
 	SCR_DrawStringExt((int)(320 - SCR_Strlen(txtbuf) * 3.5), yPos + (line * 1), 7, txtbuf, g_color_table[7], qfalse);
 }
 

@@ -316,6 +316,16 @@ Client-Side
 
 ..
 
+:Name: r_overBrightBitsJKA
+:Values: Integer >= 0
+:Default: "0"
+:Description:
+   Overbright on maps recognized as made for Jedi Academy. These are
+   maps loaded from basejka or fs_assetspathjka directories and maps
+   with ojka_ prefix or "compatible jka" string in mv.info file
+
+..
+
 :Name: r_saberGlow
 :Values: "0", "1"
 :Default: "1"

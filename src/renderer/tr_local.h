@@ -1135,6 +1135,8 @@ typedef struct {
 	// gamma correction
 	GLuint gammaVertexShader, gammaPixelShader;
 	GLuint gammaLUTImage;
+
+	mapversion_t mapversion;
 } trGlobals_t;
 
 
@@ -1277,6 +1279,7 @@ extern	cvar_t	*r_skipBackEnd;
 extern	cvar_t	*r_ignoreGLErrors;
 
 extern	cvar_t	*r_overBrightBits;
+extern	cvar_t	*r_overBrightBitsJKA;
 
 extern	cvar_t	*r_debugSurface;
 extern	cvar_t	*r_simpleMipMaps;
@@ -1419,7 +1422,7 @@ qboolean	R_GetEntityToken( char *buffer, int size );
 
 model_t		*R_AllocModel( void );
 
-void		R_Init( void );
+void		R_Init( mapversion_t mapversion );
 void R_LoadImage( const char *name, byte **pic, int *width, int *height );
 image_t		*R_FindImageFile( const char *name, qboolean mipmap, qboolean allowPicmip, qboolean allowTC, int glWrapClampMode );
 image_t		*R_FindImageFileNew( const char *name, const upload_t *upload, int glWrapClampMode );

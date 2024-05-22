@@ -2453,6 +2453,7 @@ void Com_Init( char *commandLine ) {
 	// multiprotocol support
 	// startup will be UNDEFINED
 	MV_SetCurrentGameversion(VERSION_UNDEF);
+	MV_SetCurrentMapVersion(MAPVERSION_UNDEF);
 
 	// bk001129 - do this before anything else decides to push events
 	Com_InitPushEvent();
@@ -3049,6 +3050,27 @@ mvprotocol_t MV_GetCurrentProtocol() {
 		default:
 			return PROTOCOL_UNDEF;
 	}
+}
+
+static mapversion_t mv_mapversion = MAPVERSION_UNDEF;
+
+void MV_SetCurrentMapVersion(mapversion_t version) {
+	mv_mapversion = version;
+}
+
+mapversion_t MV_GetCurrentMapVersion() {
+	return mv_mapversion;
+}
+
+const char *MV_GetMapVersionString(mapversion_t mapversion) {
+	switch(mapversion) {
+	case MAPVERSION_UNDEF: return "Unknown"; break;
+	case MAPVERSION_JK2:   return "JK2";     break;
+	case MAPVERSION_JKA:   return "JKA";     break;
+	}
+
+	assert(0);
+	return "";
 }
 
 // for auto-complete (copied from OpenJK)

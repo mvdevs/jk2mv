@@ -41,6 +41,8 @@ qboolean	CM_AreasConnected( int area1, int area2 );
 
 int			CM_WriteAreaBits( byte *buffer, int area );
 
+mapversion_t	CM_MapVersion(const char *name);
+
 // cm_tag.c
 int			CM_LerpTag( orientation_t *tag,  clipHandle_t model, int startFrame, int endFrame,
 					 float frac, const char *tagName );
