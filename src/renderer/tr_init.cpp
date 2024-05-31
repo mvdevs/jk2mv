@@ -627,7 +627,7 @@ static void GLimp_InitOpenGLVersion(void) {
 	if (strncmp(glConfig.version_string, "1.4", 3) >= 0)
 	{
 		glConfig.glVersion = QGL_VERSION_1_4;
-		Com_Printf("...OpenGL 1.4 available");
+		Com_Printf("...OpenGL 1.4 available\n");
 	}
 }
 
