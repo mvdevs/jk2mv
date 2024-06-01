@@ -301,14 +301,6 @@ void R_ImageList_f( void ) {
 //=======================================================================
 
 
-/*
-================
-R_LightScaleTexture
-
-Scale up the pixel values in a texture to increase the
-lighting range
-================
-*/
 template<int s>
 static void R_LightScaleTexture (byte *in, int inwidth, int inheight )
 {
@@ -359,6 +351,24 @@ static void R_LightScaleTextureGray (byte *in, int inwidth, int inheight )
 		{
 			p[i] = s_gammatable[s_intensitytable[p[i]]];
 		}
+	}
+}
+
+/*
+================
+R_LightScaleTexture
+
+Scale up the pixel values in a texture to increase the
+lighting range
+================
+*/
+static void R_LightScaleTexture (pixelFormat_t format, byte *data, int width, int height ) {
+	switch (format) {
+	case PXF_GRAY: R_LightScaleTextureGray( data, width, height ); break;
+	case PXF_RGB:  R_LightScaleTexture<3>( data, width, height ); break;
+	case PXF_BGR:  R_LightScaleTexture<3>( data, width, height ); break;
+	case PXF_RGBA: R_LightScaleTexture<4>( data, width, height ); break;
+	case PXF_BGRA: R_LightScaleTexture<4>( data, width, height ); break;
 	}
 }
 
@@ -625,8 +635,74 @@ static const byte mipBlendColors[16][4] = {
 	{0,0,255,128},
 };
 
+static void R_PixelFormatSwizzle440( const byte * __restrict in, byte * __restrict out, int pixelcount ) {
+	memcpy(out, in, pixelcount * 4);
+}
 
+static void R_PixelFormatSwizzle441( const byte * __restrict in, byte * __restrict out, int pixelcount ) {
+	for (int i = 0; i < pixelcount; i++) {
+		out[0] = in[2];
+		out[1] = in[1];
+		out[2] = in[0];
+		out[3] = in[3];
 
+		in  += 4;
+		out += 4;
+	}
+}
+
+static void R_PixelFormatSwizzle340( const byte * __restrict in, byte * __restrict out, int pixelcount ) {
+	for (int i = 0; i < pixelcount; i++) {
+		out[0] = in[0];
+		out[1] = in[1];
+		out[2] = in[2];
+		out[3] = 255;
+
+		in  += 3;
+		out += 4;
+	}
+}
+
+static void R_PixelFormatSwizzle341( const byte * __restrict in, byte * __restrict out, int pixelcount ) {
+	for (int i = 0; i < pixelcount; i++) {
+		out[0] = in[2];
+		out[1] = in[1];
+		out[2] = in[0];
+		out[3] = 255;
+
+		in  += 3;
+		out += 4;
+	}
+}
+
+static void R_PixelFormatSwizzle140( const byte * __restrict in, byte * __restrict out, int pixelcount ) {
+	for (int i = 0; i < pixelcount; i++) {
+		out[0] = in[0];
+		out[1] = in[0];
+		out[2] = in[0];
+		out[3] = 255;
+
+		in  += 1;
+		out += 4;
+	}
+}
+
+/*
+==================
+R_CovnvertToRGBA
+
+Convert data in given pixel format to PXF_RGBA
+==================
+*/
+static void R_ConvertToRGBA( pixelFormat_t informat, const byte * __restrict in, byte * __restrict out, int pixelcount ) {
+	switch(informat) {
+	case PXF_RGBA: R_PixelFormatSwizzle440(in, out, pixelcount); break;
+	case PXF_BGRA: R_PixelFormatSwizzle441(in, out, pixelcount); break;
+	case PXF_RGB : R_PixelFormatSwizzle340(in, out, pixelcount); break;
+	case PXF_BGR : R_PixelFormatSwizzle341(in, out, pixelcount); break;
+	case PXF_GRAY: R_PixelFormatSwizzle140(in, out, pixelcount); break;
+	}
+}
 
 
 class CStringComparator
@@ -812,62 +888,60 @@ static void Upload32( byte * const *mipmaps, qboolean customMip, image_t *image,
 
 	if ( !upload->noMipMaps )
 	{
-		int			miplevel = 0;
-		qboolean	openglMipMaps = (qboolean)(r_openglMipMaps->integer && !r_colorMipLevels->integer && glConfig.glVersion >= QGL_VERSION_1_4);
-		qboolean	processData = qtrue;
-
-		if ( openglMipMaps )
+		if ( r_openglMipMaps->integer && !r_colorMipLevels->integer && !customMip && glConfig.glVersion >= QGL_VERSION_1_4 )
 		{
+			if ( !upload->noLightScale )
+				R_LightScaleTexture( format, data, width, height );
+
 			qglTexParameteri( GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE );
+			qglTexImage2D( GL_TEXTURE_2D, 0, image->internalFormat, width, height, 0, glFormat, GL_UNSIGNED_BYTE, data );
 		}
+		else
+		{
+			int			miplevel = 0;
+			qboolean	processData = qtrue;
+			const byte	*uploadData;
+			byte		*datargba = NULL;
 
-		while ( 1 ) {
-			if ( processData &&  !upload->noLightScale )
-			{
-				switch (format) {
-				case PXF_GRAY: R_LightScaleTextureGray( data, width, height ); break;
-				case PXF_RGB:  R_LightScaleTexture<3>( data, width, height ); break;
-				case PXF_BGR:  R_LightScaleTexture<3>( data, width, height ); break;
-				case PXF_RGBA: R_LightScaleTexture<4>( data, width, height ); break;
-				case PXF_BGRA: R_LightScaleTexture<4>( data, width, height ); break;
+			if ( r_colorMipLevels->integer ) {
+				datargba = (byte *)Hunk_AllocateTempMemory(width * height * 4);
+				glFormat = GL_RGBA;
+			}
+
+			while ( 1 ) {
+				if ( processData && !upload->noLightScale )
+					R_LightScaleTexture( format, data, width, height );
+
+				if ( r_colorMipLevels->integer ) {
+					R_ConvertToRGBA( format, data, datargba, width * height );
+					R_BlendOverTexture( datargba, width * height, mipBlendColors[miplevel] );
+					uploadData = datargba;
+				} else {
+					uploadData = data;
 				}
+
+				qglTexImage2D( GL_TEXTURE_2D, miplevel, image->internalFormat, width, height, 0, glFormat, GL_UNSIGNED_BYTE, uploadData );
+
+				if ( width == 1 && height == 1 )
+					break;
+
+				if ( customMip && level < MAX_MIP_LEVELS && mipmaps[level] ) {
+					data = mipmaps[level];
+					processData = qtrue;
+				} else {
+					R_MipMap( data, width, height, format );
+					processData = qfalse;
+				}
+
+				width = max(width >> 1, 1);
+				height = max(height >> 1, 1);
+
+				miplevel++;
+				level++;
 			}
 
-			if ( r_colorMipLevels->integer )
-			{
-				R_BlendOverTexture( data, width * height, mipBlendColors[miplevel] );
-			}
-
-			if ( !openglMipMaps || processData )
-			{
-				qglTexImage2D( GL_TEXTURE_2D, miplevel, image->internalFormat, width, height, 0, glFormat, GL_UNSIGNED_BYTE, data );
-			}
-
-			if ( width == 1 && height == 1 )
-			{
-				break;
-			}
-
-			if ( customMip && level < MAX_MIP_LEVELS && mipmaps[level] )
-			{
-				data = mipmaps[level];
-				processData = qtrue;
-			}
-			else if ( !openglMipMaps )
-			{
-				R_MipMap( data, width, height, format );
-				processData = qfalse;
-			}
-			else // openglMipMaps
-			{
-				processData = qfalse;
-			}
-
-			width = max(width >> 1, 1);
-			height = max(height >> 1, 1);
-
-			miplevel++;
-			level++;
+			if ( datargba )
+				Hunk_FreeTempMemory( datargba );
 		}
 	}
 	else
