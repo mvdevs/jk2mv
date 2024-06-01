@@ -704,6 +704,88 @@ static void R_ConvertToRGBA( pixelFormat_t informat, const byte * __restrict in,
 	}
 }
 
+static int R_PixelFormatSamples( pixelFormat_t format ) {
+	switch (format) {
+	case PXF_GRAY: return 1;
+	case PXF_RGB : return 3;
+	case PXF_BGR : return 3;
+	case PXF_RGBA: return 4;
+	case PXF_BGRA: return 4;
+	}
+
+	assert(0);
+	return 0;
+}
+
+static GLenum R_GLPixelFormat( pixelFormat_t format ) {
+	switch (format) {
+	case PXF_GRAY: return GL_LUMINANCE;
+	case PXF_RGB : return GL_RGB;
+	case PXF_BGR : return GL_BGR;
+	case PXF_RGBA: return GL_RGBA;
+	case PXF_BGRA: return GL_BGRA;
+	}
+
+	assert(0);
+	return 0;
+}
+
+static GLint R_GLInternalFormat( qboolean isLightmap, qboolean noTC, qboolean hasAlpha ) {
+	if ( !hasAlpha )
+	{
+		int texturebits;
+
+		// Allow different bit depth when we are a lightmap
+		if ( isLightmap && r_texturebitslm->integer > 0 ) {
+			texturebits = r_texturebitslm->integer;
+		} else {
+			texturebits = r_texturebits->integer;
+		}
+
+		if ( glConfig.textureCompression == TC_S3TC && !noTC )
+		{
+			return GL_RGB4_S3TC;
+		}
+		else if ( glConfig.textureCompression == TC_S3TC_DXT && !noTC )
+		{	// Compress purely color - no alpha
+			return GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
+		}
+		else if ( texturebits == 16 )
+		{
+			return GL_RGB5;
+		}
+		else if ( texturebits == 32 )
+		{
+			return GL_RGB8;
+		}
+		else
+		{
+			return GL_RGB;
+		}
+	}
+	else
+	{
+		if ( glConfig.textureCompression == TC_S3TC_DXT && !noTC)
+		{	// Compress both alpha and color
+			return GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+		}
+		else if ( r_texturebits->integer == 16 )
+		{
+			return GL_RGBA4;
+		}
+		else if ( r_texturebits->integer == 32 )
+		{
+			return GL_RGBA8;
+		}
+		else
+		{
+			return GL_RGBA;
+		}
+	}
+
+	assert(0);
+	return GL_RGBA;
+}
 
 class CStringComparator
 {
@@ -768,6 +850,7 @@ static void Upload32( byte * const *mipmaps, qboolean customMip, image_t *image,
 	int			height = image->height;
 	upload_t	*upload = &image->upload;
 	GLenum		glFormat;
+	qboolean	hasAlpha;
 
 	data = mipmaps[0];
 	level = 1;
@@ -805,82 +888,10 @@ static void Upload32( byte * const *mipmaps, qboolean customMip, image_t *image,
 		level++;
 	}
 
-	switch (format) {
-	case PXF_GRAY:
-		glFormat = GL_LUMINANCE;
-		samples = 1;
-		break;
-	case PXF_RGB:
-		glFormat = GL_RGB;
-		samples = 3;
-		break;
-	case PXF_BGR:
-		glFormat = GL_BGR;
-		samples = 3;
-		break;
-	case PXF_RGBA:
-		glFormat = GL_RGBA;
-		samples = 4;
-		break;
-	case PXF_BGRA:
-		glFormat = GL_BGRA;
-		samples = 4;
-		break;
-	}
-
-	// select proper internal format
-	if ( samples == 3 || samples == 1 )
-	{
-		int texturebits;
-
-		// Allow different bit depth when we are a lightmap
-		if ( isLightmap && r_texturebitslm->integer > 0 ) {
-			texturebits = r_texturebitslm->integer;
-		} else {
-			texturebits = r_texturebits->integer;
-		}
-
-		if ( glConfig.textureCompression == TC_S3TC && !upload->noTC )
-		{
-			image->internalFormat = GL_RGB4_S3TC;
-		}
-		else if ( glConfig.textureCompression == TC_S3TC_DXT && !upload->noTC )
-		{	// Compress purely color - no alpha
-			image->internalFormat = GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
-		}
-		else if ( texturebits == 16 )
-		{
-			image->internalFormat = GL_RGB5;
-		}
-		else if ( texturebits == 32 )
-		{
-			image->internalFormat = GL_RGB8;
-		}
-		else
-		{
-			image->internalFormat = GL_RGB;
-		}
-	}
-	else if ( samples == 4 )
-	{
-		if ( glConfig.textureCompression == TC_S3TC_DXT && !upload->noTC)
-		{	// Compress both alpha and color
-			image->internalFormat = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
-		}
-		else if ( r_texturebits->integer == 16 )
-		{
-			image->internalFormat = GL_RGBA4;
-		}
-		else if ( r_texturebits->integer == 32 )
-		{
-			image->internalFormat = GL_RGBA8;
-		}
-		else
-		{
-			image->internalFormat = GL_RGBA;
-		}
-	}
-
+	samples = R_PixelFormatSamples( format );
+	glFormat = R_GLPixelFormat( format );
+	hasAlpha = (qboolean)(samples == 4);
+	image->internalFormat = R_GLInternalFormat( isLightmap, upload->noTC, hasAlpha );
 	image->uploadWidth = width;
 	image->uploadHeight = height;
 
