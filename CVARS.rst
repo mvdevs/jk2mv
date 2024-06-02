@@ -316,6 +316,15 @@ Client-Side
 
 ..
 
+:Name: r_openglMipMaps
+:Values: "0", "1"
+:Default: "1"
+:Description:
+   Enable / Disable OpenGL mipmap generation. Disable to restore
+   original downsampling algorithms.
+
+..
+
 :Name: r_saberGlow
 :Values: "0", "1"
 :Default: "1"

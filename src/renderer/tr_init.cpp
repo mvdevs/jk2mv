@@ -148,6 +148,7 @@ cvar_t	*r_overBrightBits;
 
 cvar_t	*r_debugSurface;
 cvar_t	*r_simpleMipMaps;
+cvar_t	*r_openglMipMaps;
 
 cvar_t	*r_showImages;
 
@@ -620,6 +621,16 @@ static void GLimp_InitExtensions(void) {
 	}
 }
 
+static void GLimp_InitOpenGLVersion(void) {
+	glConfig.glVersion = QGL_VERSION_1_0;
+
+	if (strncmp(glConfig.version_string, "1.4", 3) >= 0)
+	{
+		glConfig.glVersion = QGL_VERSION_1_4;
+		Com_Printf("...OpenGL 1.4 available\n");
+	}
+}
+
 /*
 ** InitOpenGL
 **
@@ -648,6 +659,8 @@ static void InitOpenGL(void) {
 
 		// stubbed or broken drivers may have reported 0...
 		glConfig.maxTextureSize = max(0, glConfig.maxTextureSize);
+
+		GLimp_InitOpenGLVersion();
 
 		// initialize extensions
 		GLimp_InitExtensions();
@@ -1078,6 +1091,7 @@ void R_Register( void )
 	r_aspectratio = ri.Cvar_Get("r_aspectratio", "-1", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH); // screen resolutions
 	r_customaspect = ri.Cvar_Get("r_customaspect", "1", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);
 	r_simpleMipMaps = ri.Cvar_Get("r_simpleMipMaps", "1", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);
+	r_openglMipMaps = ri.Cvar_Get("r_openglMipMaps", "1", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);
 	r_vertexLight = ri.Cvar_Get("r_vertexLight", "0", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);
 	r_uiFullScreen = ri.Cvar_Get( "r_uifullscreen", "0", 0);
 	r_subdivisions = ri.Cvar_Get("r_subdivisions", "4", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);

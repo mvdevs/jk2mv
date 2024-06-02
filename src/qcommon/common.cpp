@@ -713,7 +713,7 @@ int Com_Filter(const char *filter, const char *name, int casesensitive)
 Com_FilterPath
 ============
 */
-int Com_FilterPath(char *filter, char *name, int casesensitive)
+int Com_FilterPath(char *filter, const char *name, int casesensitive)
 {
 	int i;
 	char new_filter[MAX_QPATH];

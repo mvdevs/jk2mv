@@ -408,11 +408,16 @@ CMistyFog::CMistyFog(int index, CWorldEffect *owner, bool buddy) :
 	}
 	else
 	{
+		pixelFormat_t format;
 		Com_sprintf(name, MAX_QPATH, "gfx/world/fog%d", index);
-		R_LoadImage(name, &mData, &mWidth, &mHeight);
+		R_LoadImage(name, &mData, &mWidth, &mHeight, &format);
 		if (!mData)
 		{
 			ri.Error (ERR_DROP, "Could not load %s", name);
+		}
+		if (format != PXF_RGBA)
+		{
+			ri.Error (ERR_DROP, "Fog image must be RGBA %s", name);
 		}
 
 		mRendering = true;
