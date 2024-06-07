@@ -2572,6 +2572,7 @@ void Com_Init( char *commandLine ) {
 
 	SP_Init();
 	Sys_Init();
+	NET_HTTP_Init();
 
 	srand(time(NULL));
 	Netchan_Init( rand() % 0xffff );	// pick a port value that should be nice and random

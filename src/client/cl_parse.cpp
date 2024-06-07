@@ -592,6 +592,13 @@ void CL_ParseUDPDownload ( msg_t *msg ) {
 			FS_FCloseFile( clc.download );
 			clc.download = 0;
 
+			int checksum;
+			if (FS_SV_VerifyZipFile(clc.downloadTempName, &checksum)) {
+				Com_Error(ERR_DROP, "Download Error: pk3 archive corrupted");
+			}
+			if (clc.downloadChksums[clc.downloadIndex] != checksum) {
+				Com_Error(ERR_DROP, "Download Error: pk3 checksum does not match");
+			}
 			FS_SV_Rename(clc.downloadTempName, clc.downloadName);
 		}
 		*clc.downloadTempName = *clc.downloadName = 0;
@@ -619,6 +626,13 @@ HTTP download ended
 */
 void CL_EndHTTPDownload(dlHandle_t handle, qboolean success, const char *err_msg) {
 	if (success) {
+		int checksum;
+		if (FS_SV_VerifyZipFile(clc.downloadTempName, &checksum)) {
+			Com_Error(ERR_DROP, "Download Error: pk3 archive corrupted");
+		}
+		if (clc.downloadChksums[clc.downloadIndex] != checksum) {
+			Com_Error(ERR_DROP, "Download Error: pk3 checksum does not match");
+		}
 		FS_SV_Rename(clc.downloadTempName, clc.downloadName);
 	} else {
 		Com_Error(ERR_DROP, "Download Error: %s", err_msg);

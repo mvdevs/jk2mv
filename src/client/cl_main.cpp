@@ -1598,7 +1598,6 @@ void CL_BeginDownload( const char *localName, const char *remoteName ) {
 			if (cls.downloadBlacklist[i].checksum == clc.downloadChksums[clc.downloadIndex]) {
 				// file is blacklisted
 				Com_Printf("Skipping download for blacklisted file %s\n", remoteName);
-				clc.downloadIndex++;
 				CL_NextDownload();
 				return;
 			}
@@ -1638,19 +1637,14 @@ Stores it in the current game directory.
 void CL_ContinueCurrentDownload(dldecision_t decision) {
 	if (decision == DL_ABORT) {
 		// user disallowed the file
-		clc.downloadIndex++;
 		CL_NextDownload();
 	} else if (decision == DL_ABORT_BLACKLIST) {
 		// user disallowed the file and never wants to be asked again
 		Com_DPrintf("Blacklisted file with checksum %i", clc.downloadChksums[clc.downloadIndex]);
 		CL_BlacklistCurrentFile();
-
-		clc.downloadIndex++;
 		CL_NextDownload();
 	} else {
 		// user accepted the file
-		clc.downloadIndex++;
-
 		Com_Printf("^1****** ^7File Download ^1******^7\n"
 			"Localname: %s\n"
 			"Remotename: %s\n"
@@ -1673,7 +1667,7 @@ void CL_ContinueCurrentDownload(dldecision_t decision) {
 			// Try to create the destination folder
 			FS_CreatePath(tmp_os_path);
 			
-			clc.httpHandle = NET_HTTP_StartDownload(remotepath, tmp_os_path, CL_EndHTTPDownload, CL_ProcessHTTPDownload, Q3_VERSION, va("jk2://%s", NET_AdrToString(clc.serverAddress)));
+			clc.httpHandle = NET_HTTP_StartDownload(remotepath, tmp_os_path, CL_EndHTTPDownload, CL_ProcessHTTPDownload);
 		} else {
 			clc.downloadBlock = 0; // Starting new file
 			clc.downloadCount = 0;
@@ -1726,6 +1720,7 @@ void CL_NextDownload(void) {
 		// move over the rest
 		memmove( clc.downloadList, s, strlen(s) + 1);
 
+		clc.downloadIndex++;
 		CL_BeginDownload(localNameCpy, remoteNameCpy);
 
 		return;
@@ -1745,7 +1740,7 @@ and determine if we need to download them
 void CL_InitDownloads(void) {
 	char missingfiles[1024];
 
-	clc.downloadIndex = 0;
+	clc.downloadIndex = -1;
 
 	if (cls.ignoreNextDownloadList) {
 		cls.ignoreNextDownloadList = qfalse;
