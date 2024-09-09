@@ -13,6 +13,16 @@ if(MSVC)
 	add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 endif(MSVC)
 
+if(ARCH_X86)
+	add_definitions(-DPNG_INTEL_SSE_OPT=1)
+	add_definitions(-DPNG_INTEL_SSE_IMPLEMENTATION=1) # only SSE2
+	set(libpng_intel_sources
+		intel/intel_init.c
+		intel/filter_sse2_intrinsics.c)
+endif(ARCH_X86)
+
+# there is also SIMD for ARM and other architectures that can be enabled
+
 add_library(libpng STATIC include/png.h
                                   include/pngconf.h
                                   include/pnglibconf.h
@@ -34,7 +44,10 @@ add_library(libpng STATIC include/png.h
                                   pngwio.c
                                   pngwrite.c
                                   pngwtran.c
-                                  pngwutil.c)
+                                  pngwutil.c
+								  ${libpng_arm_sources}
+								  ${libpng_intel_sources}
+							  )
 
 # Let consumers get at our bundled library in the standard CMake way.  These
 # variables are not set in the cache, but instead shadow the variables in the
