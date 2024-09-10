@@ -11,8 +11,11 @@
 
 include_directories(include/)
 
+add_definitions(-DHAVE_STDARG_H)
 if(MSVC)
 	add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+else()
+	add_definitions(-DHAVE_UNISTD_H)
 endif(MSVC)
 
 add_library(zlib STATIC adler32.c
