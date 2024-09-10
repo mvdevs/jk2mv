@@ -19,8 +19,8 @@
 # The current bundled copy comes from the zlib 1.2.8 release.
 
 # These settings only apply to this directory.
-include_directories(${ZLIB_INCLUDE_DIRS})
 include_directories(include/minizip)
+include_directories(${ZLIB_INCLUDE_DIRS})
 
 if(MSVC)
 	add_definitions(-D_CRT_SECURE_NO_WARNINGS)

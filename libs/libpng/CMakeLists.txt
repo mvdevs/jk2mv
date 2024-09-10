@@ -5,9 +5,7 @@
 
 # This only has effect in this directory (lib/png).
 include_directories(include/)
-if(UseInternalZLIB)
-	include_directories(${ZLIB_INCLUDE_DIRS})
-endif(UseInternalZLIB)
+include_directories(${ZLIB_INCLUDE_DIRS})
 
 if(MSVC)
 	add_definitions(-D_CRT_SECURE_NO_WARNINGS)

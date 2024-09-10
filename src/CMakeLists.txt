@@ -23,21 +23,9 @@ if (BuildMVMP OR BuildMVDED)
 	endif()
 
 	# zlib
-	if(NOT UseInternalZLIB)
-		find_package(ZLIB)
-		if(NOT ZLIB_FOUND)
-			message(FATAL_ERROR "zlib dev files not found! Install it or set UseInternalZLIB ON")
-		endif()
-	endif()
 	set(MVMPDEDIncludeDirs ${MVMPDEDIncludeDirs} ${ZLIB_INCLUDE_DIRS})
 	
 	# minizip
-	if(NOT UseInternalMiniZip)
-		find_package(MiniZip)
-		if(NOT MINIZIP_FOUND)
-			message(FATAL_ERROR "minizip dev files not found! Install it or set UseInternalMiniZip ON")
-		endif()
-	endif()
 	set(MVMPDEDIncludeDirs ${MVMPDEDIncludeDirs} ${MINIZIP_INCLUDE_DIRS})
 	
 	# Source
@@ -325,21 +313,9 @@ if (BuildMVMP)
 	set(MVMPIncludeDirs ${MVMPIncludeDirs} "${LIBDir}/eax")
 
 	# JPEG
-	if(NOT UseInternalJPEG)
-		find_package(JPEG)
-		if(NOT JPEG_FOUND)
-			message(FATAL_ERROR "libjpeg dev files not found! Install it or set UseInternalJPEG ON")
-		endif()
-	endif()
 	set(MVMPIncludeDirs ${MVMPIncludeDirs} ${JPEG_INCLUDE_DIR})
 
 	# PNG
-	if(NOT UseInternalPNG)
-		find_package(PNG)
-		if(NOT PNG_FOUND)
-			message(FATAL_ERROR "libpng dev files not found! Install it or set UseInternalPNG ON")
-		endif()
-	endif()
 	set(MVMPIncludeDirs ${MVMPIncludeDirs} ${PNG_INCLUDE_DIRS})
 
 	# Source
