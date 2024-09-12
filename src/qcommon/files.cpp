@@ -2104,6 +2104,113 @@ static pack_t *FS_LoadZipFile( char *zipfile, const char *basename, qboolean ass
 }
 
 /*
+=================
+FS_SV_VerifyZipFile
+
+Verify zip data integrity with CRCs
+Calculate checksum for zip file the same way as in pack->checksum
+
+This is just a hash of CRCs from ZIP central directory
+It does not check the actual content and zip metadata
+=================
+*/
+qboolean FS_SV_VerifyZipFile( const char *zipfile, int *checksum )
+{
+	const char		*ospath;
+	unzFile			uf;
+	int				err;
+	unz_global_info gi;
+	unz_file_info	file_info;
+	ZPOS64_T		i;
+	int				fs_numHeaderLongs;
+	int				*fs_headerLongs = NULL;
+	int				chksum;
+	char			*read_buffer = NULL;
+	const int		read_buffer_size = 16384; // UNZ_BUFSIZE
+
+	if ( !fs_searchpaths ) {
+		Com_Error( ERR_FATAL, "Filesystem call made without initialization" );
+	}
+
+	ospath = FS_BuildOSPath( fs_homepath->string, zipfile );
+
+	uf = unzOpen(ospath);
+	if (uf == NULL)
+		goto unzip_error;
+
+	if (unzGetGlobalInfo(uf, &gi))
+		goto unzip_error;
+
+	fs_numHeaderLongs = 0;
+	fs_headerLongs = (int *)Hunk_AllocateTempMemory(gi.number_entry * sizeof(int));
+	read_buffer = (char *)Hunk_AllocateTempMemory(read_buffer_size);
+
+	if (unzGoToFirstFile(uf))
+		goto unzip_error;
+
+	for (i = 0; i < gi.number_entry; i++)
+	{
+		if (unzGetCurrentFileInfo(uf, &file_info, NULL, 0, NULL, 0, NULL, 0))
+			goto unzip_error;
+
+		if (file_info.uncompressed_size > 0) {
+			fs_headerLongs[fs_numHeaderLongs++] = LittleLong(file_info.crc);
+		}
+
+		if (unzOpenCurrentFile(uf))
+			goto unzip_error;
+
+		// read whole file to make minizip calculate CRC
+		do {
+			err = unzReadCurrentFile(uf, read_buffer, read_buffer_size);
+
+			if (err < 0) {
+				unzCloseCurrentFile(uf);
+				goto unzip_error;
+			}
+		} while (err != UNZ_EOF);
+
+		// decompression may fail early due to bitrot
+		// unzCloseCurrentFile() does not verify CRC unless unzeof() returns 1
+		if (unzeof(uf) != 1) {
+			unzCloseCurrentFile(uf);
+			goto unzip_error;
+		}
+
+		// returns UNZ_CRCERROR if CRC does not match
+		if (unzCloseCurrentFile(uf))
+			goto unzip_error;
+
+		unzGoToNextFile(uf);
+	}
+
+	if (checksum) {
+		chksum = Com_BlockChecksum( fs_headerLongs, 4 * fs_numHeaderLongs );
+		chksum = LittleLong( chksum );
+		*checksum = chksum;
+	}
+
+	unzClose(uf);
+
+	Hunk_FreeTempMemory(read_buffer);
+	Hunk_FreeTempMemory(fs_headerLongs);
+
+	return qfalse;
+
+unzip_error:
+	if (uf)
+		unzClose(uf);
+
+	if (read_buffer)
+		Hunk_FreeTempMemory(read_buffer);
+
+	if (fs_headerLongs)
+		Hunk_FreeTempMemory(fs_headerLongs);
+
+	return qtrue;
+}
+
+/*
 =================================================================================
 
 DIRECTORY SCANNING FUNCTIONS
@@ -3139,6 +3246,7 @@ qboolean FS_ComparePaks( char *neededpaks, int len, int *chksums, size_t maxchks
 	searchpath_t	*sp;
 	qboolean havepak, badchecksum, badname;
 	int i;
+	int paknum; // number of paks in neededpaks string (not counting dl_ duplicates)
 
 	if ( !fs_numServerReferencedPaks ) {
 		return qfalse; // Server didn't send any pack information along
@@ -3146,6 +3254,7 @@ qboolean FS_ComparePaks( char *neededpaks, int len, int *chksums, size_t maxchks
 
 	*neededpaks = 0;
 	badname = qfalse;
+	paknum = 0;
 
 	for ( i = 0 ; i < fs_numServerReferencedPaks ; i++ ) {
 		// Ok, see if we have this pak file
@@ -3221,11 +3330,14 @@ qboolean FS_ComparePaks( char *neededpaks, int len, int *chksums, size_t maxchks
 					break;
 				}
 
-				Q_strcat( neededpaks, len, currentPak );
-
-				if (chksums && i < (int)maxchksums) {
-					chksums[i] = fs_serverReferencedPaks[i];
+				if (paknum + 1 >= (int)maxchksums) {
+					Com_Printf( S_COLOR_YELLOW "WARNING (FS_ComparePaks): referenced pk3 files cut off because there are too many\n" );
+					break;
 				}
+
+				Q_strcat( neededpaks, len, currentPak );
+				chksums[paknum] = fs_serverReferencedPaks[i];
+				paknum++;
 			} else {
 				char st[MAX_ZPATH];
 
@@ -3236,6 +3348,7 @@ qboolean FS_ComparePaks( char *neededpaks, int len, int *chksums, size_t maxchks
 				if ( FS_SV_FileExists(va("%s/dl_%s.pk3", moddir, filename)) ) {
 					Q_strcat( neededpaks, len, " (local file exists with wrong checksum)");
 				}
+
 				Q_strcat( neededpaks, len, "\n");
 			}
 		}
@@ -4117,15 +4230,7 @@ const char *FS_MV_VerifyDownloadPath(const char *pk3file) {
 				return NULL;
 
 			if (search->pack->referenced) {
-				static char gameDataPath[MAX_OSPATH];
-				Q_strncpyz(gameDataPath, search->pack->pakFilename, sizeof(gameDataPath));
-
-				char *sp = strrchr(gameDataPath, PATH_SEP);
-				*sp = '\0';
-				sp = strrchr(gameDataPath, PATH_SEP);
-				*sp = '\0';
-
-				return gameDataPath;
+				return search->pack->pakFilename;
 			}
 		}
 	}

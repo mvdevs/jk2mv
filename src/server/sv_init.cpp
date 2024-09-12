@@ -760,6 +760,12 @@ Ghoul2 Insert End
 			Com_Printf("HTTP Downloads: redirecting to %s\n", mv_httpserverport->string);
 		} else {
 			sv.http_port = NET_HTTP_StartServer(mv_httpserverport->integer);
+			// allow connected clients to use HTTP server
+			for (i = 0; i < sv_maxclients->integer; i++) {
+				if (svs.clients[i].state >= CS_CONNECTED) {
+					NET_HTTP_AllowClient(i, svs.clients[i].netchan.remoteAddress);
+				}
+			}
 		}
 	}
 

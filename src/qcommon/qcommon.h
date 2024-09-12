@@ -181,11 +181,14 @@ typedef int dlHandle_t;
 typedef void(*dl_ended_callback)(dlHandle_t handle, qboolean success, const char *err_msg);
 typedef void(*dl_status_callback)(size_t total_bytes, size_t downloaded_bytes);
 
+void		NET_HTTP_Init();
 void		NET_HTTP_Shutdown();
 void		NET_HTTP_ProcessEvents();
+void		NET_HTTP_AllowClient(int clientNum, netadr_t addr);
+void		NET_HTTP_DenyClient(int clientNum);
 int			NET_HTTP_StartServer(int port);
 void		NET_HTTP_StopServer();
-dlHandle_t	NET_HTTP_StartDownload(const char *url, const char *toPath, dl_ended_callback ended_callback, dl_status_callback status_callback, const char *userAgent, const char *referer);
+dlHandle_t	NET_HTTP_StartDownload(const char *url, const char *toPath, dl_ended_callback ended_callback, dl_status_callback status_callback);
 void		NET_HTTP_StopDownload(dlHandle_t handle);
 
 void		NET_SendPacket (netsrc_t sock, int length, const void *data, netadr_t to);
@@ -730,6 +733,7 @@ qboolean FS_ComparePaks(char *neededpaks, int len, int *chksums, size_t maxchksu
 qboolean FS_Rename( const char *from, const char *to );
 
 const char *FS_MV_VerifyDownloadPath(const char *pk3file);
+qboolean FS_SV_VerifyZipFile( const char *zipfile, int *checksum );
 
 int FS_GetDLList(dlfile_t *files, int maxfiles);
 qboolean FS_RMDLPrefix(const char *qpath);
