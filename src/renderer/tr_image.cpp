@@ -3300,7 +3300,7 @@ qhandle_t RE_RegisterIndividualSkin( const char *name , qhandle_t hSkin)
 		else
 		{
 		*/
-			surf->shader = R_FindShader( token, lightmapsNone, stylesDefault, qtrue );
+			surf->shader = R_FindShader( token, lightmapsNone, stylesDefault, qtrue, qfalse, qtrue );
 		/*
 		}
 		*/

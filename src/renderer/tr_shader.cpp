@@ -3524,7 +3524,7 @@ most world construction surfaces.
 
 ===============
 */
-shader_t *R_FindShader( const char *name, const int *lightmapIndex, const byte *styles, qboolean mipRawImage, qboolean isAdvancedRemap )
+shader_t *R_FindShader( const char *name, const int *lightmapIndex, const byte *styles, qboolean mipRawImage, qboolean isAdvancedRemap, qboolean isSkinShader )
 {
 	char		strippedName[MAX_QPATH];
 	char		fileName[MAX_QPATH];
@@ -3633,6 +3633,10 @@ shader_t *R_FindShader( const char *name, const int *lightmapIndex, const byte *
 		ri.Printf( PRINT_DEVELOPER, "Couldn't find image for shader %s\n", name );
 		shader.defaultShader = qtrue;
 		//return FinishShader();
+		if ( isSkinShader ) {
+			shader.isSkinShader = qtrue;
+			return FinishShader();
+		}
 		image = tr.defaultImage;
 	}
 
