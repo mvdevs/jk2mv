@@ -893,7 +893,7 @@ static qboolean Sys_CrashWrite(const void *buf, size_t len) {
 	unsigned	count = 0;
 
 	while (count < len) {
-		int ret = write(crashlogfd, buf, len - count);
+		int ret = write(crashlogfd, (const byte *)buf + count, len - count);
 
 		if (ret == 0) {
 			return qfalse;
@@ -917,7 +917,7 @@ static qboolean Sys_CrashRead(void *buf, size_t len) {
 	unsigned	count = 0;
 
 	while (count < len) {
-		int ret = read(crashlogfd, buf, len - count);
+		int ret = read(crashlogfd, (byte *)buf + count, len - count);
 
 		if (ret == 0) {
 			return qfalse;
