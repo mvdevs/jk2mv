@@ -505,7 +505,7 @@ qboolean stdinIsATTY = qfalse;
 int crashlogfd;
 extern void		Sys_SigHandler( int signal );
 static void		Sys_SigHandlerFatal(int sig, siginfo_t *info, void *context);
-static Q_NORETURN void Sys_CrashLogger(int fd, int argc, char *argv[]);
+static Q_NORETURN void Sys_CrashLogger(int argc, char *argv[]);
 
 // Max open file descriptors. Mostly used by pk3 files with
 // MAX_SEARCH_PATHS limit.
@@ -528,7 +528,8 @@ void Sys_PlatformInit( int argc, char *argv[] )
 
 	if (crashpid == 0) {
 		close(crashfd[1]);
-		Sys_CrashLogger(crashfd[0], argc, argv);
+		crashlogfd = crashfd[0];
+		Sys_CrashLogger(argc, argv);
 	} else {
 		close(crashfd[0]);
 		crashlogfd = crashfd[1];
@@ -858,9 +859,9 @@ typedef struct backtrace_s {
 } backtrace_t;
 
 static int Sys_CrashBacktrace(void **buffer, int size, const ucontext_t *context);
-static qboolean Sys_CrashWrite(int fd, const void *buf, size_t len);
-static void Sys_CrashWriteVm(int fd);
-static void Sys_CrashWriteContext(int fd, const ucontext_t *context);
+static qboolean Sys_CrashWrite(const void *buf, size_t len);
+static void Sys_CrashWriteVm(void);
+static void Sys_CrashWriteContext(const ucontext_t *context);
 static void Sys_SigHandlerFatal(int sig, siginfo_t *info, void *context) {
 	static volatile sig_atomic_t signalcaught = 0;
 	ucontext_t *ucontext = (ucontext_t *)context;
@@ -870,12 +871,12 @@ static void Sys_SigHandlerFatal(int sig, siginfo_t *info, void *context) {
 
 		signalcaught = 1;
 
-		Sys_CrashWrite(crashlogfd, info, sizeof(*info));
-		Sys_CrashWriteVm(crashlogfd);
-		Sys_CrashWriteContext(crashlogfd, ucontext);
+		Sys_CrashWrite(info, sizeof(*info));
+		Sys_CrashWriteVm();
+		Sys_CrashWriteContext(ucontext);
 		trace.size = Sys_CrashBacktrace(trace.buf, ARRAY_LEN(trace.buf), ucontext);
-		Sys_CrashWrite(crashlogfd, &trace, sizeof(trace));
-		Sys_CrashWrite(crashlogfd, &consoleLog, sizeof(consoleLog));
+		Sys_CrashWrite(&trace, sizeof(trace));
+		Sys_CrashWrite(&consoleLog, sizeof(consoleLog));
 		close(crashlogfd);
 	}
 
@@ -888,11 +889,11 @@ static void Sys_SigHandlerFatal(int sig, siginfo_t *info, void *context) {
 	raise(sig);
 }
 
-static qboolean Sys_CrashWrite(int fd, const void *buf, size_t len) {
+static qboolean Sys_CrashWrite(const void *buf, size_t len) {
 	unsigned	count = 0;
 
 	while (count < len) {
-		int ret = write(fd, buf, len - count);
+		int ret = write(crashlogfd, buf, len - count);
 
 		if (ret == 0) {
 			return qfalse;
@@ -912,11 +913,11 @@ static qboolean Sys_CrashWrite(int fd, const void *buf, size_t len) {
 	return qtrue;
 }
 
-static qboolean Sys_CrashRead(int fd, void *buf, size_t len) {
+static qboolean Sys_CrashRead(void *buf, size_t len) {
 	unsigned	count = 0;
 
 	while (count < len) {
-		int ret = read(fd, buf, len - count);
+		int ret = read(crashlogfd, buf, len - count);
 
 		if (ret == 0) {
 			return qfalse;
@@ -937,57 +938,57 @@ static qboolean Sys_CrashRead(int fd, void *buf, size_t len) {
 }
 
 extern vm_t	vmTable[MAX_VM];
-static void Sys_CrashWriteVm(int fd) {
+static void Sys_CrashWriteVm(void) {
 	for (int i = 0; i < MAX_VM; i++) {
 		vm_t *vm = &vmTable[i];
 
-		Sys_CrashWrite(fd, vm, sizeof(*vm));
-		Sys_CrashWrite(fd, vm->instructionPointers, sizeof(intptr_t) * vm->instructionCount);
+		Sys_CrashWrite(vm, sizeof(*vm));
+		Sys_CrashWrite(vm->instructionPointers, sizeof(intptr_t) * vm->instructionCount);
 
 		for (vmSymbol_t *sym = vm->symbols; sym; sym = sym->next) {
 			int size = sizeof(vmSymbol_t) + strlen(sym->symName);	// ending '\0' is in vmSymbol_t
-			Sys_CrashWrite(fd, &size, sizeof(size));
-			Sys_CrashWrite(fd, sym, size);
+			Sys_CrashWrite(&size, sizeof(size));
+			Sys_CrashWrite(sym, size);
 		}
 	}
 }
 
-static void Sys_CrashReadVm(int fd) {
+static void Sys_CrashReadVm(void) {
 	for (int i = 0; i < MAX_VM; i++) {
 		vm_t *vm = &vmTable[i];
 
-		Sys_CrashRead(fd, vm, sizeof(*vm));
+		Sys_CrashRead(vm, sizeof(*vm));
 		vm->instructionPointers = (intptr_t *)malloc(sizeof(intptr_t) * vm->instructionCount);
-		Sys_CrashRead(fd, vm->instructionPointers, sizeof(intptr_t) * vm->instructionCount);
+		Sys_CrashRead(vm->instructionPointers, sizeof(intptr_t) * vm->instructionCount);
 
 		for (vmSymbol_t **sym = &(vm->symbols); *sym; sym = &((*sym)->next)) {
 			int size;
-			Sys_CrashRead(fd, &size, sizeof(size));
+			Sys_CrashRead(&size, sizeof(size));
 			*sym = (vmSymbol_t *)malloc(size);
-			Sys_CrashRead(fd, *sym, size);
+			Sys_CrashRead(*sym, size);
 		}
 	}
 }
 
-static void Sys_CrashWriteContext(int fd, const ucontext_t *context) {
+static void Sys_CrashWriteContext(const ucontext_t *context) {
 #ifdef __GNU_LIBRARY__
 #if defined(__i386__) || defined(__amd64__)
-		Sys_CrashWrite(crashlogfd, context, sizeof(ucontext_t));
-		Sys_CrashWrite(crashlogfd, context->uc_mcontext.fpregs, sizeof(*context->uc_mcontext.fpregs));
+		Sys_CrashWrite(context, sizeof(ucontext_t));
+		Sys_CrashWrite(context->uc_mcontext.fpregs, sizeof(*context->uc_mcontext.fpregs));
 #endif
 #endif
 }
 
-static qboolean Sys_CrashReadContext(int fd, ucontext_t *context) {
+static qboolean Sys_CrashReadContext(ucontext_t *context) {
 #ifdef __GNU_LIBRARY__
 #if defined(__i386__) || defined(__amd64__)
-	if (!Sys_CrashRead(fd, context, sizeof(ucontext_t))) {
+	if (!Sys_CrashRead(context, sizeof(ucontext_t))) {
 		return qfalse;
 	}
 
 	context->uc_mcontext.fpregs = (fpregset_t)malloc(sizeof(*context->uc_mcontext.fpregs));
 
-	if (!Sys_CrashRead(fd, context->uc_mcontext.fpregs, sizeof(*context->uc_mcontext.fpregs))) {
+	if (!Sys_CrashRead(context->uc_mcontext.fpregs, sizeof(*context->uc_mcontext.fpregs))) {
 		return qfalse;
 	}
 #endif
@@ -1173,15 +1174,15 @@ static void Sys_BacktraceSymbol(FILE *f, void *p) {
 	}
 }
 
-static Q_NORETURN void Sys_CrashLogger(int fd, int argc, char *argv[]) {
+static Q_NORETURN void Sys_CrashLogger(int argc, char *argv[]) {
 	siginfo_t	info;
 	ucontext_t	context;
 
-	if (!Sys_CrashRead(fd, &info, sizeof(info))) {
+	if (!Sys_CrashRead(&info, sizeof(info))) {
 		_exit(EXIT_SUCCESS);
 	}
 
-	Sys_CrashReadVm(fd);
+	Sys_CrashReadVm();
 
 	FILE		*f = NULL;
 	time_t		rawtime;
@@ -1244,7 +1245,7 @@ static Q_NORETURN void Sys_CrashLogger(int fd, int argc, char *argv[]) {
 	fprintf(f, "---Machine Context----------------------\n");
 	fprintf(f, "\n");
 
-	if (!Sys_CrashReadContext(fd, &context)) {
+	if (!Sys_CrashReadContext(&context)) {
 		goto exit_failure;
 	}
 
@@ -1336,7 +1337,7 @@ static Q_NORETURN void Sys_CrashLogger(int fd, int argc, char *argv[]) {
 
 	backtrace_t trace;
 
-	if (!Sys_CrashRead(fd, &trace, sizeof(trace))) {
+	if (!Sys_CrashRead(&trace, sizeof(trace))) {
 		goto exit_failure;
 	}
 
@@ -1350,7 +1351,7 @@ static Q_NORETURN void Sys_CrashLogger(int fd, int argc, char *argv[]) {
 	fprintf(f, "---Console Log--------------------------\n");
 	fprintf(f, "\n");
 
-	if (!Sys_CrashRead(fd, &consoleLog, sizeof(consoleLog))) {
+	if (!Sys_CrashRead(&consoleLog, sizeof(consoleLog))) {
 		goto exit_failure;
 	}
 
