@@ -215,6 +215,7 @@ typedef struct {
 	int				hashSize;					// hash table size (power of 2)
 	fileInPack_t*	*hashTable;					// hash table
 	fileInPack_t*	buildBuffer;				// buffer with the filenames etc.
+	stringPool_t*	namesPool;					// buffer with filenames
 	int				gvc;						// game-version compatibility
 	qboolean		isJKA;						// jka assets
 } pack_t;
@@ -1960,6 +1961,7 @@ of a zip file.
 static pack_t *FS_LoadZipFile( char *zipfile, const char *basename, qboolean assetsJKA )
 {
 	fileInPack_t	*buildBuffer;
+	stringPool_t	*namesPool;
 	pack_t			*pack;
 	unzFile			uf;
 	int				err;
@@ -1983,6 +1985,7 @@ static pack_t *FS_LoadZipFile( char *zipfile, const char *basename, qboolean ass
 	fs_packFiles += gi.number_entry;
 
 	buildBuffer = (struct fileInPack_s *)Z_Malloc((int)((gi.number_entry * sizeof(fileInPack_t))), TAG_FILESYS, qtrue);
+	namesPool = Z_StringPoolNew(gi.number_entry * 8, TAG_FILESYS);
 	fs_headerLongs = (int *)Z_Malloc( gi.number_entry * sizeof(int), TAG_FILESYS, qtrue );
 
 	// get the hash table size from the number of files in the zip
@@ -2034,7 +2037,7 @@ static pack_t *FS_LoadZipFile( char *zipfile, const char *basename, qboolean ass
 		}
 		Q_strlwr( filename_inzip );
 		hash = FS_HashFileName(filename_inzip, pack->hashSize);
-		buildBuffer[i].name = CopyString(filename_inzip, TAG_FILESYS);
+		buildBuffer[i].name = Z_StringPoolAdd(namesPool, filename_inzip);
 		// store the file position in the zip
 		buildBuffer[i].pos = unzGetOffset(uf);
 		buildBuffer[i].len = file_info.uncompressed_size;
@@ -2051,6 +2054,7 @@ static pack_t *FS_LoadZipFile( char *zipfile, const char *basename, qboolean ass
 	Z_Free(fs_headerLongs);
 
 	pack->buildBuffer = buildBuffer;
+	pack->namesPool = namesPool;
 
 	// which versions does this pk3 support?
 
@@ -3132,7 +3136,7 @@ static void FS_AddGameDirectory( const char *path, const char *dir, qboolean ass
 			if (!found) {
 				// server has no interest in the file
 				unzClose(pak->handle);
-				Z_Free((void *)pak->buildBuffer->name);
+				Z_StringPoolFree(pak->namesPool);
 				Z_Free(pak->buildBuffer);
 				Z_Free(pak);
 				continue;
@@ -3390,7 +3394,7 @@ void FS_Shutdown( qboolean closemfp, qboolean keepModuleFiles ) {
 
 		if ( p->pack ) {
 			unzClose(p->pack->handle);
-			Z_Free( (void *)p->pack->buildBuffer->name );
+			Z_StringPoolFree( p->pack->namesPool );
 			Z_Free( p->pack->buildBuffer );
 			Z_Free( p->pack );
 		}
