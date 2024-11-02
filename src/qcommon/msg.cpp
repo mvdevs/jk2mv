@@ -2016,7 +2016,7 @@ qboolean Huff_ReadData(huffman_t *huffman, const char *filename) {
 	FS_SV_FOpenFileRead(filename, &fp);
 
 	if (!fp) {
-		Com_DPrintf("Failed to open huffman data from %s\n", filename);
+		Com_DPrintf("Failed to open huffman data from %s - recalculating Huffman code...\n", filename);
 		return qfalse;
 	}
 
@@ -2024,8 +2024,8 @@ qboolean Huff_ReadData(huffman_t *huffman, const char *filename) {
 		goto corrupted;
 
 	if (version != HUFF_DATA_VERSION) {
-		Com_DPrintf("Huffman data in %s has incompatible version\n", filename);
-		return qfalse;
+		Com_DPrintf("Huffman data in %s has incompatible version - recalculating Huffman code...\n", filename);
+		goto close;
 	}
 
 	memset(&huffman->compressor, 0, sizeof(huff_t));
@@ -2038,7 +2038,7 @@ qboolean Huff_ReadData(huffman_t *huffman, const char *filename) {
 	checksum = LittleLong(checksum);
 	if (checksum != Com_BlockChecksum(&huffdata, sizeof(huffdata))) {
 		Com_Printf(S_COLOR_YELLOW "WARNING: %s checksum mismatch - recalculating Huffman code...", filename);
-		return qfalse;
+		goto close;
 	}
 	Huff_Deserialize(&huffdata, &huffman->compressor);
 
@@ -2049,13 +2049,18 @@ qboolean Huff_ReadData(huffman_t *huffman, const char *filename) {
 	checksum = LittleLong(checksum);
 	if (checksum != Com_BlockChecksum(&huffdata, sizeof(huffdata))) {
 		Com_Printf(S_COLOR_YELLOW "WARNING: %s checksum mismatch - recalculating Huffman code...", filename);
-		return qfalse;
+		goto close;
 	}
 	Huff_Deserialize(&huffdata, &huffman->decompressor);
+
+	FS_FCloseFile(fp);
 
 	return qtrue;
 corrupted:
 	Com_Printf(S_COLOR_YELLOW "WARNING: %s corrupted - recalculating Huffman code...\n", filename);
+close:
+	FS_FCloseFile(fp);
+
 	return qfalse;
 }
 
