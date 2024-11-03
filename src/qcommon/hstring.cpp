@@ -66,7 +66,7 @@ CMapPoolLow::CMapPoolLow()
 
 CMapPoolLow::~CMapPoolLow()
 {
-#if _DEBUG
+#ifdef DEBUG
 #if _GAME
 	if(mFreeList.size()<mMapBlocks.size()*MAPBLOCK_SIZE_NODES)
 	{
@@ -162,7 +162,7 @@ void CMapPoolLow::TouchMem()
 			HaHaOptimizer2+=memory[j];
 		}
 	}
-#ifdef _DEBUG
+#ifdef DEBUG
 //	Com_Printf("MapPool: Bytes touched %i\n",totSize);
 #endif
 }
@@ -245,7 +245,7 @@ public:
 		{
 			HaHaOptimizer2+=((unsigned char	*)mHashes)[i];
 		}
-#ifdef _DEBUG
+#ifdef DEBUG
 //		Com_Printf("Hash helper: Bytes touched %i\n",sizeof(mHashes));
 #endif
 	}
@@ -381,13 +381,13 @@ public:
 				HaHaOptimizer2+=memory[j];
 			}
 		}
-#ifdef _DEBUG
+#ifdef DEBUG
 //		Com_Printf("String Pool: Bytes touched %i\n",totSize);
 #endif
 	}
 };
 
-#ifdef _DEBUG
+#ifdef DEBUG
 CPool &TheDebugPool(void);
 CPool &ThePool(void);
 
@@ -404,7 +404,7 @@ public:
 			OutputDebugString("\n");
 		}
 #endif
-#if _DEBUG
+#ifdef DEBUG
 #if _GAME
 //		Com_Printf("[MEM][GAME]  String Pool %d unique strings, %dK\n",ThePool().mNextStringId,(ThePool().mLastBlockNum+1)*BLOCK_SIZE/1024);
 #elif _CGAME
@@ -467,7 +467,7 @@ void hstring::Init(const char *str)
 	char *raw=ThePool().Alloc(strlen(str),mId);
 	strcpy(raw,str);
 	HashHelper().Add(hash,mId);
-#ifdef _DEBUG
+#ifdef DEBUG
 	int test;
 	raw=TheDebugPool().Alloc(strlen(str),test);
 	assert(test==mId);

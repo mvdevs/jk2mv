@@ -439,7 +439,7 @@ void CL_ConfigstringModified( void ) {
 
 			gCLTotalClientNum = clientCount;
 
-#ifdef _DEBUG
+#ifdef DEBUG
 			Com_DPrintf("%i clients\n", gCLTotalClientNum);
 #endif
 
@@ -1616,7 +1616,7 @@ void CL_SetCGameTime( void ) {
 		int tn;
 
 		tn = cl_timeNudge->integer;
-#ifdef _DEBUG
+#ifdef DEBUG
 		if (tn<-900) {
 			tn = -900;
 		} else if (tn>900) {

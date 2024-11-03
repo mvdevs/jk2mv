@@ -480,7 +480,7 @@ static qboolean S_LoadSound_Actual( sfx_t *sfx )
 			FS_FreeFile (data);
 			return qfalse;
 		}
-#ifdef _DEBUG
+#ifdef DEBUG
 		if ( info.width == 1 ) {
 			Com_Printf(S_COLOR_YELLOW "WARNING: %s is an 8 bit wav file\n", sfx->sSoundName);
 		}

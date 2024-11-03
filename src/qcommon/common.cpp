@@ -196,7 +196,7 @@ static void Com_Puts_Ext( qboolean extendedColors, qboolean skipNotify, const ch
 		}
 	}
 
-#if defined(_WIN32) && defined(_DEBUG)
+#if defined(_WIN32) && defined(DEBUG)
 	if ( *msg )
 	{
 		OutputDebugStringA ( Q_CleanStr((char *)msg, (qboolean)MV_USE102COLOR) );
@@ -1226,7 +1226,7 @@ void *S_Malloc( int iSize ) {
 }
 
 
-#ifdef _DEBUG
+#ifdef DEBUG
 static void Z_MemRecoverTest_f(void)
 {
 	// needs to be in _DEBUG only, not good for final game!
@@ -1325,7 +1325,7 @@ void Com_InitZoneMemory( void )
 	memset(&TheZone, 0, sizeof(TheZone));
 	TheZone.Header.iMagic = ZONE_MAGIC;
 
-#ifdef _DEBUG
+#ifdef DEBUG
 	com_validateZone = Cvar_Get("com_validateZone", "1", 0);
 #else
 	com_validateZone = Cvar_Get("com_validateZone", "0", 0);
@@ -1334,7 +1334,7 @@ void Com_InitZoneMemory( void )
 	Cmd_AddCommand("zone_stats", Z_Stats_f);
 	Cmd_AddCommand("zone_details", Z_Details_f);
 
-#ifdef _DEBUG
+#ifdef DEBUG
 	Cmd_AddCommand("zone_memrecovertest", Z_MemRecoverTest_f);
 #endif
 }
@@ -2108,7 +2108,7 @@ void Hunk_Trash( void ) {
 	if ( s_hunkData == NULL )
 		return;
 
-#ifdef _DEBUG
+#ifdef DEBUG
 	Com_Error(ERR_DROP, "hunk trashed");
 	return;
 #endif
@@ -3340,7 +3340,7 @@ Field_CheckRep
 ==================
 */
 void Field_CheckRep( field_t *edit ) {
-#ifndef NDEBUG
+#ifdef DEBUG
 	int len = strlen(edit->buffer);
 
 	assert( len < MAX_EDIT_LINE );
@@ -3361,7 +3361,7 @@ void Field_CheckRep( field_t *edit ) {
 		assert( edit->currentTail <= edit->historyTail || edit->historyHead <= edit->currentTail );
 
 	assert( edit->buffer == edit->bufferHistory[edit->currentTail] );
-#endif // NDEBUG
+#endif // DEBUG
 }
 
 /*

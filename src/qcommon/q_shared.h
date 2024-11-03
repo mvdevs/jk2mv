@@ -250,10 +250,10 @@
 #error "Operating system not supported"
 #endif
 
-#ifdef NDEBUG
-#define	PLATFORM_STRING	OS_STRING "-" ARCH_STRING
-#else
+#ifdef DEBUG
 #define	PLATFORM_STRING	OS_STRING "-" ARCH_STRING "-debug"
+#else
+#define	PLATFORM_STRING	OS_STRING "-" ARCH_STRING
 #endif
 
 //=============================================================
@@ -481,7 +481,7 @@ typedef enum {
 #define UI_INVERSE		0x00002000
 #define UI_PULSE		0x00004000
 
-#if defined(_DEBUG) && !defined(BSPC)
+#if defined(DEBUG) && !defined(BSPC)
 	#define HUNK_DEBUG
 #endif
 
@@ -731,7 +731,7 @@ extern const vec4_t		colorDkBlue;
 #define COLOR_JK2MV     'n' // Different in Debug/Release
 #define COLOR_LT_TRANSPARENT 'o'
 
-#if _DEBUG
+#ifdef DEBUG
 	#define COLOR_JK2MV_FALLBACK 1 // If the extended colors are not supported use this as fallback
 #else
 	#define COLOR_JK2MV_FALLBACK 5 // If the extended colors are not supported use this as fallback

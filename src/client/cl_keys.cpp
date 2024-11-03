@@ -367,7 +367,7 @@ EDIT FIELDS
 */
 
 static void Key_CheckRep( void ) {
-#ifndef NDEBUG
+#ifdef DEBUG
 	assert( kg.killTail >= 0 && kg.killTail < KILL_RING_SIZE );
 	assert( kg.killHead >= 0 && kg.killHead < KILL_RING_SIZE );
 
@@ -383,7 +383,7 @@ static void Key_CheckRep( void ) {
 	}
 
 	Field_CheckRep( &kg.g_consoleField );
-#endif // NDEBUG
+#endif // DEBUG
 }
 
 /*

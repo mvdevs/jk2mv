@@ -43,7 +43,7 @@ const vec4_t	g_color_table[COLOR_EXT_AMOUNT] =
 	{0.25, 0.25, 0.25, 1},          // ^k -> dk. grey
 	{0.367f, 0.261f, 0.722f, 1},    // ^l -> lt. blue
 	{0.199f, 0.0f, 0.398f, 1},      // ^m -> dk. blue
-#ifdef _DEBUG
+#ifdef DEBUG
 	{.70f, 0, 0, 1},                // ^n -> jk2mv-color [red]
 #else
 	{ 0.509f, 0.609f, 0.847f, 1.0f},// ^n -> jk2mv-color [blue]

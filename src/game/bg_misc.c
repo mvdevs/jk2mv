@@ -1733,7 +1733,7 @@ qboolean BG_CanItemBeGrabbed( int gametype, const entityState_t *ent, const play
 			Com_Error( ERR_DROP, "BG_CanItemBeGrabbed: IT_BAD" );
 		default:
 #ifndef Q3_VM
-#ifndef NDEBUG // bk0001204
+#ifdef DEBUG // bk0001204
 		  Com_Printf("BG_CanItemBeGrabbed: unknown enum %d\n", item->giType );
 #endif
 #endif
@@ -1837,7 +1837,7 @@ void BG_EvaluateTrajectoryDelta( const trajectory_t *tr, int atTime, vec3_t resu
 	}
 }
 
-#ifdef _DEBUG
+#ifdef DEBUG
 static const char * const eventnames[] = {
 	"EV_NONE",
 
@@ -2002,7 +2002,7 @@ void	trap_Cvar_VariableStringBuffer( const char *var_name, char *buffer, int buf
 
 void BG_AddPredictableEventToPlayerstate( int newEvent, int eventParm, playerState_t *ps ) {
 
-#ifdef _DEBUG
+#ifdef DEBUG
 	{
 		char buf[256];
 		trap_Cvar_VariableStringBuffer("showevents", buf, sizeof(buf));

@@ -63,7 +63,7 @@ be freed by the game later.
 */
 void Sys_QueEvent( int time, sysEventType_t type, int value, int value2, int ptrLength, void *ptr ) {
 	sysEvent_t	*ev;
-#ifndef _DEBUG
+#ifndef DEBUG
 	static bool printedWarning = false;
 #endif
 
@@ -71,7 +71,7 @@ void Sys_QueEvent( int time, sysEventType_t type, int value, int value2, int ptr
 
 	if ( eventHead - eventTail >= MAX_QUED_EVENTS ) {
 		// Spam less often from Com_PushEvent
-#ifndef _DEBUG
+#ifndef DEBUG
 		if ( !printedWarning ) {
 			Com_Printf( "Sys_QueEvent: overflow (event type %i) (value: %i) (value2: %i)\n", type, value, value2 );
 			printedWarning = true;
@@ -85,7 +85,7 @@ void Sys_QueEvent( int time, sysEventType_t type, int value, int value2, int ptr
 		}
 		eventTail++;
 	}
-#ifndef _DEBUG
+#ifndef DEBUG
 	else
 	{
 		printedWarning = false;

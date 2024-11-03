@@ -2473,7 +2473,7 @@ qboolean R_LoadMDXM( model_t *mod, void *buffer, const char *mod_name, qboolean 
 		surfInfo = (mdxmSurfHierarchy_t *)( (byte *)surfInfo + (size_t)( &((mdxmSurfHierarchy_t *)0)->childIndexes[ surfInfo->numChildren ] ));
 	}
 
-#if _DEBUG
+#ifdef DEBUG
 	ri.Printf(PRINT_ALL, "For Ghoul2 mesh file %s\n", mod_name);
 #endif
 	// swap all the LOD's	(we need to do the middle part of this even for intel, because of shader reg and err-check)
@@ -2531,7 +2531,7 @@ qboolean R_LoadMDXM( model_t *mod, void *buffer, const char *mod_name, qboolean 
 			// find the next surface
 			surf = (mdxmSurface_t *)( (byte *)surf + surf->ofsEnd );
 		}
-#if _DEBUG
+#ifdef DEBUG
 		ri.Printf(PRINT_ALL, "Lod %d has %d tris in %d surfaces with %d bones\n", l, triCount, mdxm->numSurfaces, mdxm->numBones);
 #endif
 		// find the next LOD

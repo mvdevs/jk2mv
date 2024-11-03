@@ -219,7 +219,7 @@ NET_GetPacket
 Receive one packet
 ==================
 */
-#ifdef _DEBUG
+#ifdef DEBUG
 int	recvfromCount;
 #endif
 
@@ -233,7 +233,7 @@ qboolean NET_GetPacket( netadr_t *net_from, msg_t *net_message, fd_set *fdr ) {
 	}
 
 	fromlen = sizeof( from );
-#ifdef _DEBUG
+#ifdef DEBUG
 	recvfromCount++;		// performance check
 #endif
 	ret = recvfrom( ip_socket, (char *)net_message->data, net_message->maxsize, 0, (struct sockaddr *)&from, &fromlen );

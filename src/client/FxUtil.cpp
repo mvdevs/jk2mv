@@ -207,7 +207,7 @@ void FX_Add( void )
 
 	drawnFx = 0;
 
-#ifdef _DEBUG
+#ifdef DEBUG
 	theFxHelper.mMainRefs = theFxHelper.mMiniRefs = 0;
 #endif
 
@@ -248,7 +248,7 @@ void FX_Add( void )
 		}
 	}
 
-#ifdef _DEBUG
+#ifdef DEBUG
 /*	if (theFxHelper.mMainRefs || theFxHelper.mMiniRefs)
 	{
 		cgi.OPrintf("Main Refs: %d    Mini Refs: %d\n", theFxHelper.mMainRefs, theFxHelper.mMiniRefs);

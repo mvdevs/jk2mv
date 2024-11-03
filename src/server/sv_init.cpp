@@ -135,7 +135,7 @@ int SV_AddConfigstring (const char *name, int start, int max)
 
 	if (name[0] == '/' || name[0] == '\\')
 	{
-#if _DEBUG
+#ifdef DEBUG
 		Com_DPrintf( "WARNING: Leading slash on '%s'\n", name);
 #endif
 		name++;

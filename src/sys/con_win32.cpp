@@ -312,7 +312,7 @@ void CON_Init( void )
 	}
 #endif
 
-#ifdef _DEBUG
+#ifdef DEBUG
 	never_detach = qtrue;
 #endif
 

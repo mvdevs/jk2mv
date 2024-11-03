@@ -217,7 +217,7 @@ int main(int argc, char* argv[]) {
 
 	Sys_PlatformInit(argc, argv);
 
-#if defined(_DEBUG) && !defined(DEDICATED)
+#if defined(DEBUG) && !defined(DEDICATED)
 	CON_CreateConsoleWindow();
 #endif
 	CON_Init();

@@ -421,7 +421,7 @@ void RE_RegisterModels_Info_f( void )
 
 		ri.Printf( PRINT_ALL, "%d/%d: \"%s\" (%d bytes)",iModel,iModels,(*itModel).first.c_str(),CachedModel.iAllocSize );
 
-		#ifdef _DEBUG
+		#ifdef DEBUG
 		ri.Printf( PRINT_ALL, ", lvl %d\n",CachedModel.iLastLevelUsedOn);
 		#else
 		ri.Printf( PRINT_ALL, "\n");
