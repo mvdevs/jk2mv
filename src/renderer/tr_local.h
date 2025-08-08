@@ -501,6 +501,7 @@ Ghoul2 Insert End
 	qboolean hasGlow;
 
 	qboolean isAdvancedRemap;
+	qboolean isSkinShader;
 
 	struct shader_s *remappedShader;                  // current shader this one is remapped too
 	struct shader_s *remappedShaderAdvanced;          // current shader from the advanced remaps this one is remapped to
@@ -1469,7 +1470,7 @@ qhandle_t		 RE_RegisterShader( const char *name );
 qhandle_t		 RE_RegisterShaderNoMip( const char *name );
 qhandle_t RE_RegisterShaderFromImage(const char *name, int *lightmapIndex, byte *styles, image_t *image, qboolean mipRawImage);
 
-shader_t	*R_FindShader( const char *name, const int *lightmapIndex, const byte *styles, qboolean mipRawImage, qboolean isAdvancedRemap = qfalse );
+shader_t	*R_FindShader( const char *name, const int *lightmapIndex, const byte *styles, qboolean mipRawImage, qboolean isAdvancedRemap = qfalse, qboolean isSkinShader = qfalse );
 shader_t	*R_FindAdvancedRemapShader( const char *name, const int *lightmapIndex, const byte *styles, qboolean mipRawImage );
 shader_t	*R_GetShaderByHandle( qhandle_t hShader );
 // shader_t	*R_GetShaderByState( int index, int *cycleTime );
