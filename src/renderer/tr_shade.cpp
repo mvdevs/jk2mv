@@ -1090,9 +1090,11 @@ void RB_StageIteratorGeneric( void )
 
 	//
 	// now do any dynamic lighting needed
+	// Skip legacy dlight projection when RT glow reflections handle it
 	//
 	if ( tess.dlightBits && tess.shader->sort <= SS_OPAQUE
-		&& !(tess.shader->surfaceFlags & (SURF_NODLIGHT | SURF_SKY) ) ) {
+		&& !(tess.shader->surfaceFlags & (SURF_NODLIGHT | SURF_SKY) )
+		&& !(r_DynamicGlowReflections && r_DynamicGlowReflections->integer) ) {
 		ProjectDlightTexture();
 	}
 
@@ -1183,8 +1185,10 @@ void RB_StageIteratorVertexLitTexture( void )
 
 	//
 	// now do any dynamic lighting needed
+	// Skip legacy dlight projection when RT glow reflections handle it
 	//
-	if ( tess.dlightBits && tess.shader->sort <= SS_OPAQUE ) {
+	if ( tess.dlightBits && tess.shader->sort <= SS_OPAQUE
+		&& !(r_DynamicGlowReflections && r_DynamicGlowReflections->integer) ) {
 		ProjectDlightTexture();
 	}
 
@@ -1277,8 +1281,10 @@ void RB_StageIteratorLightmappedMultitexture( void ) {
 
 	//
 	// now do any dynamic lighting needed
+	// Skip legacy dlight projection when RT glow reflections handle it
 	//
-	if ( tess.dlightBits && tess.shader->sort <= SS_OPAQUE ) {
+	if ( tess.dlightBits && tess.shader->sort <= SS_OPAQUE
+		&& !(r_DynamicGlowReflections && r_DynamicGlowReflections->integer) ) {
 		ProjectDlightTexture();
 	}
 

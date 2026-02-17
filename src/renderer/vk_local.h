@@ -197,6 +197,100 @@ typedef struct {
 	uint32_t			halfHeight;
 } vkGlowResources_t;
 
+// Maximum number of glow light sources uploaded to the GPU each frame
+#define GLOW_RT_MAX_SOURCES		32
+
+// RT function pointers (loaded dynamically since they're extension functions)
+typedef struct {
+	PFN_vkGetAccelerationStructureBuildSizesKHR  vkGetAccelerationStructureBuildSizesKHR;
+	PFN_vkCreateAccelerationStructureKHR         vkCreateAccelerationStructureKHR;
+	PFN_vkDestroyAccelerationStructureKHR        vkDestroyAccelerationStructureKHR;
+	PFN_vkCmdBuildAccelerationStructuresKHR      vkCmdBuildAccelerationStructuresKHR;
+	PFN_vkGetAccelerationStructureDeviceAddressKHR vkGetAccelerationStructureDeviceAddressKHR;
+	PFN_vkCreateRayTracingPipelinesKHR           vkCreateRayTracingPipelinesKHR;
+	PFN_vkGetRayTracingShaderGroupHandlesKHR     vkGetRayTracingShaderGroupHandlesKHR;
+	PFN_vkCmdTraceRaysKHR                        vkCmdTraceRaysKHR;
+	PFN_vkGetBufferDeviceAddressKHR              vkGetBufferDeviceAddressKHR;
+} vkRTFunctions_t;
+
+// Maximum number of Ghoul2 entities represented as proxy boxes in the TLAS
+#define GLOW_RT_MAX_GHOUL2_ENTITIES	32
+
+// GPU-accelerated glow reflection resources (VK_KHR_ray_tracing_pipeline)
+typedef struct {
+	// ---- Acceleration Structure (BSP — static, built once per map) ----
+	VkAccelerationStructureKHR	blas;				// bottom-level (world geometry)
+	VkBuffer				blasBuffer;
+	VkDeviceMemory			blasMemory;
+
+	VkAccelerationStructureKHR	tlas;				// top-level (BSP + Ghoul2 instances)
+	VkBuffer				tlasBuffer;
+	VkDeviceMemory			tlasMemory;
+
+	// Geometry buffers (persistent, built once per map load)
+	VkBuffer				vertexBuffer;
+	VkDeviceMemory			vertexMemory;
+	VkBuffer				indexBuffer;
+	VkDeviceMemory			indexMemory;
+	uint32_t				numVertices;
+	uint32_t				numIndices;
+
+	// ---- Dynamic Ghoul2 proxy geometry (rebuilt every frame) ----
+	VkAccelerationStructureKHR	ghoul2Blas;
+	VkBuffer				ghoul2BlasBuffer;
+	VkDeviceMemory			ghoul2BlasMemory;
+	VkBuffer				ghoul2VertexBuffer;		// DEVICE_LOCAL, updated via vkCmdUpdateBuffer
+	VkDeviceMemory			ghoul2VertexMemory;
+	VkBuffer				ghoul2IndexBuffer;		// DEVICE_LOCAL, updated via vkCmdUpdateBuffer
+	VkDeviceMemory			ghoul2IndexMemory;
+	VkBuffer				ghoul2ScratchBuffer;
+	VkDeviceMemory			ghoul2ScratchMemory;
+
+	// ---- Per-frame TLAS rebuild resources ----
+	VkBuffer				tlasInstanceBuffer;		// DEVICE_LOCAL, updated via vkCmdUpdateBuffer
+	VkDeviceMemory			tlasInstanceMemory;
+	VkBuffer				tlasScratchBuffer;
+	VkDeviceMemory			tlasScratchMemory;
+
+	// ---- RT Pipeline ----
+	VkDescriptorSetLayout	rtDescriptorSetLayout;
+	VkPipelineLayout		rtPipelineLayout;
+	VkPipeline				rtPipeline;
+	VkDescriptorSet			rtDescriptorSet;
+
+	// ---- Shader Binding Table (SBT) ----
+	VkBuffer				sbtBuffer;
+	VkDeviceMemory			sbtMemory;
+	VkStridedDeviceAddressRegionKHR rgenRegion;
+	VkStridedDeviceAddressRegionKHR missRegion;
+	VkStridedDeviceAddressRegionKHR hitRegion;
+	VkStridedDeviceAddressRegionKHR callRegion;	// unused but required
+
+	// ---- Output image (RT writes here, composited onto scene) ----
+	VkImage					outputImage;
+	VkImageView				outputImageView;
+	VkDeviceMemory			outputImageMemory;
+	VkDescriptorSet			outputDescriptorSet;	// combined image sampler for compositing
+
+	// ---- Depth-only image view for RT shader ----
+	VkImageView				depthOnlyImageView;
+
+	// ---- Glow sources uniform buffer (per-frame, uploaded from CPU) ----
+	VkBuffer				glowSourcesBuffer;
+	VkDeviceMemory			glowSourcesMemory;
+	void					*glowSourcesMapped;
+
+	// ---- RT properties (queried from device) ----
+	uint32_t				shaderGroupHandleSize;
+	uint32_t				shaderGroupHandleAlignment;
+	uint32_t				shaderGroupBaseAlignment;
+
+	int						lastFrameGhoul2Count;	// Ghoul2 entity count from previous frame (for TLAS skip)
+
+	qboolean				asBuilt;				// true after AS built for current map
+	qboolean				available;				// true if all resources created successfully
+} vkGlowReflectResources_t;
+
 // Gamma correction resources
 typedef struct {
 	VkImage				lutImage;
@@ -296,9 +390,13 @@ typedef struct {
 	VkShaderModule		blurVertShader;
 	VkShaderModule		blurFragShader;
 	VkShaderModule		glowCompositeFragShader;
+	VkShaderModule		glowReflectRgenShader;
+	VkShaderModule		glowReflectRmissShader;
+	VkShaderModule		glowReflectRchitShader;
 
 	// Glow and gamma correction
 	vkGlowResources_t	glow;
+	vkGlowReflectResources_t glowReflect;
 	vkGammaResources_t  gamma;
 
 	// Stencil shadow volume pipelines
@@ -320,6 +418,10 @@ typedef struct {
 	// Does the device support the features we need?
 	qboolean			fragmentStoresAndAtomics;
 	qboolean			fillModeNonSolid;
+	qboolean			rayTracingSupported;		// VK_KHR_ray_tracing_pipeline available
+
+	// RT extension function pointers
+	vkRTFunctions_t		rtFuncs;
 
 	qboolean			initialized;
 
@@ -453,6 +555,12 @@ void	VK_CreateGlowResources( void );
 void	VK_DestroyGlowResources( void );
 void	VK_BlurGlowTexture( void );
 void	VK_DrawGlowOverlay( void );
+void	VK_CreateGlowReflectResources( void );
+void	VK_DestroyGlowReflectResources( void );
+void	VK_InvalidateGlowReflectAccelStruct( void );
+void	VK_BuildGlowReflectAccelStruct( void );
+void	VK_DispatchGlowReflect( void );
+void	VK_DrawGlowReflectOverlay( void );
 void	VK_CreateGammaResources( void );
 void	VK_DestroyGammaResources( void );
 void	VK_ApplyGammaCorrection( void );

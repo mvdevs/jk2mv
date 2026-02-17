@@ -179,6 +179,11 @@ typedef struct {
 
 	int (*CM_PointContents)( const vec3_t p, clipHandle_t model );
 
+	// BSP ray trace for glow reflections
+	void (*CM_BoxTrace)( trace_t *results, const vec3_t start, const vec3_t end,
+						 const vec3_t mins, const vec3_t maxs,
+						 clipHandle_t model, int brushmask, qboolean capsule );
+
 } refimport_t;
 
 

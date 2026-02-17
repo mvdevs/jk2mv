@@ -89,6 +89,12 @@ cvar_t	*r_DynamicGlowIntensity;
 cvar_t	*r_DynamicGlowSoft;
 cvar_t	*r_DynamicGlowWidth;
 cvar_t	*r_DynamicGlowHeight;
+cvar_t	*r_DynamicGlowReflections;
+cvar_t	*r_DynamicGlowReflectionRadius;
+cvar_t	*r_DynamicGlowReflectionIntensity;
+cvar_t	*r_DynamicGlowReflectionFalloff;
+cvar_t	*r_DynamicGlowReflectionG2Scale;
+cvar_t	*r_DynamicGlowReflectionShadowIntensity;
 
 cvar_t	*r_logFile;
 
@@ -600,6 +606,12 @@ void R_Register( void )
 	r_DynamicGlowSoft = ri.Cvar_Get("r_DynamicGlowSoft", "1.5", CVAR_ARCHIVE | CVAR_GLOBAL);
 	r_DynamicGlowWidth = ri.Cvar_Get("r_DynamicGlowWidth", "320", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);
 	r_DynamicGlowHeight = ri.Cvar_Get("r_DynamicGlowHeight", "240", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);
+	r_DynamicGlowReflections = ri.Cvar_Get("r_DynamicGlowReflections", "1", CVAR_ARCHIVE | CVAR_GLOBAL);
+	r_DynamicGlowReflectionRadius = ri.Cvar_Get("r_DynamicGlowReflectionRadius", "1.0", CVAR_ARCHIVE | CVAR_GLOBAL);
+	r_DynamicGlowReflectionIntensity = ri.Cvar_Get("r_DynamicGlowReflectionIntensity", "0.2", CVAR_ARCHIVE | CVAR_GLOBAL);
+	r_DynamicGlowReflectionFalloff = ri.Cvar_Get("r_DynamicGlowReflectionFalloff", "20", CVAR_ARCHIVE | CVAR_GLOBAL);
+	r_DynamicGlowReflectionG2Scale = ri.Cvar_Get("r_DynamicGlowReflectionG2Scale", "0.3", CVAR_ARCHIVE | CVAR_GLOBAL);
+	r_DynamicGlowReflectionShadowIntensity = ri.Cvar_Get("r_DynamicGlowReflectionShadowIntensity", "0.7", CVAR_ARCHIVE | CVAR_GLOBAL);
 
 	r_picmip = ri.Cvar_Get("r_picmip", "1", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);
 	AssertCvarRange( r_picmip, 0, 16, qtrue );
@@ -891,6 +903,10 @@ void RE_Shutdown( qboolean destroyWindow ) {
 		VK_Shutdown();
 		WIN_Shutdown();
 		glConfig.vidWidth = 0;
+	} else {
+		// Map change without vid_restart — invalidate acceleration structures
+		// so they are rebuilt from the new map's BSP geometry.
+		VK_InvalidateGlowReflectAccelStruct();
 	}
 #endif //!DEDICATED
 

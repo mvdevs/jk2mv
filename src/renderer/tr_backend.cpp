@@ -801,12 +801,20 @@ const void	*RB_DrawSurfs( const void *data ) {
 		}
 		g_bRenderGlowingObjects = false;
 
+		// Dispatch hardware RT glow reflections (VK_KHR_ray_tracing_pipeline)
+		// Must happen outside render pass, after glow scene render, before blur.
+		// Casts shadow rays from world surfaces toward glow light sources.
+		VK_DispatchGlowReflect();
+
 		// Blur the glow texture (downsamples full-res to half-res internally)
 		RB_BlurGlowTexture();
 
 		// Resume main render pass (load existing contents) and composite glow on top
 		VK_BeginRenderPassLoad();
 		RB_DrawGlowOverlay();
+
+		// Composite GPU glow reflections additively on top of the scene
+		VK_DrawGlowReflectOverlay();
 	}
 
 	return (const void *)(cmd + 1);

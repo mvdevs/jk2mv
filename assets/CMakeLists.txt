@@ -97,6 +97,9 @@ set(SPIRV_SHADER_SOURCES
 	"shaders/spirv/glow.vert"
 	"shaders/spirv/glow.frag"
 	"shaders/spirv/glow_composite.frag"
+	"shaders/spirv/glow_reflect.rgen"
+	"shaders/spirv/glow_reflect.rmiss"
+	"shaders/spirv/glow_reflect.rchit"
 )
 
 set(SPIRV_OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/shaders")
@@ -114,7 +117,7 @@ if(GLSLANG_VALIDATOR)
 
 		add_custom_command(
 			OUTPUT ${SPV_FILE}
-			COMMAND ${GLSLANG_VALIDATOR} -V "${CMAKE_CURRENT_SOURCE_DIR}/${SHADER}" -o ${SPV_FILE}
+			COMMAND ${GLSLANG_VALIDATOR} -V --target-env vulkan1.2 "${CMAKE_CURRENT_SOURCE_DIR}/${SHADER}" -o ${SPV_FILE}
 			DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/${SHADER}"
 			COMMENT "Compiling SPIR-V: ${SHADER}"
 		)
@@ -124,6 +127,7 @@ if(GLSLANG_VALIDATOR)
 		get_filename_component(SPV_FILENAME ${SPV_FILE} NAME)
 		list(APPEND AssetsFiles_Generated "shaders/${SPV_FILENAME}")
 	endforeach()
+
 
 	add_custom_target(compile_shaders DEPENDS ${SPIRV_OUTPUT_FILES})
 endif()

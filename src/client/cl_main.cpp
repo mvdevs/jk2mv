@@ -2725,6 +2725,7 @@ void CL_InitRef( void ) {
 	ri.CIN_RunCinematic = CIN_RunCinematic;
 
 	ri.CM_PointContents = CM_PointContents;
+	ri.CM_BoxTrace = CM_BoxTrace;
 
 	ret = GetRefAPI( REF_API_VERSION, &ri );
 

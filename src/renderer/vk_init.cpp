@@ -287,7 +287,7 @@ static qboolean VK_CreateInstance( SDL_Window *window ) {
 	appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
 	appInfo.pEngineName = "JK2MV Vulkan";
 	appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-	appInfo.apiVersion = VK_API_VERSION_1_0;
+	appInfo.apiVersion = VK_API_VERSION_1_2;
 
 	// Get required extensions from SDL
 	unsigned int extensionCount = 0;
@@ -442,6 +442,49 @@ static qboolean VK_FindQueueFamilies( void ) {
 // ============================================================
 // Create logical device
 // ============================================================
+static qboolean VK_CheckRTExtensionSupport( void ) {
+	uint32_t extCount = 0;
+	vkEnumerateDeviceExtensionProperties( vk.physicalDevice, NULL, &extCount, NULL );
+	if ( extCount == 0 ) return qfalse;
+
+	VkExtensionProperties *exts = (VkExtensionProperties *)ri.Malloc(
+		sizeof(VkExtensionProperties) * extCount, TAG_RENDERER, qfalse );
+	vkEnumerateDeviceExtensionProperties( vk.physicalDevice, NULL, &extCount, exts );
+
+	qboolean hasAccelStruct = qfalse, hasRTPipeline = qfalse;
+	qboolean hasDeferredOps = qfalse, hasBufAddr = qfalse;
+	for ( uint32_t i = 0; i < extCount; i++ ) {
+		if ( !strcmp( exts[i].extensionName, VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME ) ) hasAccelStruct = qtrue;
+		if ( !strcmp( exts[i].extensionName, VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME ) ) hasRTPipeline = qtrue;
+		if ( !strcmp( exts[i].extensionName, VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME ) ) hasDeferredOps = qtrue;
+		if ( !strcmp( exts[i].extensionName, VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME ) ) hasBufAddr = qtrue;
+	}
+	ri.Free( exts );
+
+	return (hasAccelStruct && hasRTPipeline && hasDeferredOps && hasBufAddr) ? qtrue : qfalse;
+}
+
+static void VK_LoadRTFunctions( void ) {
+	vk.rtFuncs.vkGetAccelerationStructureBuildSizesKHR = (PFN_vkGetAccelerationStructureBuildSizesKHR)
+		vkGetDeviceProcAddr( vk.device, "vkGetAccelerationStructureBuildSizesKHR" );
+	vk.rtFuncs.vkCreateAccelerationStructureKHR = (PFN_vkCreateAccelerationStructureKHR)
+		vkGetDeviceProcAddr( vk.device, "vkCreateAccelerationStructureKHR" );
+	vk.rtFuncs.vkDestroyAccelerationStructureKHR = (PFN_vkDestroyAccelerationStructureKHR)
+		vkGetDeviceProcAddr( vk.device, "vkDestroyAccelerationStructureKHR" );
+	vk.rtFuncs.vkCmdBuildAccelerationStructuresKHR = (PFN_vkCmdBuildAccelerationStructuresKHR)
+		vkGetDeviceProcAddr( vk.device, "vkCmdBuildAccelerationStructuresKHR" );
+	vk.rtFuncs.vkGetAccelerationStructureDeviceAddressKHR = (PFN_vkGetAccelerationStructureDeviceAddressKHR)
+		vkGetDeviceProcAddr( vk.device, "vkGetAccelerationStructureDeviceAddressKHR" );
+	vk.rtFuncs.vkCreateRayTracingPipelinesKHR = (PFN_vkCreateRayTracingPipelinesKHR)
+		vkGetDeviceProcAddr( vk.device, "vkCreateRayTracingPipelinesKHR" );
+	vk.rtFuncs.vkGetRayTracingShaderGroupHandlesKHR = (PFN_vkGetRayTracingShaderGroupHandlesKHR)
+		vkGetDeviceProcAddr( vk.device, "vkGetRayTracingShaderGroupHandlesKHR" );
+	vk.rtFuncs.vkCmdTraceRaysKHR = (PFN_vkCmdTraceRaysKHR)
+		vkGetDeviceProcAddr( vk.device, "vkCmdTraceRaysKHR" );
+	vk.rtFuncs.vkGetBufferDeviceAddressKHR = (PFN_vkGetBufferDeviceAddressKHR)
+		vkGetDeviceProcAddr( vk.device, "vkGetBufferDeviceAddress" );
+}
+
 static qboolean VK_CreateDevice( void ) {
 	float queuePriority = 1.0f;
 	
@@ -464,15 +507,57 @@ static qboolean VK_CreateDevice( void ) {
 	VkPhysicalDeviceFeatures deviceFeatures = {};
 	deviceFeatures.fillModeNonSolid = vk.fillModeNonSolid;
 	deviceFeatures.samplerAnisotropy = VK_TRUE;
+	deviceFeatures.shaderStorageImageWriteWithoutFormat = VK_TRUE;
 
-	const char *deviceExtensions[] = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
+	// Check for ray tracing extension support
+	vk.rayTracingSupported = VK_CheckRTExtensionSupport();
+
+	// Build extension list
+	const char *deviceExtensions[8];
+	int numExtensions = 0;
+	deviceExtensions[numExtensions++] = VK_KHR_SWAPCHAIN_EXTENSION_NAME;
+
+	// Chain structs for Vulkan 1.2 features and RT features
+	VkPhysicalDeviceVulkan12Features features12 = {};
+	features12.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
+	features12.bufferDeviceAddress = VK_TRUE;
+	features12.descriptorIndexing = VK_TRUE;
+
+	VkPhysicalDeviceVulkan11Features features11 = {};
+	features11.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES;
+	features11.pNext = &features12;
+
+	VkPhysicalDeviceAccelerationStructureFeaturesKHR accelFeatures = {};
+	VkPhysicalDeviceRayTracingPipelineFeaturesKHR rtPipelineFeatures = {};
+
+	if ( vk.rayTracingSupported ) {
+		ri.Printf( PRINT_ALL, "Ray tracing extensions available, enabling VK_KHR_ray_tracing_pipeline\n" );
+		deviceExtensions[numExtensions++] = VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME;
+		deviceExtensions[numExtensions++] = VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME;
+		deviceExtensions[numExtensions++] = VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME;
+
+		accelFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR;
+		accelFeatures.accelerationStructure = VK_TRUE;
+
+		rtPipelineFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR;
+		rtPipelineFeatures.rayTracingPipeline = VK_TRUE;
+		rtPipelineFeatures.pNext = &accelFeatures;
+
+		features12.pNext = &rtPipelineFeatures;
+	}
+
+	VkPhysicalDeviceFeatures2 features2 = {};
+	features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+	features2.features = deviceFeatures;
+	features2.pNext = &features11;
 
 	VkDeviceCreateInfo createInfo = {};
 	createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 	createInfo.queueCreateInfoCount = queueCount;
 	createInfo.pQueueCreateInfos = queueCreateInfos;
-	createInfo.pEnabledFeatures = &deviceFeatures;
-	createInfo.enabledExtensionCount = 1;
+	createInfo.pNext = &features2;			// use VkPhysicalDeviceFeatures2 chain
+	createInfo.pEnabledFeatures = NULL;		// must be NULL when using pNext features2
+	createInfo.enabledExtensionCount = numExtensions;
 	createInfo.ppEnabledExtensionNames = deviceExtensions;
 
 	if ( vkCreateDevice( vk.physicalDevice, &createInfo, NULL, &vk.device ) != VK_SUCCESS ) {
@@ -482,6 +567,27 @@ static qboolean VK_CreateDevice( void ) {
 
 	vkGetDeviceQueue( vk.device, vk.graphicsQueueFamily, 0, &vk.graphicsQueue );
 	vkGetDeviceQueue( vk.device, vk.presentQueueFamily, 0, &vk.presentQueue );
+
+	// Load RT function pointers after device creation
+	if ( vk.rayTracingSupported ) {
+		VK_LoadRTFunctions();
+
+		// Query RT pipeline properties
+		VkPhysicalDeviceRayTracingPipelinePropertiesKHR rtProps = {};
+		rtProps.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR;
+		VkPhysicalDeviceProperties2 deviceProps2 = {};
+		deviceProps2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+		deviceProps2.pNext = &rtProps;
+		vkGetPhysicalDeviceProperties2( vk.physicalDevice, &deviceProps2 );
+
+		vk.glowReflect.shaderGroupHandleSize = rtProps.shaderGroupHandleSize;
+		vk.glowReflect.shaderGroupHandleAlignment = rtProps.shaderGroupHandleAlignment;
+		vk.glowReflect.shaderGroupBaseAlignment = rtProps.shaderGroupBaseAlignment;
+
+		ri.Printf( PRINT_ALL, "RT pipeline properties: handleSize=%u handleAlign=%u baseAlign=%u\n",
+			rtProps.shaderGroupHandleSize, rtProps.shaderGroupHandleAlignment,
+			rtProps.shaderGroupBaseAlignment );
+	}
 
 	return qtrue;
 }
@@ -644,7 +750,7 @@ void VK_CreateDepthBuffer( void ) {
 	imageInfo.format = vk.depthFormat;
 	imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
 	imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	imageInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+	imageInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
 	imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
 	imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
@@ -971,17 +1077,23 @@ void VK_CreateSamplers( void ) {
 // Create descriptor pool and layout
 // ============================================================
 void VK_CreateDescriptorPool( void ) {
-	VkDescriptorPoolSize poolSizes[2] = {};
+	VkDescriptorPoolSize poolSizes[5] = {};
 	poolSizes[0].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	poolSizes[0].descriptorCount = VK_MAX_IMAGE_SLOTS;
+	poolSizes[0].descriptorCount = VK_MAX_IMAGE_SLOTS + ( vk.rayTracingSupported ? 2 : 0 );
 	poolSizes[1].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
 	poolSizes[1].descriptorCount = VK_NUM_COMMAND_BUFFERS;
+	poolSizes[2].type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+	poolSizes[2].descriptorCount = 1;
+	poolSizes[3].type = VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR;
+	poolSizes[3].descriptorCount = 1;
+	poolSizes[4].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	poolSizes[4].descriptorCount = 1;
 
 	VkDescriptorPoolCreateInfo poolInfo = {};
 	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-	poolInfo.poolSizeCount = 2;
+	poolInfo.poolSizeCount = vk.rayTracingSupported ? 5 : 2;
 	poolInfo.pPoolSizes = poolSizes;
-	poolInfo.maxSets = VK_MAX_IMAGE_SLOTS + VK_NUM_COMMAND_BUFFERS;
+	poolInfo.maxSets = VK_MAX_IMAGE_SLOTS + VK_NUM_COMMAND_BUFFERS + ( vk.rayTracingSupported ? 1 : 0 );
 	poolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
 
 	if ( vkCreateDescriptorPool( vk.device, &poolInfo, NULL, &vk.descriptorPool ) != VK_SUCCESS ) {
@@ -1132,6 +1244,17 @@ void VK_CreateShaderModules( void ) {
 	vk.blurFragShader = VK_LoadShaderFromFile( "shaders/glow_frag.spv" );
 	vk.glowCompositeFragShader = VK_LoadShaderFromFile( "shaders/glow_composite_frag.spv" );
 
+	// Load ray tracing shaders (optional - only if RT is supported)
+	if ( vk.rayTracingSupported ) {
+		vk.glowReflectRgenShader = VK_LoadShaderFromFile( "shaders/glow_reflect_rgen.spv" );
+		vk.glowReflectRmissShader = VK_LoadShaderFromFile( "shaders/glow_reflect_rmiss.spv" );
+		vk.glowReflectRchitShader = VK_LoadShaderFromFile( "shaders/glow_reflect_rchit.spv" );
+		if ( !vk.glowReflectRgenShader || !vk.glowReflectRmissShader || !vk.glowReflectRchitShader ) {
+			ri.Printf( PRINT_WARNING, "WARNING: RT glow shaders not found, disabling RT glow reflections\n" );
+			vk.rayTracingSupported = qfalse;
+		}
+	}
+
 	// Developer visibility: print which shader modules were successfully loaded
 	ri.Printf( PRINT_DEVELOPER, "VK_CreateShaderModules: singleTexVert=%p singleTexFrag=%p multiTexFrag=%p\n",
 		(void*)vk.singleTexVertShader, (void*)vk.singleTexFragShader, (void*)vk.multiTexFragShader );
@@ -1240,6 +1363,7 @@ qboolean VK_Init( void ) {
 
 	// Create post-processing resources
 	VK_CreateGlowResources();
+	VK_CreateGlowReflectResources();
 	VK_CreateGammaResources();
 	VK_CreateShadowPipelines();
 
@@ -1262,6 +1386,7 @@ void VK_Shutdown( void ) {
 	vkDeviceWaitIdle( vk.device );
 
 	// Destroy post-processing resources
+	VK_DestroyGlowReflectResources();
 	VK_DestroyGlowResources();
 	VK_DestroyGammaResources();
 	VK_DestroyShadowPipelines();
@@ -1280,6 +1405,9 @@ void VK_Shutdown( void ) {
 	if ( vk.blurVertShader ) vkDestroyShaderModule( vk.device, vk.blurVertShader, NULL );
 	if ( vk.blurFragShader ) vkDestroyShaderModule( vk.device, vk.blurFragShader, NULL );
 	if ( vk.glowCompositeFragShader ) vkDestroyShaderModule( vk.device, vk.glowCompositeFragShader, NULL );
+	if ( vk.glowReflectRgenShader ) vkDestroyShaderModule( vk.device, vk.glowReflectRgenShader, NULL );
+	if ( vk.glowReflectRmissShader ) vkDestroyShaderModule( vk.device, vk.glowReflectRmissShader, NULL );
+	if ( vk.glowReflectRchitShader ) vkDestroyShaderModule( vk.device, vk.glowReflectRchitShader, NULL );
 
 	// Destroy pipeline cache / layout
 	if ( vk.pipelineCache ) vkDestroyPipelineCache( vk.device, vk.pipelineCache, NULL );
@@ -1998,9 +2126,9 @@ void VK_CreateShadowPipelines( void ) {
 	stages[1].module = vk.singleTexFragShader;
 	stages[1].pName = "main";
 
-	// Vertex input: 4-binding layout matching vertex shader (pos, tc0, tc1, color)
-	VkVertexInputBindingDescription bindings[4];
-	VkVertexInputAttributeDescription attrs[4];
+	// Vertex input: 5-binding layout matching vertex shader (pos, tc0, tc1, color, normal)
+	VkVertexInputBindingDescription bindings[5];
+	VkVertexInputAttributeDescription attrs[5];
 	// Binding 0: position (vec3 from vec4-strided data)
 	bindings[0] = {}; bindings[0].binding = 0; bindings[0].stride = sizeof(float) * 4; bindings[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 	attrs[0] = {}; attrs[0].location = 0; attrs[0].binding = 0; attrs[0].format = VK_FORMAT_R32G32B32_SFLOAT; attrs[0].offset = 0;
@@ -2013,12 +2141,15 @@ void VK_CreateShadowPipelines( void ) {
 	// Binding 3: color (rgba8)
 	bindings[3] = {}; bindings[3].binding = 3; bindings[3].stride = sizeof(byte) * 4; bindings[3].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 	attrs[3] = {}; attrs[3].location = 3; attrs[3].binding = 3; attrs[3].format = VK_FORMAT_R8G8B8A8_UNORM; attrs[3].offset = 0;
+	// Binding 4: normal (vec4 — xyz normal + w bone weights)
+	bindings[4] = {}; bindings[4].binding = 4; bindings[4].stride = sizeof(float) * 4; bindings[4].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+	attrs[4] = {}; attrs[4].location = 4; attrs[4].binding = 4; attrs[4].format = VK_FORMAT_R32G32B32A32_SFLOAT; attrs[4].offset = 0;
 
 	VkPipelineVertexInputStateCreateInfo vertexInput = {};
 	vertexInput.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-	vertexInput.vertexBindingDescriptionCount = 4;
+	vertexInput.vertexBindingDescriptionCount = 5;
 	vertexInput.pVertexBindingDescriptions = bindings;
-	vertexInput.vertexAttributeDescriptionCount = 4;
+	vertexInput.vertexAttributeDescriptionCount = 5;
 	vertexInput.pVertexAttributeDescriptions = attrs;
 
 	VkPipelineInputAssemblyStateCreateInfo inputAssembly = {};

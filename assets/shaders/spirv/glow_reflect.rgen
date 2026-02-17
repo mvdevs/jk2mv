@@ -1,0 +1,471 @@
+#version 460
+#extension GL_EXT_ray_tracing : require
+
+layout(set = 0, binding = 0) uniform accelerationStructureEXT topLevelAS;
+layout(set = 0, binding = 1) uniform writeonly image2D outputImage;
+layout(set = 0, binding = 2) uniform sampler2D depthSampler;
+layout(set = 0, binding = 3) uniform sampler2D glowSampler;
+
+#define MAX_GLOW_SOURCES 32
+
+struct GlowSource {
+	vec4 posAndRadius;   // xyz = start position (or point pos), w = effect radius
+	vec4 colorAndPower;  // xyz = RGB color, w = intensity
+	vec4 endPosAndType;  // xyz = end position, w = 0.0 (point) or 1.0 (line)
+};
+
+layout(set = 0, binding = 4, std140) uniform GlowSourcesUBO {
+	GlowSource sources[MAX_GLOW_SOURCES];
+} glowSources;
+
+layout(push_constant) uniform PushConstants {
+	mat4 inverseVP;
+	mat4 viewProjection;
+	vec4 cameraPosAndIntensity;  // xyz = camera world pos, w = global intensity
+	float maxRadius;
+	int   numSources;
+	float bias;
+	float falloffExponent;       // controls distance attenuation curve steepness
+	float g2ReflectScale;        // reflection scale for Ghoul2 model surfaces
+	float shadowIntensity;       // visibility when shadow ray is occluded
+} pc;
+
+layout(location = 0) rayPayloadEXT float hitDistance;
+
+// ============================================================
+// RT Glow Illumination — replaces legacy dlight projection
+//
+// The original JK2 saber "reflection" is actually a DLIGHT:
+// the saber emits a point light, and ProjectDlightTexture()
+// projects it (spherical falloff) onto every BSP face in range.
+// That creates the colored glow splash on walls and floors.
+//
+// This shader replaces that with RT shadow rays: for each world
+// pixel, we check each glow source. If a shadow ray to the source
+// is unoccluded (no BSP between surface and emitter), the surface
+// receives diffuse illumination from that source, with the same
+// kind of distance falloff and N·L shading the engine uses.
+//
+// Additionally, we sample the glow texture at the emitter's
+// screen projection to pick up the actual rendered saber color
+// and shape, blending it softly for a natural look.
+// ============================================================
+
+vec3 reconstructWorldPos(vec2 uv, float depth) {
+	vec4 clipPos = vec4(uv * 2.0 - 1.0, depth, 1.0);
+	vec4 worldPos = pc.inverseVP * clipPos;
+	return worldPos.xyz / worldPos.w;
+}
+
+// Find the closest point on line segment [a, b] to point p.
+// For point sources (a == b), returns a.
+vec3 closestPointOnSegment(vec3 a, vec3 b, vec3 p) {
+	vec3 ab = b - a;
+	float abLenSq = dot(ab, ab);
+	if (abLenSq < 0.001) return a; // degenerate: point source
+	float t = clamp(dot(p - a, ab) / abLenSq, 0.0, 1.0);
+	return a + t * ab;
+}
+
+void main() {
+	ivec2 pixelCoord = ivec2(gl_LaunchIDEXT.xy);
+	vec2 pixelCenter = vec2(pixelCoord) + vec2(0.5);
+	vec2 invSize = 1.0 / vec2(gl_LaunchSizeEXT.xy);
+	vec2 uv = pixelCenter * invSize;
+
+	float depth = texture(depthSampler, uv).r;
+
+	// Early out: sky / near plane
+	if (depth >= 1.0 || depth <= 0.0) {
+		imageStore(outputImage, pixelCoord, vec4(0.0));
+		return;
+	}
+
+	// Early out: nothing to light
+	if (pc.numSources <= 0) {
+		imageStore(outputImage, pixelCoord, vec4(0.0));
+		return;
+	}
+
+	// Skip glow emitters before expensive normal reconstruction
+	vec3 selfGlow = texture(glowSampler, uv).rgb;
+	if (dot(selfGlow, vec3(0.299, 0.587, 0.114)) > 0.3) {
+		imageStore(outputImage, pixelCoord, vec4(0.0));
+		return;
+	}
+
+	vec3 worldPos = reconstructWorldPos(uv, depth);
+
+	// Fast pre-pass: if no source can possibly affect this pixel, skip the
+	// expensive normal reconstruction and all RT work.
+	bool hasCandidate = false;
+	for (int s = 0; s < pc.numSources; s++) {
+		vec3  srcStart  = glowSources.sources[s].posAndRadius.xyz;
+		float srcRadius = glowSources.sources[s].posAndRadius.w;
+		vec3  srcEnd    = glowSources.sources[s].endPosAndType.xyz;
+		vec3  closest   = closestPointOnSegment(srcStart, srcEnd, worldPos);
+		vec3  toLight   = closest - worldPos;
+		float distSq    = dot(toLight, toLight);
+		float radiusSq  = srcRadius * srcRadius;
+		if (distSq <= radiusSq && distSq >= 1.0) {
+			hasCandidate = true;
+			break;
+		}
+	}
+	if (!hasCandidate) {
+		imageStore(outputImage, pixelCoord, vec4(0.0));
+		return;
+	}
+
+	// Robust normal reconstruction: sample all 4 neighbors, pick the
+	// smallest depth difference per axis. This avoids crossing BSP triangle
+	// edges where a forward-only difference would produce a bad normal
+	// (pointing into the wall), causing shadow ray self-intersection and
+	// leaving individual triangles unlit.
+	vec2 texelSize = invSize * 2.0;  // 2-texel spacing for stability
+
+	float dR = texture(depthSampler, uv + vec2( texelSize.x, 0.0)).r;
+	float dL = texture(depthSampler, uv + vec2(-texelSize.x, 0.0)).r;
+	float dU = texture(depthSampler, uv + vec2(0.0,  texelSize.y)).r;
+	float dD = texture(depthSampler, uv + vec2(0.0, -texelSize.y)).r;
+
+	// Pick the neighbor with the smaller depth delta per axis
+	vec3 dx, dy;
+	if (abs(dR - depth) <= abs(dL - depth)) {
+		dx = reconstructWorldPos(uv + vec2(texelSize.x, 0.0), dR) - worldPos;
+	} else {
+		dx = worldPos - reconstructWorldPos(uv + vec2(-texelSize.x, 0.0), dL);
+	}
+	if (abs(dU - depth) <= abs(dD - depth)) {
+		dy = reconstructWorldPos(uv + vec2(0.0, texelSize.y), dU) - worldPos;
+	} else {
+		dy = worldPos - reconstructWorldPos(uv + vec2(0.0, -texelSize.y), dD);
+	}
+
+	vec3 normal = normalize(cross(dx, dy));
+
+	vec3 viewDir = normalize(pc.cameraPosAndIntensity.xyz - worldPos);
+	if (dot(normal, viewDir) < 0.0)
+		normal = -normal;
+
+	float globalIntensity = pc.cameraPosAndIntensity.w;
+	// Shadow ray origin: offset along surface normal to clear the wall.
+	// viewDir offset doesn't help when shadow rays go at grazing angles
+	// along the surface — the ray can clip through neighboring BSP triangles.
+	// NOTE: computed here (after normal reconstruction) because both debug
+	// and production paths need them.
+	vec3 shadowOrigin = worldPos + normal * pc.bias;
+	vec3 probeOrigin  = worldPos + viewDir * (pc.bias * 2.5);
+
+	// Debug modes: set r_DynamicGlowReflectionFalloff to a negative integer
+	// Each mode visualizes ONE component as a grayscale heatmap so you can
+	// identify which factor is causing banding:
+	//  -1 = attenuation only (distance falloff)
+	//  -2 = NdotL only (diffuse shading from normal · lightDir)
+	//  -3 = shadow visibility only (white = unoccluded, dark = occluded)
+	//  -4 = glow texture luminance at emitter screen position
+	//  -5 = surface normal (RGB = XYZ mapped to 0..1)
+	//  -6 = emitter color (what the glow texture samples as)
+	//  -7 = final composite (old debug: R=Ghoul2, G=shadow, B=NdotL cull, W=lit)
+	int debugMode = (pc.falloffExponent < 0.0) ? int(-pc.falloffExponent) : 0;
+
+	if (debugMode > 0 && pc.numSources > 0) {
+		vec3  srcStart  = glowSources.sources[0].posAndRadius.xyz;
+		float srcRadius = glowSources.sources[0].posAndRadius.w;
+		vec3  srcColor  = glowSources.sources[0].colorAndPower.xyz;
+		float srcPower  = glowSources.sources[0].colorAndPower.w;
+		vec3  srcEnd    = glowSources.sources[0].endPosAndType.xyz;
+		vec3  closestPt = closestPointOnSegment(srcStart, srcEnd, worldPos);
+		vec3  toLight   = closestPt - worldPos;
+		float dist      = length(toLight);
+
+		if (debugMode == 5) {
+			// Normal visualization: map XYZ from [-1,1] to [0,1]
+			imageStore(outputImage, pixelCoord, vec4(normal * 0.5 + 0.5, 1.0));
+			return;
+		}
+
+		if (dist >= srcRadius || dist < 1.0) {
+			imageStore(outputImage, pixelCoord, vec4(0.0));
+			return;
+		}
+
+		vec3  lightDir = toLight / dist;
+		float rawNdotL = dot(normal, lightDir);
+
+		// -1: attenuation
+		if (debugMode == 1) {
+			float t = (dist * dist) / (srcRadius * srcRadius);
+			float attenBase = smoothstep(1.0, 0.0, t);
+			imageStore(outputImage, pixelCoord, vec4(vec3(attenBase), 1.0));
+			return;
+		}
+
+		// -2: NdotL
+		if (debugMode == 2) {
+			float backFade = smoothstep(-0.3, 0.0, rawNdotL);
+			float NdotL = rawNdotL * 0.5 + 0.5;
+			NdotL *= NdotL;
+			NdotL *= backFade;
+			float ndotlFlatten = smoothstep(0.0, srcRadius * 0.4, dist);
+			NdotL = mix(1.0, NdotL, ndotlFlatten);
+			imageStore(outputImage, pixelCoord, vec4(vec3(NdotL), 1.0));
+			return;
+		}
+
+		// -3: shadow visibility
+		if (debugMode == 3) {
+			vec3  toShadow   = closestPt - worldPos;
+			float shadowDist = length(toShadow);
+			float vis = 1.0;
+			if (shadowDist > 1.0) {
+				vec3  shadowDir = toShadow / shadowDist;
+				float cosAngle  = max(abs(dot(shadowDir, normal)), 0.05);
+				float shadowMin = max(pc.bias / cosAngle, 2.0);
+				float shadowMax = shadowDist - 2.0;
+				if (shadowMax > shadowMin) {
+					hitDistance = -1.0;
+					traceRayEXT(
+						topLevelAS,
+						gl_RayFlagsOpaqueEXT | gl_RayFlagsTerminateOnFirstHitEXT,
+						0xFF, 0, 0, 0,
+						shadowOrigin, shadowMin, shadowDir, shadowMax, 0
+					);
+					if (hitDistance > 0.0) vis = 0.0;
+				}
+			}
+			imageStore(outputImage, pixelCoord, vec4(vec3(vis), 1.0));
+			return;
+		}
+
+		// -4: glow texture luminance at blade midpoint
+		if (debugMode == 4) {
+			vec3 midPt = (srcStart + srcEnd) * 0.5;
+			vec4 clipSrc = pc.viewProjection * vec4(midPt, 1.0);
+			float lum = 0.0;
+			if (clipSrc.w > 0.0) {
+				vec2 srcUV = (clipSrc.xy / clipSrc.w) * 0.5 + 0.5;
+				if (srcUV.x >= 0.0 && srcUV.x <= 1.0 &&
+					srcUV.y >= 0.0 && srcUV.y <= 1.0) {
+					vec2 offScale = texelSize * 3.0;
+					vec2 blurScale = offScale * 4.0;
+					vec3 g  = texture(glowSampler, srcUV).rgb * 0.4;
+					g += texture(glowSampler, srcUV + vec2( blurScale.x, 0.0)).rgb * 0.15;
+					g += texture(glowSampler, srcUV + vec2(-blurScale.x, 0.0)).rgb * 0.15;
+					g += texture(glowSampler, srcUV + vec2(0.0,  blurScale.y)).rgb * 0.15;
+					g += texture(glowSampler, srcUV + vec2(0.0, -blurScale.y)).rgb * 0.15;
+					lum = dot(g, vec3(0.299, 0.587, 0.114));
+				}
+			}
+			imageStore(outputImage, pixelCoord, vec4(vec3(lum), 1.0));
+			return;
+		}
+
+		// -6: emitter color (normalized glow hue + dlight)
+		if (debugMode == 6) {
+			vec3 emitterColor = srcColor * srcPower;
+			vec3 midPt = (srcStart + srcEnd) * 0.5;
+			vec4 clipSrc = pc.viewProjection * vec4(midPt, 1.0);
+			if (clipSrc.w > 0.0) {
+				vec2 srcUV = (clipSrc.xy / clipSrc.w) * 0.5 + 0.5;
+				if (srcUV.x >= 0.0 && srcUV.x <= 1.0 &&
+					srcUV.y >= 0.0 && srcUV.y <= 1.0) {
+					vec2 offScale = texelSize * 3.0;
+					vec2 blurScale = offScale * 4.0;
+					vec3 g  = texture(glowSampler, srcUV).rgb * 0.4;
+					g += texture(glowSampler, srcUV + vec2( blurScale.x, 0.0)).rgb * 0.15;
+					g += texture(glowSampler, srcUV + vec2(-blurScale.x, 0.0)).rgb * 0.15;
+					g += texture(glowSampler, srcUV + vec2(0.0,  blurScale.y)).rgb * 0.15;
+					g += texture(glowSampler, srcUV + vec2(0.0, -blurScale.y)).rgb * 0.15;
+					float glowLum = dot(g, vec3(0.299, 0.587, 0.114));
+					if (glowLum > 0.01) {
+						vec3 glowColor = g / glowLum;
+						float baseLum = dot(srcColor, vec3(0.299, 0.587, 0.114));
+						emitterColor = glowColor * baseLum * srcPower;
+					}
+				}
+			}
+			imageStore(outputImage, pixelCoord, vec4(emitterColor * 0.5, 1.0));
+			return;
+		}
+
+		// -7: classic debug (R=Ghoul2, G=shadow, B=NdotL cull, W=lit)
+		if (debugMode == 7) {
+			// BSP detection
+			float surfaceScale = 1.0;
+			{
+				hitDistance = -1.0;
+				traceRayEXT(
+					topLevelAS, gl_RayFlagsOpaqueEXT | gl_RayFlagsTerminateOnFirstHitEXT,
+					0x01, 0, 0, 0,
+					probeOrigin, 0.1, -viewDir, pc.bias * 5.0 + 10.0, 0
+				);
+				if (hitDistance < 0.0) surfaceScale = pc.g2ReflectScale;
+			}
+			if (surfaceScale < 1.0) {
+				imageStore(outputImage, pixelCoord, vec4(1.0, 0.0, 0.0, 1.0));
+				return;
+			}
+			if (rawNdotL <= -0.3) {
+				imageStore(outputImage, pixelCoord, vec4(0.0, 0.0, 1.0, 1.0));
+				return;
+			}
+			// Shadow
+			vec3  toShadow   = closestPt - worldPos;
+			float shadowDist = length(toShadow);
+			if (shadowDist > 1.0) {
+				vec3  shadowDir = toShadow / shadowDist;
+				float cosAngle  = max(abs(dot(shadowDir, normal)), 0.05);
+				float shadowMin = max(pc.bias / cosAngle, 2.0);
+				float shadowMax = shadowDist - 2.0;
+				if (shadowMax > shadowMin) {
+					hitDistance = -1.0;
+					traceRayEXT(
+						topLevelAS,
+						gl_RayFlagsOpaqueEXT | gl_RayFlagsTerminateOnFirstHitEXT,
+						0xFF, 0, 0, 0,
+						shadowOrigin, shadowMin, shadowDir, shadowMax, 0
+					);
+					if (hitDistance > 0.0) {
+						imageStore(outputImage, pixelCoord, vec4(0.0, 1.0, 0.0, 1.0));
+						return;
+					}
+				}
+			}
+			imageStore(outputImage, pixelCoord, vec4(1.0, 1.0, 1.0, 1.0));
+			return;
+		}
+
+		// Unknown debug mode: show magenta
+		imageStore(outputImage, pixelCoord, vec4(1.0, 0.0, 1.0, 1.0));
+		return;
+	}
+
+	// ---- Accumulate illumination from each glow source ----
+	vec3 totalLight = vec3(0.0);
+
+	for (int s = 0; s < pc.numSources; s++) {
+		vec3  srcStart  = glowSources.sources[s].posAndRadius.xyz;
+		float srcRadius = glowSources.sources[s].posAndRadius.w;
+		vec3  srcColor  = glowSources.sources[s].colorAndPower.xyz;
+		float srcPower  = glowSources.sources[s].colorAndPower.w;
+		vec3  srcEnd    = glowSources.sources[s].endPosAndType.xyz;
+
+		// For line sources, find the closest point on the blade segment;
+		// for point sources (start == end), this is just the position.
+		vec3  closestPt = closestPointOnSegment(srcStart, srcEnd, worldPos);
+		vec3  toLight   = closestPt - worldPos;
+		float distSq    = dot(toLight, toLight);
+		float radiusSq  = srcRadius * srcRadius;
+
+		// Squared-distance range check (avoids sqrt for out-of-range sources)
+		if (distSq > radiusSq || distSq < 1.0)
+			continue;
+
+		// smoothstep gives C1 continuity at both edges (derivative → 0),
+		// preventing a visible Mach band at the radius boundary. The old
+		// linear 1-distSq/radiusSq had a derivative kink there, and with
+		// exponent < 1 the pow() made it even sharper.
+		float t = distSq / radiusSq;
+		float attenBase = smoothstep(1.0, 0.0, t);  // 0 at edge, 1 at center
+		if (attenBase <= 0.0)
+			continue;
+
+		float atten;
+		if (pc.falloffExponent == 1.0) {
+			atten = attenBase;
+		} else if (pc.falloffExponent == 2.0) {
+			atten = attenBase * attenBase;
+		} else {
+			float effectiveExponent = max(pc.falloffExponent * 0.08, 0.75);
+			atten = pow(attenBase, effectiveExponent);
+		}
+		if (atten <= 0.0)
+			continue;
+
+		float dist    = sqrt(distSq);
+		vec3 lightDir = toLight / dist;
+
+		// Half-Lambert diffuse: wraps lighting around the surface so that
+		// small normal differences between low-poly triangles (Ghoul2 models)
+		// barely affect brightness, eliminating visible faceting.
+		float rawNdotL = dot(normal, lightDir);
+		// Soft back-face fade instead of hard cull — avoids visible bands
+		// where depth-reconstructed normals differ across BSP face edges.
+		float backFade = smoothstep(-0.3, 0.0, rawNdotL);
+		if (backFade <= 0.0)
+			continue;
+
+		float NdotL = rawNdotL * 0.5 + 0.5;
+		NdotL *= NdotL;  // squared half-Lambert for natural falloff
+		NdotL *= backFade;
+
+		// Flatten NdotL at close range to prevent per-triangle faceting
+		// on flat walls where the depth-reconstructed normal varies slightly.
+		float ndotlFlatten = smoothstep(0.0, srcRadius * 0.4, dist);
+		NdotL = mix(1.0, NdotL, ndotlFlatten);
+
+		// Very small theoretical contribution: skip expensive visibility test.
+		if ((NdotL * atten * srcPower * globalIntensity) < 0.0001)
+			continue;
+
+		// ---- RT shadow ray: is the path to the emitter clear? ----
+		// lightDir and dist already point toward the closest emitting point
+		// on the blade segment — reuse them instead of recomputing.
+		hitDistance = -1.0;
+		float visibility = 1.0;
+		if (dist > 1.0) {
+			// Grazing-angle correction: when the shadow ray goes nearly parallel
+			// to the surface, a fixed tMin isn't enough to clear the wall. Scale
+			// tMin by 1/cos(angle) so the ray always starts bias units above the
+			// surface plane, regardless of direction.
+			float cosAngle = max(abs(dot(lightDir, normal)), 0.05);
+			float shadowMin = max(pc.bias / cosAngle, 2.0);
+			float shadowMax = dist - 2.0;
+			if (shadowMax > shadowMin) {
+				traceRayEXT(
+					topLevelAS,
+					gl_RayFlagsOpaqueEXT | gl_RayFlagsTerminateOnFirstHitEXT,
+					0xFF, 0, 0, 0,
+					shadowOrigin, shadowMin, lightDir, shadowMax, 0
+				);
+
+				// If the ray hit something before reaching the emitter,
+				// keep a reduced contribution instead of hard-killing it.
+				if (hitDistance > 0.0)
+					visibility = pc.shadowIntensity;
+			}
+		}
+
+		// Emitter color from dlight UBO — no glow texture sampling.
+		// The glow texture has spatial brightness variation along the blade;
+		// sampling it per-pixel creates visible iso-brightness contour bands
+		// on walls.  The blade shape in the wall reflection already comes
+		// from the line-source geometry (closestPointOnSegment + attenuation).
+		vec3 emitterColor = srcColor * srcPower;
+
+		totalLight += emitterColor * NdotL * atten * visibility;
+	}
+
+	// ---- Deferred BSP detection: only trace if there's actual contribution ----
+	// surfaceScale dims Ghoul2 pixels (not in TLAS) to pc.g2ReflectScale. Skipping this
+	// ray when totalLight == 0 saves the most expensive operation for the
+	// majority of pixels that have no glow source in range.
+	float surfaceScale = 1.0;
+	if (dot(totalLight, totalLight) > 0.0) {
+		hitDistance = -1.0;
+		traceRayEXT(
+			topLevelAS, gl_RayFlagsOpaqueEXT | gl_RayFlagsTerminateOnFirstHitEXT,
+			0x01, 0, 0, 0,
+			probeOrigin, 0.1, -viewDir, pc.bias * 5.0 + 10.0, 0
+		);
+
+		if (hitDistance < 0.0) {
+			surfaceScale = pc.g2ReflectScale;
+		}
+	}
+
+	// Apply global intensity and surface type scaling
+	vec3 result = totalLight * globalIntensity * surfaceScale;
+	imageStore(outputImage, pixelCoord, vec4(result, 1.0));
+}
