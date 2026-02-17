@@ -794,8 +794,14 @@ void VK_ReadPixels( int x, int y, int width, int height, int format, byte *buffe
 	vkCmdCopyImageToBuffer( cmd, srcImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
 		vk.staging.buffer, 1, &region );
 
-	// No need to transition back - the next render pass uses initialLayout=UNDEFINED
-	// which accepts any layout
+	// Transition swapchain image back to PRESENT_SRC_KHR so it can be presented
+	barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+	barrier.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+	barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+	barrier.dstAccessMask = 0;
+
+	vkCmdPipelineBarrier( cmd, VK_PIPELINE_STAGE_TRANSFER_BIT,
+		VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, NULL, 0, NULL, 1, &barrier );
 
 	// End, submit with frame fence, and wait
 	vkEndCommandBuffer( cmd );
@@ -807,21 +813,32 @@ void VK_ReadPixels( int x, int y, int width, int height, int format, byte *buffe
 	vkQueueSubmit( vk.graphicsQueue, 1, &submitInfo, frame->fence );
 	vkWaitForFences( vk.device, 1, &frame->fence, VK_TRUE, UINT64_MAX );
 
-	// Convert from B8G8R8A8 (4bpp) to the requested 3bpp format
-	int pixelCount = width * height;
+	// Convert from B8G8R8A8 (4bpp) to the requested 3bpp format.
+	// Vulkan framebuffer is top-to-bottom, but callers expect bottom-to-top
+	// (matching OpenGL's glReadPixels convention), so flip rows vertically.
 	const byte *src = vk.staging.data;
+	int srcStride = width * 4;
+	int dstStride = width * 3;
 
 	if ( format == 0x80E0 ) { // IMGFMT_BGR
-		for ( int i = 0; i < pixelCount; i++ ) {
-			buffer[i * 3 + 0] = src[i * 4 + 0]; // B
-			buffer[i * 3 + 1] = src[i * 4 + 1]; // G
-			buffer[i * 3 + 2] = src[i * 4 + 2]; // R
+		for ( int row = 0; row < height; row++ ) {
+			const byte *srcRow = src + (height - 1 - row) * srcStride;
+			byte *dstRow = buffer + row * dstStride;
+			for ( int col = 0; col < width; col++ ) {
+				dstRow[col * 3 + 0] = srcRow[col * 4 + 0]; // B
+				dstRow[col * 3 + 1] = srcRow[col * 4 + 1]; // G
+				dstRow[col * 3 + 2] = srcRow[col * 4 + 2]; // R
+			}
 		}
 	} else { // IMGFMT_RGB
-		for ( int i = 0; i < pixelCount; i++ ) {
-			buffer[i * 3 + 0] = src[i * 4 + 2]; // R
-			buffer[i * 3 + 1] = src[i * 4 + 1]; // G
-			buffer[i * 3 + 2] = src[i * 4 + 0]; // B
+		for ( int row = 0; row < height; row++ ) {
+			const byte *srcRow = src + (height - 1 - row) * srcStride;
+			byte *dstRow = buffer + row * dstStride;
+			for ( int col = 0; col < width; col++ ) {
+				dstRow[col * 3 + 0] = srcRow[col * 4 + 2]; // R
+				dstRow[col * 3 + 1] = srcRow[col * 4 + 1]; // G
+				dstRow[col * 3 + 2] = srcRow[col * 4 + 0]; // B
+			}
 		}
 	}
 
