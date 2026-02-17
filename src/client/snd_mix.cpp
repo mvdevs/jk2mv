@@ -170,8 +170,22 @@ static void S_PaintChannelFrom16( channel_t *ch, const sfx_t *sfx, int count, in
 	{
 		iData = sfx->pSoundData[ sampleOffset++ ];
 
-		pSamplesDest[i].left  += (iData * iLeftVol )>>8;
-		pSamplesDest[i].right += (iData * iRightVol)>>8;
+		// Clamp accumulator to avoid overflow if many loud sounds play
+		int left_add = (iData * iLeftVol )>>8;
+		int right_add = (iData * iRightVol)>>8;
+		
+		int left_new = pSamplesDest[i].left + left_add;
+		int right_new = pSamplesDest[i].right + right_add;
+
+		// Hard clamp to prevent wrapping
+		if (left_new > 0x00ffff00) left_new = 0x00ffff00;
+		else if (left_new < -0x00ffff00) left_new = -0x00ffff00;
+		
+		if (right_new > 0x00ffff00) right_new = 0x00ffff00;
+		else if (right_new < -0x00ffff00) right_new = -0x00ffff00;
+		
+		pSamplesDest[i].left = left_new;
+		pSamplesDest[i].right = right_new;
 	}
 }
 
@@ -247,6 +261,51 @@ void ChannelPaint(channel_t *ch, sfx_t *sc, int count, int sampleOffset, int buf
 }
 
 
+/*
+===================
+S_PaintLoopChannelDoppler16
+
+Paint a looping channel with Doppler pitch shifting.
+Steps through source samples at a variable rate (dopplerScale) rather than 1:1.
+Linearly interpolates the doppler scale from oldDopplerScale to dopplerScale across the buffer.
+===================
+*/
+static void S_PaintLoopChannelDoppler16( channel_t *ch, const sfx_t *sfx, int count, int sampleOffset, int bufferOffset )
+{
+	portable_samplepair_t	*pSamplesDest;
+	int iData;
+
+	int iLeftVol	= ch->leftvol  * snd_vol;
+	int iRightVol	= ch->rightvol * snd_vol;
+	int totalSamples = sfx->iSoundLengthInSamples;
+
+	pSamplesDest	= &paintbuffer[ bufferOffset ];
+
+	// Use float for fractional source position tracking
+	float fracSrcPos = (float)sampleOffset;
+
+	for ( int i = 0; i < count; i++ )
+	{
+		// Linearly interpolate doppler scale across the paint buffer
+		float t = (count > 1) ? (float)i / (float)(count - 1) : 0.0f;
+		float scale = ch->oldDopplerScale + (ch->dopplerScale - ch->oldDopplerScale) * t;
+
+		int srcIndex = ((int)fracSrcPos) % totalSamples;
+		if (srcIndex < 0) srcIndex += totalSamples;
+
+		iData = sfx->pSoundData[ srcIndex ];
+
+		pSamplesDest[i].left  += (iData * iLeftVol )>>8;
+		pSamplesDest[i].right += (iData * iRightVol)>>8;
+
+		fracSrcPos += scale;
+		// Keep fracSrcPos in range to avoid float precision loss over time
+		if (fracSrcPos >= (float)totalSamples)
+			fracSrcPos -= (float)totalSamples;
+	}
+}
+
+
 
 void S_PaintChannels( int endtime ) {
 	int	i;
@@ -305,6 +364,13 @@ void S_PaintChannels( int endtime ) {
 			ltime = s_paintedtime;
 			sc = ch->thesfx;
 
+			if (sc->iSoundLengthInSamples <= 0) {
+				Com_Printf(S_COLOR_RED "S_PaintChannels: bad iSoundLengthInSamples=%d for '%s' (compression=%d)\n",
+					sc->iSoundLengthInSamples, sc->sSoundName, sc->eSoundCompressionMethod);
+				ch->thesfx = NULL;
+				continue;
+			}
+
 			sampleOffset = ltime - ch->startSample;
 			count = end - ltime;
 			if ( sampleOffset + count > sc->iSoundLengthInSamples ) {
@@ -329,23 +395,31 @@ void S_PaintChannels( int endtime ) {
 			if (sc->pSoundData == NULL || sc->iSoundLengthInSamples == 0) {
 				continue;
 			}
-			// we might have to make two passes if it
-			// is a looping sound effect and the end of
-			// the sample is hit
-			do {
-				sampleOffset = (ltime % sc->iSoundLengthInSamples);
 
+			if (ch->doppler && sc->eSoundCompressionMethod == ct_16) {
+				// Doppler-shifted painting: variable step rate through source samples
 				count = end - ltime;
-				if ( sampleOffset + count > sc->iSoundLengthInSamples) {
-					count = sc->iSoundLengthInSamples - sampleOffset;
-				}
-
 				if ( count > 0 ) {
-					ChannelPaint(ch, sc, count, sampleOffset, ltime - s_paintedtime);
-					ltime += count;
+					sampleOffset = (ltime % sc->iSoundLengthInSamples);
+					S_PaintLoopChannelDoppler16(ch, sc, count, sampleOffset, ltime - s_paintedtime);
 				}
+			} else {
+				// Normal painting: 1:1 sample rate with loop wrapping
+				do {
+					sampleOffset = (ltime % sc->iSoundLengthInSamples);
 
-			} while ( ltime < end);
+					count = end - ltime;
+					if ( sampleOffset + count > sc->iSoundLengthInSamples) {
+						count = sc->iSoundLengthInSamples - sampleOffset;
+					}
+
+					if ( count > 0 ) {
+						ChannelPaint(ch, sc, count, sampleOffset, ltime - s_paintedtime);
+						ltime += count;
+					}
+
+				} while ( ltime < end);
+			}
 		}
 
 		// transfer out according to DMA format

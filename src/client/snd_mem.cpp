@@ -156,8 +156,18 @@ ResampleSfx
 resample / decimate to the current source rate
 ================
 */
+static inline short ResampleSfx_GetSample(byte *pData, int iInWidth, int index)
+{
+	if (iInWidth == 2) {
+		return LittleShort( ((short *)pData)[index] );
+	} else {
+		// from [0,255] to [-32768,32767] range
+		return (short)( ( (int)pData[index] << 8 ) - 0x8000 );
+	}
+}
+
 static
-void ResampleSfx (sfx_t *sfx, int iInRate, int iInWidth, byte *pData)
+void ResampleSfx (sfx_t *sfx, int iInRate, int iInWidth, byte *pData, int iChannels, int iTargetRate = 0)
 {
 	int		iOutCount;
 	int		iSrcSample;
@@ -166,11 +176,36 @@ void ResampleSfx (sfx_t *sfx, int iInRate, int iInWidth, byte *pData)
 	short	iSample;
 	unsigned int uiSampleFrac, uiFracStep;	// uiSampleFrac MUST be unsigned, or large samples (eg music tracks) crash
 
-	fStepScale = (float)iInRate / dma.speed;	// this is usually 0.5, 1, or 2
+	if (iTargetRate == 0) iTargetRate = dma.speed;
+	fStepScale = (float)iInRate / iTargetRate;	// this is usually 0.5, 1, or 2
 
-	// When stepscale is > 1 (we're downsampling), we really ought to run a low pass filter on the samples
+	// If stereo input, we need to consume frames at the input rate, but output mono samples.
+	// We mix down stereo to mono on the fly.
+	// Step scale is per FRAME (time), not per SAMPLE index.
+	
+	// If channels not specified, assume 1
+	if (iChannels <= 0) iChannels = 1;
 
-	iOutCount = (int)(sfx->iSoundLengthInSamples / fStepScale);
+	// Use lambda to get mono sample
+	auto GetMonoSample = [=](int frameIndex) -> int {
+		int val = 0;
+		// frameBase is the starting byte offset or sample offset? ResampleSfx_GetSample takes INDEX into pData array of UNITS.
+		// If iInWidth is 2, index is index of short.
+		// So frameIndex=k. Channels=2. Frame starts at k*2.
+		// L = k*2. R = k*2+1.
+		
+		int baseIndex = frameIndex * iChannels;
+		for (int c = 0; c < iChannels; c++) {
+			val += ResampleSfx_GetSample(pData, iInWidth, baseIndex + c);
+		}
+		// Average
+		return val / iChannels;
+	};
+
+	iOutCount = (int)((sfx->iSoundLengthInSamples / iChannels) / fStepScale);
+	int iInFrameCount = sfx->iSoundLengthInSamples / iChannels; // number of sample frames (L+R = 1 frame)
+
+	// Update length to reflect number of MONO samples
 	sfx->iSoundLengthInSamples = iOutCount;
 
 	sfx->pSoundData = (short *) SND_malloc( sfx->iSoundLengthInSamples*2 ,sfx );
@@ -182,15 +217,36 @@ void ResampleSfx (sfx_t *sfx, int iInRate, int iInWidth, byte *pData)
 	for (i=0 ; i<sfx->iSoundLengthInSamples ; i++)
 	{
 		iSrcSample = uiSampleFrac >> 8;
-		uiSampleFrac += uiFracStep;
-		if (iInWidth == 2) {
-			iSample = LittleShort ( ((short *)pData)[iSrcSample] );
-		} else {
-			// from [0,255] to [-32768,32767] range
-			iSample = ( (int) pData[iSrcSample] << 8 ) - 0x8000;
+		int iFrac  = uiSampleFrac & 0xFF;  // fractional part (0-255)
+		uiSampleFrac += uiFracStep; 
+
+		// Linear Interpolation
+		short iSample0 = (short)GetMonoSample(iSrcSample);
+		short iSample1 = (short)( (iSrcSample + 1 < iInFrameCount)
+			? GetMonoSample(iSrcSample + 1)
+			: iSample0 );
+		
+		int iVal = iSample0 + ((iSample1 - iSample0) * iFrac / 256);
+
+		// Anti-aliasing for downsampling
+		if (fStepScale > 1.0f) {
+			int iFilterRange = (int)fStepScale;
+			if (iFilterRange > 1) {
+				int iSum = iVal; 
+				int iCount = 1;
+				for (int j = 1; j < iFilterRange; j++) {
+					if (iSrcSample + j < iInFrameCount) {
+						iSum += GetMonoSample(iSrcSample + j);
+						iCount++;
+					}
+				}
+				iVal = iSum / iCount;
+			}
 		}
 
+		iSample = (short)iVal;
 		sfx->pSoundData[i] = iSample;
+
 
 		// work out max vol for this sample...
 		//
@@ -214,7 +270,7 @@ void S_LoadSound_Finalize(wavinfo_t	*info, sfx_t *sfx, byte *data)
 
 	sfx->eSoundCompressionMethod = ct_16;
 	sfx->iSoundLengthInSamples	 = info->samples;
-	ResampleSfx( sfx, info->rate, info->width, data + info->dataofs );
+	ResampleSfx( sfx, info->rate, info->width, data + info->dataofs, info->channels );
 }
 
 
@@ -432,7 +488,21 @@ static qboolean S_LoadSound_Actual( sfx_t *sfx )
 									info.format, info.rate, info.width, info.channels, info.samples, info.dataofs
 								);
 
-				S_LoadSound_Finalize(&info,sfx,pbUnpackBuffer);
+#ifdef USE_OPENAL
+				if (s_UseOpenAL)
+				{
+					sfx->eSoundCompressionMethod = ct_16;
+					sfx->iSoundLengthInSamples = info.samples;
+					// Resample to dma.speed (44100 Hz) using the same linear
+					// interpolation the DMA mixer path uses.  This preserves
+					// the gentle HF rolloff inherent to linear-interpolation
+					// upsampling, keeping the bass/treble balance identical to
+					// the software mixer.
+					ResampleSfx( sfx, info.rate, info.width, pbUnpackBuffer + info.dataofs, info.channels );
+				}
+				else
+#endif
+					S_LoadSound_Finalize(&info,sfx,pbUnpackBuffer);
 
 #ifdef USE_OPENAL
 				// Open AL
@@ -445,8 +515,8 @@ static qboolean S_LoadSound_Actual( sfx_t *sfx )
 					alGenBuffers(1, &Buffer);
 					if (alGetError() == AL_NO_ERROR)
 					{
-						// Copy audio data to AL Buffer
-						alBufferData(Buffer, AL_FORMAT_MONO16, sfx->pSoundData, sfx->iSoundLengthInSamples*2, 22050);
+						// Upload at dma.speed — matches the DMA path's resampled rate
+						alBufferData(Buffer, AL_FORMAT_MONO16, sfx->pSoundData, sfx->iSoundLengthInSamples*2, dma.speed);
 						if (alGetError() == AL_NO_ERROR)
 						{
 							sfx->Buffer = Buffer;
@@ -501,7 +571,17 @@ static qboolean S_LoadSound_Actual( sfx_t *sfx )
 		sfx->eSoundCompressionMethod= ct_16;
 		sfx->iSoundLengthInSamples	= info.samples;
 		sfx->pSoundData = NULL;
-		ResampleSfx( sfx, info.rate, info.width, data + info.dataofs );
+
+#ifdef USE_OPENAL
+		// Both paths resample to dma.speed (44100 Hz) using the same
+		// linear-interpolation upsampling in ResampleSfx.  This preserves
+		// the gentle high-frequency rolloff of linear interpolation which
+		// keeps the bass/treble balance identical to the DMA mixer path.
+		if (s_UseOpenAL)
+			ResampleSfx( sfx, info.rate, info.width, data + info.dataofs, info.channels );
+		else
+#endif
+		ResampleSfx( sfx, info.rate, info.width, data + info.dataofs, info.channels );
 
 #ifdef USE_OPENAL
 		// Open AL
@@ -514,8 +594,8 @@ static qboolean S_LoadSound_Actual( sfx_t *sfx )
 			alGenBuffers(1, &Buffer);
 			if (alGetError() == AL_NO_ERROR)
 			{
-				// Copy audio data to AL Buffer
-				alBufferData(Buffer, AL_FORMAT_MONO16, sfx->pSoundData, sfx->iSoundLengthInSamples*2, 22050);
+				// Upload at dma.speed — matches the DMA path's resampled rate
+				alBufferData(Buffer, AL_FORMAT_MONO16, sfx->pSoundData, sfx->iSoundLengthInSamples*2, dma.speed);
 				if (alGetError() == AL_NO_ERROR)
 				{
 					// Store AL Buffer in sfx struct, and release sample data

@@ -139,9 +139,13 @@ cvar_t		*s_musicVolume;
 cvar_t		*s_musicMult;
 cvar_t		*s_separation;
 cvar_t		*s_doppler;
+cvar_t		*s_hrtf;
 cvar_t		*s_s_language;
 cvar_t		*s_muteWhenMinimized;
 cvar_t		*s_muteWhenUnfocused;
+cvar_t		*s_occlusion;
+
+#define DOPPLER_SPEED_OF_SOUND 13500.0f  // ~343 m/s in game units/sec (1 unit ~ 1 inch)
 
 static loopSound_t		loopSounds[MAX_GENTITIES];
 static	channel_t		*freelist = NULL;
@@ -162,11 +166,134 @@ ALfloat		listener_pos[3];		// Listener Position
 ALfloat		listener_ori[6];		// Listener Orientation
 int			s_numChannels;			// Number of AL Sources == Num of Channels
 short		s_rawdata[MAX_RAW_SAMPLES*4];	// Used for Raw Samples (Music etc...)
+// Sound occlusion via EFX per-source lowpass filters
+static ALuint    s_occlusionFilters[MAX_CHANNELS]; // per-source EFX lowpass filters
+static float     s_occlusionFactor[MAX_CHANNELS];  // 1.0 = clear line of sight, 0.0 = fully occluded
+
+// EFX constants (avoid dependency on efx.h which may not be available everywhere)
+#ifndef AL_DIRECT_FILTER
+#define AL_DIRECT_FILTER                         0x20005
+#endif
+#ifndef AL_AUXILIARY_SEND_FILTER
+#define AL_AUXILIARY_SEND_FILTER                  0x20006
+#endif
+#ifndef AL_FILTER_TYPE
+#define AL_FILTER_TYPE                           0x8001
+#endif
+#ifndef AL_FILTER_NULL
+#define AL_FILTER_NULL                           0x0000
+#endif
+#ifndef AL_FILTER_LOWPASS
+#define AL_FILTER_LOWPASS                        0x0001
+#endif
+#ifndef AL_LOWPASS_GAIN
+#define AL_LOWPASS_GAIN                          0x0001
+#endif
+#ifndef AL_LOWPASS_GAINHF
+#define AL_LOWPASS_GAINHF                        0x0002
+#endif
+#ifndef AL_EFFECT_TYPE
+#define AL_EFFECT_TYPE                           0x8001
+#endif
+#ifndef AL_EFFECT_EQUALIZER
+#define AL_EFFECT_EQUALIZER                      0x000C
+#endif
+#ifndef AL_EQUALIZER_LOW_GAIN
+#define AL_EQUALIZER_LOW_GAIN                    0x0001
+#endif
+#ifndef AL_EQUALIZER_LOW_CUTOFF
+#define AL_EQUALIZER_LOW_CUTOFF                  0x0002
+#endif
+#ifndef AL_EQUALIZER_HIGH_GAIN
+#define AL_EQUALIZER_HIGH_GAIN                   0x0009
+#endif
+#ifndef AL_EQUALIZER_HIGH_CUTOFF
+#define AL_EQUALIZER_HIGH_CUTOFF                 0x000A
+#endif
+#ifndef AL_EFFECTSLOT_EFFECT
+#define AL_EFFECTSLOT_EFFECT                     0x0001
+#endif
+#ifndef AL_EFFECTSLOT_NULL
+#define AL_EFFECTSLOT_NULL                       0x0000
+#endif
+#ifndef AL_LINEAR_DISTANCE_CLAMPED
+#define AL_LINEAR_DISTANCE_CLAMPED               0xD004
+#endif
+#ifndef AL_INVERSE_DISTANCE
+#define AL_INVERSE_DISTANCE                      0xD001
+#endif
+#ifndef AL_INVERSE_DISTANCE_CLAMPED
+#define AL_INVERSE_DISTANCE_CLAMPED              0xD002
+#endif
+
+// EFX function pointers (loaded at runtime for portability)
+typedef void (AL_APIENTRY *PFN_alGenFilters)(ALsizei, ALuint*);
+typedef void (AL_APIENTRY *PFN_alDeleteFilters)(ALsizei, const ALuint*);
+typedef void (AL_APIENTRY *PFN_alFilteri)(ALuint, ALenum, ALint);
+typedef void (AL_APIENTRY *PFN_alFilterf)(ALuint, ALenum, ALfloat);
+typedef void (AL_APIENTRY *PFN_alGenEffects)(ALsizei, ALuint*);
+typedef void (AL_APIENTRY *PFN_alDeleteEffects)(ALsizei, const ALuint*);
+typedef void (AL_APIENTRY *PFN_alEffecti)(ALuint, ALenum, ALint);
+typedef void (AL_APIENTRY *PFN_alEffectf)(ALuint, ALenum, ALfloat);
+typedef void (AL_APIENTRY *PFN_alGenAuxiliaryEffectSlots)(ALsizei, ALuint*);
+typedef void (AL_APIENTRY *PFN_alDeleteAuxiliaryEffectSlots)(ALsizei, const ALuint*);
+typedef void (AL_APIENTRY *PFN_alAuxiliaryEffectSloti)(ALuint, ALenum, ALint);
+static PFN_alGenFilters    s_alGenFilters = NULL;
+static PFN_alDeleteFilters s_alDeleteFilters = NULL;
+static PFN_alFilteri       s_alFilteri = NULL;
+static PFN_alFilterf       s_alFilterf = NULL;
+static PFN_alGenEffects    s_alGenEffects = NULL;
+static PFN_alDeleteEffects s_alDeleteEffects = NULL;
+static PFN_alEffecti       s_alEffecti = NULL;
+static PFN_alEffectf       s_alEffectf = NULL;
+static PFN_alGenAuxiliaryEffectSlots    s_alGenAuxiliaryEffectSlots = NULL;
+static PFN_alDeleteAuxiliaryEffectSlots s_alDeleteAuxiliaryEffectSlots = NULL;
+static PFN_alAuxiliaryEffectSloti       s_alAuxiliaryEffectSloti = NULL;
+static qboolean            s_efxAvailable = qfalse;
 
 channel_t *S_OpenALPickChannel(int entnum, int entchannel);
 void UpdateSingleShotSounds();
 void UpdateLoopingSounds();
 void UpdateRawSamples();
+
+#define OPENAL_REFERENCE_DISTANCE ((float)SOUND_FULLVOLUME)
+#define OPENAL_MAX_DISTANCE ((float)(SOUND_FULLVOLUME + ((1.0f / SOUND_ATTENUATE) * 1.20f)))
+static float S_AL_ManualDistanceAttenuation(const float *srcPos, qboolean srcRelative)
+{
+	if (srcRelative)
+		return 1.0f;
+
+	float dx = srcPos[0] - listener_pos[0];
+	float dy = srcPos[1] - listener_pos[1];
+	float dz = srcPos[2] - listener_pos[2];
+	float dist = sqrtf(dx*dx + dy*dy + dz*dz);
+
+	float nearDist = OPENAL_REFERENCE_DISTANCE;
+	float farDist = OPENAL_MAX_DISTANCE;
+
+	if (dist <= nearDist)
+		return 1.0f;
+	if (dist >= farDist)
+		return 0.0f;
+
+	// Smoothstep attenuation: perceptually smooth rolloff from 1.0 to 0.0
+	// with continuous endpoints (no volume discontinuity at the boundary).
+	float t = (dist - nearDist) / (farDist - nearDist); // 0..1
+	float atten = 1.0f - t * t * (3.0f - 2.0f * t);
+
+	return atten;
+}
+
+static void S_AL_ApplyDistanceModel(void)
+{
+	// Use AL_NONE to disable OpenAL's built-in distance attenuation.
+	// We compute distance attenuation manually via S_AL_ManualDistanceAttenuation()
+	// and apply it to AL_GAIN, which gives us a smoother custom rolloff curve.
+	// OpenAL still uses source positions for HRTF directional processing.
+	alGetError();
+	alDistanceModel(AL_NONE);
+	alGetError();
+}
 
 #ifndef WIN32
 #define LPEAXMANAGER int
@@ -267,6 +394,281 @@ void S_SoundInfo_f(void) {
 }
 
 
+#ifdef USE_OPENAL
+/*
+================
+S_EFX_Init
+
+Load EFX extension function pointers at runtime.
+================
+*/
+static void S_EFX_Init(void)
+{
+	ALCdevice *device = alcGetContextsDevice(alcGetCurrentContext());
+	if (!device || !alcIsExtensionPresent(device, "ALC_EXT_EFX")) {
+		Com_Printf("OpenAL EFX: extension not available\n");
+		s_efxAvailable = qfalse;
+		return;
+	}
+
+	s_alGenFilters    = (PFN_alGenFilters)alGetProcAddress("alGenFilters");
+	s_alDeleteFilters = (PFN_alDeleteFilters)alGetProcAddress("alDeleteFilters");
+	s_alFilteri       = (PFN_alFilteri)alGetProcAddress("alFilteri");
+	s_alFilterf       = (PFN_alFilterf)alGetProcAddress("alFilterf");
+	s_alGenEffects    = (PFN_alGenEffects)alGetProcAddress("alGenEffects");
+	s_alDeleteEffects = (PFN_alDeleteEffects)alGetProcAddress("alDeleteEffects");
+	s_alEffecti       = (PFN_alEffecti)alGetProcAddress("alEffecti");
+	s_alEffectf       = (PFN_alEffectf)alGetProcAddress("alEffectf");
+	s_alGenAuxiliaryEffectSlots    = (PFN_alGenAuxiliaryEffectSlots)alGetProcAddress("alGenAuxiliaryEffectSlots");
+	s_alDeleteAuxiliaryEffectSlots = (PFN_alDeleteAuxiliaryEffectSlots)alGetProcAddress("alDeleteAuxiliaryEffectSlots");
+	s_alAuxiliaryEffectSloti       = (PFN_alAuxiliaryEffectSloti)alGetProcAddress("alAuxiliaryEffectSloti");
+
+	if (s_alGenFilters && s_alDeleteFilters && s_alFilteri && s_alFilterf &&
+		s_alGenEffects && s_alDeleteEffects && s_alEffecti && s_alEffectf &&
+		s_alGenAuxiliaryEffectSlots && s_alDeleteAuxiliaryEffectSlots && s_alAuxiliaryEffectSloti) {
+		s_efxAvailable = qtrue;
+		Com_Printf("OpenAL EFX: loaded all functions\n");
+	} else {
+		s_efxAvailable = qfalse;
+		Com_Printf("OpenAL EFX: failed to load functions\n");
+	}
+}
+
+static void S_UpdateSourceDirectFilter(int idx); // forward declaration
+
+/*
+================
+S_Occlusion_Init
+
+Create per-source EFX lowpass filters for combined HRTF + occlusion.
+Called after OpenAL sources are created in S_Init.
+================
+*/
+static void S_Occlusion_Init(void)
+{
+	memset(s_occlusionFilters, 0, sizeof(s_occlusionFilters));
+	for (int i = 0; i < MAX_CHANNELS; i++)
+		s_occlusionFactor[i] = 1.0f;
+
+	if (!s_efxAvailable)
+		return;
+
+	int created = 0;
+	for (int i = 0; i < s_numChannels; i++) {
+		s_alGenFilters(1, &s_occlusionFilters[i]);
+		if (alGetError() != AL_NO_ERROR) {
+			s_occlusionFilters[i] = 0;
+			continue;
+		}
+		s_alFilteri(s_occlusionFilters[i], AL_FILTER_TYPE, AL_FILTER_LOWPASS);
+		s_alFilterf(s_occlusionFilters[i], AL_LOWPASS_GAIN, 1.0f);
+		s_alFilterf(s_occlusionFilters[i], AL_LOWPASS_GAINHF, 1.0f);
+		if (alGetError() != AL_NO_ERROR) {
+			s_alDeleteFilters(1, &s_occlusionFilters[i]);
+			s_occlusionFilters[i] = 0;
+		} else {
+			created++;
+		}
+	}
+
+	if (created > 0)
+		Com_Printf("Sound occlusion: created %d per-source EFX filters\n", created);
+}
+
+/*
+================
+S_Occlusion_Shutdown
+
+Delete per-source occlusion filters.
+================
+*/
+static void S_Occlusion_Shutdown(void)
+{
+	if (!s_efxAvailable)
+		return;
+
+	for (int i = 0; i < MAX_CHANNELS; i++) {
+		if (s_occlusionFilters[i]) {
+			s_alDeleteFilters(1, &s_occlusionFilters[i]);
+			s_occlusionFilters[i] = 0;
+		}
+		s_occlusionFactor[i] = 1.0f;
+	}
+}
+
+/*
+================
+S_UpdateSourceDirectFilter
+
+Set the AL_DIRECT_FILTER for a single source based on occlusion state.
+Only applies a lowpass filter when occlusion is enabled and active.
+================
+*/
+static void S_UpdateSourceDirectFilter(int idx)
+{
+	if (!s_efxAvailable || !s_occlusionFilters[idx])
+		return;
+
+	// Only apply direct lowpass filtering when occlusion is enabled.
+	// HRTF spatialization is handled entirely by OpenAL Soft internally
+	// and does not need any EFX filters.
+	if (!(s_occlusion && s_occlusion->integer)) {
+		alSourcei(s_channels[idx].alSource, AL_DIRECT_FILTER, AL_FILTER_NULL);
+		if (alGetError() != AL_NO_ERROR) {
+			Com_DPrintf("S_UpdateSourceDirectFilter: error clearing filter on source %d\n", idx);
+		}
+		return;
+	}
+
+	float gain = 1.0f;
+	float gainHF = 1.0f;
+
+	// Occlusion contribution
+	float occ = s_occlusionFactor[idx];
+	if (occ < 1.0f) {
+		// Fully occluded: keep audibility while still sounding blocked
+		gain *= 0.35f + 0.65f * occ;
+		gainHF *= 0.25f + 0.75f * occ;
+	}
+
+	// Clamp to valid OpenAL ranges
+	if (gain < 0.0f) gain = 0.0f;
+	if (gain > 1.0f) gain = 1.0f;
+	if (gainHF < 0.0f) gainHF = 0.0f;
+	if (gainHF > 1.0f) gainHF = 1.0f;
+
+	// If filter is effectively transparent, bypass it entirely to avoid
+	// unnecessary EFX processing coloration.
+	if (gain >= 0.999f && gainHF >= 0.999f) {
+		alSourcei(s_channels[idx].alSource, AL_DIRECT_FILTER, AL_FILTER_NULL);
+		if (alGetError() != AL_NO_ERROR) {
+			Com_DPrintf("S_UpdateSourceDirectFilter: error clearing filter on source %d\n", idx);
+		}
+		return;
+	}
+
+	alGetError(); // clear
+	s_alFilterf(s_occlusionFilters[idx], AL_LOWPASS_GAIN, gain);
+	s_alFilterf(s_occlusionFilters[idx], AL_LOWPASS_GAINHF, gainHF);
+	if (alGetError() != AL_NO_ERROR) {
+		Com_DPrintf("S_UpdateSourceDirectFilter: error setting filter params for ch %d\n", idx);
+	}
+	alSourcei(s_channels[idx].alSource, AL_DIRECT_FILTER, s_occlusionFilters[idx]);
+	if (alGetError() != AL_NO_ERROR) {
+		Com_DPrintf("S_UpdateSourceDirectFilter: error applying filter to source %d\n", idx);
+	}
+}
+
+/*
+================
+S_Occlusion_UpdateAllSources
+
+Perform CM_BoxTrace from listener to each playing source and update
+per-source occlusion filters. Called once per frame from S_Respatialize.
+================
+*/
+static void S_Occlusion_UpdateAllSources(void)
+{
+	if (!s_UseOpenAL || !s_efxAvailable)
+		return;
+
+	if (!s_occlusion || !s_occlusion->integer)
+		return;
+
+	// Listener origin in Quake coordinates
+	// listener_pos[] is in OpenAL coords: [quake_x, quake_z, -quake_y]
+	vec3_t listenerQ;
+	listenerQ[0] = listener_pos[0];
+	listenerQ[1] = -listener_pos[2];
+	listenerQ[2] = listener_pos[1];
+
+	vec3_t mins = {0, 0, 0};
+	vec3_t maxs = {0, 0, 0};
+
+	int numOccluded = 0;
+	int numChecked = 0;
+
+	for (int i = 1; i < s_numChannels; i++) { // skip channel 0 (music)
+		channel_t *ch = &s_channels[i];
+
+		if (!ch->bPlaying || !ch->thesfx) {
+			// Reset occlusion for inactive channels
+			if (s_occlusionFactor[i] < 1.0f) {
+				s_occlusionFactor[i] = 1.0f;
+				S_UpdateSourceDirectFilter(i);
+			}
+			continue;
+		}
+
+		// Head-relative sounds (listener entity) are never occluded
+		if (ch->entnum == listener_number) {
+			if (s_occlusionFactor[i] < 1.0f) {
+				s_occlusionFactor[i] = 1.0f;
+				S_UpdateSourceDirectFilter(i);
+			}
+			continue;
+		}
+
+		// Get source position in Quake coordinates
+		vec3_t sourceQ;
+		if (ch->fixed_origin) {
+			VectorCopy(ch->origin, sourceQ);
+		} else if (ch->entnum >= 0 && ch->entnum < MAX_GENTITIES) {
+			VectorCopy(loopSounds[ch->entnum].origin, sourceQ);
+		} else {
+			// Invalid entity, skip
+			s_occlusionFactor[i] = 1.0f;
+			S_UpdateSourceDirectFilter(i);
+			continue;
+		}
+
+		// Skip if source position is at world origin (likely uninitialized)
+		if (sourceQ[0] == 0.0f && sourceQ[1] == 0.0f && sourceQ[2] == 0.0f) {
+			s_occlusionFactor[i] = 1.0f;
+			S_UpdateSourceDirectFilter(i);
+			continue;
+		}
+
+		float targetFactor = 1.0f;
+
+		// Point trace from listener to source through world brushes
+		trace_t tr;
+		CM_BoxTrace(&tr, listenerQ, sourceQ, mins, maxs, 0, CONTENTS_SOLID, qfalse);
+
+		numChecked++;
+
+		if (tr.fraction < 1.0f) {
+			targetFactor = 0.35f; // partially occluded target to avoid over-muffling
+			numOccluded++;
+		}
+
+		// Smooth interpolation to avoid popping
+		float lerpRate = 0.15f;
+		s_occlusionFactor[i] += (targetFactor - s_occlusionFactor[i]) * lerpRate;
+
+		// Snap to target when close enough
+		if (fabsf(s_occlusionFactor[i] - targetFactor) < 0.01f)
+			s_occlusionFactor[i] = targetFactor;
+
+		S_UpdateSourceDirectFilter(i);
+	}
+
+	if (s_show->integer >= 2 && numChecked > 0) {
+		// Show per-source occlusion factors for the first few active sources
+		char buf[256] = "";
+		int len = 0;
+		for (int i = 1; i < s_numChannels && len < 200; i++) {
+			if (s_channels[i].bPlaying && s_channels[i].thesfx && s_channels[i].entnum != listener_number) {
+				int n = snprintf(buf + len, sizeof(buf) - len, " [%d]=%.2f", i, s_occlusionFactor[i]);
+				if (n > 0) len += n;
+			}
+		}
+		Com_Printf("S_Occlusion: %d/%d occluded%s\n", numOccluded, numChecked, buf);
+	}
+}
+
+#endif
+
 
 /*
 ================
@@ -297,7 +699,9 @@ void S_Init( void )
 
 	s_separation = Cvar_Get("s_separation", "0.5", CVAR_ARCHIVE | CVAR_GLOBAL);
 	s_doppler = Cvar_Get("s_doppler", "1", CVAR_ARCHIVE | CVAR_GLOBAL);
-	s_khz = Cvar_Get("s_khz", "22", CVAR_ARCHIVE | CVAR_GLOBAL);
+	s_hrtf = Cvar_Get("s_hrtf", "1", CVAR_ARCHIVE | CVAR_GLOBAL);
+	s_occlusion = Cvar_Get("s_occlusion", "0", CVAR_ARCHIVE | CVAR_GLOBAL);
+	s_khz = Cvar_Get("s_khz", "44", CVAR_ARCHIVE | CVAR_GLOBAL);
 	s_mixahead = Cvar_Get("s_mixahead", "0.2", CVAR_ARCHIVE | CVAR_GLOBAL);
 
 	s_mixPreStep = Cvar_Get("s_mixPreStep", "0.05", CVAR_ARCHIVE | CVAR_GLOBAL);
@@ -326,7 +730,7 @@ void S_Init( void )
 	Cmd_AddCommand("soundstop", S_StopAllSounds);
 
 #ifdef USE_OPENAL
-	cv = Cvar_Get("s_UseOpenAL", "0", CVAR_ARCHIVE | CVAR_LATCH | CVAR_GLOBAL);
+	cv = Cvar_Get("s_UseOpenAL", "1", CVAR_ARCHIVE | CVAR_LATCH | CVAR_GLOBAL);
 	s_UseOpenAL = !!(cv->integer);
 
 	if (s_UseOpenAL)
@@ -365,28 +769,59 @@ void S_Init( void )
 
 		InitEAXManager();
 
+		// Load EFX filter functions for occlusion support
+		S_EFX_Init();
+
 		if (!s_bEAX)
 		{
-			// on Linux we use OpenAL without EAX -> emulate the fallback linear sound system
-			alDistanceModel(AL_LINEAR_DISTANCE_CLAMPED);
+			// Use native OpenAL distance attenuation
+			S_AL_ApplyDistanceModel();
 		}
+
+		// Configure HRTF if requested and the extension is available (OpenAL Soft)
+		// Only reset the device when s_hrtf is enabled — unnecessary resets can
+		// alter the device's internal mixing pipeline and affect frequency response.
+		if (s_hrtf->integer) {
+			if (alcIsExtensionPresent(ALCDevice, "ALC_SOFT_HRTF")) {
+				LPALCRESETDEVICESOFT alcResetDevice = (LPALCRESETDEVICESOFT)alcGetProcAddress(ALCDevice, "alcResetDeviceSOFT");
+				if (alcResetDevice) {
+					// Enable HRTF and disable the output limiter.
+					// The limiter is a compressor that OpenAL Soft enables by default
+					// with HRTF — it squashes dynamics and reduces perceived brightness,
+					// making everything sound dull. Disabling it restores clarity.
+					ALCint hrtfAttribs[] = {
+						ALC_HRTF_SOFT, ALC_TRUE,
+						ALC_OUTPUT_LIMITER_SOFT, ALC_FALSE,
+						0
+					};
+					if (alcResetDevice(ALCDevice, hrtfAttribs)) {
+						ALCint hrtfState;
+						alcGetIntegerv(ALCDevice, ALC_HRTF_SOFT, 1, &hrtfState);
+						Com_Printf("OpenAL HRTF: %s (output limiter disabled)\n", hrtfState ? "enabled" : "disabled");
+					} else {
+						Com_Printf("OpenAL HRTF: alcResetDeviceSOFT failed\n");
+					}
+				}
+			} else {
+				Com_Printf("OpenAL HRTF: ALC_SOFT_HRTF extension not available\n");
+			}
+		}
+
+		// Configure OpenAL Doppler effect
+		alSpeedOfSound(DOPPLER_SPEED_OF_SOUND);
+		alDopplerFactor(s_doppler->integer ? 1.0f : 0.0f);
 
 		memset(s_channels, 0, sizeof(s_channels));
 
 		s_numChannels = 0;
 
-		// Create as many AL Sources (up to 32) as possible
-		for (i = 0; i < 32; i++)
+		// Create as many AL Sources (up to MAX_CHANNELS) as possible
+		for (i = 0; i < MAX_CHANNELS; i++)
 		{
 			alGenSources(1, &s_channels[i].alSource);
 			if (alGetError() != AL_NO_ERROR)
 			{
 				// Reached limit of sources
-				break;
-			}
-			alSourcef(s_channels[i].alSource, AL_REFERENCE_DISTANCE, 400.0f);
-			if (alGetError() != AL_NO_ERROR)
-			{
 				break;
 			}
 			s_numChannels++;
@@ -397,6 +832,46 @@ void S_Init( void )
 			ALenum alDirectChannelsSoft = alGetEnumValue("AL_DIRECT_CHANNELS_SOFT");
 			alSourcei(s_channels[0].alSource, alDirectChannelsSoft, AL_TRUE);
 		}
+
+		// Select the highest-quality resampler available in OpenAL Soft.
+		// Sound buffers are uploaded at dma.speed (44100 Hz) after being
+		// resampled with the same linear interpolation the DMA path uses.
+		// OpenAL still needs to resample 44100→device rate (e.g. 48000 Hz);
+		// using bsinc24 for this small ratio keeps the final conversion
+		// transparent without introducing any additional rolloff.
+		if (alIsExtensionPresent("AL_SOFT_source_resampler") == AL_TRUE) {
+			LPALGETSTRINGISOFT palGetStringiSOFT = (LPALGETSTRINGISOFT)alGetProcAddress("alGetStringiSOFT");
+			if (palGetStringiSOFT) {
+				ALint numResamplers = alGetInteger(AL_NUM_RESAMPLERS_SOFT);
+				ALint bestResampler = alGetInteger(AL_DEFAULT_RESAMPLER_SOFT);
+				const char *bestName = "default";
+
+				// Walk the list and pick the last (highest-quality) resampler.
+				// OpenAL Soft orders them from lowest to highest quality:
+				//   Point -> Linear -> Cubic -> BSinc12 -> BSinc24
+				for (ALint r = 0; r < numResamplers; r++) {
+					const ALchar *name = palGetStringiSOFT(AL_RESAMPLER_NAME_SOFT, r);
+					if (name) {
+						bestResampler = r;
+						bestName = name;
+					}
+				}
+
+				Com_Printf("OpenAL resampler: %s (index %d of %d)\n",
+					bestName, bestResampler, numResamplers);
+
+				for (i = 0; i < s_numChannels; i++) {
+					alSourcei(s_channels[i].alSource, AL_SOURCE_RESAMPLER_SOFT, bestResampler);
+				}
+				alGetError(); // clear any errors
+			}
+		}
+
+		// Initialize per-source occlusion filters (must be after source creation)
+		S_Occlusion_Init();
+
+		// No EFX filters needed for HRTF — OpenAL Soft handles it internally.
+		// The output limiter was already disabled during device reset above.
 
 		// Generate AL Buffers for streaming audio playback (used for MP3s)
 		ch = s_channels + 1;
@@ -410,8 +885,7 @@ void S_Init( void )
 			}
 		}
 
-		// Open AL will always use 22K
-		dma.speed = 22050;
+		dma.speed = 44100;
 
 		// These aren't really relevant for Open AL, but for completeness ...
 		dma.channels = 2;
@@ -436,7 +910,9 @@ void S_Init( void )
 	else
 	#endif
 	{
-		r = SNDDMA_Init(s_khz->integer);
+		// Force 44100 Hz for DMA path — minimp3 always decodes at native rate (44100 Hz)
+		// and cannot downsample during decode like the old Xing decoder could
+		r = SNDDMA_Init(44);
 		Com_Printf("------------------------------------\n");
 
 		if ( r ) {
@@ -544,6 +1020,16 @@ void S_Shutdown( void )
 #ifdef USE_OPENAL
 	if (s_UseOpenAL)
 	{
+		// Clean up per-source occlusion filters
+		S_Occlusion_Shutdown();
+
+		// Clean up per-source filters
+		if (s_efxAvailable) {
+			for (i = 0; i < s_numChannels; i++) {
+				alSourcei(s_channels[i].alSource, AL_DIRECT_FILTER, AL_FILTER_NULL);
+			}
+		}
+
 		// Release all the AL Sources (including Music channel (Source 0))
 		for (i = 0; i < s_numChannels; i++)
 		{
@@ -940,6 +1426,17 @@ void S_SpatializeOrigin (vec3_t origin, int master_vol, int *left_vol, int *righ
 	{
 		rscale = 0.5f * (1.0f + dot);
 		lscale = 0.5f * (1.0f - dot);
+
+		// Front/Back spatialization: attenuate sounds behind the listener
+		if (vec[0] < 0) {
+			// Sound is behind. 
+			// vec[0] is negative.
+			// Simple attenuation factor, e.g. 0.75
+			float backAtten = 0.75f; 
+			rscale *= backAtten;
+			lscale *= backAtten;
+		}
+
 		//rscale = s_separation->value + ( 1.0 - s_separation->value ) * dot;
 		//lscale = s_separation->value - ( 1.0 - s_separation->value ) * dot;
 		if ( rscale < 0 ) {
@@ -1389,13 +1886,7 @@ void S_StartSound(const vec3_t origin, int entityNum, int entchannel, sfxHandle_
 		ch->fixed_origin = qfalse;
 	}
 
-#ifdef USE_OPENAL
-	if (s_UseOpenAL)
-		ch->master_vol = 255;
-	else
-		ch->master_vol = 240;
-#endif
-
+	ch->master_vol = 240;
 	ch->entnum = entityNum;
 	ch->thesfx = sfx;
 	ch->startSample = START_SAMPLE_IMMEDIATE;
@@ -1664,6 +2155,31 @@ void S_AddLoopingSound( int entityNum, const vec3_t origin, const vec3_t velocit
 	loopSounds[entityNum].oldDopplerScale = 1.0;
 	loopSounds[entityNum].dopplerScale = 1.0;
 
+	if (s_doppler->integer && VectorLengthSquared(velocity) > 0.0) {
+		vec3_t dir;
+		float dist;
+
+		VectorSubtract(origin, loopSounds[listener_number].origin, dir);
+		dist = VectorNormalize(dir);
+
+		if (dist > 1.0f) {
+			// Radial velocity: positive = moving away, negative = approaching
+			float v_r = DotProduct(velocity, dir);
+			float scale = DOPPLER_SPEED_OF_SOUND / (DOPPLER_SPEED_OF_SOUND + v_r);
+			scale = Com_Clamp(0.5f, 2.0f, scale);
+
+			if (fabsf(scale - 1.0f) > 0.01f) {
+				loopSounds[entityNum].doppler = qtrue;
+				if ((loopSounds[entityNum].framenum + 1) != cls.framecount) {
+					loopSounds[entityNum].oldDopplerScale = scale;
+				} else {
+					loopSounds[entityNum].oldDopplerScale = loopSounds[entityNum].dopplerScale;
+				}
+				loopSounds[entityNum].dopplerScale = scale;
+			}
+		}
+	}
+
 #ifdef USE_OPENAL
 	if (s_UseOpenAL)
 	{
@@ -1691,26 +2207,6 @@ void S_AddLoopingSound( int entityNum, const vec3_t origin, const vec3_t velocit
 #endif
 
 	loopSounds[entityNum].sfx = sfx;
-/*
-	if (VectorLengthSquared(velocity)>0.0) {
-		vec3_t	out;
-		float	lena, lenb;
-
-		loopSounds[entityNum].doppler = qtrue;
-		lena = DistanceSquared(loopSounds[listener_number].origin, loopSounds[entityNum].origin);
-		VectorAdd(loopSounds[entityNum].origin, loopSounds[entityNum].velocity, out);
-		lenb = DistanceSquared(loopSounds[listener_number].origin, out);
-		if ((loopSounds[entityNum].framenum+1) != cls.framecount) {
-			loopSounds[entityNum].oldDopplerScale = 1.0;
-		} else {
-			loopSounds[entityNum].oldDopplerScale = loopSounds[entityNum].dopplerScale;
-		}
-		loopSounds[entityNum].dopplerScale = lenb/(lena*100);
-		if (loopSounds[entityNum].dopplerScale<0.5) {
-			loopSounds[entityNum].dopplerScale = 0.5;
-		}
-	}
-*/
 	loopSounds[entityNum].framenum = cls.framecount;
 }
 
@@ -1757,6 +2253,26 @@ void S_AddRealLoopingSound( int entityNum, const vec3_t origin, const vec3_t vel
 	loopSounds[entityNum].active = qtrue;
 	loopSounds[entityNum].kill = qfalse;
 	loopSounds[entityNum].doppler = qfalse;
+
+	if (s_doppler->integer && VectorLengthSquared(velocity) > 0.0) {
+		vec3_t dir;
+		float dist;
+
+		VectorSubtract(origin, loopSounds[listener_number].origin, dir);
+		dist = VectorNormalize(dir);
+
+		if (dist > 1.0f) {
+			float v_r = DotProduct(velocity, dir);
+			float scale = DOPPLER_SPEED_OF_SOUND / (DOPPLER_SPEED_OF_SOUND + v_r);
+			scale = Com_Clamp(0.5f, 2.0f, scale);
+
+			if (fabsf(scale - 1.0f) > 0.01f) {
+				loopSounds[entityNum].doppler = qtrue;
+				loopSounds[entityNum].oldDopplerScale = loopSounds[entityNum].dopplerScale;
+				loopSounds[entityNum].dopplerScale = scale;
+			}
+		}
+	}
 }
 
 
@@ -2110,6 +2626,45 @@ void S_Respatialize( int entityNum, const vec3_t head, vec3_t axis[3], int inwat
 		listener_ori[5] = -axis[2][1];
 		alListenerfv(AL_ORIENTATION, listener_ori);
 
+		// Update doppler factor cvar
+		alDopplerFactor(s_doppler->integer ? 1.0f : 0.0f);
+		S_AL_ApplyDistanceModel();
+		// Note: We intentionally do NOT set listener velocity. OpenAL Doppler should only
+		// come from source velocity on moving loop sounds. Setting listener velocity would
+		// cause every static sound to pitch-shift as the player moves, which sounds wrong
+		// in practice (the player is always moving in an FPS).
+		{
+			ALfloat zeroVel[3] = {0.0f, 0.0f, 0.0f};
+			alListenerfv(AL_VELOCITY, zeroVel);
+		}
+
+		// Check if s_hrtf cvar changed at runtime and apply
+		// Only call alcResetDeviceSOFT when actually toggling HRTF on/off
+		{
+			static int s_lastHrtfValue = 1;
+			if (s_hrtf->integer != s_lastHrtfValue) {
+				ALCdevice *device = alcGetContextsDevice(alcGetCurrentContext());
+				if (device && alcIsExtensionPresent(device, "ALC_SOFT_HRTF")) {
+					LPALCRESETDEVICESOFT alcResetDevice = (LPALCRESETDEVICESOFT)alcGetProcAddress(device, "alcResetDeviceSOFT");
+					if (alcResetDevice) {
+						// When enabling HRTF, also disable the output limiter to preserve
+						// clarity. When disabling HRTF, let OpenAL use its defaults.
+						ALCint hrtfAttribs[] = {
+							ALC_HRTF_SOFT, s_hrtf->integer ? ALC_TRUE : ALC_FALSE,
+							ALC_OUTPUT_LIMITER_SOFT, s_hrtf->integer ? ALC_FALSE : ALC_TRUE,
+							0
+						};
+						if (alcResetDevice(device, hrtfAttribs)) {
+							ALCint hrtfState;
+							alcGetIntegerv(device, ALC_HRTF_SOFT, 1, &hrtfState);
+							Com_Printf("OpenAL HRTF: %s\n", hrtfState ? "enabled" : "disabled");
+						}
+					}
+				}
+				s_lastHrtfValue = s_hrtf->integer;
+			}
+		}
+
 		// Update EAX effects here
 		if (s_bEALFileLoaded)
 		{
@@ -2162,6 +2717,9 @@ void S_Respatialize( int entityNum, const vec3_t head, vec3_t axis[3], int inwat
 				}
 			}
 		}
+
+		// Update per-source occlusion (raycasts + filter application)
+		S_Occlusion_UpdateAllSources();
 	}
 	else
 #endif
@@ -2189,7 +2747,26 @@ void S_Respatialize( int entityNum, const vec3_t head, vec3_t axis[3], int inwat
 					VectorCopy( loopSounds[ ch->entnum ].origin, origin );
 				}
 
-				S_SpatializeOrigin (origin, ch->master_vol, &ch->leftvol, &ch->rightvol);
+				// Occlusion for DMA path (Quality: Medium-High, Perf: Variable)
+				// Simple raycast check
+				float fVolMult = 1.0f;
+				if (s_occlusion->integer)
+				{
+					trace_t tr;
+					vec3_t zero = {0,0,0};
+					// Trace from listener to source
+					// MASK_SOLID | CONTENTS_WATER? Just MASK_SOLID for walls.
+					CM_BoxTrace(&tr, listener_origin, origin, zero, zero, 0, MASK_SOLID, qfalse);
+					
+					if (tr.fraction < 1.0f) {
+						// Occluded
+						// Reduce volume. Low-pass filter is too complex for this simple mixer modification,
+						// so just attenuate volume.
+						fVolMult = 0.4f; // 60% reduction
+					}
+				}
+
+				S_SpatializeOrigin (origin, (int)(ch->master_vol * fVolMult), &ch->leftvol, &ch->rightvol);
 			}
 		}
 
@@ -2426,32 +3003,35 @@ void S_Update_(void) {
 
 			alSourcefv(s_channels[source].alSource, AL_POSITION, pos);
 			alSourcei(s_channels[source].alSource, AL_LOOPING, AL_FALSE);
+			// Debug: print distance info for sounds
+			if (s_show->integer >= 1)
+			{
+				float dx = pos[0] - listener_pos[0];
+				float dy = pos[1] - listener_pos[1];
+				float dz = pos[2] - listener_pos[2];
+				ALint srcRelative = 0;
+				alGetSourcei(s_channels[source].alSource, AL_SOURCE_RELATIVE, &srcRelative);
+				float dist = sqrtf(dx*dx + dy*dy + dz*dz);
+				Com_Printf("SND: ch%d '%s' pos(%.0f,%.0f,%.0f) dist=%.0f relative=%d entchan=%d\n",
+					source, ch->thesfx->sSoundName, pos[0], pos[1], pos[2], dist, srcRelative, ch->entchannel);
+			}
 
-			if (s_bEAX)
- 			{
-					alSourcef(s_channels[source].alSource, AL_REFERENCE_DISTANCE, 400.f);
-					alSourcef(s_channels[source].alSource, AL_GAIN, ((float)(ch->master_vol) * s_volume->value) / 255.f);
+			// 510 = 255 * 2: the factor of 2 matches the DMA mixer's linear
+			// stereo panning which splits energy 0.5 per ear for centered sources.
+			float baseGain = ((float)(ch->master_vol) * s_volume->value) / 510.f;
+			ALint srcRelative = 0;
+			alGetSourcei(s_channels[source].alSource, AL_SOURCE_RELATIVE, &srcRelative);
+			float distAtten = S_AL_ManualDistanceAttenuation(pos, srcRelative ? qtrue : qfalse);
+			alSourcef(s_channels[source].alSource, AL_GAIN, baseGain * distAtten);
 
-					if (s_bEALFileLoaded)
-						UpdateEAXBuffer(ch);
-            }
- 			else
- 			{
-				// emulate the fallback linear sound system with OpenAL
-				// the distance values are taken from S_SpatializeOrigin and converted for OpenAL
-				if (ch->entchannel == CHAN_VOICE)
-				{
-					alSourcef(s_channels[source].alSource, AL_REFERENCE_DISTANCE, 768.0f);
-					alSourcef(s_channels[source].alSource, AL_MAX_DISTANCE, 2018.0f);
-					alSourcef(s_channels[source].alSource, AL_GAIN, ((float)(ch->master_vol) * s_volume->value) / 255.0f);
-				}
-				else
-				{
-					alSourcef(s_channels[source].alSource, AL_REFERENCE_DISTANCE, 256.f);
-					alSourcef(s_channels[source].alSource, AL_MAX_DISTANCE, 1506.f);
-					alSourcef(s_channels[source].alSource, AL_GAIN, ((float)(ch->master_vol) * s_volume->value) / 255.f);
-				}
- 			}
+			if (s_show->integer >= 1)
+				Com_Printf("SND: ch%d gain=%.3f (base=%.3f * atten=%.3f)\n", source, baseGain * distAtten, baseGain, distAtten);
+
+			if (s_bEAX && s_bEALFileLoaded)
+				UpdateEAXBuffer(ch);
+
+			// Apply occlusion + HRTF direct filter for this source
+			S_UpdateSourceDirectFilter(source);
 
 			int nBytesDecoded = 0;
 			int nTotalBytesDecoded = 0;
@@ -2467,12 +3047,12 @@ void S_Update_(void) {
 				for (i = 0; i < NUM_STREAMING_BUFFERS; i++)
 					ch->buffers[i].Status = UNQUEUED;
 
-				// Decode (STREAMING_BUFFER_SIZE / 1152) MP3 frames for each of the NUM_STREAMING_BUFFERS AL Buffers
+				// Decode (STREAMING_BUFFER_SIZE / STREAMING_FRAME_SIZE) MP3 frames for each of the NUM_STREAMING_BUFFERS AL Buffers
 				for (i = 0; i < NUM_STREAMING_BUFFERS; i++)
 				{
 					nTotalBytesDecoded = 0;
 
-					for (j = 0; j < (STREAMING_BUFFER_SIZE / 1152); j++)
+					for (j = 0; j < (STREAMING_BUFFER_SIZE / STREAMING_FRAME_SIZE); j++)
 					{
 						nBytesDecoded = C_MP3Stream_Decode(&ch->MP3StreamHeader);
 
@@ -2498,8 +3078,9 @@ void S_Update_(void) {
 
 				for (i = 0; i < nBuffersToAdd; i++)
 				{
-					// Copy decoded data to AL Buffer
-					alBufferData(ch->buffers[i].BufferID, AL_FORMAT_MONO16, ch->buffers[i].Data, STREAMING_BUFFER_SIZE, 22050);
+					// Copy decoded data to AL Buffer (use actual MP3 sample rate, minimp3 decodes at native rate)
+					int streamRate = ch->MP3StreamHeader.iSampleRate ? ch->MP3StreamHeader.iSampleRate : dma.speed;
+					alBufferData(ch->buffers[i].BufferID, AL_FORMAT_MONO16, ch->buffers[i].Data, STREAMING_BUFFER_SIZE, streamRate);
 
 					// Queue AL Buffer on Source
 					alSourceQueueBuffers(s_channels[source].alSource, 1, &(ch->buffers[i].BufferID));
@@ -2534,6 +3115,53 @@ void S_Update_(void) {
 				alSourcePlay(s_channels[source].alSource);
 				if (alGetError() == AL_NO_ERROR)
 					s_channels[source].bPlaying = true;
+			}
+		}
+
+		// Keep attenuation/spatial position updated for active channels each frame
+		for (i = 1, ch = s_channels + 1; i < s_numChannels; i++, ch++)
+		{
+			if (!ch->bPlaying || !ch->thesfx)
+				continue;
+
+			source = ch - s_channels;
+			if (ch->fixed_origin)
+			{
+				pos[0] = ch->origin[0];
+				pos[1] = ch->origin[2];
+				pos[2] = -ch->origin[1];
+				alSourcei(s_channels[source].alSource, AL_SOURCE_RELATIVE, AL_FALSE);
+			}
+			else if (ch->entnum == listener_number)
+			{
+				pos[0] = 0.0f;
+				pos[1] = 0.0f;
+				pos[2] = 0.0f;
+				alSourcei(s_channels[source].alSource, AL_SOURCE_RELATIVE, AL_TRUE);
+			}
+			else
+			{
+				pos[0] = loopSounds[ch->entnum].origin[0];
+				pos[1] = loopSounds[ch->entnum].origin[2];
+				pos[2] = -loopSounds[ch->entnum].origin[1];
+				alSourcei(s_channels[source].alSource, AL_SOURCE_RELATIVE, AL_FALSE);
+			}
+
+			alSourcefv(s_channels[source].alSource, AL_POSITION, pos);
+
+			ALint srcRelative = 0;
+			alGetSourcei(s_channels[source].alSource, AL_SOURCE_RELATIVE, &srcRelative);
+			float distAtten = S_AL_ManualDistanceAttenuation(pos, srcRelative ? qtrue : qfalse);
+			float baseGain = ((float)(ch->master_vol) * s_volume->value) / 510.f;
+			alSourcef(s_channels[source].alSource, AL_GAIN, baseGain * distAtten);
+
+			// Update velocity for looping sounds (needed for Doppler each frame)
+			if (ch->bLooping && s_doppler->integer && ch->entnum != listener_number) {
+				float vel[3];
+				vel[0] = loopSounds[ch->entnum].velocity[0];
+				vel[1] = loopSounds[ch->entnum].velocity[2];
+				vel[2] = -loopSounds[ch->entnum].velocity[1];
+				alSourcefv(s_channels[source].alSource, AL_VELOCITY, vel);
 			}
 		}
 
@@ -2612,6 +3240,7 @@ void UpdateSingleShotSounds()
 				if (loopSounds[ch->entnum].active == false)
 				{
 					alSourceStop(s_channels[i].alSource);
+					alSourcei(s_channels[i].alSource, AL_BUFFER, 0);
 
 					s_channels[i].bPlaying = false;
 					s_channels[i].thesfx = NULL;
@@ -2690,7 +3319,7 @@ void UpdateSingleShotSounds()
 							{
 								nTotalBytesDecoded = 0;
 
-								for (k = 0; k < (STREAMING_BUFFER_SIZE / 1152); k++)
+								for (k = 0; k < (STREAMING_BUFFER_SIZE / STREAMING_FRAME_SIZE); k++)
 								{
 									nBytesDecoded = C_MP3Stream_Decode(&ch->MP3StreamHeader);
 									if (nBytesDecoded > 0)
@@ -2713,8 +3342,11 @@ void UpdateSingleShotSounds()
 								{
 									memset(ch->buffers[j].Data + nTotalBytesDecoded, 0, (STREAMING_BUFFER_SIZE - nTotalBytesDecoded));
 
-									// Move data to buffer
-									alBufferData(ch->buffers[j].BufferID, AL_FORMAT_MONO16, ch->buffers[j].Data, STREAMING_BUFFER_SIZE, 22050);
+									// Move data to buffer (use actual MP3 sample rate)
+									{
+									int streamRate = ch->MP3StreamHeader.iSampleRate ? ch->MP3StreamHeader.iSampleRate : dma.speed;
+									alBufferData(ch->buffers[j].BufferID, AL_FORMAT_MONO16, ch->buffers[j].Data, STREAMING_BUFFER_SIZE, streamRate);
+									}
 
 									// Queue Buffer on Source
 									alSourceQueueBuffers(ch->alSource, 1, &(ch->buffers[j].BufferID));
@@ -2726,8 +3358,11 @@ void UpdateSingleShotSounds()
 								}
 								else
 								{
-									// Move data to buffer
-									alBufferData(ch->buffers[j].BufferID, AL_FORMAT_MONO16, ch->buffers[j].Data, STREAMING_BUFFER_SIZE, 22050);
+									// Move data to buffer (use actual MP3 sample rate)
+									{
+									int streamRate = ch->MP3StreamHeader.iSampleRate ? ch->MP3StreamHeader.iSampleRate : dma.speed;
+									alBufferData(ch->buffers[j].BufferID, AL_FORMAT_MONO16, ch->buffers[j].Data, STREAMING_BUFFER_SIZE, streamRate);
+									}
 
 									// Queue Buffer on Source
 									alSourceQueueBuffers(ch->alSource, 1, &(ch->buffers[j].BufferID));
@@ -2774,7 +3409,12 @@ void UpdateLoopingSounds()
  		ch = S_PickChannel(i, CHAN_AUTO);
 
 		// Play sound on channel
-		ch->master_vol = 255;
+		// Use a lower master_vol for looping sounds than one-shots.
+		// With HRTF, mono sources are rendered coherently into both ears
+		// (binaural summation), making them perceptually ~6 dB louder
+		// than the DMA path's independent L/R stereo channels.
+		// 120 compensates for this, matching perceived loudness.
+		ch->master_vol = 120;
 		ch->entnum = i;
 		ch->thesfx = loop->sfx;
 		ch->entchannel = CHAN_AUTO;
@@ -2804,18 +3444,32 @@ void UpdateLoopingSounds()
 			alSourcei(s_channels[source].alSource, AL_SOURCE_RELATIVE, AL_FALSE);
 		}
 
-		alSourcei(s_channels[source].alSource, AL_LOOPING, AL_TRUE);
-		alSourcef(s_channels[source].alSource, AL_GAIN, (float)(ch->master_vol) * s_volume->value / 255.0f);
-
-		if (s_bEAX) {
-			alSourcef(s_channels[source].alSource, AL_REFERENCE_DISTANCE, 400.f);
+		// Set source velocity for Doppler effect
+		if (s_doppler->integer) {
+			float vel[3];
+			vel[0] = loop->velocity[0];
+			vel[1] = loop->velocity[2];
+			vel[2] = -loop->velocity[1];
+			alSourcefv(s_channels[source].alSource, AL_VELOCITY, vel);
 		} else {
-			alSourcef(s_channels[source].alSource, AL_REFERENCE_DISTANCE, 256.f);
-			alSourcef(s_channels[source].alSource, AL_MAX_DISTANCE, 1506.f);
+			float zeroVel[3] = {0.0f, 0.0f, 0.0f};
+			alSourcefv(s_channels[source].alSource, AL_VELOCITY, zeroVel);
+		}
+
+		alSourcei(s_channels[source].alSource, AL_LOOPING, AL_TRUE);
+		float baseGain = (float)(ch->master_vol) * s_volume->value / 510.0f;
+		{
+			ALint srcRelative = 0;
+			alGetSourcei(s_channels[source].alSource, AL_SOURCE_RELATIVE, &srcRelative);
+			float distAtten = S_AL_ManualDistanceAttenuation((ch->entnum == listener_number) ? ch->origin : pos, srcRelative ? qtrue : qfalse);
+			alSourcef(s_channels[source].alSource, AL_GAIN, baseGain * distAtten);
 		}
 
 		if (s_bEALFileLoaded)
 			UpdateEAXBuffer(ch);
+
+		// Apply occlusion + HRTF direct filter for this source
+		S_UpdateSourceDirectFilter(source);
 
 		alGetError();
 		alSourcePlay(s_channels[source].alSource);
@@ -2903,12 +3557,12 @@ void UpdateRawSamples()
 
 			if (size > largestBufferSize)
 			{
-				alBufferData(buffer, AL_FORMAT_STEREO16, (char*)(s_rawdata + ((iterations * largestBufferSize)>>1)), largestBufferSize, 22050);
+				alBufferData(buffer, AL_FORMAT_STEREO16, (char*)(s_rawdata + ((iterations * largestBufferSize)>>1)), largestBufferSize, dma.speed);
 				size -= largestBufferSize;
 			}
 			else
 			{
-				alBufferData(buffer, AL_FORMAT_STEREO16, (char*)(s_rawdata + ((iterations * largestBufferSize)>>1)), size, 22050);
+				alBufferData(buffer, AL_FORMAT_STEREO16, (char*)(s_rawdata + ((iterations * largestBufferSize)>>1)), size, dma.speed);
 				size = 0;
 			}
 
@@ -3240,7 +3894,7 @@ static void S_StartBackgroundTrack_Actual( MusicInfo_t *pMusicInfo, const char *
 
 				pMusicInfo->s_backgroundInfo.format		= WAV_FORMAT_MP3;	// not actually used this way, but just ensures we don't match one of the legit formats
 				pMusicInfo->s_backgroundInfo.channels	= 2;		// always, for our MP3s when used for music (else 1 for FX)
-				pMusicInfo->s_backgroundInfo.rate		= dma.speed;
+				pMusicInfo->s_backgroundInfo.rate		= pMusicInfo->streamMP3_Bgrnd.iSampleRate;
 				pMusicInfo->s_backgroundInfo.width		= 2;		// always, for our MP3s
 				pMusicInfo->s_backgroundInfo.samples	= pMusicInfo->sfxMP3_Bgrnd.iSoundLengthInSamples;
 				pMusicInfo->s_backgroundSamples			= pMusicInfo->sfxMP3_Bgrnd.iSoundLengthInSamples;
@@ -3305,8 +3959,8 @@ static void S_StartBackgroundTrack_Actual( MusicInfo_t *pMusicInfo, const char *
 			return;
 		}
 
-		if ( pMusicInfo->s_backgroundInfo.channels != 2 || pMusicInfo->s_backgroundInfo.rate != 22050 ) {
-			Com_Printf(S_COLOR_YELLOW "WARNING: music file %s is not 22k stereo\n", name );
+		if ( pMusicInfo->s_backgroundInfo.channels != 2 || (pMusicInfo->s_backgroundInfo.rate != 22050 && pMusicInfo->s_backgroundInfo.rate != 44100) ) {
+			Com_Printf(S_COLOR_YELLOW "WARNING: music file %s is not 22k/44k stereo\n", name );
 		}
 
 		if ( ( len = S_FindWavChunk( pMusicInfo->s_backgroundFile, "data" ) ) == 0 ) {

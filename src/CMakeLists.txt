@@ -363,41 +363,13 @@ if (BuildMVMP)
 	set(MVMPFiles ${MVMPFiles} ${MVMPClientFiles})
 
 	set(MVMPMP3Files
-		"${LIBDir}/mp3/config.h"
-		"${LIBDir}/mp3/copyright.h"
-		"${LIBDir}/mp3/htable.h"
-		"${LIBDir}/mp3/jdw.h"
-		"${LIBDir}/mp3/l3.h"
-		"${LIBDir}/mp3/mhead.h"
 		"${LIBDir}/mp3/mp3struct.h"
-		"${LIBDir}/mp3/port.h"
-		"${LIBDir}/mp3/small_header.h"
-		"${LIBDir}/mp3/tableawd.h"
-
-		"${LIBDir}/mp3/cdct.c"
-		"${LIBDir}/mp3/csbt.c"
-		"${LIBDir}/mp3/csbtb.c"
-		"${LIBDir}/mp3/csbtl3.c"
-		"${LIBDir}/mp3/cup.c"
-		"${LIBDir}/mp3/cupini.c"
-		"${LIBDir}/mp3/cupl1.c"
-		"${LIBDir}/mp3/cupl3.c"
-		"${LIBDir}/mp3/cwin.c"
-		"${LIBDir}/mp3/cwinb.c"
-		"${LIBDir}/mp3/cwinm.c"
-		"${LIBDir}/mp3/hwin.c"
-		"${LIBDir}/mp3/l3dq.c"
-		"${LIBDir}/mp3/l3init.c"
-		"${LIBDir}/mp3/mdct.c"
-		"${LIBDir}/mp3/mhead.c"
-		"${LIBDir}/mp3/msis.c"
 		"${LIBDir}/mp3/towave.c"
-		"${LIBDir}/mp3/uph.c"
-		"${LIBDir}/mp3/upsf.c"
-		"${LIBDir}/mp3/wavep.c"
+		"${LIBDir}/minimp3/minimp3.h"
+		"${LIBDir}/minimp3/minimp3_impl.c"
 	)
 	source_group("mp3" FILES ${MVMPMP3Files})
-	set(MVMPIncludeDirs ${MVMPIncludeDirs} "${LIBDir}/mp3")
+	set(MVMPIncludeDirs ${MVMPIncludeDirs} "${LIBDir}/mp3" "${LIBDir}/minimp3")
 	set(MVMPFiles ${MVMPFiles} ${MVMPMP3Files})
 
 	set(MVMPRendererFiles

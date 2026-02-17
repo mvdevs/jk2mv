@@ -145,6 +145,7 @@ add_custom_command(
 	COMMAND ${CMAKE_COMMAND} -E make_directory "${ASSETS_STAGING_DIR}"
 	COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/assets" "${ASSETS_STAGING_DIR}"
 	COMMAND ${CMAKE_COMMAND} -E remove_directory "${ASSETS_STAGING_DIR}/shaders/spirv"
+	COMMAND ${CMAKE_COMMAND} -E remove "${ASSETS_STAGING_DIR}/CMakeLists.txt"
 	COMMAND ${CMAKE_COMMAND} -E echo "Staging complete" > "${ASSETS_STAGING_DIR}/staging_marker.txt"
 	COMMENT "Staging source assets for pk3"
 	DEPENDS ${AssetsFiles}
@@ -173,11 +174,20 @@ add_custom_command(
 	COMMENT "Staging complete"
 )
 
+# Remove staging marker files before zipping
+add_custom_command(
+	OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/staging_clean.txt"
+	COMMAND ${CMAKE_COMMAND} -E remove "${ASSETS_STAGING_DIR}/staging_marker.txt" "${ASSETS_STAGING_DIR}/staging_complete.txt"
+	COMMAND ${CMAKE_COMMAND} -E echo "Staging cleaned" > "${CMAKE_CURRENT_BINARY_DIR}/staging_clean.txt"
+	DEPENDS "${ASSETS_STAGING_DIR}/staging_complete.txt"
+	COMMENT "Cleaning staging markers"
+)
+
 include(InstallZIP)
 add_zip_command(${CMAKE_CURRENT_BINARY_DIR}/assetsmv.pk3 ${OUTFILE}
 	DIR "${ASSETS_STAGING_DIR}"
 	FILES "."
-	DEPENDS "${ASSETS_STAGING_DIR}/staging_complete.txt"
+	DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/staging_clean.txt"
 )
 
 add_custom_target(assetsmv DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/assetsmv.pk3" "${OUTFILE}")

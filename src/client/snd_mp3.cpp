@@ -12,8 +12,7 @@
 
 
 #include "snd_mp3.h"				// only included directly by a few snd_xxxx.cpp files plus this one
-#include "mp3struct.h"	// keep this rather awful file secret from the rest of the program
-#include "copyright.h"
+#include "mp3struct.h"
 
 
 static const char sKEY_MAXVOL[]="#MAXVOL";	// formerly #defines
@@ -345,15 +344,15 @@ int MP3_GetUnpackedSize( const char *psLocalFilename, void *pvData, int iDataLen
 {
 	int	iUnpackedSize = 0;
 
-	if (qbIgnoreID3Tag || !MP3_ReadSpecialTagInfo((byte *)pvData, iDataLen, NULL, &iUnpackedSize))
-	{
-		char *psError = C_MP3_GetUnpackedSize( pvData, iDataLen, &iUnpackedSize, bStereoDesired);
+	// Always scan the file to get the actual unpacked size.
+	// The old ID3v1 #UNCOMP tag stored sizes for the Xing decoder (22050 Hz output),
+	// but minimp3 decodes at the native sample rate (44100 Hz), producing different sizes.
+	char *psError = C_MP3_GetUnpackedSize( pvData, iDataLen, &iUnpackedSize, bStereoDesired);
 
-		if (psError)
-		{
-			Com_Printf(S_COLOR_RED"%s\n(File: %s)\n",psError, psLocalFilename);
-			return 0;
-		}
+	if (psError)
+	{
+		Com_Printf(S_COLOR_RED"%s\n(File: %s)\n",psError, psLocalFilename);
+		return 0;
 	}
 
 	return iUnpackedSize;
@@ -570,7 +569,6 @@ qboolean MP3Stream_InitFromFile( sfx_t* sfx, byte *pbSrcData, int iSrcDatalen, c
 		sfx->eSoundCompressionMethod = ct_MP3;
 		sfx->fVolRange = fMaxVol;
 		//sfx->width  = 2;
-		sfx->iSoundLengthInSamples = ((iMP3UnPackedSize / 2/*sfx->width*/) / (44100 / dma.speed)) / (bStereoDesired?2:1);
 		//
 		// alloc mem for data and store it (raw MP3 in this case)...
 		//
@@ -586,6 +584,13 @@ qboolean MP3Stream_InitFromFile( sfx_t* sfx, byte *pbSrcData, int iSrcDatalen, c
 												bStereoDesired
 												);
 		SFX_MP3Stream.pbSourceData = (byte *) sfx->pSoundData;
+
+		// compute sample length using actual MP3 rate (minimp3 decodes at native rate)
+		// use int64_t to avoid overflow on longer sounds
+		{
+			int actualRate = SFX_MP3Stream.iSampleRate ? SFX_MP3Stream.iSampleRate : dma.speed;
+			sfx->iSoundLengthInSamples = (int)(((int64_t)(iMP3UnPackedSize / 2/*sfx->width*/) / (bStereoDesired?2:1)) * dma.speed / actualRate);
+		}
 		if (psError)
 		{
 			// This should never happen, since any errors or problems with the MP3 file would have stopped us getting

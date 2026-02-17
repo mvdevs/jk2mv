@@ -20,6 +20,7 @@
 #	include <AL/alc.h>
 #endif
 
+#	include <AL/alext.h>
 #	include <eax.h>
 #	include <EaxMan.h>
 #endif
@@ -89,7 +90,8 @@ typedef struct
 #endif
 
 #define NUM_STREAMING_BUFFERS	4
-#define STREAMING_BUFFER_SIZE	4608		// 4 decoded MP3 frames
+#define STREAMING_BUFFER_SIZE	9216		// 4 decoded MP3 frames at 44100 Hz (2304 bytes each)
+#define STREAMING_FRAME_SIZE	2304		// bytes per mono MP3 frame at native 44100 Hz rate
 
 #define QUEUED		1
 #define UNQUEUED	2
@@ -202,7 +204,7 @@ void	SNDDMA_Activate(qboolean activate);
 
 //====================================================================
 
-#define	MAX_CHANNELS			96
+#define	MAX_CHANNELS			128
 
 extern	channel_t   s_channels[MAX_CHANNELS];
 extern	channel_t   loop_channels[MAX_CHANNELS];
