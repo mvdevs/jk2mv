@@ -201,7 +201,9 @@ void RE_AddRefEntityToScene( const refEntity_t *ent, qboolean intShaderTime ) {
 
 		if (!ghoul2 || ghoul2->empty() || !(*ghoul2)[0].mModel)
 		{
-			DebugBreak();
+#ifdef _WIN32
+			__debugbreak();
+#endif
 		}
 	}
 #endif
@@ -320,7 +322,6 @@ void RE_AddLightToScene( const vec3_t org, float intensity, float r, float g, fl
 		if ( r_numdlights >= MAX_DLIGHTS ) {
 			return;
 		}
-		//dl = &backEnd.refdef.dlights[r_numdlights++];
 		dl = &backEndData->dlights[r_numdlights++];
 
 		dl->mType=DLIGHT_VERTICAL;
@@ -480,12 +481,12 @@ void RE_RenderScene( const refdef_t *fd ) {
 	// setup view parms for the initial view
 	//
 	// set up viewport
-	// The refdef takes 0-at-the-top y coordinates, so
-	// convert to GL's 0-at-the-bottom space
+	// The refdef takes 0-at-the-top y coordinates.
+	// Vulkan also uses 0-at-the-top, so no conversion needed.
 	//
 	Com_Memset( &parms, 0, sizeof( parms ) );
 	parms.viewportX = tr.refdef.x;
-	parms.viewportY = glConfig.vidHeight - ( tr.refdef.y + tr.refdef.height );
+	parms.viewportY = tr.refdef.y;
 	parms.viewportWidth = tr.refdef.width;
 	parms.viewportHeight = tr.refdef.height;
 	parms.isPortal = qfalse;

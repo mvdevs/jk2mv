@@ -1056,14 +1056,18 @@ void RB_CalcSpecularAlpha( unsigned char *alphas ) {
 	alphas += 3;
 
 	numVertexes = tess.numVertexes;
+
+	// hoist the entity model check out of the inner loop — it's invariant across vertices
+	qboolean useEntityLightDir = (qboolean)(backEnd.currentEntity &&
+		(backEnd.currentEntity->e.hModel || backEnd.currentEntity->e.ghoul2));
+	if (useEntityLightDir) {
+		VectorCopy(backEnd.currentEntity->lightDir, lightDir);
+	}
+
 	for (i = 0 ; i < numVertexes ; i++, v += 4, normal += 4, alphas += 4) {
 		float ilength;
 
-		if (backEnd.currentEntity &&
-			(backEnd.currentEntity->e.hModel||backEnd.currentEntity->e.ghoul2) )	//this is a model so we can use world lights instead fake light
-		{
-			VectorCopy (backEnd.currentEntity->lightDir, lightDir);
-		} else {
+		if (!useEntityLightDir) {
 			VectorSubtract( lightOrigin, v, lightDir );
 			VectorNormalizeFast( lightDir );
 		}

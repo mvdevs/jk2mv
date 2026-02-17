@@ -3,6 +3,7 @@
 //////////////////////////////////////////////////////////////////////
 //#include "../server/exe_headers.h"
 #include "tr_local.h"
+#include "vk_local.h"
 
 #include "tr_quicksprite.h"
 
@@ -57,26 +58,28 @@ void CQuickSpriteSystem::Flush(void)
 	// render the main pass
 	//
 	R_BindAnimatedImage( mTexBundle );
-	GL_State(mGLStateBits);
+	R_SetStateBits(mGLStateBits);
 
 	//
-	// set arrays and lock
+	// Vulkan: build index buffer for quads (4 verts -> 2 triangles each) and draw
 	//
-	qglTexCoordPointer( 2, GL_FLOAT, 0, mTextureCoords );
-	qglEnableClientState( GL_TEXTURE_COORD_ARRAY);
-
-	qglEnableClientState( GL_COLOR_ARRAY);
-	qglColorPointer( 4, GL_UNSIGNED_BYTE, 0, mColors );
-
-	qglVertexPointer (3, GL_FLOAT, 16, mVerts);
-
-	if ( qglLockArraysEXT )
 	{
-		qglLockArraysEXT(0, mNextVert);
-		GLimp_LogComment( "glLockArraysEXT\n" );
-	}
+		int numQuads = mNextVert / 4;
+		glIndex_t indexes[SHADER_MAX_VERTEXES / 4 * 6];
+		int ni = 0;
+		for (int q = 0; q < numQuads; q++) {
+			int base = q * 4;
+			indexes[ni++] = base + 0;
+			indexes[ni++] = base + 1;
+			indexes[ni++] = base + 2;
+			indexes[ni++] = base + 0;
+			indexes[ni++] = base + 2;
+			indexes[ni++] = base + 3;
+		}
 
-	qglDrawArrays(GL_QUADS, 0, mNextVert);
+		VK_BindPipeline( renderState.stateBits, renderState.faceCulling, qfalse, qfalse );
+		VK_DrawIndexed( mNextVert, (float*)mVerts, (float*)mTextureCoords, NULL, (byte*)mColors, ni, indexes );
+	}
 
 	backEnd.pc.c_vertexes += mNextVert;
 	backEnd.pc.c_indexes += mNextVert;
@@ -87,33 +90,35 @@ void CQuickSpriteSystem::Flush(void)
 		//
 		// render the fog pass
 		//
-		GL_Bind( tr.fogImage );
-		GL_State( GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA | GLS_DEPTHFUNC_EQUAL );
+		R_BindImage( tr.fogImage );
+		R_SetStateBits( GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA | GLS_DEPTHFUNC_EQUAL );
 
-		//
-		// set arrays and lock
-		//
-		qglTexCoordPointer( 2, GL_FLOAT, 0, mFogTextureCoords);
-//		qglEnableClientState( GL_TEXTURE_COORD_ARRAY);	// Done above
+		// Vulkan: draw fog pass with fog texture coords and solid fog color
+		{
+			byte fogColors[SHADER_MAX_VERTEXES][4];
+			for (int i = 0; i < mNextVert; i++) {
+				((unsigned int*)fogColors)[i] = mFogColor;
+			}
 
-		qglDisableClientState( GL_COLOR_ARRAY );
-		qglColor4ubv((GLubyte *)&mFogColor);
+			int numQuads = mNextVert / 4;
+			glIndex_t indexes2[SHADER_MAX_VERTEXES / 4 * 6];
+			int ni = 0;
+			for (int q = 0; q < numQuads; q++) {
+				int base = q * 4;
+				indexes2[ni++] = base + 0;
+				indexes2[ni++] = base + 1;
+				indexes2[ni++] = base + 2;
+				indexes2[ni++] = base + 0;
+				indexes2[ni++] = base + 2;
+				indexes2[ni++] = base + 3;
+			}
 
-//		qglVertexPointer (3, GL_FLOAT, 16, mVerts);	// Done above
-
-		qglDrawArrays(GL_QUADS, 0, mNextVert);
+			VK_BindPipeline( renderState.stateBits, renderState.faceCulling, qfalse, qfalse );
+			VK_DrawIndexed( mNextVert, (float*)mVerts, (float*)mFogTextureCoords, NULL, (byte*)fogColors, ni, indexes2 );
+		}
 
 		// Second pass from fog
 		backEnd.pc.c_totalIndexes += mNextVert;
-	}
-
-	//
-	// unlock arrays
-	//
-	if (qglUnlockArraysEXT)
-	{
-		qglUnlockArraysEXT();
-		GLimp_LogComment( "glUnlockArraysEXT\n" );
 	}
 
 	mNextVert=0;
@@ -136,7 +141,8 @@ void CQuickSpriteSystem::StartGroup(textureBundle_t *bundle, unsigned int glbits
 		mUseFog = qfalse;
 	}
 
-	qglDisable(GL_CULL_FACE);
+	// Vulkan: cull mode is part of the pipeline state
+	R_SetCullMode( CT_TWO_SIDED );
 }
 
 
@@ -144,8 +150,8 @@ void CQuickSpriteSystem::EndGroup(void)
 {
 	Flush();
 
-	qglColor4ub(255,255,255,255);
-	qglEnable(GL_CULL_FACE);
+	// Vulkan: restore default cull mode
+	R_SetCullMode( CT_FRONT_SIDED );
 }
 
 

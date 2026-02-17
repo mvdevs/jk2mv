@@ -1,6 +1,7 @@
 // tr_map.c
 
 #include "tr_local.h"
+#include "vk_local.h"
 
 /*
 
@@ -173,7 +174,7 @@ R_LoadLightmaps
 static	void R_LoadLightmaps( lump_t *l, const char *psMapName ) {
 	const byte		*buf, *buf_p;
 	int			len;
-	byte		image[LIGHTMAP_SIZE*LIGHTMAP_SIZE*3];
+	byte		image[LIGHTMAP_SIZE*LIGHTMAP_SIZE*4];
 	int			i, j;
 	float maxIntensity = 0;
 	double sumIntensity = 0;
@@ -216,7 +217,7 @@ static	void R_LoadLightmaps( lump_t *l, const char *psMapName ) {
 			qfalse,
 			qfalse,
 			(qboolean)!!r_ext_compressed_lightmaps->integer,
-			GL_CLAMP,
+			TEXWRAP_CLAMP,
 			PXF_RGB);
 	ri.Hunk_FreeTempMemory(emptyAtlas);
 
@@ -245,15 +246,17 @@ static	void R_LoadLightmaps( lump_t *l, const char *psMapName ) {
 
 				HSVtoRGB( intensity, 1.00, 0.50, out );
 
-				image[j*3+0] = out[0] * 255;
-				image[j*3+1] = out[1] * 255;
-				image[j*3+2] = out[2] * 255;
+				image[j*4+0] = out[0] * 255;
+				image[j*4+1] = out[1] * 255;
+				image[j*4+2] = out[2] * 255;
+				image[j*4+3] = 255;
 
 				sumIntensity += intensity;
 			}
 		} else {
 			for ( j = 0 ; j < LIGHTMAP_SIZE * LIGHTMAP_SIZE; j++ ) {
-				R_ColorShiftLightingBytes3( &buf_p[j*3], &image[j*3] );
+				R_ColorShiftLightingBytes3( &buf_p[j*3], &image[j*4] );
+				image[j*4+3] = 255;
 			}
 		}
 
@@ -265,18 +268,8 @@ static	void R_LoadLightmaps( lump_t *l, const char *psMapName ) {
 		int yoff = (currentAtlasLightmap / LIGHTMAPS_PER_ATLAS_DIMENSION) * LIGHTMAP_SIZE;
 
 		// bind atlas for current lightmap and update the atlas with the lightmap data
-		GL_Bind(tr.lightmaps[currentAtlas]);
-		qglTexSubImage2D(
-			GL_TEXTURE_2D,
-			0,
-			xoff,
-			yoff,
-			LIGHTMAP_SIZE,
-			LIGHTMAP_SIZE,
-			GL_RGB,
-			GL_UNSIGNED_BYTE,
-			image
-		);
+		// Vulkan: update the lightmap atlas sub-region
+		VK_UpdateImageSubRegion( &tr.lightmaps[currentAtlas]->vkImage, LIGHTMAP_SIZE, LIGHTMAP_SIZE, xoff, yoff, image );
 	}
 
 	if ( r_lightmap->integer == 2 )	{
@@ -800,8 +793,6 @@ void R_FixSharedVertexLodError_r( int start, srfGridMesh_t *grid1 ) {
 		if (touch) {
 			grid2->lodFixed = 2;
 			R_FixSharedVertexLodError_r ( start, grid2 );
-			//NOTE: this would be correct but makes things really slow
-			//grid2->lodFixed = 1;
 		}
 	}
 }

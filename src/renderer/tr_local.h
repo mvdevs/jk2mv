@@ -6,14 +6,67 @@
 #include "tr_public.h"
 
 #ifndef DEDICATED
-#include "qgl.h"
-#include "glext.h"
+#include <vulkan/vulkan.h>
+
+// Internal renderer constants for format tracking, texture mode bookkeeping,
+// and shader parsing. These are pure integer values - no GL API is used.
+
+// Image format constants (for internalFormat bookkeeping)
+#define IMGFMT_RGB                          0x1907
+#define IMGFMT_RGBA                         0x1908
+#define IMGFMT_RGBA8                        0x8058
+#define IMGFMT_RGB8                         0x8051
+#define IMGFMT_RGBA4                        0x8056
+#define IMGFMT_RGB5                         0x8050
+#define IMGFMT_S3TC                         0x83A1
+#define IMGFMT_BGR                          0x80E0
+#define IMGFMT_DXT1                         0x83F0
+#define IMGFMT_DXT5                         0x83F3
+
+// Texture wrap mode constants
+#define TEXWRAP_REPEAT                      0x2901
+#define TEXWRAP_CLAMP                       0x2900
+#define TEXWRAP_CLAMP_TO_EDGE               0x812F
+
+// Texture filter constants
+#define TEXFILTER_NEAREST                   0x2600
+#define TEXFILTER_LINEAR                    0x2601
+#define TEXFILTER_NEAREST_MIPMAP_NEAREST    0x2700
+#define TEXFILTER_LINEAR_MIPMAP_NEAREST     0x2701
+#define TEXFILTER_NEAREST_MIPMAP_LINEAR     0x2702
+#define TEXFILTER_LINEAR_MIPMAP_LINEAR      0x2703
+
+// Texture environment mode constants
+#define TEXENV_MODULATE                     0x2100
+#define TEXENV_ADD                          0x0104
+#define TEXENV_DECAL                        0x2101
+
+// Draw buffer constants
+#define DRAWBUF_FRONT                       0x0404
+#define DRAWBUF_BACK                        0x0405
+#define DRAWBUF_BACK_LEFT                   0x0402
+#define DRAWBUF_BACK_RIGHT                  0x0403
+
 #else
-typedef unsigned int GLuint;
-typedef int GLenum;
+// dedicated server - no rendering
 #endif
 
-#define GL_INDEX_TYPE		GL_UNSIGNED_INT
+// Vulkan image handle stored per-texture
+#ifndef DEDICATED
+typedef struct {
+	VkImage			image;
+	VkDeviceMemory	memory;
+	VkImageView		view;
+	VkSampler		sampler;
+	VkDescriptorSet	descriptorSet;
+} vkImage_t;
+#else
+typedef struct {
+	int				dummy;		// placeholder for dedicated server builds
+} vkImage_t;
+#endif
+
+#define R_INDEX_TYPE		0x1405  // unsigned int index type
 typedef unsigned int glIndex_t;
 
 // everything that is needed by the backend needs
@@ -96,8 +149,6 @@ typedef struct {
 	int	minimize, maximize;
 } textureMode_t;
 
-extern	int				gl_filter_min, gl_filter_max;
-
 const textureMode_t *GetTextureMode( const char *name );
 
 #define MAX_MIP_LEVELS 10
@@ -114,7 +165,6 @@ typedef struct image_s {
 	char		imgName[MAX_QPATH];		// game path, including extension
 	int			width, height;				// source image
 	int			uploadWidth, uploadHeight;	// after power of two and picmip but not including clamp to MAX_TEXTURE_SIZE
-	GLuint		texnum;					// gl texture binding
 
 	int			frameUsed;			// for texture usage in frame statistics
 
@@ -122,9 +172,12 @@ typedef struct image_s {
 	int			TMU;				// only needed for voodoo2
 
 	upload_t	upload;
-	int			wrapClampMode;		// GL_CLAMP or GL_REPEAT
+	int			wrapClampMode;		// TEXWRAP_CLAMP or TEXWRAP_REPEAT
 
 	int			iLastLevelUsedOn;
+
+	qboolean	mipmap;				// whether this image has mipmaps
+	vkImage_t	vkImage;			// Vulkan image handles
 
 } image_t;
 
@@ -458,7 +511,7 @@ typedef struct shader_s {
 
 	float		portalRange;			// distance to fog out at
 
-	int			multitextureEnv;		// 0, GL_MODULATE, GL_ADD (FIXME: put in stage)
+	int			multitextureEnv;		// 0, TEXENV_MODULATE, TEXENV_ADD (FIXME: put in stage)
 
 	cullType_t	cullType;				// CT_FRONT_SIDED, CT_BACK_SIDED, or CT_TWO_SIDED
 	qboolean	polygonOffset;			// set for decals and other items that must be offset
@@ -969,15 +1022,17 @@ typedef struct {
 #define FUNCTABLE_MASK		(FUNCTABLE_SIZE-1)
 
 
-// the renderer front end should never modify glstate_t
+// the renderer front end should never modify renderState_t
 typedef struct {
 	int			currenttextures[2];
 	int			currenttmu;
 	qboolean	finishCalled;
 	int			texEnv[2];
 	int			faceCulling;
-	unsigned int	glStateBits;
-} glstate_t;
+	unsigned int	stateBits;
+	qboolean	multiTexture;	// qtrue when drawing with two texture units (lightmap/multitex)
+	qboolean	polygonOffset;	// qtrue when polygon offset (depth bias) is active
+} renderState_t;
 
 
 typedef struct {
@@ -1050,20 +1105,7 @@ typedef struct {
 	image_t					*whiteImage;			// full of 0xff
 	image_t					*identityLightImage;	// full of tr.identityLightByte
 
-	// Handle to the Glow Effect Vertex Shader. - AReis
-	GLuint					glowVShader;
-
-	// Handle to the Glow Effect Pixel Shader. - AReis
-	GLuint					glowPShader;
-
-	// Image the glowing objects are rendered to. - AReis
-	GLuint					screenGlow;
-
-	// A rectangular texture representing the normally rendered scene.
-	GLuint					sceneImage;
-
-	// Image used to downsample and blur scene to.	- AReis
-	GLuint					blurImage;
+	// Glow and blur are handled via vk.glow resources in Vulkan
 
 	shader_t				*defaultShader;
 	shader_t				*shadowShader;
@@ -1140,9 +1182,7 @@ typedef struct {
 	qboolean				levelshot;
 	char					levelshotName[MAX_OSPATH];
 
-	// gamma correction
-	GLuint gammaVertexShader, gammaPixelShader;
-	GLuint gammaLUTImage;
+	// gamma correction is handled via Vulkan post-process pipeline or SDL hardware gamma
 } trGlobals_t;
 
 
@@ -1156,25 +1196,18 @@ void	 R_Images_DeleteImage(image_t *pImage);
 extern backEndState_t	backEnd;
 extern trGlobals_t	tr;
 extern glconfig_t	glConfig;		// outside of TR since it shouldn't be cleared during ref re-init
-extern glstate_t	glState;		// outside of TR since it shouldn't be cleared during ref re-init
+extern renderState_t	renderState;	// outside of TR since it shouldn't be cleared during ref re-init
 extern window_t		glWindow;
 
 //
 // cvars
 //
-extern cvar_t	*r_flareSize;
-extern cvar_t	*r_flareFade;
-
 extern cvar_t	*r_ignore;				// used for debugging anything
-extern cvar_t	*r_verbose;				// used for verbose debug spew
+extern cvar_t	*r_verbose;
 extern cvar_t	*r_ignoreFastPath;		// allows us to ignore our Tess fast paths
 
 extern cvar_t	*r_znear;				// near Z clip plane
 
-extern cvar_t	*r_stencilbits;			// number of desired stencil bits
-extern cvar_t	*r_depthbits;			// number of desired depth bits
-extern cvar_t	*r_colorbits;			// number of desired color bits, only relevant for fullscreen
-extern cvar_t	*r_stereo;				// desired pixelformat stereo flag
 extern cvar_t	*r_texturebits;			// number of desired texture bits
 										// 0 = use framebuffer depth
 										// 16 = use 16-bit textures
@@ -1193,7 +1226,6 @@ extern cvar_t	*r_primitives;			// "0" = based on compiled vertex array existance
 										// "2" = glDrawElements triangles
 										// "-1" = no drawing
 
-extern cvar_t	*r_inGameVideo;				// controls whether in game video should be draw
 extern cvar_t	*r_fastsky;				// controls whether sky should be cleared or drawn
 extern cvar_t	*r_drawSun;				// controls drawing of sun quad
 extern cvar_t	*r_dynamiclight;		// dynamic lights enabled/disabled
@@ -1229,15 +1261,7 @@ extern cvar_t	*r_gamma;
 extern cvar_t	*r_gammamethod;			// gamma correction
 extern cvar_t	*r_displayRefresh;		// optional display refresh option
 
-extern cvar_t	*r_allowExtensions;				// global enable/disable of OpenGL extensions
-extern cvar_t	*r_ext_compressed_textures;		// these control use of specific extensions
-extern cvar_t	*r_ext_compressed_lightmaps;	// turns on compression of lightmaps, off by default
-extern cvar_t	*r_ext_preferred_tc_method;
-extern cvar_t	*r_ext_gamma_control;
-extern cvar_t	*r_ext_texenv_op;
-extern cvar_t	*r_ext_multitexture;
-extern cvar_t	*r_ext_compiled_vertex_array;
-extern cvar_t	*r_ext_texture_env_add;
+extern cvar_t	*r_ext_compressed_lightmaps;
 extern cvar_t	*r_ext_texture_filter_anisotropic;
 
 extern cvar_t	*r_DynamicGlow;
@@ -1250,7 +1274,6 @@ extern cvar_t	*r_DynamicGlowHeight;
 
 extern	cvar_t	*r_nobind;						// turns off binding to appropriate textures
 extern	cvar_t	*r_singleShader;				// make most world faces use default shader
-extern	cvar_t	*r_colorMipLevels;				// development aid to see texture mip usage
 extern	cvar_t	*r_picmip;						// controls picmip values
 extern	cvar_t	*r_finish;
 extern	cvar_t	*r_drawBuffer;
@@ -1281,14 +1304,10 @@ extern	cvar_t	*r_portalOnly;
 extern	cvar_t	*r_subdivisions;
 extern	cvar_t	*r_lodCurveError;
 extern	cvar_t	*r_skipBackEnd;
-
-extern	cvar_t	*r_ignoreGLErrors;
-
 extern	cvar_t	*r_overBrightBits;
 
 extern	cvar_t	*r_debugSurface;
 extern	cvar_t	*r_simpleMipMaps;
-extern	cvar_t	*r_openglMipMaps;
 
 extern	cvar_t	*r_showImages;
 extern	cvar_t	*r_debugSort;
@@ -1349,16 +1368,15 @@ int R_CullLocalPointAndRadius( vec3_t origin, float radius );
 void R_RotateForEntity( const trRefEntity_t *ent, const viewParms_t *viewParms, orientationr_t *ori );
 
 /*
-** GL wrapper/helper functions
+** Renderer state wrapper functions
 */
-void	GL_Bind( image_t *image );
-void	GL_SetDefaultState (void);
-void	GL_SelectTexture( int unit );
-void	GL_TextureMode( const char *string );
-void	GL_CheckErrors( void );
-void	GL_State( unsigned int stateVector );
-void	GL_TexEnv( int env );
-void	GL_Cull( int cullType );
+void	R_BindImage( image_t *image );
+void	R_SetDefaultState (void);
+void	R_SelectTexture( int unit );
+void	R_SetTextureMode( const char *string );
+void	R_SetStateBits( unsigned int stateVector );
+void	R_SetTexEnv( int env );
+void	R_SetCullMode( int cullType );
 
 #define GLS_SRCBLEND_ZERO						0x00000001
 #define GLS_SRCBLEND_ONE						0x00000002
@@ -1582,20 +1600,6 @@ qboolean R_inPVS( const vec3_t p1, const vec3_t p2 );
 /*
 ============================================================
 
-FLARES
-
-============================================================
-*/
-
-void R_ClearFlares( void );
-
-void RB_AddFlare( void *surface, int fogNum, vec3_t point, vec3_t color, vec3_t normal );
-void RB_AddDlightFlares( void );
-void RB_RenderFlares (void);
-
-/*
-============================================================
-
 LIGHTS
 
 ============================================================
@@ -1630,7 +1634,6 @@ SKIES
 void R_BuildCloudData( shaderCommands_t *shader );
 void R_InitSkyTexCoords( float cloudLayerHeight );
 void R_DrawSkyBox( shaderCommands_t *shader );
-void RB_DrawSun( void );
 void RB_ClipSkyPolygons( shaderCommands_t *shader );
 #endif
 /*
@@ -1726,6 +1729,7 @@ Ghoul2 Insert End
 void	R_TransformModelToClip( const vec3_t src, const float *modelMatrix, const float *projectionMatrix,
 							vec4_t eye, vec4_t dst );
 void	R_TransformClipToWindow( const vec4_t clip, const viewParms_t *view, vec4_t normalized, vec4_t window );
+void	myGlMultMatrix( const float *a, const float *b, float *out );
 
 void	RB_DeformTessGeometry( void );
 
@@ -1843,7 +1847,7 @@ typedef struct {
 	byte	*buffer;
 	int		bufSize;
 	int		padding;
-	GLenum	format;
+	int		format;  // pixel format
 } readPixelsCommand_t;
 
 typedef enum {
@@ -1936,11 +1940,7 @@ void RB_DrawSurfaceSprites( shaderStage_t *stage, shaderCommands_t *input);
 #endif
 
 static inline int Q_ftol( float f ) {
-#if 0 // original win32 client
-	return lrintf( f );
-#else // original mac client, jk2mv so far
 	return (int) f;
-#endif
 }
 
 // must match Q_ftol behaviour!

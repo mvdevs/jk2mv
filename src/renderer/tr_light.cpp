@@ -244,13 +244,18 @@ static void R_SetupEntityLightingGrid( trRefEntity_t *ent ) {
 				{
 					const byte	style = data->styles[j];
 
-					ent->ambientLight[0] += factor * data->ambientLight[j][0] * styleColors[style][0] / 255.0f;
-					ent->ambientLight[1] += factor * data->ambientLight[j][1] * styleColors[style][1] / 255.0f;
-					ent->ambientLight[2] += factor * data->ambientLight[j][2] * styleColors[style][2] / 255.0f;
+					const float inv255 = 1.0f / 255.0f;
+					float sc0 = styleColors[style][0] * inv255;
+					float sc1 = styleColors[style][1] * inv255;
+					float sc2 = styleColors[style][2] * inv255;
 
-					ent->directedLight[0] += factor * data->directLight[j][0] * styleColors[style][0] / 255.0f;
-					ent->directedLight[1] += factor * data->directLight[j][1] * styleColors[style][1] / 255.0f;
-					ent->directedLight[2] += factor * data->directLight[j][2] * styleColors[style][2] / 255.0f;
+					ent->ambientLight[0] += factor * data->ambientLight[j][0] * sc0;
+					ent->ambientLight[1] += factor * data->ambientLight[j][1] * sc1;
+					ent->ambientLight[2] += factor * data->ambientLight[j][2] * sc2;
+
+					ent->directedLight[0] += factor * data->directLight[j][0] * sc0;
+					ent->directedLight[1] += factor * data->directLight[j][1] * sc1;
+					ent->directedLight[2] += factor * data->directLight[j][2] * sc2;
 				}
 				else
 				{
@@ -362,13 +367,18 @@ static void R_SetupEntityLightingGrid( trRefEntity_t *ent ) {
 				{
 					const byte	style= data->styles[j];
 
-					ent->ambientLight[0] += factor * data->ambientLight[j][0] * styleColors[style][0] / 255.0f;
-					ent->ambientLight[1] += factor * data->ambientLight[j][1] * styleColors[style][1] / 255.0f;
-					ent->ambientLight[2] += factor * data->ambientLight[j][2] * styleColors[style][2] / 255.0f;
+					const float inv255 = 1.0f / 255.0f;
+					float sc0 = styleColors[style][0] * inv255;
+					float sc1 = styleColors[style][1] * inv255;
+					float sc2 = styleColors[style][2] * inv255;
 
-					ent->directedLight[0] += factor * data->directLight[j][0] * styleColors[style][0] / 255.0f;
-					ent->directedLight[1] += factor * data->directLight[j][1] * styleColors[style][1] / 255.0f;
-					ent->directedLight[2] += factor * data->directLight[j][2] * styleColors[style][2] / 255.0f;
+					ent->ambientLight[0] += factor * data->ambientLight[j][0] * sc0;
+					ent->ambientLight[1] += factor * data->ambientLight[j][1] * sc1;
+					ent->ambientLight[2] += factor * data->ambientLight[j][2] * sc2;
+
+					ent->directedLight[0] += factor * data->directLight[j][0] * sc0;
+					ent->directedLight[1] += factor * data->directLight[j][1] * sc1;
+					ent->directedLight[2] += factor * data->directLight[j][2] * sc2;
 				}
 				else
 				{
@@ -483,14 +493,7 @@ void R_SetupEntityLighting( const trRefdef_t *refdef, trRefEntity_t *ent ) {
 		VectorCopy( tr.sunDirection, ent->lightDir );
 	}
 
-	// bonus items and view weapons have a fixed minimum add
-	if ( 1 /* ent->e.renderfx & RF_MINLIGHT */ ) {
-		// give everything a minimum light add
-		ent->ambientLight[0] += tr.identityLight * 32;
-		ent->ambientLight[1] += tr.identityLight * 32;
-		ent->ambientLight[2] += tr.identityLight * 32;
-	}
-
+	// give everything a minimum light add
 	if (ent->e.renderfx & RF_MINLIGHT)
 	{ //the minlight flag is now for items rotating on their holo thing
 		if (ent->e.shaderRGBA[0] == 255 &&

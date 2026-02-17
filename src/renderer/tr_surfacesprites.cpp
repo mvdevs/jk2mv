@@ -231,14 +231,11 @@ static void R_SurfaceSpriteFrameUpdate(void)
 
 	if (targetspeed>0)
 	{
-//		ang[YAW] += cosf(tr.refdef.time*0.01+flrand(-1.0,1.0))*targetspeed*0.5;
-//		ang[PITCH] += sinf(tr.refdef.time*0.01+flrand(-1.0,1.0))*targetspeed*0.5;
 	}
 
 	// Get the grass wind vector first
 	AngleVectors(ang, targetWindGrassDir, NULL, NULL);
 	targetWindGrassDir[2]-=1.0f;
-//		VectorScale(targetWindGrassDir, targetspeed, targetWindGrassDir);
 
 	// Now get the general wind vector (no pitch)
 	ang[PITCH]=0;
@@ -1235,7 +1232,6 @@ static void RB_DrawEffectSurfaceSprites( shaderStage_t *stage, shaderCommands_t 
 		// Formula for alpha is 1.0f - ((len-fade)/(cut-fade))
 		// Which is equal to (1.0+fade/(cut-fade)) - (len/(cut-fade))
 		// So mult=1/(cut-fade), and base=(1+fade*mult).
-	//	SSVertAlpha[curvert] = fadebase - (VectorLength(dist) * fademult);
 
 	}
 
@@ -1390,9 +1386,7 @@ static void RB_DrawEffectSurfaceSprites( shaderStage_t *stage, shaderCommands_t 
 	}
 }
 
-extern void R_WorldToLocal (vec3_t world, vec3_t localVec) ;
-extern float preTransEntMatrix[16], invEntMatrix[16];
-extern void R_InvertMatrix(float *sourcemat, float *destmat);
+extern void R_WorldNormalToEntity (vec3_t worldvec, vec3_t entvec);
 
 void RB_DrawSurfaceSprites( shaderStage_t *stage, shaderCommands_t *input)
 {

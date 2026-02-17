@@ -250,7 +250,7 @@ Client-Side
 
 :Name: r_dynamicGlow
 :Values: "0", "1"
-:Default: "0"
+:Default: "1"
 :Description:
    Enable / Disable dynamic glow effect.
 

@@ -151,6 +151,9 @@ typedef enum graphicsApi_e
 
 	// Only OpenGL needs special treatment..
 	GRAPHICS_API_OPENGL,
+
+	// Vulkan rendering backend
+	GRAPHICS_API_VULKAN,
 } graphicsApi_t;
 
 // Graphics API

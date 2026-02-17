@@ -2,93 +2,6 @@
 
 // tr_shader.c -- this file deals with the parsing and definition of shaders
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Vertex and Pixel Shader definitions.	- AReis
-/***********************************************************************************************************/
-// This vertex shader basically passes through most values and calculates no lighting. The only
-// unusual thing it does is add the inputed texel offsets to all four texture units (this allows
-// nearest neighbor pixel peeking).
-#ifndef DEDICATED
-static const char g_strGlowVShaderARB[] =
-{
-	"!!ARBvp1.0\
-	\
-	# Input.\n\
-	ATTRIB	iPos		= vertex.position;\
-	ATTRIB	iColor		= vertex.color;\
-	ATTRIB	iTex0		= vertex.texcoord[0];\
-	ATTRIB	iTex1		= vertex.texcoord[1];\
-	ATTRIB	iTex2		= vertex.texcoord[2];\
-	ATTRIB	iTex3		= vertex.texcoord[3];\
-	\
-	# Output.\n\
-	OUTPUT	oPos		= result.position;\
-	OUTPUT	oColor		= result.color;\
-	OUTPUT	oTex0		= result.texcoord[0];\
-	OUTPUT	oTex1		= result.texcoord[1];\
-	OUTPUT	oTex2		= result.texcoord[2];\
-	OUTPUT	oTex3		= result.texcoord[3];\
-	\
-	# Constants.\n\
-	PARAM	ModelViewProj[4]= { state.matrix.mvp };\
-	PARAM	TexelOffset0	= program.env[0];\
-	PARAM	TexelOffset1	= program.env[1];\
-	PARAM	TexelOffset2	= program.env[2];\
-	PARAM	TexelOffset3	= program.env[3];\
-	\
-	# Main.\n\
-	DP4		oPos.x, ModelViewProj[0], iPos;\
-	DP4		oPos.y, ModelViewProj[1], iPos;\
-	DP4		oPos.z, ModelViewProj[2], iPos;\
-	DP4		oPos.w, ModelViewProj[3], iPos;\
-	MOV		oColor, iColor;\
-	# Notice the optimization of using one texture coord instead of all four.\n\
-	ADD		oTex0, iTex0, TexelOffset0;\
-	ADD		oTex1, iTex0, TexelOffset1;\
-	ADD		oTex2, iTex0, TexelOffset2;\
-	ADD		oTex3, iTex0, TexelOffset3;\
-	\
-	END"
-};
-
-// This Pixel Shader loads four texture units and adds them all together (with a modifier
-// multiplied to each in the process). The final output is r0 = t0 + t1 + t2 + t3.
-static const char g_strGlowPShaderARB[] =
-{
-	"!!ARBfp1.0\
-	\
-	# Input.\n\
-	ATTRIB	iColor	= fragment.color.primary;\
-	\
-	# Output.\n\
-	OUTPUT	oColor	= result.color;\
-	\
-	# Constants.\n\
-	PARAM	Weight	= program.env[0];\
-	TEMP	t0;\
-	TEMP	t1;\
-	TEMP	t2;\
-	TEMP	t3;\
-	TEMP	r0;\
-	\
-	# Main.\n\
-	TEX		t0, fragment.texcoord[0], texture[0], RECT;\
-	TEX		t1, fragment.texcoord[1], texture[1], RECT;\
-	TEX		t2, fragment.texcoord[2], texture[2], RECT;\
-	TEX		t3, fragment.texcoord[3], texture[3], RECT;\
-	\
-    MUL		r0, t0, Weight;\
-	MAD		r0, t1, Weight, r0;\
-	MAD		r0, t2, Weight, r0;\
-	MAD		r0, t3, Weight, r0;\
-	\
-	MOV		oColor, r0;\
-	\
-	END"
-};
-#endif
-/***********************************************************************************************************/
-
 static char *s_shaderText;
 
 // Dynamic Glow
@@ -1322,7 +1235,7 @@ static qboolean ParseStage( shaderStage_t *stage, const char **text )
 				stage->bundle[0].image[0] = NULL;
 				return qfalse;
 #else
-				stage->bundle[0].image[0] = R_FindImageFileNew( token, &shader.upload, GL_REPEAT );
+				stage->bundle[0].image[0] = R_FindImageFileNew( token, &shader.upload, TEXWRAP_REPEAT );
 				if ( !stage->bundle[0].image[0] )
 				{
 					ri.Printf( PRINT_WARNING, "WARNING: R_FindImageFile could not find '%s' in shader '%s'\n", token, shader.name );
@@ -1346,7 +1259,7 @@ static qboolean ParseStage( shaderStage_t *stage, const char **text )
 			stage->bundle[0].image[0] = NULL;
 			return qfalse;
 #else
-			stage->bundle[0].image[0] = R_FindImageFileNew( token, &shader.upload, GL_CLAMP );
+			stage->bundle[0].image[0] = R_FindImageFileNew( token, &shader.upload, TEXWRAP_CLAMP );
 			if ( !stage->bundle[0].image[0] )
 			{
 				ri.Printf( PRINT_WARNING, "WARNING: R_FindImageFile could not find '%s' in shader '%s'\n", token, shader.name );
@@ -1385,7 +1298,7 @@ static qboolean ParseStage( shaderStage_t *stage, const char **text )
 					stage->bundle[0].image[num] = NULL;
 					return qfalse;
 #else
-					stage->bundle[0].image[num] = R_FindImageFileNew( token, &shader.upload, bClamp?GL_CLAMP:GL_REPEAT );
+					stage->bundle[0].image[num] = R_FindImageFileNew( token, &shader.upload, bClamp?TEXWRAP_CLAMP:TEXWRAP_REPEAT );
 					if ( !stage->bundle[0].image[num] )
 					{
 						ri.Printf( PRINT_WARNING, "WARNING: R_FindImageFile could not find '%s' in shader '%s'\n", token, shader.name );
@@ -1777,8 +1690,7 @@ static qboolean ParseStage( shaderStage_t *stage, const char **text )
 	// if cgen isn't explicitly specified, use either identity or identitylighting
 	//
 	if ( stage->rgbGen == CGEN_BAD ) {
-		if ( //blendSrcBits == 0 ||
-			blendSrcBits == GLS_SRCBLEND_ONE ||
+		if ( blendSrcBits == GLS_SRCBLEND_ONE ||
 			blendSrcBits == GLS_SRCBLEND_SRC_ALPHA ) {
 			stage->rgbGen = CGEN_IDENTITY_LIGHTING;
 		} else {
@@ -1997,7 +1909,7 @@ static void ParseSkyParms( const char **text ) {
 #ifdef DEDICATED
 			shader.sky.outerbox[i] = NULL;
 #else
-			shader.sky.outerbox[i] = R_FindImageFile( ( char * ) pathname, qtrue, qtrue, (qboolean)!shader.upload.noTC, GL_CLAMP );
+			shader.sky.outerbox[i] = R_FindImageFile( ( char * ) pathname, qtrue, qtrue, (qboolean)!shader.upload.noTC, TEXWRAP_CLAMP );
 			if ( !shader.sky.outerbox[i] ) {
 				if (i) {
 					shader.sky.outerbox[i] = shader.sky.outerbox[i-1];//not found, so let's use the previous image
@@ -2035,7 +1947,7 @@ static void ParseSkyParms( const char **text ) {
 #ifdef DEDICATED
 			shader.sky.innerbox[i] = NULL;
 #else
-			shader.sky.innerbox[i] = R_FindImageFile( ( char * ) pathname, qtrue, qtrue, (qboolean)!shader.upload.noTC, GL_CLAMP );
+			shader.sky.innerbox[i] = R_FindImageFile( ( char * ) pathname, qtrue, qtrue, (qboolean)!shader.upload.noTC, TEXWRAP_CLAMP );
 			if ( !shader.sky.innerbox[i] ) {
 				shader.sky.innerbox[i] = tr.defaultImage;
 			}
@@ -2688,32 +2600,28 @@ typedef struct {
 #ifndef DEDICATED
 static const collapse_t collapse[] = {
 	{ 0, GLS_DSTBLEND_SRC_COLOR | GLS_SRCBLEND_ZERO,
-		GL_MODULATE, 0 },
+		TEXENV_MODULATE, 0 },
 
 	{ 0, GLS_DSTBLEND_ZERO | GLS_SRCBLEND_DST_COLOR,
-		GL_MODULATE, 0 },
+		TEXENV_MODULATE, 0 },
 
 	{ GLS_DSTBLEND_ZERO | GLS_SRCBLEND_DST_COLOR, GLS_DSTBLEND_ZERO | GLS_SRCBLEND_DST_COLOR,
-		GL_MODULATE, GLS_DSTBLEND_ZERO | GLS_SRCBLEND_DST_COLOR },
+		TEXENV_MODULATE, GLS_DSTBLEND_ZERO | GLS_SRCBLEND_DST_COLOR },
 
 	{ GLS_DSTBLEND_SRC_COLOR | GLS_SRCBLEND_ZERO, GLS_DSTBLEND_ZERO | GLS_SRCBLEND_DST_COLOR,
-		GL_MODULATE, GLS_DSTBLEND_ZERO | GLS_SRCBLEND_DST_COLOR },
+		TEXENV_MODULATE, GLS_DSTBLEND_ZERO | GLS_SRCBLEND_DST_COLOR },
 
 	{ GLS_DSTBLEND_ZERO | GLS_SRCBLEND_DST_COLOR, GLS_DSTBLEND_SRC_COLOR | GLS_SRCBLEND_ZERO,
-		GL_MODULATE, GLS_DSTBLEND_ZERO | GLS_SRCBLEND_DST_COLOR },
+		TEXENV_MODULATE, GLS_DSTBLEND_ZERO | GLS_SRCBLEND_DST_COLOR },
 
 	{ GLS_DSTBLEND_SRC_COLOR | GLS_SRCBLEND_ZERO, GLS_DSTBLEND_SRC_COLOR | GLS_SRCBLEND_ZERO,
-		GL_MODULATE, GLS_DSTBLEND_ZERO | GLS_SRCBLEND_DST_COLOR },
+		TEXENV_MODULATE, GLS_DSTBLEND_ZERO | GLS_SRCBLEND_DST_COLOR },
 
 	{ 0, GLS_DSTBLEND_ONE | GLS_SRCBLEND_ONE,
-		GL_ADD, 0 },
+		TEXENV_ADD, 0 },
 
 	{ GLS_DSTBLEND_ONE | GLS_SRCBLEND_ONE, GLS_DSTBLEND_ONE | GLS_SRCBLEND_ONE,
-		GL_ADD, GLS_DSTBLEND_ONE | GLS_SRCBLEND_ONE },
-#if 0
-	{ 0, GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA | GLS_SRCBLEND_SRC_ALPHA,
-		GL_DECAL, 0 },
-#endif
+		TEXENV_ADD, GLS_DSTBLEND_ONE | GLS_SRCBLEND_ONE },
 	{ -1 }
 };
 #endif
@@ -2735,9 +2643,8 @@ static qboolean CollapseMultitexture( void ) {
 	textureBundle_t tmpBundle;
 
 
-	if ( !qglActiveTextureARB ) {
-		return qfalse;
-	}
+	// Vulkan always supports multitexture
+	(void)0;
 
 	// make sure both stages are active
 	if ( !stages[0].active || !stages[1].active ) {
@@ -2769,8 +2676,8 @@ static qboolean CollapseMultitexture( void ) {
 		return qfalse;
 	}
 
-	// GL_ADD is a separate extension
-	if ( collapse[i].multitextureEnv == GL_ADD && !glConfig.textureEnvAddAvailable ) {
+	// TEXENV_ADD is a separate extension
+	if ( collapse[i].multitextureEnv == TEXENV_ADD && !glConfig.textureEnvAddAvailable ) {
 		return qfalse;
 	}
 
@@ -2781,7 +2688,7 @@ static qboolean CollapseMultitexture( void ) {
 	}
 
 	// an add collapse can only have identity colors
-	if ( collapse[i].multitextureEnv == GL_ADD && stages[0].rgbGen != CGEN_IDENTITY ) {
+	if ( collapse[i].multitextureEnv == TEXENV_ADD && stages[0].rgbGen != CGEN_IDENTITY ) {
 		return qfalse;
 	}
 
@@ -2969,110 +2876,7 @@ what it is supposed to look like.
   OUTPUT:  Number of stages after the collapse (in the case of surfacesprites this isn't one).
 =================
 */
-//rww - no longer used, at least for now. destroys alpha shaders completely.
-#if 0
-static int VertexLightingCollapse( void ) {
-	int		stage, nextopenstage;
-	shaderStage_t	*bestStage;
-	int		bestImageRank;
-	int		rank;
-	int		finalstagenum=1;
 
-	// if we aren't opaque, just use the first pass
-	if ( shader.sort == SS_OPAQUE ) {
-
-		// pick the best texture for the single pass
-		bestStage = &stages[0];
-		bestImageRank = -999999;
-
-		for ( stage = 0; stage < MAX_SHADER_STAGES; stage++ ) {
-			shaderStage_t *pStage = &stages[stage];
-
-			if ( !pStage->active ) {
-				break;
-			}
-			rank = 0;
-
-			if ( pStage->bundle[0].isLightmap ) {
-				rank -= 100;
-			}
-			if ( pStage->bundle[0].tcGen != TCGEN_TEXTURE ) {
-				rank -= 5;
-			}
-			if ( pStage->bundle[0].numTexMods ) {
-				rank -= 5;
-			}
-			if ( pStage->rgbGen != CGEN_IDENTITY && pStage->rgbGen != CGEN_IDENTITY_LIGHTING ) {
-				rank -= 3;
-			}
-
-			// SurfaceSprites are most certainly NOT desireable as the collapsed surface texture.
-			if ( pStage->ss.surfaceSpriteType)
-			{
-				rank -= 1000;
-			}
-
-			if ( rank > bestImageRank  ) {
-				bestImageRank = rank;
-				bestStage = pStage;
-			}
-		}
-
-		stages[0].bundle[0] = bestStage->bundle[0];
-		stages[0].stateBits &= ~( GLS_DSTBLEND_BITS | GLS_SRCBLEND_BITS );
-		stages[0].stateBits |= GLS_DEPTHMASK_TRUE;
-		if ( shader.lightmapIndex[0] == LIGHTMAP_NONE ) {
-			stages[0].rgbGen = CGEN_LIGHTING_DIFFUSE;
-		} else {
-			stages[0].rgbGen = CGEN_EXACT_VERTEX;
-		}
-		stages[0].alphaGen = AGEN_SKIP;
-	} else {
-		// don't use a lightmap (tesla coils)
-		if ( stages[0].bundle[0].isLightmap ) {
-			stages[0] = stages[1];
-		}
-
-		// if we were in a cross-fade cgen, hack it to normal
-		if ( stages[0].rgbGen == CGEN_ONE_MINUS_ENTITY || stages[1].rgbGen == CGEN_ONE_MINUS_ENTITY ) {
-			stages[0].rgbGen = CGEN_IDENTITY_LIGHTING;
-		}
-		if ( ( stages[0].rgbGen == CGEN_WAVEFORM && stages[0].rgbWave.func == GF_SAWTOOTH )
-			&& ( stages[1].rgbGen == CGEN_WAVEFORM && stages[1].rgbWave.func == GF_INVERSE_SAWTOOTH ) ) {
-			stages[0].rgbGen = CGEN_IDENTITY_LIGHTING;
-		}
-		if ( ( stages[0].rgbGen == CGEN_WAVEFORM && stages[0].rgbWave.func == GF_INVERSE_SAWTOOTH )
-			&& ( stages[1].rgbGen == CGEN_WAVEFORM && stages[1].rgbWave.func == GF_SAWTOOTH ) ) {
-			stages[0].rgbGen = CGEN_IDENTITY_LIGHTING;
-		}
-	}
-
-	for ( stage=1, nextopenstage=1; stage < MAX_SHADER_STAGES; stage++ ) {
-		shaderStage_t *pStage = &stages[stage];
-
-		if ( !pStage->active ) {
-			break;
-		}
-
-		if (pStage->ss.surfaceSpriteType)
-		{
-			// Copy this stage to the next open stage list (that is, we don't want any inactive stages before this one)
-			if (nextopenstage != stage)
-			{
-				stages[nextopenstage] = *pStage;
-				stages[nextopenstage].bundle[0] = pStage->bundle[0];
-			}
-			nextopenstage++;
-			finalstagenum++;
-			continue;
-		}
-
-		Com_Memset( pStage, 0, sizeof( *pStage ) );
-	}
-
-	return finalstagenum;
-}
-#endif
 
 /*
 =========================
@@ -3231,9 +3035,6 @@ static shader_t *FinishShader( void ) {
 
 	// not a true lightmap but we want to leave existing
 	// behaviour in place and not print out a warning
-	//if (pStage->rgbGen == CGEN_VERTEX) {
-	//  vertexLightmap = qtrue;
-	//}
 
 
 
@@ -3318,7 +3119,6 @@ static shader_t *FinishShader( void ) {
 	// if we are in r_vertexLight mode, never use a lightmap texture
 	//
 	if ( stage > 1 && (r_vertexLight->integer && !r_uiFullScreen->integer) ) {
-		//stage = VertexLightingCollapse();
 		//rww - since this does bad things, I am commenting it out for now. If you want to attempt a fix, feel free.
 		hasLightmapStage = qfalse;
 	}
@@ -3628,7 +3428,7 @@ shader_t *R_FindShader( const char *name, const int *lightmapIndex, const byte *
 	shader.upload.noTC = qfalse;
 	shader.upload.textureMode = mipRawImage ? NULL : GetTextureMode("GL_LINEAR");
 
-	image = R_FindImageFileNew(fileName, &shader.upload, mipRawImage ? GL_REPEAT : GL_CLAMP );
+	image = R_FindImageFileNew(fileName, &shader.upload, mipRawImage ? TEXWRAP_REPEAT : TEXWRAP_CLAMP );
 	if ( !image ) {
 		ri.Printf( PRINT_DEVELOPER, "Couldn't find image for shader %s\n", name );
 		shader.defaultShader = qtrue;
@@ -3653,7 +3453,8 @@ shader_t *R_FindShader( const char *name, const int *lightmapIndex, const byte *
 		stages[0].alphaGen = AGEN_SKIP;
 		stages[0].stateBits = GLS_DEFAULT;
 	} else if ( shader.lightmapIndex[0] == LIGHTMAP_2D ) {
-		// GUI elements
+		// GUI elements - disable face culling so negative-width quads
+		// (mirrored HUD images) are not back-face culled by Vulkan
 		stages[0].bundle[0].image[0] = image;
 		stages[0].active = qtrue;
 		stages[0].rgbGen = CGEN_VERTEX;
@@ -3661,6 +3462,7 @@ shader_t *R_FindShader( const char *name, const int *lightmapIndex, const byte *
 		stages[0].stateBits = GLS_DEPTHTEST_DISABLE |
 			  GLS_SRCBLEND_SRC_ALPHA |
 			  GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA;
+		shader.cullType = CT_TWO_SIDED;
 	} else if ( shader.lightmapIndex[0] == LIGHTMAP_WHITEIMAGE ) {
 		// fullbright level
 		stages[0].bundle[0].image[0] = tr.whiteImage;
@@ -3694,100 +3496,6 @@ shader_t *R_FindShader( const char *name, const int *lightmapIndex, const byte *
 shader_t *R_FindAdvancedRemapShader( const char *name, const int *lightmapIndex, const byte *styles, qboolean mipRawImage ) {
 	return R_FindShader( name, lightmapIndex, styles, mipRawImage, qtrue );
 }
-
-#if 0
-qhandle_t RE_RegisterShaderFromImage(const char *name, int *lightmapIndex, byte *styles, image_t *image, qboolean mipRawImage) {
-	int			i, hash;
-	shader_t	*sh;
-
-	hash = generateHashValue(name, FILE_HASH_SIZE);
-
-	//
-	// see if the shader is already loaded
-	//
-	for (sh=hashTable[hash]; sh; sh=sh->next) {
-		// NOTE: if there was no shader or image available with the name strippedName
-		// then a default shader is created with lightmapIndex == LIGHTMAP_NONE, so we
-		// have to check all default shaders otherwise for every call to R_FindShader
-		// with that same strippedName a new default shader is created.
-		if (IsShader(sh, name, lightmapIndex, styles))
-		{
-			return sh->index;
-		}
-	}
-
-	// clear the global shader
-	Com_Memset( &shader, 0, sizeof( shader ) );
-	Com_Memset( &stages, 0, sizeof( stages ) );
-	Q_strncpyz(shader.name, name, sizeof(shader.name));
-	memcpy(shader.lightmapIndex, lightmapIndex, sizeof(shader.lightmapIndex));
-	memcpy(shader.styles, styles, sizeof(shader.styles));
-
-	for ( i = 0 ; i < MAX_SHADER_STAGES ; i++ ) {
-		stages[i].bundle[0].texMods = texMods[i];
-	}
-
-	// FIXME: set these "need" values apropriately
-	shader.needsNormal = qtrue;
-	shader.needsST1 = qtrue;
-	shader.needsST2 = qtrue;
-	shader.needsColor = qtrue;
-
-	//
-	// create the default shading commands
-	//
-	if ( shader.lightmapIndex[0] == LIGHTMAP_NONE ) {
-		// dynamic colors at vertexes
-		stages[0].bundle[0].image[0] = image;
-		stages[0].active = qtrue;
-		stages[0].rgbGen = CGEN_LIGHTING_DIFFUSE;
-		stages[0].stateBits = GLS_DEFAULT;
-	} else if ( shader.lightmapIndex[0] == LIGHTMAP_BY_VERTEX ) {
-		// explicit colors at vertexes
-		stages[0].bundle[0].image[0] = image;
-		stages[0].active = qtrue;
-		stages[0].rgbGen = CGEN_EXACT_VERTEX;
-		stages[0].alphaGen = AGEN_SKIP;
-		stages[0].stateBits = GLS_DEFAULT;
-	} else if ( shader.lightmapIndex[0] == LIGHTMAP_2D ) {
-		// GUI elements
-		stages[0].bundle[0].image[0] = image;
-		stages[0].active = qtrue;
-		stages[0].rgbGen = CGEN_VERTEX;
-		stages[0].alphaGen = AGEN_VERTEX;
-		stages[0].stateBits = GLS_DEPTHTEST_DISABLE |
-			  GLS_SRCBLEND_SRC_ALPHA |
-			  GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA;
-	} else if ( shader.lightmapIndex[0] == LIGHTMAP_WHITEIMAGE ) {
-		// fullbright level
-		stages[0].bundle[0].image[0] = tr.whiteImage;
-		stages[0].active = qtrue;
-		stages[0].rgbGen = CGEN_IDENTITY_LIGHTING;
-		stages[0].stateBits = GLS_DEFAULT;
-
-		stages[1].bundle[0].image[0] = image;
-		stages[1].active = qtrue;
-		stages[1].rgbGen = CGEN_IDENTITY;
-		stages[1].stateBits |= GLS_SRCBLEND_DST_COLOR | GLS_DSTBLEND_ZERO;
-	} else {
-		// two pass lightmap
-		stages[0].bundle[0].image[0] = tr.lightmaps[shader.lightmapIndex[0]];
-		stages[0].bundle[0].isLightmap = qtrue;
-		stages[0].active = qtrue;
-		stages[0].rgbGen = CGEN_IDENTITY;	// lightmaps are scaled on creation
-													// for identitylight
-		stages[0].stateBits = GLS_DEFAULT;
-
-		stages[1].bundle[0].image[0] = image;
-		stages[1].active = qtrue;
-		stages[1].rgbGen = CGEN_IDENTITY;
-		stages[1].stateBits |= GLS_SRCBLEND_DST_COLOR | GLS_DSTBLEND_ZERO;
-	}
-
-	sh = FinishShader();
-  return sh->index;
-}
-#endif // 0
 
 /*
 ====================
@@ -3912,11 +3620,11 @@ void	R_ShaderList_f (void) {
 		} else {
 			ri.Printf (PRINT_ALL, "  ");
 		}
-		if ( shader->multitextureEnv == GL_ADD ) {
+		if ( shader->multitextureEnv == TEXENV_ADD ) {
 			ri.Printf( PRINT_ALL, "MT(a) " );
-		} else if ( shader->multitextureEnv == GL_MODULATE ) {
+		} else if ( shader->multitextureEnv == TEXENV_MODULATE ) {
 			ri.Printf( PRINT_ALL, "MT(m) " );
-		} else if ( shader->multitextureEnv == GL_DECAL ) {
+		} else if ( shader->multitextureEnv == TEXENV_DECAL ) {
 			ri.Printf( PRINT_ALL, "MT(d) " );
 		} else {
 			ri.Printf( PRINT_ALL, "	  " );
@@ -4169,27 +3877,8 @@ const char *g_GammaPixelShaderARB = {
 };
 
 qboolean MV_GammaGenerateProgram() {
-	int err = 0;
-	assert(qglGenProgramsARB);
-
-	// vertex shader
-	qglGenProgramsARB(1, &tr.gammaVertexShader);
-	qglBindProgramARB(GL_VERTEX_PROGRAM_ARB, tr.gammaVertexShader);
-	qglProgramStringARB(GL_VERTEX_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, (int)strlen(g_GammaVertexShaderARB), g_GammaVertexShaderARB);
-	qglGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &err);
-	if (err != -1) {
-		return qtrue;
-	}
-
-	// pixel shader
-	qglGenProgramsARB(1, &tr.gammaPixelShader);
-	qglBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, tr.gammaPixelShader);
-	qglProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, (int)strlen(g_GammaPixelShaderARB), g_GammaPixelShaderARB);
-	qglGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &err);
-	if (err != -1) {
-		return qtrue;
-	}
-
+	// Vulkan: gamma correction is handled via a fullscreen post-process pass
+	// Shader programs are compiled from GLSL/SPIR-V, not ARB assembly
 	return qfalse;
 }
 #endif
@@ -4223,82 +3912,8 @@ static void CreateInternalShaders( void ) {
 	tr.shadowShader = FinishShader();
 
 #ifndef DEDICATED
-	// Allocate and Load the global 'Glow' Vertex Program. - AReis
-	if ( qglGenProgramsARB )
-	{
-		qglGenProgramsARB( 1, &tr.glowVShader );
-		qglBindProgramARB( GL_VERTEX_PROGRAM_ARB, tr.glowVShader );
-		qglProgramStringARB(GL_VERTEX_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, (int)strlen(g_strGlowVShaderARB), g_strGlowVShaderARB);
-
-//		const GLubyte *strErr = qglGetString( GL_PROGRAM_ERROR_STRING_ARB );
-		int iErrPos = 0;
-		qglGetIntegerv( GL_PROGRAM_ERROR_POSITION_ARB, &iErrPos );
-		assert( iErrPos == -1 );
-	}
-
-	// NOTE: I make an assumption here. If you have (current) nvidia hardware, you obviously support register combiners instead of fragment
-	// programs, so use those. The problem with this is that nv30 WILL support fragment shaders, breaking this logic. The good thing is that
-	// if you always ask for regcoms before fragment shaders, you'll always just use regcoms (problem solved... for now). - AReis
-
-	// Load Pixel Shaders (either regcoms or fragprogs).
-	if ( qglCombinerParameteriNV )
-	{
-		// The purpose of this regcom is to blend all the pixels together from the 4 texture units, but with their
-		// texture coordinates offset by 1 (or more) texels, effectively letting us blend adjoining pixels. The weight is
-		// used to either strengthen or weaken the pixel intensity. The more it diffuses (the higher the radius of the glow),
-		// the higher the intensity should be for a noticable effect.
-		// Regcom result is: ( tex1 * fBlurWeight ) + ( tex2 * fBlurWeight ) + ( tex2 * fBlurWeight ) + ( tex2 * fBlurWeight )
-
-		// VV guys, this is the pixel shader you would use instead :-)
-		/*
-		// c0 is the blur weight.
-		ps 1.1
-		tex		t0
-		tex		t1
-		tex		t2
-		tex		t3
-
-		mul		r0, c0, t0;
-		madd	r0, c0, t1, r0;
-		madd	r0, c0, t2, r0;
-		madd	r0, c0, t3, r0;
-		*/
-		tr.glowPShader = qglGenLists( 1 );
-		qglNewList( tr.glowPShader, GL_COMPILE );
-			qglCombinerParameteriNV( GL_NUM_GENERAL_COMBINERS_NV, 2 );
-
-			// spare0 = fBlend * tex0 + fBlend * tex1.
-			qglCombinerInputNV( GL_COMBINER0_NV, GL_RGB, GL_VARIABLE_A_NV, GL_TEXTURE0_ARB, GL_UNSIGNED_IDENTITY_NV, GL_RGB );
-			qglCombinerInputNV( GL_COMBINER0_NV, GL_RGB, GL_VARIABLE_B_NV, GL_CONSTANT_COLOR0_NV, GL_UNSIGNED_IDENTITY_NV, GL_RGB );
-			qglCombinerInputNV( GL_COMBINER0_NV, GL_RGB, GL_VARIABLE_C_NV, GL_TEXTURE1_ARB, GL_UNSIGNED_IDENTITY_NV, GL_RGB );
-			qglCombinerInputNV( GL_COMBINER0_NV, GL_RGB, GL_VARIABLE_D_NV, GL_CONSTANT_COLOR0_NV, GL_UNSIGNED_IDENTITY_NV, GL_RGB );
-			qglCombinerOutputNV( GL_COMBINER0_NV, GL_RGB, GL_DISCARD_NV, GL_DISCARD_NV, GL_SPARE0_NV, GL_NONE, GL_NONE, GL_FALSE, GL_FALSE, GL_FALSE );
-
-			// spare1 = fBlend * tex2 + fBlend * tex3.
-			qglCombinerInputNV( GL_COMBINER1_NV, GL_RGB, GL_VARIABLE_A_NV, GL_TEXTURE2_ARB, GL_UNSIGNED_IDENTITY_NV, GL_RGB );
-			qglCombinerInputNV( GL_COMBINER1_NV, GL_RGB, GL_VARIABLE_B_NV, GL_CONSTANT_COLOR0_NV, GL_UNSIGNED_IDENTITY_NV, GL_RGB );
-			qglCombinerInputNV( GL_COMBINER1_NV, GL_RGB, GL_VARIABLE_C_NV, GL_TEXTURE3_ARB, GL_UNSIGNED_IDENTITY_NV, GL_RGB );
-			qglCombinerInputNV( GL_COMBINER1_NV, GL_RGB, GL_VARIABLE_D_NV, GL_CONSTANT_COLOR0_NV, GL_UNSIGNED_IDENTITY_NV, GL_RGB );
-			qglCombinerOutputNV( GL_COMBINER1_NV, GL_RGB, GL_DISCARD_NV, GL_DISCARD_NV, GL_SPARE1_NV, GL_NONE, GL_NONE, GL_FALSE, GL_FALSE, GL_FALSE );
-
-			// ( A * B ) + ( ( 1 - A ) * C ) + D = ( spare0 * 1 ) + ( ( 1 - spare0 ) * 0 ) + spare1 == spare0 + spare1.
-			qglFinalCombinerInputNV( GL_VARIABLE_A_NV, GL_SPARE0_NV,    GL_UNSIGNED_IDENTITY_NV, GL_RGB );
-			qglFinalCombinerInputNV( GL_VARIABLE_B_NV, GL_ZERO,			GL_UNSIGNED_INVERT_NV, GL_RGB );
-			qglFinalCombinerInputNV( GL_VARIABLE_C_NV, GL_ZERO,			GL_UNSIGNED_IDENTITY_NV, GL_RGB );
-			qglFinalCombinerInputNV( GL_VARIABLE_D_NV, GL_SPARE1_NV,	GL_UNSIGNED_IDENTITY_NV, GL_RGB );
-		qglEndList();
-	}
-	else if ( qglGenProgramsARB )
-	{
-		qglGenProgramsARB( 1, &tr.glowPShader );
-		qglBindProgramARB( GL_FRAGMENT_PROGRAM_ARB, tr.glowPShader );
-		qglProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, (int)strlen(g_strGlowPShaderARB), g_strGlowPShaderARB);
-
-//		const GLubyte *strErr = qglGetString( GL_PROGRAM_ERROR_STRING_ARB );
-		int iErrPos = 0;
-		qglGetIntegerv( GL_PROGRAM_ERROR_POSITION_ARB, &iErrPos );
-		assert( iErrPos == -1 );
-	}
+	// Vulkan: glow shaders are compiled from GLSL/SPIR-V at init time
+	// No ARB program loading needed here
 #endif
 
 

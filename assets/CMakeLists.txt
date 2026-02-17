@@ -80,6 +80,54 @@ set(AssetsFiles
 
 source_group("assetsmv" FILES ${AssetsFiles})
 
+# ============================================================
+# Compile SPIR-V shaders from GLSL sources using glslangValidator
+# ============================================================
+find_program(GLSLANG_VALIDATOR glslangValidator HINTS $ENV{VULKAN_SDK}/bin ${Vulkan_INCLUDE_DIRS}/../bin)
+if(NOT GLSLANG_VALIDATOR)
+	message(WARNING "glslangValidator not found! SPIR-V shaders will not be compiled. Install the Vulkan SDK to enable shader compilation.")
+endif()
+
+set(SPIRV_SHADER_SOURCES
+	"shaders/spirv/single_tex.vert"
+	"shaders/spirv/single_tex.frag"
+	"shaders/spirv/multi_tex.frag"
+	"shaders/spirv/gamma.vert"
+	"shaders/spirv/gamma.frag"
+	"shaders/spirv/glow.vert"
+	"shaders/spirv/glow.frag"
+	"shaders/spirv/glow_composite.frag"
+)
+
+set(SPIRV_OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/shaders")
+file(MAKE_DIRECTORY ${SPIRV_OUTPUT_DIR})
+
+set(SPIRV_OUTPUT_FILES "")
+
+if(GLSLANG_VALIDATOR)
+	foreach(SHADER ${SPIRV_SHADER_SOURCES})
+		get_filename_component(SHADER_NAME ${SHADER} NAME_WE)
+		get_filename_component(SHADER_EXT ${SHADER} EXT)
+		# Convert .vert -> _vert.spv, .frag -> _frag.spv
+		string(REPLACE "." "_" SPV_SUFFIX ${SHADER_EXT})
+		set(SPV_FILE "${SPIRV_OUTPUT_DIR}/${SHADER_NAME}${SPV_SUFFIX}.spv")
+
+		add_custom_command(
+			OUTPUT ${SPV_FILE}
+			COMMAND ${GLSLANG_VALIDATOR} -V "${CMAKE_CURRENT_SOURCE_DIR}/${SHADER}" -o ${SPV_FILE}
+			DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/${SHADER}"
+			COMMENT "Compiling SPIR-V: ${SHADER}"
+		)
+		list(APPEND SPIRV_OUTPUT_FILES ${SPV_FILE})
+
+		# Add to assets file list (from build directory, not source)
+		get_filename_component(SPV_FILENAME ${SPV_FILE} NAME)
+		list(APPEND AssetsFiles_Generated "shaders/${SPV_FILENAME}")
+	endforeach()
+
+	add_custom_target(compile_shaders DEPENDS ${SPIRV_OUTPUT_FILES})
+endif()
+
 # generate assetsmv.pk3
 if(MultiConfigGenerator)
 	set(OUTFILE ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/$<CONFIG>/base/assetsmv.pk3)
@@ -87,19 +135,61 @@ else()
 	set(OUTFILE ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/base/assetsmv.pk3)
 endif()
 
-include(InstallZIP)
-add_zip_command(${CMAKE_CURRENT_BINARY_DIR}/assetsmv.pk3 ${OUTFILE}
-	DIR "${CMAKE_SOURCE_DIR}/assets"
-	FILES "${AssetsFiles}"
-	DEPENDS "${AssetsFiles}"
+# Create a staging directory for pk3 contents: source assets + compiled shaders
+set(ASSETS_STAGING_DIR "${CMAKE_CURRENT_BINARY_DIR}/assets_staging")
+
+# Custom command to prepare the staging directory
+add_custom_command(
+	OUTPUT "${ASSETS_STAGING_DIR}/staging_marker.txt"
+	COMMAND ${CMAKE_COMMAND} -E remove_directory "${ASSETS_STAGING_DIR}"
+	COMMAND ${CMAKE_COMMAND} -E make_directory "${ASSETS_STAGING_DIR}"
+	COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/assets" "${ASSETS_STAGING_DIR}"
+	COMMAND ${CMAKE_COMMAND} -E remove_directory "${ASSETS_STAGING_DIR}/shaders/spirv"
+	COMMAND ${CMAKE_COMMAND} -E echo "Staging complete" > "${ASSETS_STAGING_DIR}/staging_marker.txt"
+	COMMENT "Staging source assets for pk3"
+	DEPENDS ${AssetsFiles}
 )
 
-add_custom_target(assetsmv DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/assetsmv.pk3" ${AssetsFiles})
+# Add commands to copy each compiled shader to staging directory
+set(STAGING_MARKER_FILE "${ASSETS_STAGING_DIR}/staging_marker.txt")
+if(GLSLANG_VALIDATOR)
+	foreach(SPV ${SPIRV_OUTPUT_FILES})
+		get_filename_component(SPV_FILENAME "${SPV}" NAME)
+		add_custom_command(
+			OUTPUT "${ASSETS_STAGING_DIR}/shaders/${SPV_FILENAME}"
+			COMMAND ${CMAKE_COMMAND} -E copy "${SPV}" "${ASSETS_STAGING_DIR}/shaders/${SPV_FILENAME}"
+			DEPENDS "${SPV}" "${STAGING_MARKER_FILE}"
+			COMMENT "Staging compiled shader: ${SPV_FILENAME}"
+		)
+		list(APPEND STAGED_SHADERS "${ASSETS_STAGING_DIR}/shaders/${SPV_FILENAME}")
+	endforeach()
+endif()
+
+# Create a marker file to indicate staging is complete
+add_custom_command(
+	OUTPUT "${ASSETS_STAGING_DIR}/staging_complete.txt"
+	COMMAND ${CMAKE_COMMAND} -E echo "Staging complete" > "${ASSETS_STAGING_DIR}/staging_complete.txt"
+	DEPENDS ${STAGED_SHADERS}
+	COMMENT "Staging complete"
+)
+
+include(InstallZIP)
+add_zip_command(${CMAKE_CURRENT_BINARY_DIR}/assetsmv.pk3 ${OUTFILE}
+	DIR "${ASSETS_STAGING_DIR}"
+	FILES "."
+	DEPENDS "${ASSETS_STAGING_DIR}/staging_complete.txt"
+)
+
+add_custom_target(assetsmv DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/assetsmv.pk3" "${OUTFILE}")
+
+if(GLSLANG_VALIDATOR)
+	add_dependencies(assetsmv compile_shaders)
+endif()
 
 if(WIN32 OR BuildPortableVersion)
-	install(FILES ${CMAKE_CURRENT_BINARY_DIR}/assetsmv.pk3 DESTINATION "base")
+	install(FILES ${OUTFILE} DESTINATION "base")
 elseif(APPLE)
-	install(FILES ${CMAKE_CURRENT_BINARY_DIR}/assetsmv.pk3 DESTINATION "jk2mvmp.app/Contents/MacOS/base")
+	install(FILES ${OUTFILE} DESTINATION "jk2mvmp.app/Contents/MacOS/base")
 else()
-	install(FILES ${CMAKE_CURRENT_BINARY_DIR}/assetsmv.pk3 DESTINATION "share/jk2mv/base")
+	install(FILES ${OUTFILE} DESTINATION "share/jk2mv/base")
 endif()

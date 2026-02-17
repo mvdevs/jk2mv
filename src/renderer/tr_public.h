@@ -92,10 +92,6 @@ typedef struct {
 					 float frac, const char *tagName );
 	void	(*ModelBounds)( qhandle_t model, vec3_t mins, vec3_t maxs );
 
-#ifdef __USEA3D
-	void	(*A3D_RenderGeometry) (void *pVoidA3D, void *pVoidGeom, void *pVoidMat, void *pVoidGeomStatus);
-#endif
-
 	qhandle_t (*RegisterFont)( const char *fontName );
 	int		(*Font_StrLenPixels) (const char *text, const int iFontIndex, const float scale, float xadjust, float yadjust);
 	int		(*Font_StrLenChars) (const char *text);

@@ -197,32 +197,6 @@ void R_WorldNormalToEntity (vec3_t worldvec, vec3_t entvec)
 }
 
 /*
-=================
-R_WorldPointToEntity
-
-=================
-*/
-/*void R_WorldPointToEntity (vec3_t worldvec, vec3_t entvec)
-{
-	entvec[0] = worldvec[0] * preTransEntMatrix[0] + worldvec[1] * preTransEntMatrix[4] + worldvec[2] * preTransEntMatrix[8]+preTransEntMatrix[12];
-	entvec[1] = worldvec[0] * preTransEntMatrix[1] + worldvec[1] * preTransEntMatrix[5] + worldvec[2] * preTransEntMatrix[9]+preTransEntMatrix[13];
-	entvec[2] = worldvec[0] * preTransEntMatrix[2] + worldvec[1] * preTransEntMatrix[6] + worldvec[2] * preTransEntMatrix[10]+preTransEntMatrix[14];
-}
-*/
-
-/*
-=================
-R_WorldToLocal
-
-=================
-*/
-void R_WorldToLocal (vec3_t world, vec3_t local) {
-	local[0] = DotProduct(world, tr.ori.axis[0]);
-	local[1] = DotProduct(world, tr.ori.axis[1]);
-	local[2] = DotProduct(world, tr.ori.axis[2]);
-}
-
-/*
 ==========================
 R_TransformModelToClip
 
@@ -1293,29 +1267,11 @@ R_DebugPolygon
 ================
 */
 void R_DebugPolygon( int color, int numPoints, float *points ) {
-	int		i;
-
-	GL_State( GLS_DEPTHMASK_TRUE | GLS_SRCBLEND_ONE | GLS_DSTBLEND_ONE );
-
-	// draw solid shade
-
-	qglColor3f( color&1, (color>>1)&1, (color>>2)&1 );
-	qglBegin( GL_POLYGON );
-	for ( i = 0 ; i < numPoints ; i++ ) {
-		qglVertex3fv( points + i * 3 );
-	}
-	qglEnd();
-
-	// draw wireframe outline
-	GL_State( GLS_POLYMODE_LINE | GLS_DEPTHMASK_TRUE | GLS_SRCBLEND_ONE | GLS_DSTBLEND_ONE );
-	qglDepthRange( 0, 0 );
-	qglColor3f( 1, 1, 1 );
-	qglBegin( GL_POLYGON );
-	for ( i = 0 ; i < numPoints ; i++ ) {
-		qglVertex3fv( points + i * 3 );
-	}
-	qglEnd();
-	qglDepthRange( 0, 1 );
+	// Vulkan: debug polygon rendering is a stub
+	// Would need a dedicated debug line/polygon pipeline
+	(void)color;
+	(void)numPoints;
+	(void)points;
 }
 
 /*
@@ -1333,8 +1289,8 @@ void R_DebugGraphics( void ) {
 	// the render thread can't make callbacks to the main thread
 	R_SyncRenderThread();
 
-	GL_Bind( tr.whiteImage);
-	GL_Cull( CT_FRONT_SIDED );
+	R_BindImage( tr.whiteImage);
+	R_SetCullMode( CT_FRONT_SIDED );
 	ri.CM_DrawDebugSurface( R_DebugPolygon );
 }
 

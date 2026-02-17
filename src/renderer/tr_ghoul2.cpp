@@ -2169,13 +2169,6 @@ void RB_SurfaceGhoul( CRenderableSurface *surf ) {
 	const int baseVertex = tess.numVertexes;
 	const int *triangles = (int *) ((byte *)surface + surface->ofsTriangles);
 	const int baseIndex = tess.numIndexes;
-#if 0
-	const int indexes = surface->numTriangles * 3;
-	for (j = 0 ; j < indexes ; j++) {
-		tess.indexes[baseIndex + j] = baseVertex + triangles[j];
-	}
-	tess.numIndexes += indexes;
-#else
 	const int indexes = surface->numTriangles; //*3;	//unrolled 3 times, don't multiply
 	unsigned int * tessIndexes = &tess.indexes[baseIndex];
 	for (j = 0 ; j < indexes ; j++) {
@@ -2184,7 +2177,6 @@ void RB_SurfaceGhoul( CRenderableSurface *surf ) {
 		*tessIndexes++ = baseVertex + *triangles++;
 	}
 	tess.numIndexes += indexes*3;
-#endif
 
 
 	// whip through and actually transform each vertex

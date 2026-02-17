@@ -2,9 +2,6 @@
 //
 //
 #include "tr_local.h"
-//#include "../qcommon/qcommon.h"
-
-#include "tr_local.h"
 #include "tr_font.h"
 
 #include <vector>
@@ -23,7 +20,6 @@ int							fontIndex;	// entry 0 is reserved index for missing/invalid, else ++ w
 vector<CFontInfo *>			fontArray;
 typedef map<string, int>	fontIndexMap_t;
 							fontIndexMap_t fontIndexMap;
-//paletteRGBA_c				lastcolour;
 
 // =============================== some korean stuff =======================================
 

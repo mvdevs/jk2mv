@@ -1,5 +1,6 @@
 // tr_surf.c
 #include "tr_local.h"
+#include "vk_local.h"
 
 /*
 
@@ -302,6 +303,7 @@ void RB_SurfaceTriangles( srfTriangles_t *srf ) {
 	uint32_t	*color;
 	int			dlightBits;
 	qboolean	needsNormal;
+	int			numLightmaps;
 
 	dlightBits = srf->dlightBits[backEnd.smpFrame];
 	tess.dlightBits |= dlightBits;
@@ -321,6 +323,15 @@ void RB_SurfaceTriangles( srfTriangles_t *srf ) {
 	color = &tess.vertexColorsui[ tess.numVertexes ];
 	needsNormal = tess.shader->needsNormal;
 
+	// precompute active lightmap count outside the vertex loop
+	numLightmaps = 0;
+	for ( k = 0; k < MAXLIGHTMAPS; k++ ) {
+		if ( tess.shader->lightmapIndex[k] >= 0 )
+			numLightmaps++;
+		else
+			break;
+	}
+
 	for ( i = 0 ; i < srf->numVerts ; i++, dv++)
 	{
 		xyz[0] = dv->xyz[0];
@@ -339,24 +350,15 @@ void RB_SurfaceTriangles( srfTriangles_t *srf ) {
 		tess.texCoords[0][tess.numVertexes + i][0] = dv->st[0];
 		tess.texCoords[0][tess.numVertexes + i][1] = dv->st[1];
 
-		for(k=0;k<MAXLIGHTMAPS;k++)
+		for(k=0;k<numLightmaps;k++)
 		{
-			if (tess.shader->lightmapIndex[k] >= 0)
-			{
-				tess.texCoords[k + 1][tess.numVertexes + i][0] = dv->lightmap[k][0];
-				tess.texCoords[k + 1][tess.numVertexes + i][1] = dv->lightmap[k][1];
-			}
-			else
-			{	// can't have an empty slot in the middle, so we are done
-				break;
-			}
+			tess.texCoords[k + 1][tess.numVertexes + i][0] = dv->lightmap[k][0];
+			tess.texCoords[k + 1][tess.numVertexes + i][1] = dv->lightmap[k][1];
 		}
 
 		*color = ComputeFinalVertexColor((byte *)dv->color);
 		color++;
-	}
 
-	for ( i = 0 ; i < srf->numVerts ; i++ ) {
 		tess.vertexDlightBits[ tess.numVertexes + i] = dlightBits;
 	}
 
@@ -408,18 +410,46 @@ void RB_SurfaceBeam( void )
 		VectorAdd( start_points[i], direction, end_points[i] );
 	}
 
-	GL_Bind( tr.whiteImage );
+	R_BindImage( tr.whiteImage );
 
-	GL_State( GLS_SRCBLEND_ONE | GLS_DSTBLEND_ONE );
+	R_SetStateBits( GLS_SRCBLEND_ONE | GLS_DSTBLEND_ONE );
 
-	qglColor3f( 1, 0, 0 );
+	// Vulkan: build beam as indexed triangle strip
+	{
+		const int total = (NUM_BEAM_SEGS + 1) * 2;
+		vec4_t positions[total];
+		byte colors[total][4];
+		glIndex_t indexes[NUM_BEAM_SEGS * 6];
+		int nv = 0, ni = 0;
 
-	qglBegin( GL_TRIANGLE_STRIP );
-	for ( i = 0; i <= NUM_BEAM_SEGS; i++ ) {
-		qglVertex3fv( start_points[ i % NUM_BEAM_SEGS] );
-		qglVertex3fv( end_points[ i % NUM_BEAM_SEGS] );
+		for ( i = 0; i <= NUM_BEAM_SEGS; i++ ) {
+			int idx = i % NUM_BEAM_SEGS;
+			VectorCopy( start_points[idx], positions[nv] );
+			positions[nv][3] = 1.0f;
+			colors[nv][0] = 255; colors[nv][1] = 0; colors[nv][2] = 0; colors[nv][3] = 255;
+			nv++;
+			VectorCopy( end_points[idx], positions[nv] );
+			positions[nv][3] = 1.0f;
+			colors[nv][0] = 255; colors[nv][1] = 0; colors[nv][2] = 0; colors[nv][3] = 255;
+			nv++;
+		}
+
+		// convert triangle strip to triangle list
+		for ( i = 2; i < nv; i++ ) {
+			if ( i & 1 ) {
+				indexes[ni++] = i - 1;
+				indexes[ni++] = i - 2;
+				indexes[ni++] = i;
+			} else {
+				indexes[ni++] = i - 2;
+				indexes[ni++] = i - 1;
+				indexes[ni++] = i;
+			}
+		}
+
+		VK_BindPipeline( renderState.stateBits, renderState.faceCulling, qfalse, qfalse );
+		VK_DrawIndexed( nv, (float*)positions, NULL, NULL, (byte*)colors, ni, indexes );
 	}
-	qglEnd();
 }
 
 //------------------
@@ -1287,6 +1317,7 @@ void RB_SurfaceFace( srfSurfaceFace_t *surf ) {
 	int			Bob;
 	int			numPoints;
 	int			dlightBits;
+	int			numLightmaps;
 
 	RB_CHECKOVERFLOW( surf->numPoints, surf->numIndices );
 
@@ -1297,7 +1328,7 @@ void RB_SurfaceFace( srfSurfaceFace_t *surf ) {
 
 	Bob = tess.numVertexes;
 	tessIndexes = tess.indexes + tess.numIndexes;
-	for ( i = surf->numIndices-1 ; i >= 0  ; i-- ) {
+	for ( i = 0 ; i < surf->numIndices ; i++ ) {
 		tessIndexes[i] = indices[i] + Bob;
 	}
 
@@ -1308,6 +1339,15 @@ void RB_SurfaceFace( srfSurfaceFace_t *surf ) {
 	ndx = tess.numVertexes;
 
 	numPoints = surf->numPoints;
+
+	// precompute active lightmap count outside the vertex loop
+	numLightmaps = 0;
+	for ( k = 0; k < MAXLIGHTMAPS; k++ ) {
+		if ( tess.shader->lightmapIndex[k] >= 0 )
+			numLightmaps++;
+		else
+			break;
+	}
 
 	if ( tess.shader->needsNormal ) {
 		normal = surf->plane.normal;
@@ -1321,17 +1361,10 @@ void RB_SurfaceFace( srfSurfaceFace_t *surf ) {
 		VectorCopy( v, tess.xyz[ndx]);
 		tess.texCoords[0][ndx][0] = v[3];
 		tess.texCoords[0][ndx][1] = v[4];
-		for(k=0;k<MAXLIGHTMAPS;k++)
+		for(k=0;k<numLightmaps;k++)
 		{
-			if (tess.shader->lightmapIndex[k] >= 0)
-			{
-				tess.texCoords[k+1][ndx][0] = v[VERTEX_LM+(k*2)];
-				tess.texCoords[k+1][ndx][1] = v[VERTEX_LM+(k*2)+1];
-			}
-			else
-			{
-				break;
-			}
+			tess.texCoords[k+1][ndx][0] = v[VERTEX_LM+(k*2)];
+			tess.texCoords[k+1][ndx][1] = v[VERTEX_LM+(k*2)+1];
 		}
 		tess.vertexColorsui[ndx] = ComputeFinalVertexColor((byte *)&v[VERTEX_COLOR]);
 		tess.vertexDlightBits[ndx] = dlightBits;
@@ -1394,10 +1427,20 @@ void RB_SurfaceGrid( srfGridMesh_t *cv ) {
 	int		numVertexes;
 	int		dlightBits;
 	int		*vDlightBits;
+	int		numLightmaps;
 	qboolean	needsNormal;
 
 	dlightBits = cv->dlightBits[backEnd.smpFrame];
 	tess.dlightBits |= dlightBits;
+
+	// precompute active lightmap count outside the vertex loops
+	numLightmaps = 0;
+	for ( k = 0; k < MAXLIGHTMAPS; k++ ) {
+		if ( tess.shader->lightmapIndex[k] >= 0 )
+			numLightmaps++;
+		else
+			break;
+	}
 
 	// determine the allowable discrepance
 	lodError = LodErrorForVolume( cv->lodOrigin, cv->lodRadius );
@@ -1478,7 +1521,7 @@ void RB_SurfaceGrid( srfGridMesh_t *cv ) {
 				tess.texCoords[0][vert][0] = dv->st[0];
 				tess.texCoords[0][vert][1] = dv->st[1];
 
-				for(k=0;k<MAXLIGHTMAPS;k++)
+				for(k=0;k<numLightmaps;k++)
 				{
 					tess.texCoords[k+1][vert][0] = dv->lightmap[k][0];
 					tess.texCoords[k+1][vert][1] = dv->lightmap[k][1];
@@ -1554,20 +1597,8 @@ Draws x/y/z lines from the origin for orientation debugging
 ===================
 */
 void RB_SurfaceAxis( void ) {
-	GL_Bind( tr.whiteImage );
-	qglLineWidth( 3 );
-	qglBegin( GL_LINES );
-	qglColor3f( 1,0,0 );
-	qglVertex3f( 0,0,0 );
-	qglVertex3f( 16,0,0 );
-	qglColor3f( 0,1,0 );
-	qglVertex3f( 0,0,0 );
-	qglVertex3f( 0,16,0 );
-	qglColor3f( 0,0,1 );
-	qglVertex3f( 0,0,0 );
-	qglVertex3f( 0,0,16 );
-	qglEnd();
-	qglLineWidth( 1 );
+	// Vulkan: debug axis rendering is a stub
+	// Would need a dedicated line pipeline
 }
 
 //===========================================================================
@@ -1634,75 +1665,15 @@ void RB_SurfaceBad( surfaceType_t *surfType ) {
 	ri.Printf( PRINT_ALL, "Bad surface tesselated.\n" );
 }
 
-#if 0
-
 void RB_SurfaceFlare( srfFlare_t *surf ) {
-	vec3_t		left, up;
-	float		radius;
-	byte		color[4];
-	vec3_t		dir;
-	vec3_t		origin;
-	float		d;
-
-	// calculate the xyz locations for the four corners
-	radius = 30;
-	VectorScale( backEnd.viewParms.or.axis[1], radius, left );
-	VectorScale( backEnd.viewParms.or.axis[2], radius, up );
-	if ( backEnd.viewParms.isMirror ) {
-		VectorSubtract( vec3_origin, left, left );
-	}
-
-	color[0] = color[1] = color[2] = color[3] = 255;
-
-	VectorMA( surf->origin, 3, surf->normal, origin );
-	VectorSubtract( origin, backEnd.viewParms.or.origin, dir );
-	VectorNormalize( dir );
-	VectorMA( origin, r_ignore->value, dir, origin );
-
-	d = -DotProduct( dir, surf->normal );
-	if ( d < 0 ) {
-		return;
-	}
-#if 0
-	color[0] *= d;
-	color[1] *= d;
-	color[2] *= d;
-#endif
-
-	RB_AddQuadStamp( origin, left, up, color );
+	(void)surf;
 }
-
-#else
-
-void RB_SurfaceFlare( srfFlare_t *surf ) {
-#if 0
-	vec3_t		left, up;
-	byte		color[4];
-
-	color[0] = surf->color[0] * 255;
-	color[1] = surf->color[1] * 255;
-	color[2] = surf->color[2] * 255;
-	color[3] = 255;
-
-	VectorClear( left );
-	VectorClear( up );
-
-	left[0] = r_ignore->value;
-
-	up[1] = r_ignore->value;
-
-	RB_AddQuadStampExt( surf->origin, left, up, color, 0, 0, 1, 1 );
-#endif
-}
-
-#endif
 
 
 
 void RB_SurfaceDisplayList( srfDisplayList_t *surf ) {
-	// all apropriate state must be set in RB_BeginSurface
-	// this isn't implemented yet...
-	qglCallList( surf->listNum );
+	// Vulkan: display lists not supported
+	(void)surf;
 }
 
 void RB_SurfaceSkip( void *surf ) {

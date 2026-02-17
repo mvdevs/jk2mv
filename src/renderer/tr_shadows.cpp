@@ -1,4 +1,5 @@
 #include "tr_local.h"
+#include "vk_local.h"
 
 
 /*
@@ -40,45 +41,12 @@ void R_AddEdgeDef( int i1, int i2, int facing ) {
 void R_RenderShadowEdges( void ) {
 	int		i;
 
-#if 0
-	int		numTris;
-
-	// dumb way -- render every triangle's edges
-	numTris = tess.numIndexes / 3;
-
-	for ( i = 0 ; i < numTris ; i++ ) {
-		int		i1, i2, i3;
-
-		if ( !facing[i] ) {
-			continue;
-		}
-
-		i1 = tess.indexes[ i*3 + 0 ];
-		i2 = tess.indexes[ i*3 + 1 ];
-		i3 = tess.indexes[ i*3 + 2 ];
-
-		qglBegin( GL_TRIANGLE_STRIP );
-		qglVertex3fv( tess.xyz[ i1 ] );
-		qglVertex3fv( tess.xyz[ i1 + tess.numVertexes ] );
-		qglVertex3fv( tess.xyz[ i2 ] );
-		qglVertex3fv( tess.xyz[ i2 + tess.numVertexes ] );
-		qglVertex3fv( tess.xyz[ i3 ] );
-		qglVertex3fv( tess.xyz[ i3 + tess.numVertexes ] );
-		qglVertex3fv( tess.xyz[ i1 ] );
-		qglVertex3fv( tess.xyz[ i1 + tess.numVertexes ] );
-		qglEnd();
-	}
-#else
 	int		c, c2;
 	int		j, k;
 	int		i2;
 	int		c_edges, c_rejected;
 	int		hit[2];
 
-	// an edge is NOT a silhouette edge if its face doesn't face the light,
-	// or if it has a reverse paired edge that also faces the light.
-	// A well behaved polyhedron would have exactly two faces for each edge,
-	// but lots of models have dangling edges or overfanned edges
 	c_edges = 0;
 	c_rejected = 0;
 
@@ -103,19 +71,28 @@ void R_RenderShadowEdges( void ) {
 			// if it doesn't share the edge with another front facing
 			// triangle, it is a sil edge
 			if ( hit[ 1 ] == 0 ) {
-				qglBegin( GL_TRIANGLE_STRIP );
-				qglVertex3fv( tess.xyz[ i ] );
-				qglVertex3fv( tess.xyz[ i + tess.numVertexes ] );
-				qglVertex3fv( tess.xyz[ i2 ] );
-				qglVertex3fv( tess.xyz[ i2 + tess.numVertexes ] );
-				qglEnd();
+				// Vulkan: draw shadow edge quad as two triangles
+				vec4_t positions[4];
+				glIndex_t indexes[6] = { 0, 1, 2, 0, 2, 3 };
+				byte colors[4][4];
+
+				VectorCopy( tess.xyz[ i ], positions[0] ); positions[0][3] = 1.0f;
+				VectorCopy( tess.xyz[ i + tess.numVertexes ], positions[1] ); positions[1][3] = 1.0f;
+				VectorCopy( tess.xyz[ i2 ], positions[2] ); positions[2][3] = 1.0f;
+				VectorCopy( tess.xyz[ i2 + tess.numVertexes ], positions[3] ); positions[3][3] = 1.0f;
+
+				for (int v = 0; v < 4; v++) {
+					colors[v][0] = 51; colors[v][1] = 51; colors[v][2] = 51; colors[v][3] = 255;
+				}
+
+				VK_DrawIndexed( 4, (float*)positions, NULL, NULL, (byte*)colors, 6, indexes );
+
 				c_edges++;
 			} else {
 				c_rejected++;
 			}
 		}
 	}
-#endif
 }
 
 /*
@@ -188,45 +165,43 @@ void RB_ShadowTessEnd( void ) {
 
 	// draw the silhouette edges
 
-	GL_Bind( tr.whiteImage );
-	qglEnable( GL_CULL_FACE );
-	GL_State( GLS_SRCBLEND_ONE | GLS_DSTBLEND_ZERO );
-	qglColor3f( 0.2f, 0.2f, 0.2f );
+	R_BindImage( tr.whiteImage );
+	R_SetCullMode( CT_FRONT_SIDED );
+	R_SetStateBits( GLS_SRCBLEND_ONE | GLS_DSTBLEND_ZERO );
 
-	// don't write to the color buffer
-	qglColorMask( GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE );
-
-	qglEnable( GL_STENCIL_TEST );
-	qglStencilFunc( GL_ALWAYS, 1, 255 );
-
-	// mirrors have the culling order reversed
-	if ( backEnd.viewParms.isMirror ) {
-		qglCullFace( GL_FRONT );
-		qglStencilOp( GL_KEEP, GL_KEEP, GL_INCR );
-
-		R_RenderShadowEdges();
-
-		qglCullFace( GL_BACK );
-		qglStencilOp( GL_KEEP, GL_KEEP, GL_DECR );
-
-		R_RenderShadowEdges();
-	} else {
-		qglCullFace( GL_BACK );
-		qglStencilOp( GL_KEEP, GL_KEEP, GL_INCR );
-
-		R_RenderShadowEdges();
-
-		qglCullFace( GL_FRONT );
-		qglStencilOp( GL_KEEP, GL_KEEP, GL_DECR );
-
-		R_RenderShadowEdges();
+	// Push safe fragment defaults to prevent stale alphaTest from discarding shadow edges
+	{
+		struct {
+			float texEnvMode;
+			float alphaTestFunc;
+			float alphaTestValue;
+		} fragDefaults = { 0.0f, 0.0f, 0.0f };  // MODULATE, no alpha test
+		VkCommandBuffer cmd2 = vk.frames[vk.currentFrame].commandBuffer;
+		vkCmdPushConstants( cmd2, vk.pipelineLayout,
+			VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+			80, sizeof(fragDefaults), &fragDefaults );
 	}
 
+	// Vulkan: bind stencil increment pipeline (front faces, incr stencil on depth pass)
+	if ( vk.shadowStencilIncrPipeline ) {
+		VkCommandBuffer cmd = vk.frames[vk.currentFrame].commandBuffer;
+		vkCmdBindPipeline( cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, vk.shadowStencilIncrPipeline );
+	} else {
+		return; // no shadow pipeline available
+	}
 
-	// reenable writing to the color buffer
-	qglColorMask( GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE );
+	R_RenderShadowEdges();
 
-	qglDisable( GL_CULL_FACE );
+	// Vulkan: bind stencil decrement pipeline (back faces, decr stencil on depth pass)
+	R_SetCullMode( CT_BACK_SIDED );
+	if ( vk.shadowStencilDecrPipeline ) {
+		VkCommandBuffer cmd = vk.frames[vk.currentFrame].commandBuffer;
+		vkCmdBindPipeline( cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, vk.shadowStencilDecrPipeline );
+	} else {
+		return;
+	}
+
+	R_RenderShadowEdges();
 }
 
 
@@ -247,31 +222,45 @@ void RB_ShadowFinish( void ) {
 	if ( glConfig.stencilBits < 4 ) {
 		return;
 	}
-	qglEnable( GL_STENCIL_TEST );
-	qglStencilFunc( GL_NOTEQUAL, 0, 255 );
 
-	qglDisable (GL_CLIP_PLANE0);
-	qglDisable (GL_CULL_FACE);
+	// Vulkan: bind stencil-tested shadow finish pipeline (darkens where stencil != 0)
+	R_BindImage( tr.whiteImage );
+	R_SetStateBits( GLS_DEPTHMASK_TRUE | GLS_SRCBLEND_DST_COLOR | GLS_DSTBLEND_ZERO );
 
-	GL_Bind( tr.whiteImage );
+	VK_Set2D();
 
-	qglLoadIdentity ();
+	if ( vk.shadowFinishPipeline ) {
+		VkCommandBuffer cmd = vk.frames[vk.currentFrame].commandBuffer;
+		vkCmdBindPipeline( cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, vk.shadowFinishPipeline );
 
-	qglColor3f( 0.6f, 0.6f, 0.6f );
-	GL_State( GLS_DEPTHMASK_TRUE | GLS_SRCBLEND_DST_COLOR | GLS_DSTBLEND_ZERO );
+		// Push safe fragment defaults to prevent stale alphaTest from discarding
+		struct {
+			float texEnvMode;
+			float alphaTestFunc;
+			float alphaTestValue;
+		} fragDefaults = { 0.0f, 0.0f, 0.0f };
+		vkCmdPushConstants( cmd, vk.pipelineLayout,
+			VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+			80, sizeof(fragDefaults), &fragDefaults );
+	} else {
+		return; // no shadow finish pipeline available
+	}
 
-//	qglColor3f( 1, 0, 0 );
-//	GL_State( GLS_DEPTHMASK_TRUE | GLS_SRCBLEND_ONE | GLS_DSTBLEND_ZERO );
+	// draw fullscreen darkening quad
 
-	qglBegin( GL_QUADS );
-	qglVertex3f( -100, 100, -10 );
-	qglVertex3f( 100, 100, -10 );
-	qglVertex3f( 100, -100, -10 );
-	qglVertex3f( -100, -100, -10 );
-	qglEnd ();
+	vec4_t positions[4] = {
+		{ -100, 100, -10, 1 },
+		{ 100, 100, -10, 1 },
+		{ 100, -100, -10, 1 },
+		{ -100, -100, -10, 1 }
+	};
+	glIndex_t indexes[6] = { 0, 1, 2, 0, 2, 3 };
+	byte colors[4][4];
+	for (int i = 0; i < 4; i++) {
+		colors[i][0] = 153; colors[i][1] = 153; colors[i][2] = 153; colors[i][3] = 255;
+	}
 
-	qglColor4f(1,1,1,1);
-	qglDisable( GL_STENCIL_TEST );
+	VK_DrawIndexed( 4, (float*)positions, NULL, NULL, (byte*)colors, 6, indexes );
 }
 
 

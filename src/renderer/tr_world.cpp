@@ -197,33 +197,6 @@ static int R_DlightTrisurf( srfTriangles_t *surf, int dlightBits ) {
 	// FIXME: more dlight culling to trisurfs...
 	surf->dlightBits[ tr.smpFrame ] = dlightBits;
 	return dlightBits;
-#if 0
-	int			i;
-	dlight_t	*dl;
-
-	for ( i = 0 ; i < tr.refdef.num_dlights ; i++ ) {
-		if ( ! ( dlightBits & ( 1 << i ) ) ) {
-			continue;
-		}
-		dl = &tr.refdef.dlights[i];
-		if ( dl->origin[0] - dl->radius > grid->meshBounds[1][0]
-			|| dl->origin[0] + dl->radius < grid->meshBounds[0][0]
-			|| dl->origin[1] - dl->radius > grid->meshBounds[1][1]
-			|| dl->origin[1] + dl->radius < grid->meshBounds[0][1]
-			|| dl->origin[2] - dl->radius > grid->meshBounds[1][2]
-			|| dl->origin[2] + dl->radius < grid->meshBounds[0][2] ) {
-			// dlight doesn't reach the bounds
-			dlightBits &= ~( 1 << i );
-		}
-	}
-
-	if ( !dlightBits ) {
-		tr.pc.c_dlightSurfacesCulled++;
-	}
-
-	grid->dlightBits[ tr.smpFrame ] = dlightBits;
-	return dlightBits;
-#endif
 }
 
 /*
@@ -411,7 +384,6 @@ void RE_GetBModelVerts( int bmodelIndex, vec3_t *verts, vec3_t normal )
 	}
 	else
 	{ // Possibly only have one face, so may as well use the first face, which also should be the best one
-		//i = rand() & 1; // ugh, we don't know which to use.  I'd hope this would never happen
 		i = maxIndx[0]; // use the first face
 	}
 

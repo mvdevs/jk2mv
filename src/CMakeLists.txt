@@ -177,7 +177,8 @@ if (BuildMVMP OR BuildMVDED)
 	set(MVMPDEDRendererFiles
 		"renderer/matcomp.h"
 		"renderer/mdx_format.h"
-		"renderer/qgl.h"
+		"renderer/vk_local.h"
+		"renderer/vk_shaders.h"
 		"renderer/tr_font.h"
 		"renderer/tr_local.h"
 		"renderer/tr_public.h"
@@ -192,6 +193,10 @@ if (BuildMVMP OR BuildMVDED)
 		"renderer/tr_mesh.cpp"
 		"renderer/tr_model.cpp"
 		"renderer/tr_shader.cpp"
+		"renderer/vk_init.cpp"
+		"renderer/vk_pipeline.cpp"
+		"renderer/vk_image.cpp"
+		"renderer/vk_draw.cpp"
 	)
 	source_group("renderer" FILES ${MVMPDEDRendererFiles})
 	set(MVMPDEDFiles ${MVMPDEDFiles} ${MVMPDEDRendererFiles})
@@ -267,14 +272,13 @@ if (BuildMVMP)
 
 	# Libraries
 	
-	# OpenGL
-	set(OpenGL_GL_PREFERENCE GLVND)
-	find_package(OpenGL)
-	if(NOT OPENGL_FOUND)
-		message(FATAL_ERROR "OpenGL dev files not found!")
+	# Vulkan
+	find_package(Vulkan)
+	if(NOT Vulkan_FOUND)
+		message(FATAL_ERROR "Vulkan dev files not found!")
 	endif()
-	set(MVMPIncludeDirs ${MVMPIncludeDirs} ${OPENGL_INCLUDE_DIR})
-	set(MVMPLibraries ${MVMPLibraries} ${OPENGL_LIBRARIES})
+	set(MVMPIncludeDirs ${MVMPIncludeDirs} ${Vulkan_INCLUDE_DIRS})
+	set(MVMPLibraries ${MVMPLibraries} ${Vulkan_LIBRARIES})
 
 	if(UseInternalOpenAL)
 		# OpenAL
@@ -397,7 +401,6 @@ if (BuildMVMP)
 	set(MVMPFiles ${MVMPFiles} ${MVMPMP3Files})
 
 	set(MVMPRendererFiles
-		"renderer/glext.h"
 		"renderer/tr_WorldEffects.h"
 
 		"renderer/tr_WorldEffects.cpp"
@@ -405,7 +408,6 @@ if (BuildMVMP)
 		"renderer/tr_bsp.cpp"
 		"renderer/tr_cmds.cpp"
 		"renderer/tr_curve.cpp"
-		"renderer/tr_flares.cpp"
 		"renderer/tr_font.cpp"
 		"renderer/tr_light.cpp"
 		"renderer/tr_marks.cpp"

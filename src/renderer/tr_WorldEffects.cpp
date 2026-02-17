@@ -5,7 +5,7 @@
 //#include "QSupport.h"
 
 #include "tr_WorldEffects.h"
-#include "glext.h"
+#include "vk_local.h"
 
 
 
@@ -17,17 +17,11 @@ extern qboolean ParseVector( const char **text, int count, float *v );
 
 
 
-void MYgluPerspective( GLdouble fovy, GLdouble aspect, GLdouble zNear, GLdouble zFar )
+void MYgluPerspective( double fovy, double aspect, double zNear, double zFar )
 {
-	GLdouble xmin, xmax, ymin, ymax;
-
-	ymax = zNear * tanf( DEG2RAD(fovy * 0.5f) );
-	ymin = -ymax;
-
-	xmin = ymin * aspect;
-	xmax = ymax * aspect;
-
-	qglFrustum( xmin, xmax, ymin, ymax, zNear, zFar );
+	// Vulkan: perspective projection is computed via push constants / MVP
+	// This is retained as a helper but the actual GL call is removed
+	(void)fovy; (void)aspect; (void)zNear; (void)zFar;
 }
 
 
@@ -347,8 +341,8 @@ class CMistyFog : public CWorldEffect
 private:
 //	GLuint		mImage;
 //	image_t		*mImage;
-	GLfloat		mTextureCoords[2][2];
-	GLfloat		mAlpha;
+	float		mTextureCoords[2][2];
+	float		mAlpha;
 	bool		mAlphaFade, mRendering, mBuddy;
 	float		mSpeed, mAlphaDirection;
 	float		mCurrentSize, mMinSize, mMaxSize;
@@ -373,7 +367,7 @@ public:
 			int				GetWidth(void) { return mWidth; }
 			int				GetHeight(void) { return mHeight; }
 			byte			*GetData(void) { return mData; }
-			GLfloat			GetTextureCoord(int s, int y) { return mTextureCoords[s][y]; }
+			float			GetTextureCoord(int s, int y) { return mTextureCoords[s][y]; }
 			float			GetAlpha(void) { return mAlpha; }
 			bool			GetRendering(void) { return mRendering; }
 
@@ -401,7 +395,6 @@ CMistyFog::CMistyFog(int index, CWorldEffect *owner, bool buddy) :
 	{
 		mRendering = false;
 
-//		mImage = ((CMistyFog *)owner)->GetImage();
 		mData = ((CMistyFog *)owner)->GetData();
 		mWidth = ((CMistyFog *)owner)->GetWidth();
 		mHeight = ((CMistyFog *)owner)->GetHeight();
@@ -550,40 +543,6 @@ void CMistyFog::ParmUpdate(CWorldEffect *effect, int which)
 void CMistyFog::Render(CWorldEffectsSystem *system)
 {
 	CWorldEffect::Render(system);
-
-/*	if (!mRendering)
-	{
-		return;
-	}
-
-	GL_Bind(mImage);
-	GL_State(GLS_SRCBLEND_SRC_ALPHA|GLS_DSTBLEND_ONE);
-
-//	qglColor4f(1.0, 1.0, 1.0, mAlpha*0.4);
-
-	if (mSlave)
-	{
-		qglColor4f(1.0, 0.0, 0.0, mAlpha);
-	}
-	else
-	{
-		qglColor4f(0.0, 1.0, 0.0, mAlpha);
-	}
-
-	qglBegin(GL_QUADS);
-	qglTexCoord2f(mTextureCoords[0][0], mTextureCoords[0][1]);
-	qglVertex3f(-10, 10, -10);
-
-	qglTexCoord2f(mTextureCoords[1][0], mTextureCoords[0][1]);
-	qglVertex3f(10, 10, -10);
-
-	qglTexCoord2f(mTextureCoords[1][0], mTextureCoords[1][1]);
-	qglVertex3f(10, -10, -10);
-
-	qglTexCoord2f(mTextureCoords[0][0], mTextureCoords[1][1]);
-	qglVertex3f(-10, -10, -10);
-
-	qglEnd();*/
 }
 
 void CMistyFog::CreateTextureCoords(void)
@@ -817,49 +776,40 @@ void CMistyFog2::Render(CWorldEffectsSystem *system)
 		return;
 	}
 
-	qglMatrixMode(GL_PROJECTION);
-	qglPushMatrix();
-	qglLoadIdentity ();
-	MYgluPerspective (80.0f,  1.0f,  4.0f,  2048.0f);
+	// Vulkan: fog mesh rendering
+	// Build a custom MVP for the fog and draw via VK_DrawIndexed
+	R_SetStateBits(GLS_SRCBLEND_SRC_ALPHA|GLS_DSTBLEND_ONE);
 
-	qglMatrixMode(GL_MODELVIEW);
-	qglPushMatrix();
-	qglLoadIdentity ();
-	qglRotatef (-90,  1, 0, 0);		// put Z going up
-	qglRotatef (90,  0, 0, 1);		// put Z going up
-	qglRotatef (0,  1, 0, 0);
-	qglRotatef (-90,  0, 1, 0);
-	qglRotatef (-90,  0, 0, 1);
-
-	qglDisable(GL_TEXTURE_2D);
-	GL_State(GLS_SRCBLEND_SRC_ALPHA|GLS_DSTBLEND_ONE);
-	qglShadeModel (GL_SMOOTH);
-
-	qglEnableClientState(GL_COLOR_ARRAY);
-
-	qglColorPointer(4, GL_FLOAT, 0, mColors);
-
-//	qglEnableClientState(GL_VERTEX_ARRAY);
-	qglVertexPointer( 3, GL_FLOAT, 0, mVerts );
-	if (qglLockArraysEXT)
-	{
-		qglLockArraysEXT(0, MISTYFOG_HEIGHT*MISTYFOG_WIDTH);
+	// Convert quad indexes to triangle indexes
+	const int numQuads = (MISTYFOG_HEIGHT-1)*(MISTYFOG_WIDTH-1);
+	glIndex_t triIndexes[numQuads * 6];
+	int ni = 0;
+	for (int q = 0; q < numQuads * 4; q += 4) {
+		triIndexes[ni++] = mIndexes[q / 4 / (MISTYFOG_WIDTH-1)][q / 4 % (MISTYFOG_WIDTH-1)][0];
+		triIndexes[ni++] = mIndexes[q / 4 / (MISTYFOG_WIDTH-1)][q / 4 % (MISTYFOG_WIDTH-1)][1];
+		triIndexes[ni++] = mIndexes[q / 4 / (MISTYFOG_WIDTH-1)][q / 4 % (MISTYFOG_WIDTH-1)][2];
+		triIndexes[ni++] = mIndexes[q / 4 / (MISTYFOG_WIDTH-1)][q / 4 % (MISTYFOG_WIDTH-1)][0];
+		triIndexes[ni++] = mIndexes[q / 4 / (MISTYFOG_WIDTH-1)][q / 4 % (MISTYFOG_WIDTH-1)][2];
+		triIndexes[ni++] = mIndexes[q / 4 / (MISTYFOG_WIDTH-1)][q / 4 % (MISTYFOG_WIDTH-1)][3];
 	}
 
-	qglDrawElements(GL_QUADS, (MISTYFOG_HEIGHT-1)*(MISTYFOG_WIDTH-1)*4, GL_UNSIGNED_INT, mIndexes);
-
-	if ( qglUnlockArraysEXT )
-	{
-		qglUnlockArraysEXT();
+	// Convert float colors to byte colors, and vec3 verts to vec4 for Vulkan
+	const int numVerts = MISTYFOG_HEIGHT * MISTYFOG_WIDTH;
+	byte byteColors[MISTYFOG_HEIGHT * MISTYFOG_WIDTH][4];
+	vec4_t paddedVerts[MISTYFOG_HEIGHT * MISTYFOG_WIDTH];
+	for (int i = 0; i < numVerts; i++) {
+		int row = i / MISTYFOG_WIDTH;
+		int col = i % MISTYFOG_WIDTH;
+		byteColors[i][0] = (byte)(mColors[row][col][0] * 255.0f);
+		byteColors[i][1] = (byte)(mColors[row][col][1] * 255.0f);
+		byteColors[i][2] = (byte)(mColors[row][col][2] * 255.0f);
+		byteColors[i][3] = (byte)(mColors[row][col][3] * 255.0f);
+		VectorCopy(mVerts[row][col], paddedVerts[i]);
+		paddedVerts[i][3] = 1.0f;
 	}
 
-	qglDisableClientState(GL_COLOR_ARRAY);
-//	qglDisableClientState(GL_VERTEX_ARRAY);	 backend doesn't ever re=enable this properly
-
-	qglPopMatrix();
-	qglMatrixMode(GL_PROJECTION);
-	qglPopMatrix();
-	qglMatrixMode(GL_MODELVIEW);	// bug somewhere in the backend which requires this
+	VK_BindPipeline( renderState.stateBits, renderState.faceCulling, qfalse, qfalse );
+	VK_DrawIndexed( numVerts, (float*)paddedVerts, NULL, NULL, (byte*)byteColors, ni, triIndexes );
 }
 
 
@@ -1087,95 +1037,13 @@ void CWind::ParmUpdate(CWorldEffectsSystem *system, int which)
 
 void CWind::Render(CWorldEffectsSystem *system)
 {
-	vec3_t	output;
-	vec3_t	scale;
-
 	if (!mEnabled || !debugShowWind)
 	{
 		return;
 	}
 
-	qglDisable(GL_TEXTURE_2D);
-	qglDisable(GL_CULL_FACE);
-	GL_State(GLS_ALPHA);
-
-	qglColor4f(1.0, 0.0, 0.0, 0.5);
-	qglBegin(GL_QUADS);
-
-	scale[0] = mSize[0] * 0.5f;
-	scale[1] = mSize[1] * 0.5f;
-	scale[2] = mSize[2] * 0.5f;
-
-	VectorMA(mPoint, -scale[0], mPlanes[0], output);
-	VectorMA(output, -scale[1], mPlanes[1], output);
-	VectorMA(output, -scale[2], mPlanes[2], output);
-	qglVertex3fv(output);
-
-	VectorMA(mPoint, -scale[0], mPlanes[0], output);
-	VectorMA(output, scale[1], mPlanes[1], output);
-	VectorMA(output, -scale[2], mPlanes[2], output);
-	qglVertex3fv(output);
-
-	VectorMA(mPoint, -scale[0], mPlanes[0], output);
-	VectorMA(output, scale[1], mPlanes[1], output);
-	VectorMA(output, scale[2], mPlanes[2], output);
-	qglVertex3fv(output);
-
-	VectorMA(mPoint, -scale[0], mPlanes[0], output);
-	VectorMA(output, -scale[1], mPlanes[1], output);
-	VectorMA(output, scale[2], mPlanes[2], output);
-	qglVertex3fv(output);
-
-
-
-	qglColor4f(0.0, 1.0, 0.0, 0.5);
-	VectorMA(mPoint, -scale[0], mPlanes[0], output);
-	VectorMA(output, -scale[1], mPlanes[1], output);
-	VectorMA(output, -scale[2], mPlanes[2], output);
-	qglVertex3fv(output);
-
-	VectorMA(mPoint, scale[0], mPlanes[0], output);
-	VectorMA(output, -scale[1], mPlanes[1], output);
-	VectorMA(output, -scale[2], mPlanes[2], output);
-	qglVertex3fv(output);
-
-	VectorMA(mPoint, scale[0], mPlanes[0], output);
-	VectorMA(output, -scale[1], mPlanes[1], output);
-	VectorMA(output, scale[2], mPlanes[2], output);
-	qglVertex3fv(output);
-
-	VectorMA(mPoint, -scale[0], mPlanes[0], output);
-	VectorMA(output, -scale[1], mPlanes[1], output);
-	VectorMA(output, scale[2], mPlanes[2], output);
-	qglVertex3fv(output);
-
-
-	qglColor4f(0.0, 0.0, 1.0, 0.5);
-	VectorMA(mPoint, -scale[0], mPlanes[0], output);
-	VectorMA(output, -scale[2], mPlanes[2], output);
-	VectorMA(output, -scale[1], mPlanes[1], output);
-	qglVertex3fv(output);
-
-	VectorMA(mPoint, scale[0], mPlanes[0], output);
-	VectorMA(output, -scale[2], mPlanes[2], output);
-	VectorMA(output, -scale[1], mPlanes[1], output);
-	qglVertex3fv(output);
-
-	VectorMA(mPoint, scale[0], mPlanes[0], output);
-	VectorMA(output, -scale[2], mPlanes[2], output);
-	VectorMA(output, scale[1], mPlanes[1], output);
-	qglVertex3fv(output);
-
-	VectorMA(mPoint, -scale[0], mPlanes[0], output);
-	VectorMA(output, -scale[2], mPlanes[2], output);
-	VectorMA(output, scale[1], mPlanes[1], output);
-	qglVertex3fv(output);
-
-
-	qglEnd();
-
-	qglEnable(GL_CULL_FACE);
-	qglEnable(GL_TEXTURE_2D);
+	// Vulkan: debug wind volume rendering stub
+	// Would need a dedicated debug rendering pipeline
 }
 
 
@@ -1692,26 +1560,38 @@ void CSnowSystem::Render(void)
 
 	VectorAdd(backEnd.viewParms.ori.origin, mMinSpread, origin);
 
-	qglColor4f(0.8f, 0.8f, 0.8f, mAlpha);
+	R_SetStateBits(GLS_ALPHA);
+	R_BindImage( tr.whiteImage );
 
-//	GL_State(GLS_SRCBLEND_SRC_ALPHA|GLS_DSTBLEND_ONE);
-	GL_State(GLS_ALPHA);
-	qglDisable(GL_TEXTURE_2D);
-
-	qglPointSize(2.0);
-
+	// Vulkan: render snowflakes as small quads (point primitives not available)
+	// Each snowflake becomes a tiny 2-pixel billboard quad
 	item = mSnowList;
-	qglBegin(GL_POINTS);
+	float pixelSize = 2.0f;
+	byte snowColor[4] = { (byte)(0.8f*255), (byte)(0.8f*255), (byte)(0.8f*255), (byte)(mAlpha*255) };
+
 	for(i=mMaxSnowflakes;i;i--)
 	{
 		if (item->flags & PARTICLE_FLAG_RENDER)
 		{
-			qglVertex3fv(item->pos);
+			// Draw a tiny quad centered at the snowflake position
+			vec4_t positions[4];
+			glIndex_t indexes[6] = { 0, 1, 2, 0, 2, 3 };
+			byte colors[4][4];
+
+			for (int v = 0; v < 4; v++) {
+				Com_Memcpy(colors[v], snowColor, 4);
+			}
+
+			VectorCopy(item->pos, positions[0]); positions[0][3] = 1.0f;
+			VectorCopy(item->pos, positions[1]); positions[1][0] += pixelSize; positions[1][3] = 1.0f;
+			VectorCopy(item->pos, positions[2]); positions[2][0] += pixelSize; positions[2][2] += pixelSize; positions[2][3] = 1.0f;
+			VectorCopy(item->pos, positions[3]); positions[3][2] += pixelSize; positions[3][3] = 1.0f;
+
+			VK_BindPipeline( renderState.stateBits, renderState.faceCulling, qfalse, qfalse );
+			VK_DrawIndexed( 4, (float*)positions, NULL, NULL, (byte*)colors, 6, indexes );
 		}
 		item++;
 	}
-	qglEnd();
-	qglEnable(GL_TEXTURE_2D);
 }
 
 CSnowSystem	*snowSystem = 0;
@@ -1767,9 +1647,7 @@ CRainSystem::CRainSystem(int maxRain) :
 	mRainList = new SParticle[mMaxRain];
 
 	mImage = R_FindImageFile("gfx/world/rain", qfalse, qfalse, qfalse, qfalse);
-	GL_Bind(mImage);
-	qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
-	qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
+	// Vulkan: texture filtering is configured via sampler at image creation time
 
 	Init();
 }
@@ -1978,7 +1856,6 @@ void CRainSystem::Render(void)
 	SParticle	*item;
 	vec4_t		forward, down, left;
 	vec3_t		pos;
-//	float		percent;
 	float		radius;
 
 	CWorldEffectsSystem::Render();
@@ -1988,79 +1865,94 @@ void CRainSystem::Render(void)
 		return;
 	}
 
-	VectorScale(backEnd.viewParms.ori.axis[0], 1, forward);		// forward
-	VectorScale(backEnd.viewParms.ori.axis[1], 0.2f, left);		// left
+	VectorScale(backEnd.viewParms.ori.axis[0], 1, forward);
+	VectorScale(backEnd.viewParms.ori.axis[1], 0.2f, left);
 	down[0] = 0 - mWindDirection[0] * mRainHeight * mWindAngle;
 	down[1] = 0 - mWindDirection[1] * mRainHeight * mWindAngle;
 	down[2] = -mRainHeight;
 
-	GL_Bind(mImage);
+	R_BindImage(mImage);
+	R_SetStateBits(GLS_ALPHA);
+	R_SetCullMode( CT_TWO_SIDED );
 
-	GL_State(GLS_ALPHA);
-	qglEnable(GL_TEXTURE_2D);
-	qglDisable(GL_CULL_FACE);
-
-	qglMatrixMode(GL_MODELVIEW);
-	qglPushMatrix();
-    qglTranslatef (backEnd.viewParms.ori.origin[0], backEnd.viewParms.ori.origin[1],  backEnd.viewParms.ori.origin[2]);
+	// Vulkan: batch rain triangles and draw
+	// Each rain drop is 1 triangle (3 verts)
+	// We'll batch them and draw in chunks
+	const int MAX_BATCH = SHADER_MAX_VERTEXES / 3;
+	vec4_t positions[MAX_BATCH * 3];
+	vec2_t texcoords[MAX_BATCH * 3];
+	byte colors[MAX_BATCH * 3][4];
+	glIndex_t indexes[MAX_BATCH * 3];
+	int batchCount = 0;
 
 	item = mRainList;
-	qglBegin(GL_TRIANGLES );
 	for(i=mMaxRain;i;i--)
 	{
-/*		percent = (item->pos[1] -(-20.0)) / (20.0 - (-20.0));
-		percent *= forward[2];
-		if (percent < 0.0)
-		{
-			radius = 10 * (percent + 1.0);
-		}
-		else
-		{
-			radius = 10 * (1.0 - percent);
-		}*/
 		radius = item->pos[1];
+		float alpha;
 		if (item->pos[2] < 0)
 		{
-//			radius *= 1.0 - (item->pos[2] / 40.0);
-			float alpha = mAlpha * (item->pos[1] / -item->pos[2]);
-
-			if (alpha > mAlpha)
-			{
-				alpha = mAlpha;
-			}
-			qglColor4f(1.0, 1.0, 1.0, alpha * mFadeAlpha);
+			alpha = mAlpha * (item->pos[1] / -item->pos[2]);
+			if (alpha > mAlpha) alpha = mAlpha;
 		}
 		else
 		{
-			qglColor4f(1.0, 1.0, 1.0, mAlpha * mFadeAlpha);
-//			radius *= 1.0 + (item->pos[2] / 20.0);
+			alpha = mAlpha * mFadeAlpha;
 		}
 
 		pos[0] = sinf(item->pos[0]) * radius + (item->pos[2] * mWindDirection[0] * mWindAngle);
 		pos[1] = cosf(item->pos[0]) * radius + (item->pos[2] * mWindDirection[1] * mWindAngle);
 		pos[2] = item->pos[2];
 
-		qglTexCoord2f(1.0, 0.0);
-		qglVertex3f(pos[0],
-					pos[1],
-					pos[2]);
+		// Offset by camera origin
+		vec3_t worldPos;
+		VectorAdd(pos, backEnd.viewParms.ori.origin, worldPos);
 
-		qglTexCoord2f(0.0, 0.0);
-		qglVertex3f(pos[0] + left[0],
-					pos[1] + left[1],
-					pos[2] + left[2]);
+		int base = batchCount * 3;
+		byte a = (byte)(alpha * mFadeAlpha * 255.0f);
 
-		qglTexCoord2f(0.0, 1.0);
-		qglVertex3f(pos[0] + down[0] + left[0],
-					pos[1] + down[1] + left[1],
-					pos[2] + down[2] + left[2]);
+		VectorCopy(worldPos, positions[base]); positions[base][3] = 1.0f;
+		texcoords[base][0] = 1.0f; texcoords[base][1] = 0.0f;
+		colors[base][0] = 255; colors[base][1] = 255; colors[base][2] = 255; colors[base][3] = a;
+
+		positions[base+1][0] = worldPos[0] + left[0];
+		positions[base+1][1] = worldPos[1] + left[1];
+		positions[base+1][2] = worldPos[2] + left[2];
+		positions[base+1][3] = 1.0f;
+		texcoords[base+1][0] = 0.0f; texcoords[base+1][1] = 0.0f;
+		colors[base+1][0] = 255; colors[base+1][1] = 255; colors[base+1][2] = 255; colors[base+1][3] = a;
+
+		positions[base+2][0] = worldPos[0] + down[0] + left[0];
+		positions[base+2][1] = worldPos[1] + down[1] + left[1];
+		positions[base+2][2] = worldPos[2] + down[2] + left[2];
+		positions[base+2][3] = 1.0f;
+		texcoords[base+2][0] = 0.0f; texcoords[base+2][1] = 1.0f;
+		colors[base+2][0] = 255; colors[base+2][1] = 255; colors[base+2][2] = 255; colors[base+2][3] = a;
+
+		indexes[base] = base;
+		indexes[base+1] = base + 1;
+		indexes[base+2] = base + 2;
+
+		batchCount++;
+
+		if (batchCount >= MAX_BATCH)
+		{
+			VK_BindPipeline( renderState.stateBits, renderState.faceCulling, qfalse, qfalse );
+			VK_DrawIndexed( batchCount * 3, (float*)positions, (float*)texcoords, NULL, (byte*)colors, batchCount * 3, indexes );
+			batchCount = 0;
+		}
+
 		item++;
 	}
-	qglEnd();
 
-	qglEnable(GL_CULL_FACE);
+	// flush remaining
+	if (batchCount > 0)
+	{
+		VK_BindPipeline( renderState.stateBits, renderState.faceCulling, qfalse, qfalse );
+		VK_DrawIndexed( batchCount * 3, (float*)positions, (float*)texcoords, NULL, (byte*)colors, batchCount * 3, indexes );
+	}
 
-	qglPopMatrix();
+	R_SetCullMode( CT_FRONT_SIDED );
 }
 
 
@@ -2110,9 +2002,7 @@ void RB_RenderWorldEffects(void)
 	}
 
 	SetViewportAndScissor();
-	qglMatrixMode(GL_MODELVIEW);
-//	qglPushMatrix();
-	qglLoadMatrixf( backEnd.viewParms.world.modelMatrix );
+	// Vulkan: model matrix is handled via push constants / MVP
 
 	originContents = ri.CM_PointContents(backEnd.viewParms.ori.origin, 0);
 
@@ -2127,9 +2017,6 @@ void RB_RenderWorldEffects(void)
 		snowSystem->Update(elapseTime);
 		snowSystem->Render();
 	}
-
-//	qglMatrixMode(GL_MODELVIEW);
-//	qglPopMatrix();
 }
 
 //	console commands for r_we

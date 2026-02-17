@@ -1,4 +1,5 @@
 #include "tr_local.h"
+#include "vk_local.h"
 
 volatile renderCommandList_t	*renderCommandList;
 
@@ -320,7 +321,7 @@ void RE_BeginFrame( stereoFrame_t stereoFrame, qboolean skipBackend ) {
 	if ( !tr.registered ) {
 		return;
 	}
-	glState.finishCalled = qfalse;
+	renderState.finishCalled = qfalse;
 
 	tr.frameCount++;
 	tr.frameSceneNum = 0;
@@ -347,11 +348,7 @@ void RE_BeginFrame( stereoFrame_t stereoFrame, qboolean skipBackend ) {
 		else
 		{
 			R_SyncRenderThread();
-			qglEnable( GL_STENCIL_TEST );
-			qglStencilMask( ~0U );
-			qglClearStencil( 0U );
-			qglStencilFunc( GL_ALWAYS, 0U, ~0U );
-			qglStencilOp( GL_KEEP, GL_INCR, GL_INCR );
+			// Vulkan: stencil for overdraw measurement is configured via pipeline state
 		}
 		r_measureOverdraw->modified = qfalse;
 	}
@@ -360,7 +357,7 @@ void RE_BeginFrame( stereoFrame_t stereoFrame, qboolean skipBackend ) {
 		// this is only reached if it was on and is now off
 		if ( r_measureOverdraw->modified ) {
 			R_SyncRenderThread();
-			qglDisable( GL_STENCIL_TEST );
+			// Vulkan: stencil disabled via pipeline state
 		}
 		r_measureOverdraw->modified = qfalse;
 	}
@@ -370,13 +367,15 @@ void RE_BeginFrame( stereoFrame_t stereoFrame, qboolean skipBackend ) {
 	//
 	if ( r_textureMode->modified || r_ext_texture_filter_anisotropic->modified) {
 		R_SyncRenderThread();
-		GL_TextureMode( r_textureMode->string );
+		R_SetTextureMode( r_textureMode->string );
 		r_textureMode->modified = qfalse;
 		r_ext_texture_filter_anisotropic->modified = qfalse;
 	}
 
 	if ( glConfig.textureLODBiasAvailable && r_textureLODBias->modified ) {
-		qglTexEnvf(GL_TEXTURE_FILTER_CONTROL_EXT, GL_TEXTURE_LOD_BIAS_EXT, r_textureLODBias->value );
+		// Vulkan: recreate samplers with new LOD bias
+		R_SyncRenderThread();
+		VK_SetTextureMode( r_textureMode->string );
 		r_textureLODBias->modified = qfalse;
 	}
 
@@ -404,15 +403,8 @@ void RE_BeginFrame( stereoFrame_t stereoFrame, qboolean skipBackend ) {
 			R_RemapShader("gfx/2d/charsgrid_med", "gfx/2d/charsgrid_med", 0);
 	}
 
-	// check for errors
-	if ( !r_ignoreGLErrors->integer ) {
-		int	err;
-
-		R_SyncRenderThread();
-		if ( ( err = qglGetError() ) != GL_NO_ERROR ) {
-			ri.Error( ERR_FATAL, "RE_BeginFrame() - glGetError() failed (0x%x)!", err );
-		}
-	}
+	// Vulkan: error checking is done via validation layers
+	// No per-frame error check needed
 
 	//
 	// draw buffer stuff
@@ -425,9 +417,9 @@ void RE_BeginFrame( stereoFrame_t stereoFrame, qboolean skipBackend ) {
 
 	if ( glConfig.stereoEnabled ) {
 		if ( stereoFrame == STEREO_LEFT ) {
-			cmd->buffer = (int)GL_BACK_LEFT;
+			cmd->buffer = (int)DRAWBUF_BACK_LEFT;
 		} else if ( stereoFrame == STEREO_RIGHT ) {
-			cmd->buffer = (int)GL_BACK_RIGHT;
+			cmd->buffer = (int)DRAWBUF_BACK_RIGHT;
 		} else {
 			ri.Error( ERR_FATAL, "RE_BeginFrame: Stereo is enabled, but stereoFrame was %i", stereoFrame );
 		}
@@ -436,10 +428,10 @@ void RE_BeginFrame( stereoFrame_t stereoFrame, qboolean skipBackend ) {
 			ri.Error( ERR_FATAL, "RE_BeginFrame: Stereo is disabled, but stereoFrame was %i", stereoFrame );
 		}
 		if ( !Q_stricmp( r_drawBuffer->string, "GL_FRONT" ) ) {
-			cmd->buffer = (int)GL_FRONT;
-		} else {
-			cmd->buffer = (int)GL_BACK;
+			// Vulkan has no front-buffer rendering, always use back buffer
+			ri.Printf( PRINT_WARNING, "GL_FRONT draw buffer not supported in Vulkan, using back buffer\n" );
 		}
+		cmd->buffer = (int)DRAWBUF_BACK;
 	}
 }
 
@@ -451,9 +443,8 @@ This must be called when drawing is done after RE_BeginFrame
 =============
 */
 void RE_EndFrame( void ) {
-	if (r_gammamethod->integer == GAMMA_POSTPROCESSING) {
-		RE_GammaCorrection();
-	}
+	// Gamma correction is applied via push constants during rendering
+	// No additional post-processing needed
 }
 
 /*
@@ -534,13 +525,10 @@ int RE_CaptureFrameRaw( byte *buffer, int bufSize, int padding )
 	cmd->buffer = buffer;
 	cmd->bufSize = bufSize;
 	cmd->padding = padding;
-	cmd->format = GL_BGR;
+	cmd->format = IMGFMT_BGR;
 
 	R_SyncRenderThread();
-	//
-
-	if (r_gammamethod->integer == GAMMA_HARDWARE)
-		R_GammaCorrect(buffer, size);
+	// Gamma is applied during Vulkan rendering, no post-processing needed
 
 	return size;
 }
@@ -581,13 +569,10 @@ int RE_CaptureFrameJPEG( byte *buffer, int bufSize, int quality )
 	cmd->buffer = captureBuffer;
 	cmd->bufSize = memcount;
 	cmd->padding = 1;
-	cmd->format = GL_RGB;
+	cmd->format = IMGFMT_RGB;
 
 	R_SyncRenderThread();
-	//
-
-	if (r_gammamethod->integer == GAMMA_HARDWARE)
-		R_GammaCorrect(captureBuffer, memcount);
+	// Gamma is applied during Vulkan rendering, no post-processing needed
 
 	size = SaveJPGToBuffer(buffer, bufSize,
 		quality, width, height, captureBuffer, 0);

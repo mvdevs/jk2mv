@@ -458,7 +458,7 @@ void RE_RegisterMedia_LevelLoadBegin(const char *psMapName, ForceReload_e eForce
 	// for development purposes we may want to ditch certain media just before loading a map...
 	//
 	bool bDeleteModels	= eForceReload == eForceReload_MODELS || eForceReload == eForceReload_ALL;
-//	bool bDeleteBSP		= eForceReload == eForceReload_BSP    || eForceReload == eForceReload_ALL;
+
 
 	if (bDeleteModels)
 	{

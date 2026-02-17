@@ -3,7 +3,7 @@
 #include "tr_local.h"
 
 #ifndef DEDICATED
-#include "glext.h"
+#include "vk_local.h"
 #endif
 
 #include <map>
@@ -28,9 +28,6 @@ static void LoadJPG( const char *name, byte **pic, int *width, int *height, pixe
 static byte			 s_intensitytable[256];
 static unsigned char s_gammatable[256];
 
-int		gl_filter_min = GL_LINEAR_MIPMAP_NEAREST;
-int		gl_filter_max = GL_LINEAR;
-
 //#define FILE_HASH_SIZE		1024	// actually the shader code still needs this (from another module, great),
 //static	image_t*		hashTable[FILE_HASH_SIZE];
 
@@ -46,12 +43,12 @@ void R_GammaCorrect( byte *buffer, int bufSize ) {
 }
 
 static const textureMode_t modes[] = {
-	{"GL_NEAREST", GL_NEAREST, GL_NEAREST},
-	{"GL_LINEAR", GL_LINEAR, GL_LINEAR},
-	{"GL_NEAREST_MIPMAP_NEAREST", GL_NEAREST_MIPMAP_NEAREST, GL_NEAREST},
-	{"GL_LINEAR_MIPMAP_NEAREST", GL_LINEAR_MIPMAP_NEAREST, GL_LINEAR},
-	{"GL_NEAREST_MIPMAP_LINEAR", GL_NEAREST_MIPMAP_LINEAR, GL_NEAREST},
-	{"GL_LINEAR_MIPMAP_LINEAR", GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR}
+	{"GL_NEAREST", TEXFILTER_NEAREST, TEXFILTER_NEAREST},
+	{"GL_LINEAR", TEXFILTER_LINEAR, TEXFILTER_LINEAR},
+	{"GL_NEAREST_MIPMAP_NEAREST", TEXFILTER_NEAREST_MIPMAP_NEAREST, TEXFILTER_NEAREST},
+	{"GL_LINEAR_MIPMAP_NEAREST", TEXFILTER_LINEAR_MIPMAP_NEAREST, TEXFILTER_LINEAR},
+	{"GL_NEAREST_MIPMAP_LINEAR", TEXFILTER_NEAREST_MIPMAP_LINEAR, TEXFILTER_NEAREST},
+	{"GL_LINEAR_MIPMAP_LINEAR", TEXFILTER_LINEAR_MIPMAP_LINEAR, TEXFILTER_LINEAR}
 };
 
 // makeup a nice clean, consistant name to query for and file under, for map<> usage...
@@ -80,11 +77,10 @@ static char *GenerateImageMappingName( const char *name )
 
 /*
 ===============
-GL_TextureMode
+R_SetTextureMode
 ===============
 */
-void GL_TextureMode( const char *string ) {
-	image_t			*glt;
+void R_SetTextureMode( const char *string ) {
 	const textureMode_t	*mode;
 
 	mode = GetTextureMode(string);
@@ -97,32 +93,8 @@ void GL_TextureMode( const char *string ) {
 		return;
 	}
 
-	gl_filter_min = mode->minimize;
-	gl_filter_max = mode->maximize;
-
-	// change all the existing mipmap texture objects
-	   				 R_Images_StartIteration();
-	while ( (glt   = R_Images_GetNextIteration()) != NULL)
-	{
-		if ( glt->upload.textureMode && glt->upload.noMipMaps ) {
-			continue;
-		}
-
-		GL_Bind (glt);
-
-		if ( !glt->upload.textureMode ) {
-			qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_min);
-			qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_max);
-		}
-
-		if ( !glt->upload.noMipMaps ) {
-			if(glConfig.textureFilterAnisotropicMax >= 2.0f) {
-				float aniso = r_ext_texture_filter_anisotropic->value;
-				aniso = Com_Clamp(1.0f, glConfig.textureFilterAnisotropicMax, aniso);
-				qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, aniso);
-			}
-		}
-	}
+	// Vulkan: recreate samplers when texture mode changes
+	VK_SetTextureMode( string );
 }
 
 static float R_BytesPerTex (int format)
@@ -137,43 +109,43 @@ static float R_BytesPerTex (int format)
 		return 2;
 		break;
 	case 3:
-	case GL_RGB:
+	case IMGFMT_RGB:
 		//"RGB  "
 		return glConfig.colorBits/8.0f;
 		break;
 	case 4:
-	case GL_RGBA:
+	case IMGFMT_RGBA:
 		//"RGBA "
 		return glConfig.colorBits/8.0f;
 		break;
 
-	case GL_RGBA4:
+	case IMGFMT_RGBA4:
 		//"RGBA4"
 		return 2;
 		break;
-	case GL_RGB5:
+	case IMGFMT_RGB5:
 		//"RGB5 "
 		return 2;
 		break;
 
-	case GL_RGBA8:
+	case IMGFMT_RGBA8:
 		//"RGBA8"
 		return 4;
 		break;
-	case GL_RGB8:
+	case IMGFMT_RGB8:
 		//"RGB8"
 		return 4;
 		break;
 
-	case GL_RGB4_S3TC:
+	case IMGFMT_S3TC:
 		//"S3TC "
 		return 0.33333f;
 		break;
-	case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
+	case IMGFMT_DXT1:
 		//"DXT1 "
 		return 0.33333f;
 		break;
-	case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
+	case IMGFMT_DXT5:
 		//"DXT5 "
 		return 1;
 		break;
@@ -241,32 +213,32 @@ void R_ImageList_f( void ) {
 			ri.Printf( PRINT_ALL, "IA    " );
 			break;
 		case 3:
-		case GL_RGB:
+		case IMGFMT_RGB:
 			ri.Printf( PRINT_ALL, "RGB   " );
 			break;
 		case 4:
-		case GL_RGBA:
+		case IMGFMT_RGBA:
 			ri.Printf( PRINT_ALL, "RGBA  " );
 			break;
-		case GL_RGBA8:
+		case IMGFMT_RGBA8:
 			ri.Printf( PRINT_ALL, "RGBA8 " );
 			break;
-		case GL_RGB8:
+		case IMGFMT_RGB8:
 			ri.Printf( PRINT_ALL, "RGB8  " );
 			break;
-		case GL_RGB4_S3TC:
+		case IMGFMT_S3TC:
 			ri.Printf( PRINT_ALL, "S3TC  " );
 			break;
-		case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
+		case IMGFMT_DXT1:
 			ri.Printf( PRINT_ALL, "DXT1  " );
 			break;
-		case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
+		case IMGFMT_DXT5:
 			ri.Printf( PRINT_ALL, "DXT5  " );
 			break;
-		case GL_RGBA4:
+		case IMGFMT_RGBA4:
 			ri.Printf( PRINT_ALL, "RGBA4 " );
 			break;
-		case GL_RGB5:
+		case IMGFMT_RGB5:
 			ri.Printf( PRINT_ALL, "RGB5  " );
 			break;
 		default:
@@ -274,13 +246,13 @@ void R_ImageList_f( void ) {
 		}
 
 		switch ( image->wrapClampMode ) {
-		case GL_REPEAT:
+		case TEXWRAP_REPEAT:
 			ri.Printf( PRINT_ALL, "rept " );
 			break;
-		case GL_CLAMP:
+		case TEXWRAP_CLAMP:
 			ri.Printf( PRINT_ALL, "clmp " );
 			break;
-		case GL_CLAMP_TO_EDGE:
+		case TEXWRAP_CLAMP_TO_EDGE:
 			ri.Printf( PRINT_ALL, "clpE " );
 			break;
 		default:
@@ -310,23 +282,12 @@ static void R_LightScaleTexture (byte *in, int inwidth, int inheight )
 	p = in;
 	c = inwidth*inheight;
 
-	if ( r_gammamethod->integer )
+	// Store linear values in textures; gamma is applied uniformly in Vulkan shader
+	for (i=0 ; i<c ; i++, p+=s)
 	{
-		for (i=0 ; i<c ; i++, p+=s)
-		{
-			p[0] = s_intensitytable[p[0]];
-			p[1] = s_intensitytable[p[1]];
-			p[2] = s_intensitytable[p[2]];
-		}
-	}
-	else
-	{
-		for (i=0 ; i<c ; i++, p+=s)
-		{
-			p[0] = s_gammatable[s_intensitytable[p[0]]];
-			p[1] = s_gammatable[s_intensitytable[p[1]]];
-			p[2] = s_gammatable[s_intensitytable[p[2]]];
-		}
+		p[0] = s_intensitytable[p[0]];
+		p[1] = s_intensitytable[p[1]];
+		p[2] = s_intensitytable[p[2]];
 	}
 }
 
@@ -338,19 +299,10 @@ static void R_LightScaleTextureGray (byte *in, int inwidth, int inheight )
 	p = in;
 	c = inwidth * inheight;
 
-	if ( r_gammamethod->integer )
+	// Store linear values in textures; gamma is applied uniformly in Vulkan shader
+	for (i = 0; i < c; i++)
 	{
-		for (i = 0; i < c; i++)
-		{
-			p[i] = s_intensitytable[p[i]];
-		}
-	}
-	else
-	{
-		for (i = 0; i < c; i++)
-		{
-			p[i] = s_gammatable[s_intensitytable[p[i]]];
-		}
+		p[i] = s_intensitytable[p[i]];
 	}
 }
 
@@ -592,49 +544,6 @@ static void R_MipMap (byte *in, int width, int height, pixelFormat_t format) {
 }
 
 
-/*
-==================
-R_BlendOverTexture
-
-Apply a color blend over a set of pixels
-==================
-*/
-static void R_BlendOverTexture( byte *data, int pixelCount, const byte blend[4] ) {
-	int		i;
-	int		inverseAlpha;
-	int		premult[3];
-
-	inverseAlpha = 255 - blend[3];
-	premult[0] = blend[0] * blend[3];
-	premult[1] = blend[1] * blend[3];
-	premult[2] = blend[2] * blend[3];
-
-	for ( i = 0 ; i < pixelCount ; i++, data+=4 ) {
-		data[0] = ( data[0] * inverseAlpha + premult[0] ) >> 9;
-		data[1] = ( data[1] * inverseAlpha + premult[1] ) >> 9;
-		data[2] = ( data[2] * inverseAlpha + premult[2] ) >> 9;
-	}
-}
-
-static const byte mipBlendColors[16][4] = {
-	{0,0,0,0},
-	{255,0,0,128},
-	{0,255,0,128},
-	{0,0,255,128},
-	{255,0,0,128},
-	{0,255,0,128},
-	{0,0,255,128},
-	{255,0,0,128},
-	{0,255,0,128},
-	{0,0,255,128},
-	{255,0,0,128},
-	{0,255,0,128},
-	{0,0,255,128},
-	{255,0,0,128},
-	{0,255,0,128},
-	{0,0,255,128},
-};
-
 static void R_PixelFormatSwizzle440( const byte * __restrict in, byte * __restrict out, int pixelcount ) {
 	memcpy(out, in, pixelcount * 4);
 }
@@ -717,20 +626,7 @@ static int R_PixelFormatSamples( pixelFormat_t format ) {
 	return 0;
 }
 
-static GLenum R_GLPixelFormat( pixelFormat_t format ) {
-	switch (format) {
-	case PXF_GRAY: return GL_LUMINANCE;
-	case PXF_RGB : return GL_RGB;
-	case PXF_BGR : return GL_BGR;
-	case PXF_RGBA: return GL_RGBA;
-	case PXF_BGRA: return GL_BGRA;
-	}
-
-	assert(0);
-	return 0;
-}
-
-static GLint R_GLInternalFormat( qboolean isLightmap, qboolean noTC, qboolean hasAlpha ) {
+static int R_InternalFormat( qboolean isLightmap, qboolean noTC, qboolean hasAlpha ) {
 	if ( !hasAlpha )
 	{
 		int texturebits;
@@ -744,47 +640,47 @@ static GLint R_GLInternalFormat( qboolean isLightmap, qboolean noTC, qboolean ha
 
 		if ( glConfig.textureCompression == TC_S3TC && !noTC )
 		{
-			return GL_RGB4_S3TC;
+			return IMGFMT_S3TC;
 		}
 		else if ( glConfig.textureCompression == TC_S3TC_DXT && !noTC )
 		{	// Compress purely color - no alpha
-			return GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
+			return IMGFMT_DXT1;
 		}
 		else if ( texturebits == 16 )
 		{
-			return GL_RGB5;
+			return IMGFMT_RGB5;
 		}
 		else if ( texturebits == 32 )
 		{
-			return GL_RGB8;
+			return IMGFMT_RGB8;
 		}
 		else
 		{
-			return GL_RGB;
+			return IMGFMT_RGB;
 		}
 	}
 	else
 	{
 		if ( glConfig.textureCompression == TC_S3TC_DXT && !noTC)
 		{	// Compress both alpha and color
-			return GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+			return IMGFMT_DXT5;
 		}
 		else if ( r_texturebits->integer == 16 )
 		{
-			return GL_RGBA4;
+			return IMGFMT_RGBA4;
 		}
 		else if ( r_texturebits->integer == 32 )
 		{
-			return GL_RGBA8;
+			return IMGFMT_RGBA8;
 		}
 		else
 		{
-			return GL_RGBA;
+			return IMGFMT_RGBA;
 		}
 	}
 
 	assert(0);
-	return GL_RGBA;
+	return IMGFMT_RGBA;
 }
 
 class CStringComparator
@@ -826,7 +722,8 @@ static void R_Images_DeleteImageContents( image_t *pImage )
 	assert(pImage);	// should never be called with NULL
 	if (pImage)
 	{
-		qglDeleteTextures( 1, &pImage->texnum );
+		// Vulkan: destroy the Vulkan image resources
+		VK_DestroyImageResources( &pImage->vkImage );
 
 		Z_Free(pImage);
 	}
@@ -849,7 +746,6 @@ static void Upload32( byte * const *mipmaps, qboolean customMip, image_t *image,
 	int			width = image->width;
 	int			height = image->height;
 	upload_t	*upload = &image->upload;
-	GLenum		glFormat;
 	qboolean	hasAlpha;
 
 	data = mipmaps[0];
@@ -873,9 +769,7 @@ static void Upload32( byte * const *mipmaps, qboolean customMip, image_t *image,
 	}
 
 	//
-	// clamp to the current upper OpenGL limit
-	// scale both axis down equally so we don't have to
-	// deal with a half mip resampling
+	// clamp to the current upper limit
 	//
 	while ( width > glConfig.maxTextureSize	|| height > glConfig.maxTextureSize ) {
 		if (customMip && level < MAX_MIP_LEVELS && mipmaps[level]) {
@@ -889,115 +783,39 @@ static void Upload32( byte * const *mipmaps, qboolean customMip, image_t *image,
 	}
 
 	samples = R_PixelFormatSamples( format );
-	glFormat = R_GLPixelFormat( format );
 	hasAlpha = (qboolean)(samples == 4);
-	image->internalFormat = R_GLInternalFormat( isLightmap, upload->noTC, hasAlpha );
+	image->internalFormat = R_InternalFormat( isLightmap, upload->noTC, hasAlpha );
 	image->uploadWidth = width;
 	image->uploadHeight = height;
+	image->mipmap = (qboolean)!upload->noMipMaps;
 
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-
-	if ( !upload->noMipMaps )
-	{
-		if ( r_openglMipMaps->integer && !r_colorMipLevels->integer && !customMip && glConfig.glVersion >= QGL_VERSION_1_4 )
-		{
-			if ( !upload->noLightScale )
-				R_LightScaleTexture( format, data, width, height );
-
-			qglTexParameteri( GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE );
-			qglTexImage2D( GL_TEXTURE_2D, 0, image->internalFormat, width, height, 0, glFormat, GL_UNSIGNED_BYTE, data );
-		}
-		else
-		{
-			int			miplevel = 0;
-			qboolean	processData = qtrue;
-			const byte	*uploadData;
-			byte		*datargba = NULL;
-
-			if ( r_colorMipLevels->integer ) {
-				datargba = (byte *)Hunk_AllocateTempMemory(width * height * 4);
-				glFormat = GL_RGBA;
-			}
-
-			while ( 1 ) {
-				if ( processData && !upload->noLightScale )
-					R_LightScaleTexture( format, data, width, height );
-
-				if ( r_colorMipLevels->integer ) {
-					R_ConvertToRGBA( format, data, datargba, width * height );
-					R_BlendOverTexture( datargba, width * height, mipBlendColors[miplevel] );
-					uploadData = datargba;
-				} else {
-					uploadData = data;
-				}
-
-				qglTexImage2D( GL_TEXTURE_2D, miplevel, image->internalFormat, width, height, 0, glFormat, GL_UNSIGNED_BYTE, uploadData );
-
-				if ( width == 1 && height == 1 )
-					break;
-
-				if ( customMip && level < MAX_MIP_LEVELS && mipmaps[level] ) {
-					data = mipmaps[level];
-					processData = qtrue;
-				} else {
-					R_MipMap( data, width, height, format );
-					processData = qfalse;
-				}
-
-				width = max(width >> 1, 1);
-				height = max(height >> 1, 1);
-
-				miplevel++;
-				level++;
-			}
-
-			if ( datargba )
-				Hunk_FreeTempMemory( datargba );
-		}
-	}
-	else
-	{
-		qglTexImage2D (GL_TEXTURE_2D, 0, image->internalFormat, width, height, 0, glFormat, GL_UNSIGNED_BYTE, data );
+	// Apply light scaling to the data before uploading
+	if ( !upload->noLightScale ) {
+		R_LightScaleTexture( format, data, width, height );
 	}
 
-	if (upload->textureMode)
-	{
-		qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, upload->textureMode->minimize);
-		qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, upload->textureMode->maximize);
-	}
-	else
-	{
-		qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_min);
-		qglTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_max);
+	// Vulkan always uses R8G8B8A8_UNORM, so convert non-RGBA data
+	byte *rgbaData = data;
+	if ( format != PXF_RGBA ) {
+		int pixelCount = width * height;
+		rgbaData = (byte *)ri.Hunk_AllocateTempMemory( pixelCount * 4 );
+		R_ConvertToRGBA( format, data, rgbaData, pixelCount );
 	}
 
-	if (!upload->noMipMaps) {
-		if(glConfig.textureFilterAnisotropicMax >= 2.0f) {
-			float aniso = r_ext_texture_filter_anisotropic->value;
-			aniso = Com_Clamp(1.0f, glConfig.textureFilterAnisotropicMax, aniso);
-			qglTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, aniso);
-		}
-	}
+	// Vulkan: Create the VkImage from RGBA pixel data
+	VK_CreateImage( image, rgbaData, width, height, image->mipmap,
+		(image->wrapClampMode != TEXWRAP_REPEAT) ? qtrue : qfalse);
 
-	GL_CheckErrors();
+	if ( rgbaData != data ) {
+		ri.Hunk_FreeTempMemory( rgbaData );
+	}
 }
 
 
-static void GL_ResetBinds(void)
+static void R_ResetBinds(void)
 {
-	memset( glState.currenttextures, 0, sizeof( glState.currenttextures ) );
-
-	if ( qglActiveTextureARB )
-	{
-		GL_SelectTexture( 1 );
-		qglBindTexture( GL_TEXTURE_2D, 0 );
-		GL_SelectTexture( 0 );
-		qglBindTexture( GL_TEXTURE_2D, 0 );
-	}
-	else
-	{
-		qglBindTexture( GL_TEXTURE_2D, 0 );
-	}
+	memset( renderState.currenttextures, 0, sizeof( renderState.currenttextures ) );
+	// Vulkan: no need to unbind textures - descriptor sets handle binding
 }
 
 
@@ -1023,7 +841,7 @@ void R_Images_DeleteLightMaps(void)
 		++itImage;
 	}
 
-	GL_ResetBinds();
+	R_ResetBinds();
 }
 
 // special function currently only called by Dissolve code...
@@ -1137,7 +955,7 @@ qboolean RE_RegisterImages_LevelLoadEnd(void)
 
 	ri.Printf( PRINT_DEVELOPER, "RE_RegisterImages_LevelLoadEnd(): Ok\n");
 
-	GL_ResetBinds();
+	R_ResetBinds();
 
 	return bEraseOccured;
 }
@@ -1228,8 +1046,8 @@ image_t *R_CreateImageNew( const char *name, byte * const *mipmaps, qboolean cus
 		ri.Error (ERR_DROP, "R_CreateImage: \"%s\" is too long", name);
 	}
 
-	if(glConfig.clampToEdgeAvailable && glWrapClampMode == GL_CLAMP) {
-		glWrapClampMode = GL_CLAMP_TO_EDGE;
+	if(glConfig.clampToEdgeAvailable && glWrapClampMode == TEXWRAP_CLAMP) {
+		glWrapClampMode = TEXWRAP_CLAMP_TO_EDGE;
 	}
 
 	if (name[0] == '*')
@@ -1253,8 +1071,6 @@ image_t *R_CreateImageNew( const char *name, byte * const *mipmaps, qboolean cus
 	image = (image_t*) ri.Malloc( sizeof( image_t ), TAG_IMAGE_T, qtrue );
 //	memset(image,0,sizeof(*image));	// qtrue above does this
 
-	image->texnum = 1024 + giTextureBindNum++;	// ++ is of course staggeringly important...
-
 	// record which map it was used on...
 	//
 	image->iLastLevelUsedOn = RE_RegisterMedia_GetLevel();
@@ -1268,29 +1084,16 @@ image_t *R_CreateImageNew( const char *name, byte * const *mipmaps, qboolean cus
 	image->wrapClampMode = glWrapClampMode;
 
 	// lightmaps are always allocated on TMU 1
-	if ( qglActiveTextureARB && isLightmap ) {
+	if ( isLightmap ) {
 		image->TMU = 1;
 	} else {
 		image->TMU = 0;
 	}
 
-	if ( qglActiveTextureARB ) {
-		GL_SelectTexture( image->TMU );
-	}
-
-	GL_Bind(image);
-
+	// Vulkan: Upload32 now creates the VkImage internally
 	Upload32( mipmaps, customMip, image, isLightmap, format );
 
-	qglTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, glWrapClampMode );
-	qglTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, glWrapClampMode );
-
-	qglBindTexture( GL_TEXTURE_2D, 0 );	//jfm: i don't know why this is here, but it breaks lightmaps when there's only 1
-	glState.currenttextures[glState.currenttmu] = 0;	//mark it not bound
-
-	if ( image->TMU == 1 ) {
-		GL_SelectTexture( 0 );
-	}
+	renderState.currenttextures[renderState.currenttmu] = 0;	//mark it not bound
 
     const char *psNewName = GenerateImageMappingName(name);
 	Q_strncpyz(image->imgName, psNewName, sizeof(image->imgName));
@@ -2543,8 +2346,8 @@ image_t	*R_FindImageFileNew( const char *name, const upload_t *upload, int glWra
 	// need to do this here as well as in R_CreateImage, or R_FindImageFile_NoLoad() may complain about
 	//	different clamp parms used...
 	//
-	if(glConfig.clampToEdgeAvailable && glWrapClampMode == GL_CLAMP) {
-		glWrapClampMode = GL_CLAMP_TO_EDGE;
+	if(glConfig.clampToEdgeAvailable && glWrapClampMode == TEXWRAP_CLAMP) {
+		glWrapClampMode = TEXWRAP_CLAMP_TO_EDGE;
 	}
 
 	image = R_FindImageFile_NoLoad(name, upload, glWrapClampMode );
@@ -2676,7 +2479,7 @@ static void R_CreateDlightImage( void ) {
 			data[y][x] = b;
 		}
 	}
-	tr.dlightImage = R_CreateImage("*dlight", (byte *)data, DLIGHT_SIZE, DLIGHT_SIZE, qfalse, qfalse, qfalse, GL_CLAMP, PXF_GRAY );
+	tr.dlightImage = R_CreateImage("*dlight", (byte *)data, DLIGHT_SIZE, DLIGHT_SIZE, qfalse, qfalse, qfalse, TEXWRAP_CLAMP, PXF_GRAY );
 }
 
 
@@ -2743,7 +2546,6 @@ static void R_CreateFogImage( void ) {
 	byte	*data;
 	float	g;
 	float	d;
-	float	borderColor[4];
 
 	data = (unsigned char *)ri.Hunk_AllocateTempMemory( FOG_S * FOG_T * 4 );
 
@@ -2763,15 +2565,10 @@ static void R_CreateFogImage( void ) {
 	// standard openGL clamping doesn't really do what we want -- it includes
 	// the border color at the edges.  OpenGL 1.2 has clamp-to-edge, which does
 	// what we want.
-	tr.fogImage = R_CreateImage("*fog", (byte *)data, FOG_S, FOG_T, qfalse, qfalse, qfalse, GL_CLAMP, PXF_RGBA );
+	tr.fogImage = R_CreateImage("*fog", (byte *)data, FOG_S, FOG_T, qfalse, qfalse, qfalse, TEXWRAP_CLAMP, PXF_RGBA );
 	ri.Hunk_FreeTempMemory( data );
 
-	borderColor[0] = 1.0;
-	borderColor[1] = 1.0;
-	borderColor[2] = 1.0;
-	borderColor[3] = 1;
-
-	qglTexParameterfv( GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor );
+	// Vulkan: border color is handled by sampler objects, no separate GL call needed
 }
 
 /*
@@ -2795,55 +2592,14 @@ static void R_CreateDefaultImage( void ) {
 
 		data[x][DEFAULT_SIZE-1] = 255;
 	}
-	tr.defaultImage = R_CreateImage("*default", (byte *)data, DEFAULT_SIZE, DEFAULT_SIZE, qtrue, qfalse, qfalse, GL_REPEAT, PXF_GRAY );
+	tr.defaultImage = R_CreateImage("*default", (byte *)data, DEFAULT_SIZE, DEFAULT_SIZE, qtrue, qfalse, qfalse, TEXWRAP_REPEAT, PXF_GRAY );
 }
 
 static void R_BindGlowImages( void ) {
-	// Update dynamic glow textures when vidWidth/vidHeight changes
-
-	qglDisable( GL_TEXTURE_2D );
-	qglEnable( GL_TEXTURE_RECTANGLE_ARB );
-
-	if (tr.screenGlow) {
-		// Create the scene glow image. - AReis
-		qglBindTexture( GL_TEXTURE_RECTANGLE_ARB, tr.screenGlow );
-		qglTexImage2D( GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA16, glConfig.vidWidth, glConfig.vidHeight, 0, GL_RGB, GL_FLOAT, 0 );
-		qglTexParameteri( GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-		qglTexParameteri( GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-		qglTexParameteri( GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP );
-		qglTexParameteri( GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP );
-	}
-	if (tr.sceneImage) {
-		// Create the scene image. - AReis
-		qglBindTexture( GL_TEXTURE_RECTANGLE_ARB, tr.sceneImage );
-		qglTexImage2D( GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA16, glConfig.vidWidth, glConfig.vidHeight, 0, GL_RGB, GL_FLOAT, 0 );
-		qglTexParameteri( GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-		qglTexParameteri( GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-		qglTexParameteri( GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP );
-		qglTexParameteri( GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP );
-	}
-
-	if ( r_DynamicGlowWidth->integer > glConfig.vidWidth  )
-	{
-		r_DynamicGlowWidth->integer = glConfig.vidWidth;
-	}
-	if ( r_DynamicGlowHeight->integer > glConfig.vidHeight  )
-	{
-		r_DynamicGlowHeight->integer = glConfig.vidHeight;
-	}
-
-	if (tr.blurImage) {
-		// Create the minimized scene blur image.
-		qglBindTexture( GL_TEXTURE_RECTANGLE_ARB, tr.blurImage );
-		qglTexImage2D( GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA16, r_DynamicGlowWidth->integer, r_DynamicGlowHeight->integer, 0, GL_RGB, GL_FLOAT, 0 );
-		qglTexParameteri( GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-		qglTexParameteri( GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-		qglTexParameteri( GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP );
-		qglTexParameteri( GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP );
-	}
-
-	qglDisable( GL_TEXTURE_RECTANGLE_ARB );
-	qglEnable( GL_TEXTURE_2D );
+	// Vulkan: glow/scene/blur images are Vulkan render targets
+	// They are created/updated via VK_CreateRenderTargetImage
+	// This is a placeholder - the actual Vulkan render target images
+	// are managed by the vk state in vk_init.cpp
 }
 
 /*
@@ -2859,11 +2615,9 @@ void R_CreateBuiltinImages( void ) {
 
 	// we use a solid white image instead of disabling texturing
 	Com_Memset( data, 255, sizeof( data ) );
-	tr.whiteImage = R_CreateImage("*white", (byte *)data, 8, 8, qfalse, qfalse, qfalse, GL_REPEAT, PXF_GRAY );
+	tr.whiteImage = R_CreateImage("*white", (byte *)data, 8, 8, qfalse, qfalse, qfalse, TEXWRAP_REPEAT, PXF_GRAY );
 
-	tr.screenGlow = 1024 + giTextureBindNum++;
-	tr.sceneImage = 1024 + giTextureBindNum++;
-	tr.blurImage = 1024 + giTextureBindNum++;
+	// Vulkan: glow render targets are managed by vk.glow resources
 
 	R_BindGlowImages( );
 
@@ -2876,17 +2630,17 @@ void R_CreateBuiltinImages( void ) {
 	}
 
 
-	tr.identityLightImage = R_CreateImage("*identityLight", (byte *)data, 8, 8, qfalse, qfalse, qfalse, GL_REPEAT, PXF_GRAY );
+	tr.identityLightImage = R_CreateImage("*identityLight", (byte *)data, 8, 8, qfalse, qfalse, qfalse, TEXWRAP_REPEAT, PXF_GRAY );
 
 
 	for(x=0;x<32;x++) {
 		// scratchimage is usually used for cinematic drawing
-		tr.scratchImage[x] = R_CreateImage(va("*scratch%d",x), (byte *)data, DEFAULT_SIZE, DEFAULT_SIZE, qfalse, qtrue, qfalse, GL_CLAMP, PXF_GRAY );
+		tr.scratchImage[x] = R_CreateImage(va("*scratch%d",x), (byte *)data, DEFAULT_SIZE, DEFAULT_SIZE, qfalse, qtrue, qfalse, TEXWRAP_CLAMP, PXF_GRAY );
 	}
 
 	if (r_newDLights->integer)
 	{
-		tr.dlightImage = R_FindImageFile("gfx/2d/dlight", qtrue, qfalse, qfalse, GL_CLAMP);
+		tr.dlightImage = R_FindImageFile("gfx/2d/dlight", qtrue, qfalse, qfalse, TEXWRAP_CLAMP);
 	}
 	else
 	{
@@ -2920,15 +2674,9 @@ void R_SetColorMappings( void ) {
 	// setup the overbright lighting
 	tr.overbrightBits = r_overBrightBits->integer;
 
-	if (r_gammamethod->integer == GAMMA_NONE)
-	{
-		tr.overbrightBits = 0;
-	}
-
-	// never overbright in windowed mode
-	if (r_gammamethod->integer == GAMMA_HARDWARE && !glConfig.isFullscreen) {
-		tr.overbrightBits = 0;
-	}
+	// In Vulkan, gamma is always applied uniformly as post-processing,
+	// so overbright bits are always available for proper lighting
+	// (windowed mode restriction applies to hardware-only systems)
 
 	if ( tr.overbrightBits > 1 ) {
 		tr.overbrightBits = 1;
@@ -2955,52 +2703,23 @@ void R_SetColorMappings( void ) {
 	g = r_gamma->value;
 	shift = tr.overbrightBits;
 
-	if (r_gammamethod->integer != GAMMA_POSTPROCESSING) {
-		for (i = 0; i < 256; i++) {
-			if (g == 1) {
-				inf = i;
-			} else {
-				inf = 255 * powf(i / 255.0f, 1.0f / g) + 0.5f;
-			}
-			inf <<= shift;
-			if (inf < 0) {
-				inf = 0;
-			}
-			if (inf > 255) {
-				inf = 255;
-			}
-			s_gammatable[i] = inf;
+	// Always build the gamma table for texture correction
+	// regardless of gamma method. This ensures gamma is applied
+	// consistently in the Vulkan renderer.
+	for (i = 0; i < 256; i++) {
+		if (g == 1) {
+			inf = i;
+		} else {
+			inf = 255 * powf(i / 255.0f, 1.0f / g) + 0.5f;
 		}
-	} else {
-		byte gammaCorrected[64];
-		
-		for (int i = 0; i < 64; i++) {
-			if (g == 1.0f) {
-				inf = (int)(((float)i / 63.0f) * 255.0f + 0.5f);
-			} else {
-				inf = (int)(255.0f * powf(i / 63.0f, 1.0f / g) + 0.5f);
-			}
-
-			gammaCorrected[i] = Com_Clampi(0, 255, inf << shift);
+		inf <<= shift;
+		if (inf < 0) {
+			inf = 0;
 		}
-		
-		byte *lutTable = (byte *)Hunk_AllocateTempMemory(64 * 64 * 64 * 3);
-		byte *write = lutTable;
-		for (int z = 0; z < 64; z++) {
-			for (int y = 0; y < 64; y++) {
-				for (int x = 0; x < 64; x++) {
-					*write++ = gammaCorrected[x];
-					*write++ = gammaCorrected[y];
-					*write++ = gammaCorrected[z];
-				}
-			}
+		if (inf > 255) {
+			inf = 255;
 		}
-
-		qglBindTexture(GL_TEXTURE_3D, tr.gammaLUTImage);
-		qglPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-		qglTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, 0, 64, 64, 64, GL_RGB, GL_UNSIGNED_BYTE, lutTable);
-		
-		Hunk_FreeTempMemory(lutTable);
+		s_gammatable[i] = inf;
 	}
 
 	for (i=0 ; i<256 ; i++) {
@@ -3011,10 +2730,8 @@ void R_SetColorMappings( void ) {
 		s_intensitytable[i] = j;
 	}
 
-	// gamma correction
-	if (r_gammamethod->integer == GAMMA_HARDWARE) {
-		WIN_SetGamma( &glConfig, s_gammatable, s_gammatable, s_gammatable );
-	}
+	// Gamma is now applied uniformly in Vulkan as post-processing
+	// Hardware gamma is not used in Vulkan renderer
 }
 
 /*
@@ -3025,17 +2742,9 @@ R_InitImages
 void	R_InitImages( void ) {
 	// gamma render target
 	if (r_gammamethod->integer == GAMMA_POSTPROCESSING) {
-		qglEnable(GL_TEXTURE_3D);
-		tr.gammaLUTImage = 1024 + giTextureBindNum++;
-		qglBindTexture(GL_TEXTURE_3D, tr.gammaLUTImage);
-		qglTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA8, 64, 64, 64, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-		qglTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		qglTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		qglTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		qglTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-		qglTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		qglDisable(GL_TEXTURE_3D);
-		qglEnable(GL_TEXTURE_2D);
+		// Vulkan: gamma correction is handled via the VK gamma pipeline
+		// with push constants (invGamma, brightness, contrast).
+		// No separate LUT texture is needed.
 	}
 
 	// build brightness translation tables
@@ -3055,7 +2764,7 @@ R_DeleteTextures
 void R_DeleteTextures( void ) {
 
 	R_Images_Clear();
-	GL_ResetBinds();
+	R_ResetBinds();
 }
 
 /*

@@ -110,9 +110,14 @@ function(add_zip_command tmp_output output)
 	set(ZipCommand ${ZIP_COMMAND})
 	string(REPLACE <ARCHIVE> "${tmp_output}" ZipCommand "${ZipCommand}")
 	string(REPLACE <FILES> "${ARGS_FILES}" ZipCommand "${ZipCommand}")
-	add_custom_command(OUTPUT "${tmp_output}"
+	
+	# Ensure output directory exists
+	get_filename_component(OUTPUT_DIR "${output}" DIRECTORY)
+	
+	add_custom_command(OUTPUT "${tmp_output}" "${output}"
 		WORKING_DIRECTORY ${ARGS_DIR}
 		COMMAND ${CMAKE_COMMAND} -E remove "${tmp_output}"
+		COMMAND ${CMAKE_COMMAND} -E make_directory "${OUTPUT_DIR}"
 		COMMAND ${ZipCommand}
 		COMMAND ${CMAKE_COMMAND} -E copy "${tmp_output}" "${output}"
 		DEPENDS ${ARGS_DEPENDS}

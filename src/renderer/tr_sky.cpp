@@ -1,5 +1,6 @@
 // tr_sky.c
 #include "tr_local.h"
+#include "vk_local.h"
 
 #define SKY_SUBDIVISIONS		8
 #define HALF_SKY_SUBDIVISIONS	(SKY_SUBDIVISIONS/2)
@@ -345,22 +346,59 @@ static void DrawSkySide( struct image_s *image, const int mins[2], const int max
 {
 	int s, t;
 
-	GL_Bind( image );
+	R_BindImage( image );
 
+	// Vulkan: build triangle strip as indexed triangles and draw
 	for ( t = mins[1]+HALF_SKY_SUBDIVISIONS; t < maxs[1]+HALF_SKY_SUBDIVISIONS; t++ )
 	{
-		qglBegin( GL_TRIANGLE_STRIP );
+		int numVerts = 0;
+		int numIndexes = 0;
+		vec4_t positions[SKY_SUBDIVISIONS*2+2];
+		vec2_t texcoords[SKY_SUBDIVISIONS*2+2];
+		glIndex_t indexes[(SKY_SUBDIVISIONS*2)*3];
 
 		for ( s = mins[0]+HALF_SKY_SUBDIVISIONS; s <= maxs[0]+HALF_SKY_SUBDIVISIONS; s++ )
 		{
-			qglTexCoord2fv( s_skyTexCoords[t][s] );
-			qglVertex3fv( s_skyPoints[t][s] );
+			vec3_t p;
 
-			qglTexCoord2fv( s_skyTexCoords[t+1][s] );
-			qglVertex3fv( s_skyPoints[t+1][s] );
+			VectorAdd( s_skyPoints[t][s], backEnd.viewParms.ori.origin, p );
+			VectorCopy( p, positions[numVerts] );
+			positions[numVerts][3] = 1.0f;
+			texcoords[numVerts][0] = s_skyTexCoords[t][s][0];
+			texcoords[numVerts][1] = s_skyTexCoords[t][s][1];
+			numVerts++;
+
+			VectorAdd( s_skyPoints[t+1][s], backEnd.viewParms.ori.origin, p );
+			VectorCopy( p, positions[numVerts] );
+			positions[numVerts][3] = 1.0f;
+			texcoords[numVerts][0] = s_skyTexCoords[t+1][s][0];
+			texcoords[numVerts][1] = s_skyTexCoords[t+1][s][1];
+			numVerts++;
 		}
 
-		qglEnd();
+		// convert triangle strip to triangle list
+		for ( int i = 2; i < numVerts; i++ ) {
+			if ( i & 1 ) {
+				indexes[numIndexes++] = i - 1;
+				indexes[numIndexes++] = i - 2;
+				indexes[numIndexes++] = i;
+			} else {
+				indexes[numIndexes++] = i - 2;
+				indexes[numIndexes++] = i - 1;
+				indexes[numIndexes++] = i;
+			}
+		}
+
+		byte colors[SKY_SUBDIVISIONS*2+2][4];
+		for ( int i = 0; i < numVerts; i++ ) {
+			colors[i][0] = 255;
+			colors[i][1] = 255;
+			colors[i][2] = 255;
+			colors[i][3] = 255;
+		}
+
+		VK_BindPipeline( renderState.stateBits, renderState.faceCulling, qfalse, qfalse );
+		VK_DrawIndexed( numVerts, (float*)positions, (float*)texcoords, NULL, (byte*)colors, numIndexes, indexes );
 	}
 }
 
@@ -673,98 +711,6 @@ void R_InitSkyTexCoords( float heightCloud )
 
 //======================================================================================
 
-/*
-** RB_DrawSun
-*/
-void RB_DrawSun( void ) {
-	float		size;
-	float		dist;
-	vec3_t		origin, vec1, vec2;
-	vec3_t		temp;
-
-	if ( !backEnd.skyRenderedThisView ) {
-		return;
-	}
-	if ( !r_drawSun->integer ) {
-		return;
-	}
-	qglLoadMatrixf( backEnd.viewParms.world.modelMatrix );
-	qglTranslatef (backEnd.viewParms.ori.origin[0], backEnd.viewParms.ori.origin[1], backEnd.viewParms.ori.origin[2]);
-
-	dist =	backEnd.viewParms.zFar * (1.0f / 1.75f);		// div sqrt(3)
-	size = dist * 0.4f;
-
-	VectorScale( tr.sunDirection, dist, origin );
-	PerpendicularVector( vec1, tr.sunDirection );
-	CrossProduct( tr.sunDirection, vec1, vec2 );
-
-	VectorScale( vec1, size, vec1 );
-	VectorScale( vec2, size, vec2 );
-
-	// farthest depth range
-	qglDepthRange( 1.0, 1.0 );
-
-	// FIXME: use quad stamp
-	RB_BeginSurface( tr.sunShader, tess.fogNum );
-		VectorCopy( origin, temp );
-		VectorSubtract( temp, vec1, temp );
-		VectorSubtract( temp, vec2, temp );
-		VectorCopy( temp, tess.xyz[tess.numVertexes] );
-		tess.texCoords[0][tess.numVertexes][0] = 0;
-		tess.texCoords[0][tess.numVertexes][1] = 0;
-		tess.vertexColors[tess.numVertexes][0] = 255;
-		tess.vertexColors[tess.numVertexes][1] = 255;
-		tess.vertexColors[tess.numVertexes][2] = 255;
-		tess.numVertexes++;
-
-		VectorCopy( origin, temp );
-		VectorAdd( temp, vec1, temp );
-		VectorSubtract( temp, vec2, temp );
-		VectorCopy( temp, tess.xyz[tess.numVertexes] );
-		tess.texCoords[0][tess.numVertexes][0] = 0;
-		tess.texCoords[0][tess.numVertexes][1] = 1;
-		tess.vertexColors[tess.numVertexes][0] = 255;
-		tess.vertexColors[tess.numVertexes][1] = 255;
-		tess.vertexColors[tess.numVertexes][2] = 255;
-		tess.numVertexes++;
-
-		VectorCopy( origin, temp );
-		VectorAdd( temp, vec1, temp );
-		VectorAdd( temp, vec2, temp );
-		VectorCopy( temp, tess.xyz[tess.numVertexes] );
-		tess.texCoords[0][tess.numVertexes][0] = 1;
-		tess.texCoords[0][tess.numVertexes][1] = 1;
-		tess.vertexColors[tess.numVertexes][0] = 255;
-		tess.vertexColors[tess.numVertexes][1] = 255;
-		tess.vertexColors[tess.numVertexes][2] = 255;
-		tess.numVertexes++;
-
-		VectorCopy( origin, temp );
-		VectorSubtract( temp, vec1, temp );
-		VectorAdd( temp, vec2, temp );
-		VectorCopy( temp, tess.xyz[tess.numVertexes] );
-		tess.texCoords[0][tess.numVertexes][0] = 1;
-		tess.texCoords[0][tess.numVertexes][1] = 0;
-		tess.vertexColors[tess.numVertexes][0] = 255;
-		tess.vertexColors[tess.numVertexes][1] = 255;
-		tess.vertexColors[tess.numVertexes][2] = 255;
-		tess.numVertexes++;
-
-		tess.indexes[tess.numIndexes++] = 0;
-		tess.indexes[tess.numIndexes++] = 1;
-		tess.indexes[tess.numIndexes++] = 2;
-		tess.indexes[tess.numIndexes++] = 0;
-		tess.indexes[tess.numIndexes++] = 2;
-		tess.indexes[tess.numIndexes++] = 3;
-
-	RB_EndSurface();
-
-	// back to normal depth range
-	qglDepthRange( 0.0, 1.0 );
-}
-
-
-
 
 /*
 ================
@@ -792,23 +738,20 @@ void RB_StageIteratorSky( void ) {
 	// front of everything to allow developers to see how
 	// much sky is getting sucked in
 	if ( r_showsky->integer ) {
-		qglDepthRange( 0.0, 0.0 );
+		VK_SetDepthRange( 0.0f, 0.0f );
 	} else {
-		qglDepthRange( 1.0, 1.0 );
+		VK_SetDepthRange( 1.0f, 1.0f );
 	}
 
 	// draw the outer skybox
 	if ( tess.shader->sky.outerbox[0] && tess.shader->sky.outerbox[0] != tr.defaultImage ) {
-		qglColor3f( tr.identityLight, tr.identityLight, tr.identityLight );
+		// Vulkan: identity light color handled via vertex colors in DrawSkySide
 
-		qglPushMatrix ();
-		GL_State( 0 );
-		GL_Cull( CT_FRONT_SIDED );
-		qglTranslatef (backEnd.viewParms.ori.origin[0], backEnd.viewParms.ori.origin[1], backEnd.viewParms.ori.origin[2]);
+		R_SetStateBits( 0 );
+		R_SetCullMode( CT_FRONT_SIDED );
+		// Vulkan: translation is baked into s_skyPoints by MakeSkyVec
 
 		DrawSkyBox( tess.shader );
-
-		qglPopMatrix();
 	}
 
 	// generate the vertexes for all the clouds, which will be drawn
@@ -822,7 +765,7 @@ void RB_StageIteratorSky( void ) {
 
 
 	// back to normal depth range
-	qglDepthRange( 0.0, 1.0 );
+	VK_SetDepthRange( 0.0f, 1.0f );
 
 	// note that sky was drawn so we will draw a sun later
 	backEnd.skyRenderedThisView = qtrue;

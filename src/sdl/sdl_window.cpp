@@ -1,5 +1,6 @@
 #include <SDL.h>
 #include <SDL_syswm.h>
+#include <SDL_vulkan.h>
 #include "../qcommon/qcommon.h"
 #include "../sys/sys_local.h"
 #include "../renderer/tr_public.h"
@@ -17,8 +18,7 @@ enum rserr_t
 	RSERR_UNKNOWN
 };
 
-static SDL_Window *screen = NULL;
-static SDL_GLContext opengl_context;
+SDL_Window *screen = NULL;
 static float displayAspect;
 static int	displayIndex;
 static float displayBaseScale;
@@ -323,19 +323,7 @@ void GLimp_Minimize(void)
 
 void WIN_Present( window_t *window )
 {
-	if ( window->api == GRAPHICS_API_OPENGL )
-	{
-		SDL_GL_SwapWindow(screen);
-
-		if ( r_swapInterval->modified )
-		{
-			r_swapInterval->modified = qfalse;
-			if ( SDL_GL_SetSwapInterval( r_swapInterval->integer ) == -1 )
-			{
-				Com_DPrintf( "SDL_GL_SetSwapInterval failed: %s\n", SDL_GetError() );
-			}
-		}
-	}
+	// Vulkan: presentation is handled by VK_EndFrame()
 
 	if ( r_fullscreen->modified )
 	{
@@ -396,12 +384,8 @@ void WIN_UpdateGLConfig( glconfig_t *glConfig ) {
 		displayBaseScale = GLimp_GetDisplayScale(display);
 	}
 
-	// OpenGL context drawable size may change on high dpi-enabled SDL
-	// video driver while window dimensions should remain the
-	// same. This can happen when switching windowed/fullscreen,
-	// moving window to another monitor with different scaling,
-	// changing scaling in display settings.
-	SDL_GL_GetDrawableSize(screen, &glConfig->vidWidth, &glConfig->vidHeight);
+	// Vulkan drawable size
+	SDL_Vulkan_GetDrawableSize(screen, &glConfig->vidWidth, &glConfig->vidHeight);
 	glConfig->displayScale = displayBaseScale * glConfig->vidHeight / glConfig->winHeight;
 }
 
@@ -561,10 +545,8 @@ GLimp_SetMode
 */
 static rserr_t GLimp_SetMode(glconfig_t *glConfig, const windowDesc_t *windowDesc, const char *windowTitle, int mode, qboolean fullscreen, qboolean noborder)
 {
-	int perChannelColorBits;
 	int colorBits, depthBits, stencilBits;
 	int samples;
-	int i = 0;
 	SDL_Surface *icon = NULL;
 	Uint32 flags = SDL_WINDOW_SHOWN;
 	SDL_DisplayMode desktopMode;
@@ -573,7 +555,12 @@ static rserr_t GLimp_SetMode(glconfig_t *glConfig, const windowDesc_t *windowDes
 	int winWidth = 0; // window dimensions in screen coordinates (divided by desktop scaling)
 	int winHeight = 0;
 
-	if ( windowDesc->api == GRAPHICS_API_OPENGL )
+	if ( windowDesc->api == GRAPHICS_API_VULKAN )
+	{
+		// Use SDL_WINDOW_VULKAN for Vulkan rendering
+		flags |= SDL_WINDOW_VULKAN;
+	}
+	else if ( windowDesc->api == GRAPHICS_API_OPENGL )
 	{
 		flags |= SDL_WINDOW_OPENGL;
 	}
@@ -593,13 +580,6 @@ static rserr_t GLimp_SetMode(glconfig_t *glConfig, const windowDesc_t *windowDes
 		CLIENT_WINDOW_ICON.bytes_per_pixel * CLIENT_WINDOW_ICON.width,
 		0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000
 		);
-
-	// Destroy existing state if it exists
-	if( opengl_context != NULL )
-	{
-		SDL_GL_DeleteContext( opengl_context );
-		opengl_context = NULL;
-	}
 
 	// If a window exists, note its display index
 	if ( screen != NULL )
@@ -690,197 +670,42 @@ static rserr_t GLimp_SetMode(glconfig_t *glConfig, const windowDesc_t *windowDes
 	stencilBits = r_stencilbits->integer;
 	samples = r_ext_multisample->integer;
 
-	if ( windowDesc->api == GRAPHICS_API_OPENGL )
+	if ( windowDesc->api == GRAPHICS_API_VULKAN )
 	{
-		for (i = 0; i < 16; i++)
+		// Vulkan: No GL attributes needed, just create the window with SDL_WINDOW_VULKAN flag
+		if( ( screen = SDL_CreateWindow( windowTitle, x, y,
+				winWidth, winHeight, flags ) ) == NULL )
 		{
-			int testColorBits, testDepthBits, testStencilBits;
-
-			// 0 - default
-			// 1 - minus colorBits
-			// 2 - minus depthBits
-			// 3 - minus stencil
-			if ((i % 4) == 0 && i)
-			{
-				// one pass, reduce
-				switch (i / 4)
-				{
-					case 2 :
-						if (colorBits == 24)
-							colorBits = 16;
-						break;
-					case 1 :
-						if (depthBits == 24)
-							depthBits = 16;
-						else if (depthBits == 16)
-							depthBits = 8;
-					case 3 :
-						if (stencilBits == 24)
-							stencilBits = 16;
-						else if (stencilBits == 16)
-							stencilBits = 8;
-				}
-			}
-
-			testColorBits = colorBits;
-			testDepthBits = depthBits;
-			testStencilBits = stencilBits;
-
-			if ((i % 4) == 3)
-			{ // reduce colorBits
-				if (testColorBits == 24)
-					testColorBits = 16;
-			}
-
-			if ((i % 4) == 2)
-			{ // reduce depthBits
-				if (testDepthBits == 24)
-					testDepthBits = 16;
-				else if (testDepthBits == 16)
-					testDepthBits = 8;
-			}
-
-			if ((i % 4) == 1)
-			{ // reduce stencilBits
-				if (testStencilBits == 24)
-					testStencilBits = 16;
-				else if (testStencilBits == 16)
-					testStencilBits = 8;
-				else
-					testStencilBits = 0;
-			}
-
-			if (testColorBits == 24)
-				perChannelColorBits = 8;
-			else
-				perChannelColorBits = 4;
-
-			SDL_GL_SetAttribute( SDL_GL_RED_SIZE, perChannelColorBits );
-			SDL_GL_SetAttribute( SDL_GL_GREEN_SIZE, perChannelColorBits );
-			SDL_GL_SetAttribute( SDL_GL_BLUE_SIZE, perChannelColorBits );
-			SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE, testDepthBits );
-			SDL_GL_SetAttribute( SDL_GL_STENCIL_SIZE, testStencilBits );
-
-			SDL_GL_SetAttribute( SDL_GL_MULTISAMPLEBUFFERS, samples ? 1 : 0 );
-			SDL_GL_SetAttribute( SDL_GL_MULTISAMPLESAMPLES, samples );
-
-			if ( windowDesc->gl.majorVersion )
-			{
-				int compactVersion = windowDesc->gl.majorVersion * 100 + windowDesc->gl.minorVersion * 10;
-
-				SDL_GL_SetAttribute( SDL_GL_CONTEXT_MAJOR_VERSION, windowDesc->gl.majorVersion );
-				SDL_GL_SetAttribute( SDL_GL_CONTEXT_MINOR_VERSION, windowDesc->gl.minorVersion );
-
-				if ( windowDesc->gl.profile == GLPROFILE_ES || compactVersion >= 320 )
-				{
-					int profile;
-					switch ( windowDesc->gl.profile )
-					{
-					default:
-					case GLPROFILE_COMPATIBILITY:
-						profile = SDL_GL_CONTEXT_PROFILE_COMPATIBILITY;
-						break;
-
-					case GLPROFILE_CORE:
-						profile = SDL_GL_CONTEXT_PROFILE_CORE;
-						break;
-
-					case GLPROFILE_ES:
-						profile = SDL_GL_CONTEXT_PROFILE_ES;
-						break;
-					}
-
-					SDL_GL_SetAttribute( SDL_GL_CONTEXT_PROFILE_MASK, profile );
-				}
-			}
-
-			if ( windowDesc->gl.contextFlags & GLCONTEXT_DEBUG )
-			{
-				SDL_GL_SetAttribute( SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG );
-			}
-
-			if(r_stereo->integer)
-			{
-				glConfig->stereoEnabled = qtrue;
-				SDL_GL_SetAttribute(SDL_GL_STEREO, 1);
-			}
-			else
-			{
-				glConfig->stereoEnabled = qfalse;
-				SDL_GL_SetAttribute(SDL_GL_STEREO, 0);
-			}
-
-			SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
-			SDL_GL_SetAttribute( SDL_GL_ACCELERATED_VISUAL, !r_allowsoftwaregl->integer);
-
-			if( ( screen = SDL_CreateWindow( windowTitle, x, y,
-					winWidth, winHeight, flags ) ) == NULL )
-			{
-				if ( samples > 0 ) {
-					SDL_GL_SetAttribute( SDL_GL_MULTISAMPLEBUFFERS, 0 );
-					SDL_GL_SetAttribute( SDL_GL_MULTISAMPLESAMPLES, 0 );
-
-					screen = SDL_CreateWindow( windowTitle, x, y,
-						winWidth, winHeight, flags );
-				}
-			}
-
-			if ( screen == NULL ) {
-				Com_DPrintf( "SDL_CreateWindow failed: %s\n", SDL_GetError( ) );
-				continue;
-			}
-
-#ifndef MACOS_X
-			SDL_SetWindowIcon(screen, icon);
-#endif
-
-			if( fullscreen )
-			{
-				SDL_DisplayMode mode;
-
-				switch( testColorBits )
-				{
-					case 16: mode.format = SDL_PIXELFORMAT_RGB565; break;
-					case 24: mode.format = SDL_PIXELFORMAT_RGB24;  break;
-					default: Com_DPrintf( "testColorBits is %d, can't fullscreen\n", testColorBits ); continue;
-				}
-
-				mode.w = winWidth;
-				mode.h = winHeight;
-				mode.refresh_rate = glConfig->displayFrequency = r_displayRefresh->integer;
-				mode.driverdata = NULL;
-
-				if( SDL_SetWindowDisplayMode( screen, &mode ) < 0 )
-				{
-					Com_DPrintf( "SDL_SetWindowDisplayMode failed: %s\n", SDL_GetError( ) );
-					continue;
-				}
-			}
-
-			if( ( opengl_context = SDL_GL_CreateContext( screen ) ) == NULL )
-			{
-				Com_Printf( "SDL_GL_CreateContext failed: %s\n", SDL_GetError( ) );
-				continue;
-			}
-
-			if ( SDL_GL_SetSwapInterval( r_swapInterval->integer ) == -1 )
-			{
-				Com_DPrintf( "SDL_GL_SetSwapInterval failed: %s\n", SDL_GetError() );
-			}
-
-			glConfig->colorBits = testColorBits;
-			glConfig->depthBits = testDepthBits;
-			glConfig->stencilBits = testStencilBits;
-
-			Com_Printf( "Using %d color bits, %d depth, %d stencil display.\n",
-					glConfig->colorBits, glConfig->depthBits, glConfig->stencilBits );
-			break;
-		}
-
-		if (opengl_context == NULL) {
+			Com_Printf( "SDL_CreateWindow failed: %s\n", SDL_GetError( ) );
 			SDL_FreeSurface(icon);
 			return RSERR_UNKNOWN;
 		}
+
+#ifndef MACOS_X
+		SDL_SetWindowIcon(screen, icon);
+#endif
+
+		if( fullscreen )
+		{
+			SDL_DisplayMode mode;
+			mode.format = SDL_PIXELFORMAT_RGB24;
+			mode.w = winWidth;
+			mode.h = winHeight;
+			mode.refresh_rate = glConfig->displayFrequency = r_displayRefresh->integer;
+			mode.driverdata = NULL;
+
+			if( SDL_SetWindowDisplayMode( screen, &mode ) < 0 )
+			{
+				Com_DPrintf( "SDL_SetWindowDisplayMode failed: %s\n", SDL_GetError( ) );
+			}
+		}
+
+		glConfig->colorBits = colorBits;
+		glConfig->depthBits = depthBits;
+		glConfig->stencilBits = stencilBits;
+
+		Com_Printf( "Using %d color bits, %d depth, %d stencil display.\n",
+				glConfig->colorBits, glConfig->depthBits, glConfig->stencilBits );
 	}
 	else
 	{
@@ -1030,7 +855,7 @@ window_t WIN_Init( const windowDesc_t *windowDesc, glconfig_t *glConfig )
 			if (!GLimp_StartDriverAndSetMode( glConfig, windowDesc, R_MODE_FALLBACK, qfalse, qfalse ))
 			{
 				// Nothing worked, give up
-				Com_Error( ERR_FATAL, "GLimp_Init() - could not load OpenGL subsystem" );
+				Com_Error( ERR_FATAL, "GLimp_Init() - could not initialize display" );
 			}
 		}
 	}
@@ -1089,11 +914,6 @@ void WIN_Shutdown( void )
 	Cmd_RemoveCommand("minimize");
 
 	IN_Shutdown();
-
-	if ( opengl_context ) {
-		SDL_GL_DeleteContext( opengl_context );
-		opengl_context = NULL;
-	}
 
 	if ( screen ) {
 		SDL_DestroyWindow( screen );
@@ -1167,7 +987,8 @@ void WIN_SetGamma( glconfig_t *glConfig, byte red[256], byte green[256], byte bl
 
 void *WIN_GL_GetProcAddress( const char *proc )
 {
-	return SDL_GL_GetProcAddress( proc );
+	// Vulkan: GL proc address not used
+	return NULL;
 }
 
 void WIN_SetTaskbarState(tbstate_t state, uint64_t current, uint64_t total) {
