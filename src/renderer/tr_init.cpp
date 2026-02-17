@@ -238,6 +238,8 @@ static void R_InitCapabilities(void) {
 ** This function is responsible for initializing a valid Vulkan subsystem.
 */
 static void InitVulkan(void) {
+	static char vkVersionString[32];
+
 	if (glConfig.vidWidth == 0) {
 		windowDesc_t windowDesc = { GRAPHICS_API_VULKAN };
 		memset(&glConfig, 0, sizeof(glConfig));
@@ -255,11 +257,12 @@ static void InitVulkan(void) {
 		// Set config from actual Vulkan device properties
 		glConfig.vendor_string = "Vulkan";
 		glConfig.renderer_string = (const char *)vk.deviceProperties.deviceName;
-		glConfig.version_string = va( "%d.%d.%d",
+		Com_sprintf( vkVersionString, sizeof( vkVersionString ), "%d.%d.%d",
 			VK_VERSION_MAJOR( vk.deviceProperties.apiVersion ),
 			VK_VERSION_MINOR( vk.deviceProperties.apiVersion ),
 			VK_VERSION_PATCH( vk.deviceProperties.apiVersion ) );
-		glConfig.extensions_string = "";
+		glConfig.version_string = vkVersionString;
+		glConfig.extensions_string = VK_GetEnabledExtensionsString();
 
 		// Set texture size limit from device, capped to fit in the staging buffer.
 		// VK_STAGING_BUFFER_SIZE bytes must hold width*height*4 (RGBA8), so
@@ -597,7 +600,7 @@ void R_Register( void )
 	//
 
 	r_ext_compressed_lightmaps = ri.Cvar_Get("r_ext_compress_lightmaps", "0", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);
-	r_ext_texture_filter_anisotropic = ri.Cvar_Get("r_ext_texture_filter_anisotropic", "2", CVAR_ARCHIVE | CVAR_GLOBAL);
+	r_ext_texture_filter_anisotropic = ri.Cvar_Get("r_ext_texture_filter_anisotropic", "16", CVAR_ARCHIVE | CVAR_GLOBAL);
 
 	r_DynamicGlow = ri.Cvar_Get( "r_DynamicGlow", "1", CVAR_ARCHIVE | CVAR_GLOBAL );
 	r_DynamicGlowPasses = ri.Cvar_Get("r_DynamicGlowPasses", "3", CVAR_ARCHIVE | CVAR_GLOBAL);
@@ -613,7 +616,7 @@ void R_Register( void )
 	r_DynamicGlowReflectionG2Scale = ri.Cvar_Get("r_DynamicGlowReflectionG2Scale", "0.3", CVAR_ARCHIVE | CVAR_GLOBAL);
 	r_DynamicGlowReflectionShadowIntensity = ri.Cvar_Get("r_DynamicGlowReflectionShadowIntensity", "0.7", CVAR_ARCHIVE | CVAR_GLOBAL);
 
-	r_picmip = ri.Cvar_Get("r_picmip", "1", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);
+	r_picmip = ri.Cvar_Get("r_picmip", "0", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);
 	AssertCvarRange( r_picmip, 0, 16, qtrue );
 	r_detailTextures = ri.Cvar_Get("r_detailtextures", "1", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);
 	r_texturebits = ri.Cvar_Get("r_texturebits", "0", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);
@@ -621,7 +624,7 @@ void R_Register( void )
 	r_overBrightBits = ri.Cvar_Get("r_overBrightBits", "1", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);
 	r_intensity = ri.Cvar_Get("r_intensity", "1", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);
 
-	r_simpleMipMaps = ri.Cvar_Get("r_simpleMipMaps", "1", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);
+	r_simpleMipMaps = ri.Cvar_Get("r_simpleMipMaps", "0", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);
 	r_vertexLight = ri.Cvar_Get("r_vertexLight", "0", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);
 	r_uiFullScreen = ri.Cvar_Get( "r_uifullscreen", "0", 0);
 	r_subdivisions = ri.Cvar_Get("r_subdivisions", "4", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);
@@ -645,15 +648,15 @@ void R_Register( void )
 	r_lodbias = ri.Cvar_Get("r_lodbias", "0", CVAR_ARCHIVE | CVAR_GLOBAL);
 	r_autolodscalevalue = ri.Cvar_Get( "r_autolodscalevalue", "0", CVAR_ROM );
 
-	r_flares = ri.Cvar_Get("r_flares", "0", CVAR_ARCHIVE | CVAR_GLOBAL);
+	r_flares = ri.Cvar_Get("r_flares", "1", CVAR_ARCHIVE | CVAR_GLOBAL);
 	r_znear = ri.Cvar_Get( "r_znear", "4", CVAR_CHEAT );
 	AssertCvarRange( r_znear, 0.001f, 200, qtrue );
 	r_fastsky = ri.Cvar_Get("r_fastsky", "0", CVAR_ARCHIVE | CVAR_GLOBAL);
-	r_drawSun = ri.Cvar_Get("r_drawSun", "0", CVAR_ARCHIVE | CVAR_GLOBAL);
+	r_drawSun = ri.Cvar_Get("r_drawSun", "1", CVAR_ARCHIVE | CVAR_GLOBAL);
 	r_dynamiclight = ri.Cvar_Get("r_dynamiclight", "1", CVAR_ARCHIVE | CVAR_GLOBAL);
 	r_dlightBacks = ri.Cvar_Get("r_dlightBacks", "1", CVAR_ARCHIVE | CVAR_GLOBAL);
 	r_finish = ri.Cvar_Get("r_finish", "0", CVAR_ARCHIVE | CVAR_GLOBAL);
-	r_textureMode = ri.Cvar_Get("r_textureMode", "GL_LINEAR_MIPMAP_NEAREST", CVAR_ARCHIVE | CVAR_GLOBAL);
+	r_textureMode = ri.Cvar_Get("r_textureMode", "GL_LINEAR_MIPMAP_LINEAR", CVAR_ARCHIVE | CVAR_GLOBAL);
 
 	// gamma correction
 	r_gamma = ri.Cvar_Get("r_gamma", "1", CVAR_ARCHIVE | CVAR_GLOBAL);

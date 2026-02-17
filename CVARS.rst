@@ -267,7 +267,7 @@ Client-Side
 
 :Name: r_ext_multisample
 :Values: "0", "2", "4", "8", "16"
-:Default: "0"
+:Default: "16"
 :Description:
    Multisample anti-aliasing. May not work on all machines.
 
@@ -275,7 +275,7 @@ Client-Side
 
 :Name: r_ext_texture_filter_anisotropic
 :Values: "0", "2", "4", "8", "16"
-:Default: "2"
+:Default: "16"
 :Description:
    Anisotropic filtering level. Higher values increase image quality
    with little performance loss.

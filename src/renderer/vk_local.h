@@ -459,6 +459,7 @@ extern vkState_t vk;
 // ============================================================
 qboolean	VK_Init( void );
 void		VK_Shutdown( void );
+const char *VK_GetEnabledExtensionsString( void );
 void		VK_CreateSwapchain( void );
 void		VK_DestroySwapchain( void );
 void		VK_CreateDepthBuffer( void );

@@ -20,6 +20,23 @@ This replaces GLimp_Init and the OpenGL extension loading.
 #include <stdlib.h>
 
 vkState_t vk;
+static char vkEnabledExtensionsString[BIG_INFO_STRING];
+
+static void VK_AppendExtensionToken( const char *token ) {
+	if ( !token || !*token ) {
+		return;
+	}
+
+	if ( vkEnabledExtensionsString[0] ) {
+		Q_strcat( vkEnabledExtensionsString, sizeof( vkEnabledExtensionsString ), " " );
+	}
+
+	Q_strcat( vkEnabledExtensionsString, sizeof( vkEnabledExtensionsString ), token );
+}
+
+const char *VK_GetEnabledExtensionsString( void ) {
+	return vkEnabledExtensionsString;
+}
 
 // ============================================================
 // Memory type finder
@@ -296,9 +313,15 @@ static qboolean VK_CreateInstance( SDL_Window *window ) {
 	const char **extensionNames = (const char **)ri.Malloc( sizeof(const char *) * (extensionCount + 2), TAG_RENDERER, qfalse );
 	SDL_Vulkan_GetInstanceExtensions( window, &extensionCount, extensionNames );
 
+	VK_AppendExtensionToken( "instance:" );
+	for ( unsigned int i = 0; i < extensionCount; i++ ) {
+		VK_AppendExtensionToken( extensionNames[i] );
+	}
+
 #ifndef NDEBUG
 	// Add debug extension
 	extensionNames[extensionCount++] = VK_EXT_DEBUG_UTILS_EXTENSION_NAME;
+	VK_AppendExtensionToken( VK_EXT_DEBUG_UTILS_EXTENSION_NAME );
 #endif
 
 	VkInstanceCreateInfo createInfo = {};
@@ -516,6 +539,8 @@ static qboolean VK_CreateDevice( void ) {
 	const char *deviceExtensions[8];
 	int numExtensions = 0;
 	deviceExtensions[numExtensions++] = VK_KHR_SWAPCHAIN_EXTENSION_NAME;
+	VK_AppendExtensionToken( "device:" );
+	VK_AppendExtensionToken( VK_KHR_SWAPCHAIN_EXTENSION_NAME );
 
 	// Chain structs for Vulkan 1.2 features and RT features
 	VkPhysicalDeviceVulkan12Features features12 = {};
@@ -535,6 +560,9 @@ static qboolean VK_CreateDevice( void ) {
 		deviceExtensions[numExtensions++] = VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME;
 		deviceExtensions[numExtensions++] = VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME;
 		deviceExtensions[numExtensions++] = VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME;
+		VK_AppendExtensionToken( VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME );
+		VK_AppendExtensionToken( VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME );
+		VK_AppendExtensionToken( VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME );
 
 		accelFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR;
 		accelFeatures.accelerationStructure = VK_TRUE;
@@ -1316,6 +1344,7 @@ qboolean VK_Init( void ) {
 	extern SDL_Window *screen;
 
 	Com_Memset( &vk, 0, sizeof(vk) );
+	vkEnabledExtensionsString[0] = '\0';
 
 	ri.Printf( PRINT_ALL, "------- Vulkan Init -------\n" );
 
