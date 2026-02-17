@@ -46,6 +46,9 @@ void R_InitNextFrame(void) {
 	r_firstScenePoly = 0;
 
 	r_numpolyverts = 0;
+
+	// Reset per-frame Ghoul2 renderable surface pool
+	G2_ResetRenderableSurfacePool();
 }
 
 /*

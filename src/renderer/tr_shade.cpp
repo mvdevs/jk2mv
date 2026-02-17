@@ -19,6 +19,103 @@ color4ub_t	styleColors[MAX_LIGHT_STYLES];
 
 extern bool g_bRenderGlowingObjects;
 
+// ============================================================
+// GPU offload: per-draw UBO params accumulated during
+// ComputeColors / ComputeTexCoords and consumed by R_DrawElements.
+// ============================================================
+static gpuParams_t currentGPUParams;
+
+// Fixed specular light origin (world space) — matches tr_shade_calc.cpp
+extern vec3_t lightOrigin; // { -960, 1980, 96 }
+
+/*
+=================
+GPU_SetupFogParams
+
+Compute fog plane equations from current entity orientation
+and fog brush. Stores results into currentGPUParams fog fields.
+Must be called per-surface when tess.fogNum is set.
+=================
+*/
+static void GPU_SetupFogParams( void ) {
+	fog_t	*fog;
+	vec3_t	local;
+	float	eyeT;
+
+	if ( !tess.fogNum || !tr.world ) {
+		return;
+	}
+
+	fog = tr.world->fogs + tess.fogNum;
+
+	// Fog distance vector (based on entity model matrix)
+	VectorSubtract( backEnd.ori.origin, backEnd.viewParms.ori.origin, local );
+	currentGPUParams.fogDistVec[0] = -backEnd.ori.modelMatrix[2];
+	currentGPUParams.fogDistVec[1] = -backEnd.ori.modelMatrix[6];
+	currentGPUParams.fogDistVec[2] = -backEnd.ori.modelMatrix[10];
+	currentGPUParams.fogDistVec[3] = DotProduct( local, backEnd.viewParms.ori.axis[0] );
+
+	// Scale by fog thickness
+	currentGPUParams.fogDistVec[0] *= fog->tcScale;
+	currentGPUParams.fogDistVec[1] *= fog->tcScale;
+	currentGPUParams.fogDistVec[2] *= fog->tcScale;
+	currentGPUParams.fogDistVec[3] *= fog->tcScale;
+
+	// Bias (matches CPU RB_CalcFogTexCoords)
+	currentGPUParams.fogDistVec[3] += 1.0f / 512;
+
+	// Fog depth vector
+	if ( fog->hasSurface ) {
+		currentGPUParams.fogDepthVec[0] = fog->surface[0] * backEnd.ori.axis[0][0] +
+			fog->surface[1] * backEnd.ori.axis[0][1] + fog->surface[2] * backEnd.ori.axis[0][2];
+		currentGPUParams.fogDepthVec[1] = fog->surface[0] * backEnd.ori.axis[1][0] +
+			fog->surface[1] * backEnd.ori.axis[1][1] + fog->surface[2] * backEnd.ori.axis[1][2];
+		currentGPUParams.fogDepthVec[2] = fog->surface[0] * backEnd.ori.axis[2][0] +
+			fog->surface[1] * backEnd.ori.axis[2][1] + fog->surface[2] * backEnd.ori.axis[2][2];
+		currentGPUParams.fogDepthVec[3] = -fog->surface[3] + DotProduct( backEnd.ori.origin, fog->surface );
+
+		eyeT = DotProduct( backEnd.ori.viewOrigin, currentGPUParams.fogDepthVec ) + currentGPUParams.fogDepthVec[3];
+		currentGPUParams.fogEyeT = eyeT;
+		currentGPUParams.fogEyeOutside = ( eyeT < 0 ) ? 1.0f : 0.0f;
+	} else {
+		currentGPUParams.fogDepthVec[0] = 0;
+		currentGPUParams.fogDepthVec[1] = 0;
+		currentGPUParams.fogDepthVec[2] = 0;
+		currentGPUParams.fogDepthVec[3] = 0;
+		currentGPUParams.fogEyeT = 1.0f;
+		currentGPUParams.fogEyeOutside = 0.0f;
+	}
+
+	// Fog color (pre-scaled by identityLight, matches ColorBytes4 in R_LoadFogs)
+	currentGPUParams.fogColor[0] = fog->parms.color[0] * tr.identityLight;
+	currentGPUParams.fogColor[1] = fog->parms.color[1] * tr.identityLight;
+	currentGPUParams.fogColor[2] = fog->parms.color[2] * tr.identityLight;
+	currentGPUParams.fogColor[3] = 1.0f;
+}
+
+/*
+=================
+GPU_ResetParams
+
+Reset GPU params for a new draw call. Call once per stage before
+ComputeColors / ComputeTexCoords.
+=================
+*/
+static void GPU_ResetParams( void ) {
+	Com_Memset( &currentGPUParams, 0, GPU_PARAMS_BASE_SIZE );
+	currentGPUParams.identityLight = (float)tr.identityLight;
+	VectorCopy( backEnd.ori.viewOrigin, currentGPUParams.viewOrigin );
+
+	// If the current batch uses GPU skinning, upload bone matrices
+	if ( tess.gpuSkinning ) {
+		currentGPUParams.gpuFlags |= GPU_FLAG_SKINNING;
+		int numBones = tess.gpuNumBones;
+		if ( numBones > GPU_MAX_BONES ) numBones = GPU_MAX_BONES;
+		Com_Memcpy( currentGPUParams.boneMatrices, tess.gpuBoneMatrices,
+			numBones * 12 * sizeof(float) );
+	}
+}
+
 /*
 ==================
 R_DrawElements
@@ -65,15 +162,32 @@ static void R_DrawElements( int numIndexes, const glIndex_t *indexes ) {
 			80, sizeof(float) * 2, fragConstants );
 	}
 
-	VK_DrawIndexed(
-		tess.numVertexes,
-		(float *)tess.xyz,
-		(float *)tess.svars.texcoords[0],
-		renderState.multiTexture ? (float *)tess.svars.texcoords[1] : NULL,
-		(unsigned char *)tess.svars.colors,
-		numIndexes,
-		indexes
-	);
+	// Upload GPU params UBO and bind descriptor set 2
+	VK_UpdateGPUParams( &currentGPUParams );
+
+	// Optimization #2: if geometry base (pos/normal/idx) is already cached,
+	// only upload the varying data (texcoords, colors) per stage
+	if ( tess.cachedGeo.valid ) {
+		VK_DrawWithCachedGeo(
+			tess.numVertexes,
+			(float *)tess.svars.texcoords[0],
+			renderState.multiTexture ? (float *)tess.svars.texcoords[1] : NULL,
+			(unsigned char *)tess.svars.colors,
+			numIndexes,
+			indexes
+		);
+	} else {
+		VK_DrawIndexedWithNormals(
+			tess.numVertexes,
+			(float *)tess.xyz,
+			(float *)tess.normal,
+			(float *)tess.svars.texcoords[0],
+			renderState.multiTexture ? (float *)tess.svars.texcoords[1] : NULL,
+			(unsigned char *)tess.svars.colors,
+			numIndexes,
+			indexes
+		);
+	}
 }
 
 
@@ -207,7 +321,13 @@ void RB_BeginSurface( shader_t *shader, int fogNum ) {
 		tess.shaderTime = tess.shader->clampTime;
 	}
 
+	// Clear GPU skinning state — will be set by RB_SurfaceGhoul if needed
+	tess.gpuSkinning = qfalse;
+	tess.gpuNumBones = 0;
 
+	// Clear cached geometry — will be set by VK_CacheTessGeometry
+	tess.cachedGeo.valid = qfalse;
+	tess.vboMesh = NULL;
 }
 
 /*
@@ -252,274 +372,102 @@ static void DrawMultitextured( shaderCommands_t *input, int stage ) {
 
 /*
 ===================
-NewProjectDlightTexture
+ProjectDlightTexture
 
-Perform dynamic lighting with another rendering pass
+Two-pass multi-dlight: pack affecting dlights into the UBO boneMatrices
+region and issue up to two draw calls — one for non-additive lights
+(SRC_DST_COLOR + DST_ONE) and one for additive lights (SRC_ONE + DST_ONE).
+This replaces the old per-dlight-per-surface approach (N passes → 2 max).
 ===================
 */
-static void NewProjectDlightTexture( void )
-{
-	int		i, l;
-	vec3_t	origin;
-	float	*texCoords;
-	byte	*colors;
-	static byte	clipBits[SHADER_MAX_VERTEXES];
-	static float	texCoordsArray[SHADER_MAX_VERTEXES][2];
-	static byte	colorArray[SHADER_MAX_VERTEXES][4];
-	static glIndex_t	hitIndexes[SHADER_MAX_INDEXES];
-	int		numIndexes;
-	float	scale;
-	float	radius;
-	vec3_t	floatColor;
-	float	modulate = 0.0f;
 
-	if (!backEnd.refdef.num_dlights) {
-		return;
-	}
+static int PackDlightsForBlendMode( qboolean wantAdditive ) {
+	int numPacked = 0;
 
-	for (l = 0; l < backEnd.refdef.num_dlights; l++) {
-		dlight_t	*dl;
-
-		if (!(tess.dlightBits & (1 << l))) {
-			continue;	// this surface definately doesn't have any of this light
-		}
-		texCoords = texCoordsArray[0];
-		colors = colorArray[0];
-
-		dl = &backEnd.refdef.dlights[l];
-		VectorCopy(dl->transformed, origin);
-		radius = dl->radius;
-		scale = 1.0f / radius;
-
-		floatColor[0] = dl->color[0] * 255.0f;
-		floatColor[1] = dl->color[1] * 255.0f;
-		floatColor[2] = dl->color[2] * 255.0f;
-
-		for (i = 0; i < tess.numVertexes; i++, texCoords += 2, colors += 4) {
-			int		clip = 0;
-			vec3_t	dist;
-
-			VectorSubtract(origin, tess.xyz[i], dist);
-
-			backEnd.pc.c_dlightVertexes++;
-
-			texCoords[0] = 0.5f + dist[0] * scale;
-			texCoords[1] = 0.5f + dist[1] * scale;
-
-			if (!r_dlightBacks->integer &&
-				// dist . tess.normal[i]
-				(dist[0] * tess.normal[i][0] +
-				dist[1] * tess.normal[i][1] +
-				dist[2] * tess.normal[i][2]) < 0.0f) {
-				clip = 63;
-			} else {
-				if (texCoords[0] < 0.0f) {
-					clip |= 1;
-				} else if (texCoords[0] > 1.0f) {
-					clip |= 2;
-				}
-				if (texCoords[1] < 0.0f) {
-					clip |= 4;
-				} else if (texCoords[1] > 1.0f) {
-					clip |= 8;
-				}
-				texCoords[0] = texCoords[0];
-				texCoords[1] = texCoords[1];
-
-				// modulate the strength based on the height and color
-				if (dist[2] > radius) {
-					clip |= 16;
-					modulate = 0.0f;
-				} else if (dist[2] < -radius) {
-					clip |= 32;
-					modulate = 0.0f;
-				} else {
-					dist[2] = Q_fabs(dist[2]);
-					if (dist[2] < radius * 0.5f) {
-						modulate = 1.0f;
-					} else {
-						modulate = 2.0f * (radius - dist[2]) * scale;
-					}
-				}
-			}
-			clipBits[i] = clip;
-			colors[0] = Q_ftol(floatColor[0] * modulate);
-			colors[1] = Q_ftol(floatColor[1] * modulate);
-			colors[2] = Q_ftol(floatColor[2] * modulate);
-			colors[3] = 255;
-		}
-
-		// build a list of triangles that need light
-		numIndexes = 0;
-		for (i = 0; i < tess.numIndexes; i += 3) {
-			int		a, b, c;
-
-			a = tess.indexes[i];
-			b = tess.indexes[i + 1];
-			c = tess.indexes[i + 2];
-			if (clipBits[a] & clipBits[b] & clipBits[c]) {
-				continue;	// not lighted
-			}
-			hitIndexes[numIndexes] = a;
-			hitIndexes[numIndexes + 1] = b;
-			hitIndexes[numIndexes + 2] = c;
-			numIndexes += 3;
-		}
-
-		if (!numIndexes) {
+	for ( int l = 0; l < backEnd.refdef.num_dlights && numPacked < 32; l++ ) {
+		if ( !( tess.dlightBits & ( 1 << l ) ) ) {
 			continue;
 		}
 
-		// Vulkan: copy dlight texcoords and colors into tess svars for drawing
-		Com_Memcpy( tess.svars.texcoords[0], texCoordsArray, tess.numVertexes * sizeof( tess.svars.texcoords[0][0] ) );
-		Com_Memcpy( tess.svars.colors, colorArray, tess.numVertexes * 4 );
+		dlight_t *dl = &backEnd.refdef.dlights[l];
 
-		R_BindImage(tr.dlightImage);
-		// include GLS_DEPTHFUNC_EQUAL so alpha tested surfaces don't add light
-		// where they aren't rendered
-		if (dl->additive) {
-			R_SetStateBits(GLS_SRCBLEND_ONE | GLS_DSTBLEND_ONE | GLS_DEPTHFUNC_EQUAL);
-		} else {
-			R_SetStateBits(GLS_SRCBLEND_DST_COLOR | GLS_DSTBLEND_ONE | GLS_DEPTHFUNC_EQUAL);
+		// Filter by additive flag
+		qboolean isAdditive = dl->additive ? qtrue : qfalse;
+		if ( isAdditive != wantAdditive ) {
+			continue;
 		}
-		renderState.multiTexture = qfalse;
-		R_DrawElements(numIndexes, hitIndexes);
-		backEnd.pc.c_totalIndexes += numIndexes;
-		backEnd.pc.c_dlightIndexes += numIndexes;
+
+		// Pack into boneMatrices region: 2 vec4s per dlight
+		int base = numPacked * 8;
+		currentGPUParams.boneMatrices[base + 0] = dl->transformed[0];
+		currentGPUParams.boneMatrices[base + 1] = dl->transformed[1];
+		currentGPUParams.boneMatrices[base + 2] = dl->transformed[2];
+		currentGPUParams.boneMatrices[base + 3] = dl->radius;
+		currentGPUParams.boneMatrices[base + 4] = dl->color[0];
+		currentGPUParams.boneMatrices[base + 5] = dl->color[1];
+		currentGPUParams.boneMatrices[base + 6] = dl->color[2];
+		currentGPUParams.boneMatrices[base + 7] = dl->additive ? 1.0f : 0.0f;
+		numPacked++;
 	}
+
+	return numPacked;
 }
 
-/*
-===================
-ProjectDlightTexture
-
-Perform dynamic lighting with another rendering pass
-===================
-*/
 static void ProjectDlightTexture( void ) {
-	int		i, l;
-	vec3_t	origin;
-	float	*texCoords;
-	byte	*colors;
-	static byte	clipBits[SHADER_MAX_VERTEXES];
-	static float	texCoordsArray[SHADER_MAX_VERTEXES][2];
-	static byte	colorArray[SHADER_MAX_VERTEXES][4];
-	static unsigned	hitIndexes[SHADER_MAX_INDEXES];
-	int		numIndexes;
-	float	scale;
-	float	radius;
-	vec3_t	floatColor;
 
 	if ( !backEnd.refdef.num_dlights ) {
 		return;
 	}
 
-	if (r_newDLights->integer)
-	{
-		NewProjectDlightTexture();
+	// Check if any dlights affect this surface at all
+	if ( !tess.dlightBits ) {
 		return;
 	}
 
-	for ( l = 0 ; l < backEnd.refdef.num_dlights ; l++ ) {
-		dlight_t	*dl;
+	// Bind dlight texture — fragment shader samples it per-light for XY attenuation
+	R_BindImage( tr.dlightImage );
+	renderState.multiTexture = qfalse;
 
-		if ( !( tess.dlightBits & ( 1 << l ) ) ) {
-			continue;	// this surface definately doesn't have any of this light
-		}
-		texCoords = texCoordsArray[0];
-		colors = colorArray[0];
+	// texcoords[0] and colors already contain valid data from the main shader stage.
+	// The GPU multi-dlight shader overrides both entirely, so no memset needed.
 
-		dl = &backEnd.refdef.dlights[l];
-		VectorCopy( dl->transformed, origin );
-		radius = dl->radius;
-		scale = 1.0f / radius;
-		floatColor[0] = dl->color[0] * 255.0f;
-		floatColor[1] = dl->color[1] * 255.0f;
-		floatColor[2] = dl->color[2] * 255.0f;
-
-		for ( i = 0 ; i < tess.numVertexes ; i++, texCoords += 2, colors += 4 ) {
-			vec3_t	dist;
-			int		clip;
-			float	modulate;
-
-			backEnd.pc.c_dlightVertexes++;
-
-			VectorSubtract( origin, tess.xyz[i], dist );
-			texCoords[0] = 0.5f + dist[0] * scale;
-			texCoords[1] = 0.5f + dist[1] * scale;
-
-			clip = 0;
-			if ( texCoords[0] < 0.0f ) {
-				clip |= 1;
-			} else if ( texCoords[0] > 1.0f ) {
-				clip |= 2;
-			}
-			if ( texCoords[1] < 0.0f ) {
-				clip |= 4;
-			} else if ( texCoords[1] > 1.0f ) {
-				clip |= 8;
-			}
-			// modulate the strength based on the height and color
-			if ( dist[2] > radius ) {
-				clip |= 16;
-				modulate = 0.0f;
-			} else if ( dist[2] < -radius ) {
-				clip |= 32;
-				modulate = 0.0f;
-			} else {
-				dist[2] = Q_fabs(dist[2]);
-				if ( dist[2] < radius * 0.5f ) {
-					modulate = 1.0f;
-				} else {
-					modulate = 2.0f * (radius - dist[2]) * scale;
-				}
-			}
-			clipBits[i] = clip;
-
-			colors[0] = Q_ftol(floatColor[0] * modulate);
-			colors[1] = Q_ftol(floatColor[1] * modulate);
-			colors[2] = Q_ftol(floatColor[2] * modulate);
-			colors[3] = 255;
+	// Sub-pass 1: Non-additive dlights (SRC_DST_COLOR + DST_ONE)
+	// This is the standard dlight blending — brightens surfaces proportionally.
+	// Sabers, blaster bolts, etc. use this mode.
+	{
+		GPU_ResetParams();
+		currentGPUParams.gpuFlags |= GPU_FLAG_MULTI_DLIGHT_PASS;
+		if ( r_dlightBacks->integer ) {
+			currentGPUParams.gpuFlags |= GPU_FLAG_DLIGHT_BACKSIDES;
 		}
 
-		// build a list of triangles that need light
-		numIndexes = 0;
-		for ( i = 0 ; i < tess.numIndexes ; i += 3 ) {
-			int		a, b, c;
-
-			a = tess.indexes[i];
-			b = tess.indexes[i+1];
-			c = tess.indexes[i+2];
-			if ( clipBits[a] & clipBits[b] & clipBits[c] ) {
-				continue;	// not lighted
-			}
-			hitIndexes[numIndexes] = a;
-			hitIndexes[numIndexes+1] = b;
-			hitIndexes[numIndexes+2] = c;
-			numIndexes += 3;
-		}
-
-		if ( !numIndexes ) {
-			continue;
-		}
-
-		// Vulkan: copy dlight texcoords and colors into tess svars for drawing
-		Com_Memcpy( tess.svars.texcoords[0], texCoordsArray, tess.numVertexes * sizeof( tess.svars.texcoords[0][0] ) );
-		Com_Memcpy( tess.svars.colors, colorArray, tess.numVertexes * 4 );
-
-		R_BindImage( tr.dlightImage );
-		// include GLS_DEPTHFUNC_EQUAL so alpha tested surfaces don't add light
-		// where they aren't rendered
-		if ( dl->additive ) {
-			R_SetStateBits( GLS_SRCBLEND_ONE | GLS_DSTBLEND_ONE | GLS_DEPTHFUNC_EQUAL );
-		}
-		else {
+		int numNonAdditive = PackDlightsForBlendMode( qfalse );
+		if ( numNonAdditive > 0 ) {
+			currentGPUParams.pad0 = (float)numNonAdditive;
 			R_SetStateBits( GLS_SRCBLEND_DST_COLOR | GLS_DSTBLEND_ONE | GLS_DEPTHFUNC_EQUAL );
+			R_DrawElements( tess.numIndexes, tess.indexes );
+			backEnd.pc.c_totalIndexes += tess.numIndexes;
+			backEnd.pc.c_dlightIndexes += tess.numIndexes * numNonAdditive;
 		}
-		renderState.multiTexture = qfalse;
-		R_DrawElements( numIndexes, hitIndexes );
-		backEnd.pc.c_totalIndexes += numIndexes;
-		backEnd.pc.c_dlightIndexes += numIndexes;
+	}
+
+	// Sub-pass 2: Additive dlights (SRC_ONE + DST_ONE)
+	// Explosions, force effects, etc. use pure additive blending.
+	{
+		GPU_ResetParams();
+		currentGPUParams.gpuFlags |= GPU_FLAG_MULTI_DLIGHT_PASS;
+		if ( r_dlightBacks->integer ) {
+			currentGPUParams.gpuFlags |= GPU_FLAG_DLIGHT_BACKSIDES;
+		}
+
+		int numAdditive = PackDlightsForBlendMode( qtrue );
+		if ( numAdditive > 0 ) {
+			currentGPUParams.pad0 = (float)numAdditive;
+			R_SetStateBits( GLS_SRCBLEND_ONE | GLS_DSTBLEND_ONE | GLS_DEPTHFUNC_EQUAL );
+			R_DrawElements( tess.numIndexes, tess.indexes );
+			backEnd.pc.c_totalIndexes += tess.numIndexes;
+			backEnd.pc.c_dlightIndexes += tess.numIndexes * numAdditive;
+		}
 	}
 }
 
@@ -533,16 +481,21 @@ Blends a fog texture on top of everything else
 */
 static void RB_FogPass( void ) {
 	fog_t		*fog;
-	int			i;
 
-	// Vulkan: fog colors and texcoords are computed into tess.svars and drawn
 	fog = tr.world->fogs + tess.fogNum;
 
-	for ( i = 0; i < tess.numVertexes; i++ ) {
+	// GPU: vertex shader computes fog texcoords and sets fog color
+	GPU_ResetParams();
+	currentGPUParams.gpuFlags |= GPU_FLAG_FOG_PASS;
+	GPU_SetupFogParams();
+
+	// Fill dummy vertex colors — GPU overrides with fogColor
+	for ( int i = 0; i < tess.numVertexes; i++ ) {
 		tess.svars.colorsui[i] = fog->colorInt;
 	}
 
-	RB_CalcFogTexCoords( ( float * ) tess.svars.texcoords[0] );
+	// Fill dummy texcoords — GPU overrides with computed fog ST
+	Com_Memset( tess.svars.texcoords[0], 0, tess.numVertexes * sizeof( tess.svars.texcoords[0][0] ) );
 
 	R_BindImage( tr.fogImage );
 
@@ -632,7 +585,16 @@ static void ComputeColors( shaderStage_t *pStage, int forceRGBGen )
 			Com_Memset( tess.svars.colors, tr.identityLightByte, tess.numVertexes * 4 );
 			break;
 		case CGEN_LIGHTING_DIFFUSE:
-			RB_CalcDiffuseColor( ( unsigned char * ) tess.svars.colors );
+			// GPU: offload diffuse vertex lighting to vertex shader
+			currentGPUParams.gpuFlags |= GPU_FLAG_DIFFUSE_LIGHTING;
+			{
+				trRefEntity_t *ent = backEnd.currentEntity;
+				VectorCopy( ent->ambientLight, currentGPUParams.ambientLight );
+				VectorCopy( ent->directedLight, currentGPUParams.directedLight );
+				VectorCopy( ent->lightDir, currentGPUParams.entityLightDir );
+			}
+			// Fill white — GPU overrides RGB, alphaGen may set alpha below
+			Com_Memset( tess.svars.colors, 0xff, tess.numVertexes * 4 );
 			break;
 		case CGEN_EXACT_VERTEX:
 			Com_Memcpy( tess.svars.colors, tess.vertexColors, tess.numVertexes * sizeof( tess.vertexColors[0] ) );
@@ -743,7 +705,19 @@ static void ComputeColors( shaderStage_t *pStage, int forceRGBGen )
 		RB_CalcWaveAlpha( &pStage->alphaWave, ( unsigned char * ) tess.svars.colors );
 		break;
 	case AGEN_LIGHTING_SPECULAR:
-		RB_CalcSpecularAlpha( ( unsigned char * ) tess.svars.colors );
+		// GPU: offload specular alpha to vertex shader
+		currentGPUParams.gpuFlags |= GPU_FLAG_SPECULAR_ALPHA;
+		{
+			qboolean useEntDir = (qboolean)(backEnd.currentEntity &&
+				(backEnd.currentEntity->e.hModel || backEnd.currentEntity->e.ghoul2));
+			if ( useEntDir ) {
+				VectorCopy( backEnd.currentEntity->lightDir, currentGPUParams.entityLightDir );
+				currentGPUParams.specLightOrigin[3] = 1.0f; // flag: use entity lightDir
+			} else {
+				VectorCopy( lightOrigin, currentGPUParams.specLightOrigin );
+				currentGPUParams.specLightOrigin[3] = 0.0f; // flag: use lightOrigin per-vertex
+			}
+		}
 		break;
 	case AGEN_ENTITY:
 		RB_CalcAlphaFromEntity( ( unsigned char * ) tess.svars.colors );
@@ -808,19 +782,23 @@ static void ComputeColors( shaderStage_t *pStage, int forceRGBGen )
 avoidGen:
 	//
 	// fog adjustment for colors to fade out as fog increases
+	// GPU: set flags and let the vertex shader modulate
 	//
 	if ( tess.fogNum )
 	{
 		switch ( pStage->adjustColorsForFog )
 		{
 		case ACFF_MODULATE_RGB:
-			RB_CalcModulateColorsByFog( ( unsigned char * ) tess.svars.colors );
+			GPU_SetupFogParams();
+			currentGPUParams.gpuFlags |= GPU_FLAG_FOG_MODULATE_RGB;
 			break;
 		case ACFF_MODULATE_ALPHA:
-			RB_CalcModulateAlphasByFog( ( unsigned char * ) tess.svars.colors );
+			GPU_SetupFogParams();
+			currentGPUParams.gpuFlags |= GPU_FLAG_FOG_MODULATE_ALPHA;
 			break;
 		case ACFF_MODULATE_RGBA:
-			RB_CalcModulateRGBAsByFog( ( unsigned char * ) tess.svars.colors );
+			GPU_SetupFogParams();
+			currentGPUParams.gpuFlags |= GPU_FLAG_FOG_MODULATE_RGB | GPU_FLAG_FOG_MODULATE_ALPHA;
 			break;
 		case ACFF_NONE:
 			break;
@@ -880,7 +858,11 @@ static void ComputeTexCoords( shaderStage_t *pStage ) {
 			break;
 		case TCGEN_ENVIRONMENT_MAPPED:
 			if ( r_environmentMapping->integer ) {
-				RB_CalcEnvironmentTexCoords( texcoords );
+				// GPU: offload environment map TC to vertex shader
+				currentGPUParams.gpuFlags |= GPU_FLAG_ENVMAP_TC;
+				VectorCopy( backEnd.ori.viewOrigin, currentGPUParams.viewOrigin );
+				// Still need to fill something for svars — GPU overrides fragTexCoord0
+				Com_Memset( texcoords, 0, sizeof( float ) * 2 * tess.numVertexes );
 			} else {
 				Com_Memset( texcoords, 0, sizeof( float ) * 2 * tess.numVertexes );
 			}
@@ -1005,6 +987,9 @@ static void RB_IterateStagesGeneric( shaderCommands_t *input )
 			continue;
 		}
 
+		// Reset GPU params for this stage — flags accumulate in Compute*
+		GPU_ResetParams();
+
 		ComputeColors( pStage, forceRGBGen );
 		ComputeTexCoords( pStage );
 
@@ -1068,6 +1053,12 @@ void RB_StageIteratorGeneric( void )
 		// a call to va() every frame!
 		GLimp_LogComment( va("--- RB_StageIteratorGeneric( %s ) ---\n", tess.shader->name) );
 	}
+
+	//
+	// Cache geometry base (pos/normal/idx) once for all stages
+	// Subsequent R_DrawElements calls reuse these offsets.
+	//
+	VK_CacheTessGeometry();
 
 	//
 	// set face culling appropriately
@@ -1144,9 +1135,23 @@ void RB_StageIteratorVertexLitTexture( void )
 	shader = input->shader;
 
 	//
-	// compute colors
+	// Cache geometry base once (pos/normal/idx)
 	//
-	RB_CalcDiffuseColor( ( unsigned char * ) tess.svars.colors );
+	VK_CacheTessGeometry();
+
+	//
+	// GPU: compute diffuse lighting in vertex shader
+	//
+	GPU_ResetParams();
+	currentGPUParams.gpuFlags |= GPU_FLAG_DIFFUSE_LIGHTING;
+	{
+		trRefEntity_t *ent = backEnd.currentEntity;
+		VectorCopy( ent->ambientLight, currentGPUParams.ambientLight );
+		VectorCopy( ent->directedLight, currentGPUParams.directedLight );
+		VectorCopy( ent->lightDir, currentGPUParams.entityLightDir );
+	}
+	// Fill white colors — GPU overrides RGB
+	Com_Memset( tess.svars.colors, 0xff, tess.numVertexes * 4 );
 
 	//
 	// log this call
@@ -1216,6 +1221,11 @@ void RB_StageIteratorLightmappedMultitexture( void ) {
 	input = &tess;
 
 	//
+	// Cache geometry base once (pos/normal/idx)
+	//
+	VK_CacheTessGeometry();
+
+	//
 	// log this call
 	//
 	if ( r_logFile->integer ) {
@@ -1252,6 +1262,9 @@ void RB_StageIteratorLightmappedMultitexture( void ) {
 	//
 	R_SelectTexture( 1 );
 	R_BindAnimatedImage( &tess.xstages[0]->bundle[1] );
+
+	// GPU: no special features for lightmapped surfaces, just pass-through
+	GPU_ResetParams();
 
 	renderState.multiTexture = qtrue;
 	R_DrawElements( input->numIndexes, input->indexes );
@@ -1293,6 +1306,197 @@ void RB_StageIteratorLightmappedMultitexture( void ) {
 	}
 }
 
+
+/*
+** RB_StageIteratorVBO
+**
+** Draws pre-merged static world geometry directly from GPU-resident buffers.
+** This is the fast path for VBO meshes — zero CPU vertex data upload.
+*/
+void RB_StageIteratorVBO( void ) {
+	srfVBOMesh_t *vboMesh = tess.vboMesh;
+
+	if ( !vboMesh || !vk.staticBuffersValid ) {
+		// Fallback to lightmapped multitexture path
+		RB_StageIteratorLightmappedMultitexture();
+		return;
+	}
+
+	shaderCommands_t *input = &tess;
+
+	//
+	// log this call
+	//
+	if ( r_logFile->integer ) {
+		GLimp_LogComment( va("--- RB_StageIteratorVBO( %s ) ---\n", tess.shader->name) );
+	}
+
+	//
+	// set face culling appropriately
+	//
+	R_SetCullMode( input->shader->cullType );
+
+	//
+	// set color and state
+	//
+	R_SetStateBits( GLS_DEFAULT );
+
+	//
+	// select base stage
+	//
+	R_SelectTexture( 0 );
+	R_BindAnimatedImage( &tess.xstages[0]->bundle[0] );
+
+	//
+	// configure second stage (lightmap)
+	//
+	R_SelectTexture( 1 );
+	R_BindAnimatedImage( &tess.xstages[0]->bundle[1] );
+
+	// GPU: no special features for lightmapped surfaces
+	GPU_ResetParams();
+
+	// Bind pipeline
+	renderState.multiTexture = qtrue;
+
+	VK_BindPipeline( renderState.stateBits, renderState.faceCulling, renderState.multiTexture, renderState.polygonOffset );
+
+	// Push fragment constants
+	{
+		float fragConstants[2] = { 0.0f, 0.0f }; // texEnvMode=modulate, alphaTest=none
+		if ( tess.shader->multitextureEnv == TEXENV_ADD ) {
+			fragConstants[0] = 3.0f;
+		}
+		VkCommandBuffer cmd = vk.frames[vk.currentFrame].commandBuffer;
+		vkCmdPushConstants( cmd, vk.pipelineLayout,
+			VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+			80, sizeof(float) * 2, fragConstants );
+	}
+
+	VK_UpdateGPUParams( &currentGPUParams );
+
+	// Draw entirely from static buffers — zero vertex upload!
+	VK_DrawFromStaticBuffers(
+		vboMesh->firstVertex, vboMesh->numVertices,
+		vboMesh->firstIndex, vboMesh->numIndexes,
+		NULL, NULL, NULL, qfalse
+	);
+
+	renderState.multiTexture = qfalse;
+	R_SelectTexture( 0 );
+
+	//
+	// now do any dynamic lighting needed
+	//
+	if ( tess.dlightBits && tess.shader->sort <= SS_OPAQUE
+		&& !(tess.shader->surfaceFlags & (SURF_NODLIGHT | SURF_SKY) ) ) {
+
+		if ( backEnd.refdef.num_dlights && tess.dlightBits ) {
+			R_BindImage( tr.dlightImage );
+			renderState.multiTexture = qfalse;
+
+			// Non-additive dlights from static buffer
+			{
+				GPU_ResetParams();
+				currentGPUParams.gpuFlags |= GPU_FLAG_MULTI_DLIGHT_PASS;
+				if ( r_dlightBacks->integer ) {
+					currentGPUParams.gpuFlags |= GPU_FLAG_DLIGHT_BACKSIDES;
+				}
+				int numNonAdditive = PackDlightsForBlendMode( qfalse );
+				if ( numNonAdditive > 0 ) {
+					currentGPUParams.pad0 = (float)numNonAdditive;
+					R_SetStateBits( GLS_SRCBLEND_DST_COLOR | GLS_DSTBLEND_ONE | GLS_DEPTHFUNC_EQUAL );
+					VK_BindPipeline( renderState.stateBits, renderState.faceCulling, renderState.multiTexture, renderState.polygonOffset );
+					{
+						float fragConstants[2] = { 0.0f, 0.0f };
+						VkCommandBuffer cmd = vk.frames[vk.currentFrame].commandBuffer;
+						vkCmdPushConstants( cmd, vk.pipelineLayout,
+							VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+							80, sizeof(float) * 2, fragConstants );
+					}
+					VK_UpdateGPUParams( &currentGPUParams );
+					// Colors/TCs computed by GPU dlight shader, but we need dummy data
+					// Use static buffer for pos/norm, zero region for TC, white for color
+					VK_DrawFromStaticBuffers(
+						vboMesh->firstVertex, vboMesh->numVertices,
+						vboMesh->firstIndex, vboMesh->numIndexes,
+						NULL, NULL, NULL, qfalse
+					);
+					backEnd.pc.c_totalIndexes += vboMesh->numIndexes;
+					backEnd.pc.c_dlightIndexes += vboMesh->numIndexes * numNonAdditive;
+				}
+			}
+
+			// Additive dlights from static buffer
+			{
+				GPU_ResetParams();
+				currentGPUParams.gpuFlags |= GPU_FLAG_MULTI_DLIGHT_PASS;
+				if ( r_dlightBacks->integer ) {
+					currentGPUParams.gpuFlags |= GPU_FLAG_DLIGHT_BACKSIDES;
+				}
+				int numAdditive = PackDlightsForBlendMode( qtrue );
+				if ( numAdditive > 0 ) {
+					currentGPUParams.pad0 = (float)numAdditive;
+					R_SetStateBits( GLS_SRCBLEND_ONE | GLS_DSTBLEND_ONE | GLS_DEPTHFUNC_EQUAL );
+					VK_BindPipeline( renderState.stateBits, renderState.faceCulling, renderState.multiTexture, renderState.polygonOffset );
+					{
+						float fragConstants[2] = { 0.0f, 0.0f };
+						VkCommandBuffer cmd = vk.frames[vk.currentFrame].commandBuffer;
+						vkCmdPushConstants( cmd, vk.pipelineLayout,
+							VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+							80, sizeof(float) * 2, fragConstants );
+					}
+					VK_UpdateGPUParams( &currentGPUParams );
+					VK_DrawFromStaticBuffers(
+						vboMesh->firstVertex, vboMesh->numVertices,
+						vboMesh->firstIndex, vboMesh->numIndexes,
+						NULL, NULL, NULL, qfalse
+					);
+					backEnd.pc.c_totalIndexes += vboMesh->numIndexes;
+					backEnd.pc.c_dlightIndexes += vboMesh->numIndexes * numAdditive;
+				}
+			}
+		}
+	}
+
+	//
+	// now do fog
+	//
+	if ( tess.fogNum && tess.shader->fogPass ) {
+		// fog_t *fog = tr.world->fogs + tess.fogNum; // unused
+
+		GPU_ResetParams();
+		currentGPUParams.gpuFlags |= GPU_FLAG_FOG_PASS;
+		GPU_SetupFogParams();
+
+		R_BindImage( tr.fogImage );
+		if ( tess.shader->fogPass == FP_EQUAL ) {
+			R_SetStateBits( GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA | GLS_DEPTHFUNC_EQUAL );
+		} else {
+			R_SetStateBits( GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA );
+		}
+		renderState.multiTexture = qfalse;
+
+		VK_BindPipeline( renderState.stateBits, renderState.faceCulling, renderState.multiTexture, renderState.polygonOffset );
+		{
+			float fragConstants[2] = { 0.0f, 0.0f };
+			VkCommandBuffer cmd = vk.frames[vk.currentFrame].commandBuffer;
+			vkCmdPushConstants( cmd, vk.pipelineLayout,
+				VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+				80, sizeof(float) * 2, fragConstants );
+		}
+		VK_UpdateGPUParams( &currentGPUParams );
+
+		// Fog pass from static buffer — fog TC and colors computed by GPU
+		VK_DrawFromStaticBuffers(
+			vboMesh->firstVertex, vboMesh->numVertices,
+			vboMesh->firstIndex, vboMesh->numIndexes,
+			NULL, NULL, NULL, qfalse
+		);
+	}
+}
+
+
 /*
 ** RB_EndSurface
 */
@@ -1305,11 +1509,14 @@ void RB_EndSurface( void ) {
 		return;
 	}
 
-	if (input->indexes[SHADER_MAX_INDEXES-1] != 0) {
-		ri.Error (ERR_DROP, "RB_EndSurface() - SHADER_MAX_INDEXES hit");
-	}
-	if (input->xyz[SHADER_MAX_VERTEXES-1][0] != 0) {
-		ri.Error (ERR_DROP, "RB_EndSurface() - SHADER_MAX_VERTEXES hit");
+	// VBO meshes don't populate tess arrays, skip sentinel checks
+	if (input->vboMesh == NULL) {
+		if (input->indexes[SHADER_MAX_INDEXES-1] != 0) {
+			ri.Error (ERR_DROP, "RB_EndSurface() - SHADER_MAX_INDEXES hit");
+		}
+		if (input->xyz[SHADER_MAX_VERTEXES-1][0] != 0) {
+			ri.Error (ERR_DROP, "RB_EndSurface() - SHADER_MAX_VERTEXES hit");
+		}
 	}
 
 	if ( tess.shader == tr.shadowShader ) {

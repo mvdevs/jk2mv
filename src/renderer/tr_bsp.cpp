@@ -1991,6 +1991,325 @@ qboolean R_GetEntityToken( char *buffer, int size ) {
 	}
 }
 
+#ifndef DEDICATED
+/*
+=================
+R_CreateWorldVBOs
+
+Groups eligible BSP surfaces (faces and triangles only) by (shader, fogNum)
+and uploads them to a device-local GPU buffer for zero-copy rendering.
+Only surfaces that use the lightmapped multitexture fast path with no
+vertex deformations are eligible.
+=================
+*/
+
+// Temp structure for grouping surfaces during VBO creation
+typedef struct {
+	shader_t	*shader;
+	int			fogNum;
+	int			numVertices;
+	int			numIndexes;
+	int			firstVertex;	// assigned after counting
+	int			firstIndex;		// assigned after counting
+} vboGroupInfo_t;
+
+void R_CreateWorldVBOs( void ) {
+	if ( !tr.world || !vk.initialized ) {
+		return;
+	}
+
+	// Destroy any existing static buffers from a previous map
+	VK_DestroyStaticWorldBuffers();
+
+	int numSurfaces = tr.world->numsurfaces;
+	msurface_t *surfaces = tr.world->surfaces;
+
+	// Initialize surface vboGroupIndex
+	for ( int i = 0; i < numSurfaces; i++ ) {
+		surfaces[i].vboGroupIndex = -1;
+	}
+
+	// Phase 1: Identify eligible surfaces and group by (shader, fogNum)
+	// Use a simple linear list of groups (max MAX_VBO_SURFACES)
+	static vboGroupInfo_t groups[MAX_VBO_SURFACES];
+	int numGroups = 0;
+
+	for ( int i = 0; i < numSurfaces; i++ ) {
+		msurface_t *surf = &surfaces[i];
+		shader_t *shader = surf->shader;
+
+		if ( !shader ) continue;
+
+		// Only faces and triangles (grids have runtime LOD)
+		surfaceType_t type = *surf->data;
+		if ( type != SF_FACE && type != SF_TRIANGLES ) continue;
+
+		// Must use lightmapped multitexture fast path
+		if ( shader->optimalStageIteratorFunc != RB_StageIteratorLightmappedMultitexture ) continue;
+
+		// No vertex deformations
+		if ( shader->numDeforms > 0 ) continue;
+
+		// No sky shaders
+		if ( shader->isSky ) continue;
+
+		// Must have at least one stage
+		if ( !shader->stages[0] ) continue;
+
+		// Find or create the group for this (shader, fogNum)
+		int groupIdx = -1;
+		for ( int g = 0; g < numGroups; g++ ) {
+			if ( groups[g].shader == shader && groups[g].fogNum == surf->fogIndex ) {
+				groupIdx = g;
+				break;
+			}
+		}
+
+		if ( groupIdx == -1 ) {
+			if ( numGroups >= MAX_VBO_SURFACES ) {
+				continue; // too many groups
+			}
+			groupIdx = numGroups++;
+			groups[groupIdx].shader = shader;
+			groups[groupIdx].fogNum = surf->fogIndex;
+			groups[groupIdx].numVertices = 0;
+			groups[groupIdx].numIndexes = 0;
+		}
+
+		// Count vertices/indices
+		int surfVerts = 0, surfIdxs = 0;
+		if ( type == SF_FACE ) {
+			srfSurfaceFace_t *face = (srfSurfaceFace_t *)surf->data;
+			surfVerts = face->numPoints;
+			surfIdxs = face->numIndices;
+		} else if ( type == SF_TRIANGLES ) {
+			srfTriangles_t *tri = (srfTriangles_t *)surf->data;
+			surfVerts = tri->numVerts;
+			surfIdxs = tri->numIndexes;
+		}
+
+		groups[groupIdx].numVertices += surfVerts;
+		groups[groupIdx].numIndexes += surfIdxs;
+		surf->vboGroupIndex = groupIdx;
+	}
+
+	if ( numGroups == 0 ) {
+		ri.Printf( PRINT_ALL, "R_CreateWorldVBOs: no eligible surfaces found\n" );
+		return;
+	}
+
+	// Phase 2: Compute offsets for each group
+	int totalVertices = 0, totalIndexes = 0;
+	for ( int g = 0; g < numGroups; g++ ) {
+		groups[g].firstVertex = totalVertices;
+		groups[g].firstIndex = totalIndexes;
+		totalVertices += groups[g].numVertices;
+		totalIndexes += groups[g].numIndexes;
+	}
+
+	if ( totalVertices == 0 || totalIndexes == 0 ) {
+		return;
+	}
+
+	// Phase 3: Build the static buffer data
+	// Layout: [positions(vec4)] [texcoord0(vec2)] [texcoord1(vec2)] [colors(RGBA8)] [normals(vec4)]
+	VkDeviceSize posSize   = (VkDeviceSize)totalVertices * sizeof(float) * 4;
+	VkDeviceSize tc0Size   = (VkDeviceSize)totalVertices * sizeof(float) * 2;
+	VkDeviceSize tc1Size   = (VkDeviceSize)totalVertices * sizeof(float) * 2;
+	VkDeviceSize colorSize = (VkDeviceSize)totalVertices * 4;
+	VkDeviceSize normSize  = (VkDeviceSize)totalVertices * sizeof(float) * 4;
+	VkDeviceSize totalVtxSize = posSize + tc0Size + tc1Size + colorSize + normSize;
+	VkDeviceSize totalIdxSize = (VkDeviceSize)totalIndexes * sizeof(glIndex_t);
+
+	byte *vtxData = (byte *)ri.Malloc( (int)totalVtxSize, TAG_RENDERER, qfalse );
+	byte *idxData = (byte *)ri.Malloc( (int)totalIdxSize, TAG_RENDERER, qfalse );
+
+	if ( !vtxData || !idxData ) {
+		if ( vtxData ) ri.Free( vtxData );
+		if ( idxData ) ri.Free( idxData );
+		ri.Printf( PRINT_WARNING, "R_CreateWorldVBOs: failed to allocate temp buffers\n" );
+		return;
+	}
+
+	// Section pointers
+	VkDeviceSize posOff   = 0;
+	VkDeviceSize tc0Off   = posSize;
+	VkDeviceSize tc1Off   = tc0Off + tc0Size;
+	VkDeviceSize colorOff = tc1Off + tc1Size;
+	VkDeviceSize normOff  = colorOff + colorSize;
+
+	float *posPtr   = (float *)(vtxData + posOff);
+	float *tc0Ptr   = (float *)(vtxData + tc0Off);
+	float *tc1Ptr   = (float *)(vtxData + tc1Off);
+	byte  *colorPtr = vtxData + colorOff;
+	float *normPtr  = (float *)(vtxData + normOff);
+	glIndex_t *idxPtr = (glIndex_t *)idxData;
+
+	// Per-group vertex counter (tracks how many we've written per group so far)
+	static int groupVertCount[MAX_VBO_SURFACES];
+	static int groupIdxCount[MAX_VBO_SURFACES];
+	Com_Memset( groupVertCount, 0, sizeof(int) * numGroups );
+	Com_Memset( groupIdxCount, 0, sizeof(int) * numGroups );
+
+	// Phase 4: Fill the data, grouping by (shader, fogNum) order
+	for ( int i = 0; i < numSurfaces; i++ ) {
+		msurface_t *surf = &surfaces[i];
+		int gIdx = surf->vboGroupIndex;
+		if ( gIdx < 0 ) continue;
+
+		int baseVertex = groups[gIdx].firstVertex + groupVertCount[gIdx];
+		int baseIndex  = groups[gIdx].firstIndex + groupIdxCount[gIdx];
+		int vertOffset = groupVertCount[gIdx]; // for index offsetting within group
+
+		surfaceType_t type = *surf->data;
+
+		if ( type == SF_FACE ) {
+			srfSurfaceFace_t *face = (srfSurfaceFace_t *)surf->data;
+			int numPts = face->numPoints;
+			int numIdx = face->numIndices;
+
+			for ( int v = 0; v < numPts; v++ ) {
+				int dst = baseVertex + v;
+				float *pt = face->points[v];
+
+				// Position (vec4)
+				posPtr[dst * 4 + 0] = pt[0];
+				posPtr[dst * 4 + 1] = pt[1];
+				posPtr[dst * 4 + 2] = pt[2];
+				posPtr[dst * 4 + 3] = 1.0f;
+
+				// Texcoord0
+				tc0Ptr[dst * 2 + 0] = pt[3];
+				tc0Ptr[dst * 2 + 1] = pt[4];
+
+				// Texcoord1 (lightmap, first lightmap layer)
+				tc1Ptr[dst * 2 + 0] = pt[VERTEX_LM + 0];
+				tc1Ptr[dst * 2 + 1] = pt[VERTEX_LM + 1];
+
+				// Vertex color
+				byte *c = (byte *)&pt[VERTEX_COLOR];
+				colorPtr[dst * 4 + 0] = c[0];
+				colorPtr[dst * 4 + 1] = c[1];
+				colorPtr[dst * 4 + 2] = c[2];
+				colorPtr[dst * 4 + 3] = c[3];
+
+				// Normal (from face plane)
+				normPtr[dst * 4 + 0] = face->plane.normal[0];
+				normPtr[dst * 4 + 1] = face->plane.normal[1];
+				normPtr[dst * 4 + 2] = face->plane.normal[2];
+				normPtr[dst * 4 + 3] = 0.0f;
+			}
+
+			// Indices (offset within group)
+			unsigned *srcIdx = (unsigned *)((byte *)face + face->ofsIndices);
+			for ( int j = 0; j < numIdx; j++ ) {
+				idxPtr[baseIndex + j] = srcIdx[j] + vertOffset;
+			}
+
+			groupVertCount[gIdx] += numPts;
+			groupIdxCount[gIdx] += numIdx;
+
+		} else if ( type == SF_TRIANGLES ) {
+			srfTriangles_t *tri = (srfTriangles_t *)surf->data;
+			int numVerts = tri->numVerts;
+			int numIdx = tri->numIndexes;
+
+			for ( int v = 0; v < numVerts; v++ ) {
+				int dst = baseVertex + v;
+				drawVert_t *dv = &tri->verts[v];
+
+				// Position (vec4)
+				posPtr[dst * 4 + 0] = dv->xyz[0];
+				posPtr[dst * 4 + 1] = dv->xyz[1];
+				posPtr[dst * 4 + 2] = dv->xyz[2];
+				posPtr[dst * 4 + 3] = 1.0f;
+
+				// Texcoord0
+				tc0Ptr[dst * 2 + 0] = dv->st[0];
+				tc0Ptr[dst * 2 + 1] = dv->st[1];
+
+				// Texcoord1 (lightmap, first layer)
+				tc1Ptr[dst * 2 + 0] = dv->lightmap[0][0];
+				tc1Ptr[dst * 2 + 1] = dv->lightmap[0][1];
+
+				// Vertex color
+				colorPtr[dst * 4 + 0] = dv->color[0][0];
+				colorPtr[dst * 4 + 1] = dv->color[0][1];
+				colorPtr[dst * 4 + 2] = dv->color[0][2];
+				colorPtr[dst * 4 + 3] = dv->color[0][3];
+
+				// Normal
+				normPtr[dst * 4 + 0] = dv->normal[0];
+				normPtr[dst * 4 + 1] = dv->normal[1];
+				normPtr[dst * 4 + 2] = dv->normal[2];
+				normPtr[dst * 4 + 3] = 0.0f;
+			}
+
+			// Indices (offset within group)
+			for ( int j = 0; j < numIdx; j++ ) {
+				idxPtr[baseIndex + j] = tri->indexes[j] + vertOffset;
+			}
+
+			groupVertCount[gIdx] += numVerts;
+			groupIdxCount[gIdx] += numIdx;
+		}
+	}
+
+	// Phase 5: Upload to GPU
+	vk.staticPosOffset   = posOff;
+	vk.staticTc0Offset   = tc0Off;
+	vk.staticTc1Offset   = tc1Off;
+	vk.staticColorOffset = colorOff;
+	vk.staticNormOffset  = normOff;
+
+	VK_CreateStaticWorldBuffers( totalVertices, totalIndexes,
+		vtxData, totalVtxSize, idxData, totalIdxSize );
+
+	ri.Free( vtxData );
+	ri.Free( idxData );
+
+	// Phase 6: Create srfVBOMesh_t entries for each group
+	tr.world->numVBOSurfaces = numGroups;
+	tr.world->vboSurfaces = (srfVBOMesh_t *)ri.Hunk_Alloc( numGroups * sizeof(srfVBOMesh_t), h_low );
+
+	for ( int g = 0; g < numGroups; g++ ) {
+		srfVBOMesh_t *vbo = &tr.world->vboSurfaces[g];
+
+		vbo->surfaceType = SF_VBO_MESH;
+		vbo->shader = groups[g].shader;
+		vbo->fogNum = groups[g].fogNum;
+		vbo->firstVertex = groups[g].firstVertex;
+		vbo->numVertices = groups[g].numVertices;
+		vbo->firstIndex = groups[g].firstIndex;
+		vbo->numIndexes = groups[g].numIndexes;
+		vbo->visCount = -1;
+		vbo->dlightBits[0] = 0;
+		vbo->dlightBits[1] = 0;
+
+		// Compute bounding box from all surfaces in this group
+		ClearBounds( vbo->bounds[0], vbo->bounds[1] );
+		for ( int i = 0; i < numSurfaces; i++ ) {
+			if ( surfaces[i].vboGroupIndex != g ) continue;
+			surfaceType_t type = *surfaces[i].data;
+			if ( type == SF_FACE ) {
+				srfSurfaceFace_t *face = (srfSurfaceFace_t *)surfaces[i].data;
+				for ( int v = 0; v < face->numPoints; v++ ) {
+					AddPointToBounds( face->points[v], vbo->bounds[0], vbo->bounds[1] );
+				}
+			} else if ( type == SF_TRIANGLES ) {
+				srfTriangles_t *tri = (srfTriangles_t *)surfaces[i].data;
+				AddPointToBounds( tri->bounds[0], vbo->bounds[0], vbo->bounds[1] );
+				AddPointToBounds( tri->bounds[1], vbo->bounds[0], vbo->bounds[1] );
+			}
+		}
+	}
+
+	ri.Printf( PRINT_ALL, "Created %d VBO surface groups (%d vertices, %d indices)\n",
+		numGroups, totalVertices, totalIndexes );
+}
+#endif // !DEDICATED
+
+
 /*
 =================
 RE_LoadWorldMap
@@ -2079,6 +2398,11 @@ static void RE_LoadWorldMap_Actual( const char *name ) {
 
 	// only set tr.world now that we know the entire level has loaded properly
 	tr.world = &s_worldData;
+
+#ifndef DEDICATED
+	// Create VBO groups for static world geometry
+	R_CreateWorldVBOs();
+#endif
 
 	if (gpvCachedMapDiskImage)
 	{

@@ -17,6 +17,9 @@ layout(set = 1, binding = 0) uniform sampler2D tex1;
 layout(location = 0) in vec2 fragTexCoord0;
 layout(location = 1) in vec2 fragTexCoord1;
 layout(location = 2) in vec4 fragColor;
+layout(location = 3) in float fragFogFactor;
+layout(location = 4) in vec3 fragWorldPos;
+layout(location = 5) in vec3 fragWorldNormal;
 
 layout(location = 0) out vec4 outColor;
 

@@ -695,6 +695,7 @@ Ghoul2 Insert End
 	SF_FLARE,
 	SF_ENTITY,				// beams, rails, lightning, etc that can be determined by entity
 	SF_DISPLAY_LIST,
+	SF_VBO_MESH,			// pre-merged static world geometry drawn from GPU-resident buffer
 
 	SF_NUM_SURFACE_TYPES,
 	SF_MAX = 0xffffffff			// ensures that sizeof( surfaceType_t ) == sizeof( int )
@@ -802,6 +803,31 @@ typedef struct {
 } srfTriangles_t;
 
 
+// VBO mesh: pre-merged static world surfaces drawn from GPU-resident buffer.
+// Created at map load by grouping BSP faces/triangles with the same shader.
+#define MAX_VBO_SURFACES 4096
+typedef struct {
+	surfaceType_t	surfaceType;	// SF_VBO_MESH
+
+	// Static buffer location
+	int				firstVertex;	// first vertex in static vertex buffer
+	int				numVertices;
+	int				firstIndex;		// first index in static index buffer
+	int				numIndexes;
+
+	// Rendering info
+	shader_t		*shader;
+	int				fogNum;
+
+	// Culling
+	vec3_t			bounds[2];
+
+	// Per-frame state (reset each frame during world traversal)
+	int				dlightBits[SMP_FRAMES];
+	int				visCount;		// == tr.viewCount when visible this frame
+} srfVBOMesh_t;
+
+
 extern	void (*rb_surfaceTable[SF_NUM_SURFACE_TYPES])(void *);
 
 /*
@@ -827,6 +853,7 @@ typedef struct msurface_s {
 	int					fogIndex;
 
 	surfaceType_t		*data;			// any of srf*_t
+	int					vboGroupIndex;	// index into world->vboSurfaces, -1 if not in VBO group
 } msurface_t;
 
 
@@ -889,6 +916,10 @@ typedef struct {
 
 	int			nummarksurfaces;
 	msurface_t	**marksurfaces;
+
+	// VBO-merged world surfaces for static GPU buffer drawing
+	int				numVBOSurfaces;
+	srfVBOMesh_t	*vboSurfaces;
 
 	int			numfogs;
 	fog_t		*fogs;
@@ -1283,6 +1314,8 @@ extern	cvar_t	*r_offsetUnits;
 
 extern	cvar_t	*r_fullbright;					// avoid lightmap pass
 extern	cvar_t	*r_lightmap;					// render lightmaps only
+extern	cvar_t	*r_vbo;							// use static VBO for world geometry
+extern	cvar_t	*r_cachedGeo;					// cache tess geometry across shader stages
 extern	cvar_t	*r_vertexLight;					// vertex lighting mode for better performance
 extern	cvar_t	*r_uiFullScreen;				// ui is running fullscreen
 
@@ -1353,6 +1386,9 @@ void R_DecomposeSort( unsigned sort, int *entityNum, shader_t **shader,
 					 int *fogNum, int *dlightMap );
 
 void R_AddDrawSurf( surfaceType_t *surface, shader_t *shader, int fogIndex, int dlightMap );
+
+// Static world VBO creation (called from RE_LoadWorldMap)
+void R_CreateWorldVBOs( void );
 
 
 #define	CULL_IN		0		// completely unclipped
@@ -1561,6 +1597,23 @@ struct shaderCommands_s
 
 	qboolean	SSInitializedWind;
 
+	// GPU skinning state (set by RB_SurfaceGhoul, consumed by GPU_ResetParams)
+	qboolean	gpuSkinning;		// qtrue when current batch uses GPU skeletal skinning
+	int			gpuNumBones;		// number of bones in current model
+	float		gpuBoneMatrices[72 * 12];	// pre-extracted bone matrices (mat3x4 × 72)
+
+	// Cached geometry base offsets (optimization: avoid re-uploading pos/normal/idx across stages)
+	struct {
+		qboolean	valid;			// qtrue after geometry base uploaded for this batch
+		int			posOffset;		// offset in dynamic vertex buffer
+		int			normOffset;		// offset in dynamic vertex buffer (or zero region)
+		int			idxOffset;		// offset in dynamic index buffer
+		qboolean	hasNormals;		// qtrue if real normals were uploaded (not zero region)
+	} cachedGeo;
+
+	// VBO mesh pointer (set by RB_SurfaceVBO, NULL for normal tessellation)
+	srfVBOMesh_t *vboMesh;
+
 };
 #ifndef DEDICATED
 typedef shaderCommands_s	shaderCommands_t;
@@ -1578,6 +1631,7 @@ void RB_StageIteratorGeneric( void );
 void RB_StageIteratorSky( void );
 void RB_StageIteratorVertexLitTexture( void );
 void RB_StageIteratorLightmappedMultitexture( void );
+void RB_StageIteratorVBO( void );
 
 void RB_AddQuadStamp( vec3_t origin, vec3_t left, vec3_t up, byte *color );
 void RB_AddQuadStampExt( vec3_t origin, vec3_t left, vec3_t up, byte *color, float s1, float t1, float s2, float t2 );
@@ -1719,6 +1773,8 @@ CRenderableSurface():
 
 void R_AddGhoulSurfaces( trRefEntity_t *ent );
 void RB_SurfaceGhoul( CRenderableSurface *surface );
+CRenderableSurface *G2_AllocRenderableSurface( void );
+void G2_ResetRenderableSurfacePool( void );
 /*
 Ghoul2 Insert End
 */

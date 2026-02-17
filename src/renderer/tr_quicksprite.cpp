@@ -15,6 +15,9 @@ void R_BindAnimatedImage( textureBundle_t *bundle );
 //////////////////////////////////////////////////////////////////////
 CQuickSpriteSystem SQuickSprite;
 
+// Static pre-computed quad index buffer
+glIndex_t CQuickSpriteSystem::mQuadIndexes[SHADER_MAX_VERTEXES / 4 * 6];
+bool CQuickSpriteSystem::mIndexesInitialized = false;
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -39,6 +42,21 @@ CQuickSpriteSystem::CQuickSpriteSystem()
 		mTextureCoords[i+3][0] = 0.0;
 		mTextureCoords[i+3][1] = 1.0;
 	}
+
+	// Pre-compute quad index buffer once — pattern never changes
+	if ( !mIndexesInitialized ) {
+		int ni = 0;
+		for (int q = 0; q < SHADER_MAX_VERTEXES / 4; q++) {
+			int base = q * 4;
+			mQuadIndexes[ni++] = base + 0;
+			mQuadIndexes[ni++] = base + 1;
+			mQuadIndexes[ni++] = base + 2;
+			mQuadIndexes[ni++] = base + 0;
+			mQuadIndexes[ni++] = base + 2;
+			mQuadIndexes[ni++] = base + 3;
+		}
+		mIndexesInitialized = true;
+	}
 }
 
 CQuickSpriteSystem::~CQuickSpriteSystem()
@@ -61,24 +79,13 @@ void CQuickSpriteSystem::Flush(void)
 	R_SetStateBits(mGLStateBits);
 
 	//
-	// Vulkan: build index buffer for quads (4 verts -> 2 triangles each) and draw
+	// Vulkan: use pre-computed quad index buffer and draw
 	//
 	{
-		int numQuads = mNextVert / 4;
-		glIndex_t indexes[SHADER_MAX_VERTEXES / 4 * 6];
-		int ni = 0;
-		for (int q = 0; q < numQuads; q++) {
-			int base = q * 4;
-			indexes[ni++] = base + 0;
-			indexes[ni++] = base + 1;
-			indexes[ni++] = base + 2;
-			indexes[ni++] = base + 0;
-			indexes[ni++] = base + 2;
-			indexes[ni++] = base + 3;
-		}
+		int numIndexes = (mNextVert / 4) * 6;
 
 		VK_BindPipeline( renderState.stateBits, renderState.faceCulling, qfalse, qfalse );
-		VK_DrawIndexed( mNextVert, (float*)mVerts, (float*)mTextureCoords, NULL, (byte*)mColors, ni, indexes );
+		VK_DrawIndexed( mNextVert, (float*)mVerts, (float*)mTextureCoords, NULL, (byte*)mColors, numIndexes, mQuadIndexes );
 	}
 
 	backEnd.pc.c_vertexes += mNextVert;
@@ -94,27 +101,17 @@ void CQuickSpriteSystem::Flush(void)
 		R_SetStateBits( GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA | GLS_DEPTHFUNC_EQUAL );
 
 		// Vulkan: draw fog pass with fog texture coords and solid fog color
+		// Reuse pre-computed quad index buffer
 		{
 			byte fogColors[SHADER_MAX_VERTEXES][4];
 			for (int i = 0; i < mNextVert; i++) {
 				((unsigned int*)fogColors)[i] = mFogColor;
 			}
 
-			int numQuads = mNextVert / 4;
-			glIndex_t indexes2[SHADER_MAX_VERTEXES / 4 * 6];
-			int ni = 0;
-			for (int q = 0; q < numQuads; q++) {
-				int base = q * 4;
-				indexes2[ni++] = base + 0;
-				indexes2[ni++] = base + 1;
-				indexes2[ni++] = base + 2;
-				indexes2[ni++] = base + 0;
-				indexes2[ni++] = base + 2;
-				indexes2[ni++] = base + 3;
-			}
+			int numIndexes = (mNextVert / 4) * 6;
 
 			VK_BindPipeline( renderState.stateBits, renderState.faceCulling, qfalse, qfalse );
-			VK_DrawIndexed( mNextVert, (float*)mVerts, (float*)mFogTextureCoords, NULL, (byte*)fogColors, ni, indexes2 );
+			VK_DrawIndexed( mNextVert, (float*)mVerts, (float*)mFogTextureCoords, NULL, (byte*)fogColors, numIndexes, mQuadIndexes );
 		}
 
 		// Second pass from fog

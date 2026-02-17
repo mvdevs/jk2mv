@@ -47,6 +47,15 @@ void R_RenderShadowEdges( void ) {
 	int		c_edges, c_rejected;
 	int		hit[2];
 
+	// Batch all silhouette edge quads into a single draw call instead of
+	// issuing one VK_DrawIndexed per edge. This massively reduces Vulkan
+	// command overhead for shadow volumes.
+	#define MAX_SHADOW_EDGES 1024
+	static vec4_t	batchPositions[MAX_SHADOW_EDGES * 4];
+	static glIndex_t batchIndexes[MAX_SHADOW_EDGES * 6];
+	static byte		batchColors[MAX_SHADOW_EDGES * 4 * 4];
+	int numEdges = 0;
+
 	c_edges = 0;
 	c_rejected = 0;
 
@@ -71,27 +80,54 @@ void R_RenderShadowEdges( void ) {
 			// if it doesn't share the edge with another front facing
 			// triangle, it is a sil edge
 			if ( hit[ 1 ] == 0 ) {
-				// Vulkan: draw shadow edge quad as two triangles
-				vec4_t positions[4];
-				glIndex_t indexes[6] = { 0, 1, 2, 0, 2, 3 };
-				byte colors[4][4];
-
-				VectorCopy( tess.xyz[ i ], positions[0] ); positions[0][3] = 1.0f;
-				VectorCopy( tess.xyz[ i + tess.numVertexes ], positions[1] ); positions[1][3] = 1.0f;
-				VectorCopy( tess.xyz[ i2 ], positions[2] ); positions[2][3] = 1.0f;
-				VectorCopy( tess.xyz[ i2 + tess.numVertexes ], positions[3] ); positions[3][3] = 1.0f;
-
-				for (int v = 0; v < 4; v++) {
-					colors[v][0] = 51; colors[v][1] = 51; colors[v][2] = 51; colors[v][3] = 255;
+				if ( numEdges >= MAX_SHADOW_EDGES ) {
+					// Flush current batch and start a new one
+					if ( numEdges > 0 ) {
+						VK_DrawIndexed( numEdges * 4, (float*)batchPositions, NULL, NULL,
+							batchColors, numEdges * 6, batchIndexes );
+					}
+					numEdges = 0;
 				}
 
-				VK_DrawIndexed( 4, (float*)positions, NULL, NULL, (byte*)colors, 6, indexes );
+				int base = numEdges * 4;
 
+				VectorCopy( tess.xyz[ i ], batchPositions[base] );
+				batchPositions[base][3] = 1.0f;
+				VectorCopy( tess.xyz[ i + tess.numVertexes ], batchPositions[base + 1] );
+				batchPositions[base + 1][3] = 1.0f;
+				VectorCopy( tess.xyz[ i2 ], batchPositions[base + 2] );
+				batchPositions[base + 2][3] = 1.0f;
+				VectorCopy( tess.xyz[ i2 + tess.numVertexes ], batchPositions[base + 3] );
+				batchPositions[base + 3][3] = 1.0f;
+
+				int idxBase = numEdges * 6;
+				batchIndexes[idxBase + 0] = base;
+				batchIndexes[idxBase + 1] = base + 1;
+				batchIndexes[idxBase + 2] = base + 2;
+				batchIndexes[idxBase + 3] = base;
+				batchIndexes[idxBase + 4] = base + 2;
+				batchIndexes[idxBase + 5] = base + 3;
+
+				int colorBase = base * 4;
+				for ( int v = 0; v < 4; v++ ) {
+					batchColors[colorBase + v * 4 + 0] = 51;
+					batchColors[colorBase + v * 4 + 1] = 51;
+					batchColors[colorBase + v * 4 + 2] = 51;
+					batchColors[colorBase + v * 4 + 3] = 255;
+				}
+
+				numEdges++;
 				c_edges++;
 			} else {
 				c_rejected++;
 			}
 		}
+	}
+
+	// Flush remaining batched edges
+	if ( numEdges > 0 ) {
+		VK_DrawIndexed( numEdges * 4, (float*)batchPositions, NULL, NULL,
+			batchColors, numEdges * 6, batchIndexes );
 	}
 }
 

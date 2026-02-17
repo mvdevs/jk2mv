@@ -24,6 +24,52 @@ extern cvar_t	*r_Ghoul2UnSqashAfterSmooth;
 mdxaBone_t		worldMatrix;
 mdxaBone_t		worldMatrixInv;
 
+// Per-frame pool for CRenderableSurface objects.
+// Eliminates per-surface per-player per-frame heap allocations.
+// With 32 players × ~20 surfaces × 3 possible draw surfs (main + shadow + projection) = ~1920 max.
+#define RENDERABLE_SURFACE_POOL_SIZE 4096
+static CRenderableSurface g_renderableSurfacePool[RENDERABLE_SURFACE_POOL_SIZE];
+static int g_renderableSurfacePoolIndex = 0;
+
+// Bone override lookup table — maps bone number to index in boneList.
+// Built once per model at the start of G2_TransformGhoulBones, used by
+// G2_TransformBone to replace the O(N) linear scan in G2_Find_Bone_In_List.
+// -1 means no override for that bone.
+#define MAX_BONE_LOOKUP 256
+static int g_boneOverrideLookup[MAX_BONE_LOOKUP];
+
+static void G2_BuildBoneOverrideLookup( boneInfo_v &blist ) {
+	Com_Memset( g_boneOverrideLookup, 0xFF, sizeof(g_boneOverrideLookup) );  // fill with -1
+	for ( size_t i = 0; i < blist.size(); i++ ) {
+		int boneNum = blist[i].boneNumber;
+		if ( boneNum >= 0 && boneNum < MAX_BONE_LOOKUP ) {
+			g_boneOverrideLookup[boneNum] = (int)i;
+		}
+	}
+}
+
+static inline int G2_Find_Bone_Override( int boneNum ) {
+	if ( boneNum >= 0 && boneNum < MAX_BONE_LOOKUP ) {
+		return g_boneOverrideLookup[boneNum];
+	}
+	return -1;
+}
+
+CRenderableSurface *G2_AllocRenderableSurface( void ) {
+	if ( g_renderableSurfacePoolIndex >= RENDERABLE_SURFACE_POOL_SIZE ) {
+		// Fallback to heap if pool exhausted (shouldn't happen in practice)
+		return new CRenderableSurface;
+	}
+	CRenderableSurface *surf = &g_renderableSurfacePool[g_renderableSurfacePoolIndex++];
+	surf->boneList = 0;
+	surf->surfaceData = 0;
+	return surf;
+}
+
+void G2_ResetRenderableSurfacePool( void ) {
+	g_renderableSurfacePoolIndex = 0;
+}
+
 class CConstructBoneList
 {
 public:
@@ -469,7 +515,7 @@ void G2_TransformBone (CTransformBone &TB)
 	}
 
 	// should this bone be overridden by a bone in the bone list?
-	boneListIndex = G2_Find_Bone_In_List(boneList, TB.child);
+	boneListIndex = G2_Find_Bone_Override(TB.child);
 	if (boneListIndex != -1)
 	{
 		// we found a bone in the list - we need to override something here.
@@ -1032,6 +1078,9 @@ void G2_TransformGhoulBones( mdxaHeader_t *header, int *usedBoneList, boneInfo_v
 	}
 
 	// now recursively call the bone transform routines using the bone hirearchy
+	// Build O(1) bone override lookup table before recursive traversal
+	G2_BuildBoneOverrideLookup( rootBoneList );
+
 	CTransformBone TB(ghoul2.mAnimFrameDefault, ghoul2.mAnimFrameDefault, 0, rootBoneIndex, frameSize, header, 0.0f, usedBoneList,
 					  rootBoneList, bonePtr, boltList, rootMatrix, true, time, 0, 0, false, 0,  ghoul2.mNewOrigin);
 
@@ -1339,7 +1388,7 @@ void RenderSurfaces(CRenderSurface &RS)
 			&& !(RS.renderfx & ( RF_NOSHADOW | RF_DEPTHHACK ) )
 			&& shader->sort == SS_OPAQUE )
 		{		// set the surface info to point at the where the transformed bone list is going to be for when the surface gets rendered out
-			CRenderableSurface *newSurf = new CRenderableSurface;
+			CRenderableSurface *newSurf = G2_AllocRenderableSurface();
 			newSurf->surfaceData = surface;
 			newSurf->boneList = &RS.bonePtr;
 			R_AddDrawSurf( (surfaceType_t *)newSurf, tr.shadowShader, 0, qfalse );
@@ -1351,7 +1400,7 @@ void RenderSurfaces(CRenderSurface &RS)
 			&& (RS.renderfx & RF_SHADOW_PLANE )
 			&& shader->sort == SS_OPAQUE )
 		{		// set the surface info to point at the where the transformed bone list is going to be for when the surface gets rendered out
-			CRenderableSurface *newSurf = new CRenderableSurface;
+			CRenderableSurface *newSurf = G2_AllocRenderableSurface();
 			newSurf->surfaceData = surface;
 			newSurf->boneList = &RS.bonePtr;
 			R_AddDrawSurf( (surfaceType_t *)newSurf, tr.projectionShadowShader, 0, qfalse );
@@ -1360,7 +1409,7 @@ void RenderSurfaces(CRenderSurface &RS)
 		// don't add third_person objects if not viewing through a portal
 		if ( !RS.personalModel )
 		{		// set the surface info to point at the where the transformed bone list is going to be for when the surface gets rendered out
-			CRenderableSurface *newSurf = new CRenderableSurface;
+			CRenderableSurface *newSurf = G2_AllocRenderableSurface();
 			newSurf->surfaceData = surface;
 			newSurf->boneList = &RS.bonePtr;
 			R_AddDrawSurf( (surfaceType_t *)newSurf, shader, RS.fogNum, qfalse );
@@ -1624,7 +1673,8 @@ void R_AddGhoulSurfaces( trRefEntity_t *ent ) {
 	model_t			*currentModel;
 	model_t			*animModel;
 	int				modelCount;
-	int				*modelList;
+	int				modelListStorage[256]; // Stack-allocated, max from MAX_GHOUL_COUNT_BITS=8
+	int				*modelList = modelListStorage;
 	mdxaBone_t		rootMatrix;
 	bool			setNewOrigin = false;
 	CGhoul2Info_v	*ghoul2Ptr = G2API_GetGhoul2Model( ent->e.ghoul2 );
@@ -1704,7 +1754,8 @@ void R_AddGhoulSurfaces( trRefEntity_t *ent ) {
 	// don't add third_person objects if not in a portal
 	personalModel = (qboolean)((ent->e.renderfx & RF_THIRD_PERSON) && !tr.viewParms.isPortal);
 
-	modelList = (int*)Z_Malloc((int)ghoul2.size() * 4, TAG_GHOUL2, qtrue);
+	// modelList is stack-allocated (256 entries max)
+	memset(modelList, 0, (int)ghoul2.size() * 4);
 #ifndef DEDICATED
 	// set up lighting now that we know we aren't culled
 	if ( !personalModel || r_shadows->integer > 1 )
@@ -1765,14 +1816,15 @@ void R_AddGhoulSurfaces( trRefEntity_t *ent ) {
 
 			if (ghoul2[i].mSkelFrameNum != tr.refdef.time)
 			{
-				int	*boneUsedList;
-
 				ghoul2[i].mSkelFrameNum = tr.refdef.time;
 
 				// construct a list of all bones used by this model - this makes the bone transform go a bit faster since it will dump out bones
 				// that aren't being used. - NOTE this will screw up any models that have surfaces turned off where the lower surfaces aren't.
-				boneUsedList = (int *)Z_Malloc(animModel->mdxa->numBones * 4, TAG_GHOUL2, qtrue);
-				memset(boneUsedList, 0, (animModel->mdxa->numBones * 4));
+				int boneUsedListStorage[256]; // Stack-allocated, generous max
+				int *boneUsedList = boneUsedListStorage;
+				int numBonesToClear = animModel->mdxa->numBones;
+				if (numBonesToClear > 256) numBonesToClear = 256;
+				memset(boneUsedList, 0, (numBonesToClear * 4));
 
 				CConstructBoneList	CBL(ghoul2[i].mSurfaceRoot,
 					boneUsedList,
@@ -1877,7 +1929,7 @@ void R_AddGhoulSurfaces( trRefEntity_t *ent ) {
 
 				}
 
-				Z_Free(boneUsedList);
+				// boneUsedList is stack-allocated, no free needed
 			}
 			//
 			// compute LOD
@@ -1910,7 +1962,7 @@ void R_AddGhoulSurfaces( trRefEntity_t *ent ) {
 
 		}
 	}
-	Z_Free(modelList);
+	// modelList is stack-allocated, no free needed
 #endif
 }
 
@@ -1922,11 +1974,11 @@ G2_ConstructGhoulSkeleton - builds a complete skeleton for all ghoul models in a
 void G2_ConstructGhoulSkeleton( CGhoul2Info_v &ghoul2, const int frameNum, const qhandle_t *modelPointerList, bool checkForNewOrigin, const vec3_t angles, const vec3_t position, const vec3_t scale, bool modelSet) {
 	mdxaHeader_t	*aHeader;
 	int				i, j;
-	int				*boneUsedList;
 	model_t			*currentModel;
 	model_t			*animModel;
 	int				modelCount;
-	int				*modelList;
+	int				modelListStorage2[256]; // Stack-allocated, max from MAX_GHOUL_COUNT_BITS=8
+	int				*modelList = modelListStorage2;
 	bool			setNewOrigin = false;
 	mdxaBone_t		rootMatrix;
 
@@ -1976,7 +2028,8 @@ void G2_ConstructGhoulSkeleton( CGhoul2Info_v &ghoul2, const int frameNum, const
 		}
 	}
 
-	modelList = (int*)Z_Malloc((int)ghoul2.size() * 4, TAG_GHOUL2, qtrue);
+	// modelList is stack-allocated (256 entries max)
+	memset(modelList, 0, (int)ghoul2.size() * 4);
 	// order sort the ghoul 2 models so bolt ons get bolted to the right model
 	G2_Sort_Models(ghoul2, modelList, &modelCount);
 
@@ -2011,8 +2064,11 @@ void G2_ConstructGhoulSkeleton( CGhoul2Info_v &ghoul2, const int frameNum, const
 
 			// construct a list of all bones used by this model - this makes the bone transform go a bit faster since it will dump out bones
 			// that aren't being used. - NOTE this will screw up any models that have surfaces turned off where the lower surfaces aren't.
-			boneUsedList = (int *)Z_Malloc(animModel->mdxa->numBones * 4, TAG_GHOUL2, qtrue);
-			memset(boneUsedList, 0, (animModel->mdxa->numBones * 4));
+			int boneUsedListStorage2[256]; // Stack-allocated, generous max
+			int *boneUsedList = boneUsedListStorage2;
+			int numBonesToClear2 = animModel->mdxa->numBones;
+			if (numBonesToClear2 > 256) numBonesToClear2 = 256;
+			memset(boneUsedList, 0, (numBonesToClear2 * 4));
 
 			CConstructBoneList	CBL(
 			ghoul2[i].mSurfaceRoot,
@@ -2120,7 +2176,7 @@ void G2_ConstructGhoulSkeleton( CGhoul2Info_v &ghoul2, const int frameNum, const
 
 			}
 
-			Z_Free(boneUsedList);
+			// boneUsedList is stack-allocated, no free needed
 
 			// call function that will go through the main model and generate all the bolts required
 			ProcessModelBoltSurfaces(ghoul2[i].mSurfaceRoot, ghoul2[i].mSlist, ghoul2[i].mTempBoneList, currentModel, 0, ghoul2[i].mBltlist);
@@ -2130,7 +2186,7 @@ void G2_ConstructGhoulSkeleton( CGhoul2Info_v &ghoul2, const int frameNum, const
 
 		}
 	}
-	Z_Free(modelList);
+	// modelList is stack-allocated, no free needed
 	return;
 }
 
@@ -2152,18 +2208,45 @@ void RB_SurfaceGhoul( CRenderableSurface *surf ) {
 	// NOTE: This is required because a ghoul model might need to be rendered twice a frame (don't cringe,
 	// it's not THAT bad), so we only delete it when doing the glow pass. Warning though, this assumes that
 	// the glow is rendered _second_!!! If that changes, change this!
+	// Pool-allocated surfaces are freed in bulk at frame start via G2_ResetRenderableSurfacePool(),
+	// so individual delete is no longer needed. Only delete heap-allocated overflow surfaces.
 	extern bool g_bRenderGlowingObjects;
 	extern bool g_bDynamicGlowSupported;
 	if ( !tess.shader->hasGlow || g_bRenderGlowingObjects || !g_bDynamicGlowSupported || !r_DynamicGlow->integer ) {
-		delete surf;
+		// Only delete if this is a heap-allocated overflow (outside pool range)
+		if ( surf < &g_renderableSurfacePool[0] || surf >= &g_renderableSurfacePool[RENDERABLE_SURFACE_POOL_SIZE] ) {
+			delete surf;
+		}
 	}
 
-	//
-	// deform the vertexes by the lerped bones
-	//
+	// If the bone list changed (different model instance), flush the current batch
+	if ( tess.gpuSkinning && tess.numVertexes > 0 ) {
+		// Check if bone data differs — compare bone list pointers
+		// (stored in gpuBoneMatrices[0] as a sentinel won't work, so always flush
+		// if we already have skinned geometry — batching across bone lists is complex)
+		// For simplicity, allow batching only within same bone list via a static tracker
+		static void *lastBoneList = NULL;
+		if ( lastBoneList != (void *)&bonePtr ) {
+			RB_EndSurface();
+			RB_BeginSurface( tess.shader, tess.fogNum );
+			lastBoneList = (void *)&bonePtr;
+		}
+	}
 
 	// first up, sanity check our numbers
 	RB_CHECKOVERFLOW( surface->numVerts, surface->numTriangles * 3 );
+
+	// Mark this batch as using GPU skinning and extract bone matrices
+	if ( !tess.gpuSkinning ) {
+		tess.gpuSkinning = qtrue;
+		int numBones = (int)bonePtr.size() - 1; // mTempBoneList size = numBones + 1
+		if ( numBones > 72 ) numBones = 72;
+		tess.gpuNumBones = numBones;
+		for ( int i = 0; i < numBones; i++ ) {
+			Com_Memcpy( &tess.gpuBoneMatrices[i * 12],
+				bonePtr[i].second.matrix, 12 * sizeof(float) );
+		}
+	}
 
 	// now copy the right number of verts to the temporary area for verts for this shader
 	const int baseVertex = tess.numVertexes;
@@ -2178,8 +2261,8 @@ void RB_SurfaceGhoul( CRenderableSurface *surf ) {
 	}
 	tess.numIndexes += indexes*3;
 
-
-	// whip through and actually transform each vertex
+	// GPU skinning path: write raw bind-pose data + packed bone info
+	// The vertex shader will perform the actual skinning transformation.
 
 	const int *piBoneRefs = (int*) ((byte*)surface + surface->ofsBoneReferences);
 	const int numVerts = surface->numVerts;
@@ -2188,100 +2271,48 @@ void RB_SurfaceGhoul( CRenderableSurface *surf ) {
 
 	int baseVert = tess.numVertexes;
 
-#if id386 || idx64
-	// SSE2 version
-    __m128 bones[32][4];
-
-	// precache referenced bones
-	assert( surface->numBoneReferences <= 32 );
-    for ( j = 0; j < surface->numBoneReferences; j++ )
-    {
-		const mdxaBone_t &bone = bonePtr[piBoneRefs[j]].second;
-
-		bones[j][0] = _mm_loadu_ps( bone.matrix[0] );
-		bones[j][1] = _mm_loadu_ps( bone.matrix[1] );
-		bones[j][2] = _mm_loadu_ps( bone.matrix[2] );
-		bones[j][3] = _mm_setzero_ps();
-
-		// use transposed bone matrix for faster calculations
-		_MM_TRANSPOSE4_PS( bones[j][0], bones[j][1], bones[j][2], bones[j][3] );
-    }
-
 	for ( j = 0; j < numVerts; j++, baseVert++, v++ )
 	{
+		// Copy raw bind-pose position
+		tess.xyz[baseVert][0] = v->vertCoords[0];
+		tess.xyz[baseVert][1] = v->vertCoords[1];
+		tess.xyz[baseVert][2] = v->vertCoords[2];
+
+		// Pack bone indices (remapped from surface-local to global model bone indices)
+		// Format: 4 × uint8, each is a global bone index (0-255)
 		const int iNumWeights = G2_GetVertWeights( v );
-
-		__m128 matrix[4] = {
-			_mm_setzero_ps(),
-			_mm_setzero_ps(),
-			_mm_setzero_ps(),
-			_mm_setzero_ps()
-		};
-
-		// calculate weighted bone matrix
+		uint32_t packedIndices = 0;
+		uint32_t packedWeights = 0;
 		float fTotalWeight = 0.0f;
-		for ( k = 0 ; k < iNumWeights ; k++ )
-		{
-			int		iBoneIndex	= G2_GetVertBoneIndex( v, k );
-			float	fBoneWeight	= G2_GetVertBoneWeight( v, k, fTotalWeight, iNumWeights );
-			__m128	weight = _mm_set_ps1( fBoneWeight );
+		int iRemainWeight = 255;
 
-			matrix[0] = _mm_add_ps( matrix[0], _mm_mul_ps( weight, bones[iBoneIndex][0] ) );
-			matrix[1] = _mm_add_ps( matrix[1], _mm_mul_ps( weight, bones[iBoneIndex][1] ) );
-			matrix[2] = _mm_add_ps( matrix[2], _mm_mul_ps( weight, bones[iBoneIndex][2] ) );
-			matrix[3] = _mm_add_ps( matrix[3], _mm_mul_ps( weight, bones[iBoneIndex][3] ) );
+		for ( k = 0; k < iNumWeights; k++ ) {
+			int localIdx = G2_GetVertBoneIndex( v, k );
+			int globalIdx = piBoneRefs[localIdx];
+			packedIndices |= ((uint32_t)(globalIdx & 0xFF)) << (k * 8);
+
+			float fWeight = G2_GetVertBoneWeight( v, k, fTotalWeight, iNumWeights );
+			int iQuantized;
+			if ( k == iNumWeights - 1 ) {
+				// Last weight gets whatever remains to ensure sum = 255
+				iQuantized = iRemainWeight > 0 ? iRemainWeight : 0;
+			} else {
+				iQuantized = (int)(fWeight * 255.0f + 0.5f);
+				if ( iQuantized > iRemainWeight ) iQuantized = iRemainWeight;
+				iRemainWeight -= iQuantized;
+			}
+			packedWeights |= ((uint32_t)(iQuantized & 0xFF)) << (k * 8);
 		}
 
-		{
-			__m128 xyz[4] = {
-				_mm_mul_ps( matrix[0], _mm_set_ps1( v->vertCoords[0] ) ),
-				_mm_mul_ps( matrix[1], _mm_set_ps1( v->vertCoords[1] ) ),
-				_mm_mul_ps( matrix[2], _mm_set_ps1( v->vertCoords[2] ) ),
-				matrix[3] // matrix[3] * 1 - translation
-			};
+		// Store packed bone data in the .w components
+		*(uint32_t *)&tess.xyz[baseVert][3] = packedIndices;
 
-			__m128 result = _mm_add_ps( _mm_add_ps( xyz[0], xyz[1] ), _mm_add_ps( xyz[2], xyz[3] ) );
-			_mm_store_ps( tess.xyz[baseVert], result ); // [3] = 0
-		}
-
-		{
-			__m128 norm[3] = {
-				_mm_mul_ps( matrix[0], _mm_set_ps1( v->normal[0] ) ),
-				_mm_mul_ps( matrix[1], _mm_set_ps1( v->normal[1] ) ),
-				_mm_mul_ps( matrix[2], _mm_set_ps1( v->normal[2] ) ),
-				// no translation
-			};
-
-			__m128 result = _mm_add_ps( _mm_add_ps( norm[0], norm[1] ), norm[2] );
-			_mm_store_ps( tess.normal[baseVert], result );
-		}
+		// Copy raw bind-pose normal
+		tess.normal[baseVert][0] = v->normal[0];
+		tess.normal[baseVert][1] = v->normal[1];
+		tess.normal[baseVert][2] = v->normal[2];
+		*(uint32_t *)&tess.normal[baseVert][3] = packedWeights;
 	}
-#else // id386 || idx64
-	for ( j = 0; j < numVerts; j++, baseVert++, v++ )
-	{
-		const int iNumWeights = G2_GetVertWeights( v );
-//		const mdxmWeight_t	*w = v->weights;
-		VectorClear( tess.xyz[baseVert]);
-		VectorClear( tess.normal[baseVert]);
-
-		float fTotalWeight = 0.0f;
-		for ( k = 0 ; k < iNumWeights ; k++ )
-		{
-			int		iBoneIndex	= G2_GetVertBoneIndex( v, k );
-			float	fBoneWeight	= G2_GetVertBoneWeight( v, k, fTotalWeight, iNumWeights );
-
-			mdxaBone_t &bone = bonePtr[piBoneRefs[iBoneIndex]].second;
-
-			tess.xyz[baseVert][0] += fBoneWeight * ( DotProduct( bone.matrix[0], v->vertCoords ) + bone.matrix[0][3] );
-			tess.xyz[baseVert][1] += fBoneWeight * ( DotProduct( bone.matrix[1], v->vertCoords ) + bone.matrix[1][3] );
-			tess.xyz[baseVert][2] += fBoneWeight * ( DotProduct( bone.matrix[2], v->vertCoords ) + bone.matrix[2][3] );
-
-			tess.normal[baseVert][0] += fBoneWeight * DotProduct( bone.matrix[0], v->normal );
-			tess.normal[baseVert][1] += fBoneWeight * DotProduct( bone.matrix[1], v->normal );
-			tess.normal[baseVert][2] += fBoneWeight * DotProduct( bone.matrix[2], v->normal );
-		}
-	}
-#endif // id386 || idx64
 
 	// assumes mdxmVertexTexCoord_t consists only of vec2_t
 	Com_Memcpy( tess.texCoords[0][tess.numVertexes], pTexCoords, numVerts * sizeof( vec2_t ) );

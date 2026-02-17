@@ -192,6 +192,8 @@ void VK_DestroyImageResources( vkImage_t *vkImg ) {
 		if ( vk.frameStarted ) {
 			if ( vk.deferredFreeCount < 1024 ) {
 				vk.deferredFreeSets[vk.deferredFreeCount++] = vkImg->descriptorSet;
+			} else {
+				ri.Printf( PRINT_WARNING, "WARNING: Deferred descriptor free queue full (1024), descriptor leaked!\n" );
 			}
 		} else {
 			vkFreeDescriptorSets( vk.device, vk.descriptorPool, 1, &vkImg->descriptorSet );
@@ -324,7 +326,11 @@ void VK_CreateRenderTargetImage( VkImage *image, VkDeviceMemory *memory, VkImage
 // Bind texture for drawing (update descriptor set binding)
 // ============================================================
 void VK_BindImage( int textureUnit, image_t *image ) {
-	if ( !image || image->vkImage.descriptorSet == VK_NULL_HANDLE ) {
+	if ( !image ) {
+		return;
+	}
+	if ( image->vkImage.descriptorSet == VK_NULL_HANDLE ) {
+		ri.Printf( PRINT_DEVELOPER, "VK_BindImage: image '%s' has NULL descriptor set, skipping bind\n", image->imgName );
 		return;
 	}
 	if ( !vk.frameStarted ) return;
@@ -425,7 +431,7 @@ void VK_SetTextureMode( const char *string ) {
 		if ( img->vkImage.view == VK_NULL_HANDLE ) continue;
 		if ( !img->mipmap ) continue;  // only mipped textures are affected
 
-		qboolean clamped = (img->wrapClampMode != 0) ? qtrue : qfalse;
+		qboolean clamped = (img->wrapClampMode != TEXWRAP_REPEAT) ? qtrue : qfalse;
 		VkSampler newSampler = clamped ? vk.samplerMipClamp : vk.samplerMipRepeat;
 
 		img->vkImage.sampler = newSampler;

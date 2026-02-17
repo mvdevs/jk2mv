@@ -971,15 +971,17 @@ void VK_CreateSamplers( void ) {
 // Create descriptor pool and layout
 // ============================================================
 void VK_CreateDescriptorPool( void ) {
-	VkDescriptorPoolSize poolSize = {};
-	poolSize.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	poolSize.descriptorCount = VK_MAX_IMAGE_SLOTS;
+	VkDescriptorPoolSize poolSizes[2] = {};
+	poolSizes[0].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	poolSizes[0].descriptorCount = VK_MAX_IMAGE_SLOTS;
+	poolSizes[1].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+	poolSizes[1].descriptorCount = VK_NUM_COMMAND_BUFFERS;
 
 	VkDescriptorPoolCreateInfo poolInfo = {};
 	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-	poolInfo.poolSizeCount = 1;
-	poolInfo.pPoolSizes = &poolSize;
-	poolInfo.maxSets = VK_MAX_IMAGE_SLOTS;
+	poolInfo.poolSizeCount = 2;
+	poolInfo.pPoolSizes = poolSizes;
+	poolInfo.maxSets = VK_MAX_IMAGE_SLOTS + VK_NUM_COMMAND_BUFFERS;
 	poolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
 
 	if ( vkCreateDescriptorPool( vk.device, &poolInfo, NULL, &vk.descriptorPool ) != VK_SUCCESS ) {
@@ -988,6 +990,7 @@ void VK_CreateDescriptorPool( void ) {
 }
 
 void VK_CreateDescriptorSetLayout( void ) {
+	// Texture sampler layout (set 0 and set 1)
 	VkDescriptorSetLayoutBinding binding = {};
 	binding.binding = 0;
 	binding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -1002,14 +1005,72 @@ void VK_CreateDescriptorSetLayout( void ) {
 	if ( vkCreateDescriptorSetLayout( vk.device, &layoutInfo, NULL, &vk.descriptorSetLayout ) != VK_SUCCESS ) {
 		ri.Error( ERR_FATAL, "Failed to create descriptor set layout" );
 	}
+
+	// UBO layout (set 2) - dynamic uniform buffer for per-draw GPU params
+	VkDescriptorSetLayoutBinding uboBinding = {};
+	uboBinding.binding = 0;
+	uboBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+	uboBinding.descriptorCount = 1;
+	uboBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+
+	VkDescriptorSetLayoutCreateInfo uboLayoutInfo = {};
+	uboLayoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+	uboLayoutInfo.bindingCount = 1;
+	uboLayoutInfo.pBindings = &uboBinding;
+
+	if ( vkCreateDescriptorSetLayout( vk.device, &uboLayoutInfo, NULL, &vk.uboDescriptorSetLayout ) != VK_SUCCESS ) {
+		ri.Error( ERR_FATAL, "Failed to create UBO descriptor set layout" );
+	}
+
+	// Store UBO alignment requirement
+	vk.uboAlignment = vk.deviceProperties.limits.minUniformBufferOffsetAlignment;
+	if ( vk.uboAlignment < GPU_PARAMS_ALIGN ) {
+		vk.uboAlignment = GPU_PARAMS_ALIGN;
+	}
+	// Ensure alignment is at least minUniformBufferOffsetAlignment
+	VkDeviceSize minAlign = vk.deviceProperties.limits.minUniformBufferOffsetAlignment;
+	if ( vk.uboAlignment < minAlign ) {
+		vk.uboAlignment = minAlign;
+	}
+	// Round up to next multiple of minUniformBufferOffsetAlignment
+	vk.uboAlignment = (vk.uboAlignment + minAlign - 1) & ~(minAlign - 1);
+
+	// Allocate UBO descriptor sets (one per frame)
+	for ( int i = 0; i < VK_NUM_COMMAND_BUFFERS; i++ ) {
+		VkDescriptorSetAllocateInfo allocInfo = {};
+		allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+		allocInfo.descriptorPool = vk.descriptorPool;
+		allocInfo.descriptorSetCount = 1;
+		allocInfo.pSetLayouts = &vk.uboDescriptorSetLayout;
+
+		if ( vkAllocateDescriptorSets( vk.device, &allocInfo, &vk.uboDescriptorSets[i] ) != VK_SUCCESS ) {
+			ri.Error( ERR_FATAL, "Failed to allocate UBO descriptor set" );
+		}
+
+		// Point descriptor at the dynamic uniform buffer
+		VkDescriptorBufferInfo bufInfo = {};
+		bufInfo.buffer = vk.dynBuffers[i].uniformBuffer;
+		bufInfo.offset = 0;
+		bufInfo.range = GPU_PARAMS_FULL_SIZE;  // Must cover max possible read (including bones)
+
+		VkWriteDescriptorSet write = {};
+		write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		write.dstSet = vk.uboDescriptorSets[i];
+		write.dstBinding = 0;
+		write.descriptorCount = 1;
+		write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+		write.pBufferInfo = &bufInfo;
+
+		vkUpdateDescriptorSets( vk.device, 1, &write, 0, NULL );
+	}
 }
 
 // ============================================================
 // Create pipeline layout
 // ============================================================
 void VK_CreatePipelineLayout( void ) {
-	// Two descriptor sets: set 0 = texture 0, set 1 = texture 1
-	VkDescriptorSetLayout setLayouts[] = { vk.descriptorSetLayout, vk.descriptorSetLayout };
+	// Three descriptor sets: set 0 = texture 0, set 1 = texture 1, set 2 = GPU params UBO
+	VkDescriptorSetLayout setLayouts[] = { vk.descriptorSetLayout, vk.descriptorSetLayout, vk.uboDescriptorSetLayout };
 
 	VkPushConstantRange pushConstantRange = {};
 	pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
@@ -1018,7 +1079,7 @@ void VK_CreatePipelineLayout( void ) {
 
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
 	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	pipelineLayoutInfo.setLayoutCount = 2;
+	pipelineLayoutInfo.setLayoutCount = 3;
 	pipelineLayoutInfo.pSetLayouts = setLayouts;
 	pipelineLayoutInfo.pushConstantRangeCount = 1;
 	pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;
@@ -1102,7 +1163,7 @@ VkDescriptorSet VK_AllocateImageDescriptor( VkImageView view, VkSampler sampler 
 
 	VkDescriptorSet descriptorSet;
 	if ( vkAllocateDescriptorSets( vk.device, &allocInfo, &descriptorSet ) != VK_SUCCESS ) {
-		ri.Printf( PRINT_ALL, "Failed to allocate descriptor set\n" );
+		ri.Printf( PRINT_ERROR, "ERROR: Failed to allocate descriptor set (pool exhausted, max %d). Possible descriptor leak!\n", VK_MAX_IMAGE_SLOTS );
 		return VK_NULL_HANDLE;
 	}
 
@@ -1223,6 +1284,7 @@ void VK_Shutdown( void ) {
 	// Destroy pipeline cache / layout
 	if ( vk.pipelineCache ) vkDestroyPipelineCache( vk.device, vk.pipelineCache, NULL );
 	if ( vk.pipelineLayout ) vkDestroyPipelineLayout( vk.device, vk.pipelineLayout, NULL );
+	if ( vk.uboDescriptorSetLayout ) vkDestroyDescriptorSetLayout( vk.device, vk.uboDescriptorSetLayout, NULL );
 	if ( vk.descriptorSetLayout ) vkDestroyDescriptorSetLayout( vk.device, vk.descriptorSetLayout, NULL );
 	if ( vk.descriptorPool ) vkDestroyDescriptorPool( vk.device, vk.descriptorPool, NULL );
 
@@ -1232,6 +1294,9 @@ void VK_Shutdown( void ) {
 	if ( vk.samplerNoMipRepeat ) vkDestroySampler( vk.device, vk.samplerNoMipRepeat, NULL );
 	if ( vk.samplerNoMipClamp ) vkDestroySampler( vk.device, vk.samplerNoMipClamp, NULL );
 	if ( vk.samplerNearest ) vkDestroySampler( vk.device, vk.samplerNearest, NULL );
+
+	// Destroy static world buffers
+	VK_DestroyStaticWorldBuffers();
 
 	// Destroy dynamic buffers
 	for ( int i = 0; i < VK_NUM_COMMAND_BUFFERS; i++ ) {

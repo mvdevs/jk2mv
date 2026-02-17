@@ -98,19 +98,18 @@ VkPipeline VK_CreatePipelineFromKey( const vkPipelineKey_t *key ) {
 	}
 
 	// --- Vertex input ---
-	// Vertex layout always has 4 bindings to match the vertex shader:
-	// position(3f) + texcoord0(2f) + texcoord1(2f) + color(4ub)
-	// For single-texture pipelines, texcoord1 is still bound but ignored by the fragment shader.
-	VkVertexInputBindingDescription bindingDescriptions[4] = {};
-	VkVertexInputAttributeDescription attributeDescriptions[4] = {};
+	// Vertex layout: 5 bindings
+	// position(3f) + texcoord0(2f) + texcoord1(2f) + color(4ub) + normal(3f)
+	VkVertexInputBindingDescription bindingDescriptions[5] = {};
+	VkVertexInputAttributeDescription attributeDescriptions[5] = {};
 
-	// Binding 0: position (vec3 read from vec4-strided data)
+	// Binding 0: position (vec4, full read including .w for bone indices)
 	bindingDescriptions[0].binding = 0;
 	bindingDescriptions[0].stride = sizeof(float) * 4; // vec4 stride to match tess.xyz layout
 	bindingDescriptions[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 	attributeDescriptions[0].binding = 0;
 	attributeDescriptions[0].location = 0;
-	attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT; // only read xyz
+	attributeDescriptions[0].format = VK_FORMAT_R32G32B32A32_SFLOAT; // read full vec4 (xyz + bone data in w)
 	attributeDescriptions[0].offset = 0;
 
 	// Binding 1: texcoord0 (vec2)
@@ -140,11 +139,20 @@ VkPipeline VK_CreatePipelineFromKey( const vkPipelineKey_t *key ) {
 	attributeDescriptions[3].format = VK_FORMAT_R8G8B8A8_UNORM;
 	attributeDescriptions[3].offset = 0;
 
+	// Binding 4: normal (vec4, full read including .w for bone weights)
+	bindingDescriptions[4].binding = 4;
+	bindingDescriptions[4].stride = sizeof(float) * 4; // vec4 stride
+	bindingDescriptions[4].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+	attributeDescriptions[4].binding = 4;
+	attributeDescriptions[4].location = 4;
+	attributeDescriptions[4].format = VK_FORMAT_R32G32B32A32_SFLOAT; // read full vec4 (xyz + bone weights in w)
+	attributeDescriptions[4].offset = 0;
+
 	VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
 	vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-	vertexInputInfo.vertexBindingDescriptionCount = 4;
+	vertexInputInfo.vertexBindingDescriptionCount = 5;
 	vertexInputInfo.pVertexBindingDescriptions = bindingDescriptions;
-	vertexInputInfo.vertexAttributeDescriptionCount = 4;
+	vertexInputInfo.vertexAttributeDescriptionCount = 5;
 	vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions;
 
 	// --- Input assembly ---

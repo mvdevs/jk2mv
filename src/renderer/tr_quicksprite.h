@@ -21,11 +21,15 @@ private:
 			unsigned int	mFogColor;
 			qboolean		mUseFog;
 			vec4_t			mVerts[SHADER_MAX_VERTEXES];
-			// unsigned int	mIndexes[SHADER_MAX_VERTEXES];			// Ideally this would be static, cause it never changes
-			vec2_t			mTextureCoords[SHADER_MAX_VERTEXES];	// Ideally this would be static, cause it never changes
+			vec2_t			mTextureCoords[SHADER_MAX_VERTEXES];	// Pre-computed in constructor (never changes)
 			vec2_t			mFogTextureCoords[SHADER_MAX_VERTEXES];
 			unsigned int	mColors[SHADER_MAX_VERTEXES];
 			int				mNextVert;
+
+			// Pre-computed quad index buffer — pattern is always 0,1,2,0,2,3,4,5,6,4,6,7,...
+			// Computed once in constructor, reused every flush.
+			static glIndex_t	mQuadIndexes[SHADER_MAX_VERTEXES / 4 * 6];
+			static bool		mIndexesInitialized;
 
 			void Flush(void);
 

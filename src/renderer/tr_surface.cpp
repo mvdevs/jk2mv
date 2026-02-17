@@ -1679,6 +1679,39 @@ void RB_SurfaceDisplayList( srfDisplayList_t *surf ) {
 void RB_SurfaceSkip( void *surf ) {
 }
 
+/*
+=============
+RB_SurfaceVBO
+
+Handles a VBO mesh surface. Instead of tessellating vertex data into tess,
+this draws directly from the static GPU buffer.
+VBO meshes are self-contained — they flush immediately.
+=============
+*/
+void RB_SurfaceVBO( srfVBOMesh_t *mesh ) {
+	// If there's pending non-VBO tess data, we need to flush it first
+	if ( tess.numIndexes > 0 && tess.vboMesh == NULL ) {
+		RB_EndSurface();
+		// Re-begin surface with this mesh's shader
+		RB_BeginSurface( mesh->shader, mesh->fogNum );
+	}
+
+	// Set up tess for VBO drawing (no vertex data copied)
+	tess.vboMesh = mesh;
+	tess.numVertexes = mesh->numVertices;
+	tess.numIndexes = mesh->numIndexes;
+	tess.dlightBits = mesh->dlightBits[backEnd.smpFrame];
+
+	// Override stage iterator to use VBO path
+	tess.currentStageIteratorFunc = RB_StageIteratorVBO;
+
+	// VBO meshes are self-contained, flush immediately
+	RB_EndSurface();
+
+	// Re-begin for any subsequent surfaces with the same shader
+	RB_BeginSurface( mesh->shader, mesh->fogNum );
+}
+
 
 void (*rb_surfaceTable[SF_NUM_SURFACE_TYPES])( void *) = {
 	(void(*)(void*))RB_SurfaceBad,			// SF_BAD,
@@ -1698,5 +1731,6 @@ Ghoul2 Insert End
 */
 	(void(*)(void*))RB_SurfaceFlare,		// SF_FLARE,
 	(void(*)(void*))RB_SurfaceEntity,		// SF_ENTITY
-	(void(*)(void*))RB_SurfaceDisplayList	// SF_DISPLAY_LIST
+	(void(*)(void*))RB_SurfaceDisplayList,	// SF_DISPLAY_LIST
+	(void(*)(void*))RB_SurfaceVBO			// SF_VBO_MESH
 };

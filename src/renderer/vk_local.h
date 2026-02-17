@@ -21,9 +21,9 @@ via GL calls is now managed through Vulkan objects.
 #define VK_NUM_COMMAND_BUFFERS		2
 #define VK_MAX_SWAPCHAIN_IMAGES		8
 #define VK_MAX_PIPELINES			256
-#define VK_VERTEX_BUFFER_SIZE		(4 * 1024 * 1024)
+#define VK_VERTEX_BUFFER_SIZE		(8 * 1024 * 1024)
 #define VK_INDEX_BUFFER_SIZE		(2 * 1024 * 1024)
-#define VK_UNIFORM_BUFFER_SIZE		(256 * 1024)
+#define VK_UNIFORM_BUFFER_SIZE		(4 * 1024 * 1024)
 #define VK_STAGING_BUFFER_SIZE		(16 * 1024 * 1024) // for texture uploads
 #define VK_MAX_IMAGE_SLOTS			4096
 
@@ -42,6 +42,60 @@ typedef struct {
 	float depthRange[2];	// near, far
 	float gamma;			// gamma correction value (1.0 = no correction)
 } vkPushConstants_t;
+
+// ============================================================
+// GPU-side feature flags (bitfield for gpuParams_t::gpuFlags)
+// These tell the vertex/fragment shaders which computations
+// to perform on the GPU instead of the CPU.
+// ============================================================
+#define GPU_FLAG_NONE               0
+#define GPU_FLAG_DIFFUSE_LIGHTING   (1 << 0)  // compute N.L diffuse in vertex shader
+#define GPU_FLAG_SPECULAR_ALPHA     (1 << 1)  // compute specular in vertex shader -> alpha
+#define GPU_FLAG_ENVMAP_TC          (1 << 2)  // compute environment map texcoords in vertex shader
+#define GPU_FLAG_FOG                (1 << 3)  // compute fog and apply in fragment shader
+#define GPU_FLAG_FOG_MODULATE_RGB   (1 << 4)  // modulate stage RGB by inverse fog factor
+#define GPU_FLAG_FOG_MODULATE_ALPHA (1 << 5)  // modulate stage alpha by inverse fog factor
+#define GPU_FLAG_FOG_PASS           (1 << 6)  // this draw IS the fog pass (blend fog color)
+#define GPU_FLAG_DLIGHT_PASS        (1 << 7)  // dynamic light pass (compute TC + color from light)
+#define GPU_FLAG_DLIGHT_BACKSIDES   (1 << 8)  // allow dlight on backfaces (r_dlightBacks)
+#define GPU_FLAG_SKINNING           (1 << 9)  // GPU skeletal skinning (Ghoul2)
+#define GPU_FLAG_MULTI_DLIGHT_PASS  (1 << 10) // single-pass multi-dlight (dlight data packed in boneMatrices region)
+
+// Maximum number of bones for GPU skeletal skinning
+#define GPU_MAX_BONES  72
+
+// Per-draw UBO data (std140 layout, must match GLSL)
+// Passed via dynamic uniform buffer (descriptor set 2)
+typedef struct {
+	uint32_t  gpuFlags;            // 0
+	float     backlerp;            // 4
+	float     identityLight;       // 8
+	float     pad0;                // 12
+	float     viewOrigin[4];       // 16 (xyz + pad) — eye position in model space
+	float     ambientLight[4];     // 32 (rgb + ambientLightInt as float bits)
+	float     directedLight[4];    // 48 (rgb + pad)
+	float     entityLightDir[4];   // 64 (xyz + pad) — entity light direction
+	float     fogDistVec[4];       // 80 — fog distance plane equation
+	float     fogDepthVec[4];      // 96 — fog depth plane equation
+	float     fogColor[4];         // 112 (rgba)
+	float     fogEyeT;             // 128
+	float     fogEyeOutside;       // 132 (0.0 or 1.0)
+	float     pad1[2];             // 136
+	float     dlightOrigin[4];     // 144 (xyz in model space, w = radius)
+	float     dlightColor[4];      // 160 (rgb, w = additive flag)
+	float     specLightOrigin[4];  // 176 (xyz for specular, w unused)
+	// --- Bone matrices for GPU skinning (offset 192) ---
+	// Each bone is a 3x4 matrix stored as 3 vec4 rows.
+	// boneMatrices[boneIndex * 12 .. boneIndex * 12 + 11]
+	float     boneMatrices[GPU_MAX_BONES * 12]; // 72 bones × 12 floats = 3456 bytes
+} gpuParams_t;                    // 3648 bytes total
+
+// Base param size (without bones) for non-skinned draws
+#define GPU_PARAMS_BASE_SIZE  192
+// Full param size (with bones) for skinned draws
+#define GPU_PARAMS_FULL_SIZE  (GPU_PARAMS_BASE_SIZE + GPU_MAX_BONES * 12 * (int)sizeof(float)) // 3648
+// Must be aligned to minUniformBufferOffsetAlignment
+#define GPU_PARAMS_ALIGN 256  // safe default, actual alignment queried at init
 
 // Cull mode values for pipeline key (custom enum, not VkCullModeFlagBits)
 #define VKCULL_NONE		0
@@ -222,6 +276,14 @@ typedef struct {
 	vkPipelineEntry_t	pipelines[VK_MAX_PIPELINES];
 	int					pipelineCount;
 
+	// UBO descriptor set layout and per-frame descriptor sets
+	VkDescriptorSetLayout uboDescriptorSetLayout;
+	VkDescriptorSet		uboDescriptorSets[VK_NUM_COMMAND_BUFFERS];
+	VkDeviceSize		uboAlignment;		// minUniformBufferOffsetAlignment
+	int					zeroUBOOffset[VK_NUM_COMMAND_BUFFERS];	// offset of zeroed UBO written at frame start
+	int					zeroTc1Offset[VK_NUM_COMMAND_BUFFERS];	// offset of zeroed tc1 region in vertex buffer
+	int					zeroNormOffset[VK_NUM_COMMAND_BUFFERS];	// offset of zeroed normal region in vertex buffer
+
 	// Shader modules
 	VkShaderModule		singleTexVertShader;
 	VkShaderModule		singleTexFragShader;
@@ -267,6 +329,25 @@ typedef struct {
 	// Deferred deletion of descriptor sets to avoid freeing while recording
 	VkDescriptorSet		deferredFreeSets[1024];
 	int					deferredFreeCount;
+
+	// ============================================================
+	// Static world geometry buffers (device-local, uploaded at map load)
+	// ============================================================
+	VkBuffer			staticVertexBuffer;
+	VkDeviceMemory		staticVertexMemory;
+	VkBuffer			staticIndexBuffer;
+	VkDeviceMemory		staticIndexMemory;
+
+	// Byte offsets of each attribute section within staticVertexBuffer
+	VkDeviceSize		staticPosOffset;	// positions (vec4)
+	VkDeviceSize		staticTc0Offset;	// texcoord0 (vec2)
+	VkDeviceSize		staticTc1Offset;	// texcoord1/lightmap (vec2)
+	VkDeviceSize		staticColorOffset;	// vertex colors (RGBA8)
+	VkDeviceSize		staticNormOffset;	// normals (vec4)
+
+	int					staticTotalVertices;
+	int					staticTotalIndexes;
+	qboolean			staticBuffersValid;
 } vkState_t;
 
 extern vkState_t vk;
@@ -325,8 +406,10 @@ void	VK_RecreateSwapchain( void );
 // ============================================================
 void	VK_DrawIndexed( int numVerts, const float *xyz, const float *texCoords0,
 						const float *texCoords1, const byte *colors,
-						int numIndexes, const glIndex_t *indexes );
-void	VK_DrawQuad( float x0, float y0, float x1, float y1,
+						int numIndexes, const glIndex_t *indexes );void	VK_DrawIndexedWithNormals( int numVerts, const float *xyz, const float *normals,
+					const float *texCoords0, const float *texCoords1,
+					const byte *colors, int numIndexes, const glIndex_t *indexes );
+void	VK_UpdateGPUParams( const gpuParams_t *params );void	VK_DrawQuad( float x0, float y0, float x1, float y1,
 					 float s0, float t0, float s1, float t1,
 					 const byte *color );
 void	VK_SetViewport( float x, float y, float width, float height, float minDepth, float maxDepth );
@@ -337,6 +420,25 @@ void	VK_SetMVP( const float *mvp );
 void	VK_Set2D( void );
 void	VK_SetPushConstants( const vkPushConstants_t *pc );
 void	VK_ReadPixels( int x, int y, int width, int height, int format, byte *buffer );
+
+// ============================================================
+// Static world VBO management
+// ============================================================
+void	VK_CreateStaticWorldBuffers( int totalVertices, int totalIndexes,
+			const byte *vertexData, VkDeviceSize vertexDataSize,
+			const byte *indexData, VkDeviceSize indexDataSize );
+void	VK_DestroyStaticWorldBuffers( void );
+
+// ============================================================
+// Cached geometry (avoid re-uploading pos/normal/idx across stages)
+// ============================================================
+void	VK_CacheTessGeometry( void );
+void	VK_DrawWithCachedGeo( int numVerts, const float *tc0, const float *tc1,
+			const byte *colors, int numIndexes, const glIndex_t *indexes );
+void	VK_DrawFromStaticBuffers( int firstVertex, int numVertices,
+			int firstIndex, int numIndexes,
+			const float *dynTc0, const float *dynTc1, const byte *dynColors,
+			qboolean useDynamicVaryings );
 
 // ============================================================
 // Vulkan texture binding (replacing GL_Bind)

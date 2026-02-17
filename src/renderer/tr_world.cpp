@@ -241,6 +241,19 @@ static void R_AddWorldSurface( msurface_t *surf, int dlightBits ) {
 	surf->viewCount = tr.viewCount;
 	// FIXME: bmodel fog?
 
+	// If this surface belongs to a VBO group, mark the group visible
+	// instead of adding it as an individual draw surface.
+	if ( r_vbo->integer && surf->vboGroupIndex >= 0 && tr.world->vboSurfaces ) {
+		srfVBOMesh_t *vbo = &tr.world->vboSurfaces[surf->vboGroupIndex];
+		vbo->visCount = tr.viewCount;
+		// Accumulate dlight bits for the group
+		if ( dlightBits ) {
+			dlightBits = R_DlightSurface( surf, dlightBits );
+			vbo->dlightBits[tr.smpFrame] |= dlightBits;
+		}
+		return;
+	}
+
 	// try to cull before dlighting or adding
 	if ( R_CullSurface( surf->data, surf->shader ) ) {
 		return;
@@ -702,6 +715,7 @@ R_AddWorldSurfaces
 */
 void R_AddWorldSurfaces (void) {
 	unsigned int dlightBits;
+	int i;
 
 	if ( !r_drawworld->integer ) {
 		return;
@@ -720,6 +734,13 @@ void R_AddWorldSurfaces (void) {
 	// clear out the visible min/max
 	ClearBounds( tr.viewParms.visBounds[0], tr.viewParms.visBounds[1] );
 
+	// Reset VBO group visibility for this frame
+	if ( tr.world->vboSurfaces ) {
+		for ( i = 0; i < tr.world->numVBOSurfaces; i++ ) {
+			tr.world->vboSurfaces[i].dlightBits[tr.smpFrame] = 0;
+		}
+	}
+
 	// perform frustum culling and add all the potentially visible surfaces
 	if ( tr.refdef.num_dlights > MAX_DLIGHTS ) {
 		tr.refdef.num_dlights = MAX_DLIGHTS;
@@ -729,4 +750,20 @@ void R_AddWorldSurfaces (void) {
 	}
 
 	R_RecursiveWorldNode( tr.world->nodes, 15, dlightBits );
+
+	// Add visible VBO groups as draw surfaces (with frustum cull on group bounds)
+	if ( r_vbo->integer && tr.world->vboSurfaces ) {
+		for ( i = 0; i < tr.world->numVBOSurfaces; i++ ) {
+			srfVBOMesh_t *vbo = &tr.world->vboSurfaces[i];
+			if ( vbo->visCount != tr.viewCount ) {
+				continue;
+			}
+			// Frustum cull the entire VBO group bounding box
+			if ( R_CullLocalBox( vbo->bounds ) == CULL_OUT ) {
+				continue;
+			}
+			R_AddDrawSurf( (surfaceType_t *)&vbo->surfaceType, vbo->shader, vbo->fogNum,
+				vbo->dlightBits[tr.smpFrame] != 0 );
+		}
+	}
 }

@@ -831,7 +831,7 @@ void R_Images_DeleteLightMaps(void)
 	{
 		image_t *pImage = (*itImage).second;
 
-		if (pImage->imgName[0] == '*' && strstr(pImage->imgName,"lightmap"))	// loose check, but should be ok
+		if (pImage->imgName[0] == '*' && (strstr(pImage->imgName,"lightmap") || strstr(pImage->imgName,"lmatlas")))	// match both old lightmap names and atlas names (names are lowercased by GenerateImageMappingName)
 		{
 			R_Images_DeleteImageContents(pImage);
 			itImage = AllocatedImages.erase(itImage);

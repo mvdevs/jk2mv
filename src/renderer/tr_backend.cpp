@@ -259,6 +259,12 @@ void RB_BeginDrawingView (void) {
 
 #define	MAC_EVENT_PUMP_MSEC		5
 
+// Glow surface list — populated during main pass, used by glow pass.
+// Avoids re-iterating all drawSurfs and skipping non-glow ones.
+#define MAX_GLOW_DRAWSURFS 4096
+static drawSurf_t glowDrawSurfs[MAX_GLOW_DRAWSURFS];
+static int numGlowDrawSurfs = 0;
+
 /*
 ==================
 RB_RenderDrawSurfList
@@ -279,6 +285,11 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 	if (g_bRenderGlowingObjects)
 	{ //only shadow on initial passes
 		didShadowPass = true;
+	}
+	else
+	{
+		// Reset glow surface list at start of main pass
+		numGlowDrawSurfs = 0;
 	}
 
 	// save original time for entity shader offsets
@@ -320,6 +331,12 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 			dlighted = oldDlighted;
 			continue;
 		}
+
+		// During main pass, collect glow surfaces for the separate glow pass
+		if ( !g_bRenderGlowingObjects && shader->hasGlow && numGlowDrawSurfs < MAX_GLOW_DRAWSURFS ) {
+			glowDrawSurfs[numGlowDrawSurfs++] = *drawSurf;
+		}
+
 		oldSort = drawSurf->sort;
 
 		//
@@ -774,7 +791,10 @@ const void	*RB_DrawSurfs( const void *data ) {
 
 			// Full-res viewport — RB_RenderDrawSurfList will set it from backEnd.viewParms
 			// which are already at full resolution, so no scaling needed.
-			RB_RenderDrawSurfList( cmd->drawSurfs, cmd->numDrawSurfs );
+			// Use pre-built glow surface list to avoid iterating all drawsurfs.
+			if ( numGlowDrawSurfs > 0 ) {
+				RB_RenderDrawSurfList( glowDrawSurfs, numGlowDrawSurfs );
+			}
 
 			vkCmdEndRenderPass( vkcmd );
 			vk.renderPassActive = qfalse;
