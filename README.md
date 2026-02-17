@@ -1,108 +1,56 @@
-# JK2MV
-https://jk2mv.org
+This branch adds a Vulkan renderer and then builds several large improvements on top of it.
 
-JK2MV (Multi Version) is a modification for Jedi Knight II: Jedi Outcast. It supports all three game versions and comes with various features and optimizations.
+I'm currently learning how to work with AI efficiently and wanted to do that in a codebase I know well and with clear goals that make sense.
+It's **completely written by AI** under my steering. I didn't write a single line of code myself.
 
-Main Features:
-- Supports 1.02, 1.03 & 1.04 in a single executable
-- Supports most mods made for JK2 (maps, skins, (code)mods etc.)
-- Supports some original and custom Jedi Academy assets (maps, models etc.)
-- Raw mouse input
-- Fast ingame HTTP-Downloads with a dialogue asking you for permission before downloading files to your computer
-- Multiplatform: Windows, Linux, MacOSX, FreeBSD
-- Multiarchitecture: x86, x86-64, ARM
-- Dynamic glow: Better looking lightsabers with the dynamic glow feature from JKA
-- EAX/OpenAL sound fixed
-- Supports modern screen resolutions and desktop scaling
-- Fixes for all known security bugs
-- Minimizer: Press the Windows key / Command key in fullscreen mode to minimize
-- Improved gamma correction
-- Performance improvements
-- High resolution fonts and widescreen UI
-- Fast AVI recording from demos
-- Opensource (GPLv2)
-- Engine extensions for JK2 modifications (maps, mods etc.)
-- Modernized, portable codebase and build system
-- Tons of other fixes and improvements in the engine, see the changelog for detailed information
+Do not expect me to actually care about code quality or whether it stole parts of it from somewhere. The goal is to prove what is possible now, nothing more. Look at this from the viewpoint of a player. Everyone can mod it now. No limits anymore. The future is now.
 
-# Automated Builds
-These builds are automatically generated on every push to the repository. For testing purposes only.
+AI generated summary of what has been changed in this branch:
 
-| GitHub Actions |
-| -------------- |
-| [![GitHub Actions Badge](https://github.com/mvdevs/jk2mv/actions/workflows/build.yml/badge.svg)](https://github.com/mvdevs/jk2mv/actions?query=branch%3Amaster) |
 
-# Project Goals
+## Vulkan renderer
 
-1. To provide an open source JK2 multiplayer client/server distribution for modern systems.
-2. To support all three major JK2 multiplayer versions: 1.02, 1.03 and 1.04.
-3. To benefit JK2 multiplayer community by providing necessary engine bugfixes, enchancements and changes to keep the game playable online using JK2MV.
-4. To benefit JK2 modding community by providing engine bugfixes, enchancements and documentation.
-5. To maintain compatibility with modifications created for original JK2 client/server.
+- Replaces the OpenGL backend with a Vulkan renderer (`vk_*` codepath).
+- Uses SPIR-V shaders (`assets/shaders/spirv/*`) and Vulkan pipelines/render passes instead of GLSL + GL state.
+- Initializes Vulkan via SDL (surface/instance extensions come from SDL).
+- Reports Vulkan device/API info through existing `glConfig` paths.
 
-Note that MVSDK is a separate project with its own goals.
+## Performance optimizations
 
-# Howto Build JK2MV
+- Adds static “world VBO” building for eligible BSP surfaces: groups world faces/triangles by `(shader, fogNum)` and uploads them once to device-local GPU buffers for lower CPU overhead during rendering.
+- Tightens multiple Vulkan/renderer hot paths and updates several SPIR-V shaders.
 
-1. Clone the JK2MV repository
-Clone the JK2MV repository including submodules:
-	* `git clone --recursive https://github.com/mvdevs/jk2mv`
-2. Get CMake from either https://cmake.org or, in case of Linux, from the repositories of your distribution.
-3. Dependencies
- 	* Windows: Requires at least Visual Studio 2013, required libraries are shipped with JK2MV in the `libs` directory.
-		* If you plan to build the installer package get NSIS from http://nsis.sourceforge.net
-	* Linux/FreeBSD: OpenGL, OpenAL, SDL2 and depending on your configuration libjpeg, libpng, libminizip, zlib.
-		* Ubuntu/Debian: `apt-get install git debhelper devscripts libsdl2-dev libgl1-mesa-dev libopenal-dev libjpeg-dev libpng-dev zlib1g-dev libminizip-dev`
-		* Fedora: `dnf install git SDL2-devel mesa-libGL-devel openal-soft-devel libjpeg-turbo-devel libpng-devel zlib-devel minizip-devel`
-	* MacOSX: XCode on MacOSX >= 10.9
-		* Configure / Build SDL2:
-			1. `curl -O https://www.libsdl.org/release/SDL2-2.0.10.tar.gz`
-			2. `tar xzf SDL2-2.0.10.tar.gz && cd SDL2-2.0.10/Xcode/SDL`
-			4. `sed -i -e 's/@rpath//g' SDL.xcodeproj/project.pbxproj` (packaging fails otherwise)
-			5. `xcodebuild -configuration Release`
-			6. `mkdir -p ~/Library/Frameworks/`
-			7. ``ln -s `pwd`/build/Release/SDL2.framework ~/Library/Frameworks``
-4. Configuration
-	* Either
-		* Use the CMake GUI to configure JK2MV
-		* Generate the default configuration by using the build scripts in the `build` directory.
-	* Important Options
-		* `BuildPortableVersion` Build portable version (does not read or write files from your user/home directory)
-		* `BuildMVMP` Whether to create targets for the client (jk2mvmp & jk2mvmenu)
-		* `BuildMVDED` Whether to create targets for the dedicated server (jk2mvded)
-		* `BuildMVSDK` Whether to build and integrate the mvsdk modules.
-		* `CMAKE_BUILD_TYPE=Debug/Release` Build for development/release.
-5. Building
-	* Unix-Makefiles
-		* `make` Build all previously selected binaries.
-		* `make install` Installs JK2MV to `/usr` on Linux. On MacOSX it finishes the App-Package.
-		* `make package` Generates rpm/deb packages on Linux and a dmg image on MacOSX.
+## Ray-traced glow reflections
 
-# Contributing
+- Adds hardware ray-traced glow reflections using `VK_KHR_ray_tracing_pipeline` + `VK_KHR_acceleration_structure`.
+- Adds new tuning CVARs:
+  - `r_DynamicGlowReflections`
+  - `r_DynamicGlowReflectionRadius`
+  - `r_DynamicGlowReflectionIntensity`
+  - `r_DynamicGlowReflectionFalloff`
+  - `r_DynamicGlowReflectionG2Scale`
+  - `r_DynamicGlowReflectionShadowIntensity`
+- Integrates reflections into the glow pipeline (dispatch after glow render, composite additively).
+- When RT reflections are enabled, skips legacy dynamic-light projection to avoid double work.
 
-Code contributions are welcome as GitHub pull requests, however they must meet some conditions:
+## Modern defaults and UX polish
 
-1. Change must adhere to general project goals outlined earlier.
-2. Source code must pass a review from JK2MV maintainer.
-3. Source code must be published under GPL2 licence.
+- Raises default visual quality settings:
+  - MSAA default: `r_ext_multisample` → `16`
+  - Anisotropic filtering default: `r_ext_texture_filter_anisotropic` → `16`
+  - Texture detail defaults: `r_picmip` → `0`, `r_simpleMipMaps` → `0`
+  - Enables: `r_flares` and `r_drawSun`
+  - Texture filtering default: `r_textureMode` → `GL_LINEAR_MIPMAP_LINEAR`
+- Improves Vulkan “enabled extensions” reporting.
+- Improves per-monitor scaling behavior on Linux (x11/wayland) and clamps unreasonable DPI values.
 
-When in doubt, it is best to ask JK2MV developers directly if your idea has a chance of being accepted.
+## Sound improvements
 
-# License
-JK2MV is licensed under GPLv2 as free software. You are free to use, modify and redistribute JK2MV following the terms in the LICENSE file. Please be aware of the implications of the GPLv2 licence. In short, be prepared to share your code under the same GPLv2 licence.
+- Updates MP3 playback/decoding behavior around minimp3 (native sample rate) and fixes length calculations accordingly.
+- Adds `s_hrtf` and `s_occlusion`.
+- Implements optional sound occlusion via OpenAL EFX lowpass filters (loaded at runtime for portability).
+- Switches to manual distance attenuation (smooth rolloff) while keeping positional audio for HRTF.
 
-# Credits
-- openjk (https://github.com/JACoders/OpenJK) (SDL port, engine fixes, improvements etc.)
-- ioq3 (https://github.com/ioquake/ioq3/) (SDL port, x64 qvm, engine fixes, improvements etc.)
-- xLAva (https://github.com/xLAva/JediOutcastLinux) (openal fixes)
-- Thoroughbred-Of-Sin (http://thoroughbred-of-sin.deviantart.com/) (icon)
+## VM improvements
 
-# Maintainers
-
-- Daggo
-- fau
-- ouned
-
-JK2MV maintainers can be contacted on GitHub or on JK2 Discord server.
-
-![JK2 Discord](https://discordapp.com/api/guilds/220358272538902528/widget.png?style=banner2)
+- Optimizes the x86 VM code generator with better stack/register tracking and fewer redundant memory operations.
