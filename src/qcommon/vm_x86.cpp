@@ -79,6 +79,7 @@ typedef enum
 	LAST_COMMAND_MOV_STACK_EAX,
 	LAST_COMMAND_SUB_BL_1,
 	LAST_COMMAND_SUB_BL_2,
+	LAST_COMMAND_TOS_IN_EAX,
 } ELastCommand;
 
 typedef enum
@@ -94,16 +95,32 @@ static int iss8(int32_t v)
 	return (SCHAR_MIN <= v && v <= SCHAR_MAX);
 }
 
-#if 0
-static int isu8(uint32_t v)
+static qboolean IsPowerOf2(unsigned int v)
 {
-	return (v <= UCHAR_MAX);
+	return (v && !(v & (v - 1))) ? qtrue : qfalse;
 }
-#endif
+
+static int Log2(unsigned int v)
+{
+	int r = 0;
+	while (v >>= 1)
+		r++;
+	return r;
+}
 
 static int NextConstant4(void)
 {
 	return (code[pc] | (code[pc+1]<<8) | (code[pc+2]<<16) | (code[pc+3]<<24));
+}
+
+static qboolean IsLastStackConstStore(void)
+{
+	return (
+		compiledOfs >= 7
+		&& buf[compiledOfs - 7] == 0xC7
+		&& buf[compiledOfs - 6] == 0x04
+		&& buf[compiledOfs - 5] == 0x9F
+	) ? qtrue : qfalse;
 }
 
 static int	Constant4( void ) {
@@ -122,6 +139,12 @@ static int	Constant1( void ) {
 	return v;
 }
 
+// Raw byte emit - does not touch LastCommand
+static void EmitRaw(int v)
+{
+	buf[compiledOfs++] = v;
+}
+
 static void Emit1( int v )
 {
 	buf[ compiledOfs ] = v;
@@ -132,17 +155,18 @@ static void Emit1( int v )
 
 static void Emit2(int v)
 {
-	Emit1(v & 255);
-	Emit1((v >> 8) & 255);
+	EmitRaw(v & 255);
+	EmitRaw((v >> 8) & 255);
+	LastCommand = LAST_COMMAND_NONE;
 }
-
 
 static void Emit4(int v)
 {
-	Emit1(v & 0xFF);
-	Emit1((v >> 8) & 0xFF);
-	Emit1((v >> 16) & 0xFF);
-	Emit1((v >> 24) & 0xFF);
+	EmitRaw(v & 0xFF);
+	EmitRaw((v >> 8) & 0xFF);
+	EmitRaw((v >> 16) & 0xFF);
+	EmitRaw((v >> 24) & 0xFF);
+	LastCommand = LAST_COMMAND_NONE;
 }
 
 static void EmitPtr(void *ptr)
@@ -151,11 +175,12 @@ static void EmitPtr(void *ptr)
 
 	Emit4(v);
 #if idx64
-	Emit1((v >> 32) & 0xFF);
-	Emit1((v >> 40) & 0xFF);
-	Emit1((v >> 48) & 0xFF);
-	Emit1((v >> 56) & 0xFF);
+	EmitRaw((v >> 32) & 0xFF);
+	EmitRaw((v >> 40) & 0xFF);
+	EmitRaw((v >> 48) & 0xFF);
+	EmitRaw((v >> 56) & 0xFF);
 #endif
+	LastCommand = LAST_COMMAND_NONE;
 }
 
 static int Hex( int c ) {
@@ -183,13 +208,14 @@ static void EmitString( const char *string ) {
 		c2 = string[1];
 
 		v = ( Hex( c1 ) << 4 ) | Hex( c2 );
-		Emit1( v );
+		EmitRaw( v );
 
 		if ( !string[2] ) {
 			break;
 		}
 		string += 3;
 	}
+	LastCommand = LAST_COMMAND_NONE;
 }
 static void EmitRexString(byte rex, const char *string)
 {
@@ -199,6 +225,15 @@ static void EmitRexString(byte rex, const char *string)
 #endif
 
 	EmitString(string);
+}
+
+static void FlushTOS(vm_t *vm)
+{
+	if(LastCommand == LAST_COMMAND_TOS_IN_EAX)
+	{
+		EmitString("89 04 9F");		// mov dword ptr [edi + ebx * 4], eax
+		LastCommand = LAST_COMMAND_MOV_STACK_EAX;
+	}
 }
 
 
@@ -238,6 +273,8 @@ static void EmitCommand(ELastCommand command)
 		case LAST_COMMAND_SUB_BL_2:
 			STACK_POP(2);			// sub bl, 2
 			break;
+		case LAST_COMMAND_TOS_IN_EAX:
+			break;
 		default:
 			break;
 	}
@@ -246,6 +283,8 @@ static void EmitCommand(ELastCommand command)
 
 static void EmitPushStack(vm_t *vm)
 {
+	FlushTOS(vm);
+
 	if (!jlabel)
 	{
 		if(LastCommand == LAST_COMMAND_SUB_BL_1)
@@ -270,12 +309,16 @@ static void EmitMovEAXStack(vm_t *vm, int andit)
 {
 	if(!jlabel)
 	{
-		if(LastCommand == LAST_COMMAND_MOV_STACK_EAX)
+		if (LastCommand == LAST_COMMAND_TOS_IN_EAX)
+		{
+			// Value is already in EAX
+		}
+		else if(LastCommand == LAST_COMMAND_MOV_STACK_EAX)
 		{	// mov [edi + ebx * 4], eax
 			compiledOfs -= 3;
 			vm->instructionPointers[instruction - 1] = compiledOfs;
 		}
-		else if(pop1 == OP_CONST && buf[compiledOfs-7] == 0xC7 && buf[compiledOfs-6] == 0x04 && buf[compiledOfs - 5] == 0x9F)
+		else if(pop1 == OP_CONST && IsLastStackConstStore())
 		{	// mov [edi + ebx * 4], 0x12345678
 			compiledOfs -= 7;
 			vm->instructionPointers[instruction - 1] = compiledOfs;
@@ -286,16 +329,28 @@ static void EmitMovEAXStack(vm_t *vm, int andit)
 			else
 				Emit4(lastConst);
 
+			if (LastCommand != LAST_COMMAND_TOS_IN_EAX)
+				LastCommand = LAST_COMMAND_NONE;
+
 			return;
 		}
 		else if(pop1 != OP_DIVI && pop1 != OP_DIVU && pop1 != OP_MULI && pop1 != OP_MULU &&
 			pop1 != OP_STORE4 && pop1 != OP_STORE2 && pop1 != OP_STORE1)
 		{
+			FlushTOS(vm);
+			EmitString("8B 04 9F");	// mov eax, dword ptr [edi + ebx * 4]
+		}
+		else
+		{
+			FlushTOS(vm);
 			EmitString("8B 04 9F");	// mov eax, dword ptr [edi + ebx * 4]
 		}
 	}
 	else
+	{
+		FlushTOS(vm);
 		EmitString("8B 04 9F");		// mov eax, dword ptr [edi + ebx * 4]
+	}
 
 	if(andit)
 	{
@@ -304,10 +359,16 @@ static void EmitMovEAXStack(vm_t *vm, int andit)
 	}
 }
 
-void EmitMovECXStack(vm_t *vm)
+static void EmitMovECXStack(vm_t *vm)
 {
 	if(!jlabel)
 	{
+		if(LastCommand == LAST_COMMAND_TOS_IN_EAX)
+		{
+			EmitString("89 C1"); // mov ecx, eax
+			return;
+		}
+
 		if(LastCommand == LAST_COMMAND_MOV_STACK_EAX) // mov [edi + ebx * 4], eax
 		{
 			compiledOfs -= 3;
@@ -322,16 +383,21 @@ void EmitMovECXStack(vm_t *vm)
 			return;
 		}
 	}
-
+	
+	FlushTOS(vm);
 	EmitString("8B 0C 9F");		// mov ecx, dword ptr [edi + ebx * 4]
 }
 
 
-void EmitMovEDXStack(vm_t *vm, int andit)
+static void EmitMovEDXStack(vm_t *vm, int andit)
 {
 	if(!jlabel)
 	{
-		if(LastCommand == LAST_COMMAND_MOV_STACK_EAX)
+		if(LastCommand == LAST_COMMAND_TOS_IN_EAX)
+		{
+			EmitString("89 C2"); // mov edx, eax
+		}
+		else if(LastCommand == LAST_COMMAND_MOV_STACK_EAX)
 		{	// mov dword ptr [edi + ebx * 4], eax
 			compiledOfs -= 3;
 			vm->instructionPointers[instruction - 1] = compiledOfs;
@@ -343,7 +409,7 @@ void EmitMovEDXStack(vm_t *vm, int andit)
 		{
 			EmitString("8B D0");	// mov edx, eax
 		}
-		else if(pop1 == OP_CONST && buf[compiledOfs-7] == 0xC7 && buf[compiledOfs-6] == 0x07 && buf[compiledOfs - 5] == 0x9F)
+		else if(pop1 == OP_CONST && IsLastStackConstStore())
 		{	// mov dword ptr [edi + ebx * 4], 0x12345678
 			compiledOfs -= 7;
 			vm->instructionPointers[instruction - 1] = compiledOfs;
@@ -354,14 +420,22 @@ void EmitMovEDXStack(vm_t *vm, int andit)
 			else
 				Emit4(lastConst);
 
+			if (LastCommand != LAST_COMMAND_TOS_IN_EAX)
+				LastCommand = LAST_COMMAND_NONE;
+
 			return;
 		}
 		else
+		{
+			FlushTOS(vm);
 			EmitString("8B 14 9F");	// mov edx, dword ptr [edi + ebx * 4]
-
+		}
 	}
 	else
+	{
+		FlushTOS(vm);
 		EmitString("8B 14 9F");		// mov edx, dword ptr [edi + ebx * 4]
+	}
 
 	if(andit)
 		MASK_REG("E2", andit);		// and edx, 0x12345678
@@ -465,7 +539,7 @@ Relative call to vm->codeBase + callOfs
 =================
 */
 
-void EmitCallRel(vm_t *vm, int callOfs)
+static void EmitCallRel(vm_t *vm, int callOfs)
 {
 	EmitString("E8");			// call 0x12345678
 	Emit4(callOfs - compiledOfs - 4);
@@ -478,7 +552,7 @@ Call to DoSyscall()
 =================
 */
 
-int EmitCallDoSyscall(vm_t *vm)
+static int EmitCallDoSyscall(vm_t *vm)
 {
 	// save frame pointer
 	EmitString("55");					// push ebp
@@ -569,7 +643,7 @@ VM OP_CALL procedure for call destinations obtained at runtime
 =================
 */
 
-int EmitCallProcedure(vm_t *vm, int sysCallOfs)
+static int EmitCallProcedure(vm_t *vm, int sysCallOfs)
 {
 	int jmpSystemCall, jmpBadAddr;
 	int retval;
@@ -632,8 +706,9 @@ Jump to constant instruction number
 =================
 */
 
-void EmitJumpIns(vm_t *vm, const char *jmpop, int cdest)
+static void EmitJumpIns(vm_t *vm, const char *jmpop, int cdest)
 {
+	FlushTOS(vm);
 	JUSED(cdest);
 
 	EmitString(jmpop);	// j??? 0x12345678
@@ -652,8 +727,9 @@ Call to constant instruction number
 =================
 */
 
-void EmitCallIns(vm_t *vm, int cdest)
+static void EmitCallIns(vm_t *vm, int cdest)
 {
+	FlushTOS(vm);
 	JUSED(cdest);
 
 	EmitString("E8");	// call 0x12345678
@@ -672,8 +748,10 @@ Call to constant instruction number or syscall
 =================
 */
 
-void EmitCallConst(vm_t *vm, int cdest, int callProcOfsSyscall)
+static void EmitCallConst(vm_t *vm, int cdest, int callProcOfsSyscall)
 {
+	FlushTOS(vm);
+
 	if(cdest < 0)
 	{
 		EmitString("B8");	// mov eax, cdest
@@ -691,7 +769,7 @@ EmitBranchConditions
 Emits x86 branch condition as given in op
 =================
 */
-void EmitBranchConditions(vm_t *vm, int op)
+static void EmitBranchConditions(vm_t *vm, int op)
 {
 	switch(op)
 	{
@@ -737,7 +815,7 @@ instead of opStack operations, which will save expensive operations on memory
 =================
 */
 
-qboolean ConstOptimize(vm_t *vm, int callProcOfsSyscall)
+static qboolean ConstOptimize(vm_t *vm, int callProcOfsSyscall)
 {
 	int v;
 	int op1;
@@ -850,6 +928,13 @@ qboolean ConstOptimize(vm_t *vm, int callProcOfsSyscall)
 	case OP_ADD:
 		v = Constant4();
 
+		if(v == 0)
+		{	// add 0 is a no-op
+			pc++;
+			instruction += 1;
+			return qtrue;
+		}
+
 		EmitMovEAXStack(vm, 0);
 		if(iss8(v))
 		{
@@ -869,6 +954,13 @@ qboolean ConstOptimize(vm_t *vm, int callProcOfsSyscall)
 
 	case OP_SUB:
 		v = Constant4();
+
+		if(v == 0)
+		{	// sub 0 is a no-op
+			pc++;
+			instruction += 1;
+			return qtrue;
+		}
 
 		EmitMovEAXStack(vm, 0);
 		if(iss8(v))
@@ -890,6 +982,32 @@ qboolean ConstOptimize(vm_t *vm, int callProcOfsSyscall)
 	case OP_MULI:
 		v = Constant4();
 
+		if(v == 0)
+		{	// multiply by 0 always yields 0
+			EmitMovEAXStack(vm, 0);
+			EmitString("31 C0");			// xor eax, eax
+			EmitCommand(LAST_COMMAND_MOV_STACK_EAX);
+			pc++;
+			instruction += 1;
+			return qtrue;
+		}
+		if(v == 1)
+		{	// multiply by 1 is a no-op
+			pc++;
+			instruction += 1;
+			return qtrue;
+		}
+		if(IsPowerOf2((unsigned int)v))
+		{	// multiply by power-of-2: use shift left
+			EmitMovEAXStack(vm, 0);
+			EmitString("C1 E0");			// shl eax, log2(v)
+			Emit1(Log2((unsigned int)v));
+			EmitCommand(LAST_COMMAND_MOV_STACK_EAX);
+			pc++;
+			instruction += 1;
+			return qtrue;
+		}
+
 		EmitMovEAXStack(vm, 0);
 		if(iss8(v))
 		{
@@ -907,10 +1025,62 @@ qboolean ConstOptimize(vm_t *vm, int callProcOfsSyscall)
 
 		return qtrue;
 
+	case OP_MULU:
+		v = Constant4();
+
+		if(v == 0)
+		{	// multiply by 0 always yields 0
+			EmitMovEAXStack(vm, 0);
+			EmitString("31 C0");			// xor eax, eax
+			EmitCommand(LAST_COMMAND_MOV_STACK_EAX);
+			pc++;
+			instruction += 1;
+			return qtrue;
+		}
+		if(v == 1)
+		{	// multiply by 1 is a no-op
+			pc++;
+			instruction += 1;
+			return qtrue;
+		}
+		if(IsPowerOf2((unsigned int)v))
+		{	// multiply by power-of-2: use shift left
+			EmitMovEAXStack(vm, 0);
+			EmitString("C1 E0");			// shl eax, log2(v)
+			Emit1(Log2((unsigned int)v));
+			EmitCommand(LAST_COMMAND_MOV_STACK_EAX);
+			pc++;
+			instruction += 1;
+			return qtrue;
+		}
+
+		EmitMovEAXStack(vm, 0);
+		if(iss8(v))
+		{
+			EmitString("6B C0");			// imul eax, 0x7F
+			Emit1(v);
+		}
+		else
+		{
+			EmitString("69 C0");			// imul eax, 0x12345678
+			Emit4(v);
+		}
+		EmitCommand(LAST_COMMAND_MOV_STACK_EAX);
+		pc++;						// OP_MULU
+		instruction += 1;
+
+		return qtrue;
+
 	case OP_LSH:
 		v = NextConstant4();
 		if(v < 0 || v > 31)
 			break;
+		if(v == 0)
+		{	// shift by 0 is a no-op
+			pc += 5;
+			instruction += 1;
+			return qtrue;
+		}
 
 		EmitMovEAXStack(vm, 0);
 		EmitString("C1 E0");				// shl eax, 0x12
@@ -925,6 +1095,12 @@ qboolean ConstOptimize(vm_t *vm, int callProcOfsSyscall)
 		v = NextConstant4();
 		if(v < 0 || v > 31)
 			break;
+		if(v == 0)
+		{
+			pc += 5;
+			instruction += 1;
+			return qtrue;
+		}
 
 		EmitMovEAXStack(vm, 0);
 		EmitString("C1 F8");				// sar eax, 0x12
@@ -939,6 +1115,12 @@ qboolean ConstOptimize(vm_t *vm, int callProcOfsSyscall)
 		v = NextConstant4();
 		if(v < 0 || v > 31)
 			break;
+		if(v == 0)
+		{
+			pc += 5;
+			instruction += 1;
+			return qtrue;
+		}
 
 		EmitMovEAXStack(vm, 0);
 		EmitString("C1 E8");				// shr eax, 0x12
@@ -951,6 +1133,22 @@ qboolean ConstOptimize(vm_t *vm, int callProcOfsSyscall)
 
 	case OP_BAND:
 		v = Constant4();
+
+		if(v == 0)
+		{	// AND 0 always yields 0
+			EmitMovEAXStack(vm, 0);
+			EmitString("31 C0");			// xor eax, eax
+			EmitCommand(LAST_COMMAND_MOV_STACK_EAX);
+			pc += 1;
+			instruction += 1;
+			return qtrue;
+		}
+		if(v == -1)
+		{	// AND -1 (all bits set) is a no-op
+			pc += 1;
+			instruction += 1;
+			return qtrue;
+		}
 
 		EmitMovEAXStack(vm, 0);
 		if(iss8(v))
@@ -972,6 +1170,22 @@ qboolean ConstOptimize(vm_t *vm, int callProcOfsSyscall)
 	case OP_BOR:
 		v = Constant4();
 
+		if(v == 0)
+		{	// OR 0 is a no-op
+			pc += 1;
+			instruction += 1;
+			return qtrue;
+		}
+		if(v == -1)
+		{	// OR -1 always yields -1
+			EmitMovEAXStack(vm, 0);
+			EmitString("83 C8 FF");		// or eax, -1
+			EmitCommand(LAST_COMMAND_MOV_STACK_EAX);
+			pc += 1;
+			instruction += 1;
+			return qtrue;
+		}
+
 		EmitMovEAXStack(vm, 0);
 		if(iss8(v))
 		{
@@ -992,6 +1206,13 @@ qboolean ConstOptimize(vm_t *vm, int callProcOfsSyscall)
 	case OP_BXOR:
 		v = Constant4();
 
+		if(v == 0)
+		{	// XOR 0 is a no-op
+			pc += 1;
+			instruction += 1;
+			return qtrue;
+		}
+
 		EmitMovEAXStack(vm, 0);
 		if(iss8(v))
 		{
@@ -1008,6 +1229,71 @@ qboolean ConstOptimize(vm_t *vm, int callProcOfsSyscall)
 		pc += 1;					// OP_BXOR
 		instruction += 1;
 		return qtrue;
+
+	case OP_NEGI:
+		v = Constant4();
+		EmitPushStack(vm);
+		EmitString("B8");			// mov eax, -v
+		Emit4(-v);
+		EmitCommand(LAST_COMMAND_TOS_IN_EAX);
+
+		pc += 1;					// OP_NEGI
+		instruction += 1;
+		return qtrue;
+
+	case OP_BCOM:
+		v = Constant4();
+		EmitPushStack(vm);
+		EmitString("B8");			// mov eax, ~v
+		Emit4(~v);
+		EmitCommand(LAST_COMMAND_TOS_IN_EAX);
+
+		pc += 1;					// OP_BCOM
+		instruction += 1;
+		return qtrue;
+
+	case OP_DIVU:
+		v = Constant4();
+		if(v == 1)
+		{	// divide by 1 is a no-op
+			pc++;
+			instruction += 1;
+			return qtrue;
+		}
+		if(v > 0 && IsPowerOf2((unsigned int)v))
+		{	// unsigned divide by power-of-2: use shift right
+			EmitMovEAXStack(vm, 0);
+			EmitString("C1 E8");			// shr eax, log2(v)
+			Emit1(Log2((unsigned int)v));
+			EmitCommand(LAST_COMMAND_MOV_STACK_EAX);
+			pc++;
+			instruction += 1;
+			return qtrue;
+		}
+		break;
+
+	case OP_MODU:
+		v = Constant4();
+		if(v == 1)
+		{	// x % 1 always yields 0
+			EmitMovEAXStack(vm, 0);
+			EmitString("31 C0");			// xor eax, eax
+			EmitCommand(LAST_COMMAND_MOV_STACK_EAX);
+			pc++;
+			instruction += 1;
+			return qtrue;
+		}
+		if(v > 0 && IsPowerOf2((unsigned int)v))
+		{	// unsigned modulo by power-of-2: use AND mask
+			EmitMovEAXStack(vm, 0);
+			EmitString("25");			// and eax, (v - 1)
+			Emit4(v - 1);
+			EmitCommand(LAST_COMMAND_MOV_STACK_EAX);
+			pc++;
+			instruction += 1;
+			return qtrue;
+		}
+		break;
 
 	case OP_EQ:
 	case OP_NE:
@@ -1176,10 +1462,15 @@ void VM_Compile(vm_t *vm, vmHeader_t *header)
 				break;
 
 			EmitPushStack(vm);
-			EmitString("C7 04 9F");				// mov dword ptr [edi + ebx * 4], 0x12345678
+			EmitString("B8");				// mov eax, 0x12345678
 			lastConst = Constant4();
 
 			Emit4(lastConst);
+			EmitCommand(LAST_COMMAND_TOS_IN_EAX);
+
+			if(code[pc] == OP_JUMP)
+				FlushTOS(vm);
+
 			if(code[pc] == OP_JUMP)
 				JUSED(lastConst);
 
@@ -1190,7 +1481,7 @@ void VM_Compile(vm_t *vm, vmHeader_t *header)
 			oc0 = oc1;
 			oc1 = Constant4();
 			Emit4(oc1);
-			EmitCommand(LAST_COMMAND_MOV_STACK_EAX);	// mov dword ptr [edi + ebx * 4], eax
+			EmitCommand(LAST_COMMAND_TOS_IN_EAX);	// mov dword ptr [edi + ebx * 4], eax
 			break;
 		case OP_ARG:
 			EmitMovEAXStack(vm, 0);				// mov eax, dword ptr [edi + ebx * 4]
@@ -1207,6 +1498,7 @@ void VM_Compile(vm_t *vm, vmHeader_t *header)
 			EmitCommand(LAST_COMMAND_SUB_BL_1);		// sub bl, 1
 			break;
 		case OP_CALL:
+			FlushTOS(vm);
 			EmitCallRel(vm, callProcOfs);
 			break;
 		case OP_PUSH:
@@ -1216,6 +1508,7 @@ void VM_Compile(vm_t *vm, vmHeader_t *header)
 			EmitCommand(LAST_COMMAND_SUB_BL_1);		// sub bl, 1
 			break;
 		case OP_LEAVE:
+			FlushTOS(vm);
 			v = Constant4();
 			EmitString("81 C6");				// add	esi, 0x12345678
 			Emit4(v);
@@ -1369,7 +1662,7 @@ void VM_Compile(vm_t *vm, vmHeader_t *header)
 			EmitString("8B 80");				// mov eax, dword ptr [eax + 0x12345678]
 			Emit4((intptr_t) vm->dataBase);
 #endif
-			EmitCommand(LAST_COMMAND_MOV_STACK_EAX);	// mov dword ptr [edi + ebx * 4], eax
+			EmitCommand(LAST_COMMAND_TOS_IN_EAX);	// mov dword ptr [edi + ebx * 4], eax
 			break;
 		case OP_LOAD2:
 			EmitMovEAXStack(vm, vm->dataMask);
@@ -1379,7 +1672,7 @@ void VM_Compile(vm_t *vm, vmHeader_t *header)
 			EmitString("0F B7 80");				// movzx eax, word ptr [eax + 0x12345678]
 			Emit4((intptr_t) vm->dataBase);
 #endif
-			EmitCommand(LAST_COMMAND_MOV_STACK_EAX);	// mov dword ptr [edi + ebx * 4], eax
+			EmitCommand(LAST_COMMAND_TOS_IN_EAX);	// mov dword ptr [edi + ebx * 4], eax
 			break;
 		case OP_LOAD1:
 			EmitMovEAXStack(vm, vm->dataMask);
@@ -1389,7 +1682,7 @@ void VM_Compile(vm_t *vm, vmHeader_t *header)
 			EmitString("0F B6 80");				// movzx eax, byte ptr [eax + 0x12345678]
 			Emit4((intptr_t) vm->dataBase);
 #endif
-			EmitCommand(LAST_COMMAND_MOV_STACK_EAX);	// mov dword ptr [edi + ebx * 4], eax
+			EmitCommand(LAST_COMMAND_TOS_IN_EAX);	// mov dword ptr [edi + ebx * 4], eax
 			break;
 		case OP_STORE4:
 			EmitMovEAXStack(vm, 0);
@@ -1446,6 +1739,7 @@ void VM_Compile(vm_t *vm, vmHeader_t *header)
 			EmitBranchConditions(vm, op);
 		break;
 		case OP_EQF:
+			FlushTOS(vm);
 			EmitCommand(LAST_COMMAND_SUB_BL_2);		// sub bl, 2
 			EmitString("F3 0F 10 44 9F 04");		// movss xmm0, dword ptr 4[edi + ebx * 4]
 			EmitString("0F 2E 44 9F 08");			// ucomiss xmm0, dword ptr 8[edi + ebx * 4]
@@ -1453,6 +1747,7 @@ void VM_Compile(vm_t *vm, vmHeader_t *header)
 			EmitJumpIns(vm, "0F 84", Constant4());	// je 0x12345678
 			break;
 		case OP_NEF:
+			FlushTOS(vm);
 			EmitCommand(LAST_COMMAND_SUB_BL_2);		// sub bl, 2
 			EmitString("F3 0F 10 44 9F 04");		// movss xmm0, dword ptr 4[edi + ebx * 4]
 			EmitString("0F 2E 44 9F 08");			// ucomiss xmm0, dword ptr 8[edi + ebx * 4]
@@ -1463,24 +1758,28 @@ void VM_Compile(vm_t *vm, vmHeader_t *header)
 			}
 			break;
 		case OP_LTF:
+			FlushTOS(vm);
 			EmitCommand(LAST_COMMAND_SUB_BL_2);		// sub bl, 2
 			EmitString("F3 0F 10 44 9F 08");		// movss xmm0, dword ptr 8[edi + ebx * 4]
 			EmitString("0F 2E 44 9F 04");			// ucomiss xmm0, dword ptr 4[edi + ebx * 4]
 			EmitJumpIns(vm, "0F 87", Constant4());	// ja 0x12345678
 			break;
 		case OP_LEF:
+			FlushTOS(vm);
 			EmitCommand(LAST_COMMAND_SUB_BL_2);		// sub bl, 2
 			EmitString("F3 0F 10 44 9F 08");		// movss xmm0, dword ptr 8[edi + ebx * 4]
 			EmitString("0F 2E 44 9F 04");			// ucomiss xmm0, dword ptr 4[edi + ebx * 4]
 			EmitJumpIns(vm, "0F 83", Constant4());	// jae 0x12345678
 			break;
 		case OP_GTF:
+			FlushTOS(vm);
 			EmitCommand(LAST_COMMAND_SUB_BL_2);		// sub bl, 2
 			EmitString("F3 0F 10 44 9F 04");		// movss xmm0, dword ptr 4[edi + ebx * 4]
 			EmitString("0F 2E 44 9F 08");			// ucomiss xmm0, dword ptr 8[edi + ebx * 4]
 			EmitJumpIns(vm, "0F 87", Constant4());	// ja 0x12345678
 			break;
 		case OP_GEF:
+			FlushTOS(vm);
 			EmitCommand(LAST_COMMAND_SUB_BL_2);		// sub bl, 2
 			EmitString("F3 0F 10 44 9F 04");		// movss xmm0, dword ptr 4[edi + ebx * 4]
 			EmitString("0F 2E 44 9F 08");			// ucomiss xmm0, dword ptr 8[edi + ebx * 4]
@@ -1489,7 +1788,7 @@ void VM_Compile(vm_t *vm, vmHeader_t *header)
 		case OP_NEGI:
 			EmitMovEAXStack(vm, 0);
 			EmitString("F7 D8");				// neg eax
-			EmitCommand(LAST_COMMAND_MOV_STACK_EAX);
+			EmitCommand(LAST_COMMAND_TOS_IN_EAX);
 			break;
 		case OP_ADD:
 			EmitMovEAXStack(vm, 0);				// mov eax, dword ptr [edi + ebx * 4]
@@ -1502,6 +1801,7 @@ void VM_Compile(vm_t *vm, vmHeader_t *header)
 			EmitCommand(LAST_COMMAND_SUB_BL_1);		// sub bl, 1
 			break;
 		case OP_DIVI:
+			FlushTOS(vm);
 			EmitString("8B 44 9F FC");			// mov eax,dword ptr -4[edi + ebx * 4]
 			EmitString("99");				// cdq
 			EmitString("F7 3C 9F");				// idiv dword ptr [edi + ebx * 4]
@@ -1509,6 +1809,7 @@ void VM_Compile(vm_t *vm, vmHeader_t *header)
 			EmitCommand(LAST_COMMAND_SUB_BL_1);		// sub bl, 1
 			break;
 		case OP_DIVU:
+			FlushTOS(vm);
 			EmitString("8B 44 9F FC");			// mov eax,dword ptr -4[edi + ebx * 4]
 			EmitString("33 D2");				// xor edx, edx
 			EmitString("F7 34 9F");				// div dword ptr [edi + ebx * 4]
@@ -1516,6 +1817,7 @@ void VM_Compile(vm_t *vm, vmHeader_t *header)
 			EmitCommand(LAST_COMMAND_SUB_BL_1);		// sub bl, 1
 			break;
 		case OP_MODI:
+			FlushTOS(vm);
 			EmitString("8B 44 9F FC");			// mov eax,dword ptr -4[edi + ebx * 4]
 			EmitString("99" );				// cdq
 			EmitString("F7 3C 9F");				// idiv dword ptr [edi + ebx * 4]
@@ -1523,6 +1825,7 @@ void VM_Compile(vm_t *vm, vmHeader_t *header)
 			EmitCommand(LAST_COMMAND_SUB_BL_1);		// sub bl, 1
 			break;
 		case OP_MODU:
+			FlushTOS(vm);
 			EmitString("8B 44 9F FC");			// mov eax,dword ptr -4[edi + ebx * 4]
 			EmitString("33 D2");				// xor edx, edx
 			EmitString("F7 34 9F");				// div dword ptr [edi + ebx * 4]
@@ -1530,12 +1833,14 @@ void VM_Compile(vm_t *vm, vmHeader_t *header)
 			EmitCommand(LAST_COMMAND_SUB_BL_1);		// sub bl, 1
 			break;
 		case OP_MULI:
+			FlushTOS(vm);
 			EmitString("8B 44 9F FC");			// mov eax,dword ptr -4[edi + ebx * 4]
 			EmitString("F7 2C 9F");				// imul dword ptr [edi + ebx * 4]
 			EmitString("89 44 9F FC");			// mov dword ptr -4[edi + ebx * 4],eax
 			EmitCommand(LAST_COMMAND_SUB_BL_1);		// sub bl, 1
 			break;
 		case OP_MULU:
+			FlushTOS(vm);
 			EmitString("8B 44 9F FC");			// mov eax,dword ptr -4[edi + ebx * 4]
 			EmitString("F7 24 9F");				// mul dword ptr [edi + ebx * 4]
 			EmitString("89 44 9F FC");			// mov dword ptr -4[edi + ebx * 4],eax
@@ -1557,7 +1862,9 @@ void VM_Compile(vm_t *vm, vmHeader_t *header)
 			EmitCommand(LAST_COMMAND_SUB_BL_1);		// sub bl, 1
 			break;
 		case OP_BCOM:
-			EmitString("F7 14 9F");				// not dword ptr [edi + ebx * 4]
+			EmitMovEAXStack(vm, 0);
+			EmitString("F7 D0");				// not eax
+			EmitCommand(LAST_COMMAND_TOS_IN_EAX);
 			break;
 		case OP_LSH:
 			EmitMovECXStack(vm);
@@ -1575,52 +1882,61 @@ void VM_Compile(vm_t *vm, vmHeader_t *header)
 			EmitCommand(LAST_COMMAND_SUB_BL_1);		// sub bl, 1
 			break;
 		case OP_NEGF:
-			EmitString("0F 57 C0");				// xorps xmm0, xmm0
-			EmitString("F3 0F 5C 04 9F");		// subss xmm0, dword ptr [edi + ebx * 4]
-			EmitString("F3 0F 11 04 9F");		// storess dword ptr [edi + ebx * 4], xmm0
+			FlushTOS(vm);
+			EmitString("81 34 9F");				// xor dword ptr [edi + ebx * 4], 0x80000000
+			Emit4(0x80000000);				// flip sign bit in-place
 			break;
 		case OP_ADDF:
+			FlushTOS(vm);
 			EmitCommand(LAST_COMMAND_SUB_BL_1);		// sub bl, 1
 			EmitString("F3 0F 10 04 9F");		// movss xmm0, dword ptr [edi + ebx * 4]
 			EmitString("F3 0F 58 44 9F 04");	// addss xmm0, dword ptr 4[edi + ebx * 4]
 			EmitString("F3 0F 11 04 9F");		// movss dword ptr [edi + ebx * 4], xmm0
 			break;
 		case OP_SUBF:
+			FlushTOS(vm);
 			EmitCommand(LAST_COMMAND_SUB_BL_1);		// sub bl, 1
 			EmitString("F3 0F 10 04 9F");		// movss xmm0, dword ptr [edi + ebx * 4]
 			EmitString("F3 0F 5C 44 9F 04");	// subss xmm0, dword ptr 4[edi + ebx * 4]
 			EmitString("F3 0F 11 04 9F");		// movss dword ptr [edi + ebx * 4], xmm0
 			break;
 		case OP_DIVF:
+			FlushTOS(vm);
 			EmitCommand(LAST_COMMAND_SUB_BL_1);		// sub bl, 1
 			EmitString("F3 0F 10 04 9F");		// movss xmm0, dword ptr [edi + ebx * 4]
 			EmitString("F3 0F 5E 44 9F 04");	// divss xmm0, dword ptr 4[edi + ebx * 4]
 			EmitString("F3 0F 11 04 9F");		// movss dword ptr [edi + ebx * 4], xmm0
 			break;
 		case OP_MULF:
+			FlushTOS(vm);
 			EmitCommand(LAST_COMMAND_SUB_BL_1);		// sub bl, 1
 			EmitString("F3 0F 10 04 9F");		// movss xmm0, dword ptr [edi + ebx * 4]
 			EmitString("F3 0F 59 44 9F 04");	// mulss xmm0, dword ptr 4[edi + ebx * 4]
 			EmitString("F3 0F 11 04 9F");		// movss dword ptr [edi + ebx * 4], xmm0
 			break;
 		case OP_CVIF:
+			FlushTOS(vm);
 			EmitString("F3 0F 2A 04 9F");		// cvtsi2ss xmm0, dword ptr [edi + ebx * 4]
 			EmitString("F3 0F 11 04 9F");		// movss dword ptr [edi + ebx * 4], xmm0
 			break;
 		case OP_CVFI:
+			FlushTOS(vm);
 			EmitString("F3 0F 2C 04 9F");		// cvttss2si eax, dword ptr [edi + ebx *4]
 			EmitCommand(LAST_COMMAND_MOV_STACK_EAX);	// mov dword ptr [edi + ebx * 4], eax
 			break;
 		case OP_SEX8:
+			FlushTOS(vm);
 			EmitString("0F BE 04 9F");			// movsx eax, byte ptr [edi + ebx * 4]
 			EmitCommand(LAST_COMMAND_MOV_STACK_EAX);	// mov dword ptr [edi + ebx * 4], eax
 			break;
 		case OP_SEX16:
+			FlushTOS(vm);
 			EmitString("0F BF 04 9F");			// movsx eax, word ptr [edi + ebx * 4]
 			EmitCommand(LAST_COMMAND_MOV_STACK_EAX);	// mov dword ptr [edi + ebx * 4], eax
 			break;
 
 		case OP_BLOCK_COPY:
+			FlushTOS(vm);
 			EmitString("B8");				// mov eax, 0x12345678
 			Emit4(VM_BLOCK_COPY);
 			EmitString("B9");				// mov ecx, 0x12345678
@@ -1632,6 +1948,7 @@ void VM_Compile(vm_t *vm, vmHeader_t *header)
 			break;
 
 		case OP_JUMP:
+			FlushTOS(vm);
 			EmitCommand(LAST_COMMAND_SUB_BL_1);	// sub bl, 1
 			EmitString("8B 44 9F 04");		// mov eax, dword ptr 4[edi + ebx * 4]
 			EmitString("81 F8");			// cmp eax, vm->instructionCount
