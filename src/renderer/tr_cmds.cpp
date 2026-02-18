@@ -443,8 +443,8 @@ This must be called when drawing is done after RE_BeginFrame
 =============
 */
 void RE_EndFrame( void ) {
-	// Gamma correction is applied via push constants during rendering
-	// No additional post-processing needed
+	// Queue gamma correction as the final post-process before swap
+	RE_GammaCorrection();
 }
 
 /*

@@ -1289,7 +1289,6 @@ extern cvar_t	*r_windPointY;
 extern cvar_t	*r_mode;				// video mode
 extern cvar_t	*r_fullscreen;
 extern cvar_t	*r_gamma;
-extern cvar_t	*r_gammamethod;			// gamma correction
 extern cvar_t	*r_displayRefresh;		// optional display refresh option
 
 extern cvar_t	*r_ext_compressed_lightmaps;

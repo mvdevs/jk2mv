@@ -275,7 +275,7 @@ Client-Side
 
 :Name: r_ext_texture_filter_anisotropic
 :Values: "0", "2", "4", "8", "16"
-:Default: "16"
+:Default: "8"
 :Description:
    Anisotropic filtering level. Higher values increase image quality
    with little performance loss.
@@ -290,20 +290,6 @@ Client-Side
 
    | 0: Always use original low-res fonts
    | 1: Best quality (in fau's opinion)
-
-..
-
-:Name: r_gammamethod
-:Values: "0", "1", "2"
-:Default: "2"
-:Description:
-   Method for applying gamma correction. Keep in mind that using
-   non-functional gamma method disables not only ``r_gamma``, but also
-   ``r_overbrightbits``.
-
-   | 0: Pre-processing. Causes washed out colors. Use as last resort.
-   | 1: Hardware gamma. Works only in fullscreen.
-   | 2: Post-processing. Works in both fullscreen and windowed.
 
 ..
 

@@ -632,14 +632,38 @@ void VK_CreateSwapchain( void ) {
 	VkSurfaceFormatKHR *formats = (VkSurfaceFormatKHR *)ri.Malloc( sizeof(VkSurfaceFormatKHR) * formatCount, TAG_RENDERER, qfalse );
 	vkGetPhysicalDeviceSurfaceFormatsKHR( vk.physicalDevice, vk.surface, &formatCount, formats );
 
-	// Choose B8G8R8A8_SRGB if available, otherwise first available
+	// Choose B8G8R8A8_UNORM + SRGB_NONLINEAR if available.
+	// Avoid _SRGB pixel formats — the game applies gamma correction
+	// manually via a post-processing shader pass, so an SRGB swapchain
+	// format would cause double gamma application.
 	VkSurfaceFormatKHR chosenFormat = formats[0];
+	qboolean foundPreferred = qfalse;
+
+	// First pass: exact preferred match
 	for ( uint32_t i = 0; i < formatCount; i++ ) {
 		if ( formats[i].format == VK_FORMAT_B8G8R8A8_UNORM && formats[i].colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR ) {
 			chosenFormat = formats[i];
+			foundPreferred = qtrue;
 			break;
 		}
 	}
+
+	// Second pass: any UNORM format (avoid SRGB pixel formats)
+	if ( !foundPreferred ) {
+		for ( uint32_t i = 0; i < formatCount; i++ ) {
+			if ( formats[i].format == VK_FORMAT_B8G8R8A8_UNORM ||
+				 formats[i].format == VK_FORMAT_R8G8B8A8_UNORM ) {
+				chosenFormat = formats[i];
+				foundPreferred = qtrue;
+				break;
+			}
+		}
+	}
+
+	if ( !foundPreferred ) {
+		ri.Printf( PRINT_WARNING, "WARNING: No UNORM swapchain format available, gamma may be incorrect\n" );
+	}
+
 	ri.Free( formats );
 
 	vk.swapchainFormat = chosenFormat.format;
@@ -2013,7 +2037,9 @@ void VK_DrawGlowOverlay( void ) {
 // ============================================================
 // Gamma correction post-processing
 // Applies gamma/brightness/contrast as a fullscreen pass.
-// Uses a simple shader-based approach with push constants.
+// Uses an offscreen render target and a fullscreen gamma.frag post-process pass.
+// All scene rendering is redirected to the offscreen image, then gamma/brightness/contrast
+// are applied when copying to the swapchain.
 // ============================================================
 void VK_CreateGammaResources( void ) {
 	if ( !vk.gammaVertShader || !vk.gammaFragShader ) {
@@ -2021,117 +2047,326 @@ void VK_CreateGammaResources( void ) {
 		return;
 	}
 
-	// Create gamma pipeline (fullscreen triangle, no depth test)
-	VkPipelineShaderStageCreateInfo stages[2] = {};
-	stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-	stages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
-	stages[0].module = vk.gammaVertShader;
-	stages[0].pName = "main";
-	stages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-	stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-	stages[1].module = vk.gammaFragShader;
-	stages[1].pName = "main";
+	uint32_t width = vk.swapchainExtent.width;
+	uint32_t height = vk.swapchainExtent.height;
 
-	VkPipelineVertexInputStateCreateInfo vertexInput = {};
-	vertexInput.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+	// ---- Offscreen scene image ----
+	VK_CreateRenderTargetImage( &vk.gamma.sceneImage, &vk.gamma.sceneImageMemory, &vk.gamma.sceneImageView,
+		width, height, vk.swapchainFormat,
+		VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT );
+	vk.gamma.sceneDescriptorSet = VK_AllocateImageDescriptor( vk.gamma.sceneImageView, vk.samplerNoMipClamp );
 
-	VkPipelineInputAssemblyStateCreateInfo inputAssembly = {};
-	inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-	inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+	// ---- Scene render pass (clear) ----
+	// Same attachment format as vk.renderPass (pipeline-compatible) but finalLayout = SHADER_READ_ONLY
+	{
+		VkAttachmentDescription colorAtt = {};
+		colorAtt.format = vk.swapchainFormat;
+		colorAtt.samples = VK_SAMPLE_COUNT_1_BIT;
+		colorAtt.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		colorAtt.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		colorAtt.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		colorAtt.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		colorAtt.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		colorAtt.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-	VkPipelineViewportStateCreateInfo viewportState = {};
-	viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-	viewportState.viewportCount = 1;
-	viewportState.scissorCount = 1;
+		VkAttachmentDescription depthAtt = {};
+		depthAtt.format = vk.depthFormat;
+		depthAtt.samples = VK_SAMPLE_COUNT_1_BIT;
+		depthAtt.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		depthAtt.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		depthAtt.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		depthAtt.stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
+		depthAtt.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		depthAtt.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
-	VkPipelineRasterizationStateCreateInfo rasterization = {};
-	rasterization.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-	rasterization.polygonMode = VK_POLYGON_MODE_FILL;
-	rasterization.cullMode = VK_CULL_MODE_NONE;
-	rasterization.frontFace = VK_FRONT_FACE_CLOCKWISE;
-	rasterization.lineWidth = 1.0f;
+		VkAttachmentReference colorRef = { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
+		VkAttachmentReference depthRef = { 1, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL };
 
-	VkPipelineMultisampleStateCreateInfo multisample = {};
-	multisample.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-	multisample.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+		VkSubpassDescription subpass = {};
+		subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+		subpass.colorAttachmentCount = 1;
+		subpass.pColorAttachments = &colorRef;
+		subpass.pDepthStencilAttachment = &depthRef;
 
-	VkPipelineColorBlendAttachmentState blendAttachment = {};
-	blendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
-		VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-	blendAttachment.blendEnable = VK_FALSE;
+		VkSubpassDependency dep = {};
+		dep.srcSubpass = VK_SUBPASS_EXTERNAL;
+		dep.dstSubpass = 0;
+		dep.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+		dep.srcAccessMask = 0;
+		dep.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+		dep.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 
-	VkPipelineColorBlendStateCreateInfo colorBlend = {};
-	colorBlend.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-	colorBlend.attachmentCount = 1;
-	colorBlend.pAttachments = &blendAttachment;
+		VkAttachmentDescription atts[] = { colorAtt, depthAtt };
+		VkRenderPassCreateInfo rpInfo = {};
+		rpInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+		rpInfo.attachmentCount = 2;
+		rpInfo.pAttachments = atts;
+		rpInfo.subpassCount = 1;
+		rpInfo.pSubpasses = &subpass;
+		rpInfo.dependencyCount = 1;
+		rpInfo.pDependencies = &dep;
 
-	VkPipelineDepthStencilStateCreateInfo depthStencil = {};
-	depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-	depthStencil.depthTestEnable = VK_FALSE;
-	depthStencil.depthWriteEnable = VK_FALSE;
+		vkCreateRenderPass( vk.device, &rpInfo, NULL, &vk.gamma.sceneRenderPass );
 
-	VkDynamicState dynamicStates[] = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
-	VkPipelineDynamicStateCreateInfo dynamicState = {};
-	dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-	dynamicState.dynamicStateCount = 2;
-	dynamicState.pDynamicStates = dynamicStates;
+		// Load variant (resume after glow without clearing)
+		colorAtt.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+		colorAtt.initialLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		depthAtt.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+		depthAtt.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+		depthAtt.initialLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+		atts[0] = colorAtt;
+		atts[1] = depthAtt;
 
-	VkGraphicsPipelineCreateInfo pipelineInfo = {};
-	pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-	pipelineInfo.stageCount = 2;
-	pipelineInfo.pStages = stages;
-	pipelineInfo.pVertexInputState = &vertexInput;
-	pipelineInfo.pInputAssemblyState = &inputAssembly;
-	pipelineInfo.pViewportState = &viewportState;
-	pipelineInfo.pRasterizationState = &rasterization;
-	pipelineInfo.pMultisampleState = &multisample;
-	pipelineInfo.pDepthStencilState = &depthStencil;
-	pipelineInfo.pColorBlendState = &colorBlend;
-	pipelineInfo.pDynamicState = &dynamicState;
-	pipelineInfo.layout = vk.pipelineLayout;
-	pipelineInfo.renderPass = vk.renderPass;
-	pipelineInfo.subpass = 0;
+		vkCreateRenderPass( vk.device, &rpInfo, NULL, &vk.gamma.sceneRenderPassLoad );
+	}
 
-	vkCreateGraphicsPipelines( vk.device, vk.pipelineCache, 1, &pipelineInfo, NULL, &vk.gamma.gammaPipeline );
+	// ---- Scene framebuffer (offscreen color + shared depth) ----
+	{
+		VkImageView atts[] = { vk.gamma.sceneImageView, vk.depthImageView };
+		VkFramebufferCreateInfo fbInfo = {};
+		fbInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+		fbInfo.renderPass = vk.gamma.sceneRenderPass;
+		fbInfo.attachmentCount = 2;
+		fbInfo.pAttachments = atts;
+		fbInfo.width = width;
+		fbInfo.height = height;
+		fbInfo.layers = 1;
+		vkCreateFramebuffer( vk.device, &fbInfo, NULL, &vk.gamma.sceneFramebuffer );
+	}
 
-	ri.Printf( PRINT_ALL, "Gamma correction resources created\n" );
+	// ---- Gamma render pass (color only, writes to swapchain) ----
+	{
+		VkAttachmentDescription colorAtt = {};
+		colorAtt.format = vk.swapchainFormat;
+		colorAtt.samples = VK_SAMPLE_COUNT_1_BIT;
+		colorAtt.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE; // fullscreen overwrite
+		colorAtt.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		colorAtt.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		colorAtt.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		colorAtt.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		colorAtt.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+		VkAttachmentReference colorRef = { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
+
+		VkSubpassDescription subpass = {};
+		subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+		subpass.colorAttachmentCount = 1;
+		subpass.pColorAttachments = &colorRef;
+
+		VkSubpassDependency dep = {};
+		dep.srcSubpass = VK_SUBPASS_EXTERNAL;
+		dep.dstSubpass = 0;
+		dep.srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+		dep.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+		dep.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		dep.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+		VkRenderPassCreateInfo rpInfo = {};
+		rpInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+		rpInfo.attachmentCount = 1;
+		rpInfo.pAttachments = &colorAtt;
+		rpInfo.subpassCount = 1;
+		rpInfo.pSubpasses = &subpass;
+		rpInfo.dependencyCount = 1;
+		rpInfo.pDependencies = &dep;
+
+		vkCreateRenderPass( vk.device, &rpInfo, NULL, &vk.gamma.gammaRenderPass );
+	}
+
+	// ---- Per-swapchain-image gamma framebuffers ----
+	for ( uint32_t i = 0; i < vk.swapchainImageCount; i++ ) {
+		VkFramebufferCreateInfo fbInfo = {};
+		fbInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+		fbInfo.renderPass = vk.gamma.gammaRenderPass;
+		fbInfo.attachmentCount = 1;
+		fbInfo.pAttachments = &vk.swapchainImageViews[i];
+		fbInfo.width = width;
+		fbInfo.height = height;
+		fbInfo.layers = 1;
+		vkCreateFramebuffer( vk.device, &fbInfo, NULL, &vk.gamma.gammaFramebuffers[i] );
+	}
+
+	// ---- Gamma pipeline layout (16-byte push constants, 1 descriptor set) ----
+	{
+		VkPushConstantRange pcRange = {};
+		pcRange.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+		pcRange.offset = 0;
+		pcRange.size = 16; // GammaPC: invGamma, brightness, contrast, pad
+
+		VkPipelineLayoutCreateInfo layoutInfo = {};
+		layoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+		layoutInfo.setLayoutCount = 1;
+		layoutInfo.pSetLayouts = &vk.descriptorSetLayout; // reuse existing sampler layout
+		layoutInfo.pushConstantRangeCount = 1;
+		layoutInfo.pPushConstantRanges = &pcRange;
+
+		vkCreatePipelineLayout( vk.device, &layoutInfo, NULL, &vk.gamma.gammaPipelineLayout );
+	}
+
+	// ---- Gamma pipeline (fullscreen triangle, no depth test) ----
+	{
+		VkPipelineShaderStageCreateInfo stages[2] = {};
+		stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+		stages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
+		stages[0].module = vk.gammaVertShader;
+		stages[0].pName = "main";
+		stages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+		stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+		stages[1].module = vk.gammaFragShader;
+		stages[1].pName = "main";
+
+		VkPipelineVertexInputStateCreateInfo vertexInput = {};
+		vertexInput.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+
+		VkPipelineInputAssemblyStateCreateInfo inputAssembly = {};
+		inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+		inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+
+		VkPipelineViewportStateCreateInfo viewportState = {};
+		viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+		viewportState.viewportCount = 1;
+		viewportState.scissorCount = 1;
+
+		VkPipelineRasterizationStateCreateInfo rasterization = {};
+		rasterization.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+		rasterization.polygonMode = VK_POLYGON_MODE_FILL;
+		rasterization.cullMode = VK_CULL_MODE_NONE;
+		rasterization.frontFace = VK_FRONT_FACE_CLOCKWISE;
+		rasterization.lineWidth = 1.0f;
+
+		VkPipelineMultisampleStateCreateInfo multisample = {};
+		multisample.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+		multisample.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+
+		VkPipelineColorBlendAttachmentState blendAttachment = {};
+		blendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
+			VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+		blendAttachment.blendEnable = VK_FALSE;
+
+		VkPipelineColorBlendStateCreateInfo colorBlend = {};
+		colorBlend.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+		colorBlend.attachmentCount = 1;
+		colorBlend.pAttachments = &blendAttachment;
+
+		VkPipelineDepthStencilStateCreateInfo depthStencil = {};
+		depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+		depthStencil.depthTestEnable = VK_FALSE;
+		depthStencil.depthWriteEnable = VK_FALSE;
+
+		VkDynamicState dynamicStates[] = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
+		VkPipelineDynamicStateCreateInfo dynamicState = {};
+		dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+		dynamicState.dynamicStateCount = 2;
+		dynamicState.pDynamicStates = dynamicStates;
+
+		VkGraphicsPipelineCreateInfo pipelineInfo = {};
+		pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+		pipelineInfo.stageCount = 2;
+		pipelineInfo.pStages = stages;
+		pipelineInfo.pVertexInputState = &vertexInput;
+		pipelineInfo.pInputAssemblyState = &inputAssembly;
+		pipelineInfo.pViewportState = &viewportState;
+		pipelineInfo.pRasterizationState = &rasterization;
+		pipelineInfo.pMultisampleState = &multisample;
+		pipelineInfo.pDepthStencilState = &depthStencil;
+		pipelineInfo.pColorBlendState = &colorBlend;
+		pipelineInfo.pDynamicState = &dynamicState;
+		pipelineInfo.layout = vk.gamma.gammaPipelineLayout;
+		pipelineInfo.renderPass = vk.gamma.gammaRenderPass;
+		pipelineInfo.subpass = 0;
+
+		vkCreateGraphicsPipelines( vk.device, vk.pipelineCache, 1, &pipelineInfo, NULL, &vk.gamma.gammaPipeline );
+	}
+
+	vk.gamma.enabled = qtrue;
+	ri.Printf( PRINT_ALL, "Gamma correction resources created (offscreen %dx%d)\n", width, height );
 }
 
 void VK_DestroyGammaResources( void ) {
 	if ( !vk.device ) return;
 	vkDeviceWaitIdle( vk.device );
 
-	if ( vk.gamma.lutDescriptorSet ) vkFreeDescriptorSets( vk.device, vk.descriptorPool, 1, &vk.gamma.lutDescriptorSet );
-
 	if ( vk.gamma.gammaPipeline ) vkDestroyPipeline( vk.device, vk.gamma.gammaPipeline, NULL );
-	if ( vk.gamma.lutImageView ) vkDestroyImageView( vk.device, vk.gamma.lutImageView, NULL );
-	if ( vk.gamma.lutImage ) vkDestroyImage( vk.device, vk.gamma.lutImage, NULL );
-	if ( vk.gamma.lutImageMemory ) vkFreeMemory( vk.device, vk.gamma.lutImageMemory, NULL );
+	if ( vk.gamma.gammaPipelineLayout ) vkDestroyPipelineLayout( vk.device, vk.gamma.gammaPipelineLayout, NULL );
+
+	for ( uint32_t i = 0; i < vk.swapchainImageCount; i++ ) {
+		if ( vk.gamma.gammaFramebuffers[i] ) vkDestroyFramebuffer( vk.device, vk.gamma.gammaFramebuffers[i], NULL );
+	}
+	if ( vk.gamma.gammaRenderPass ) vkDestroyRenderPass( vk.device, vk.gamma.gammaRenderPass, NULL );
+
+	if ( vk.gamma.sceneFramebuffer ) vkDestroyFramebuffer( vk.device, vk.gamma.sceneFramebuffer, NULL );
+	if ( vk.gamma.sceneRenderPassLoad ) vkDestroyRenderPass( vk.device, vk.gamma.sceneRenderPassLoad, NULL );
+	if ( vk.gamma.sceneRenderPass ) vkDestroyRenderPass( vk.device, vk.gamma.sceneRenderPass, NULL );
+
+	if ( vk.gamma.sceneDescriptorSet ) vkFreeDescriptorSets( vk.device, vk.descriptorPool, 1, &vk.gamma.sceneDescriptorSet );
+	if ( vk.gamma.sceneImageView ) vkDestroyImageView( vk.device, vk.gamma.sceneImageView, NULL );
+	if ( vk.gamma.sceneImage ) vkDestroyImage( vk.device, vk.gamma.sceneImage, NULL );
+	if ( vk.gamma.sceneImageMemory ) vkFreeMemory( vk.device, vk.gamma.sceneImageMemory, NULL );
+
 	Com_Memset( &vk.gamma, 0, sizeof(vk.gamma) );
 }
 
 void VK_ApplyGammaCorrection( void ) {
-	if ( !vk.frameStarted ) return;
-	
-	extern cvar_t *r_gamma;
+	if ( !vk.gamma.enabled || !vk.frameStarted ) return;
 
-	// Ensure gamma value is in valid range
-	float gammaValue = r_gamma->value;
-	if ( gammaValue < 0.5f ) gammaValue = 0.5f;
-	if ( gammaValue > 3.0f ) gammaValue = 3.0f;
+	vkFrame_t *frame = &vk.frames[vk.currentFrame];
+	VkCommandBuffer cmd = frame->commandBuffer;
 
-	// Compute inverse gamma for shader (shader will do pow(color, invGamma))
-	float invGamma = 1.0f / gammaValue;
+	// End the scene render pass — transitions offscreen image to SHADER_READ_ONLY_OPTIMAL
+	VK_EndRenderPass();
 
-	// Apply gamma correction via shader by pushing gamma as a constant
-	// The main shaders will apply this to their final output
-	VkCommandBuffer cmd = vk.frames[vk.currentFrame].commandBuffer;
+	// Begin gamma render pass on swapchain framebuffer
+	VkRenderPassBeginInfo rpBegin = {};
+	rpBegin.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+	rpBegin.renderPass = vk.gamma.gammaRenderPass;
+	rpBegin.framebuffer = vk.gamma.gammaFramebuffers[vk.currentSwapchainImage];
+	rpBegin.renderArea.offset = { 0, 0 };
+	rpBegin.renderArea.extent = vk.swapchainExtent;
+	rpBegin.clearValueCount = 0;
+	rpBegin.pClearValues = NULL;
 
-	// Push invGamma value for shaders to use 
-	// Offset is 100 bytes into push constants (after mvp, color, texEnvMode, alphaTestFunc, alphaTestValue, depthRange)
-	vkCmdPushConstants( cmd, vk.pipelineLayout, 
-		VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-		100, sizeof(float), &invGamma );
+	vkCmdBeginRenderPass( cmd, &rpBegin, VK_SUBPASS_CONTENTS_INLINE );
+
+	// Set viewport and scissor
+	VkViewport viewport = {};
+	viewport.x = 0.0f;
+	viewport.y = 0.0f;
+	viewport.width = (float)vk.swapchainExtent.width;
+	viewport.height = (float)vk.swapchainExtent.height;
+	viewport.minDepth = 0.0f;
+	viewport.maxDepth = 1.0f;
+	vkCmdSetViewport( cmd, 0, 1, &viewport );
+
+	VkRect2D scissor = {};
+	scissor.offset = { 0, 0 };
+	scissor.extent = vk.swapchainExtent;
+	vkCmdSetScissor( cmd, 0, 1, &scissor );
+
+	// Bind gamma pipeline
+	vkCmdBindPipeline( cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, vk.gamma.gammaPipeline );
+
+	// Bind offscreen scene image as texture in set 0
+	vkCmdBindDescriptorSets( cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, vk.gamma.gammaPipelineLayout,
+		0, 1, &vk.gamma.sceneDescriptorSet, 0, NULL );
+
+	// Push gamma constants: { invGamma, brightness, contrast, pad }
+	float gamma = r_gamma ? r_gamma->value : 1.0f;
+	if ( gamma < 0.5f ) gamma = 0.5f;
+	if ( gamma > 3.0f ) gamma = 3.0f;
+	float invGamma = 1.0f / gamma;
+	float brightness = 0.0f;
+	float contrast = 1.0f;
+	float gammaPC[4] = { invGamma, brightness, contrast, 0.0f };
+	vkCmdPushConstants( cmd, vk.gamma.gammaPipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 16, gammaPC );
+
+	// Draw fullscreen triangle
+	vkCmdDraw( cmd, 3, 1, 0, 0 );
+
+	// End gamma render pass — swapchain image transitions to PRESENT_SRC_KHR
+	vkCmdEndRenderPass( cmd );
+
+	// Scene render pass is no longer active
+	vk.renderPassActive = qfalse;
 }
 
 // ============================================================

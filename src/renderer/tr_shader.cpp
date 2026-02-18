@@ -3910,23 +3910,6 @@ static void CreateInternalShaders( void ) {
 	Q_strncpyz( shader.name, "<stencil shadow>", sizeof( shader.name ) );
 	shader.sort = SS_STENCIL_SHADOW;
 	tr.shadowShader = FinishShader();
-
-#ifndef DEDICATED
-	// Vulkan: glow shaders are compiled from GLSL/SPIR-V at init time
-	// No ARB program loading needed here
-#endif
-
-
-#ifndef DEDICATED
-	// gamma correction
-	if (r_gammamethod->integer == GAMMA_POSTPROCESSING) {
-		if (MV_GammaGenerateProgram()) {
-			ri.Printf(PRINT_WARNING, "WARNING: failed initializing gamma program... falling back to hardware gamma correction\n");
-			glConfig.deviceSupportsPostprocessingGamma = qfalse;
-			r_gammamethod->integer = GAMMA_HARDWARE; // temporary fallback to hardware gamma
-		}
-	}
-#endif
 }
 
 static void CreateExternalShaders( void ) {

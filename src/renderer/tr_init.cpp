@@ -249,8 +249,6 @@ static void InitVulkan(void) {
 		// Initialize capability flags (before VK_Init for early config)
 		R_InitCapabilities();
 
-		WIN_InitGammaMethod(&glConfig);
-
 		// Initialize Vulkan subsystem
 		VK_Init();
 
@@ -524,13 +522,7 @@ void GfxInfo_f( void )
 	ri.Printf( PRINT_ALL, "display scale: %d%%\n", (int)roundf(glConfig.displayScale * 100.0f));
 
 	// gamma correction
-	if (r_gammamethod->integer == GAMMA_POSTPROCESSING) {
-		ri.Printf(PRINT_ALL, "gamma method: postprocessing\n");
-	} else if (r_gammamethod->integer == GAMMA_HARDWARE) {
-		ri.Printf(PRINT_ALL, "gamma method: hardware\n");
-	} else {
-		ri.Printf(PRINT_ALL, "gamma method: none\n");
-	}
+	ri.Printf(PRINT_ALL, "gamma method: postprocessing\n");
 
 	// rendering primitives
 	{
@@ -600,7 +592,7 @@ void R_Register( void )
 	//
 
 	r_ext_compressed_lightmaps = ri.Cvar_Get("r_ext_compress_lightmaps", "0", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);
-	r_ext_texture_filter_anisotropic = ri.Cvar_Get("r_ext_texture_filter_anisotropic", "16", CVAR_ARCHIVE | CVAR_GLOBAL);
+	r_ext_texture_filter_anisotropic = ri.Cvar_Get("r_ext_texture_filter_anisotropic", "8", CVAR_ARCHIVE | CVAR_GLOBAL);
 
 	r_DynamicGlow = ri.Cvar_Get( "r_DynamicGlow", "1", CVAR_ARCHIVE | CVAR_GLOBAL );
 	r_DynamicGlowPasses = ri.Cvar_Get("r_DynamicGlowPasses", "3", CVAR_ARCHIVE | CVAR_GLOBAL);
@@ -621,7 +613,7 @@ void R_Register( void )
 	r_detailTextures = ri.Cvar_Get("r_detailtextures", "1", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);
 	r_texturebits = ri.Cvar_Get("r_texturebits", "0", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);
 	r_texturebitslm = ri.Cvar_Get("r_texturebitslm", "0", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);
-	r_overBrightBits = ri.Cvar_Get("r_overBrightBits", "1", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);
+	r_overBrightBits = ri.Cvar_Get("r_overBrightBits", "0", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);
 	r_intensity = ri.Cvar_Get("r_intensity", "1", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);
 
 	r_simpleMipMaps = ri.Cvar_Get("r_simpleMipMaps", "0", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);

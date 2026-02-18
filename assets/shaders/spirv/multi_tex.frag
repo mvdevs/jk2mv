@@ -51,7 +51,4 @@ void main() {
             if (outColor.a < 0.75) discard;
         }
     }
-    
-    // Apply gamma correction
-    outColor.rgb = pow(outColor.rgb, vec3(pc.gamma));
 }

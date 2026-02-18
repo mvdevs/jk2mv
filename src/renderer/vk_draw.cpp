@@ -135,8 +135,13 @@ void VK_BeginRenderPass( void ) {
 
 	VkRenderPassBeginInfo renderPassInfo = {};
 	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-	renderPassInfo.renderPass = vk.renderPass;
-	renderPassInfo.framebuffer = vk.framebuffers[vk.currentSwapchainImage];
+	if ( vk.gamma.enabled ) {
+		renderPassInfo.renderPass = vk.gamma.sceneRenderPass;
+		renderPassInfo.framebuffer = vk.gamma.sceneFramebuffer;
+	} else {
+		renderPassInfo.renderPass = vk.renderPass;
+		renderPassInfo.framebuffer = vk.framebuffers[vk.currentSwapchainImage];
+	}
 	renderPassInfo.renderArea.offset = { 0, 0 };
 	renderPassInfo.renderArea.extent = vk.swapchainExtent;
 	renderPassInfo.clearValueCount = 2;
@@ -177,8 +182,13 @@ void VK_BeginRenderPassLoad( void ) {
 
 	VkRenderPassBeginInfo renderPassInfo = {};
 	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-	renderPassInfo.renderPass = vk.renderPassLoad;
-	renderPassInfo.framebuffer = vk.framebuffers[vk.currentSwapchainImage];
+	if ( vk.gamma.enabled ) {
+		renderPassInfo.renderPass = vk.gamma.sceneRenderPassLoad;
+		renderPassInfo.framebuffer = vk.gamma.sceneFramebuffer;
+	} else {
+		renderPassInfo.renderPass = vk.renderPassLoad;
+		renderPassInfo.framebuffer = vk.framebuffers[vk.currentSwapchainImage];
+	}
 	renderPassInfo.renderArea.offset = { 0, 0 };
 	renderPassInfo.renderArea.extent = vk.swapchainExtent;
 	renderPassInfo.clearValueCount = 0;
@@ -223,6 +233,12 @@ void VK_EndFrame( void ) {
 	}
 
 	vkFrame_t *frame = &vk.frames[vk.currentFrame];
+
+	// If gamma is enabled but the gamma pass wasn't applied yet (scene render pass still active),
+	// force the gamma pass now to ensure the swapchain image is written and in PRESENT_SRC_KHR layout.
+	if ( vk.gamma.enabled && vk.renderPassActive ) {
+		VK_ApplyGammaCorrection();
+	}
 
 	VK_EndRenderPass();
 
@@ -366,12 +382,9 @@ void VK_Set2D( void ) {
 	pc.alphaTestValue = 0.0f;
 	pc.texEnvMode = 0; // modulate
 
-	// Set gamma correction value
-	extern cvar_t *r_gamma;
-	float gammaValue = r_gamma->value;
-	if ( gammaValue < 0.5f ) gammaValue = 0.5f;
-	if ( gammaValue > 3.0f ) gammaValue = 3.0f;
-	pc.gamma = 1.0f / gammaValue;  // compute inverse gamma for shader
+	// Gamma field kept at 1.0 for push constant ABI compatibility
+	// (gamma correction is no longer applied per-fragment)
+	pc.gamma = 1.0f;
 
 	VkCommandBuffer cmd = vk.frames[vk.currentFrame].commandBuffer;
 	vkCmdPushConstants( cmd, vk.pipelineLayout,

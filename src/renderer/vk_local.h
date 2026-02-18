@@ -293,11 +293,30 @@ typedef struct {
 
 // Gamma correction resources
 typedef struct {
-	VkImage				lutImage;
-	VkImageView			lutImageView;
-	VkDeviceMemory		lutImageMemory;
-	VkDescriptorSet		lutDescriptorSet;
+	// Offscreen scene image (main rendering draws here instead of swapchain)
+	VkImage				sceneImage;
+	VkImageView			sceneImageView;
+	VkDeviceMemory		sceneImageMemory;
+	VkDescriptorSet		sceneDescriptorSet;
+
+	// Scene render passes (same attachment format as vk.renderPass, but finalLayout = SHADER_READ_ONLY)
+	VkRenderPass		sceneRenderPass;		// clear variant
+	VkRenderPass		sceneRenderPassLoad;	// load variant (resume after glow)
+
+	// Single framebuffer for scene rendering (offscreen color + shared depth)
+	VkFramebuffer		sceneFramebuffer;
+
+	// Gamma-specific render pass (color only, writes to swapchain, finalLayout = PRESENT_SRC)
+	VkRenderPass		gammaRenderPass;
+
+	// Per-swapchain-image framebuffers for the gamma render pass (swapchain color only)
+	VkFramebuffer		gammaFramebuffers[VK_MAX_SWAPCHAIN_IMAGES];
+
+	// Gamma-specific pipeline layout (16-byte push constants, 1 descriptor set)
+	VkPipelineLayout	gammaPipelineLayout;
+
 	VkPipeline			gammaPipeline;
+	qboolean			enabled;		// true if all gamma resources created successfully
 } vkGammaResources_t;
 
 // The main Vulkan state structure

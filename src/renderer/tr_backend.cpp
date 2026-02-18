@@ -186,15 +186,13 @@ void RB_BeginDrawingView (void) {
 	// Start the render pass (lazily starts the frame if needed)
 	VK_BeginRenderPass();
 
-	// Set gamma for 3D rendering
-	extern cvar_t *r_gamma;
-	float gammaValue = r_gamma->value;
-	if ( gammaValue < 0.5f ) gammaValue = 0.5f;
-	if ( gammaValue > 3.0f ) gammaValue = 3.0f;
-	float invGamma = 1.0f / gammaValue;
-	VkCommandBuffer cmd = vk.frames[vk.currentFrame].commandBuffer;
-	vkCmdPushConstants( cmd, vk.pipelineLayout,
-		VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 100, sizeof(float), &invGamma );
+	// Push gamma=1.0 for push constant ABI compatibility (gamma no longer applied per-fragment)
+	{
+		float noGamma = 1.0f;
+		VkCommandBuffer cmd = vk.frames[vk.currentFrame].commandBuffer;
+		vkCmdPushConstants( cmd, vk.pipelineLayout,
+			VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 100, sizeof(float), &noGamma );
+	}
 
 	//
 	// set the modelview matrix for the viewer

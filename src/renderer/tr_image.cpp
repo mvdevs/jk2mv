@@ -2740,12 +2740,6 @@ R_InitImages
 ===============
 */
 void	R_InitImages( void ) {
-	// gamma render target
-	if (r_gammamethod->integer == GAMMA_POSTPROCESSING) {
-		// Vulkan: gamma correction is handled via the VK gamma pipeline
-		// with push constants (invGamma, brightness, contrast).
-		// No separate LUT texture is needed.
-	}
 
 	// build brightness translation tables
 	R_SetColorMappings();

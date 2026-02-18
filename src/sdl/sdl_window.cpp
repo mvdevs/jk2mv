@@ -44,7 +44,6 @@ static cvar_t	*r_depthbits;
 static cvar_t	*r_colorbits;
 static cvar_t	*r_ext_multisample;
 static cvar_t	*r_allowsoftwaregl;
-cvar_t			*r_gammamethod;
 
 static float GLimp_GetDisplayScale(int display);
 
@@ -841,7 +840,6 @@ window_t WIN_Init( const windowDesc_t *windowDesc, glconfig_t *glConfig )
 	r_colorbits			= Cvar_Get( "r_colorbits",			"0",		CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH );
 	r_ext_multisample	= Cvar_Get( "r_ext_multisample",	"16",		CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH );
 	r_allowsoftwaregl	= Cvar_Get( "r_allowsoftwaregl",	"0",		CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH );
-	r_gammamethod		= Cvar_Get( "r_gammamethod",		"2",		CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH );
 	Cvar_Get( "r_availableModes", "", CVAR_ROM );
 
 	// Create the window and set up the context
@@ -888,21 +886,6 @@ window_t WIN_Init( const windowDesc_t *windowDesc, glconfig_t *glConfig )
 	return window;
 }
 
-void WIN_InitGammaMethod(glconfig_t *glConfig) {
-	if (r_gammamethod->integer == GAMMA_POSTPROCESSING && !glConfig->deviceSupportsPostprocessingGamma) {
-		Com_Printf("postprocessing gamma correction not supported, falling back to hardware gamma...\n");
-		r_gammamethod->integer = GAMMA_HARDWARE;
-	}
-
-	if (r_gammamethod->integer == GAMMA_HARDWARE) {
-		glConfig->deviceSupportsGamma = (qboolean)(SDL_SetWindowBrightness(screen, 1.0f) >= 0);
-		if (!glConfig->deviceSupportsGamma) {
-			Com_Printf("hardware gamma correction not supported, proceeding without gamma correction...\n");
-			r_gammamethod->integer = GAMMA_NONE;
-		}
-	}
-}
-
 /*
 ===============
 GLimp_Shutdown
@@ -933,56 +916,8 @@ void GLimp_LogComment( char *comment )
 
 void WIN_SetGamma( glconfig_t *glConfig, byte red[256], byte green[256], byte blue[256] )
 {
-	Uint16 table[3][256];
-	int i, j;
-
-	if( r_gammamethod->integer != GAMMA_HARDWARE )
-		return;
-
-	for (i = 0; i < 256; i++)
-	{
-		table[0][i] = ( ( ( Uint16 ) red[i] ) << 8 ) | red[i];
-		table[1][i] = ( ( ( Uint16 ) green[i] ) << 8 ) | green[i];
-		table[2][i] = ( ( ( Uint16 ) blue[i] ) << 8 ) | blue[i];
-	}
-
-#if defined(_WIN32)
-	// Win2K and newer put this odd restriction on gamma ramps...
-	{
-		OSVERSIONINFO	vinfo;
-
-		vinfo.dwOSVersionInfoSize = sizeof( vinfo );
-		GetVersionEx( &vinfo );
-		if( vinfo.dwMajorVersion >= 5 && vinfo.dwPlatformId == VER_PLATFORM_WIN32_NT )
-		{
-			Com_DPrintf( "performing gamma clamp.\n" );
-			for( j = 0 ; j < 3 ; j++ )
-			{
-				for( i = 0 ; i < 128 ; i++ )
-				{
-                                        table[j][i] = MIN(table[j][i], (128 + i) << 8);
-				}
-
-                                table[j][127] = MIN(table[j][127], 254 << 8);
-			}
-		}
-	}
-#endif
-
-	// enforce constantly increasing
-	for (j = 0; j < 3; j++)
-	{
-		for (i = 1; i < 256; i++)
-		{
-			if (table[j][i] < table[j][i-1])
-				table[j][i] = table[j][i-1];
-		}
-	}
-
-	if ( SDL_SetWindowGammaRamp( screen, table[0], table[1], table[2] ) < 0 )
-	{
-		Com_DPrintf( "SDL_SetWindowGammaRamp() failed: %s\n", SDL_GetError() );
-	}
+	// Gamma correction is always handled via Vulkan post-processing shader.
+	// Hardware gamma ramps are no longer used.
 }
 
 void *WIN_GL_GetProcAddress( const char *proc )
