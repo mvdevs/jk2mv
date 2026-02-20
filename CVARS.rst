@@ -267,7 +267,7 @@ Client-Side
 
 :Name: r_ext_multisample
 :Values: "0", "2", "4", "8", "16"
-:Default: "16"
+:Default: "8"
 :Description:
    Multisample anti-aliasing. May not work on all machines.
 

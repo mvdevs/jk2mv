@@ -2,13 +2,8 @@
 
 layout(push_constant) uniform PushConstants {
     mat4 mvp;
-    vec4 color;
     float texEnvMode;
     float alphaTestFunc;
-    float alphaTestValue;
-    float depthNear;
-    float depthFar;
-    float gamma;
 } pc;
 
 layout(set = 0, binding = 0) uniform sampler2D tex0;

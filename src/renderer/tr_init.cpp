@@ -264,7 +264,7 @@ static void InitVulkan(void) {
 
 		// Set texture size limit from device, capped to fit in the staging buffer.
 		// VK_STAGING_BUFFER_SIZE bytes must hold width*height*4 (RGBA8), so
-		// max dimension = sqrt(VK_STAGING_BUFFER_SIZE / 4) = 2048 for 16 MB.
+		// max dimension = sqrt(VK_STAGING_BUFFER_SIZE / 4) = 4096 for 64 MB.
 		{
 			int deviceMax = vk.deviceProperties.limits.maxImageDimension2D;
 			int stagingMax = (int)sqrt( (double)VK_STAGING_BUFFER_SIZE / 4.0 );

@@ -21,13 +21,12 @@ typedef struct {
 	float	inverseVP[16];				// mat4  (64 bytes)
 	float	viewProjection[16];			// mat4  (64 bytes): for reprojecting hit pos to screen UV
 	float	cameraPosAndIntensity[4];	// vec4  (16 bytes): xyz=pos, w=intensity
-	float	maxRadius;					// float (4 bytes)
 	int		numSources;					// int   (4 bytes)
 	float	bias;						// float (4 bytes)
 	float	falloffExponent;				// float (4 bytes): distance falloff curve steepness
 	float	g2ReflectScale;				// float (4 bytes): reflection scale for Ghoul2 model surfaces
 	float	shadowIntensity;			// float (4 bytes): visibility when shadow ray is occluded
-} glowReflectPC_t;						// Total: 168 bytes
+} glowReflectPC_t;						// Total: 164 bytes
 
 // Glow source upload struct (must match GLSL GlowSource)
 typedef struct {
@@ -1239,7 +1238,6 @@ void VK_DispatchGlowReflect( void ) {
 	pc.cameraPosAndIntensity[1] = backEnd.viewParms.ori.origin[1];
 	pc.cameraPosAndIntensity[2] = backEnd.viewParms.ori.origin[2];
 	pc.cameraPosAndIntensity[3] = r_DynamicGlowReflectionIntensity->value;
-	pc.maxRadius = r_DynamicGlowReflectionRadius->value * 256.0f;  // unused by shader, kept for struct size
 	pc.numSources = numSources;
 	pc.bias = 4.0f;
 	pc.falloffExponent = r_DynamicGlowReflectionFalloff->value;
@@ -1745,11 +1743,10 @@ void VK_DrawGlowReflectOverlay( void ) {
 	vkCmdBindDescriptorSets( cmd, VK_PIPELINE_BIND_POINT_GRAPHICS,
 		vk.pipelineLayout, 0, 1, &vk.glowReflect.outputDescriptorSet, 0, NULL );
 
-	float compositePC[4] = {};
-	compositePC[3] = 1.0f;
+	float intensity = 1.0f;
 	vkCmdPushConstants( cmd, vk.pipelineLayout,
 		VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-		0, sizeof(compositePC), compositePC );
+		0, sizeof(intensity), &intensity );
 
 	vkCmdDraw( cmd, 3, 1, 0, 0 );
 

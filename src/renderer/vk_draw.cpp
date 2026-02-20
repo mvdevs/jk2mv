@@ -22,6 +22,8 @@ void VK_BeginFrame( void ) {
 		return;
 	}
 
+	vk.acquireSemaphoreConsumedThisFrame = qfalse;
+
 	if ( vk.deferredFreeCount > 0 ) {
 		vkDeviceWaitIdle( vk.device );
 		vkFreeDescriptorSets( vk.device, vk.descriptorPool, vk.deferredFreeCount, vk.deferredFreeSets );
@@ -258,9 +260,15 @@ void VK_EndFrame( void ) {
 
 	VkSubmitInfo submitInfo = {};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-	submitInfo.waitSemaphoreCount = 1;
-	submitInfo.pWaitSemaphores = waitSemaphores;
-	submitInfo.pWaitDstStageMask = waitStages;
+	if ( vk.acquireSemaphoreConsumedThisFrame ) {
+		submitInfo.waitSemaphoreCount = 0;
+		submitInfo.pWaitSemaphores = NULL;
+		submitInfo.pWaitDstStageMask = NULL;
+	} else {
+		submitInfo.waitSemaphoreCount = 1;
+		submitInfo.pWaitSemaphores = waitSemaphores;
+		submitInfo.pWaitDstStageMask = waitStages;
+	}
 	submitInfo.commandBufferCount = 1;
 	submitInfo.pCommandBuffers = &frame->commandBuffer;
 	submitInfo.signalSemaphoreCount = 1;
@@ -379,12 +387,8 @@ void VK_Set2D( void ) {
 	pc.mvp[15] = 1.0f;
 
 	// Alpha test and tex env mode defaults
-	pc.alphaTestValue = 0.0f;
-	pc.texEnvMode = 0; // modulate
-
-	// Gamma field kept at 1.0 for push constant ABI compatibility
-	// (gamma correction is no longer applied per-fragment)
-	pc.gamma = 1.0f;
+	pc.texEnvMode = 0.0f; // modulate
+	pc.alphaTestFunc = 0.0f;
 
 	VkCommandBuffer cmd = vk.frames[vk.currentFrame].commandBuffer;
 	vkCmdPushConstants( cmd, vk.pipelineLayout,
@@ -625,8 +629,8 @@ void VK_DrawIndexedWithNormals( int numVerts, const float *xyz, const float *nor
 // ============================================================
 // Write GPU params UBO and bind the descriptor set
 // ============================================================
-void VK_UpdateGPUParams( const gpuParams_t *params ) {
-	if ( !vk.frameStarted ) return;
+qboolean VK_UpdateGPUParams( const gpuParams_t *params ) {
+	if ( !vk.frameStarted ) return qfalse;
 
 	vkDynamicBuffers_t *dyn = &vk.dynBuffers[vk.currentFrame];
 
@@ -654,7 +658,7 @@ void VK_UpdateGPUParams( const gpuParams_t *params ) {
 	// (descriptor range covers full size even for non-skinned draws)
 	if ( dyn->uniformOffset + GPU_PARAMS_FULL_SIZE > VK_UNIFORM_BUFFER_SIZE ) {
 		ri.Printf( PRINT_WARNING, "VK_UpdateGPUParams: uniform buffer overflow\n" );
-		return;
+		return qfalse;
 	}
 
 	// Copy data to mapped uniform buffer (only write what's needed)
@@ -668,6 +672,7 @@ void VK_UpdateGPUParams( const gpuParams_t *params ) {
 
 	// Advance by aligned write size (not full size — non-skinned draws save space)
 	dyn->uniformOffset += (int)((writeSize + alignment - 1) & ~(alignment - 1));
+	return qtrue;
 }
 
 // ============================================================
@@ -765,8 +770,17 @@ void VK_Clear( unsigned int clearBits, float r, float g, float b, float a ) {
 // format: IMGFMT_BGR (3bpp) or IMGFMT_RGB (3bpp)
 // ============================================================
 void VK_ReadPixels( int x, int y, int width, int height, int format, byte *buffer ) {
+	if ( !vk.frameStarted ) {
+		return;
+	}
 	vkFrame_t *frame = &vk.frames[vk.currentFrame];
 	VkCommandBuffer cmd = frame->commandBuffer;
+
+	// If we render the scene offscreen (gamma enabled), ensure the swapchain image
+	// contains the final scene before we try to copy from it.
+	if ( vk.gamma.enabled ) {
+		VK_ApplyGammaCorrection();
+	}
 
 	VK_EndRenderPass();
 
@@ -793,19 +807,23 @@ void VK_ReadPixels( int x, int y, int width, int height, int format, byte *buffe
 		VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, NULL, 0, NULL, 1, &barrier );
 
 	// Copy to staging buffer
-	VkBufferImageCopy region = {};
-	region.bufferOffset = 0;
-	region.bufferRowLength = 0;
-	region.bufferImageHeight = 0;
-	region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-	region.imageSubresource.mipLevel = 0;
-	region.imageSubresource.baseArrayLayer = 0;
-	region.imageSubresource.layerCount = 1;
-	region.imageOffset = { x, y, 0 };
-	region.imageExtent = { (uint32_t)width, (uint32_t)height, 1 };
+	if ( (size_t)width * height * 4 > VK_STAGING_BUFFER_SIZE ) {
+		ri.Printf( PRINT_ALL, "VK_ReadPixels: image too large for staging buffer (%dx%d)\n", width, height );
+	} else {
+		VkBufferImageCopy region = {};
+		region.bufferOffset = 0;
+		region.bufferRowLength = 0;
+		region.bufferImageHeight = 0;
+		region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		region.imageSubresource.mipLevel = 0;
+		region.imageSubresource.baseArrayLayer = 0;
+		region.imageSubresource.layerCount = 1;
+		region.imageOffset = { x, y, 0 };
+		region.imageExtent = { (uint32_t)width, (uint32_t)height, 1 };
 
-	vkCmdCopyImageToBuffer( cmd, srcImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-		vk.staging.buffer, 1, &region );
+		vkCmdCopyImageToBuffer( cmd, srcImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+			vk.staging.buffer, 1, &region );
+	}
 
 	// Transition swapchain image back to PRESENT_SRC_KHR so it can be presented
 	barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
@@ -821,38 +839,67 @@ void VK_ReadPixels( int x, int y, int width, int height, int format, byte *buffe
 
 	VkSubmitInfo submitInfo = {};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+	// IMPORTANT: vkAcquireNextImageKHR signals imageAvailableSemaphore. If we submit
+	// a mid-frame command buffer (screenshots), we must wait on it here; and since
+	// binary semaphores are consumed by a wait, VK_EndFrame must not wait on it again.
+	VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+	if ( !vk.acquireSemaphoreConsumedThisFrame ) {
+		submitInfo.waitSemaphoreCount = 1;
+		submitInfo.pWaitSemaphores = &frame->imageAvailableSemaphore;
+		submitInfo.pWaitDstStageMask = &waitStage;
+		vk.acquireSemaphoreConsumedThisFrame = qtrue;
+	} else {
+		submitInfo.waitSemaphoreCount = 0;
+		submitInfo.pWaitSemaphores = NULL;
+		submitInfo.pWaitDstStageMask = NULL;
+	}
 	submitInfo.commandBufferCount = 1;
 	submitInfo.pCommandBuffers = &cmd;
 	vkQueueSubmit( vk.graphicsQueue, 1, &submitInfo, frame->fence );
-	vkWaitForFences( vk.device, 1, &frame->fence, VK_TRUE, UINT64_MAX );
+	// Ensure we wait for the fence to be signaled. Check return value just in case.
+	if ( vkWaitForFences( vk.device, 1, &frame->fence, VK_TRUE, UINT64_MAX ) != VK_SUCCESS ) {
+		ri.Printf( PRINT_WARNING, "VK_ReadPixels: vkWaitForFences failed\n" );
+	}
 
-	// Convert from B8G8R8A8 (4bpp) to the requested 3bpp format.
-	// Vulkan framebuffer is top-to-bottom, but callers expect bottom-to-top
-	// (matching OpenGL's glReadPixels convention), so flip rows vertically.
-	const byte *src = vk.staging.data;
-	int srcStride = width * 4;
-	int dstStride = width * 3;
+	// Copy data from staging buffer (uncached/WC memory) to temporary cached buffer FIRST.
+	// Reading byte-by-byte from uncached memory is extremely slow (can take seconds for 4K).
+	// memcpy is optimized for linear reads even from WC memory.
+	size_t dataSize = (size_t)width * height * 4;
+	byte *tempBuf = (byte *)ri.Hunk_AllocateTempMemory( dataSize );
+	
+	if ( tempBuf ) {
+		// Use a simple loop for safety or Memcpy if robust
+		Com_Memcpy( tempBuf, vk.staging.data, dataSize );
+		
+		const byte *src = tempBuf;
+		int srcStride = width * 4;
+		int dstStride = width * 3;
 
-	if ( format == 0x80E0 ) { // IMGFMT_BGR
-		for ( int row = 0; row < height; row++ ) {
-			const byte *srcRow = src + (height - 1 - row) * srcStride;
-			byte *dstRow = buffer + row * dstStride;
-			for ( int col = 0; col < width; col++ ) {
-				dstRow[col * 3 + 0] = srcRow[col * 4 + 0]; // B
-				dstRow[col * 3 + 1] = srcRow[col * 4 + 1]; // G
-				dstRow[col * 3 + 2] = srcRow[col * 4 + 2]; // R
+		if ( format == IMGFMT_BGR ) {
+			for ( int row = 0; row < height; row++ ) {
+				const byte *srcRow = src + (height - 1 - row) * srcStride;
+				byte *dstRow = buffer + row * dstStride;
+				for ( int col = 0; col < width; col++ ) {
+					dstRow[col * 3 + 0] = srcRow[col * 4 + 0]; // B
+					dstRow[col * 3 + 1] = srcRow[col * 4 + 1]; // G
+					dstRow[col * 3 + 2] = srcRow[col * 4 + 2]; // R
+				}
+			}
+		} else { // IMGFMT_RGB
+			for ( int row = 0; row < height; row++ ) {
+				const byte *srcRow = src + (height - 1 - row) * srcStride;
+				byte *dstRow = buffer + row * dstStride;
+				for ( int col = 0; col < width; col++ ) {
+					dstRow[col * 3 + 0] = srcRow[col * 4 + 2]; // R
+					dstRow[col * 3 + 1] = srcRow[col * 4 + 1]; // G
+					dstRow[col * 3 + 2] = srcRow[col * 4 + 0]; // B
+				}
 			}
 		}
-	} else { // IMGFMT_RGB
-		for ( int row = 0; row < height; row++ ) {
-			const byte *srcRow = src + (height - 1 - row) * srcStride;
-			byte *dstRow = buffer + row * dstStride;
-			for ( int col = 0; col < width; col++ ) {
-				dstRow[col * 3 + 0] = srcRow[col * 4 + 2]; // R
-				dstRow[col * 3 + 1] = srcRow[col * 4 + 1]; // G
-				dstRow[col * 3 + 2] = srcRow[col * 4 + 0]; // B
-			}
-		}
+		
+		ri.Hunk_FreeTempMemory( tempBuf );
+	} else {
+		ri.Printf( PRINT_WARNING, "VK_ReadPixels: failed to allocate temp buffer\n" );
 	}
 
 	// Re-begin the command buffer so remaining commands can proceed

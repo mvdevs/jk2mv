@@ -22,7 +22,6 @@ layout(push_constant) uniform PushConstants {
 	mat4 inverseVP;
 	mat4 viewProjection;
 	vec4 cameraPosAndIntensity;  // xyz = camera world pos, w = global intensity
-	float maxRadius;
 	int   numSources;
 	float bias;
 	float falloffExponent;       // controls distance attenuation curve steepness

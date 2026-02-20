@@ -329,11 +329,10 @@ void VK_BindPipeline( unsigned int stateBits, int cullType, qboolean multiTextur
 	struct {
 		float texEnvMode;
 		float alphaTestFunc;
-		float alphaTestValue;
-	} fragDefaults = { 0.0f, 0.0f, 0.0f };  // MODULATE, no alpha test
+	} fragDefaults = { 0.0f, 0.0f };  // MODULATE, no alpha test
 	vkCmdPushConstants( cmd, vk.pipelineLayout,
 		VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-		80, sizeof(fragDefaults), &fragDefaults );
+		64, sizeof(fragDefaults), &fragDefaults );
 
 	// If polygon offset is enabled, set the dynamic depth bias
 	if ( polygonOffset ) {

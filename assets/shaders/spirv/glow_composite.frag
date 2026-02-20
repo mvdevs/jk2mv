@@ -5,8 +5,6 @@
 // blending when compositing this on top of the main scene.
 
 layout(push_constant) uniform GlowPC {
-    vec2 texelOffset;   // unused in composite (shared layout with blur)
-    float softness;     // unused in composite
     float intensity;    // glow brightness multiplier (r_DynamicGlowIntensity)
 } pc;
 

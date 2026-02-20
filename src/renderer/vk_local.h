@@ -24,23 +24,14 @@ via GL calls is now managed through Vulkan objects.
 #define VK_VERTEX_BUFFER_SIZE		(8 * 1024 * 1024)
 #define VK_INDEX_BUFFER_SIZE		(2 * 1024 * 1024)
 #define VK_UNIFORM_BUFFER_SIZE		(4 * 1024 * 1024)
-#define VK_STAGING_BUFFER_SIZE		(16 * 1024 * 1024) // for texture uploads
+#define VK_STAGING_BUFFER_SIZE		(64 * 1024 * 1024) // for texture uploads and screenshots
 #define VK_MAX_IMAGE_SLOTS			4096
-
-// Push constant structure matching the fixed-function pipeline transforms
-typedef struct {
-	float mvp[16];			// model-view-projection matrix
-} vkUniformBlock_t;
 
 // Per-draw push constants
 typedef struct {
 	float mvp[16];
-	float color[4];			// global color modulation
 	float texEnvMode;		// 0=modulate, 1=replace, 2=decal, 3=add
 	float alphaTestFunc;	// 0=none, 1=GT0, 2=LT80, 3=GE80, 4=GEC0
-	float alphaTestValue;
-	float depthRange[2];	// near, far
-	float gamma;			// gamma correction value (1.0 = no correction)
 } vkPushConstants_t;
 
 // ============================================================
@@ -447,6 +438,10 @@ typedef struct {
 	// Set when VK_ReadPixels submits the CB mid-frame
 	qboolean			pixelsCapturedThisFrame;
 
+	// Set when a submission has already waited on the swapchain acquire semaphore
+	// for the current frame (VK_ReadPixels submits mid-frame and consumes it).
+	qboolean			acquireSemaphoreConsumedThisFrame;
+
 	// Deferred deletion of descriptor sets to avoid freeing while recording
 	VkDescriptorSet		deferredFreeSets[1024];
 	int					deferredFreeCount;
@@ -531,7 +526,7 @@ void	VK_DrawIndexed( int numVerts, const float *xyz, const float *texCoords0,
 						int numIndexes, const glIndex_t *indexes );void	VK_DrawIndexedWithNormals( int numVerts, const float *xyz, const float *normals,
 					const float *texCoords0, const float *texCoords1,
 					const byte *colors, int numIndexes, const glIndex_t *indexes );
-void	VK_UpdateGPUParams( const gpuParams_t *params );void	VK_DrawQuad( float x0, float y0, float x1, float y1,
+qboolean	VK_UpdateGPUParams( const gpuParams_t *params );void	VK_DrawQuad( float x0, float y0, float x1, float y1,
 					 float s0, float t0, float s1, float t1,
 					 const byte *color );
 void	VK_SetViewport( float x, float y, float width, float height, float minDepth, float maxDepth );
@@ -599,7 +594,7 @@ VkFormat VK_FindDepthFormat( void );
 VkCommandBuffer VK_BeginSingleTimeCommands( void );
 void	VK_EndSingleTimeCommands( VkCommandBuffer commandBuffer );
 void	VK_TransitionImageLayout( VkImage image, VkFormat format,
-								  VkImageLayout oldLayout, VkImageLayout newLayout, int mipLevels );
+								  VkImageLayout oldLayout, VkImageLayout newLayout, int mipLevels, VkCommandBuffer cmdBuffer = VK_NULL_HANDLE );
 void	VK_CopyBufferToImage( VkBuffer buffer, VkImage image, uint32_t width, uint32_t height );
 void	VK_GenerateMipmaps( VkImage image, VkFormat format, int texWidth, int texHeight, int mipLevels );
 

@@ -210,12 +210,11 @@ void RB_ShadowTessEnd( void ) {
 		struct {
 			float texEnvMode;
 			float alphaTestFunc;
-			float alphaTestValue;
-		} fragDefaults = { 0.0f, 0.0f, 0.0f };  // MODULATE, no alpha test
+		} fragDefaults = { 0.0f, 0.0f };  // MODULATE, no alpha test
 		VkCommandBuffer cmd2 = vk.frames[vk.currentFrame].commandBuffer;
 		vkCmdPushConstants( cmd2, vk.pipelineLayout,
 			VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-			80, sizeof(fragDefaults), &fragDefaults );
+			64, sizeof(fragDefaults), &fragDefaults );
 	}
 
 	// Vulkan: bind stencil increment pipeline (front faces, incr stencil on depth pass)
@@ -273,11 +272,10 @@ void RB_ShadowFinish( void ) {
 		struct {
 			float texEnvMode;
 			float alphaTestFunc;
-			float alphaTestValue;
-		} fragDefaults = { 0.0f, 0.0f, 0.0f };
+		} fragDefaults = { 0.0f, 0.0f };
 		vkCmdPushConstants( cmd, vk.pipelineLayout,
 			VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-			80, sizeof(fragDefaults), &fragDefaults );
+			64, sizeof(fragDefaults), &fragDefaults );
 	} else {
 		return; // no shadow finish pipeline available
 	}

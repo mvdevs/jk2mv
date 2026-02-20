@@ -2,13 +2,8 @@
 
 layout(push_constant) uniform PushConstants {
     mat4 mvp;
-    vec4 color;
     float texEnvMode;
     float alphaTestFunc;
-    float alphaTestValue;
-    float depthNear;
-    float depthFar;
-    float gamma;
 } pc;
 
 // GPU params UBO (set 2, dynamic uniform buffer) — same layout as vertex shader

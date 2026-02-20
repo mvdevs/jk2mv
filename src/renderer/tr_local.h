@@ -1607,6 +1607,9 @@ struct shaderCommands_s
 	int			gpuNumBones;		// number of bones in current model
 	float		gpuBoneMatrices[72 * 12];	// pre-extracted bone matrices (mat3x4 × 72)
 
+	// Non-skinned batches: whether xyz[].w and normal[].w have been initialized.
+	qboolean	wComponentsInitialized;
+
 	// Cached geometry base offsets (optimization: avoid re-uploading pos/normal/idx across stages)
 	struct {
 		qboolean	valid;			// qtrue after geometry base uploaded for this batch

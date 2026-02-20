@@ -13,7 +13,6 @@
 */
 
 shaderCommands_t	tess;
-static qboolean	setArraysOnce;
 
 color4ub_t	styleColors[MAX_LIGHT_STYLES];
 
@@ -42,7 +41,7 @@ static void GPU_SetupFogParams( void ) {
 	vec3_t	local;
 	float	eyeT;
 
-	if ( !tess.fogNum || !tr.world ) {
+	if ( !tess.fogNum || !tr.world || tess.fogNum < 0 || tess.fogNum >= tr.world->numfogs ) {
 		return;
 	}
 
@@ -154,16 +153,18 @@ static void R_DrawElements( int numIndexes, const glIndex_t *indexes ) {
 		}
 
 		// Push alphaTestFunc and texEnvMode at their respective offsets
-		// Layout: mvp(64) + color(16) + texEnvMode(4) + alphaTestFunc(4)
+		// Layout: mvp(64) + texEnvMode(4) + alphaTestFunc(4)
 		float fragConstants[2] = { texEnvMode, alphaTestFunc };
 		VkCommandBuffer cmd = vk.frames[vk.currentFrame].commandBuffer;
 		vkCmdPushConstants( cmd, vk.pipelineLayout,
 			VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-			80, sizeof(float) * 2, fragConstants );
+			64, sizeof(float) * 2, fragConstants );
 	}
 
 	// Upload GPU params UBO and bind descriptor set 2
-	VK_UpdateGPUParams( &currentGPUParams );
+	if ( !VK_UpdateGPUParams( &currentGPUParams ) ) {
+		return;
+	}
 
 	// Optimization #2: if geometry base (pos/normal/idx) is already cached,
 	// only upload the varying data (texcoords, colors) per stage
@@ -324,10 +325,27 @@ void RB_BeginSurface( shader_t *shader, int fogNum ) {
 	// Clear GPU skinning state — will be set by RB_SurfaceGhoul if needed
 	tess.gpuSkinning = qfalse;
 	tess.gpuNumBones = 0;
+	tess.wComponentsInitialized = qfalse;
 
 	// Clear cached geometry — will be set by VK_CacheTessGeometry
 	tess.cachedGeo.valid = qfalse;
 	tess.vboMesh = NULL;
+}
+
+static void RB_InitTessWComponents( void ) {
+	if ( tess.wComponentsInitialized ) {
+		return;
+	}
+	// Ghoul2 GPU skinning packs bone indices/weights into xyz.w/normal.w.
+	if ( tess.gpuSkinning ) {
+		tess.wComponentsInitialized = qtrue;
+		return;
+	}
+	for ( int i = 0; i < tess.numVertexes; i++ ) {
+		tess.xyz[i][3] = 1.0f;
+		tess.normal[i][3] = 0.0f;
+	}
+	tess.wComponentsInitialized = qtrue;
 }
 
 /*
@@ -1043,6 +1061,7 @@ void RB_StageIteratorGeneric( void )
 	input = &tess;
 
 	RB_DeformTessGeometry();
+	RB_InitTessWComponents();
 
 	//
 	// log this call
@@ -1081,7 +1100,8 @@ void RB_StageIteratorGeneric( void )
 	// Vulkan: no need to manage client state arrays - data is uploaded
 	// directly in R_DrawElements via VK_DrawIndexed
 	//
-	setArraysOnce = qfalse;
+	// Optimization: we don't need to do this anymore
+	// setArraysOnce = qfalse;
 
 	//
 	// call shader function
@@ -1135,6 +1155,7 @@ void RB_StageIteratorVertexLitTexture( void )
 	input = &tess;
 
 	shader = input->shader;
+	RB_InitTessWComponents();
 
 	//
 	// Cache geometry base once (pos/normal/idx)
@@ -1223,6 +1244,7 @@ void RB_StageIteratorLightmappedMultitexture( void ) {
 	int stage;
 
 	input = &tess;
+	RB_InitTessWComponents();
 
 	//
 	// Cache geometry base once (pos/normal/idx)
@@ -1376,10 +1398,10 @@ void RB_StageIteratorVBO( void ) {
 		VkCommandBuffer cmd = vk.frames[vk.currentFrame].commandBuffer;
 		vkCmdPushConstants( cmd, vk.pipelineLayout,
 			VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-			80, sizeof(float) * 2, fragConstants );
+			64, sizeof(float) * 2, fragConstants );
 	}
 
-	VK_UpdateGPUParams( &currentGPUParams );
+	if ( !VK_UpdateGPUParams( &currentGPUParams ) ) return;
 
 	// Draw entirely from static buffers — zero vertex upload!
 	VK_DrawFromStaticBuffers(
@@ -1418,9 +1440,9 @@ void RB_StageIteratorVBO( void ) {
 						VkCommandBuffer cmd = vk.frames[vk.currentFrame].commandBuffer;
 						vkCmdPushConstants( cmd, vk.pipelineLayout,
 							VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-							80, sizeof(float) * 2, fragConstants );
+							64, sizeof(float) * 2, fragConstants );
 					}
-					VK_UpdateGPUParams( &currentGPUParams );
+					if ( !VK_UpdateGPUParams( &currentGPUParams ) ) return;
 					// Colors/TCs computed by GPU dlight shader, but we need dummy data
 					// Use static buffer for pos/norm, zero region for TC, white for color
 					VK_DrawFromStaticBuffers(
@@ -1450,9 +1472,9 @@ void RB_StageIteratorVBO( void ) {
 						VkCommandBuffer cmd = vk.frames[vk.currentFrame].commandBuffer;
 						vkCmdPushConstants( cmd, vk.pipelineLayout,
 							VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-							80, sizeof(float) * 2, fragConstants );
+							64, sizeof(float) * 2, fragConstants );
 					}
-					VK_UpdateGPUParams( &currentGPUParams );
+					if ( !VK_UpdateGPUParams( &currentGPUParams ) ) return;
 					VK_DrawFromStaticBuffers(
 						vboMesh->firstVertex, vboMesh->numVertices,
 						vboMesh->firstIndex, vboMesh->numIndexes,
@@ -1489,9 +1511,9 @@ void RB_StageIteratorVBO( void ) {
 			VkCommandBuffer cmd = vk.frames[vk.currentFrame].commandBuffer;
 			vkCmdPushConstants( cmd, vk.pipelineLayout,
 				VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-				80, sizeof(float) * 2, fragConstants );
+				64, sizeof(float) * 2, fragConstants );
 		}
-		VK_UpdateGPUParams( &currentGPUParams );
+		if ( !VK_UpdateGPUParams( &currentGPUParams ) ) return;
 
 		// Fog pass from static buffer — fog TC and colors computed by GPU
 		VK_DrawFromStaticBuffers(

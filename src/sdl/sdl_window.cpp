@@ -838,7 +838,7 @@ window_t WIN_Init( const windowDesc_t *windowDesc, glconfig_t *glConfig )
 	r_stencilbits		= Cvar_Get( "r_stencilbits",		"8",		CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH );
 	r_depthbits			= Cvar_Get( "r_depthbits",			"0",		CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH );
 	r_colorbits			= Cvar_Get( "r_colorbits",			"0",		CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH );
-	r_ext_multisample	= Cvar_Get( "r_ext_multisample",	"16",		CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH );
+	r_ext_multisample	= Cvar_Get( "r_ext_multisample",	"8",		CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH );
 	r_allowsoftwaregl	= Cvar_Get( "r_allowsoftwaregl",	"0",		CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH );
 	Cvar_Get( "r_availableModes", "", CVAR_ROM );
 

@@ -106,9 +106,15 @@ void VK_EndSingleTimeCommands( VkCommandBuffer commandBuffer ) {
 // Image layout transitions
 // ============================================================
 void VK_TransitionImageLayout( VkImage image, VkFormat format,
-	VkImageLayout oldLayout, VkImageLayout newLayout, int mipLevels )
+	VkImageLayout oldLayout, VkImageLayout newLayout, int mipLevels, VkCommandBuffer cmdBuffer )
 {
-	VkCommandBuffer commandBuffer = VK_BeginSingleTimeCommands();
+	VkCommandBuffer commandBuffer = cmdBuffer;
+	bool singleTime = false;
+
+	if ( commandBuffer == VK_NULL_HANDLE ) {
+		commandBuffer = VK_BeginSingleTimeCommands();
+		singleTime = true;
+	}
 
 	VkImageMemoryBarrier barrier = {};
 	barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -164,7 +170,9 @@ void VK_TransitionImageLayout( VkImage image, VkFormat format,
 	vkCmdPipelineBarrier( commandBuffer, sourceStage, destinationStage, 0,
 		0, NULL, 0, NULL, 1, &barrier );
 
-	VK_EndSingleTimeCommands( commandBuffer );
+	if ( singleTime ) {
+		VK_EndSingleTimeCommands( commandBuffer );
+	}
 }
 
 // ============================================================
@@ -2021,14 +2029,10 @@ void VK_DrawGlowOverlay( void ) {
 	VkDescriptorSet glowDesc = vk.glow.sceneDescriptorSet;
 	vkCmdBindDescriptorSets( cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, vk.pipelineLayout, 0, 1, &glowDesc, 0, NULL );
 
-	// Push intensity as a push constant (shared layout with blur shaders)
-	float compositePC[4];
-	compositePC[0] = 0.0f;  // texelOffset.x (unused)
-	compositePC[1] = 0.0f;  // texelOffset.y (unused)
-	compositePC[2] = 0.0f;  // softness (unused in composite)
-	compositePC[3] = r_DynamicGlowIntensity->value;  // intensity multiplier
-	if ( compositePC[3] < 0.0f ) compositePC[3] = 0.0f;
-	vkCmdPushConstants( cmd, vk.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(compositePC), compositePC );
+	// Push intensity as a push constant
+	float intensity = r_DynamicGlowIntensity->value;
+	if ( intensity < 0.0f ) intensity = 0.0f;
+	vkCmdPushConstants( cmd, vk.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(intensity), &intensity );
 
 	// Draw fullscreen triangle with additive blend
 	vkCmdDraw( cmd, 3, 1, 0, 0 );
