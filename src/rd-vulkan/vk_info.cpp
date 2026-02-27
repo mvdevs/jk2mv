@@ -87,7 +87,7 @@ const char *vk_result_string( VkResult code ) {
         CASE_STR(VK_ERROR_INVALID_SHADER_NV);
         CASE_STR(VK_ERROR_NOT_PERMITTED_EXT);
         default:
-            sprintf(buffer, "code %i", code);
+            Com_sprintf(buffer, sizeof(buffer), "code %i", code);
             return buffer;
     }
 }
@@ -173,7 +173,7 @@ const char *vk_shadertype_string( Vk_Shader_Type code ) {
         CASE_STR(TYPE_BLEND3_DST_COLOR_SRC_ALPHA);
         CASE_STR(TYPE_BLEND3_DST_COLOR_SRC_ALPHA_ENV);
         default:
-            sprintf(buffer, "code %i", code);
+            Com_sprintf(buffer, sizeof(buffer), "code %i", code);
             return buffer;
     }
 }
