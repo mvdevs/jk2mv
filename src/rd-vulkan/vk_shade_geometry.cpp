@@ -311,6 +311,7 @@ void vk_bind_geometry( uint32_t flags )
 			case SF_MDX:		return vk_vbo_bind_geometry_ghoul2( flags );
 			case SF_VBO_MDVMESH:return vk_vbo_bind_geometry_mdv( flags );
 			case SF_SPRITES:	return vk_vbo_bind_geometry_surface_sprites( flags );
+			default:			break;
 		}
 	}
 
