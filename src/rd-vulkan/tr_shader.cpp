@@ -3792,7 +3792,7 @@ static int CollapseMultitexture( unsigned int st0bits, shaderStage_t *st0, shade
 	}
 
 	// preserve lightmap style
-	if (st1->lightmapStyle)
+	if (st1->lightmapStyle[0])
 	{
 		st0->lightmapStyle[1] = st1->lightmapStyle[0];
 	}
