@@ -95,6 +95,7 @@ typedef struct {
 
 // Pipeline state key - used to cache pipeline objects
 typedef struct {
+	VkRenderPass		renderPass;		// render pass this pipeline is compatible with
 	unsigned int	srcBlend;		// GLS_SRCBLEND_xxx
 	unsigned int	dstBlend;		// GLS_DSTBLEND_xxx
 	int				depthWrite;
@@ -111,10 +112,23 @@ typedef struct {
 typedef struct {
 	vkPipelineKey_t	key;
 	VkPipeline		pipeline;
+	qboolean		occupied;
 } vkPipelineEntry_t;
+
+// Hash table size for pipeline cache (must be power of 2, > VK_MAX_PIPELINES)
+#define VK_PIPELINE_HASH_SIZE	512
 
 // vkImage_t is defined in tr_local.h (inside image_t struct)
 // It contains: VkImage image, VkDeviceMemory memory, VkImageView view, VkSampler sampler, VkDescriptorSet descriptorSet
+
+// Deferred image resource destruction (freed after per-frame fence wait)
+#define VK_MAX_DEFERRED_IMAGES 256
+typedef struct {
+	VkDescriptorSet		descriptorSet;
+	VkImageView			view;
+	VkImage				image;
+	VkDeviceMemory		memory;
+} vkDeferredImageDestroy_t;
 
 // Per-frame command buffer and synchronization
 typedef struct {
@@ -150,6 +164,21 @@ typedef struct {
 	int					offset;
 } vkStagingBuffer_t;
 
+// Maximum number of progressive bloom mip levels
+#define BLOOM_MAX_MIPS 6
+
+// Single mip level in the progressive bloom chain
+typedef struct {
+	VkImage				image;
+	VkImageView			imageView;
+	VkDeviceMemory		memory;
+	VkDescriptorSet		descriptorSet;
+	VkFramebuffer		framebuffer;			// created with blurRenderPass (downsample, loadOp=CLEAR)
+	VkFramebuffer		upsampleFramebuffer;	// created with bloomUpsampleRenderPass (upsample, loadOp=LOAD)
+	uint32_t			width;
+	uint32_t			height;
+} bloomMipLevel_t;
+
 // Glow/post-process resources
 typedef struct {
 	// Half-res scene image (final blur output, used by composite)
@@ -164,7 +193,7 @@ typedef struct {
 	VkDeviceMemory		glowImageMemory;
 	VkDescriptorSet		glowDescriptorSet;
 
-	// Half-res blur image (ping-pong target)
+	// Half-res blur image (ping-pong target, used by legacy Gaussian blur)
 	VkImage				blurImage;
 	VkImageView			blurImageView;
 	VkDeviceMemory		blurImageMemory;
@@ -178,10 +207,17 @@ typedef struct {
 
 	// Render passes
 	VkRenderPass		glowRenderPass;		// full-res, color+depth (scene rendering)
-	VkRenderPass		blurRenderPass;		// half-res, color only (blur passes)
+	VkRenderPass		blurRenderPass;		// color only, loadOp=CLEAR (downsample)
+	VkRenderPass		bloomUpsampleRenderPass; // color only, loadOp=LOAD (additive upsample)
 
 	VkPipeline			blurPipeline;
 	VkPipeline			glowCompositePipeline;
+
+	// Progressive bloom (downsample/upsample chain)
+	VkPipeline			bloomDownsamplePipeline;
+	VkPipeline			bloomUpsamplePipeline;
+	bloomMipLevel_t		bloomMips[BLOOM_MAX_MIPS];
+	int					bloomMipCount;
 
 	// Cached blur target dimensions (from r_DynamicGlowWidth/Height or swapchain/2)
 	uint32_t			halfWidth;
@@ -190,6 +226,25 @@ typedef struct {
 
 // Maximum number of glow light sources uploaded to the GPU each frame
 #define GLOW_RT_MAX_SOURCES		32
+
+// Push constant layout for glow reflect RT shaders (must match glow_reflect.rgen)
+typedef struct {
+	float	inverseVP[16];				// mat4  (64 bytes)
+	float	viewProjection[16];			// mat4  (64 bytes): for reprojecting hit pos to screen UV
+	float	cameraPosAndIntensity[4];	// vec4  (16 bytes): xyz=pos, w=intensity
+	int		numSources;					// int   (4 bytes)
+	float	bias;						// float (4 bytes)
+	float	falloffExponent;				// float (4 bytes): distance falloff curve steepness
+	float	g2ReflectScale;				// float (4 bytes): reflection scale for Ghoul2 model surfaces
+	float	shadowIntensity;			// float (4 bytes): visibility when shadow ray is occluded
+} glowReflectPC_t;						// Total: 164 bytes
+
+// Glow source upload struct (must match GLSL GlowSource)
+typedef struct {
+	float	posAndRadius[4];			// vec4: xyz=start pos (or point pos), w=effect radius
+	float	colorAndPower[4];			// vec4: xyz=RGB color, w=intensity
+	float	endPosAndType[4];			// vec4: xyz=end pos, w=0 (point) or 1 (line)
+} glowSourceData_t;						// 48 bytes
 
 // RT function pointers (loaded dynamically since they're extension functions)
 typedef struct {
@@ -213,6 +268,18 @@ typedef struct {
 	VkAccelerationStructureKHR	blas;				// bottom-level (world geometry)
 	VkBuffer				blasBuffer;
 	VkDeviceMemory			blasMemory;
+
+	// Optional BLAS for "see-through" world surfaces (grates, fences, etc.)
+	// Approximated via any-hit stochastic opacity.
+	VkAccelerationStructureKHR	blasSeeThrough;
+	VkBuffer				blasSeeThroughBuffer;
+	VkDeviceMemory			blasSeeThroughMemory;
+	VkBuffer				seeThroughVertexBuffer;
+	VkDeviceMemory			seeThroughVertexMemory;
+	VkBuffer				seeThroughIndexBuffer;
+	VkDeviceMemory			seeThroughIndexMemory;
+	uint32_t				seeThroughNumVertices;
+	uint32_t				seeThroughNumIndices;
 
 	VkAccelerationStructureKHR	tlas;				// top-level (BSP + Ghoul2 instances)
 	VkBuffer				tlasBuffer;
@@ -257,11 +324,34 @@ typedef struct {
 	VkStridedDeviceAddressRegionKHR hitRegion;
 	VkStridedDeviceAddressRegionKHR callRegion;	// unused but required
 
-	// ---- Output image (RT writes here, composited onto scene) ----
-	VkImage					outputImage;
-	VkImageView				outputImageView;
-	VkDeviceMemory			outputImageMemory;
-	VkDescriptorSet			outputDescriptorSet;	// combined image sampler for compositing
+	// ---- Ping-pong output images (eliminates per-frame copy for temporal) ----
+	// Frame N writes to ppImage[pingPongIndex], reads history from ppImage[1-pingPongIndex].
+	// After dispatch, pingPongIndex flips. No vkCmdCopyImage needed.
+	VkImage					ppImage[2];
+	VkImageView				ppImageView[2];
+	VkDeviceMemory			ppImageMemory[2];
+	VkDescriptorSet			ppRtDescriptorSet[2];		// RT descriptor sets with swapped output/history bindings
+	VkDescriptorSet			ppOutputDescriptorSet[2];	// combined image sampler (GENERAL layout) for compositing
+	VkDescriptorSet			ppOutputReadDescriptorSet[2]; // combined image sampler (SHADER_READ_ONLY) for blur sampling
+	int						pingPongIndex;				// 0 or 1, flipped each frame
+
+	// ---- Screen-space blur for RT output (softens hard shadow edges) ----
+	VkImage					blurTempImage;			// H pass output
+	VkImageView				blurTempImageView;
+	VkDeviceMemory			blurTempImageMemory;
+	VkDescriptorSet			blurTempDescriptorSet;
+	VkFramebuffer			blurTempFramebuffer;
+
+	VkImage					blurOutputImage;		// V pass output (final blurred)
+	VkImageView				blurOutputImageView;
+	VkDeviceMemory			blurOutputImageMemory;
+	VkDescriptorSet			blurOutputDescriptorSet;
+	VkFramebuffer			blurOutputFramebuffer;
+
+	VkPipeline				blurMaskedPipeline;		// alpha-masked blur (skips Ghoul2 pixels)
+	VkPipeline				g2CompositePipeline;	// (ONE_MINUS_SRC_ALPHA, ONE) for raw Ghoul2 overlay
+
+	// (History image removed — ping-pong ppImage[2] replaces output + history)
 
 	// ---- Depth-only image view for RT shader ----
 	VkImageView				depthOnlyImageView;
@@ -271,6 +361,13 @@ typedef struct {
 	VkDeviceMemory			glowSourcesMemory;
 	void					*glowSourcesMapped;
 
+	// ---- Per-frame RT params UBO (prev VP, frame index, temporal settings) ----
+	VkBuffer				rtParamsBuffer;
+	VkDeviceMemory			rtParamsMemory;
+	void					*rtParamsMapped;
+	uint32_t				rtFrameIndex;
+	float					prevViewProjection[16];
+
 	// ---- RT properties (queried from device) ----
 	uint32_t				shaderGroupHandleSize;
 	uint32_t				shaderGroupHandleAlignment;
@@ -278,8 +375,13 @@ typedef struct {
 
 	int						lastFrameGhoul2Count;	// Ghoul2 entity count from previous frame (for TLAS skip)
 
+	uint32_t				rtWidth;				// RT dispatch resolution (may be less than swapchain)
+	uint32_t				rtHeight;
+
 	qboolean				asBuilt;				// true after AS built for current map
 	qboolean				available;				// true if all resources created successfully
+	qboolean				blurActive;				// true when blur was performed this frame
+	qboolean				hasGhoul2;				// true when G2 was in the TLAS this frame
 } vkGlowReflectResources_t;
 
 // Gamma correction resources
@@ -300,13 +402,25 @@ typedef struct {
 	// Gamma-specific render pass (color only, writes to swapchain, finalLayout = PRESENT_SRC)
 	VkRenderPass		gammaRenderPass;
 
+	// Swapchain overlay render pass for UI (color + depth, LOAD swapchain, finalLayout = PRESENT_SRC)
+	VkRenderPass		overlayRenderPass;
+	VkFramebuffer		overlayFramebuffers[VK_MAX_SWAPCHAIN_IMAGES];
+
 	// Per-swapchain-image framebuffers for the gamma render pass (swapchain color only)
 	VkFramebuffer		gammaFramebuffers[VK_MAX_SWAPCHAIN_IMAGES];
 
 	// Gamma-specific pipeline layout (16-byte push constants, 1 descriptor set)
 	VkPipelineLayout	gammaPipelineLayout;
 
-	VkPipeline			gammaPipeline;
+	VkPipeline			gammaPipeline;       // FXAA_ENABLED=true  variant
+	VkPipeline			gammaPipelineNoFxaa; // FXAA_ENABLED=false variant (prunes FXAA dead code)
+
+	// FXAA (scene-only) pipeline
+	int					fxaaQuality; // 0=off, otherwise preset driven by r_fxaa
+	qboolean				fxaaActive;
+	qboolean				appliedThisFrame;
+	qboolean				sceneRenderedThisFrame;
+	qboolean				uiFirstThisFrame; // first draws were 2D (menus/loading) -> keep UI in scene pass for correctness
 	qboolean			enabled;		// true if all gamma resources created successfully
 } vkGammaResources_t;
 
@@ -328,9 +442,11 @@ typedef struct {
 	VkSurfaceKHR		surface;
 	VkSwapchainKHR		swapchain;
 	VkFormat			swapchainFormat;
+	VkFormat			sceneFormat;		// HDR: R16G16B16A16_SFLOAT, otherwise same as swapchainFormat
 	VkExtent2D			swapchainExtent;
 	uint32_t			swapchainImageCount;
 	VkImage				swapchainImages[VK_MAX_SWAPCHAIN_IMAGES];
+	VkImageLayout		swapchainImageLayouts[VK_MAX_SWAPCHAIN_IMAGES];
 	VkImageView			swapchainImageViews[VK_MAX_SWAPCHAIN_IMAGES];
 
 	VkImage				depthImage;
@@ -344,6 +460,9 @@ typedef struct {
 	VkRenderPass		renderPass;
 	VkRenderPass		renderPassLoad;
 	VkFramebuffer		framebuffers[VK_MAX_SWAPCHAIN_IMAGES];
+
+	// Active render pass used for pipeline compatibility (set by VK_Begin*RenderPass).
+	VkRenderPass		pipelineRenderPass;
 
 	VkDescriptorPool	descriptorPool;
 	VkDescriptorSetLayout descriptorSetLayout;
@@ -376,8 +495,8 @@ typedef struct {
 	// Image slots for descriptors
 	int					imageCount;
 
-	// Pipeline cache
-	vkPipelineEntry_t	pipelines[VK_MAX_PIPELINES];
+	// Pipeline cache (open-addressing hash table)
+	vkPipelineEntry_t	pipelines[VK_PIPELINE_HASH_SIZE];
 	int					pipelineCount;
 
 	// UBO descriptor set layout and per-frame descriptor sets
@@ -399,10 +518,14 @@ typedef struct {
 	VkShaderModule		gammaFragShader;
 	VkShaderModule		blurVertShader;
 	VkShaderModule		blurFragShader;
+	VkShaderModule		blurMaskedFragShader;
 	VkShaderModule		glowCompositeFragShader;
+	VkShaderModule		glowDownsampleFragShader;
+	VkShaderModule		glowUpsampleFragShader;
 	VkShaderModule		glowReflectRgenShader;
 	VkShaderModule		glowReflectRmissShader;
 	VkShaderModule		glowReflectRchitShader;
+	VkShaderModule		glowReflectRahitShader;
 
 	// Glow and gamma correction
 	vkGlowResources_t	glow;
@@ -418,6 +541,7 @@ typedef struct {
 	float				clearColor[4];
 	qboolean			depthWriteEnabled;
 	qboolean			renderPassActive;
+	qboolean			uiPassActive;
 
 	// Projection matrix for 2D rendering
 	float				projMatrix2D[16];
@@ -429,6 +553,7 @@ typedef struct {
 	qboolean			fragmentStoresAndAtomics;
 	qboolean			fillModeNonSolid;
 	qboolean			rayTracingSupported;		// VK_KHR_ray_tracing_pipeline available
+	qboolean			bcSupported;				// VK_FORMAT_BC7_UNORM_BLOCK available
 
 	// RT extension function pointers
 	vkRTFunctions_t		rtFuncs;
@@ -442,9 +567,14 @@ typedef struct {
 	// for the current frame (VK_ReadPixels submits mid-frame and consumes it).
 	qboolean			acquireSemaphoreConsumedThisFrame;
 
-	// Deferred deletion of descriptor sets to avoid freeing while recording
-	VkDescriptorSet		deferredFreeSets[1024];
-	int					deferredFreeCount;
+	// Per-frame deferred image resource destruction (freed after fence wait)
+	vkDeferredImageDestroy_t	deferredImages[VK_NUM_COMMAND_BUFFERS][VK_MAX_DEFERRED_IMAGES];
+	int							deferredImageCount[VK_NUM_COMMAND_BUFFERS];
+
+	// Cached bindings to skip redundant Vulkan calls during recording
+	VkDescriptorSet		boundTextureSets[2];
+	VkPipeline			boundPipeline;
+	uint32_t			boundUBOOffset;
 
 	// ============================================================
 	// Static world geometry buffers (device-local, uploaded at map load)
@@ -473,6 +603,7 @@ extern vkState_t vk;
 // ============================================================
 qboolean	VK_Init( void );
 void		VK_Shutdown( void );
+void		VK_FlushDeferredResources( void );
 const char *VK_GetEnabledExtensionsString( void );
 void		VK_CreateSwapchain( void );
 void		VK_DestroySwapchain( void );
@@ -576,9 +707,11 @@ void	VK_InvalidateGlowReflectAccelStruct( void );
 void	VK_BuildGlowReflectAccelStruct( void );
 void	VK_DispatchGlowReflect( void );
 void	VK_DrawGlowReflectOverlay( void );
+void	VK_BlurGlowReflectOutput( void );
 void	VK_CreateGammaResources( void );
 void	VK_DestroyGammaResources( void );
 void	VK_ApplyGammaCorrection( void );
+int		VK_ClampFxaaQuality( int v );
 
 // ============================================================
 // Stencil shadow pipelines

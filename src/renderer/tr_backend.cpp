@@ -162,6 +162,15 @@ to actually render the visible surfaces for this view
 void RB_BeginDrawingView (void) {
 	int clearBits = 0;
 
+	// Menus can render 3D panels (RDF_NOWORLDMODEL) and interleave them with 2D drawing.
+	// When FXAA is active, routing 2D through the swapchain overlay path can cause the
+	// menu background/model to flicker due to frame-to-frame ordering differences.
+	// Force such frames to keep all drawing in the offscreen scene pass, applying FXAA+gamma
+	// once at end-of-frame.
+	if ( vk.gamma.enabled && vk.gamma.fxaaActive && ( backEnd.refdef.rdflags & RDF_NOWORLDMODEL ) ) {
+		vk.gamma.uiFirstThisFrame = qtrue;
+	}
+
 	// sync with gl if needed
 	if ( r_finish->integer == 1 && !renderState.finishCalled ) {
 		// Vulkan doesn't have glFinish, synchronization is handled via fences
@@ -473,6 +482,16 @@ RB_SetGL2D
 */
 void	RB_SetGL2D (void) {
 	backEnd.projection2D = qtrue;
+
+	// Default 2D draw color is opaque white (matches OpenGL's default state).
+	// Many UI paths (notably fullscreen menu backgrounds) draw without issuing
+	// an explicit trap_R_SetColor first; if color2D defaults to 0 alpha, those
+	// quads become fully transparent and the menu appears to have "no background".
+	backEnd.color2D[0] = 255;
+	backEnd.color2D[1] = 255;
+	backEnd.color2D[2] = 255;
+	backEnd.color2D[3] = 255;
+	backEnd.color2Dui = 0xFFFFFFFFu;
 
 	VK_Set2D();
 
@@ -795,6 +814,10 @@ const void	*RB_DrawSurfs( const void *data ) {
 		// Must happen outside render pass, after glow scene render, before blur.
 		// Casts shadow rays from world surfaces toward glow light sources.
 		VK_DispatchGlowReflect();
+
+		// Optional screen-space blur on the RT reflection output to soften
+		// hard shadow edges. Must run outside render pass, before composite.
+		VK_BlurGlowReflectOutput();
 
 		// Blur the glow texture (downsamples full-res to half-res internally)
 		RB_BlurGlowTexture();

@@ -540,7 +540,7 @@ LINES_INSERT 944 [
 				"16x"				16
 			}
 			descText			@MV_MULTISAMPLE_ANTIALIASING
-			cvar				"ui_r_ext_multisample"
+			cvar				"ui_r_fxaa"
 			cvarTest			"ui_menulevel"
 			disableCvar			{ "0" }
 

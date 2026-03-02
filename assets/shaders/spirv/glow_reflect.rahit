@@ -1,0 +1,59 @@
+#version 460
+#extension GL_EXT_ray_tracing : require
+
+// Any-hit shader used to approximate partial transmission for "see-through" world geometry
+// (grates/fences). We don't have per-triangle alpha masks here, so we use a constant opacity
+// with stochastic acceptance.
+
+layout(location = 0) rayPayloadInEXT float hitDistance;
+
+layout(set = 0, binding = 6, std140) uniform RTParamsUBO {
+	mat4 prevViewProjection;
+	uvec4 params0; // x = frameIndex, y = reserved, z = reserved, w = reserved
+	vec4  params1; // x = seeThroughOpacity, y = emitterEpsilon, z = temporalBlend, w = reserved
+} rt;
+
+// pc not needed here; use launch ID + primitive/instance to decorrelate.
+
+uint hash_u32(uint x) {
+	x ^= x >> 16;
+	x *= 0x7feb352d;
+	x ^= x >> 15;
+	x *= 0x846ca68b;
+	x ^= x >> 16;
+	return x;
+}
+
+float rand01(uvec3 v) {
+	uint h = v.x * 1664525u + v.y * 1013904223u + v.z * 2246822519u;
+	h = hash_u32(h);
+	return float(h & 0x00FFFFFFu) / 16777216.0;
+}
+
+void main() {
+	// Frame-stratified stochastic sampling: offset the random value by a
+	// per-frame fraction so each frame covers a different probability bin.
+	// Over 8 frames the full [0,1] range is sampled uniformly, converging
+	// faster with temporal accumulation.
+	uint frameSlot = rt.params0.x & 7u;
+	float stratifiedOffset = float(frameSlot) / 8.0;
+
+	// InstanceCustomIndex 1 is our see-through BSP instance.
+	if (gl_InstanceCustomIndexEXT == 1) {
+		float opacity = clamp(rt.params1.x, 0.0, 1.0);
+		// Stochastic opacity: accept a hit (occlude) with probability=opacity.
+		float r = fract(rand01(uvec3(gl_LaunchIDEXT.xy, rt.params0.x ^ uint(gl_PrimitiveID))) + stratifiedOffset);
+		if (r > opacity) {
+			ignoreIntersectionEXT;
+		}
+	} else if (gl_InstanceCustomIndexEXT == 2) {
+		// Ghoul2 proxy instance. Make it a softer occluder than solid world geometry.
+		// This reduces the “too hard” player shadow on walls while preserving a silhouette.
+		float opacity = clamp(rt.params1.w, 0.0, 1.0);
+		float r = fract(rand01(uvec3(gl_LaunchIDEXT.xy, (rt.params0.x * 131u) ^ uint(gl_PrimitiveID))) + stratifiedOffset);
+		if (r > opacity) {
+			ignoreIntersectionEXT;
+		}
+	}
+	// Otherwise: leave hit untouched (opaque), closest-hit will run.
+}

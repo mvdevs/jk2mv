@@ -1307,6 +1307,13 @@ extern cvar_t	*r_DynamicGlowReflectionIntensity;
 extern cvar_t	*r_DynamicGlowReflectionFalloff;
 extern cvar_t	*r_DynamicGlowReflectionG2Scale;
 extern cvar_t	*r_DynamicGlowReflectionShadowIntensity;
+extern cvar_t	*r_DynamicGlowReflectionG2Opacity;
+
+extern cvar_t	*r_hdr;
+extern cvar_t	*r_hdr_exposure;
+
+extern cvar_t	*r_DynamicGlowReflectionBlur;
+extern cvar_t	*r_DynamicGlowReflectionScale;
 
 extern	cvar_t	*r_nobind;						// turns off binding to appropriate textures
 extern	cvar_t	*r_singleShader;				// make most world faces use default shader
@@ -1583,6 +1590,17 @@ struct shaderCommands_s
 	int			vertexDlightBits[SHADER_MAX_VERTEXES];
 
 	stageVars_t	svars;
+
+	// Vulkan fast-path: allow stage iterators to override the attribute pointers
+	// used by R_DrawElements, avoiding per-surface memcpy into svars.
+	// If the *_Set flag is qtrue, the corresponding pointer is used (and may be NULL
+	// to request a default fill inside the Vulkan draw path).
+	qboolean	vk_tc0Set;
+	qboolean	vk_tc1Set;
+	qboolean	vk_colorsSet;
+	const float	*vk_tc0;
+	const float	*vk_tc1;
+	const byte	*vk_colors;
 
 	color4ub_t	constantColor255[SHADER_MAX_VERTEXES];
 

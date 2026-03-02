@@ -117,29 +117,35 @@ Fills in a list of all the leafs touched
 =============
 */
 void CM_BoxLeafnums_r( leafList_t *ll, int nodenum ) {
+	// Iterative traversal with explicit stack; BSP depth is bounded so 128 entries is safe
+	int			stack[128];
+	int			top = 0;
 	cplane_t	*plane;
 	cNode_t		*node;
 	int			s;
 
-	while (1) {
-		if (nodenum < 0) {
+	stack[top++] = nodenum;
+
+	while ( top > 0 ) {
+		nodenum = stack[--top];
+
+		if ( nodenum < 0 ) {
 			ll->storeLeafs( ll, nodenum );
-			return;
+			continue;
 		}
 
 		node = &cm.nodes[nodenum];
 		plane = node->plane;
 		s = BoxOnPlaneSide( ll->bounds[0], ll->bounds[1], plane );
-		if (s == 1) {
-			nodenum = node->children[0];
-		} else if (s == 2) {
-			nodenum = node->children[1];
+		if ( s == 1 ) {
+			stack[top++] = node->children[0];
+		} else if ( s == 2 ) {
+			stack[top++] = node->children[1];
 		} else {
-			// go down both
-			CM_BoxLeafnums_r( ll, node->children[0] );
-			nodenum = node->children[1];
+			// straddles both sides — push both
+			stack[top++] = node->children[1];
+			stack[top++] = node->children[0];
 		}
-
 	}
 }
 

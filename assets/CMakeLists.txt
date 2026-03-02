@@ -96,10 +96,14 @@ set(SPIRV_SHADER_SOURCES
 	"shaders/spirv/gamma.frag"
 	"shaders/spirv/glow.vert"
 	"shaders/spirv/glow.frag"
+	"shaders/spirv/glow_blur_masked.frag"
 	"shaders/spirv/glow_composite.frag"
+	"shaders/spirv/glow_downsample.frag"
+	"shaders/spirv/glow_upsample.frag"
 	"shaders/spirv/glow_reflect.rgen"
 	"shaders/spirv/glow_reflect.rmiss"
 	"shaders/spirv/glow_reflect.rchit"
+	"shaders/spirv/glow_reflect.rahit"
 )
 
 set(SPIRV_OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/shaders")

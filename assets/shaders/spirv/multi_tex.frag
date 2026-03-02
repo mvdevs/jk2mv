@@ -29,9 +29,13 @@ void main() {
     // 0 = GL_MODULATE: base * tex1
     // 3 = GL_ADD: base + tex1
     if (pc.texEnvMode < 0.5) {
-        outColor = base * texColor1;
+        outColor.rgb = base.rgb * texColor1.rgb;
+        outColor.a = base.a * texColor1.a;
     } else {
-        outColor = clamp(base + texColor1, 0.0, 1.0);
+        // For ADD, keep alpha driven by the base stage; clamping the sum would
+        // otherwise force alpha toward 1.0 and break alpha-driven compositing.
+        outColor.rgb = clamp(base.rgb + texColor1.rgb, 0.0, 1.0);
+        outColor.a = base.a;
     }
 
     // Alpha test

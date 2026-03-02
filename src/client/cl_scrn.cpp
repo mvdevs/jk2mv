@@ -179,12 +179,17 @@ static void SCR_DrawStringExt( int x, int y, float size, const char *string, con
 	s = string;
 	xx = x;
 	re.SetColor( setColor );
+	vec4_t lastColor;
+	Com_Memcpy( lastColor, setColor, sizeof( lastColor ) );
 	while ( *s ) {
 		if ( Q_IsColorString( s ) || (use102color && Q_IsColorString_1_02( s ))) {
 			if ( !forceColor ) {
 				Com_Memcpy( color, g_color_table[ColorIndex(*(s+1))], sizeof( color ) );
 				color[3] = setColor[3];
-				re.SetColor( color );
+				if ( color[0] != lastColor[0] || color[1] != lastColor[1] || color[2] != lastColor[2] || color[3] != lastColor[3] ) {
+					re.SetColor( color );
+					Com_Memcpy( lastColor, color, sizeof( lastColor ) );
+				}
 			}
 			s += 2;
 			continue;
@@ -231,12 +236,17 @@ void SCR_DrawSmallStringExt( int x, int y, const char *string, const vec4_t setC
 	s = string;
 	xx = x;
 	re.SetColor( setColor );
+	vec4_t lastColor;
+	Com_Memcpy( lastColor, setColor, sizeof( lastColor ) );
 	while ( *s ) {
 		if ( Q_IsColorString( s ) || (use102color && Q_IsColorString_1_02( s ))) {
 			if ( !forceColor ) {
 				Com_Memcpy( color, g_color_table[ColorIndex(*(s+1))], sizeof( color ) );
 				color[3] = setColor[3];
-				re.SetColor( color );
+				if ( color[0] != lastColor[0] || color[1] != lastColor[1] || color[2] != lastColor[2] || color[3] != lastColor[3] ) {
+					re.SetColor( color );
+					Com_Memcpy( lastColor, color, sizeof( lastColor ) );
+				}
 			}
 			s += 2;
 			continue;
@@ -499,16 +509,20 @@ text to the screen.
 ==================
 */
 void SCR_UpdateScreen( void ) {
-	static int	recursive;
+	static qboolean	inUpdate;
 
 	if ( !scr_initialized ) {
 		return;				// not initialized yet
 	}
 
-	if ( ++recursive > 2 ) {
-		Com_Error( ERR_FATAL, "SCR_UpdateScreen: recursively called" );
+	// UI and cgame can request an update via UI_UPDATESCREEN/CG_UPDATESCREEN while
+	// we're already inside SCR_UpdateScreen (e.g. server browser refresh loops).
+	// Recursive rendering/present is undefined for the Vulkan backend and can lead
+	// to swapchain acquisition stalls that look like the menu is frozen.
+	if ( inUpdate ) {
+		return;
 	}
-	recursive = 1;
+	inUpdate = qtrue;
 
 	CL_UpdateRefConfig( );
 
@@ -528,7 +542,7 @@ void SCR_UpdateScreen( void ) {
 		re.SwapBuffers( NULL, NULL );
 	}
 
-	recursive = 0;
+	inUpdate = qfalse;
 }
 
 #define MAX_SCR_LINES 10

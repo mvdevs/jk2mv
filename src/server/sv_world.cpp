@@ -133,6 +133,7 @@ void SV_ClearWorld( void ) {
 	for ( unsigned i = 0; i < ARRAY_LEN( sv.svEntities ); i++ ) {
 		sv.svEntities[i].worldSector = NULL;
 		sv.svEntities[i].nextEntityInWorldSector = NULL;
+		sv.svEntities[i].prevEntityInWorldSector = NULL;
 	}
 
 	// get world map bounds
@@ -150,7 +151,6 @@ SV_UnlinkEntity
 */
 void SV_UnlinkEntity( sharedEntity_t *gEnt ) {
 	svEntity_t		*ent;
-	svEntity_t		*scan;
 	worldSector_t	*ws;
 
 	ent = SV_SvEntityForGentity( gEnt );
@@ -163,19 +163,17 @@ void SV_UnlinkEntity( sharedEntity_t *gEnt ) {
 	}
 	ent->worldSector = NULL;
 
-	if ( ws->entities == ent ) {
-		ws->entities = ent->nextEntityInWorldSector;
-		return;
-	}
+	// O(1) removal using back-pointer
+	if ( ent->prevEntityInWorldSector )
+		ent->prevEntityInWorldSector->nextEntityInWorldSector = ent->nextEntityInWorldSector;
+	else
+		ws->entities = ent->nextEntityInWorldSector;	// was head of list
 
-	for ( scan = ws->entities ; scan ; scan = scan->nextEntityInWorldSector ) {
-		if ( scan->nextEntityInWorldSector == ent ) {
-			scan->nextEntityInWorldSector = ent->nextEntityInWorldSector;
-			return;
-		}
-	}
+	if ( ent->nextEntityInWorldSector )
+		ent->nextEntityInWorldSector->prevEntityInWorldSector = ent->prevEntityInWorldSector;
 
-	Com_Printf( "WARNING: SV_UnlinkEntity: not found in worldSector\n" );
+	ent->nextEntityInWorldSector = NULL;
+	ent->prevEntityInWorldSector = NULL;
 }
 
 
@@ -347,7 +345,10 @@ void SV_LinkEntity( sharedEntity_t *gEnt ) {
 
 	// link it in
 	ent->worldSector = node;
+	ent->prevEntityInWorldSector = NULL;
 	ent->nextEntityInWorldSector = node->entities;
+	if ( node->entities )
+		node->entities->prevEntityInWorldSector = ent;
 	node->entities = ent;
 
 	gEnt->r.linked = qtrue;

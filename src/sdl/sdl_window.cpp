@@ -42,8 +42,7 @@ static cvar_t	*r_highdpi;
 static cvar_t	*r_stencilbits;
 static cvar_t	*r_depthbits;
 static cvar_t	*r_colorbits;
-static cvar_t	*r_ext_multisample;
-static cvar_t	*r_allowsoftwaregl;
+static cvar_t	*r_fxaa;
 
 static float GLimp_GetDisplayScale(int display);
 
@@ -667,7 +666,7 @@ static rserr_t GLimp_SetMode(glconfig_t *glConfig, const windowDesc_t *windowDes
 		depthBits = r_depthbits->integer;
 
 	stencilBits = r_stencilbits->integer;
-	samples = r_ext_multisample->integer;
+	samples = r_fxaa->integer;
 
 	if ( windowDesc->api == GRAPHICS_API_VULKAN )
 	{
@@ -838,8 +837,7 @@ window_t WIN_Init( const windowDesc_t *windowDesc, glconfig_t *glConfig )
 	r_stencilbits		= Cvar_Get( "r_stencilbits",		"8",		CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH );
 	r_depthbits			= Cvar_Get( "r_depthbits",			"0",		CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH );
 	r_colorbits			= Cvar_Get( "r_colorbits",			"0",		CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH );
-	r_ext_multisample	= Cvar_Get( "r_ext_multisample",	"8",		CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH );
-	r_allowsoftwaregl	= Cvar_Get( "r_allowsoftwaregl",	"0",		CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH );
+	r_fxaa				= Cvar_Get( "r_fxaa",				"0",		CVAR_ARCHIVE | CVAR_GLOBAL );
 	Cvar_Get( "r_availableModes", "", CVAR_ROM );
 
 	// Create the window and set up the context

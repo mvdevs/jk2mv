@@ -15,47 +15,11 @@
 #include "vk_local.h"
 
 // ============================================================
-// Push constant layout (must match glow_reflect.rgen)
-// ============================================================
-typedef struct {
-	float	inverseVP[16];				// mat4  (64 bytes)
-	float	viewProjection[16];			// mat4  (64 bytes): for reprojecting hit pos to screen UV
-	float	cameraPosAndIntensity[4];	// vec4  (16 bytes): xyz=pos, w=intensity
-	int		numSources;					// int   (4 bytes)
-	float	bias;						// float (4 bytes)
-	float	falloffExponent;				// float (4 bytes): distance falloff curve steepness
-	float	g2ReflectScale;				// float (4 bytes): reflection scale for Ghoul2 model surfaces
-	float	shadowIntensity;			// float (4 bytes): visibility when shadow ray is occluded
-} glowReflectPC_t;						// Total: 164 bytes
-
-// Glow source upload struct (must match GLSL GlowSource)
-typedef struct {
-	float	posAndRadius[4];			// vec4: xyz=start pos (or point pos), w=effect radius
-	float	colorAndPower[4];			// vec4: xyz=RGB color, w=intensity
-	float	endPosAndType[4];			// vec4: xyz=end pos, w=0 (point) or 1 (line)
-} glowSourceData_t;						// 48 bytes
-
-// ============================================================
 // Helpers
 // ============================================================
 
 static uint32_t alignUp( uint32_t v, uint32_t alignment ) {
 	return (v + alignment - 1) & ~(alignment - 1);
-}
-
-/*
- * vkCmdUpdateBuffer is limited to 65536 bytes per call.
- * This helper splits larger uploads into conformant chunks.
- */
-static void cmdUpdateBufferChunked( VkCommandBuffer cmd, VkBuffer buf,
-	VkDeviceSize offset, VkDeviceSize size, const void *data )
-{
-	const VkDeviceSize kMaxChunk = 65536;
-	const char *p = (const char *)data;
-	for ( VkDeviceSize off = 0; off < size; off += kMaxChunk ) {
-		VkDeviceSize chunk = ( size - off < kMaxChunk ) ? ( size - off ) : kMaxChunk;
-		vkCmdUpdateBuffer( cmd, buf, offset + off, chunk, p + off );
-	}
 }
 
 /*
@@ -98,60 +62,6 @@ static VkDeviceAddress getBufferAddress( VkBuffer buffer ) {
 	return vk.rtFuncs.vkGetBufferDeviceAddressKHR( vk.device, &addrInfo );
 }
 
-/*
- * Invert a 4x4 matrix using cofactor expansion.
- * Returns qfalse if the matrix is singular.
- */
-static qboolean invertMatrix4x4( const float *m, float *out ) {
-	float inv[16], det;
-	int i;
-
-	inv[0]  =  m[5]*m[10]*m[15] - m[5]*m[11]*m[14] - m[9]*m[6]*m[15]
-	          + m[9]*m[7]*m[14] + m[13]*m[6]*m[11] - m[13]*m[7]*m[10];
-	inv[4]  = -m[4]*m[10]*m[15] + m[4]*m[11]*m[14] + m[8]*m[6]*m[15]
-	          - m[8]*m[7]*m[14] - m[12]*m[6]*m[11] + m[12]*m[7]*m[10];
-	inv[8]  =  m[4]*m[9]*m[15]  - m[4]*m[11]*m[13] - m[8]*m[5]*m[15]
-	          + m[8]*m[7]*m[13] + m[12]*m[5]*m[11] - m[12]*m[7]*m[9];
-	inv[12] = -m[4]*m[9]*m[14]  + m[4]*m[10]*m[13] + m[8]*m[5]*m[14]
-	          - m[8]*m[6]*m[13] - m[12]*m[5]*m[10] + m[12]*m[6]*m[9];
-
-	det = m[0]*inv[0] + m[1]*inv[4] + m[2]*inv[8] + m[3]*inv[12];
-	if ( det == 0.0f ) return qfalse;
-
-	inv[1]  = -m[1]*m[10]*m[15] + m[1]*m[11]*m[14] + m[9]*m[2]*m[15]
-	          - m[9]*m[3]*m[14] - m[13]*m[2]*m[11] + m[13]*m[3]*m[10];
-	inv[5]  =  m[0]*m[10]*m[15] - m[0]*m[11]*m[14] - m[8]*m[2]*m[15]
-	          + m[8]*m[3]*m[14] + m[12]*m[2]*m[11] - m[12]*m[3]*m[10];
-	inv[9]  = -m[0]*m[9]*m[15]  + m[0]*m[11]*m[13] + m[8]*m[1]*m[15]
-	          - m[8]*m[3]*m[13] - m[12]*m[1]*m[11] + m[12]*m[3]*m[9];
-	inv[13] =  m[0]*m[9]*m[14]  - m[0]*m[10]*m[13] - m[8]*m[1]*m[14]
-	          + m[8]*m[2]*m[13] + m[12]*m[1]*m[10] - m[12]*m[2]*m[9];
-
-	inv[2]  =  m[1]*m[6]*m[15]  - m[1]*m[7]*m[14] - m[5]*m[2]*m[15]
-	          + m[5]*m[3]*m[14] + m[13]*m[2]*m[7]  - m[13]*m[3]*m[6];
-	inv[6]  = -m[0]*m[6]*m[15]  + m[0]*m[7]*m[14] + m[4]*m[2]*m[15]
-	          - m[4]*m[3]*m[14] - m[12]*m[2]*m[7]  + m[12]*m[3]*m[6];
-	inv[10] =  m[0]*m[5]*m[15]  - m[0]*m[7]*m[13] - m[4]*m[1]*m[15]
-	          + m[4]*m[3]*m[13] + m[12]*m[1]*m[7]  - m[12]*m[3]*m[5];
-	inv[14] = -m[0]*m[5]*m[14]  + m[0]*m[6]*m[13] + m[4]*m[1]*m[14]
-	          - m[4]*m[2]*m[13] - m[12]*m[1]*m[6]  + m[12]*m[2]*m[5];
-
-	inv[3]  = -m[1]*m[6]*m[11]  + m[1]*m[7]*m[10] + m[5]*m[2]*m[11]
-	          - m[5]*m[3]*m[10] - m[9]*m[2]*m[7]   + m[9]*m[3]*m[6];
-	inv[7]  =  m[0]*m[6]*m[11]  - m[0]*m[7]*m[10] - m[4]*m[2]*m[11]
-	          + m[4]*m[3]*m[10] + m[8]*m[2]*m[7]   - m[8]*m[3]*m[6];
-	inv[11] = -m[0]*m[5]*m[11]  + m[0]*m[7]*m[9]  + m[4]*m[1]*m[11]
-	          - m[4]*m[3]*m[9]  - m[8]*m[1]*m[7]   + m[8]*m[3]*m[5];
-	inv[15] =  m[0]*m[5]*m[10]  - m[0]*m[6]*m[9]  - m[4]*m[1]*m[10]
-	          + m[4]*m[2]*m[9]  + m[8]*m[1]*m[6]   - m[8]*m[2]*m[5];
-
-	det = 1.0f / det;
-	for ( i = 0; i < 16; i++ )
-		out[i] = inv[i] * det;
-
-	return qtrue;
-}
-
 // ============================================================
 // Acceleration Structure Build
 // ============================================================
@@ -169,27 +79,70 @@ void VK_BuildGlowReflectAccelStruct( void ) {
 	if ( !vk.rayTracingSupported || !tr.world ) return;
 	if ( vk.glowReflect.asBuilt ) return;
 
+	// Only include world surfaces that behave like solid occluders.
+	// This avoids obviously-wrong RT shadows where sky/nodraw/see-through
+	// materials (grates, decals, fog, blends) block rays as if they were solid.
+	auto isRTShadowOccluder = []( const msurface_t *surf ) -> qboolean {
+		if ( !surf || !surf->shader ) return qfalse;
+		const shader_t *sh = surf->shader;
+		if ( sh->surfaceFlags & ( SURF_SKY | SURF_NODRAW | SURF_NODLIGHT ) ) return qfalse;
+		if ( sh->isSky ) return qfalse;
+		// Keep only portal/environment/opaque sorts; skip decals, see-through, fog, blends, etc.
+		if ( sh->sort > SS_OPAQUE ) return qfalse;
+		return qtrue;
+	};
+	auto isRTSeeThroughOccluder = []( const msurface_t *surf ) -> qboolean {
+		if ( !surf || !surf->shader ) return qfalse;
+		const shader_t *sh = surf->shader;
+		if ( sh->surfaceFlags & ( SURF_SKY | SURF_NODRAW | SURF_NODLIGHT ) ) return qfalse;
+		if ( sh->isSky ) return qfalse;
+		// Grates/fences typically live in SS_SEE_THROUGH (alpha-test + small blended edges).
+		if ( (int)sh->sort != SS_SEE_THROUGH ) return qfalse;
+		return qtrue;
+	};
+
 	// ---- Step 1: Count geometry ----
 	uint32_t totalVerts = 0, totalIndices = 0;
+	uint32_t stVerts = 0, stIndices = 0;
 	for ( int i = 0; i < tr.world->numsurfaces; i++ ) {
 		msurface_t *surf = &tr.world->surfaces[i];
+		qboolean isOpaque = isRTShadowOccluder( surf );
+		qboolean isSeeThrough = isRTSeeThroughOccluder( surf );
+		if ( !isOpaque && !isSeeThrough ) continue;
 		switch ( *surf->data ) {
 		case SF_FACE: {
 			srfSurfaceFace_t *face = (srfSurfaceFace_t *)surf->data;
-			totalVerts += face->numPoints;
-			totalIndices += face->numIndices;
+			if ( isOpaque ) {
+				totalVerts += face->numPoints;
+				totalIndices += face->numIndices;
+			} else {
+				stVerts += face->numPoints;
+				stIndices += face->numIndices;
+			}
 			break;
 		}
 		case SF_TRIANGLES: {
 			srfTriangles_t *tri = (srfTriangles_t *)surf->data;
-			totalVerts += tri->numVerts;
-			totalIndices += tri->numIndexes;
+			if ( isOpaque ) {
+				totalVerts += tri->numVerts;
+				totalIndices += tri->numIndexes;
+			} else {
+				stVerts += tri->numVerts;
+				stIndices += tri->numIndexes;
+			}
 			break;
 		}
 		case SF_GRID: {
 			srfGridMesh_t *grid = (srfGridMesh_t *)surf->data;
-			totalVerts += grid->width * grid->height;
-			totalIndices += (grid->width - 1) * (grid->height - 1) * 6;
+			uint32_t vCount = grid->width * grid->height;
+			uint32_t iCount = (grid->width - 1) * (grid->height - 1) * 6;
+			if ( isOpaque ) {
+				totalVerts += vCount;
+				totalIndices += iCount;
+			} else {
+				stVerts += vCount;
+				stIndices += iCount;
+			}
 			break;
 		}
 		default:
@@ -208,36 +161,54 @@ void VK_BuildGlowReflectAccelStruct( void ) {
 	// ---- Step 2: Fill CPU-side arrays ----
 	float *cpuVerts = (float *)ri.Malloc( totalVerts * 3 * sizeof(float), TAG_RENDERER, qfalse );
 	uint32_t *cpuIndices = (uint32_t *)ri.Malloc( totalIndices * sizeof(uint32_t), TAG_RENDERER, qfalse );
+	float *stCpuVerts = NULL;
+	uint32_t *stCpuIndices = NULL;
+	if ( stVerts && stIndices ) {
+		stCpuVerts = (float *)ri.Malloc( stVerts * 3 * sizeof(float), TAG_RENDERER, qfalse );
+		stCpuIndices = (uint32_t *)ri.Malloc( stIndices * sizeof(uint32_t), TAG_RENDERER, qfalse );
+	}
 
 	uint32_t vertOff = 0, idxOff = 0;
+	uint32_t stVertOff = 0, stIdxOff = 0;
 	for ( int i = 0; i < tr.world->numsurfaces; i++ ) {
 		msurface_t *surf = &tr.world->surfaces[i];
-		uint32_t baseVert = vertOff;
+		qboolean isOpaque = isRTShadowOccluder( surf );
+		qboolean isSeeThrough = ( stCpuVerts != NULL ) ? isRTSeeThroughOccluder( surf ) : qfalse;
+		if ( !isOpaque && !isSeeThrough ) continue;
+		uint32_t baseVert = isOpaque ? vertOff : stVertOff;
 		switch ( *surf->data ) {
 		case SF_FACE: {
 			srfSurfaceFace_t *face = (srfSurfaceFace_t *)surf->data;
 			for ( int v = 0; v < face->numPoints; v++ ) {
-				cpuVerts[vertOff*3+0] = face->points[v][0];
-				cpuVerts[vertOff*3+1] = face->points[v][1];
-				cpuVerts[vertOff*3+2] = face->points[v][2];
-				vertOff++;
+				float *dstV = isOpaque ? cpuVerts : stCpuVerts;
+				uint32_t &o = isOpaque ? vertOff : stVertOff;
+				dstV[o*3+0] = face->points[v][0];
+				dstV[o*3+1] = face->points[v][1];
+				dstV[o*3+2] = face->points[v][2];
+				o++;
 			}
 			unsigned int *faceIdx = (unsigned int *)((char *)face + face->ofsIndices);
 			for ( int j = 0; j < face->numIndices; j++ ) {
-				cpuIndices[idxOff++] = baseVert + faceIdx[j];
+				uint32_t *dstI = isOpaque ? cpuIndices : stCpuIndices;
+				uint32_t &io = isOpaque ? idxOff : stIdxOff;
+				dstI[io++] = baseVert + faceIdx[j];
 			}
 			break;
 		}
 		case SF_TRIANGLES: {
 			srfTriangles_t *tri = (srfTriangles_t *)surf->data;
 			for ( int v = 0; v < tri->numVerts; v++ ) {
-				cpuVerts[vertOff*3+0] = tri->verts[v].xyz[0];
-				cpuVerts[vertOff*3+1] = tri->verts[v].xyz[1];
-				cpuVerts[vertOff*3+2] = tri->verts[v].xyz[2];
-				vertOff++;
+				float *dstV = isOpaque ? cpuVerts : stCpuVerts;
+				uint32_t &o = isOpaque ? vertOff : stVertOff;
+				dstV[o*3+0] = tri->verts[v].xyz[0];
+				dstV[o*3+1] = tri->verts[v].xyz[1];
+				dstV[o*3+2] = tri->verts[v].xyz[2];
+				o++;
 			}
 			for ( int j = 0; j < tri->numIndexes; j++ ) {
-				cpuIndices[idxOff++] = baseVert + tri->indexes[j];
+				uint32_t *dstI = isOpaque ? cpuIndices : stCpuIndices;
+				uint32_t &io = isOpaque ? idxOff : stIdxOff;
+				dstI[io++] = baseVert + tri->indexes[j];
 			}
 			break;
 		}
@@ -245,10 +216,12 @@ void VK_BuildGlowReflectAccelStruct( void ) {
 			srfGridMesh_t *grid = (srfGridMesh_t *)surf->data;
 			int w = grid->width, h = grid->height;
 			for ( int v = 0; v < w * h; v++ ) {
-				cpuVerts[vertOff*3+0] = grid->verts[v].xyz[0];
-				cpuVerts[vertOff*3+1] = grid->verts[v].xyz[1];
-				cpuVerts[vertOff*3+2] = grid->verts[v].xyz[2];
-				vertOff++;
+				float *dstV = isOpaque ? cpuVerts : stCpuVerts;
+				uint32_t &o = isOpaque ? vertOff : stVertOff;
+				dstV[o*3+0] = grid->verts[v].xyz[0];
+				dstV[o*3+1] = grid->verts[v].xyz[1];
+				dstV[o*3+2] = grid->verts[v].xyz[2];
+				o++;
 			}
 			for ( int row = 0; row < h - 1; row++ ) {
 				for ( int col = 0; col < w - 1; col++ ) {
@@ -256,12 +229,14 @@ void VK_BuildGlowReflectAccelStruct( void ) {
 					uint32_t v1 = v0 + 1;
 					uint32_t v2 = v0 + w;
 					uint32_t v3 = v2 + 1;
-					cpuIndices[idxOff++] = v0;
-					cpuIndices[idxOff++] = v2;
-					cpuIndices[idxOff++] = v1;
-					cpuIndices[idxOff++] = v1;
-					cpuIndices[idxOff++] = v2;
-					cpuIndices[idxOff++] = v3;
+					uint32_t *dstI = isOpaque ? cpuIndices : stCpuIndices;
+					uint32_t &io = isOpaque ? idxOff : stIdxOff;
+					dstI[io++] = v0;
+					dstI[io++] = v2;
+					dstI[io++] = v1;
+					dstI[io++] = v1;
+					dstI[io++] = v2;
+					dstI[io++] = v3;
 				}
 			}
 			break;
@@ -273,6 +248,8 @@ void VK_BuildGlowReflectAccelStruct( void ) {
 
 	vk.glowReflect.numVertices = vertOff;
 	vk.glowReflect.numIndices  = idxOff;
+	vk.glowReflect.seeThroughNumVertices = stVertOff;
+	vk.glowReflect.seeThroughNumIndices  = stIdxOff;
 
 	// ---- Step 3: Upload to GPU buffers ----
 	VkDeviceSize vertBufSize = (VkDeviceSize)vertOff * 3 * sizeof(float);
@@ -299,10 +276,35 @@ void VK_BuildGlowReflectAccelStruct( void ) {
 	Com_Memcpy( mapped, cpuIndices, (size_t)idxBufSize );
 	vkUnmapMemory( vk.device, vk.glowReflect.indexMemory );
 
+	// Upload see-through buffers (optional)
+	if ( stCpuVerts && stCpuIndices && stVertOff && stIdxOff ) {
+		VkDeviceSize stVertBufSize = (VkDeviceSize)stVertOff * 3 * sizeof(float);
+		VkDeviceSize stIdxBufSize  = (VkDeviceSize)stIdxOff * sizeof(uint32_t);
+		createRTBuffer( stVertBufSize,
+			VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR
+			| VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+			&vk.glowReflect.seeThroughVertexBuffer, &vk.glowReflect.seeThroughVertexMemory );
+		createRTBuffer( stIdxBufSize,
+			VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR
+			| VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+			&vk.glowReflect.seeThroughIndexBuffer, &vk.glowReflect.seeThroughIndexMemory );
+		void *stMapped;
+		vkMapMemory( vk.device, vk.glowReflect.seeThroughVertexMemory, 0, stVertBufSize, 0, &stMapped );
+		Com_Memcpy( stMapped, stCpuVerts, (size_t)stVertBufSize );
+		vkUnmapMemory( vk.device, vk.glowReflect.seeThroughVertexMemory );
+		vkMapMemory( vk.device, vk.glowReflect.seeThroughIndexMemory, 0, stIdxBufSize, 0, &stMapped );
+		Com_Memcpy( stMapped, stCpuIndices, (size_t)stIdxBufSize );
+		vkUnmapMemory( vk.device, vk.glowReflect.seeThroughIndexMemory );
+	}
+
 	ri.Free( cpuVerts );
 	ri.Free( cpuIndices );
+	if ( stCpuVerts ) ri.Free( stCpuVerts );
+	if ( stCpuIndices ) ri.Free( stCpuIndices );
 
-	// ---- Step 4: Build BLAS ----
+	// ---- Step 4: Build BLAS (opaque world) ----
 	VkAccelerationStructureGeometryTrianglesDataKHR trianglesData = {};
 	trianglesData.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_TRIANGLES_DATA_KHR;
 	trianglesData.vertexFormat = VK_FORMAT_R32G32B32_SFLOAT;
@@ -348,10 +350,63 @@ void VK_BuildGlowReflectAccelStruct( void ) {
 	vk.rtFuncs.vkCreateAccelerationStructureKHR( vk.device, &asCreateInfo, NULL,
 		&vk.glowReflect.blas );
 
-	// Scratch buffer for build
+	// Optional: build see-through BLAS (grates/fences)
+	VkAccelerationStructureBuildSizesInfoKHR stSizeInfo = {};
+	VkAccelerationStructureBuildGeometryInfoKHR stBuildInfo = {};
+	VkAccelerationStructureGeometryKHR stGeometry = {};
+	VkAccelerationStructureGeometryTrianglesDataKHR stTriangles = {};
+	uint32_t stPrimitiveCount = 0;
+	qboolean haveSeeThrough = ( vk.glowReflect.seeThroughVertexBuffer != VK_NULL_HANDLE
+		&& vk.glowReflect.seeThroughIndexBuffer != VK_NULL_HANDLE
+		&& vk.glowReflect.seeThroughNumIndices >= 3 ) ? qtrue : qfalse;
+	if ( haveSeeThrough ) {
+		stTriangles.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_TRIANGLES_DATA_KHR;
+		stTriangles.vertexFormat = VK_FORMAT_R32G32B32_SFLOAT;
+		stTriangles.vertexData.deviceAddress = getBufferAddress( vk.glowReflect.seeThroughVertexBuffer );
+		stTriangles.vertexStride = 3 * sizeof(float);
+		stTriangles.maxVertex = vk.glowReflect.seeThroughNumVertices - 1;
+		stTriangles.indexType = VK_INDEX_TYPE_UINT32;
+		stTriangles.indexData.deviceAddress = getBufferAddress( vk.glowReflect.seeThroughIndexBuffer );
+
+		stGeometry.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
+		stGeometry.geometryType = VK_GEOMETRY_TYPE_TRIANGLES_KHR;
+		stGeometry.flags = 0; // NOT opaque; any-hit will handle stochastic opacity
+		stGeometry.geometry.triangles = stTriangles;
+
+		stBuildInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
+		stBuildInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
+		stBuildInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR;
+		stBuildInfo.mode = VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR;
+		stBuildInfo.geometryCount = 1;
+		stBuildInfo.pGeometries = &stGeometry;
+
+		stPrimitiveCount = vk.glowReflect.seeThroughNumIndices / 3;
+		stSizeInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR;
+		vk.rtFuncs.vkGetAccelerationStructureBuildSizesKHR( vk.device,
+			VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR,
+			&stBuildInfo, &stPrimitiveCount, &stSizeInfo );
+
+		createRTBuffer( stSizeInfo.accelerationStructureSize,
+			VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR,
+			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+			&vk.glowReflect.blasSeeThroughBuffer, &vk.glowReflect.blasSeeThroughMemory );
+
+		VkAccelerationStructureCreateInfoKHR stAsCreate = {};
+		stAsCreate.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_KHR;
+		stAsCreate.buffer = vk.glowReflect.blasSeeThroughBuffer;
+		stAsCreate.size = stSizeInfo.accelerationStructureSize;
+		stAsCreate.type = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
+		vk.rtFuncs.vkCreateAccelerationStructureKHR( vk.device, &stAsCreate, NULL,
+			&vk.glowReflect.blasSeeThrough );
+	}
+
+	// Scratch buffer for builds (size = max of opaque + see-through + later TLAS scratch)
 	VkBuffer scratchBuf;
 	VkDeviceMemory scratchMem;
 	VkDeviceSize maxScratch = sizeInfo.buildScratchSize;
+	if ( haveSeeThrough && stSizeInfo.buildScratchSize > maxScratch ) {
+		maxScratch = stSizeInfo.buildScratchSize;
+	}
 	createRTBuffer( maxScratch,
 		VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
 		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
@@ -368,6 +423,25 @@ void VK_BuildGlowReflectAccelStruct( void ) {
 	VkCommandBuffer cmd = VK_BeginSingleTimeCommands();
 	vk.rtFuncs.vkCmdBuildAccelerationStructuresKHR( cmd, 1, &buildInfo, &pRangeInfos );
 
+	// Build see-through BLAS (optional)
+	if ( haveSeeThrough ) {
+		VkMemoryBarrier memBarrier2 = {};
+		memBarrier2.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+		memBarrier2.srcAccessMask = VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_KHR;
+		memBarrier2.dstAccessMask = VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR;
+		vkCmdPipelineBarrier( cmd,
+			VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR,
+			VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR,
+			0, 1, &memBarrier2, 0, NULL, 0, NULL );
+
+		stBuildInfo.dstAccelerationStructure = vk.glowReflect.blasSeeThrough;
+		stBuildInfo.scratchData.deviceAddress = getBufferAddress( scratchBuf );
+		VkAccelerationStructureBuildRangeInfoKHR stRange = {};
+		stRange.primitiveCount = stPrimitiveCount;
+		const VkAccelerationStructureBuildRangeInfoKHR *pStRange = &stRange;
+		vk.rtFuncs.vkCmdBuildAccelerationStructuresKHR( cmd, 1, &stBuildInfo, &pStRange );
+	}
+
 	// Memory barrier between BLAS and TLAS builds
 	VkMemoryBarrier memBarrier = {};
 	memBarrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
@@ -379,15 +453,20 @@ void VK_BuildGlowReflectAccelStruct( void ) {
 		0, 1, &memBarrier, 0, NULL, 0, NULL );
 
 	// ---- Step 5: Pre-allocate Ghoul2 proxy BLAS ----
-	// Each Ghoul2 entity is approximated by 12 bone-driven octagonal prisms
+	// Each Ghoul2 entity is approximated by bone-driven prisms
 	// (torso, head, arms, legs) for a smooth human-shaped shadow silhouette.
-	// Each prism has 16 verts (8-point ring × 2 ends) and 28 tris.
+	// We use a 12-sided tapered prism per segment (24 verts) for a less blocky
+	// silhouette than an octagon.
 	// Buffers are DEVICE_LOCAL and updated each frame via vkCmdUpdateBuffer.
 	{
-		const uint32_t kSegments = 12;
-		uint32_t maxG2Verts   = GLOW_RT_MAX_GHOUL2_ENTITIES * kSegments * 16;
-		uint32_t maxG2Indices = GLOW_RT_MAX_GHOUL2_ENTITIES * kSegments * 84;
-		uint32_t maxG2Tris    = GLOW_RT_MAX_GHOUL2_ENTITIES * kSegments * 28;
+		const uint32_t kSegments = 15;
+		const uint32_t kSides = 24;
+		const uint32_t kVertsPerSeg = kSides * 2;
+		const uint32_t kIndicesPerSeg = (12 * kSides - 12); // 2 caps + sides (see generation below)
+		const uint32_t kTrisPerSeg = kIndicesPerSeg / 3;
+		uint32_t maxG2Verts   = GLOW_RT_MAX_GHOUL2_ENTITIES * kSegments * kVertsPerSeg;
+		uint32_t maxG2Indices = GLOW_RT_MAX_GHOUL2_ENTITIES * kSegments * kIndicesPerSeg;
+		uint32_t maxG2Tris    = GLOW_RT_MAX_GHOUL2_ENTITIES * kSegments * kTrisPerSeg;
 
 		VkDeviceSize g2VertSize = (VkDeviceSize)maxG2Verts * 3 * sizeof(float);
 		VkDeviceSize g2IdxSize  = (VkDeviceSize)maxG2Indices * sizeof(uint32_t);
@@ -417,7 +496,8 @@ void VK_BuildGlowReflectAccelStruct( void ) {
 		VkAccelerationStructureGeometryKHR g2Geom = {};
 		g2Geom.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
 		g2Geom.geometryType = VK_GEOMETRY_TYPE_TRIANGLES_KHR;
-		g2Geom.flags = VK_GEOMETRY_OPAQUE_BIT_KHR;
+		// Not opaque: allow any-hit shader to run so Ghoul2 occlusion can be softened.
+		g2Geom.flags = 0;
 		g2Geom.geometry.triangles = g2Tri;
 
 		VkAccelerationStructureBuildGeometryInfoKHR g2Build = {};
@@ -453,9 +533,9 @@ void VK_BuildGlowReflectAccelStruct( void ) {
 			&vk.glowReflect.ghoul2ScratchBuffer, &vk.glowReflect.ghoul2ScratchMemory );
 	}
 
-	// ---- Step 6: Pre-allocate TLAS for up to 2 instances (BSP + Ghoul2) ----
+	// ---- Step 6: Pre-allocate TLAS for up to 3 instances (opaque BSP + see-through BSP + Ghoul2) ----
 	{
-		uint32_t maxInstances = 2;
+		uint32_t maxInstances = 3;
 
 		// Instance buffer (DEVICE_LOCAL, updated each frame via vkCmdUpdateBuffer)
 		createRTBuffer( maxInstances * sizeof(VkAccelerationStructureInstanceKHR),
@@ -506,24 +586,47 @@ void VK_BuildGlowReflectAccelStruct( void ) {
 			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 			&vk.glowReflect.tlasScratchBuffer, &vk.glowReflect.tlasScratchMemory );
 
-		// ---- Initial TLAS build with BSP-only instance ----
+		// ---- Initial TLAS build with BSP-only instance(s) ----
 		VkAccelerationStructureDeviceAddressInfoKHR blasAddrInfo = {};
 		blasAddrInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_DEVICE_ADDRESS_INFO_KHR;
 		blasAddrInfo.accelerationStructure = vk.glowReflect.blas;
 		VkDeviceAddress blasAddress =
 			vk.rtFuncs.vkGetAccelerationStructureDeviceAddressKHR( vk.device, &blasAddrInfo );
 
-		VkAccelerationStructureInstanceKHR bspInstance = {};
+		VkAccelerationStructureInstanceKHR instancesInit[2] = {};
+		uint32_t initCount = 1;
+
+		// Instance 0: opaque BSP
+		VkAccelerationStructureInstanceKHR &bspInstance = instancesInit[0];
 		bspInstance.transform.matrix[0][0] = 1.0f;
 		bspInstance.transform.matrix[1][1] = 1.0f;
 		bspInstance.transform.matrix[2][2] = 1.0f;
-		bspInstance.mask = 0xFF;
+		bspInstance.instanceCustomIndex = 0;
+		bspInstance.mask = 0x01;
 		bspInstance.instanceShaderBindingTableRecordOffset = 0;
 		bspInstance.flags = VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR;
 		bspInstance.accelerationStructureReference = blasAddress;
 
+		// Instance 1: see-through BSP (optional)
+		if ( vk.glowReflect.blasSeeThrough ) {
+			VkAccelerationStructureDeviceAddressInfoKHR stAddrInfo = {};
+			stAddrInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_DEVICE_ADDRESS_INFO_KHR;
+			stAddrInfo.accelerationStructure = vk.glowReflect.blasSeeThrough;
+			VkDeviceAddress stAddress = vk.rtFuncs.vkGetAccelerationStructureDeviceAddressKHR( vk.device, &stAddrInfo );
+			VkAccelerationStructureInstanceKHR &stInst = instancesInit[1];
+			stInst.transform.matrix[0][0] = 1.0f;
+			stInst.transform.matrix[1][1] = 1.0f;
+			stInst.transform.matrix[2][2] = 1.0f;
+			stInst.instanceCustomIndex = 1;
+			stInst.mask = 0x04;
+			stInst.instanceShaderBindingTableRecordOffset = 0;
+			stInst.flags = VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR;
+			stInst.accelerationStructureReference = stAddress;
+			initCount = 2;
+		}
+
 		vkCmdUpdateBuffer( cmd, vk.glowReflect.tlasInstanceBuffer, 0,
-			sizeof(bspInstance), &bspInstance );
+			initCount * sizeof(VkAccelerationStructureInstanceKHR), instancesInit );
 
 		// Barrier: transfer write → AS build read
 		VkMemoryBarrier xferBarrier = {};
@@ -538,7 +641,7 @@ void VK_BuildGlowReflectAccelStruct( void ) {
 		tlasBuildInfo.dstAccelerationStructure = vk.glowReflect.tlas;
 		tlasBuildInfo.scratchData.deviceAddress = getBufferAddress( vk.glowReflect.tlasScratchBuffer );
 
-		uint32_t initInstanceCount = 1;
+		uint32_t initInstanceCount = initCount;
 		VkAccelerationStructureBuildRangeInfoKHR tlasRangeInfo = {};
 		tlasRangeInfo.primitiveCount = initInstanceCount;
 		const VkAccelerationStructureBuildRangeInfoKHR *pTlasRangeInfos = &tlasRangeInfo;
@@ -592,6 +695,9 @@ void VK_CreateGlowReflectResources( void ) {
 		ri.Printf( PRINT_ALL, "VK_CreateGlowReflectResources: RT shaders not loaded\n" );
 		return;
 	}
+	if ( !vk.glowReflectRahitShader ) {
+		ri.Printf( PRINT_WARNING, "VK_CreateGlowReflectResources: any-hit shader not loaded, see-through occluders disabled\n" );
+	}
 	if ( !vk.glow.glowImage ) {
 		ri.Printf( PRINT_ALL, "VK_CreateGlowReflectResources: glow resources not available\n" );
 		return;
@@ -600,40 +706,311 @@ void VK_CreateGlowReflectResources( void ) {
 	uint32_t width  = vk.swapchainExtent.width;
 	uint32_t height = vk.swapchainExtent.height;
 
-	// ---- Output storage image ----
-	VK_CreateRenderTargetImage( &vk.glowReflect.outputImage,
-		&vk.glowReflect.outputImageMemory,
-		&vk.glowReflect.outputImageView,
-		width, height, vk.swapchainFormat,
-		VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT );
+	// Apply render scale (0.5 = half-res, 1.0 = full-res).
+	// Half-res is nearly invisible for a diffuse glow effect that gets
+	// blurred anyway, but dispatches 4x fewer RT shader invocations.
+	float scale = r_DynamicGlowReflectionScale ? Com_Clamp( 0.25f, 1.0f, r_DynamicGlowReflectionScale->value ) : 0.5f;
+	uint32_t rtW = (uint32_t)(width  * scale);
+	uint32_t rtH = (uint32_t)(height * scale);
+	if ( rtW < 64 ) rtW = 64;
+	if ( rtH < 64 ) rtH = 64;
+	vk.glowReflect.rtWidth  = rtW;
+	vk.glowReflect.rtHeight = rtH;
 
-	VK_TransitionImageLayout( vk.glowReflect.outputImage, vk.swapchainFormat,
-		VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL, 1 );
+	// ---- Ping-pong output images (replaces separate output + history) ----
+	// Both images have identical usage: STORAGE (RT writes) + SAMPLED (history/blur/composite).
+	// Frame N writes to ppImage[pingPongIndex], reads history from ppImage[1-pingPongIndex].
+	// After dispatch, pingPongIndex flips — no vkCmdCopyImage needed.
+	for ( int pp = 0; pp < 2; pp++ ) {
+		VK_CreateRenderTargetImage( &vk.glowReflect.ppImage[pp],
+			&vk.glowReflect.ppImageMemory[pp],
+			&vk.glowReflect.ppImageView[pp],
+			rtW, rtH, vk.sceneFormat,
+			VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT );
+	}
 
-	// Composite descriptor (sampled image for the fullscreen triangle pass)
-	// We keep the output image in GENERAL layout at all times, so write the
-	// descriptor with GENERAL rather than the SHADER_READ_ONLY_OPTIMAL that
-	// VK_AllocateImageDescriptor would use.
-	vk.glowReflect.outputDescriptorSet = VK_AllocateImageDescriptor(
-		vk.glowReflect.outputImageView, vk.samplerNoMipClamp );
-
-	// Overwrite with GENERAL layout
+	// Initialize both to GENERAL layout (ping-pong images always stay in GENERAL for simplicity)
 	{
-		VkDescriptorImageInfo imgInfo = {};
-		imgInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-		imgInfo.imageView   = vk.glowReflect.outputImageView;
-		imgInfo.sampler     = vk.samplerNoMipClamp;
+		VkCommandBuffer initCmd = VK_BeginSingleTimeCommands();
 
-		VkWriteDescriptorSet write = {};
-		write.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		write.dstSet          = vk.glowReflect.outputDescriptorSet;
-		write.dstBinding       = 0;
-		write.dstArrayElement   = 0;
-		write.descriptorType   = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		write.descriptorCount  = 1;
-		write.pImageInfo       = &imgInfo;
+		VK_TransitionImageLayout( vk.glowReflect.ppImage[0], vk.sceneFormat,
+			VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL, 1, initCmd );
 
-		vkUpdateDescriptorSets( vk.device, 1, &write, 0, NULL );
+		// Clear ppImage[1] to black and keep in GENERAL layout
+		VK_TransitionImageLayout( vk.glowReflect.ppImage[1], vk.sceneFormat,
+			VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, initCmd );
+		VkClearColorValue clear = { { 0.0f, 0.0f, 0.0f, 0.0f } };
+		VkImageSubresourceRange range = {};
+		range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		range.baseMipLevel = 0;
+		range.levelCount = 1;
+		range.baseArrayLayer = 0;
+		range.layerCount = 1;
+		vkCmdClearColorImage( initCmd, vk.glowReflect.ppImage[1],
+			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clear, 1, &range );
+		VkImageMemoryBarrier b = {};
+		b.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+		b.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+		b.dstAccessMask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT;
+		b.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+		b.newLayout = VK_IMAGE_LAYOUT_GENERAL;
+		b.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		b.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		b.image = vk.glowReflect.ppImage[1];
+		b.subresourceRange = range;
+		vkCmdPipelineBarrier( initCmd,
+			VK_PIPELINE_STAGE_TRANSFER_BIT,
+			VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR,
+			0, 0, NULL, 0, NULL, 1, &b );
+
+		VK_EndSingleTimeCommands( initCmd );
+	}
+
+	vk.glowReflect.pingPongIndex = 0;
+
+	// Create per-image composite descriptors (GENERAL layout for fullscreen triangle pass)
+	// and blur-read descriptors (SHADER_READ_ONLY layout)
+	for ( int pp = 0; pp < 2; pp++ ) {
+		// Composite descriptor (GENERAL layout)
+		vk.glowReflect.ppOutputDescriptorSet[pp] = VK_AllocateImageDescriptor(
+			vk.glowReflect.ppImageView[pp], vk.samplerNoMipClamp );
+		{
+			VkDescriptorImageInfo imgInfo = {};
+			imgInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+			imgInfo.imageView   = vk.glowReflect.ppImageView[pp];
+			imgInfo.sampler     = vk.samplerNoMipClamp;
+
+			VkWriteDescriptorSet write = {};
+			write.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			write.dstSet          = vk.glowReflect.ppOutputDescriptorSet[pp];
+			write.dstBinding       = 0;
+			write.dstArrayElement   = 0;
+			write.descriptorType   = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			write.descriptorCount  = 1;
+			write.pImageInfo       = &imgInfo;
+
+			vkUpdateDescriptorSets( vk.device, 1, &write, 0, NULL );
+		}
+
+		// Blur-read descriptor: allocate and update with GENERAL layout (images stay in GENERAL)
+		{
+			VkDescriptorSetAllocateInfo allocInfo = {};
+			allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+			allocInfo.descriptorPool = vk.descriptorPool;
+			allocInfo.descriptorSetCount = 1;
+			allocInfo.pSetLayouts = &vk.descriptorSetLayout;
+			vkAllocateDescriptorSets( vk.device, &allocInfo,
+				&vk.glowReflect.ppOutputReadDescriptorSet[pp] );
+
+			VkDescriptorImageInfo imgInfo = {};
+			imgInfo.imageView   = vk.glowReflect.ppImageView[pp];
+			imgInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;  // Keep in GENERAL (not SHADER_READ_ONLY)
+			imgInfo.sampler     = vk.samplerNoMipClamp;
+
+			VkWriteDescriptorSet write = {};
+			write.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			write.dstSet          = vk.glowReflect.ppOutputReadDescriptorSet[pp];
+			write.dstBinding      = 0;
+			write.dstArrayElement = 0;
+			write.descriptorCount = 1;
+			write.descriptorType  = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			write.pImageInfo      = &imgInfo;
+
+			vkUpdateDescriptorSets( vk.device, 1, &write, 0, NULL );
+		}
+	}
+
+	// ---- Blur resources: two images for H/V separable blur ----
+	// Size matches RT dispatch resolution, not swapchain.
+	{
+		VK_CreateRenderTargetImage( &vk.glowReflect.blurTempImage,
+			&vk.glowReflect.blurTempImageMemory,
+			&vk.glowReflect.blurTempImageView,
+			rtW, rtH, vk.sceneFormat,
+			VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT );
+		vk.glowReflect.blurTempDescriptorSet = VK_AllocateImageDescriptor(
+			vk.glowReflect.blurTempImageView, vk.samplerNoMipClamp );
+
+		VK_CreateRenderTargetImage( &vk.glowReflect.blurOutputImage,
+			&vk.glowReflect.blurOutputImageMemory,
+			&vk.glowReflect.blurOutputImageView,
+			rtW, rtH, vk.sceneFormat,
+			VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT );
+		vk.glowReflect.blurOutputDescriptorSet = VK_AllocateImageDescriptor(
+			vk.glowReflect.blurOutputImageView, vk.samplerNoMipClamp );
+
+		if ( vk.glow.blurRenderPass ) {
+			VkFramebufferCreateInfo fbInfo = {};
+			fbInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+			fbInfo.renderPass = vk.glow.blurRenderPass;
+			fbInfo.attachmentCount = 1;
+			fbInfo.width = rtW;
+			fbInfo.height = rtH;
+			fbInfo.layers = 1;
+
+			fbInfo.pAttachments = &vk.glowReflect.blurTempImageView;
+			vkCreateFramebuffer( vk.device, &fbInfo, NULL, &vk.glowReflect.blurTempFramebuffer );
+
+			fbInfo.pAttachments = &vk.glowReflect.blurOutputImageView;
+			vkCreateFramebuffer( vk.device, &fbInfo, NULL, &vk.glowReflect.blurOutputFramebuffer );
+		}
+
+		// Create alpha-masked blur pipeline (same as glow blur but uses glow_blur_masked.frag)
+		if ( vk.glow.blurRenderPass && vk.blurVertShader && vk.blurMaskedFragShader ) {
+			VkPipelineShaderStageCreateInfo stages[2] = {};
+			stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+			stages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
+			stages[0].module = vk.blurVertShader;
+			stages[0].pName = "main";
+			stages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+			stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+			stages[1].module = vk.blurMaskedFragShader;
+			stages[1].pName = "main";
+
+			VkPipelineVertexInputStateCreateInfo vertexInput = {};
+			vertexInput.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+
+			VkPipelineInputAssemblyStateCreateInfo inputAssembly = {};
+			inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+			inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+
+			VkPipelineViewportStateCreateInfo viewportState = {};
+			viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+			viewportState.viewportCount = 1;
+			viewportState.scissorCount = 1;
+
+			VkPipelineRasterizationStateCreateInfo rasterization = {};
+			rasterization.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+			rasterization.polygonMode = VK_POLYGON_MODE_FILL;
+			rasterization.cullMode = VK_CULL_MODE_NONE;
+			rasterization.frontFace = VK_FRONT_FACE_CLOCKWISE;
+			rasterization.lineWidth = 1.0f;
+
+			VkPipelineMultisampleStateCreateInfo multisample = {};
+			multisample.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+			multisample.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+
+			VkPipelineColorBlendAttachmentState blendAttachment = {};
+			blendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
+				VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+			blendAttachment.blendEnable = VK_FALSE;
+
+			VkPipelineColorBlendStateCreateInfo colorBlend = {};
+			colorBlend.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+			colorBlend.attachmentCount = 1;
+			colorBlend.pAttachments = &blendAttachment;
+
+			VkPipelineDepthStencilStateCreateInfo depthStencil = {};
+			depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+			depthStencil.depthTestEnable = VK_FALSE;
+			depthStencil.depthWriteEnable = VK_FALSE;
+
+			VkDynamicState dynamicStates[] = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
+			VkPipelineDynamicStateCreateInfo dynamicState = {};
+			dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+			dynamicState.dynamicStateCount = 2;
+			dynamicState.pDynamicStates = dynamicStates;
+
+			VkGraphicsPipelineCreateInfo pipelineInfo = {};
+			pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+			pipelineInfo.stageCount = 2;
+			pipelineInfo.pStages = stages;
+			pipelineInfo.pVertexInputState = &vertexInput;
+			pipelineInfo.pInputAssemblyState = &inputAssembly;
+			pipelineInfo.pViewportState = &viewportState;
+			pipelineInfo.pRasterizationState = &rasterization;
+			pipelineInfo.pMultisampleState = &multisample;
+			pipelineInfo.pDepthStencilState = &depthStencil;
+			pipelineInfo.pColorBlendState = &colorBlend;
+			pipelineInfo.pDynamicState = &dynamicState;
+			pipelineInfo.layout = vk.pipelineLayout;
+			pipelineInfo.renderPass = vk.glow.blurRenderPass;
+			pipelineInfo.subpass = 0;
+
+			vkCreateGraphicsPipelines( vk.device, vk.pipelineCache, 1, &pipelineInfo, NULL, &vk.glowReflect.blurMaskedPipeline );
+		}
+
+		// Alpha-masked composite pipeline: renders raw RT output using (ONE_MINUS_SRC_ALPHA, ONE)
+		// so that only Ghoul2 pixels (alpha=0 → factor=1) are added; BSP (alpha=1 → factor=0) are skipped.
+		if ( vk.renderPassLoad && vk.blurVertShader && vk.glowCompositeFragShader ) {
+			VkPipelineShaderStageCreateInfo cStages[2] = {};
+			cStages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+			cStages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
+			cStages[0].module = vk.blurVertShader;
+			cStages[0].pName = "main";
+			cStages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+			cStages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+			cStages[1].module = vk.glowCompositeFragShader;
+			cStages[1].pName = "main";
+
+			VkPipelineVertexInputStateCreateInfo vi = {};
+			vi.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+
+			VkPipelineInputAssemblyStateCreateInfo ia = {};
+			ia.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+			ia.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+
+			VkPipelineViewportStateCreateInfo vp = {};
+			vp.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+			vp.viewportCount = 1;
+			vp.scissorCount = 1;
+
+			VkPipelineRasterizationStateCreateInfo rs = {};
+			rs.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+			rs.polygonMode = VK_POLYGON_MODE_FILL;
+			rs.cullMode = VK_CULL_MODE_NONE;
+			rs.frontFace = VK_FRONT_FACE_CLOCKWISE;
+			rs.lineWidth = 1.0f;
+
+			VkPipelineMultisampleStateCreateInfo ms = {};
+			ms.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+			ms.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+
+			VkPipelineColorBlendAttachmentState ba = {};
+			ba.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
+				VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+			ba.blendEnable = VK_TRUE;
+			ba.srcColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+			ba.dstColorBlendFactor = VK_BLEND_FACTOR_ONE;
+			ba.colorBlendOp = VK_BLEND_OP_ADD;
+			ba.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+			ba.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+			ba.alphaBlendOp = VK_BLEND_OP_ADD;
+
+			VkPipelineColorBlendStateCreateInfo cb = {};
+			cb.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+			cb.attachmentCount = 1;
+			cb.pAttachments = &ba;
+
+			VkPipelineDepthStencilStateCreateInfo ds = {};
+			ds.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+			ds.depthTestEnable = VK_FALSE;
+			ds.depthWriteEnable = VK_FALSE;
+
+			VkDynamicState dynStates[] = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
+			VkPipelineDynamicStateCreateInfo dyn = {};
+			dyn.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+			dyn.dynamicStateCount = 2;
+			dyn.pDynamicStates = dynStates;
+
+			VkGraphicsPipelineCreateInfo pi = {};
+			pi.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+			pi.stageCount = 2;
+			pi.pStages = cStages;
+			pi.pVertexInputState = &vi;
+			pi.pInputAssemblyState = &ia;
+			pi.pViewportState = &vp;
+			pi.pRasterizationState = &rs;
+			pi.pMultisampleState = &ms;
+			pi.pDepthStencilState = &ds;
+			pi.pColorBlendState = &cb;
+			pi.pDynamicState = &dyn;
+			pi.layout = vk.pipelineLayout;
+			pi.renderPass = vk.renderPassLoad;
+			pi.subpass = 0;
+
+			vkCreateGraphicsPipelines( vk.device, vk.pipelineCache, 1, &pi, NULL, &vk.glowReflect.g2CompositePipeline );
+		}
 	}
 
 	// ---- Depth-only image view ----
@@ -683,9 +1060,43 @@ void VK_CreateGlowReflectResources( void ) {
 		Com_Memset( vk.glowReflect.glowSourcesMapped, 0, (size_t)uboSize );
 	}
 
+	// ---- RT params uniform buffer (host-visible, persistently mapped) ----
+	{
+		// Matches RTParamsUBO in glow_reflect.rgen/.rahit
+		VkDeviceSize uboSize = 16 * sizeof(float) + 4 * sizeof(uint32_t) + 4 * sizeof(float);
+		VkBufferCreateInfo bufInfo = {};
+		bufInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+		bufInfo.size = uboSize;
+		bufInfo.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+		bufInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+		vkCreateBuffer( vk.device, &bufInfo, NULL, &vk.glowReflect.rtParamsBuffer );
+
+		VkMemoryRequirements memReqs;
+		vkGetBufferMemoryRequirements( vk.device, vk.glowReflect.rtParamsBuffer, &memReqs );
+
+		VkMemoryAllocateInfo allocInfo = {};
+		allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+		allocInfo.allocationSize = memReqs.size;
+		allocInfo.memoryTypeIndex = VK_FindMemoryType( memReqs.memoryTypeBits,
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT );
+		vkAllocateMemory( vk.device, &allocInfo, NULL, &vk.glowReflect.rtParamsMemory );
+		vkBindBufferMemory( vk.device, vk.glowReflect.rtParamsBuffer,
+			vk.glowReflect.rtParamsMemory, 0 );
+
+		vkMapMemory( vk.device, vk.glowReflect.rtParamsMemory, 0, uboSize, 0,
+			&vk.glowReflect.rtParamsMapped );
+		Com_Memset( vk.glowReflect.rtParamsMapped, 0, (size_t)uboSize );
+		vk.glowReflect.rtFrameIndex = 0;
+		Com_Memset( vk.glowReflect.prevViewProjection, 0, sizeof(vk.glowReflect.prevViewProjection) );
+		vk.glowReflect.prevViewProjection[0] = 1.0f;
+		vk.glowReflect.prevViewProjection[5] = 1.0f;
+		vk.glowReflect.prevViewProjection[10] = 1.0f;
+		vk.glowReflect.prevViewProjection[15] = 1.0f;
+	}
+
 	// ---- RT descriptor set layout ----
 	{
-		VkDescriptorSetLayoutBinding bindings[5] = {};
+		VkDescriptorSetLayoutBinding bindings[7] = {};
 
 		bindings[0].binding = 0;
 		bindings[0].descriptorType = VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR;
@@ -712,9 +1123,19 @@ void VK_CreateGlowReflectResources( void ) {
 		bindings[4].descriptorCount = 1;
 		bindings[4].stageFlags = VK_SHADER_STAGE_RAYGEN_BIT_KHR;
 
+		bindings[5].binding = 5;
+		bindings[5].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		bindings[5].descriptorCount = 1;
+		bindings[5].stageFlags = VK_SHADER_STAGE_RAYGEN_BIT_KHR;
+
+		bindings[6].binding = 6;
+		bindings[6].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		bindings[6].descriptorCount = 1;
+		bindings[6].stageFlags = VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_ANY_HIT_BIT_KHR;
+
 		VkDescriptorSetLayoutCreateInfo layoutInfo = {};
 		layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-		layoutInfo.bindingCount = 5;
+		layoutInfo.bindingCount = 7;
 		layoutInfo.pBindings = bindings;
 
 		if ( vkCreateDescriptorSetLayout( vk.device, &layoutInfo, NULL,
@@ -747,7 +1168,7 @@ void VK_CreateGlowReflectResources( void ) {
 
 	// ---- RT Pipeline ----
 	{
-		VkPipelineShaderStageCreateInfo stages[3] = {};
+		VkPipelineShaderStageCreateInfo stages[4] = {};
 
 		stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 		stages[0].stage = VK_SHADER_STAGE_RAYGEN_BIT_KHR;
@@ -763,6 +1184,11 @@ void VK_CreateGlowReflectResources( void ) {
 		stages[2].stage = VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR;
 		stages[2].module = vk.glowReflectRchitShader;
 		stages[2].pName = "main";
+
+		stages[3].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+		stages[3].stage = VK_SHADER_STAGE_ANY_HIT_BIT_KHR;
+		stages[3].module = vk.glowReflectRahitShader;
+		stages[3].pName = "main";
 
 		VkRayTracingShaderGroupCreateInfoKHR groups[3] = {};
 
@@ -787,12 +1213,12 @@ void VK_CreateGlowReflectResources( void ) {
 		groups[2].type = VK_RAY_TRACING_SHADER_GROUP_TYPE_TRIANGLES_HIT_GROUP_KHR;
 		groups[2].generalShader = VK_SHADER_UNUSED_KHR;
 		groups[2].closestHitShader = 2;
-		groups[2].anyHitShader = VK_SHADER_UNUSED_KHR;
+		groups[2].anyHitShader = ( vk.glowReflectRahitShader != VK_NULL_HANDLE ) ? 3 : VK_SHADER_UNUSED_KHR;
 		groups[2].intersectionShader = VK_SHADER_UNUSED_KHR;
 
 		VkRayTracingPipelineCreateInfoKHR rtPipelineInfo = {};
 		rtPipelineInfo.sType = VK_STRUCTURE_TYPE_RAY_TRACING_PIPELINE_CREATE_INFO_KHR;
-		rtPipelineInfo.stageCount = 3;
+		rtPipelineInfo.stageCount = ( vk.glowReflectRahitShader != VK_NULL_HANDLE ) ? 4 : 3;
 		rtPipelineInfo.pStages = stages;
 		rtPipelineInfo.groupCount = 3;
 		rtPipelineInfo.pGroups = groups;
@@ -860,91 +1286,28 @@ void VK_CreateGlowReflectResources( void ) {
 		Com_Memset( &vk.glowReflect.callRegion, 0, sizeof(vk.glowReflect.callRegion) );
 	}
 
-	// ---- Allocate RT descriptor set (written once AS is built) ----
+	// ---- Allocate ping-pong RT descriptor sets (written once AS is built) ----
+	// ppRtDescriptorSet[0]: output=ppImage[0], history=ppImage[1]
+	// ppRtDescriptorSet[1]: output=ppImage[1], history=ppImage[0]
 	{
+		VkDescriptorSetLayout layouts[2] = { vk.glowReflect.rtDescriptorSetLayout, vk.glowReflect.rtDescriptorSetLayout };
 		VkDescriptorSetAllocateInfo allocInfo = {};
 		allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 		allocInfo.descriptorPool = vk.descriptorPool;
-		allocInfo.descriptorSetCount = 1;
-		allocInfo.pSetLayouts = &vk.glowReflect.rtDescriptorSetLayout;
+		allocInfo.descriptorSetCount = 2;
+		allocInfo.pSetLayouts = layouts;
 
 		if ( vkAllocateDescriptorSets( vk.device, &allocInfo,
-			&vk.glowReflect.rtDescriptorSet ) != VK_SUCCESS ) {
-			ri.Printf( PRINT_ALL, "VK_CreateGlowReflectResources: failed to allocate RT descriptor set\n" );
+			vk.glowReflect.ppRtDescriptorSet ) != VK_SUCCESS ) {
+			ri.Printf( PRINT_ALL, "VK_CreateGlowReflectResources: failed to allocate RT descriptor sets\n" );
 			return;
 		}
+		// Keep rtDescriptorSet pointing to ppRtDescriptorSet[0] for writeRTDescriptorSet compatibility
+		vk.glowReflect.rtDescriptorSet = vk.glowReflect.ppRtDescriptorSet[0];
 	}
 
 	vk.glowReflect.available = qtrue;
 	ri.Printf( PRINT_ALL, "RT glow reflection resources created (%dx%d)\n", width, height );
-}
-
-/*
- * Write the RT descriptor set (called once after AS build).
- */
-static void writeRTDescriptorSet( void ) {
-	VkWriteDescriptorSetAccelerationStructureKHR asWrite = {};
-	asWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_KHR;
-	asWrite.accelerationStructureCount = 1;
-	asWrite.pAccelerationStructures = &vk.glowReflect.tlas;
-
-	VkDescriptorImageInfo outputImgInfo = {};
-	outputImgInfo.imageView  = vk.glowReflect.outputImageView;
-	outputImgInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-
-	VkDescriptorImageInfo depthImgInfo = {};
-	depthImgInfo.imageView  = vk.glowReflect.depthOnlyImageView;
-	depthImgInfo.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
-	depthImgInfo.sampler     = vk.samplerNoMipClamp;
-
-	VkDescriptorImageInfo glowImgInfo = {};
-	glowImgInfo.imageView  = vk.glow.glowImageView;
-	glowImgInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	glowImgInfo.sampler     = vk.samplerNoMipClamp;
-
-	VkDescriptorBufferInfo uboInfo = {};
-	uboInfo.buffer = vk.glowReflect.glowSourcesBuffer;
-	uboInfo.offset = 0;
-	uboInfo.range  = GLOW_RT_MAX_SOURCES * sizeof(glowSourceData_t);
-
-	VkWriteDescriptorSet writes[5] = {};
-
-	writes[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	writes[0].pNext = &asWrite;
-	writes[0].dstSet = vk.glowReflect.rtDescriptorSet;
-	writes[0].dstBinding = 0;
-	writes[0].descriptorType = VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR;
-	writes[0].descriptorCount = 1;
-
-	writes[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	writes[1].dstSet = vk.glowReflect.rtDescriptorSet;
-	writes[1].dstBinding = 1;
-	writes[1].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
-	writes[1].descriptorCount = 1;
-	writes[1].pImageInfo = &outputImgInfo;
-
-	writes[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	writes[2].dstSet = vk.glowReflect.rtDescriptorSet;
-	writes[2].dstBinding = 2;
-	writes[2].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	writes[2].descriptorCount = 1;
-	writes[2].pImageInfo = &depthImgInfo;
-
-	writes[3].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	writes[3].dstSet = vk.glowReflect.rtDescriptorSet;
-	writes[3].dstBinding = 3;
-	writes[3].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	writes[3].descriptorCount = 1;
-	writes[3].pImageInfo = &glowImgInfo;
-
-	writes[4].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	writes[4].dstSet = vk.glowReflect.rtDescriptorSet;
-	writes[4].dstBinding = 4;
-	writes[4].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	writes[4].descriptorCount = 1;
-	writes[4].pBufferInfo = &uboInfo;
-
-	vkUpdateDescriptorSets( vk.device, 5, writes, 0, NULL );
 }
 
 /*
@@ -973,6 +1336,16 @@ void VK_InvalidateGlowReflectAccelStruct( void ) {
 	if ( vk.glowReflect.vertexMemory ) vkFreeMemory( vk.device, vk.glowReflect.vertexMemory, NULL );
 	if ( vk.glowReflect.indexBuffer ) vkDestroyBuffer( vk.device, vk.glowReflect.indexBuffer, NULL );
 	if ( vk.glowReflect.indexMemory ) vkFreeMemory( vk.device, vk.glowReflect.indexMemory, NULL );
+
+	// See-through BSP BLAS (optional)
+	if ( vk.glowReflect.blasSeeThrough && vk.rtFuncs.vkDestroyAccelerationStructureKHR )
+		vk.rtFuncs.vkDestroyAccelerationStructureKHR( vk.device, vk.glowReflect.blasSeeThrough, NULL );
+	if ( vk.glowReflect.blasSeeThroughBuffer ) vkDestroyBuffer( vk.device, vk.glowReflect.blasSeeThroughBuffer, NULL );
+	if ( vk.glowReflect.blasSeeThroughMemory ) vkFreeMemory( vk.device, vk.glowReflect.blasSeeThroughMemory, NULL );
+	if ( vk.glowReflect.seeThroughVertexBuffer ) vkDestroyBuffer( vk.device, vk.glowReflect.seeThroughVertexBuffer, NULL );
+	if ( vk.glowReflect.seeThroughVertexMemory ) vkFreeMemory( vk.device, vk.glowReflect.seeThroughVertexMemory, NULL );
+	if ( vk.glowReflect.seeThroughIndexBuffer ) vkDestroyBuffer( vk.device, vk.glowReflect.seeThroughIndexBuffer, NULL );
+	if ( vk.glowReflect.seeThroughIndexMemory ) vkFreeMemory( vk.device, vk.glowReflect.seeThroughIndexMemory, NULL );
 
 	// Ghoul2 proxy BLAS
 	if ( vk.glowReflect.ghoul2Blas && vk.rtFuncs.vkDestroyAccelerationStructureKHR )
@@ -1006,6 +1379,15 @@ void VK_InvalidateGlowReflectAccelStruct( void ) {
 	vk.glowReflect.indexMemory = VK_NULL_HANDLE;
 	vk.glowReflect.numVertices = 0;
 	vk.glowReflect.numIndices = 0;
+	vk.glowReflect.blasSeeThrough = VK_NULL_HANDLE;
+	vk.glowReflect.blasSeeThroughBuffer = VK_NULL_HANDLE;
+	vk.glowReflect.blasSeeThroughMemory = VK_NULL_HANDLE;
+	vk.glowReflect.seeThroughVertexBuffer = VK_NULL_HANDLE;
+	vk.glowReflect.seeThroughVertexMemory = VK_NULL_HANDLE;
+	vk.glowReflect.seeThroughIndexBuffer = VK_NULL_HANDLE;
+	vk.glowReflect.seeThroughIndexMemory = VK_NULL_HANDLE;
+	vk.glowReflect.seeThroughNumVertices = 0;
+	vk.glowReflect.seeThroughNumIndices = 0;
 	vk.glowReflect.ghoul2Blas = VK_NULL_HANDLE;
 	vk.glowReflect.ghoul2BlasBuffer = VK_NULL_HANDLE;
 	vk.glowReflect.ghoul2BlasMemory = VK_NULL_HANDLE;
@@ -1038,12 +1420,36 @@ void VK_DestroyGlowReflectResources( void ) {
 	if ( !vk.device ) return;
 	vkDeviceWaitIdle( vk.device );
 
-	if ( vk.glowReflect.rtDescriptorSet ) {
-		vkFreeDescriptorSets( vk.device, vk.descriptorPool, 1, &vk.glowReflect.rtDescriptorSet );
+	// Ping-pong descriptor sets
+	for ( int pp = 0; pp < 2; pp++ ) {
+		if ( vk.glowReflect.ppRtDescriptorSet[pp] ) {
+			vkFreeDescriptorSets( vk.device, vk.descriptorPool, 1, &vk.glowReflect.ppRtDescriptorSet[pp] );
+		}
+		if ( vk.glowReflect.ppOutputDescriptorSet[pp] ) {
+			vkFreeDescriptorSets( vk.device, vk.descriptorPool, 1, &vk.glowReflect.ppOutputDescriptorSet[pp] );
+		}
+		if ( vk.glowReflect.ppOutputReadDescriptorSet[pp] ) {
+			vkFreeDescriptorSets( vk.device, vk.descriptorPool, 1, &vk.glowReflect.ppOutputReadDescriptorSet[pp] );
+		}
 	}
-	if ( vk.glowReflect.outputDescriptorSet ) {
-		vkFreeDescriptorSets( vk.device, vk.descriptorPool, 1, &vk.glowReflect.outputDescriptorSet );
+
+	// Blur resources
+	if ( vk.glowReflect.blurTempDescriptorSet ) {
+		vkFreeDescriptorSets( vk.device, vk.descriptorPool, 1, &vk.glowReflect.blurTempDescriptorSet );
 	}
+	if ( vk.glowReflect.blurOutputDescriptorSet ) {
+		vkFreeDescriptorSets( vk.device, vk.descriptorPool, 1, &vk.glowReflect.blurOutputDescriptorSet );
+	}
+	if ( vk.glowReflect.blurTempFramebuffer ) vkDestroyFramebuffer( vk.device, vk.glowReflect.blurTempFramebuffer, NULL );
+	if ( vk.glowReflect.blurOutputFramebuffer ) vkDestroyFramebuffer( vk.device, vk.glowReflect.blurOutputFramebuffer, NULL );
+	if ( vk.glowReflect.blurMaskedPipeline ) vkDestroyPipeline( vk.device, vk.glowReflect.blurMaskedPipeline, NULL );
+	if ( vk.glowReflect.g2CompositePipeline ) vkDestroyPipeline( vk.device, vk.glowReflect.g2CompositePipeline, NULL );
+	if ( vk.glowReflect.blurTempImageView ) vkDestroyImageView( vk.device, vk.glowReflect.blurTempImageView, NULL );
+	if ( vk.glowReflect.blurTempImage ) vkDestroyImage( vk.device, vk.glowReflect.blurTempImage, NULL );
+	if ( vk.glowReflect.blurTempImageMemory ) vkFreeMemory( vk.device, vk.glowReflect.blurTempImageMemory, NULL );
+	if ( vk.glowReflect.blurOutputImageView ) vkDestroyImageView( vk.device, vk.glowReflect.blurOutputImageView, NULL );
+	if ( vk.glowReflect.blurOutputImage ) vkDestroyImage( vk.device, vk.glowReflect.blurOutputImage, NULL );
+	if ( vk.glowReflect.blurOutputImageMemory ) vkFreeMemory( vk.device, vk.glowReflect.blurOutputImageMemory, NULL );
 
 	if ( vk.glowReflect.rtPipeline ) vkDestroyPipeline( vk.device, vk.glowReflect.rtPipeline, NULL );
 	if ( vk.glowReflect.rtPipelineLayout ) vkDestroyPipelineLayout( vk.device, vk.glowReflect.rtPipelineLayout, NULL );
@@ -1073,6 +1479,16 @@ void VK_DestroyGlowReflectResources( void ) {
 	if ( vk.glowReflect.indexBuffer ) vkDestroyBuffer( vk.device, vk.glowReflect.indexBuffer, NULL );
 	if ( vk.glowReflect.indexMemory ) vkFreeMemory( vk.device, vk.glowReflect.indexMemory, NULL );
 
+	// See-through BSP BLAS (optional)
+	if ( vk.glowReflect.blasSeeThrough && vk.rtFuncs.vkDestroyAccelerationStructureKHR )
+		vk.rtFuncs.vkDestroyAccelerationStructureKHR( vk.device, vk.glowReflect.blasSeeThrough, NULL );
+	if ( vk.glowReflect.blasSeeThroughBuffer ) vkDestroyBuffer( vk.device, vk.glowReflect.blasSeeThroughBuffer, NULL );
+	if ( vk.glowReflect.blasSeeThroughMemory ) vkFreeMemory( vk.device, vk.glowReflect.blasSeeThroughMemory, NULL );
+	if ( vk.glowReflect.seeThroughVertexBuffer ) vkDestroyBuffer( vk.device, vk.glowReflect.seeThroughVertexBuffer, NULL );
+	if ( vk.glowReflect.seeThroughVertexMemory ) vkFreeMemory( vk.device, vk.glowReflect.seeThroughVertexMemory, NULL );
+	if ( vk.glowReflect.seeThroughIndexBuffer ) vkDestroyBuffer( vk.device, vk.glowReflect.seeThroughIndexBuffer, NULL );
+	if ( vk.glowReflect.seeThroughIndexMemory ) vkFreeMemory( vk.device, vk.glowReflect.seeThroughIndexMemory, NULL );
+
 	// Ghoul2 BLAS + buffers
 	if ( vk.glowReflect.ghoul2Blas && vk.rtFuncs.vkDestroyAccelerationStructureKHR )
 		vk.rtFuncs.vkDestroyAccelerationStructureKHR( vk.device, vk.glowReflect.ghoul2Blas, NULL );
@@ -1093,664 +1509,20 @@ void VK_DestroyGlowReflectResources( void ) {
 
 	if ( vk.glowReflect.depthOnlyImageView ) vkDestroyImageView( vk.device, vk.glowReflect.depthOnlyImageView, NULL );
 
-	if ( vk.glowReflect.outputImageView ) vkDestroyImageView( vk.device, vk.glowReflect.outputImageView, NULL );
-	if ( vk.glowReflect.outputImage ) vkDestroyImage( vk.device, vk.glowReflect.outputImage, NULL );
-	if ( vk.glowReflect.outputImageMemory ) vkFreeMemory( vk.device, vk.glowReflect.outputImageMemory, NULL );
+	if ( vk.glowReflect.rtParamsMapped ) {
+		vkUnmapMemory( vk.device, vk.glowReflect.rtParamsMemory );
+	}
+	if ( vk.glowReflect.rtParamsBuffer ) vkDestroyBuffer( vk.device, vk.glowReflect.rtParamsBuffer, NULL );
+	if ( vk.glowReflect.rtParamsMemory ) vkFreeMemory( vk.device, vk.glowReflect.rtParamsMemory, NULL );
+
+	for ( int pp = 0; pp < 2; pp++ ) {
+		if ( vk.glowReflect.ppImageView[pp] ) vkDestroyImageView( vk.device, vk.glowReflect.ppImageView[pp], NULL );
+		if ( vk.glowReflect.ppImage[pp] ) vkDestroyImage( vk.device, vk.glowReflect.ppImage[pp], NULL );
+		if ( vk.glowReflect.ppImageMemory[pp] ) vkFreeMemory( vk.device, vk.glowReflect.ppImageMemory[pp], NULL );
+	}
 
 	Com_Memset( &vk.glowReflect, 0, sizeof(vk.glowReflect) );
 }
 
-// ============================================================
-// Per-frame dispatch
-// ============================================================
-
-/*
-================
-VK_DispatchGlowReflect
-
-Trace shadow rays from world surfaces toward glow sources.
-Must be called OUTSIDE a render pass, after the glow scene has been rendered.
-================
-*/
-void VK_DispatchGlowReflect( void ) {
-	if ( !vk.glowReflect.available ) return;
-	if ( !r_DynamicGlowReflections || !r_DynamicGlowReflections->integer ) return;
-
-	// Lazily build the acceleration structure on first use after map load
-	if ( !vk.glowReflect.asBuilt && tr.world ) {
-		VK_BuildGlowReflectAccelStruct();
-		if ( vk.glowReflect.asBuilt ) {
-			writeRTDescriptorSet();
-		}
-	}
-	if ( !vk.glowReflect.asBuilt ) return;
-
-	VkCommandBuffer cmd = vk.frames[vk.currentFrame].commandBuffer;
-	uint32_t width  = vk.swapchainExtent.width;
-	uint32_t height = vk.swapchainExtent.height;
-
-	// ---- Collect glow sources from dynamic lights, with saber line-segment enhancement ----
-	int numSources = 0;
-	glowSourceData_t *dst = (glowSourceData_t *)vk.glowReflect.glowSourcesMapped;
-
-	// Build a small list of saber blade geometries from RT_SABER_GLOW entities
-	struct {
-		vec3_t start;		// hilt position
-		vec3_t end;			// blade tip
-		vec3_t mid;			// midpoint (for matching with dlight)
-		qboolean matched;
-	} sabers[GLOW_RT_MAX_SOURCES];
-	int numSabers = 0;
-
-	for ( int i = 0; i < backEnd.refdef.num_entities && numSabers < GLOW_RT_MAX_SOURCES; i++ ) {
-		trRefEntity_t *ent = &backEnd.refdef.entities[i];
-		if ( ent->e.reType != RT_SABER_GLOW ) continue;
-		if ( ent->e.saberLength < 0.5f ) continue;
-
-		VectorCopy( ent->e.origin, sabers[numSabers].start );
-		VectorMA( ent->e.origin, ent->e.saberLength, ent->e.axis[0], sabers[numSabers].end );
-		VectorMA( ent->e.origin, ent->e.saberLength * 0.5f, ent->e.axis[0], sabers[numSabers].mid );
-		sabers[numSabers].matched = qfalse;
-		numSabers++;
-	}
-
-	// Process dlights, matching each with a saber entity when possible
-	for ( int i = 0; i < backEnd.refdef.num_dlights && numSources < GLOW_RT_MAX_SOURCES; i++ ) {
-		dlight_t *dl = &backEnd.refdef.dlights[i];
-		if ( dl->radius <= 0.0f ) continue;
-		float luminance = dl->color[0] * 0.299f + dl->color[1] * 0.587f + dl->color[2] * 0.114f;
-		if ( luminance < 0.01f ) continue;
-
-		// Try to match this dlight with a saber entity (dlight origin is at blade midpoint)
-		int bestSaber = -1;
-		float bestDistSq = 10000.0f; // 100-unit matching tolerance
-		for ( int s = 0; s < numSabers; s++ ) {
-			if ( sabers[s].matched ) continue;
-			vec3_t diff;
-			VectorSubtract( dl->origin, sabers[s].mid, diff );
-			float distSq = DotProduct( diff, diff );
-			if ( distSq < bestDistSq ) {
-				bestDistSq = distSq;
-				bestSaber = s;
-			}
-		}
-
-		if ( bestSaber >= 0 ) {
-			// Line-segment source: hilt to tip with dlight color
-			sabers[bestSaber].matched = qtrue;
-			dst[numSources].posAndRadius[0] = sabers[bestSaber].start[0];
-			dst[numSources].posAndRadius[1] = sabers[bestSaber].start[1];
-			dst[numSources].posAndRadius[2] = sabers[bestSaber].start[2];
-			dst[numSources].posAndRadius[3] = dl->radius * r_DynamicGlowReflectionRadius->value;
-			dst[numSources].colorAndPower[0] = dl->color[0];
-			dst[numSources].colorAndPower[1] = dl->color[1];
-			dst[numSources].colorAndPower[2] = dl->color[2];
-			dst[numSources].colorAndPower[3] = 1.0f;
-			dst[numSources].endPosAndType[0] = sabers[bestSaber].end[0];
-			dst[numSources].endPosAndType[1] = sabers[bestSaber].end[1];
-			dst[numSources].endPosAndType[2] = sabers[bestSaber].end[2];
-			dst[numSources].endPosAndType[3] = 1.0f; // line source
-		} else {
-			// Point source: no matching saber entity
-			dst[numSources].posAndRadius[0] = dl->origin[0];
-			dst[numSources].posAndRadius[1] = dl->origin[1];
-			dst[numSources].posAndRadius[2] = dl->origin[2];
-			dst[numSources].posAndRadius[3] = dl->radius * r_DynamicGlowReflectionRadius->value;
-			dst[numSources].colorAndPower[0] = dl->color[0];
-			dst[numSources].colorAndPower[1] = dl->color[1];
-			dst[numSources].colorAndPower[2] = dl->color[2];
-			dst[numSources].colorAndPower[3] = 1.0f;
-			dst[numSources].endPosAndType[0] = dl->origin[0];
-			dst[numSources].endPosAndType[1] = dl->origin[1];
-			dst[numSources].endPosAndType[2] = dl->origin[2];
-			dst[numSources].endPosAndType[3] = 0.0f; // point source
-		}
-		numSources++;
-	}
-
-	if ( numSources == 0 ) {
-		// No dynamic lights, but glow texture may still have emitters
-		// (e.g. lightsaber blades) — continue to dispatch RT pass.
-	}
-
-	// ---- Compute VP and inverse VP matrices ----
-	glowReflectPC_t pc = {};
-
-	float vp[16];
-	myGlMultMatrix( backEnd.viewParms.world.modelMatrix,
-		backEnd.viewParms.projectionMatrix, vp );
-
-	// Convert to Vulkan clip space (same transforms as VK_SetMVP)
-	vp[1]  = -vp[1];  vp[5]  = -vp[5];  vp[9]  = -vp[9];  vp[13] = -vp[13];
-	vp[2]  = 0.5f * vp[2]  + 0.5f * vp[3];
-	vp[6]  = 0.5f * vp[6]  + 0.5f * vp[7];
-	vp[10] = 0.5f * vp[10] + 0.5f * vp[11];
-	vp[14] = 0.5f * vp[14] + 0.5f * vp[15];
-
-	if ( !invertMatrix4x4( vp, pc.inverseVP ) ) {
-		return;
-	}
-
-	// Forward VP matrix for projecting reflected hit positions to screen UV
-	Com_Memcpy( pc.viewProjection, vp, sizeof(float) * 16 );
-
-	pc.cameraPosAndIntensity[0] = backEnd.viewParms.ori.origin[0];
-	pc.cameraPosAndIntensity[1] = backEnd.viewParms.ori.origin[1];
-	pc.cameraPosAndIntensity[2] = backEnd.viewParms.ori.origin[2];
-	pc.cameraPosAndIntensity[3] = r_DynamicGlowReflectionIntensity->value;
-	pc.numSources = numSources;
-	pc.bias = 4.0f;
-	pc.falloffExponent = r_DynamicGlowReflectionFalloff->value;
-	pc.g2ReflectScale = r_DynamicGlowReflectionG2Scale->value;
-	pc.shadowIntensity = r_DynamicGlowReflectionShadowIntensity->value;
-
-	// ================================================================
-	// Per-frame Ghoul2 proxy generation + TLAS rebuild
-	// Generate oriented bounding boxes for each Ghoul2 entity so
-	// shadow rays are blocked by player model proxy geometry.
-	//
-	// When no Ghoul2 entities are present AND the previous frame was
-	// also BSP-only, we skip the entire TLAS rebuild to avoid the
-	// GPU sync barrier + build overhead (common case on empty servers
-	// or when players are far from any lightsaber).
-	// ================================================================
-	int &lastFrameGhoul2Count = vk.glowReflect.lastFrameGhoul2Count;
-	{
-
-		// Bone names for the skeletal proxy (13 key joints)
-		static const char *proxyBoneNames[] = {
-			"pelvis",        // 0: hip center
-			"lower_lumbar",  // 1: waist
-			"thoracic",      // 2: chest
-			"cervical",      // 3: neck
-			"cranium",       // 4: head top
-			"rhumerus",      // 5: right shoulder
-			"lhumerus",      // 6: left shoulder
-			"rradius",       // 7: right elbow
-			"lradius",       // 8: left elbow
-			"rtibia",        // 9: right knee
-			"ltibia",        // 10: left knee
-			"rtalus",        // 11: right ankle
-			"ltalus",        // 12: left ankle
-		};
-		static const int kNumProxyBones = 13;
-
-		// Body segments: each is a prism between two bone positions
-		// { boneA, boneB, radius }
-		static const struct { int a, b; float r; } proxySegments[] = {
-			{ 0, 1, 7.0f },   // pelvis → waist
-			{ 1, 2, 6.5f },   // waist → chest
-			{ 2, 3, 5.0f },   // chest → neck
-			{ 3, 4, 4.5f },   // neck → head
-			{ 2, 5, 3.5f },   // chest → right shoulder
-			{ 2, 6, 3.5f },   // chest → left shoulder
-			{ 5, 7, 2.5f },   // right shoulder → elbow
-			{ 6, 8, 2.5f },   // left shoulder → elbow
-			{ 0, 9, 4.5f },   // pelvis → right knee
-			{ 0, 10, 4.5f },  // pelvis → left knee
-			{ 9, 11, 3.0f },  // right knee → ankle
-			{ 10, 12, 3.0f }, // left knee → ankle
-		};
-		static const int kNumSegments = 12;
-
-		// Octagonal prism index template (16 verts: 0-7 bottom ring, 8-15 top ring)
-		// 28 triangles = 84 indices per segment
-		static const uint32_t octPrismIndices[84] = {
-			// Bottom cap fan from vertex 0
-			0,1,2,  0,2,3,  0,3,4,  0,4,5,  0,5,6,  0,6,7,
-			// Top cap fan from vertex 8
-			8,10,9,  8,11,10,  8,12,11,  8,13,12,  8,14,13,  8,15,14,
-			// Side quads (8 quads × 2 tris)
-			0,9,1,   0,8,9,
-			1,10,2,  1,9,10,
-			2,11,3,  2,10,11,
-			3,12,4,  3,11,12,
-			4,13,5,  4,12,13,
-			5,14,6,  5,13,14,
-			6,15,7,  6,14,15,
-			7,8,0,   7,15,8,
-		};
-
-		// Octagonal ring: cos/sin at 45° increments
-		static const float octCos[8] = {
-			 1.000f,  0.707f,  0.000f, -0.707f,
-			-1.000f, -0.707f,  0.000f,  0.707f,
-		};
-		static const float octSin[8] = {
-			 0.000f,  0.707f,  1.000f,  0.707f,
-			 0.000f, -0.707f, -1.000f, -0.707f,
-		};
-
-		// Generate bone-driven proxy for all Ghoul2 entities
-		const int kVertsPerSegment   = 16;
-		const int kIndicesPerSegment = 84;
-		const int kVertsPerEntity    = kNumSegments * kVertsPerSegment;
-		const int kIndicesPerEntity  = kNumSegments * kIndicesPerSegment;
-		// Static to avoid ~200KB stack allocation each frame (not re-entrant, single-threaded renderer)
-		static float    g2VertsCPU[GLOW_RT_MAX_GHOUL2_ENTITIES * 12 * 16 * 3];
-		static uint32_t g2IdxCPU[GLOW_RT_MAX_GHOUL2_ENTITIES * 12 * 84];
-		int numGhoul2 = 0;
-
-		for ( int i = 0; i < backEnd.refdef.num_entities && numGhoul2 < GLOW_RT_MAX_GHOUL2_ENTITIES; i++ ) {
-			trRefEntity_t *ent = &backEnd.refdef.entities[i];
-			if ( ent->e.reType != RT_MODEL ) continue;
-			if ( !ent->e.ghoul2 ) continue;
-			if ( ent->e.renderfx & RF_FIRST_PERSON ) continue;
-
-			// Retrieve bone positions in model space, then transform to world
-			// space using ent->e.axis + ent->e.origin (same transform the GPU
-			// renderer uses).  G2API_GetBoltMatrix internally builds a world
-			// matrix from ent->e.angles via AnglesToAxis, which can differ from
-			// the actual ent->e.axis (e.g. when modelScale is baked in, or the
-			// game code sets axis directly).  By querying the bolt with zero
-			// angles/origin we get the model-space position from the already-
-			// built skeleton cache, then apply the entity transform ourselves.
-			vec3_t bonePos[13];
-			qboolean boneValid[13];
-			int numValid = 0;
-
-			static const vec3_t zeroVec = { 0, 0, 0 };
-
-			for ( int b = 0; b < kNumProxyBones; b++ ) {
-				boneValid[b] = qfalse;
-				int boltIdx = G2API_AddBolt( ent->e.ghoul2, 0, proxyBoneNames[b] );
-				if ( boltIdx >= 0 ) {
-					mdxaBone_t boltMatrix;
-					// Get model-space bolt position (skeleton already cached this frame)
-					if ( G2API_GetBoltMatrix( ent->e.ghoul2, 0, boltIdx, &boltMatrix,
-							zeroVec, zeroVec, backEnd.refdef.time,
-							NULL, ent->e.modelScale ) ) {
-						// boltMatrix[*][3] is now in model space — transform to world
-						// using the entity's actual axis + origin (matches GPU rendering)
-						float mx = boltMatrix.matrix[0][3];
-						float my = boltMatrix.matrix[1][3];
-						float mz = boltMatrix.matrix[2][3];
-						bonePos[b][0] = ent->e.origin[0]
-							+ mx * ent->e.axis[0][0] + my * ent->e.axis[1][0] + mz * ent->e.axis[2][0];
-						bonePos[b][1] = ent->e.origin[1]
-							+ mx * ent->e.axis[0][1] + my * ent->e.axis[1][1] + mz * ent->e.axis[2][1];
-						bonePos[b][2] = ent->e.origin[2]
-							+ mx * ent->e.axis[0][2] + my * ent->e.axis[1][2] + mz * ent->e.axis[2][2];
-						boneValid[b] = qtrue;
-						numValid++;
-					}
-				}
-			}
-
-			if ( numValid < 3 ) continue; // not a humanoid model, skip
-
-			int entityVertBase = numGhoul2 * kVertsPerEntity;
-			int entityIdxBase  = numGhoul2 * kIndicesPerEntity;
-
-			// Build oriented prisms between bone pairs
-			for ( int seg = 0; seg < kNumSegments; seg++ ) {
-				int bA = proxySegments[seg].a;
-				int bB = proxySegments[seg].b;
-				float radius = proxySegments[seg].r;
-
-				vec3_t posA, posB;
-				if ( boneValid[bA] ) { VectorCopy( bonePos[bA], posA ); }
-				else { VectorCopy( ent->e.origin, posA ); posA[2] += 32.0f; }
-				if ( boneValid[bB] ) { VectorCopy( bonePos[bB], posB ); }
-				else { VectorCopy( posA, posB ); posB[2] += 8.0f; }
-
-				// Direction A→B and perpendicular basis
-				vec3_t dir, perp1, perp2;
-				VectorSubtract( posB, posA, dir );
-				float len = VectorNormalize( dir );
-				if ( len < 0.1f ) {
-					dir[0] = 0; dir[1] = 0; dir[2] = 1.0f;
-				}
-
-				vec3_t up = { 0, 0, 1 };
-				if ( fabs( dir[2] ) > 0.9f ) { up[0] = 1.0f; up[1] = 0; up[2] = 0; }
-				CrossProduct( dir, up, perp1 );
-				VectorNormalize( perp1 );
-				CrossProduct( dir, perp1, perp2 );
-				VectorNormalize( perp2 );
-
-				int segVertBase = entityVertBase + seg * kVertsPerSegment;
-				int segIdxBase  = entityIdxBase  + seg * kIndicesPerSegment;
-
-				// 8 verts at posA (bottom ring), 8 at posB (top ring)
-				for ( int c = 0; c < 16; c++ ) {
-					int ring = c & 7;
-					float sx = radius * octCos[ring];
-					float sy = radius * octSin[ring];
-					float *base = ( c < 8 ) ? posA : posB;
-
-					int vi = ( segVertBase + c ) * 3;
-					g2VertsCPU[vi + 0] = base[0] + sx * perp1[0] + sy * perp2[0];
-					g2VertsCPU[vi + 1] = base[1] + sx * perp1[1] + sy * perp2[1];
-					g2VertsCPU[vi + 2] = base[2] + sx * perp1[2] + sy * perp2[2];
-				}
-
-				for ( int t = 0; t < kIndicesPerSegment; t++ ) {
-					g2IdxCPU[segIdxBase + t] = (uint32_t)segVertBase + octPrismIndices[t];
-				}
-			}
-
-			numGhoul2++;
-		}
-
-		// Upload proxy data to device-local buffers via command buffer
-		if ( numGhoul2 > 0 ) {
-			VkDeviceSize vertBytes = (VkDeviceSize)numGhoul2 * kVertsPerEntity * 3 * sizeof(float);
-			VkDeviceSize idxBytes  = (VkDeviceSize)numGhoul2 * kIndicesPerEntity * sizeof(uint32_t);
-
-			cmdUpdateBufferChunked( cmd, vk.glowReflect.ghoul2VertexBuffer, 0, vertBytes, g2VertsCPU );
-			cmdUpdateBufferChunked( cmd, vk.glowReflect.ghoul2IndexBuffer, 0, idxBytes, g2IdxCPU );
-		}
-
-		// Skip the entire TLAS rebuild when BSP-only and previous frame was
-		// also BSP-only — the TLAS hasn't changed so all barriers + builds
-		// are wasted GPU work.  This is the common case on empty servers or
-		// when players are far from lightsabers.
-		qboolean needTlasRebuild = ( numGhoul2 > 0 || lastFrameGhoul2Count > 0 ) ? qtrue : qfalse;
-		lastFrameGhoul2Count = numGhoul2;
-
-		if ( needTlasRebuild ) {
-			// GPU-side sync: ensure previous frame's AS builds + traces are
-			// complete before we overwrite scratch/data buffers.
-			VkMemoryBarrier asSyncBarrier = {};
-			asSyncBarrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
-			asSyncBarrier.srcAccessMask = VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_KHR
-				| VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR;
-			asSyncBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-			vkCmdPipelineBarrier( cmd,
-				VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR
-				| VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR,
-				VK_PIPELINE_STAGE_TRANSFER_BIT,
-				0, 1, &asSyncBarrier, 0, NULL, 0, NULL );
-
-			// Prepare TLAS instance data (BSP always, Ghoul2 if present)
-			VkAccelerationStructureDeviceAddressInfoKHR addrInfo = {};
-			addrInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_DEVICE_ADDRESS_INFO_KHR;
-			addrInfo.accelerationStructure = vk.glowReflect.blas;
-			VkDeviceAddress bspBlasAddr =
-				vk.rtFuncs.vkGetAccelerationStructureDeviceAddressKHR( vk.device, &addrInfo );
-
-			VkAccelerationStructureInstanceKHR instancesCPU[2] = {};
-
-			// Instance 0: BSP world geometry
-			instancesCPU[0].transform.matrix[0][0] = 1.0f;
-			instancesCPU[0].transform.matrix[1][1] = 1.0f;
-			instancesCPU[0].transform.matrix[2][2] = 1.0f;
-			instancesCPU[0].mask = 0x01;  // BSP-only mask (probed separately from Ghoul2)
-			instancesCPU[0].instanceShaderBindingTableRecordOffset = 0;
-			instancesCPU[0].flags = VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR;
-			instancesCPU[0].accelerationStructureReference = bspBlasAddr;
-
-			uint32_t instanceCount = 1;
-
-			if ( numGhoul2 > 0 ) {
-				addrInfo.accelerationStructure = vk.glowReflect.ghoul2Blas;
-				VkDeviceAddress g2BlasAddr =
-					vk.rtFuncs.vkGetAccelerationStructureDeviceAddressKHR( vk.device, &addrInfo );
-
-				// Instance 1: Ghoul2 proxy geometry
-				instancesCPU[1].transform.matrix[0][0] = 1.0f;
-				instancesCPU[1].transform.matrix[1][1] = 1.0f;
-				instancesCPU[1].transform.matrix[2][2] = 1.0f;
-				instancesCPU[1].mask = 0x02;  // Ghoul2 mask (not matched by BSP detection probe)
-				instancesCPU[1].instanceShaderBindingTableRecordOffset = 0;
-				instancesCPU[1].flags = VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR;
-				instancesCPU[1].accelerationStructureReference = g2BlasAddr;
-
-				instanceCount = 2;
-			}
-
-			// Upload TLAS instances
-			vkCmdUpdateBuffer( cmd, vk.glowReflect.tlasInstanceBuffer, 0,
-				instanceCount * sizeof(VkAccelerationStructureInstanceKHR), instancesCPU );
-
-			// Barrier: transfer writes → AS build reads
-			VkMemoryBarrier xferToAsBarrier = {};
-			xferToAsBarrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
-			xferToAsBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-			xferToAsBarrier.dstAccessMask = VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR
-				| VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_KHR;
-			vkCmdPipelineBarrier( cmd,
-				VK_PIPELINE_STAGE_TRANSFER_BIT,
-				VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR,
-				0, 1, &xferToAsBarrier, 0, NULL, 0, NULL );
-
-			// Build Ghoul2 BLAS (only if entities are present)
-			if ( numGhoul2 > 0 ) {
-				uint32_t g2TriCount  = (uint32_t)numGhoul2 * kNumSegments * 28;
-				uint32_t g2VertCount = (uint32_t)numGhoul2 * kVertsPerEntity;
-
-				VkAccelerationStructureGeometryTrianglesDataKHR g2Tri = {};
-				g2Tri.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_TRIANGLES_DATA_KHR;
-				g2Tri.vertexFormat = VK_FORMAT_R32G32B32_SFLOAT;
-				g2Tri.vertexData.deviceAddress = getBufferAddress( vk.glowReflect.ghoul2VertexBuffer );
-				g2Tri.vertexStride = 3 * sizeof(float);
-				g2Tri.maxVertex = g2VertCount - 1;
-				g2Tri.indexType = VK_INDEX_TYPE_UINT32;
-				g2Tri.indexData.deviceAddress = getBufferAddress( vk.glowReflect.ghoul2IndexBuffer );
-
-				VkAccelerationStructureGeometryKHR g2Geom = {};
-				g2Geom.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
-				g2Geom.geometryType = VK_GEOMETRY_TYPE_TRIANGLES_KHR;
-				g2Geom.flags = VK_GEOMETRY_OPAQUE_BIT_KHR;
-				g2Geom.geometry.triangles = g2Tri;
-
-				VkAccelerationStructureBuildGeometryInfoKHR g2Build = {};
-				g2Build.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
-				g2Build.type = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
-				g2Build.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_BUILD_BIT_KHR;
-				g2Build.mode = VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR;
-				g2Build.geometryCount = 1;
-				g2Build.pGeometries = &g2Geom;
-				g2Build.dstAccelerationStructure = vk.glowReflect.ghoul2Blas;
-				g2Build.scratchData.deviceAddress = getBufferAddress( vk.glowReflect.ghoul2ScratchBuffer );
-
-				VkAccelerationStructureBuildRangeInfoKHR g2Range = {};
-				g2Range.primitiveCount = g2TriCount;
-				const VkAccelerationStructureBuildRangeInfoKHR *pG2Range = &g2Range;
-
-				vk.rtFuncs.vkCmdBuildAccelerationStructuresKHR( cmd, 1, &g2Build, &pG2Range );
-
-				// Barrier: BLAS build complete → TLAS can read it
-				VkMemoryBarrier blasToTlasBarrier = {};
-				blasToTlasBarrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
-				blasToTlasBarrier.srcAccessMask = VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_KHR;
-				blasToTlasBarrier.dstAccessMask = VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR;
-				vkCmdPipelineBarrier( cmd,
-					VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR,
-					VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR,
-					0, 1, &blasToTlasBarrier, 0, NULL, 0, NULL );
-			}
-
-			// Rebuild TLAS with current instances
-			{
-				VkAccelerationStructureGeometryInstancesDataKHR instData = {};
-				instData.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_INSTANCES_DATA_KHR;
-				instData.arrayOfPointers = VK_FALSE;
-				instData.data.deviceAddress = getBufferAddress( vk.glowReflect.tlasInstanceBuffer );
-
-				VkAccelerationStructureGeometryKHR tlasGeom = {};
-				tlasGeom.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
-				tlasGeom.geometryType = VK_GEOMETRY_TYPE_INSTANCES_KHR;
-				tlasGeom.geometry.instances = instData;
-
-				VkAccelerationStructureBuildGeometryInfoKHR tlasBuild = {};
-				tlasBuild.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
-				tlasBuild.type = VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
-				tlasBuild.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_BUILD_BIT_KHR;
-				tlasBuild.mode = VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR;
-				tlasBuild.geometryCount = 1;
-				tlasBuild.pGeometries = &tlasGeom;
-				tlasBuild.dstAccelerationStructure = vk.glowReflect.tlas;
-				tlasBuild.scratchData.deviceAddress = getBufferAddress( vk.glowReflect.tlasScratchBuffer );
-
-				VkAccelerationStructureBuildRangeInfoKHR tlasRange = {};
-				tlasRange.primitiveCount = instanceCount;
-				const VkAccelerationStructureBuildRangeInfoKHR *pTlasRange = &tlasRange;
-
-				vk.rtFuncs.vkCmdBuildAccelerationStructuresKHR( cmd, 1, &tlasBuild, &pTlasRange );
-			}
-
-			// Barrier: TLAS build → ray tracing shader read
-			VkMemoryBarrier asToRtBarrier = {};
-			asToRtBarrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
-			asToRtBarrier.srcAccessMask = VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_KHR;
-			asToRtBarrier.dstAccessMask = VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR;
-			vkCmdPipelineBarrier( cmd,
-				VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR,
-				VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR,
-				0, 1, &asToRtBarrier, 0, NULL, 0, NULL );
-		}
-		// else: BSP-only, unchanged from previous frame — TLAS is already valid
-	}
-
-	// ---- Barrier: depth for shader read ----
-	{
-		VkImageMemoryBarrier depthBarrier = {};
-		depthBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-		depthBarrier.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-		depthBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-		depthBarrier.oldLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-		depthBarrier.newLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
-		depthBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		depthBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		depthBarrier.image = vk.depthImage;
-		depthBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
-		if ( vk.depthFormat == VK_FORMAT_D32_SFLOAT_S8_UINT || vk.depthFormat == VK_FORMAT_D24_UNORM_S8_UINT ) {
-			depthBarrier.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
-		}
-		depthBarrier.subresourceRange.baseMipLevel = 0;
-		depthBarrier.subresourceRange.levelCount = 1;
-		depthBarrier.subresourceRange.baseArrayLayer = 0;
-		depthBarrier.subresourceRange.layerCount = 1;
-
-		vkCmdPipelineBarrier( cmd,
-			VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
-			VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR,
-			0, 0, NULL, 0, NULL, 1, &depthBarrier );
-	}
-
-	// ---- Barrier: glow image readable ----
-	{
-		VkImageMemoryBarrier glowBarrier = {};
-		glowBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-		glowBarrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-		glowBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-		glowBarrier.oldLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		glowBarrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		glowBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		glowBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		glowBarrier.image = vk.glow.glowImage;
-		glowBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		glowBarrier.subresourceRange.baseMipLevel = 0;
-		glowBarrier.subresourceRange.levelCount = 1;
-		glowBarrier.subresourceRange.baseArrayLayer = 0;
-		glowBarrier.subresourceRange.layerCount = 1;
-
-		vkCmdPipelineBarrier( cmd,
-			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-			VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR,
-			0, 0, NULL, 0, NULL, 1, &glowBarrier );
-	}
-
-	// ---- Bind RT pipeline and dispatch ----
-	vkCmdBindPipeline( cmd, VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR, vk.glowReflect.rtPipeline );
-	vkCmdBindDescriptorSets( cmd, VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR,
-		vk.glowReflect.rtPipelineLayout, 0, 1,
-		&vk.glowReflect.rtDescriptorSet, 0, NULL );
-	vkCmdPushConstants( cmd, vk.glowReflect.rtPipelineLayout,
-		VK_SHADER_STAGE_RAYGEN_BIT_KHR, 0, sizeof(pc), &pc );
-
-	vk.rtFuncs.vkCmdTraceRaysKHR( cmd,
-		&vk.glowReflect.rgenRegion,
-		&vk.glowReflect.missRegion,
-		&vk.glowReflect.hitRegion,
-		&vk.glowReflect.callRegion,
-		width, height, 1 );
-
-	// ---- Barrier: depth back to attachment ----
-	{
-		VkImageMemoryBarrier depthBarrier = {};
-		depthBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-		depthBarrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
-		depthBarrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT
-			| VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-		depthBarrier.oldLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
-		depthBarrier.newLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-		depthBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		depthBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		depthBarrier.image = vk.depthImage;
-		depthBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
-		if ( vk.depthFormat == VK_FORMAT_D32_SFLOAT_S8_UINT || vk.depthFormat == VK_FORMAT_D24_UNORM_S8_UINT ) {
-			depthBarrier.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
-		}
-		depthBarrier.subresourceRange.baseMipLevel = 0;
-		depthBarrier.subresourceRange.levelCount = 1;
-		depthBarrier.subresourceRange.baseArrayLayer = 0;
-		depthBarrier.subresourceRange.layerCount = 1;
-
-		vkCmdPipelineBarrier( cmd,
-			VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR,
-			VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
-			0, 0, NULL, 0, NULL, 1, &depthBarrier );
-	}
-
-	// ---- Barrier: output image RT write → fragment shader read (stay in GENERAL) ----
-	{
-		VkImageMemoryBarrier outputBarrier = {};
-		outputBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-		outputBarrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
-		outputBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-		outputBarrier.oldLayout = VK_IMAGE_LAYOUT_GENERAL;
-		outputBarrier.newLayout = VK_IMAGE_LAYOUT_GENERAL;
-		outputBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		outputBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		outputBarrier.image = vk.glowReflect.outputImage;
-		outputBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		outputBarrier.subresourceRange.baseMipLevel = 0;
-		outputBarrier.subresourceRange.levelCount = 1;
-		outputBarrier.subresourceRange.baseArrayLayer = 0;
-		outputBarrier.subresourceRange.layerCount = 1;
-
-		vkCmdPipelineBarrier( cmd,
-			VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR,
-			VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-			0, 0, NULL, 0, NULL, 1, &outputBarrier );
-	}
-}
-
-/*
-================
-VK_DrawGlowReflectOverlay
-
-Composite the RT output onto the scene using additive blending.
-Must be called INSIDE the load render pass (after VK_BeginRenderPassLoad).
-================
-*/
-void VK_DrawGlowReflectOverlay( void ) {
-	if ( !vk.glowReflect.available ) return;
-	if ( !r_DynamicGlowReflections || !r_DynamicGlowReflections->integer ) return;
-	if ( !vk.glow.glowCompositePipeline || !vk.glowReflect.outputDescriptorSet ) return;
-
-	if ( !vk.renderPassActive ) {
-		ri.Printf( PRINT_WARNING, "VK_DrawGlowReflectOverlay: called outside render pass\n" );
-		return;
-	}
-
-	VkCommandBuffer cmd = vk.frames[vk.currentFrame].commandBuffer;
-
-	vkCmdBindPipeline( cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, vk.glow.glowCompositePipeline );
-	vkCmdBindDescriptorSets( cmd, VK_PIPELINE_BIND_POINT_GRAPHICS,
-		vk.pipelineLayout, 0, 1, &vk.glowReflect.outputDescriptorSet, 0, NULL );
-
-	float intensity = 1.0f;
-	vkCmdPushConstants( cmd, vk.pipelineLayout,
-		VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-		0, sizeof(intensity), &intensity );
-
-	vkCmdDraw( cmd, 3, 1, 0, 0 );
-
-	// Image stays in GENERAL — no layout transition needed.
-}
 
 #endif // !DEDICATED

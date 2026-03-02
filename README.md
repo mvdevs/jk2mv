@@ -36,7 +36,7 @@ AI generated summary of what has been changed in this branch:
 ## Modern defaults and UX polish
 
 - Raises default visual quality settings:
-  - MSAA default: `r_ext_multisample` → `16`
+  - FXAA quality: `r_fxaa` → `0` (disabled by default)
   - Anisotropic filtering default: `r_ext_texture_filter_anisotropic` → `16`
   - Texture detail defaults: `r_picmip` → `0`, `r_simpleMipMaps` → `0`
   - Enables: `r_flares` and `r_drawSun`

@@ -724,7 +724,7 @@ LINES_INSERT 1486 [
 				"16x"				16
 			}
 			descText			@MV_MULTISAMPLE_ANTIALIASING
-			cvar				"ui_r_ext_multisample"
+			cvar				"ui_r_fxaa"
 
 			visible				0
 
@@ -835,7 +835,7 @@ LINES_INSERT 2498 [
 				English   english
 				Francais  francais
 				Deutsch   deutsch
-				"Español"   espanol
+				"Espaï¿½ol"   espanol
 ]
 
 LINES_DELETE 2514 2549

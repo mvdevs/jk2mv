@@ -14,6 +14,17 @@ glBegin/glEnd, etc.) with Vulkan command buffer recording.
 
 #include "vk_local.h"
 
+static void VK_CheckFxaaCvarAndRebuildIfNeeded( void ) {
+	// r_fxaa controls FXAA quality preset; apply changes immediately.
+	if ( !vk.device || !vk.gamma.enabled ) return;
+
+	int desired = VK_ClampFxaaQuality( Cvar_VariableIntegerValue( "r_fxaa" ) );
+	if ( desired != vk.gamma.fxaaQuality ) {
+		VK_DestroyGammaResources();
+		VK_CreateGammaResources();
+	}
+}
+
 // ============================================================
 // Begin a frame - acquire swapchain image, begin command buffer
 // ============================================================
@@ -22,18 +33,36 @@ void VK_BeginFrame( void ) {
 		return;
 	}
 
-	vk.acquireSemaphoreConsumedThisFrame = qfalse;
+	// Allow FXAA quality changes to take effect immediately.
+	VK_CheckFxaaCvarAndRebuildIfNeeded();
 
-	if ( vk.deferredFreeCount > 0 ) {
-		vkDeviceWaitIdle( vk.device );
-		vkFreeDescriptorSets( vk.device, vk.descriptorPool, vk.deferredFreeCount, vk.deferredFreeSets );
-		vk.deferredFreeCount = 0;
-	}
+	vk.acquireSemaphoreConsumedThisFrame = qfalse;
 
 	vkFrame_t *frame = &vk.frames[vk.currentFrame];
 
-	// Wait for this frame's fence
+	// Wait for this frame's fence - guarantees the GPU is done with this
+	// frame's previous submission, so we can safely free its deferred sets.
 	vkWaitForFences( vk.device, 1, &frame->fence, VK_TRUE, UINT64_MAX );
+
+	// Destroy image resources that were deferred during this frame's previous cycle
+	if ( vk.deferredImageCount[vk.currentFrame] > 0 ) {
+		for ( int i = 0; i < vk.deferredImageCount[vk.currentFrame]; i++ ) {
+			vkDeferredImageDestroy_t *d = &vk.deferredImages[vk.currentFrame][i];
+			if ( d->descriptorSet != VK_NULL_HANDLE ) {
+				vkFreeDescriptorSets( vk.device, vk.descriptorPool, 1, &d->descriptorSet );
+			}
+			if ( d->view != VK_NULL_HANDLE ) {
+				vkDestroyImageView( vk.device, d->view, NULL );
+			}
+			if ( d->image != VK_NULL_HANDLE ) {
+				vkDestroyImage( vk.device, d->image, NULL );
+			}
+			if ( d->memory != VK_NULL_HANDLE ) {
+				vkFreeMemory( vk.device, d->memory, NULL );
+			}
+		}
+		vk.deferredImageCount[vk.currentFrame] = 0;
+	}
 
 	// Reset dynamic buffer offsets
 	vk.dynBuffers[vk.currentFrame].vertexOffset = 0;
@@ -41,9 +70,21 @@ void VK_BeginFrame( void ) {
 	vk.dynBuffers[vk.currentFrame].uniformOffset = 0;
 
 	// Acquire next swapchain image
-	// Use 1 second timeout instead of UINT64_MAX to avoid hangs on Wayland/Linux
-	VkResult result = vkAcquireNextImageKHR( vk.device, vk.swapchain, 1000000000,
-		frame->imageAvailableSemaphore, VK_NULL_HANDLE, &vk.currentSwapchainImage );
+	// Use a bounded timeout instead of UINT64_MAX to avoid indefinite hangs on some Wayland/Linux setups.
+	// If acquisition times out (or is not ready), retry once with a longer timeout to avoid visual "stuck"
+	// frames (old image remains presented).
+	VkResult result = VK_NOT_READY;
+	for ( int attempt = 0; attempt < 2; attempt++ ) {
+		uint64_t timeoutNs = ( attempt == 0 ) ? 1000000000ull : 5000000000ull; // 1s then 5s
+		result = vkAcquireNextImageKHR( vk.device, vk.swapchain, timeoutNs,
+			frame->imageAvailableSemaphore, VK_NULL_HANDLE, &vk.currentSwapchainImage );
+		if ( result != VK_TIMEOUT && result != VK_NOT_READY ) {
+			break;
+		}
+	}
+	if ( ( result == VK_TIMEOUT || result == VK_NOT_READY ) && com_developer && com_developer->integer ) {
+		ri.Printf( PRINT_DEVELOPER, "VK_BeginFrame: vkAcquireNextImageKHR timed out/not ready\n" );
+	}
 
 	if ( result == VK_ERROR_OUT_OF_DATE_KHR ) {
 		// Need to recreate swapchain (window resize)
@@ -58,7 +99,7 @@ void VK_BeginFrame( void ) {
 	}
 
 	if ( result == VK_TIMEOUT || result == VK_NOT_READY ) {
-		// Timeout or not ready - skip this frame gracefully
+		// Still timed out/not ready after retries - skip this frame gracefully.
 		return;
 	} else if ( result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR ) {
 		// Acquisition failed for other reasons
@@ -74,8 +115,19 @@ void VK_BeginFrame( void ) {
 	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 	vkBeginCommandBuffer( frame->commandBuffer, &beginInfo );
 
+	// Command buffer state cache must be reset after vkResetCommandBuffer.
+	vk.boundTextureSets[0] = VK_NULL_HANDLE;
+	vk.boundTextureSets[1] = VK_NULL_HANDLE;
+	vk.boundPipeline = VK_NULL_HANDLE;
+	vk.boundUBOOffset = ~0u;
+
 	vk.renderPassActive = qfalse;
+	vk.uiPassActive = qfalse;
 	vk.frameStarted = qtrue;
+	vk.gamma.appliedThisFrame = qfalse;
+	vk.gamma.sceneRenderedThisFrame = qfalse;
+	vk.gamma.uiFirstThisFrame = qfalse;
+	vk.pipelineRenderPass = VK_NULL_HANDLE;
 
 	// Write zeroed GPU params once at frame start so VK_DrawIndexed callers
 	// can rebind this offset without allocating new UBO space per draw.
@@ -140,6 +192,7 @@ void VK_BeginRenderPass( void ) {
 	if ( vk.gamma.enabled ) {
 		renderPassInfo.renderPass = vk.gamma.sceneRenderPass;
 		renderPassInfo.framebuffer = vk.gamma.sceneFramebuffer;
+		vk.gamma.sceneRenderedThisFrame = qtrue;
 	} else {
 		renderPassInfo.renderPass = vk.renderPass;
 		renderPassInfo.framebuffer = vk.framebuffers[vk.currentSwapchainImage];
@@ -150,6 +203,7 @@ void VK_BeginRenderPass( void ) {
 	renderPassInfo.pClearValues = clearValues;
 
 	vkCmdBeginRenderPass( frame->commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE );
+	vk.pipelineRenderPass = renderPassInfo.renderPass;
 
 	// Set default viewport and scissor so early draws don't fail
 	VkViewport viewport = {};
@@ -167,6 +221,7 @@ void VK_BeginRenderPass( void ) {
 	vkCmdSetScissor( frame->commandBuffer, 0, 1, &scissor );
 
 	vk.renderPassActive = qtrue;
+	vk.uiPassActive = qfalse;
 }
 
 // ============================================================
@@ -187,6 +242,7 @@ void VK_BeginRenderPassLoad( void ) {
 	if ( vk.gamma.enabled ) {
 		renderPassInfo.renderPass = vk.gamma.sceneRenderPassLoad;
 		renderPassInfo.framebuffer = vk.gamma.sceneFramebuffer;
+		vk.gamma.sceneRenderedThisFrame = qtrue;
 	} else {
 		renderPassInfo.renderPass = vk.renderPassLoad;
 		renderPassInfo.framebuffer = vk.framebuffers[vk.currentSwapchainImage];
@@ -197,6 +253,7 @@ void VK_BeginRenderPassLoad( void ) {
 	renderPassInfo.pClearValues = NULL;
 
 	vkCmdBeginRenderPass( frame->commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE );
+	vk.pipelineRenderPass = renderPassInfo.renderPass;
 
 	VkViewport viewport = {};
 	viewport.x = 0.0f;
@@ -213,6 +270,72 @@ void VK_BeginRenderPassLoad( void ) {
 	vkCmdSetScissor( frame->commandBuffer, 0, 1, &scissor );
 
 	vk.renderPassActive = qtrue;
+	vk.uiPassActive = qfalse;
+}
+
+// ============================================================
+// Begin the swapchain overlay render pass (UI drawn after FXAA+gamma)
+// ============================================================
+static void VK_BeginOverlayPass( void ) {
+	if ( !vk.gamma.enabled || !vk.gamma.overlayRenderPass ) {
+		return;
+	}
+
+	// Already recording into overlay pass.
+	if ( vk.renderPassActive && vk.uiPassActive ) {
+		return;
+	}
+
+	// Frame must be started.
+	if ( !vk.frameStarted ) {
+		VK_BeginFrame();
+		if ( !vk.frameStarted ) return;
+	}
+
+	// End any active pass first.
+	if ( vk.renderPassActive ) {
+		VK_EndRenderPass();
+	}
+
+	vkFrame_t *frame = &vk.frames[vk.currentFrame];
+
+	// The overlay render pass assumes the swapchain image starts in PRESENT layout (loadOp=LOAD).
+	// Fresh swapchain images (never presented/rendered) are in UNDEFINED; transition them once.
+	if ( vk.swapchainImageLayouts[vk.currentSwapchainImage] == VK_IMAGE_LAYOUT_UNDEFINED ) {
+		VK_TransitionImageLayout( vk.swapchainImages[vk.currentSwapchainImage], vk.swapchainFormat,
+			VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, 1, frame->commandBuffer );
+		vk.swapchainImageLayouts[vk.currentSwapchainImage] = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+	}
+
+	VkRenderPassBeginInfo rpBegin = {};
+	rpBegin.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+	rpBegin.renderPass = vk.gamma.overlayRenderPass;
+	rpBegin.framebuffer = vk.gamma.overlayFramebuffers[vk.currentSwapchainImage];
+	rpBegin.renderArea.offset = { 0, 0 };
+	rpBegin.renderArea.extent = vk.swapchainExtent;
+	rpBegin.clearValueCount = 0;
+	rpBegin.pClearValues = NULL;
+
+	vkCmdBeginRenderPass( frame->commandBuffer, &rpBegin, VK_SUBPASS_CONTENTS_INLINE );
+	vk.pipelineRenderPass = rpBegin.renderPass;
+
+	// Set default viewport and scissor
+	VkViewport viewport = {};
+	viewport.x = 0.0f;
+	viewport.y = 0.0f;
+	viewport.width = (float)vk.swapchainExtent.width;
+	viewport.height = (float)vk.swapchainExtent.height;
+	viewport.minDepth = 0.0f;
+	viewport.maxDepth = 1.0f;
+	vkCmdSetViewport( frame->commandBuffer, 0, 1, &viewport );
+
+	VkRect2D scissor = {};
+	scissor.offset = { 0, 0 };
+	scissor.extent = vk.swapchainExtent;
+	vkCmdSetScissor( frame->commandBuffer, 0, 1, &scissor );
+
+	vk.renderPassActive = qtrue;
+	vk.uiPassActive = qtrue;
 }
 
 // ============================================================
@@ -224,6 +347,7 @@ void VK_EndRenderPass( void ) {
 	vkFrame_t *frame = &vk.frames[vk.currentFrame];
 	vkCmdEndRenderPass( frame->commandBuffer );
 	vk.renderPassActive = qfalse;
+	vk.uiPassActive = qfalse;
 }
 
 // ============================================================
@@ -237,8 +361,8 @@ void VK_EndFrame( void ) {
 	vkFrame_t *frame = &vk.frames[vk.currentFrame];
 
 	// If gamma is enabled but the gamma pass wasn't applied yet (scene render pass still active),
-	// force the gamma pass now to ensure the swapchain image is written and in PRESENT_SRC_KHR layout.
-	if ( vk.gamma.enabled && vk.renderPassActive ) {
+	// force the gamma pass now to ensure the swapchain image is written.
+	if ( vk.gamma.enabled && vk.renderPassActive && !vk.gamma.appliedThisFrame ) {
 		VK_ApplyGammaCorrection();
 	}
 
@@ -255,7 +379,10 @@ void VK_EndFrame( void ) {
 
 	// Submit
 	VkSemaphore waitSemaphores[] = { frame->imageAvailableSemaphore };
-	VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+	// Be conservative: ensure *no* commands execute before the acquired swapchain image is available.
+	// This avoids issues when we record explicit swapchain layout transitions (FXAA/gamma path) that
+	// may otherwise run earlier than COLOR_ATTACHMENT_OUTPUT.
+	VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT };
 	VkSemaphore signalSemaphores[] = { vk.renderFinishedSemaphores[vk.currentSwapchainImage] };
 
 	VkSubmitInfo submitInfo = {};
@@ -296,7 +423,20 @@ void VK_EndFrame( void ) {
 		VK_RecreateSwapchain();
 	}
 
+	// Presented images are in PRESENT layout.
+	if ( vk.currentSwapchainImage < VK_MAX_SWAPCHAIN_IMAGES ) {
+		vk.swapchainImageLayouts[vk.currentSwapchainImage] = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+	}
+
 	vk.frameStarted = qfalse;
+	// Reset gamma frame-state flags now that the frame is fully submitted.
+	// If a stale VK_Set2D call arrives (e.g. from R_SyncRenderThread) before
+	// VK_BeginFrame is called for the next frame, it will see clean state and
+	// correctly set uiFirstThisFrame rather than triggering the wrong code path
+	// (FXAA on empty scene + UI in overlay) due to stale sceneRenderedThisFrame.
+	vk.gamma.appliedThisFrame = qfalse;
+	vk.gamma.sceneRenderedThisFrame = qfalse;
+	vk.gamma.uiFirstThisFrame = qfalse;
 	vk.currentFrame = (vk.currentFrame + 1) % VK_NUM_COMMAND_BUFFERS;
 }
 
@@ -350,7 +490,31 @@ void VK_SetScissor( int x, int y, int width, int height ) {
 // Set 2D rendering mode (orthographic projection)
 // ============================================================
 void VK_Set2D( void ) {
-	VK_BeginRenderPass();
+	if ( vk.gamma.enabled ) {
+		// Gamma path:
+		// - If the frame starts with 3D (typical gameplay): apply gamma/FXAA to swapchain, then draw UI in overlay.
+		// - If the frame starts with 2D (menus/loading): UI may interleave 2D and 3D (model panels). In that case,
+		//   keep drawing into the offscreen scene target for the whole frame and apply gamma at end-of-frame.
+		if ( !vk.gamma.sceneRenderedThisFrame && !vk.gamma.appliedThisFrame ) {
+			vk.gamma.uiFirstThisFrame = qtrue;
+		}
+
+		if ( vk.gamma.uiFirstThisFrame ) {
+			// Ensure we are recording into the scene render pass (offscreen, with depth) rather than the swapchain overlay.
+			if ( vk.renderPassActive && vk.uiPassActive ) {
+				VK_EndRenderPass();
+			}
+			VK_BeginRenderPass();
+		} else {
+			// Normal gameplay HUD: 3D already rendered into offscreen scene, then FXAA+gamma, then overlay UI.
+			if ( !vk.gamma.appliedThisFrame ) {
+				VK_ApplyGammaCorrection();
+			}
+			VK_BeginOverlayPass();
+		}
+	} else {
+		VK_BeginRenderPass();
+	}
 	if ( !vk.frameStarted ) return;
 
 	VK_SetViewport( 0, 0, (float)glConfig.vidWidth, (float)glConfig.vidHeight, 0.0f, 1.0f );
@@ -519,8 +683,11 @@ void VK_DrawIndexed( int numVerts, const float *xyz, const float *texCoords0,
 	// Re-bind the zeroed GPU params written at frame start (no new UBO upload)
 	{
 		uint32_t dynamicOffset = (uint32_t)vk.zeroUBOOffset[vk.currentFrame];
-		vkCmdBindDescriptorSets( cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, vk.pipelineLayout,
-			2, 1, &vk.uboDescriptorSets[vk.currentFrame], 1, &dynamicOffset );
+		if ( dynamicOffset != vk.boundUBOOffset ) {
+			vkCmdBindDescriptorSets( cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, vk.pipelineLayout,
+				2, 1, &vk.uboDescriptorSets[vk.currentFrame], 1, &dynamicOffset );
+			vk.boundUBOOffset = dynamicOffset;
+		}
 	}
 
 	// Draw!
@@ -669,6 +836,7 @@ qboolean VK_UpdateGPUParams( const gpuParams_t *params ) {
 	VkCommandBuffer cmd = vk.frames[vk.currentFrame].commandBuffer;
 	vkCmdBindDescriptorSets( cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, vk.pipelineLayout,
 		2, 1, &vk.uboDescriptorSets[vk.currentFrame], 1, &dynamicOffset );
+	vk.boundUBOOffset = dynamicOffset;
 
 	// Advance by aligned write size (not full size — non-skinned draws save space)
 	dyn->uniformOffset += (int)((writeSize + alignment - 1) & ~(alignment - 1));
@@ -834,6 +1002,11 @@ void VK_ReadPixels( int x, int y, int width, int height, int format, byte *buffe
 	vkCmdPipelineBarrier( cmd, VK_PIPELINE_STAGE_TRANSFER_BIT,
 		VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, NULL, 0, NULL, 1, &barrier );
 
+	// Track swapchain layout for subsequent passes in this frame.
+	if ( vk.currentSwapchainImage < VK_MAX_SWAPCHAIN_IMAGES ) {
+		vk.swapchainImageLayouts[vk.currentSwapchainImage] = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+	}
+
 	// End, submit with frame fence, and wait
 	vkEndCommandBuffer( cmd );
 
@@ -910,7 +1083,14 @@ void VK_ReadPixels( int x, int y, int width, int height, int format, byte *buffe
 	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 	vkBeginCommandBuffer( cmd, &beginInfo );
 
+	// Reset command-buffer state cache after reset/re-begin.
+	vk.boundTextureSets[0] = VK_NULL_HANDLE;
+	vk.boundTextureSets[1] = VK_NULL_HANDLE;
+	vk.boundPipeline = VK_NULL_HANDLE;
+	vk.boundUBOOffset = ~0u;
+
 	vk.renderPassActive = qfalse;
+	vk.uiPassActive = qfalse;
 	vk.pixelsCapturedThisFrame = qtrue;
 }
 
@@ -919,6 +1099,12 @@ void VK_ReadPixels( int x, int y, int width, int height, int format, byte *buffe
 // ============================================================
 void VK_RecreateSwapchain( void ) {
 	vkDeviceWaitIdle( vk.device );
+
+	// Post-process resources depend on swapchain extent, swapchain image views, and depth buffer.
+	// Recreate them around swapchain recreation.
+	VK_DestroyGlowReflectResources();
+	VK_DestroyGlowResources();
+	VK_DestroyGammaResources();
 
 	// Destroy framebuffers
 	for ( uint32_t i = 0; i < vk.swapchainImageCount; i++ ) {
@@ -945,6 +1131,10 @@ void VK_RecreateSwapchain( void ) {
 	VK_CreateDepthBuffer();
 	VK_CreateRenderPass();
 	VK_CreateFramebuffers();
+
+	VK_CreateGlowResources();
+	VK_CreateGlowReflectResources();
+	VK_CreateGammaResources();
 }
 
 // ============================================================

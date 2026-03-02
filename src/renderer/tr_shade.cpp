@@ -446,12 +446,16 @@ static void ProjectDlightTexture( void ) {
 	R_BindImage( tr.dlightImage );
 	renderState.multiTexture = qfalse;
 
-	// texcoords[0] and colors already contain valid data from the main shader stage.
-	// The GPU multi-dlight shader overrides both entirely, so no memset needed.
+	// Vulkan: the multi-dlight shader overrides texcoords/colors entirely.
+	// Pass NULL attributes explicitly so we don't depend on prior stage svars.
+	tess.vk_tc0Set = qtrue;
+	tess.vk_tc0 = NULL;
+	tess.vk_tc1Set = qfalse;
+	tess.vk_tc1 = NULL;
+	tess.vk_colorsSet = qtrue;
+	tess.vk_colors = NULL;
 
 	// Sub-pass 1: Non-additive dlights (SRC_DST_COLOR + DST_ONE)
-	// This is the standard dlight blending — brightens surfaces proportionally.
-	// Sabers, blaster bolts, etc. use this mode.
 	{
 		GPU_ResetParams();
 		currentGPUParams.gpuFlags |= GPU_FLAG_MULTI_DLIGHT_PASS;
@@ -470,7 +474,6 @@ static void ProjectDlightTexture( void ) {
 	}
 
 	// Sub-pass 2: Additive dlights (SRC_ONE + DST_ONE)
-	// Explosions, force effects, etc. use pure additive blending.
 	{
 		GPU_ResetParams();
 		currentGPUParams.gpuFlags |= GPU_FLAG_MULTI_DLIGHT_PASS;
@@ -487,7 +490,17 @@ static void ProjectDlightTexture( void ) {
 			backEnd.pc.c_dlightIndexes += tess.numIndexes * numAdditive;
 		}
 	}
+
+	// Clear overrides
+	tess.vk_tc0Set = qfalse;
+	tess.vk_tc0 = NULL;
+	tess.vk_tc1Set = qfalse;
+	tess.vk_tc1 = NULL;
+	tess.vk_colorsSet = qfalse;
+	tess.vk_colors = NULL;
+
 }
+
 
 
 /*
@@ -507,13 +520,14 @@ static void RB_FogPass( void ) {
 	currentGPUParams.gpuFlags |= GPU_FLAG_FOG_PASS;
 	GPU_SetupFogParams();
 
-	// Fill dummy vertex colors — GPU overrides with fogColor
-	for ( int i = 0; i < tess.numVertexes; i++ ) {
-		tess.svars.colorsui[i] = fog->colorInt;
-	}
-
-	// Fill dummy texcoords — GPU overrides with computed fog ST
-	Com_Memset( tess.svars.texcoords[0], 0, tess.numVertexes * sizeof( tess.svars.texcoords[0][0] ) );
+	// Vulkan: GPU overrides both color and texcoords; pass NULL attributes to avoid
+	// per-vertex CPU fills into svars.
+	tess.vk_tc0Set = qtrue;
+	tess.vk_tc0 = NULL;
+	tess.vk_tc1Set = qfalse;
+	tess.vk_tc1 = NULL;
+	tess.vk_colorsSet = qtrue;
+	tess.vk_colors = NULL;
 
 	R_BindImage( tr.fogImage );
 
@@ -525,8 +539,15 @@ static void RB_FogPass( void ) {
 
 	renderState.multiTexture = qfalse;
 	R_DrawElements( tess.numIndexes, tess.indexes );
-}
 
+	// Clear overrides
+	tess.vk_tc0Set = qfalse;
+	tess.vk_tc0 = NULL;
+	tess.vk_tc1Set = qfalse;
+	tess.vk_tc1 = NULL;
+	tess.vk_colorsSet = qfalse;
+	tess.vk_colors = NULL;
+}
 /*
 ===============
 ComputeColors
@@ -760,27 +781,20 @@ static void ComputeColors( shaderStage_t *pStage, int forceRGBGen )
 		{
 			unsigned char alpha;
 
-			for ( i = 0; i < tess.numVertexes; i++ )
-			{
+			for ( i = 0; i < tess.numVertexes; i++ ) {
 				float len;
 				vec3_t v;
 
 				VectorSubtract( tess.xyz[i], backEnd.viewParms.ori.origin, v );
 				len = VectorLength( v );
-
 				len /= tess.shader->portalRange;
 
-				if ( len < 0 )
-				{
-					alpha = 0;
-				}
-				else if ( len > 1 )
-				{
+				if ( len <= 0.0f ) {
 					alpha = 0xff;
-				}
-				else
-				{
-					alpha = len * 0xff;
+				} else if ( len >= 1.0f ) {
+					alpha = 0;
+				} else {
+					alpha = (unsigned char)((1.0f - len) * 255.0f);
 				}
 
 				tess.svars.colors[i][3] = alpha;
@@ -1173,8 +1187,9 @@ void RB_StageIteratorVertexLitTexture( void )
 		VectorCopy( ent->directedLight, currentGPUParams.directedLight );
 		VectorCopy( ent->lightDir, currentGPUParams.entityLightDir );
 	}
-	// Fill white colors — GPU overrides RGB
-	Com_Memset( tess.svars.colors, 0xff, tess.numVertexes * 4 );
+	// Fill white colors — GPU overrides RGB (avoid CPU memset into svars)
+	tess.vk_colorsSet = qtrue;
+	tess.vk_colors = NULL;
 
 	//
 	// log this call
@@ -1192,9 +1207,9 @@ void RB_StageIteratorVertexLitTexture( void )
 	R_SetCullMode( input->shader->cullType );
 
 	//
-	// Vulkan: texcoords come from tess.texCoords, copy to svars for drawing
-	//
-	Com_Memcpy( tess.svars.texcoords[0], input->texCoords[0][0], input->numVertexes * sizeof( tess.svars.texcoords[0][0] ) );
+	// Vulkan: draw directly from tess.texCoords without copying into svars
+	tess.vk_tc0Set = qtrue;
+	tess.vk_tc0 = (const float *)input->texCoords[0][0];
 
 	//
 	// call special shade routine
@@ -1203,6 +1218,14 @@ void RB_StageIteratorVertexLitTexture( void )
 	R_SetStateBits( tess.xstages[0]->stateBits );
 	renderState.multiTexture = qfalse;
 	R_DrawElements( input->numIndexes, input->indexes );
+
+	// Clear overrides after draw
+	tess.vk_tc0Set = qfalse;
+	tess.vk_tc0 = NULL;
+	tess.vk_tc1Set = qfalse;
+	tess.vk_tc1 = NULL;
+	tess.vk_colorsSet = qfalse;
+	tess.vk_colors = NULL;
 
 	//
 	// now do any dynamic lighting needed
@@ -1269,13 +1292,13 @@ void RB_StageIteratorLightmappedMultitexture( void ) {
 	// set color and state
 	//
 	R_SetStateBits( GLS_DEFAULT );
-	Com_Memset( tess.svars.colors, 0xff, tess.numVertexes * 4 );
-
-	//
-	// Vulkan: copy texcoords to svars for drawing
-	//
-	Com_Memcpy( tess.svars.texcoords[0], input->texCoords[0][0], input->numVertexes * sizeof( tess.svars.texcoords[0][0] ) );
-	Com_Memcpy( tess.svars.texcoords[1], tess.texCoords[1][0], input->numVertexes * sizeof( tess.svars.texcoords[1][0] ) );
+	// Vulkan: avoid memcpy/memset into svars; pass pointers directly
+	tess.vk_tc0Set = qtrue;
+	tess.vk_tc0 = (const float *)input->texCoords[0][0];
+	tess.vk_tc1Set = qtrue;
+	tess.vk_tc1 = (const float *)tess.texCoords[1][0];
+	tess.vk_colorsSet = qtrue;
+	tess.vk_colors = NULL; // white
 
 	//
 	// select base stage
@@ -1295,6 +1318,14 @@ void RB_StageIteratorLightmappedMultitexture( void ) {
 	renderState.multiTexture = qtrue;
 	R_DrawElements( input->numIndexes, input->indexes );
 	renderState.multiTexture = qfalse;
+
+	// Clear overrides after draw
+	tess.vk_tc0Set = qfalse;
+	tess.vk_tc0 = NULL;
+	tess.vk_tc1Set = qfalse;
+	tess.vk_tc1 = NULL;
+	tess.vk_colorsSet = qfalse;
+	tess.vk_colors = NULL;
 
 	//
 	// select TEXTURE0

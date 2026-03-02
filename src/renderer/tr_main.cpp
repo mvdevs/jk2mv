@@ -1154,23 +1154,49 @@ void R_AddEntitySurfaces (void) {
 			continue;
 		}
 
-		// simple generated models, like sprites and beams, are not culled
 		switch ( ent->e.reType ) {
 		case RT_PORTALSURFACE:
 			break;		// don't draw anything
 		case RT_SPRITE:
-		case RT_BEAM:
 		case RT_ORIENTED_QUAD:
-		case RT_ELECTRICITY:
-		case RT_LINE:
-		case RT_ORIENTEDLINE:
-		case RT_CYLINDER:
 		case RT_SABER_GLOW:
 			// self blood sprites, talk balloons, etc should not be drawn in the primary
 			// view.  We can't just do this check for all entities, because md3
 			// entities may still want to cast shadows from them
 			if ( (ent->e.renderfx & RF_THIRD_PERSON) && !tr.viewParms.isPortal) {
 				continue;
+			}
+			if ( R_CullPointAndRadius( ent->e.origin, ent->e.radius > 0 ? ent->e.radius : 16.0f ) == CULL_OUT ) {
+				continue;
+			}
+			shader = R_GetShaderByHandle( ent->e.customShader );
+			R_AddDrawSurf( &entitySurface, shader, R_SpriteFogNum( ent ), 0 );
+			break;
+		case RT_BEAM:
+		case RT_ELECTRICITY:
+		case RT_LINE:
+		case RT_ORIENTEDLINE:
+		case RT_CYLINDER:
+			// self blood sprites, talk balloons, etc should not be drawn in the primary
+			// view.  We can't just do this check for all entities, because md3
+			// entities may still want to cast shadows from them
+			if ( (ent->e.renderfx & RF_THIRD_PERSON) && !tr.viewParms.isPortal) {
+				continue;
+			}
+			{
+				// bounding sphere from midpoint of the two endpoints
+				vec3_t mid;
+				mid[0] = ( ent->e.origin[0] + ent->e.oldorigin[0] ) * 0.5f;
+				mid[1] = ( ent->e.origin[1] + ent->e.oldorigin[1] ) * 0.5f;
+				mid[2] = ( ent->e.origin[2] + ent->e.oldorigin[2] ) * 0.5f;
+				float dx = ent->e.origin[0] - ent->e.oldorigin[0];
+				float dy = ent->e.origin[1] - ent->e.oldorigin[1];
+				float dz = ent->e.origin[2] - ent->e.oldorigin[2];
+				float halfLen = 0.5f * sqrtf( dx*dx + dy*dy + dz*dz );
+				float cullRadius = halfLen + ( ent->e.radius > 0 ? ent->e.radius : 16.0f );
+				if ( R_CullPointAndRadius( mid, cullRadius ) == CULL_OUT ) {
+					continue;
+				}
 			}
 			shader = R_GetShaderByHandle( ent->e.customShader );
 			R_AddDrawSurf( &entitySurface, shader, R_SpriteFogNum( ent ), 0 );

@@ -160,6 +160,16 @@ void VK_TransitionImageLayout( VkImage image, VkFormat format,
 		barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 		sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
 		destinationStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	} else if ( oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_PRESENT_SRC_KHR ) {
+		barrier.srcAccessMask = 0;
+		barrier.dstAccessMask = 0;
+		sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+		destinationStage = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+	} else if ( oldLayout == VK_IMAGE_LAYOUT_PRESENT_SRC_KHR && newLayout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL ) {
+		barrier.srcAccessMask = 0;
+		barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+		destinationStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 	} else {
 		barrier.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT | VK_ACCESS_MEMORY_WRITE_BIT;
 		barrier.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT | VK_ACCESS_MEMORY_WRITE_BIT;
@@ -430,6 +440,7 @@ static qboolean VK_SelectPhysicalDevice( void ) {
 	VkPhysicalDeviceFeatures features;
 	vkGetPhysicalDeviceFeatures( vk.physicalDevice, &features );
 	vk.fillModeNonSolid = features.fillModeNonSolid ? qtrue : qfalse;
+	vk.bcSupported = features.textureCompressionBC ? qtrue : qfalse;
 
 	ri.Printf( PRINT_ALL, "Vulkan device: %s\n", vk.deviceProperties.deviceName );
 	ri.Free( devices );
@@ -539,6 +550,7 @@ static qboolean VK_CreateDevice( void ) {
 	deviceFeatures.fillModeNonSolid = vk.fillModeNonSolid;
 	deviceFeatures.samplerAnisotropy = VK_TRUE;
 	deviceFeatures.shaderStorageImageWriteWithoutFormat = VK_TRUE;
+	deviceFeatures.textureCompressionBC = vk.bcSupported ? VK_TRUE : VK_FALSE;
 
 	// Check for ray tracing extension support
 	vk.rayTracingSupported = VK_CheckRTExtensionSupport();
@@ -760,6 +772,9 @@ void VK_CreateSwapchain( void ) {
 
 	vkGetSwapchainImagesKHR( vk.device, vk.swapchain, &vk.swapchainImageCount, NULL );
 	vkGetSwapchainImagesKHR( vk.device, vk.swapchain, &vk.swapchainImageCount, vk.swapchainImages );
+	for ( uint32_t i = 0; i < vk.swapchainImageCount; i++ ) {
+		vk.swapchainImageLayouts[i] = VK_IMAGE_LAYOUT_UNDEFINED;
+	}
 
 	// Create image views
 	for ( uint32_t i = 0; i < vk.swapchainImageCount; i++ ) {
@@ -786,6 +801,7 @@ void VK_DestroySwapchain( void ) {
 			vkDestroyImageView( vk.device, vk.swapchainImageViews[i], NULL );
 			vk.swapchainImageViews[i] = VK_NULL_HANDLE;
 		}
+		vk.swapchainImageLayouts[i] = VK_IMAGE_LAYOUT_UNDEFINED;
 	}
 	if ( vk.swapchain ) {
 		vkDestroySwapchainKHR( vk.device, vk.swapchain, NULL );
@@ -852,7 +868,7 @@ void VK_CreateDepthBuffer( void ) {
 // ============================================================
 void VK_CreateRenderPass( void ) {
 	VkAttachmentDescription colorAttachment = {};
-	colorAttachment.format = vk.swapchainFormat;
+	colorAttachment.format = vk.sceneFormat;
 	colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
 	colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -929,6 +945,13 @@ void VK_CreateRenderPass( void ) {
 // Create framebuffers
 // ============================================================
 void VK_CreateFramebuffers( void ) {
+	// When HDR is on and scene format differs from swapchain, these framebuffers
+	// are unused (gamma redirect draws to offscreen image). Skip creation to
+	// avoid format mismatch between render pass and swapchain image views.
+	if ( vk.sceneFormat != vk.swapchainFormat ) {
+		return;
+	}
+
 	for ( uint32_t i = 0; i < vk.swapchainImageCount; i++ ) {
 		VkImageView attachments[] = { vk.swapchainImageViews[i], vk.depthImageView };
 
@@ -1139,21 +1162,28 @@ void VK_CreateSamplers( void ) {
 void VK_CreateDescriptorPool( void ) {
 	VkDescriptorPoolSize poolSizes[5] = {};
 	poolSizes[0].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	poolSizes[0].descriptorCount = VK_MAX_IMAGE_SLOTS + ( vk.rayTracingSupported ? 2 : 0 );
+	// RT needs: 3 in RT set (depth, glow, history) + output + outputRead + blurTemp + blurOutput = 7 extra
+	// Progressive bloom needs up to BLOOM_MAX_MIPS (6) descriptor sets for the mip chain
+	poolSizes[0].descriptorCount = VK_MAX_IMAGE_SLOTS + BLOOM_MAX_MIPS + ( vk.rayTracingSupported ? 7 : 0 );
 	poolSizes[1].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
 	poolSizes[1].descriptorCount = VK_NUM_COMMAND_BUFFERS;
 	poolSizes[2].type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
-	poolSizes[2].descriptorCount = 1;
+	// Ping-pong RT: 2 storage images (one per descriptor set)
+	poolSizes[2].descriptorCount = 2;
 	poolSizes[3].type = VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR;
-	poolSizes[3].descriptorCount = 1;
+	// Ping-pong RT: 2 acceleration structures (one per descriptor set)
+	poolSizes[3].descriptorCount = 2;
 	poolSizes[4].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	poolSizes[4].descriptorCount = 1;
+	// Ping-pong RT: 2 sets × 2 UBOs each (GlowSourcesUBO + RTParamsUBO)
+	poolSizes[4].descriptorCount = 4;
 
 	VkDescriptorPoolCreateInfo poolInfo = {};
 	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 	poolInfo.poolSizeCount = vk.rayTracingSupported ? 5 : 2;
 	poolInfo.pPoolSizes = poolSizes;
-	poolInfo.maxSets = VK_MAX_IMAGE_SLOTS + VK_NUM_COMMAND_BUFFERS + ( vk.rayTracingSupported ? 1 : 0 );
+	// RT adds: 2 ping-pong RT descriptor sets + 4 image-only sets (2×output + 2×outputRead) + blurTemp + blurOutput
+	// Progressive bloom adds up to BLOOM_MAX_MIPS sets for the mip chain
+	poolInfo.maxSets = VK_MAX_IMAGE_SLOTS + VK_NUM_COMMAND_BUFFERS + BLOOM_MAX_MIPS + ( vk.rayTracingSupported ? 8 : 0 );
 	poolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
 
 	if ( vkCreateDescriptorPool( vk.device, &poolInfo, NULL, &vk.descriptorPool ) != VK_SUCCESS ) {
@@ -1302,13 +1332,17 @@ void VK_CreateShaderModules( void ) {
 	vk.gammaFragShader = VK_LoadShaderFromFile( "shaders/gamma_frag.spv" );
 	vk.blurVertShader = VK_LoadShaderFromFile( "shaders/glow_vert.spv" );
 	vk.blurFragShader = VK_LoadShaderFromFile( "shaders/glow_frag.spv" );
+	vk.blurMaskedFragShader = VK_LoadShaderFromFile( "shaders/glow_blur_masked_frag.spv" );
 	vk.glowCompositeFragShader = VK_LoadShaderFromFile( "shaders/glow_composite_frag.spv" );
+	vk.glowDownsampleFragShader = VK_LoadShaderFromFile( "shaders/glow_downsample_frag.spv" );
+	vk.glowUpsampleFragShader = VK_LoadShaderFromFile( "shaders/glow_upsample_frag.spv" );
 
 	// Load ray tracing shaders (optional - only if RT is supported)
 	if ( vk.rayTracingSupported ) {
 		vk.glowReflectRgenShader = VK_LoadShaderFromFile( "shaders/glow_reflect_rgen.spv" );
 		vk.glowReflectRmissShader = VK_LoadShaderFromFile( "shaders/glow_reflect_rmiss.spv" );
 		vk.glowReflectRchitShader = VK_LoadShaderFromFile( "shaders/glow_reflect_rchit.spv" );
+		vk.glowReflectRahitShader = VK_LoadShaderFromFile( "shaders/glow_reflect_rahit.spv" );
 		if ( !vk.glowReflectRgenShader || !vk.glowReflectRmissShader || !vk.glowReflectRchitShader ) {
 			ri.Printf( PRINT_WARNING, "WARNING: RT glow shaders not found, disabling RT glow reflections\n" );
 			vk.rayTracingSupported = qfalse;
@@ -1404,6 +1438,15 @@ qboolean VK_Init( void ) {
 
 	VK_CreateCommandPool();
 	VK_CreateSwapchain();
+
+	// Set scene rendering format: HDR uses float16, otherwise match swapchain
+	if ( r_hdr && r_hdr->integer ) {
+		vk.sceneFormat = VK_FORMAT_R16G16B16A16_SFLOAT;
+		ri.Printf( PRINT_ALL, "HDR rendering enabled (R16G16B16A16_SFLOAT)\n" );
+	} else {
+		vk.sceneFormat = vk.swapchainFormat;
+	}
+
 	VK_CreateDepthBuffer();
 	VK_CreateRenderPass();
 	VK_CreateFramebuffers();
@@ -1428,6 +1471,12 @@ qboolean VK_Init( void ) {
 	VK_CreateGammaResources();
 	VK_CreateShadowPipelines();
 
+	// Update texture compression status
+	glConfig.textureCompression = vk.bcSupported ? TC_S3TC : TC_NONE;
+	if ( vk.bcSupported ) {
+		ri.Printf( PRINT_ALL, "BC7 texture compression enabled\n" );
+	}
+
 	vk.initialized = qtrue;
 
 	ri.Printf( PRINT_ALL, "Vulkan initialized successfully\n" );
@@ -1439,12 +1488,39 @@ qboolean VK_Init( void ) {
 }
 
 // ============================================================
+// Flush pending deferred image resource destruction
+// Called before shutdown or texture deletion to free queued resources
+// ============================================================
+void VK_FlushDeferredResources( void ) {
+	if ( !vk.device ) return;
+	vkDeviceWaitIdle( vk.device );
+	for ( int f = 0; f < VK_NUM_COMMAND_BUFFERS; f++ ) {
+		for ( int i = 0; i < vk.deferredImageCount[f]; i++ ) {
+			vkDeferredImageDestroy_t *d = &vk.deferredImages[f][i];
+			if ( d->descriptorSet != VK_NULL_HANDLE ) {
+				vkFreeDescriptorSets( vk.device, vk.descriptorPool, 1, &d->descriptorSet );
+			}
+			if ( d->view != VK_NULL_HANDLE ) {
+				vkDestroyImageView( vk.device, d->view, NULL );
+			}
+			if ( d->image != VK_NULL_HANDLE ) {
+				vkDestroyImage( vk.device, d->image, NULL );
+			}
+			if ( d->memory != VK_NULL_HANDLE ) {
+				vkFreeMemory( vk.device, d->memory, NULL );
+			}
+		}
+		vk.deferredImageCount[f] = 0;
+	}
+}
+
+// ============================================================
 // Vulkan shutdown
 // ============================================================
 void VK_Shutdown( void ) {
 	if ( !vk.initialized ) return;
 
-	vkDeviceWaitIdle( vk.device );
+	VK_FlushDeferredResources();
 
 	// Destroy post-processing resources
 	VK_DestroyGlowReflectResources();
@@ -1452,9 +1528,11 @@ void VK_Shutdown( void ) {
 	VK_DestroyGammaResources();
 	VK_DestroyShadowPipelines();
 
-	// Destroy pipelines
-	for ( int i = 0; i < vk.pipelineCount; i++ ) {
-		vkDestroyPipeline( vk.device, vk.pipelines[i].pipeline, NULL );
+	// Destroy pipelines (hash table — iterate all slots)
+	for ( int i = 0; i < VK_PIPELINE_HASH_SIZE; i++ ) {
+		if ( vk.pipelines[i].occupied ) {
+			vkDestroyPipeline( vk.device, vk.pipelines[i].pipeline, NULL );
+		}
 	}
 
 	// Destroy shader modules
@@ -1465,10 +1543,14 @@ void VK_Shutdown( void ) {
 	if ( vk.gammaFragShader ) vkDestroyShaderModule( vk.device, vk.gammaFragShader, NULL );
 	if ( vk.blurVertShader ) vkDestroyShaderModule( vk.device, vk.blurVertShader, NULL );
 	if ( vk.blurFragShader ) vkDestroyShaderModule( vk.device, vk.blurFragShader, NULL );
+	if ( vk.blurMaskedFragShader ) vkDestroyShaderModule( vk.device, vk.blurMaskedFragShader, NULL );
 	if ( vk.glowCompositeFragShader ) vkDestroyShaderModule( vk.device, vk.glowCompositeFragShader, NULL );
+	if ( vk.glowDownsampleFragShader ) vkDestroyShaderModule( vk.device, vk.glowDownsampleFragShader, NULL );
+	if ( vk.glowUpsampleFragShader ) vkDestroyShaderModule( vk.device, vk.glowUpsampleFragShader, NULL );
 	if ( vk.glowReflectRgenShader ) vkDestroyShaderModule( vk.device, vk.glowReflectRgenShader, NULL );
 	if ( vk.glowReflectRmissShader ) vkDestroyShaderModule( vk.device, vk.glowReflectRmissShader, NULL );
 	if ( vk.glowReflectRchitShader ) vkDestroyShaderModule( vk.device, vk.glowReflectRchitShader, NULL );
+	if ( vk.glowReflectRahitShader ) vkDestroyShaderModule( vk.device, vk.glowReflectRahitShader, NULL );
 
 	// Destroy pipeline cache / layout
 	if ( vk.pipelineCache ) vkDestroyPipelineCache( vk.device, vk.pipelineCache, NULL );
@@ -1562,972 +1644,5 @@ void VK_Shutdown( void ) {
 	Com_Memset( &vk, 0, sizeof(vk) );
 }
 
-// ============================================================
-// Glow (bloom) post-processing
-// Renders glow objects to a full-res offscreen image (sharing the main depth buffer
-// for correct occlusion), blurs bright areas at half-res, and composites back onto
-// the main scene.
-// ============================================================
-void VK_CreateGlowResources( void ) {
-	if ( !vk.blurVertShader || !vk.blurFragShader || !vk.glowCompositeFragShader ) {
-		ri.Printf( PRINT_ALL, "VK_CreateGlowResources: blur/glow shaders not loaded, glow disabled\n" );
-		return;
-	}
-
-	uint32_t fullWidth = vk.swapchainExtent.width;
-	uint32_t fullHeight = vk.swapchainExtent.height;
-
-	// Use r_DynamicGlowWidth/Height cvars if set, otherwise default to swapchain/2
-	uint32_t halfWidth = r_DynamicGlowWidth->integer;
-	uint32_t halfHeight = r_DynamicGlowHeight->integer;
-	if ( halfWidth <= 0 || halfWidth > fullWidth ) halfWidth = fullWidth / 2;
-	if ( halfHeight <= 0 || halfHeight > fullHeight ) halfHeight = fullHeight / 2;
-	// Ensure minimum size
-	if ( halfWidth < 32 ) halfWidth = 32;
-	if ( halfHeight < 32 ) halfHeight = 32;
-
-	// Store for use by VK_BlurGlowTexture
-	vk.glow.halfWidth = halfWidth;
-	vk.glow.halfHeight = halfHeight;
-
-	// Create full-res glow scene render target (glow objects rendered here)
-	VK_CreateRenderTargetImage( &vk.glow.glowImage, &vk.glow.glowImageMemory, &vk.glow.glowImageView,
-		fullWidth, fullHeight, vk.swapchainFormat,
-		VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT );
-	vk.glow.glowDescriptorSet = VK_AllocateImageDescriptor( vk.glow.glowImageView, vk.samplerNoMipClamp );
-
-	// Create half-res scene image (final blur output, used by composite)
-	VK_CreateRenderTargetImage( &vk.glow.sceneImage, &vk.glow.sceneImageMemory, &vk.glow.sceneImageView,
-		halfWidth, halfHeight, vk.swapchainFormat,
-		VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT );
-	vk.glow.sceneDescriptorSet = VK_AllocateImageDescriptor( vk.glow.sceneImageView, vk.samplerNoMipClamp );
-
-	// Create half-res blur ping-pong render target
-	VK_CreateRenderTargetImage( &vk.glow.blurImage, &vk.glow.blurImageMemory, &vk.glow.blurImageView,
-		halfWidth, halfHeight, vk.swapchainFormat,
-		VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT );
-	vk.glow.blurDescriptorSet = VK_AllocateImageDescriptor( vk.glow.blurImageView, vk.samplerNoMipClamp );
-
-	// ---- Glow scene render pass (full-res, color + depth) ----
-	// Shares the main depth buffer for correct occlusion of glow objects
-	{
-		VkAttachmentDescription colorAtt = {};
-		colorAtt.format = vk.swapchainFormat;
-		colorAtt.samples = VK_SAMPLE_COUNT_1_BIT;
-		colorAtt.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		colorAtt.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-		colorAtt.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-		colorAtt.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		colorAtt.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		colorAtt.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-
-		VkAttachmentDescription depthAtt = {};
-		depthAtt.format = vk.depthFormat;
-		depthAtt.samples = VK_SAMPLE_COUNT_1_BIT;
-		depthAtt.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;   // Load main scene depth for occlusion
-		depthAtt.storeOp = VK_ATTACHMENT_STORE_OP_STORE; // Preserve for renderPassLoad
-		depthAtt.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
-		depthAtt.stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
-		depthAtt.initialLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-		depthAtt.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-		VkAttachmentReference colorRef = { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
-		VkAttachmentReference depthRef = { 1, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL };
-
-		VkSubpassDescription subpass = {};
-		subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-		subpass.colorAttachmentCount = 1;
-		subpass.pColorAttachments = &colorRef;
-		subpass.pDepthStencilAttachment = &depthRef;
-
-		VkSubpassDependency dep = {};
-		dep.srcSubpass = VK_SUBPASS_EXTERNAL;
-		dep.dstSubpass = 0;
-		dep.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-		dep.srcAccessMask = 0;
-		dep.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-		dep.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-
-		VkAttachmentDescription atts[] = { colorAtt, depthAtt };
-		VkRenderPassCreateInfo rpInfo = {};
-		rpInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-		rpInfo.attachmentCount = 2;
-		rpInfo.pAttachments = atts;
-		rpInfo.subpassCount = 1;
-		rpInfo.pSubpasses = &subpass;
-		rpInfo.dependencyCount = 1;
-		rpInfo.pDependencies = &dep;
-
-		vkCreateRenderPass( vk.device, &rpInfo, NULL, &vk.glow.glowRenderPass );
-	}
-
-	// ---- Blur render pass (half-res, color only, no depth) ----
-	{
-		VkAttachmentDescription colorAtt = {};
-		colorAtt.format = vk.swapchainFormat;
-		colorAtt.samples = VK_SAMPLE_COUNT_1_BIT;
-		colorAtt.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		colorAtt.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-		colorAtt.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-		colorAtt.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		colorAtt.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		colorAtt.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-
-		VkAttachmentReference colorRef = { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
-
-		VkSubpassDescription subpass = {};
-		subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-		subpass.colorAttachmentCount = 1;
-		subpass.pColorAttachments = &colorRef;
-
-		VkSubpassDependency dep = {};
-		dep.srcSubpass = VK_SUBPASS_EXTERNAL;
-		dep.dstSubpass = 0;
-		dep.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		dep.srcAccessMask = 0;
-		dep.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		dep.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-
-		VkRenderPassCreateInfo rpInfo = {};
-		rpInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-		rpInfo.attachmentCount = 1;
-		rpInfo.pAttachments = &colorAtt;
-		rpInfo.subpassCount = 1;
-		rpInfo.pSubpasses = &subpass;
-		rpInfo.dependencyCount = 1;
-		rpInfo.pDependencies = &dep;
-
-		vkCreateRenderPass( vk.device, &rpInfo, NULL, &vk.glow.blurRenderPass );
-	}
-
-	// ---- Framebuffers ----
-	// Glow scene framebuffer: full-res, glowImage + main depth
-	{
-		VkImageView atts[] = { vk.glow.glowImageView, vk.depthImageView };
-		VkFramebufferCreateInfo fbInfo = {};
-		fbInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-		fbInfo.renderPass = vk.glow.glowRenderPass;
-		fbInfo.attachmentCount = 2;
-		fbInfo.pAttachments = atts;
-		fbInfo.width = fullWidth;
-		fbInfo.height = fullHeight;
-		fbInfo.layers = 1;
-		vkCreateFramebuffer( vk.device, &fbInfo, NULL, &vk.glow.glowFramebuffer );
-	}
-
-	// Blur framebuffer: half-res, blurImage only
-	{
-		VkFramebufferCreateInfo fbInfo = {};
-		fbInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-		fbInfo.renderPass = vk.glow.blurRenderPass;
-		fbInfo.attachmentCount = 1;
-		fbInfo.pAttachments = &vk.glow.blurImageView;
-		fbInfo.width = halfWidth;
-		fbInfo.height = halfHeight;
-		fbInfo.layers = 1;
-		vkCreateFramebuffer( vk.device, &fbInfo, NULL, &vk.glow.blurFramebuffer );
-	}
-
-	// Scene framebuffer: half-res, sceneImage only (blur pass 1 output)
-	{
-		VkFramebufferCreateInfo fbInfo = {};
-		fbInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-		fbInfo.renderPass = vk.glow.blurRenderPass;
-		fbInfo.attachmentCount = 1;
-		fbInfo.pAttachments = &vk.glow.sceneImageView;
-		fbInfo.width = halfWidth;
-		fbInfo.height = halfHeight;
-		fbInfo.layers = 1;
-		vkCreateFramebuffer( vk.device, &fbInfo, NULL, &vk.glow.sceneFramebuffer );
-	}
-
-	// ---- Pipelines ----
-	// Blur pipeline (fullscreen triangle, samples from texture with offset)
-	VkPipelineShaderStageCreateInfo stages[2] = {};
-	stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-	stages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
-	stages[0].module = vk.blurVertShader;
-	stages[0].pName = "main";
-	stages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-	stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-	stages[1].module = vk.blurFragShader;
-	stages[1].pName = "main";
-
-	VkPipelineVertexInputStateCreateInfo vertexInput = {};
-	vertexInput.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-
-	VkPipelineInputAssemblyStateCreateInfo inputAssembly = {};
-	inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-	inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-
-	VkPipelineViewportStateCreateInfo viewportState = {};
-	viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-	viewportState.viewportCount = 1;
-	viewportState.scissorCount = 1;
-
-	VkPipelineRasterizationStateCreateInfo rasterization = {};
-	rasterization.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-	rasterization.polygonMode = VK_POLYGON_MODE_FILL;
-	rasterization.cullMode = VK_CULL_MODE_NONE;
-	rasterization.frontFace = VK_FRONT_FACE_CLOCKWISE;
-	rasterization.lineWidth = 1.0f;
-
-	VkPipelineMultisampleStateCreateInfo multisample = {};
-	multisample.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-	multisample.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
-
-	VkPipelineColorBlendAttachmentState blendAttachment = {};
-	blendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
-		VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-	blendAttachment.blendEnable = VK_FALSE;
-
-	VkPipelineColorBlendStateCreateInfo colorBlend = {};
-	colorBlend.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-	colorBlend.attachmentCount = 1;
-	colorBlend.pAttachments = &blendAttachment;
-
-	VkPipelineDepthStencilStateCreateInfo depthStencil = {};
-	depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-	depthStencil.depthTestEnable = VK_FALSE;
-	depthStencil.depthWriteEnable = VK_FALSE;
-
-	VkDynamicState dynamicStates[] = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
-	VkPipelineDynamicStateCreateInfo dynamicState = {};
-	dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-	dynamicState.dynamicStateCount = 2;
-	dynamicState.pDynamicStates = dynamicStates;
-
-	VkGraphicsPipelineCreateInfo pipelineInfo = {};
-	pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-	pipelineInfo.stageCount = 2;
-	pipelineInfo.pStages = stages;
-	pipelineInfo.pVertexInputState = &vertexInput;
-	pipelineInfo.pInputAssemblyState = &inputAssembly;
-	pipelineInfo.pViewportState = &viewportState;
-	pipelineInfo.pRasterizationState = &rasterization;
-	pipelineInfo.pMultisampleState = &multisample;
-	pipelineInfo.pDepthStencilState = &depthStencil;
-	pipelineInfo.pColorBlendState = &colorBlend;
-	pipelineInfo.pDynamicState = &dynamicState;
-	pipelineInfo.layout = vk.pipelineLayout;
-	pipelineInfo.renderPass = vk.glow.blurRenderPass;  // blur uses color-only render pass
-	pipelineInfo.subpass = 0;
-
-	vkCreateGraphicsPipelines( vk.device, vk.pipelineCache, 1, &pipelineInfo, NULL, &vk.glow.blurPipeline );
-
-	// Create glow composite pipeline (additive blend, renders to main render pass)
-	blendAttachment.blendEnable = VK_TRUE;
-	blendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
-	blendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE;
-	blendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
-	blendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-	blendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
-	blendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
-
-	// Use glow composite shader instead of blur shader for composite pass
-	stages[1].module = vk.glowCompositeFragShader;
-	
-	pipelineInfo.renderPass = vk.renderPassLoad;  // Use load render pass for compositing
-	vkCreateGraphicsPipelines( vk.device, vk.pipelineCache, 1, &pipelineInfo, NULL, &vk.glow.glowCompositePipeline );
-
-	ri.Printf( PRINT_ALL, "Glow resources created (scene=%dx%d, blur=%dx%d)\n", fullWidth, fullHeight, halfWidth, halfHeight );
-}
-
-void VK_DestroyGlowResources( void ) {
-	if ( !vk.device ) return;
-	vkDeviceWaitIdle( vk.device );
-
-	if ( vk.glow.sceneDescriptorSet ) vkFreeDescriptorSets( vk.device, vk.descriptorPool, 1, &vk.glow.sceneDescriptorSet );
-	if ( vk.glow.glowDescriptorSet ) vkFreeDescriptorSets( vk.device, vk.descriptorPool, 1, &vk.glow.glowDescriptorSet );
-	if ( vk.glow.blurDescriptorSet ) vkFreeDescriptorSets( vk.device, vk.descriptorPool, 1, &vk.glow.blurDescriptorSet );
-
-	if ( vk.glow.blurPipeline ) vkDestroyPipeline( vk.device, vk.glow.blurPipeline, NULL );
-	if ( vk.glow.glowCompositePipeline ) vkDestroyPipeline( vk.device, vk.glow.glowCompositePipeline, NULL );
-	if ( vk.glow.glowRenderPass ) vkDestroyRenderPass( vk.device, vk.glow.glowRenderPass, NULL );
-	if ( vk.glow.blurRenderPass ) vkDestroyRenderPass( vk.device, vk.glow.blurRenderPass, NULL );
-	if ( vk.glow.glowFramebuffer ) vkDestroyFramebuffer( vk.device, vk.glow.glowFramebuffer, NULL );
-	if ( vk.glow.blurFramebuffer ) vkDestroyFramebuffer( vk.device, vk.glow.blurFramebuffer, NULL );
-	if ( vk.glow.sceneFramebuffer ) vkDestroyFramebuffer( vk.device, vk.glow.sceneFramebuffer, NULL );
-	if ( vk.glow.glowImageView ) vkDestroyImageView( vk.device, vk.glow.glowImageView, NULL );
-	if ( vk.glow.glowImage ) vkDestroyImage( vk.device, vk.glow.glowImage, NULL );
-	if ( vk.glow.glowImageMemory ) vkFreeMemory( vk.device, vk.glow.glowImageMemory, NULL );
-	if ( vk.glow.sceneImageView ) vkDestroyImageView( vk.device, vk.glow.sceneImageView, NULL );
-	if ( vk.glow.sceneImage ) vkDestroyImage( vk.device, vk.glow.sceneImage, NULL );
-	if ( vk.glow.sceneImageMemory ) vkFreeMemory( vk.device, vk.glow.sceneImageMemory, NULL );
-	if ( vk.glow.blurImageView ) vkDestroyImageView( vk.device, vk.glow.blurImageView, NULL );
-	if ( vk.glow.blurImage ) vkDestroyImage( vk.device, vk.glow.blurImage, NULL );
-	if ( vk.glow.blurImageMemory ) vkFreeMemory( vk.device, vk.glow.blurImageMemory, NULL );
-	Com_Memset( &vk.glow, 0, sizeof(vk.glow) );
-}
-
-void VK_BlurGlowTexture( void ) {
-	if ( !vk.glow.blurPipeline ) return;
-
-	// Ensure any active render pass is ended before starting blur passes
-	VK_EndRenderPass();
-
-	VkCommandBuffer cmd = vk.frames[vk.currentFrame].commandBuffer;
-	uint32_t width = vk.glow.halfWidth;
-	uint32_t height = vk.glow.halfHeight;
-
-	// Barrier: make glow render pass writes to glowImage visible for shader reads.
-	// The glow render pass transitioned glowImage to SHADER_READ_ONLY_OPTIMAL but
-	// the implicit end-of-renderpass dependency has dstAccessMask=0, so we need an
-	// explicit barrier to ensure the color attachment writes are visible to the
-	// fragment shader that samples it in the first blur pass.
-	{
-		VkImageMemoryBarrier barrier = {};
-		barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-		barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-		barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-		barrier.oldLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		barrier.image = vk.glow.glowImage;
-		barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		barrier.subresourceRange.baseMipLevel = 0;
-		barrier.subresourceRange.levelCount = 1;
-		barrier.subresourceRange.baseArrayLayer = 0;
-		barrier.subresourceRange.layerCount = 1;
-
-		vkCmdPipelineBarrier( cmd,
-			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-			VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-			0, 0, NULL, 0, NULL, 1, &barrier );
-	}
-
-	VkViewport viewport = {};
-	viewport.width = (float)width;
-	viewport.height = (float)height;
-	viewport.minDepth = 0.0f;
-	viewport.maxDepth = 1.0f;
-
-	VkRect2D scissor = {};
-	scissor.extent.width = width;
-	scissor.extent.height = height;
-
-	// Number of blur iterations from cvar (each iteration = one H + one V pass)
-	int numPasses = r_DynamicGlowPasses->integer;
-	if ( numPasses < 1 ) numPasses = 1;
-	if ( numPasses > 10 ) numPasses = 10;
-
-	float softness = r_DynamicGlowSoft->value;
-	if ( softness < 0.0f ) softness = 0.0f;
-
-	float delta = r_DynamicGlowDelta->value;
-	if ( delta < 0.0f ) delta = 0.0f;
-
-	// Each iteration performs two passes: horizontal blur then vertical blur.
-	// Pass flow:
-	//   Iteration 0, H: glowImage -> blurImage
-	//   Iteration 0, V: blurImage -> sceneImage
-	//   Iteration 1, H: sceneImage -> blurImage
-	//   Iteration 1, V: blurImage -> sceneImage
-	//   ... and so on, always ending with sceneImage as the final output.
-	for ( int iter = 0; iter < numPasses; iter++ ) {
-		for ( int dir = 0; dir < 2; dir++ ) {
-			VkClearValue clearValue = {};
-			clearValue.color = { { 0.0f, 0.0f, 0.0f, 0.0f } };
-
-			VkRenderPassBeginInfo rpBegin = {};
-			rpBegin.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-			rpBegin.renderPass = vk.glow.blurRenderPass;
-			rpBegin.clearValueCount = 1;
-			rpBegin.pClearValues = &clearValue;
-			rpBegin.renderArea.extent.width = width;
-			rpBegin.renderArea.extent.height = height;
-
-			VkDescriptorSet srcDescriptor;
-			if ( dir == 0 ) {
-				// Horizontal pass: write to blurImage
-				rpBegin.framebuffer = vk.glow.blurFramebuffer;
-				if ( iter == 0 ) {
-					srcDescriptor = vk.glow.glowDescriptorSet;   // first iter reads full-res glow scene
-				} else {
-					srcDescriptor = vk.glow.sceneDescriptorSet;  // subsequent iters read previous V output
-				}
-			} else {
-				// Vertical pass: write to sceneImage
-				rpBegin.framebuffer = vk.glow.sceneFramebuffer;
-				srcDescriptor = vk.glow.blurDescriptorSet;        // always read H output
-			}
-
-			vk.renderPassActive = qtrue;
-			vkCmdBeginRenderPass( cmd, &rpBegin, VK_SUBPASS_CONTENTS_INLINE );
-			vkCmdSetViewport( cmd, 0, 1, &viewport );
-			vkCmdSetScissor( cmd, 0, 1, &scissor );
-			vkCmdBindPipeline( cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, vk.glow.blurPipeline );
-
-			vkCmdBindDescriptorSets( cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, vk.pipelineLayout, 0, 1, &srcDescriptor, 0, NULL );
-
-			// Push blur direction + softness + delta as push constants
-			float blurPC[4];
-			if ( dir == 0 ) {
-				blurPC[0] = 1.0f / (float)width;  // horizontal texel offset
-				blurPC[1] = 0.0f;
-			} else {
-				blurPC[0] = 0.0f;
-				blurPC[1] = 1.0f / (float)height;  // vertical texel offset
-			}
-			blurPC[2] = softness;               // r_DynamicGlowSoft
-			// Only apply brightness threshold on first iteration to avoid
-			// repeated thresholding killing the signal across multiple passes
-			blurPC[3] = ( iter == 0 ) ? delta : 0.0f;  // r_DynamicGlowDelta
-			vkCmdPushConstants( cmd, vk.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(blurPC), blurPC );
-
-			vkCmdDraw( cmd, 3, 1, 0, 0 );
-
-			vkCmdEndRenderPass( cmd );
-			vk.renderPassActive = qfalse;
-
-			// Barrier to ensure write completes before the next pass reads it
-			{
-				VkImage barrierImage = ( dir == 0 ) ? vk.glow.blurImage : vk.glow.sceneImage;
-				VkImageMemoryBarrier barrier = {};
-				barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-				barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-				barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-				barrier.oldLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-				barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-				barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-				barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-				barrier.image = barrierImage;
-				barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-				barrier.subresourceRange.baseMipLevel = 0;
-				barrier.subresourceRange.levelCount = 1;
-				barrier.subresourceRange.baseArrayLayer = 0;
-				barrier.subresourceRange.layerCount = 1;
-
-				vkCmdPipelineBarrier( cmd,
-					VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-					VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-					0, 0, NULL, 0, NULL, 1, &barrier );
-			}
-		}
-	}
-}
-
-void VK_DrawGlowOverlay( void ) {
-	if ( !vk.glow.glowCompositePipeline || !vk.glow.sceneDescriptorSet ) {
-		ri.Printf( PRINT_WARNING, "VK_DrawGlowOverlay: missing composite pipeline or scene descriptor (pipeline=%p desc=%p)\n",
-			(void*)vk.glow.glowCompositePipeline, (void*)vk.glow.sceneDescriptorSet );
-		return;
-	}
-
-	// Ensure we're inside a render pass before drawing
-	if ( !vk.renderPassActive ) {
-		ri.Printf( PRINT_WARNING, "VK_DrawGlowOverlay: called outside render pass\n" );
-		return;
-	}
-
-	VkCommandBuffer cmd = vk.frames[vk.currentFrame].commandBuffer;
-
-	// We should be inside the main render pass already
-	vkCmdBindPipeline( cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, vk.glow.glowCompositePipeline );
-
-	VkDescriptorSet glowDesc = vk.glow.sceneDescriptorSet;
-	vkCmdBindDescriptorSets( cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, vk.pipelineLayout, 0, 1, &glowDesc, 0, NULL );
-
-	// Push intensity as a push constant
-	float intensity = r_DynamicGlowIntensity->value;
-	if ( intensity < 0.0f ) intensity = 0.0f;
-	vkCmdPushConstants( cmd, vk.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(intensity), &intensity );
-
-	// Draw fullscreen triangle with additive blend
-	vkCmdDraw( cmd, 3, 1, 0, 0 );
-}
-
-// ============================================================
-// Gamma correction post-processing
-// Applies gamma/brightness/contrast as a fullscreen pass.
-// Uses an offscreen render target and a fullscreen gamma.frag post-process pass.
-// All scene rendering is redirected to the offscreen image, then gamma/brightness/contrast
-// are applied when copying to the swapchain.
-// ============================================================
-void VK_CreateGammaResources( void ) {
-	if ( !vk.gammaVertShader || !vk.gammaFragShader ) {
-		ri.Printf( PRINT_ALL, "VK_CreateGammaResources: gamma shaders not loaded, gamma disabled\n" );
-		return;
-	}
-
-	uint32_t width = vk.swapchainExtent.width;
-	uint32_t height = vk.swapchainExtent.height;
-
-	// ---- Offscreen scene image ----
-	VK_CreateRenderTargetImage( &vk.gamma.sceneImage, &vk.gamma.sceneImageMemory, &vk.gamma.sceneImageView,
-		width, height, vk.swapchainFormat,
-		VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT );
-	vk.gamma.sceneDescriptorSet = VK_AllocateImageDescriptor( vk.gamma.sceneImageView, vk.samplerNoMipClamp );
-
-	// ---- Scene render pass (clear) ----
-	// Same attachment format as vk.renderPass (pipeline-compatible) but finalLayout = SHADER_READ_ONLY
-	{
-		VkAttachmentDescription colorAtt = {};
-		colorAtt.format = vk.swapchainFormat;
-		colorAtt.samples = VK_SAMPLE_COUNT_1_BIT;
-		colorAtt.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		colorAtt.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-		colorAtt.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-		colorAtt.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		colorAtt.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		colorAtt.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-
-		VkAttachmentDescription depthAtt = {};
-		depthAtt.format = vk.depthFormat;
-		depthAtt.samples = VK_SAMPLE_COUNT_1_BIT;
-		depthAtt.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		depthAtt.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-		depthAtt.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		depthAtt.stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
-		depthAtt.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		depthAtt.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-		VkAttachmentReference colorRef = { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
-		VkAttachmentReference depthRef = { 1, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL };
-
-		VkSubpassDescription subpass = {};
-		subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-		subpass.colorAttachmentCount = 1;
-		subpass.pColorAttachments = &colorRef;
-		subpass.pDepthStencilAttachment = &depthRef;
-
-		VkSubpassDependency dep = {};
-		dep.srcSubpass = VK_SUBPASS_EXTERNAL;
-		dep.dstSubpass = 0;
-		dep.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-		dep.srcAccessMask = 0;
-		dep.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-		dep.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-
-		VkAttachmentDescription atts[] = { colorAtt, depthAtt };
-		VkRenderPassCreateInfo rpInfo = {};
-		rpInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-		rpInfo.attachmentCount = 2;
-		rpInfo.pAttachments = atts;
-		rpInfo.subpassCount = 1;
-		rpInfo.pSubpasses = &subpass;
-		rpInfo.dependencyCount = 1;
-		rpInfo.pDependencies = &dep;
-
-		vkCreateRenderPass( vk.device, &rpInfo, NULL, &vk.gamma.sceneRenderPass );
-
-		// Load variant (resume after glow without clearing)
-		colorAtt.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
-		colorAtt.initialLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		depthAtt.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
-		depthAtt.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
-		depthAtt.initialLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-		atts[0] = colorAtt;
-		atts[1] = depthAtt;
-
-		vkCreateRenderPass( vk.device, &rpInfo, NULL, &vk.gamma.sceneRenderPassLoad );
-	}
-
-	// ---- Scene framebuffer (offscreen color + shared depth) ----
-	{
-		VkImageView atts[] = { vk.gamma.sceneImageView, vk.depthImageView };
-		VkFramebufferCreateInfo fbInfo = {};
-		fbInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-		fbInfo.renderPass = vk.gamma.sceneRenderPass;
-		fbInfo.attachmentCount = 2;
-		fbInfo.pAttachments = atts;
-		fbInfo.width = width;
-		fbInfo.height = height;
-		fbInfo.layers = 1;
-		vkCreateFramebuffer( vk.device, &fbInfo, NULL, &vk.gamma.sceneFramebuffer );
-	}
-
-	// ---- Gamma render pass (color only, writes to swapchain) ----
-	{
-		VkAttachmentDescription colorAtt = {};
-		colorAtt.format = vk.swapchainFormat;
-		colorAtt.samples = VK_SAMPLE_COUNT_1_BIT;
-		colorAtt.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE; // fullscreen overwrite
-		colorAtt.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-		colorAtt.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-		colorAtt.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		colorAtt.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		colorAtt.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-
-		VkAttachmentReference colorRef = { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
-
-		VkSubpassDescription subpass = {};
-		subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-		subpass.colorAttachmentCount = 1;
-		subpass.pColorAttachments = &colorRef;
-
-		VkSubpassDependency dep = {};
-		dep.srcSubpass = VK_SUBPASS_EXTERNAL;
-		dep.dstSubpass = 0;
-		dep.srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-		dep.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
-		dep.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		dep.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-
-		VkRenderPassCreateInfo rpInfo = {};
-		rpInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-		rpInfo.attachmentCount = 1;
-		rpInfo.pAttachments = &colorAtt;
-		rpInfo.subpassCount = 1;
-		rpInfo.pSubpasses = &subpass;
-		rpInfo.dependencyCount = 1;
-		rpInfo.pDependencies = &dep;
-
-		vkCreateRenderPass( vk.device, &rpInfo, NULL, &vk.gamma.gammaRenderPass );
-	}
-
-	// ---- Per-swapchain-image gamma framebuffers ----
-	for ( uint32_t i = 0; i < vk.swapchainImageCount; i++ ) {
-		VkFramebufferCreateInfo fbInfo = {};
-		fbInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-		fbInfo.renderPass = vk.gamma.gammaRenderPass;
-		fbInfo.attachmentCount = 1;
-		fbInfo.pAttachments = &vk.swapchainImageViews[i];
-		fbInfo.width = width;
-		fbInfo.height = height;
-		fbInfo.layers = 1;
-		vkCreateFramebuffer( vk.device, &fbInfo, NULL, &vk.gamma.gammaFramebuffers[i] );
-	}
-
-	// ---- Gamma pipeline layout (16-byte push constants, 1 descriptor set) ----
-	{
-		VkPushConstantRange pcRange = {};
-		pcRange.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-		pcRange.offset = 0;
-		pcRange.size = 16; // GammaPC: invGamma, brightness, contrast, pad
-
-		VkPipelineLayoutCreateInfo layoutInfo = {};
-		layoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-		layoutInfo.setLayoutCount = 1;
-		layoutInfo.pSetLayouts = &vk.descriptorSetLayout; // reuse existing sampler layout
-		layoutInfo.pushConstantRangeCount = 1;
-		layoutInfo.pPushConstantRanges = &pcRange;
-
-		vkCreatePipelineLayout( vk.device, &layoutInfo, NULL, &vk.gamma.gammaPipelineLayout );
-	}
-
-	// ---- Gamma pipeline (fullscreen triangle, no depth test) ----
-	{
-		VkPipelineShaderStageCreateInfo stages[2] = {};
-		stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-		stages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
-		stages[0].module = vk.gammaVertShader;
-		stages[0].pName = "main";
-		stages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-		stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-		stages[1].module = vk.gammaFragShader;
-		stages[1].pName = "main";
-
-		VkPipelineVertexInputStateCreateInfo vertexInput = {};
-		vertexInput.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-
-		VkPipelineInputAssemblyStateCreateInfo inputAssembly = {};
-		inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-		inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-
-		VkPipelineViewportStateCreateInfo viewportState = {};
-		viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-		viewportState.viewportCount = 1;
-		viewportState.scissorCount = 1;
-
-		VkPipelineRasterizationStateCreateInfo rasterization = {};
-		rasterization.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-		rasterization.polygonMode = VK_POLYGON_MODE_FILL;
-		rasterization.cullMode = VK_CULL_MODE_NONE;
-		rasterization.frontFace = VK_FRONT_FACE_CLOCKWISE;
-		rasterization.lineWidth = 1.0f;
-
-		VkPipelineMultisampleStateCreateInfo multisample = {};
-		multisample.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-		multisample.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
-
-		VkPipelineColorBlendAttachmentState blendAttachment = {};
-		blendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
-			VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-		blendAttachment.blendEnable = VK_FALSE;
-
-		VkPipelineColorBlendStateCreateInfo colorBlend = {};
-		colorBlend.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-		colorBlend.attachmentCount = 1;
-		colorBlend.pAttachments = &blendAttachment;
-
-		VkPipelineDepthStencilStateCreateInfo depthStencil = {};
-		depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-		depthStencil.depthTestEnable = VK_FALSE;
-		depthStencil.depthWriteEnable = VK_FALSE;
-
-		VkDynamicState dynamicStates[] = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
-		VkPipelineDynamicStateCreateInfo dynamicState = {};
-		dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-		dynamicState.dynamicStateCount = 2;
-		dynamicState.pDynamicStates = dynamicStates;
-
-		VkGraphicsPipelineCreateInfo pipelineInfo = {};
-		pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-		pipelineInfo.stageCount = 2;
-		pipelineInfo.pStages = stages;
-		pipelineInfo.pVertexInputState = &vertexInput;
-		pipelineInfo.pInputAssemblyState = &inputAssembly;
-		pipelineInfo.pViewportState = &viewportState;
-		pipelineInfo.pRasterizationState = &rasterization;
-		pipelineInfo.pMultisampleState = &multisample;
-		pipelineInfo.pDepthStencilState = &depthStencil;
-		pipelineInfo.pColorBlendState = &colorBlend;
-		pipelineInfo.pDynamicState = &dynamicState;
-		pipelineInfo.layout = vk.gamma.gammaPipelineLayout;
-		pipelineInfo.renderPass = vk.gamma.gammaRenderPass;
-		pipelineInfo.subpass = 0;
-
-		vkCreateGraphicsPipelines( vk.device, vk.pipelineCache, 1, &pipelineInfo, NULL, &vk.gamma.gammaPipeline );
-	}
-
-	vk.gamma.enabled = qtrue;
-	ri.Printf( PRINT_ALL, "Gamma correction resources created (offscreen %dx%d)\n", width, height );
-}
-
-void VK_DestroyGammaResources( void ) {
-	if ( !vk.device ) return;
-	vkDeviceWaitIdle( vk.device );
-
-	if ( vk.gamma.gammaPipeline ) vkDestroyPipeline( vk.device, vk.gamma.gammaPipeline, NULL );
-	if ( vk.gamma.gammaPipelineLayout ) vkDestroyPipelineLayout( vk.device, vk.gamma.gammaPipelineLayout, NULL );
-
-	for ( uint32_t i = 0; i < vk.swapchainImageCount; i++ ) {
-		if ( vk.gamma.gammaFramebuffers[i] ) vkDestroyFramebuffer( vk.device, vk.gamma.gammaFramebuffers[i], NULL );
-	}
-	if ( vk.gamma.gammaRenderPass ) vkDestroyRenderPass( vk.device, vk.gamma.gammaRenderPass, NULL );
-
-	if ( vk.gamma.sceneFramebuffer ) vkDestroyFramebuffer( vk.device, vk.gamma.sceneFramebuffer, NULL );
-	if ( vk.gamma.sceneRenderPassLoad ) vkDestroyRenderPass( vk.device, vk.gamma.sceneRenderPassLoad, NULL );
-	if ( vk.gamma.sceneRenderPass ) vkDestroyRenderPass( vk.device, vk.gamma.sceneRenderPass, NULL );
-
-	if ( vk.gamma.sceneDescriptorSet ) vkFreeDescriptorSets( vk.device, vk.descriptorPool, 1, &vk.gamma.sceneDescriptorSet );
-	if ( vk.gamma.sceneImageView ) vkDestroyImageView( vk.device, vk.gamma.sceneImageView, NULL );
-	if ( vk.gamma.sceneImage ) vkDestroyImage( vk.device, vk.gamma.sceneImage, NULL );
-	if ( vk.gamma.sceneImageMemory ) vkFreeMemory( vk.device, vk.gamma.sceneImageMemory, NULL );
-
-	Com_Memset( &vk.gamma, 0, sizeof(vk.gamma) );
-}
-
-void VK_ApplyGammaCorrection( void ) {
-	if ( !vk.gamma.enabled || !vk.frameStarted ) return;
-
-	vkFrame_t *frame = &vk.frames[vk.currentFrame];
-	VkCommandBuffer cmd = frame->commandBuffer;
-
-	// End the scene render pass — transitions offscreen image to SHADER_READ_ONLY_OPTIMAL
-	VK_EndRenderPass();
-
-	// Begin gamma render pass on swapchain framebuffer
-	VkRenderPassBeginInfo rpBegin = {};
-	rpBegin.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-	rpBegin.renderPass = vk.gamma.gammaRenderPass;
-	rpBegin.framebuffer = vk.gamma.gammaFramebuffers[vk.currentSwapchainImage];
-	rpBegin.renderArea.offset = { 0, 0 };
-	rpBegin.renderArea.extent = vk.swapchainExtent;
-	rpBegin.clearValueCount = 0;
-	rpBegin.pClearValues = NULL;
-
-	vkCmdBeginRenderPass( cmd, &rpBegin, VK_SUBPASS_CONTENTS_INLINE );
-
-	// Set viewport and scissor
-	VkViewport viewport = {};
-	viewport.x = 0.0f;
-	viewport.y = 0.0f;
-	viewport.width = (float)vk.swapchainExtent.width;
-	viewport.height = (float)vk.swapchainExtent.height;
-	viewport.minDepth = 0.0f;
-	viewport.maxDepth = 1.0f;
-	vkCmdSetViewport( cmd, 0, 1, &viewport );
-
-	VkRect2D scissor = {};
-	scissor.offset = { 0, 0 };
-	scissor.extent = vk.swapchainExtent;
-	vkCmdSetScissor( cmd, 0, 1, &scissor );
-
-	// Bind gamma pipeline
-	vkCmdBindPipeline( cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, vk.gamma.gammaPipeline );
-
-	// Bind offscreen scene image as texture in set 0
-	vkCmdBindDescriptorSets( cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, vk.gamma.gammaPipelineLayout,
-		0, 1, &vk.gamma.sceneDescriptorSet, 0, NULL );
-
-	// Push gamma constants: { invGamma, brightness, contrast, pad }
-	float gamma = r_gamma ? r_gamma->value : 1.0f;
-	if ( gamma < 0.5f ) gamma = 0.5f;
-	if ( gamma > 3.0f ) gamma = 3.0f;
-	float invGamma = 1.0f / gamma;
-	float brightness = 0.0f;
-	float contrast = 1.0f;
-	float gammaPC[4] = { invGamma, brightness, contrast, 0.0f };
-	vkCmdPushConstants( cmd, vk.gamma.gammaPipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, 16, gammaPC );
-
-	// Draw fullscreen triangle
-	vkCmdDraw( cmd, 3, 1, 0, 0 );
-
-	// End gamma render pass — swapchain image transitions to PRESENT_SRC_KHR
-	vkCmdEndRenderPass( cmd );
-
-	// Scene render pass is no longer active
-	vk.renderPassActive = qfalse;
-}
-
-// ============================================================
-// Stencil shadow volume pipelines
-// Three dedicated pipelines for the two-pass stencil shadow algorithm:
-//   1. Front face pass: depth test, write stencil INCR on depth pass
-//   2. Back face pass: depth test, write stencil DECR on depth pass
-//   3. Shadow finish: stencil test (!=0), draw darkening fullscreen quad
-// ============================================================
-void VK_CreateShadowPipelines( void ) {
-	if ( !vk.singleTexVertShader || !vk.singleTexFragShader ) return;
-
-	// Common state for all three pipelines
-	VkPipelineShaderStageCreateInfo stages[2] = {};
-	stages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-	stages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
-	stages[0].module = vk.singleTexVertShader;
-	stages[0].pName = "main";
-	stages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-	stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-	stages[1].module = vk.singleTexFragShader;
-	stages[1].pName = "main";
-
-	// Vertex input: 5-binding layout matching vertex shader (pos, tc0, tc1, color, normal)
-	VkVertexInputBindingDescription bindings[5];
-	VkVertexInputAttributeDescription attrs[5];
-	// Binding 0: position (vec3 from vec4-strided data)
-	bindings[0] = {}; bindings[0].binding = 0; bindings[0].stride = sizeof(float) * 4; bindings[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-	attrs[0] = {}; attrs[0].location = 0; attrs[0].binding = 0; attrs[0].format = VK_FORMAT_R32G32B32_SFLOAT; attrs[0].offset = 0;
-	// Binding 1: texcoord0 (vec2)
-	bindings[1] = {}; bindings[1].binding = 1; bindings[1].stride = sizeof(float) * 2; bindings[1].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-	attrs[1] = {}; attrs[1].location = 1; attrs[1].binding = 1; attrs[1].format = VK_FORMAT_R32G32_SFLOAT; attrs[1].offset = 0;
-	// Binding 2: texcoord1 (vec2)
-	bindings[2] = {}; bindings[2].binding = 2; bindings[2].stride = sizeof(float) * 2; bindings[2].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-	attrs[2] = {}; attrs[2].location = 2; attrs[2].binding = 2; attrs[2].format = VK_FORMAT_R32G32_SFLOAT; attrs[2].offset = 0;
-	// Binding 3: color (rgba8)
-	bindings[3] = {}; bindings[3].binding = 3; bindings[3].stride = sizeof(byte) * 4; bindings[3].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-	attrs[3] = {}; attrs[3].location = 3; attrs[3].binding = 3; attrs[3].format = VK_FORMAT_R8G8B8A8_UNORM; attrs[3].offset = 0;
-	// Binding 4: normal (vec4 — xyz normal + w bone weights)
-	bindings[4] = {}; bindings[4].binding = 4; bindings[4].stride = sizeof(float) * 4; bindings[4].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-	attrs[4] = {}; attrs[4].location = 4; attrs[4].binding = 4; attrs[4].format = VK_FORMAT_R32G32B32A32_SFLOAT; attrs[4].offset = 0;
-
-	VkPipelineVertexInputStateCreateInfo vertexInput = {};
-	vertexInput.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-	vertexInput.vertexBindingDescriptionCount = 5;
-	vertexInput.pVertexBindingDescriptions = bindings;
-	vertexInput.vertexAttributeDescriptionCount = 5;
-	vertexInput.pVertexAttributeDescriptions = attrs;
-
-	VkPipelineInputAssemblyStateCreateInfo inputAssembly = {};
-	inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-	inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-
-	VkPipelineViewportStateCreateInfo viewportState = {};
-	viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-	viewportState.viewportCount = 1;
-	viewportState.scissorCount = 1;
-
-	VkPipelineRasterizationStateCreateInfo rasterization = {};
-	rasterization.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-	rasterization.polygonMode = VK_POLYGON_MODE_FILL;
-	rasterization.frontFace = VK_FRONT_FACE_CLOCKWISE;
-	rasterization.lineWidth = 1.0f;
-
-	VkPipelineMultisampleStateCreateInfo multisample = {};
-	multisample.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-	multisample.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
-
-	VkPipelineColorBlendAttachmentState blendAttachment = {};
-	blendAttachment.colorWriteMask = 0;  // no color writes during stencil fill
-	blendAttachment.blendEnable = VK_FALSE;
-
-	VkPipelineColorBlendStateCreateInfo colorBlend = {};
-	colorBlend.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-	colorBlend.attachmentCount = 1;
-	colorBlend.pAttachments = &blendAttachment;
-
-	VkPipelineDepthStencilStateCreateInfo depthStencil = {};
-	depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-	depthStencil.depthTestEnable = VK_TRUE;
-	depthStencil.depthWriteEnable = VK_FALSE;
-	depthStencil.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
-	depthStencil.stencilTestEnable = VK_TRUE;
-
-	VkDynamicState dynamicStates[] = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
-	VkPipelineDynamicStateCreateInfo dynamicState = {};
-	dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-	dynamicState.dynamicStateCount = 2;
-	dynamicState.pDynamicStates = dynamicStates;
-
-	VkGraphicsPipelineCreateInfo pipelineInfo = {};
-	pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-	pipelineInfo.stageCount = 2;
-	pipelineInfo.pStages = stages;
-	pipelineInfo.pVertexInputState = &vertexInput;
-	pipelineInfo.pInputAssemblyState = &inputAssembly;
-	pipelineInfo.pViewportState = &viewportState;
-	pipelineInfo.pRasterizationState = &rasterization;
-	pipelineInfo.pMultisampleState = &multisample;
-	pipelineInfo.pDepthStencilState = &depthStencil;
-	pipelineInfo.pColorBlendState = &colorBlend;
-	pipelineInfo.pDynamicState = &dynamicState;
-	pipelineInfo.layout = vk.pipelineLayout;
-	pipelineInfo.renderPass = vk.renderPass;
-	pipelineInfo.subpass = 0;
-
-	// --- Pipeline 1: Front faces, stencil INCR on depth pass ---
-	rasterization.cullMode = VK_CULL_MODE_BACK_BIT;
-	depthStencil.front.failOp = VK_STENCIL_OP_KEEP;
-	depthStencil.front.passOp = VK_STENCIL_OP_INCREMENT_AND_CLAMP;
-	depthStencil.front.depthFailOp = VK_STENCIL_OP_KEEP;
-	depthStencil.front.compareOp = VK_COMPARE_OP_ALWAYS;
-	depthStencil.front.compareMask = 0xFF;
-	depthStencil.front.writeMask = 0xFF;
-	depthStencil.front.reference = 0;
-	depthStencil.back = depthStencil.front;
-	vkCreateGraphicsPipelines( vk.device, vk.pipelineCache, 1, &pipelineInfo, NULL, &vk.shadowStencilIncrPipeline );
-
-	// --- Pipeline 2: Back faces, stencil DECR on depth pass ---
-	rasterization.cullMode = VK_CULL_MODE_FRONT_BIT;
-	depthStencil.front.passOp = VK_STENCIL_OP_DECREMENT_AND_CLAMP;
-	depthStencil.back = depthStencil.front;
-	vkCreateGraphicsPipelines( vk.device, vk.pipelineCache, 1, &pipelineInfo, NULL, &vk.shadowStencilDecrPipeline );
-
-	// --- Pipeline 3: Shadow finish - draw darkening quad where stencil != 0 ---
-	rasterization.cullMode = VK_CULL_MODE_NONE;
-	depthStencil.depthTestEnable = VK_FALSE;
-	depthStencil.front.failOp = VK_STENCIL_OP_KEEP;
-	depthStencil.front.passOp = VK_STENCIL_OP_KEEP;
-	depthStencil.front.depthFailOp = VK_STENCIL_OP_KEEP;
-	depthStencil.front.compareOp = VK_COMPARE_OP_NOT_EQUAL;
-	depthStencil.front.compareMask = 0xFF;
-	depthStencil.front.writeMask = 0xFF;
-	depthStencil.front.reference = 0;
-	depthStencil.back = depthStencil.front;
-
-	blendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
-		VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-	blendAttachment.blendEnable = VK_TRUE;
-	blendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_DST_COLOR;
-	blendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
-	blendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
-	blendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_DST_COLOR;
-	blendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
-	blendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
-	vkCreateGraphicsPipelines( vk.device, vk.pipelineCache, 1, &pipelineInfo, NULL, &vk.shadowFinishPipeline );
-
-	ri.Printf( PRINT_ALL, "Stencil shadow pipelines created\n" );
-}
-
-void VK_DestroyShadowPipelines( void ) {
-	if ( vk.shadowStencilIncrPipeline ) vkDestroyPipeline( vk.device, vk.shadowStencilIncrPipeline, NULL );
-	if ( vk.shadowStencilDecrPipeline ) vkDestroyPipeline( vk.device, vk.shadowStencilDecrPipeline, NULL );
-	if ( vk.shadowFinishPipeline ) vkDestroyPipeline( vk.device, vk.shadowFinishPipeline, NULL );
-	vk.shadowStencilIncrPipeline = VK_NULL_HANDLE;
-	vk.shadowStencilDecrPipeline = VK_NULL_HANDLE;
-	vk.shadowFinishPipeline = VK_NULL_HANDLE;
-}
 
 #endif // !DEDICATED

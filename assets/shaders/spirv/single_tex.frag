@@ -111,7 +111,9 @@ void main() {
     } else if (pc.texEnvMode < 1.5) {
         outColor = texColor;
     } else if (pc.texEnvMode < 2.5) {
-        outColor = vec4(mix(fragColor.rgb, texColor.rgb, texColor.a), fragColor.a);
+        // GL_DECAL: RGB = mix(vertex.rgb, tex.rgb, tex.a), A = tex.a (modulated by vertex.a)
+        // Using vertex alpha here breaks alpha-driven compositing (e.g. UI offscreen target).
+        outColor = vec4(mix(fragColor.rgb, texColor.rgb, texColor.a), texColor.a * fragColor.a);
     } else {
         outColor = texColor + fragColor;
         outColor.a = texColor.a * fragColor.a;

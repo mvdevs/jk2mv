@@ -54,27 +54,43 @@ static VkBlendFactor VK_BlendFactor( unsigned int glsBits ) {
 // ============================================================
 // Find or create a pipeline matching the given state
 // ============================================================
+static uint32_t VK_HashPipelineKey( const vkPipelineKey_t *key ) {
+	const byte *data = (const byte *)key;
+	uint32_t hash = 2166136261u; // FNV-1a offset basis
+	for ( size_t i = 0; i < sizeof(vkPipelineKey_t); i++ ) {
+		hash ^= data[i];
+		hash *= 16777619u; // FNV prime
+	}
+	return hash;
+}
+
 VkPipeline VK_FindPipeline( const vkPipelineKey_t *key ) {
-	// Search existing pipelines
-	for ( int i = 0; i < vk.pipelineCount; i++ ) {
-		if ( memcmp( &vk.pipelines[i].key, key, sizeof(vkPipelineKey_t) ) == 0 ) {
-			return vk.pipelines[i].pipeline;
+	uint32_t hash = VK_HashPipelineKey( key );
+	uint32_t idx = hash & (VK_PIPELINE_HASH_SIZE - 1);
+
+	// Open-addressing linear probe
+	for ( int probe = 0; probe < VK_PIPELINE_HASH_SIZE; probe++ ) {
+		vkPipelineEntry_t *entry = &vk.pipelines[idx];
+		if ( !entry->occupied ) {
+			// Empty slot — create and insert
+			if ( vk.pipelineCount >= VK_MAX_PIPELINES ) {
+				ri.Error( ERR_FATAL, "VK_FindPipeline: max pipelines exceeded" );
+				return VK_NULL_HANDLE;
+			}
+			entry->key = *key;
+			entry->pipeline = VK_CreatePipelineFromKey( key );
+			entry->occupied = qtrue;
+			vk.pipelineCount++;
+			return entry->pipeline;
 		}
+		if ( memcmp( &entry->key, key, sizeof(vkPipelineKey_t) ) == 0 ) {
+			return entry->pipeline;
+		}
+		idx = (idx + 1) & (VK_PIPELINE_HASH_SIZE - 1);
 	}
 
-	if ( vk.pipelineCount >= VK_MAX_PIPELINES ) {
-		ri.Error( ERR_FATAL, "VK_FindPipeline: max pipelines exceeded" );
-		return VK_NULL_HANDLE;
-	}
-
-	// Create new pipeline
-	VkPipeline pipeline = VK_CreatePipelineFromKey( key );
-
-	vk.pipelines[vk.pipelineCount].key = *key;
-	vk.pipelines[vk.pipelineCount].pipeline = pipeline;
-	vk.pipelineCount++;
-
-	return pipeline;
+	ri.Error( ERR_FATAL, "VK_FindPipeline: hash table full" );
+	return VK_NULL_HANDLE;
 }
 
 VkPipeline VK_CreatePipelineFromKey( const vkPipelineKey_t *key ) {
@@ -228,8 +244,18 @@ VkPipeline VK_CreatePipelineFromKey( const vkPipelineKey_t *key ) {
 		colorBlendAttachment.srcColorBlendFactor = VK_BlendFactor( key->srcBlend );
 		colorBlendAttachment.dstColorBlendFactor = VK_BlendFactor( key->dstBlend );
 		colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
-		colorBlendAttachment.srcAlphaBlendFactor = VK_BlendFactor( key->srcBlend );
-		colorBlendAttachment.dstAlphaBlendFactor = VK_BlendFactor( key->dstBlend );
+
+		// IMPORTANT: We rely on the framebuffer alpha channel for post-process compositing
+		// (UI offscreen target). Many blend modes (and GL's default behavior of applying the
+		// same factors to alpha as to color) produce alpha values that don't represent
+		// "coverage". That breaks later ui.a-based compositing and can show up as black
+		// boxes/halos behind UI panels/cursor.
+		//
+		// Always blend ALPHA as coverage when blending is enabled:
+		//   Aout = Asrc + Adst * (1 - Asrc)
+		// This keeps alpha meaningful regardless of the color blend equation.
+		colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+		colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
 		colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
 	} else {
 		colorBlendAttachment.blendEnable = VK_FALSE;
@@ -267,7 +293,7 @@ VkPipeline VK_CreatePipelineFromKey( const vkPipelineKey_t *key ) {
 	pipelineInfo.pColorBlendState = &colorBlending;
 	pipelineInfo.pDynamicState = &dynamicState;
 	pipelineInfo.layout = vk.pipelineLayout;
-	pipelineInfo.renderPass = vk.renderPass;
+	pipelineInfo.renderPass = key->renderPass ? key->renderPass : vk.renderPass;
 	pipelineInfo.subpass = 0;
 
 	VkPipeline pipeline;
@@ -284,6 +310,7 @@ VkPipeline VK_CreatePipelineFromKey( const vkPipelineKey_t *key ) {
 vkPipelineKey_t VK_PipelineKeyFromState( unsigned int stateBits, int cullType, qboolean multiTexture, qboolean polygonOffset ) {
 	vkPipelineKey_t key;
 	Com_Memset( &key, 0, sizeof(key) );
+	key.renderPass = vk.pipelineRenderPass ? vk.pipelineRenderPass : vk.renderPass;
 
 	key.srcBlend = stateBits & GLS_SRCBLEND_BITS;
 	key.dstBlend = stateBits & GLS_DSTBLEND_BITS;
@@ -320,7 +347,11 @@ void VK_BindPipeline( unsigned int stateBits, int cullType, qboolean multiTextur
 	VkPipeline pipeline = VK_FindPipeline( &key );
 
 	VkCommandBuffer cmd = vk.frames[vk.currentFrame].commandBuffer;
-	vkCmdBindPipeline( cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline );
+
+	if ( pipeline != vk.boundPipeline ) {
+		vkCmdBindPipeline( cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline );
+		vk.boundPipeline = pipeline;
+	}
 
 	// Push safe fragment shader defaults so direct VK_DrawIndexed callers
 	// (sky, beams, quicksprites, world effects, etc.) that bypass R_DrawElements

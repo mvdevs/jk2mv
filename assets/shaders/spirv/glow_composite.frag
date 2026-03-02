@@ -14,7 +14,9 @@ layout(location = 0) in vec2 fragTexCoord;
 layout(location = 0) out vec4 outColor;
 
 void main() {
-    vec3 glow = texture(sceneTex, fragTexCoord).rgb;
-    // Apply intensity multiplier to control glow brightness
-    outColor = vec4(glow * pc.intensity, 1.0);
+    vec4 glow = texture(sceneTex, fragTexCoord);
+    // Apply intensity multiplier to control glow brightness.
+    // Preserve source alpha — needed by RT glow reflection alpha-masked composite.
+    // Regular glow blur output always has alpha=1, so this is harmless for non-RT usage.
+    outColor = vec4(glow.rgb * pc.intensity, glow.a);
 }

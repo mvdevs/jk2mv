@@ -5,6 +5,7 @@ layout(set = 0, binding = 0) uniform accelerationStructureEXT topLevelAS;
 layout(set = 0, binding = 1) uniform writeonly image2D outputImage;
 layout(set = 0, binding = 2) uniform sampler2D depthSampler;
 layout(set = 0, binding = 3) uniform sampler2D glowSampler;
+layout(set = 0, binding = 5) uniform sampler2D historySampler;
 
 #define MAX_GLOW_SOURCES 32
 
@@ -18,6 +19,12 @@ layout(set = 0, binding = 4, std140) uniform GlowSourcesUBO {
 	GlowSource sources[MAX_GLOW_SOURCES];
 } glowSources;
 
+layout(set = 0, binding = 6, std140) uniform RTParamsUBO {
+	mat4 prevViewProjection;
+	uvec4 params0; // x = frameIndex
+	vec4  params1; // x = seeThroughOpacity, y = emitterEpsilon, z = temporalBlend
+} rt;
+
 layout(push_constant) uniform PushConstants {
 	mat4 inverseVP;
 	mat4 viewProjection;
@@ -30,6 +37,21 @@ layout(push_constant) uniform PushConstants {
 } pc;
 
 layout(location = 0) rayPayloadEXT float hitDistance;
+
+uint hash_u32(uint x) {
+	x ^= x >> 16;
+	x *= 0x7feb352d;
+	x ^= x >> 15;
+	x *= 0x846ca68b;
+	x ^= x >> 16;
+	return x;
+}
+
+float rand01(uvec3 v) {
+	uint h = v.x * 1664525u + v.y * 1013904223u + v.z * 2246822519u;
+	h = hash_u32(h);
+	return float(h & 0x00FFFFFFu) / 16777216.0;
+}
 
 // ============================================================
 // RT Glow Illumination — replaces legacy dlight projection
@@ -86,17 +108,10 @@ void main() {
 		return;
 	}
 
-	// Skip glow emitters before expensive normal reconstruction
-	vec3 selfGlow = texture(glowSampler, uv).rgb;
-	if (dot(selfGlow, vec3(0.299, 0.587, 0.114)) > 0.3) {
-		imageStore(outputImage, pixelCoord, vec4(0.0));
-		return;
-	}
-
 	vec3 worldPos = reconstructWorldPos(uv, depth);
 
 	// Fast pre-pass: if no source can possibly affect this pixel, skip the
-	// expensive normal reconstruction and all RT work.
+	// expensive normal reconstruction, glow texture sample, and all RT work.
 	bool hasCandidate = false;
 	for (int s = 0; s < pc.numSources; s++) {
 		vec3  srcStart  = glowSources.sources[s].posAndRadius.xyz;
@@ -112,6 +127,13 @@ void main() {
 		}
 	}
 	if (!hasCandidate) {
+		imageStore(outputImage, pixelCoord, vec4(0.0));
+		return;
+	}
+
+	// Skip glow emitters (avoids lighting the saber blade itself)
+	vec3 selfGlow = texture(glowSampler, uv).rgb;
+	if (dot(selfGlow, vec3(0.299, 0.587, 0.114)) > 0.3) {
 		imageStore(outputImage, pixelCoord, vec4(0.0));
 		return;
 	}
@@ -147,14 +169,23 @@ void main() {
 	if (dot(normal, viewDir) < 0.0)
 		normal = -normal;
 
+	// When extremely close to a surface (e.g. standing against a wall), depth-derived
+	// reconstruction and RT precision can cause self-intersection “phantom” shadows.
+	// Boost bias locally based on camera distance.
+	float camDist = length(pc.cameraPosAndIntensity.xyz - worldPos);
+	float close = 1.0 - smoothstep(8.0, 64.0, camDist);
+	float biasScale = mix(1.0, 3.0, close);
+
+
 	float globalIntensity = pc.cameraPosAndIntensity.w;
 	// Shadow ray origin: offset along surface normal to clear the wall.
 	// viewDir offset doesn't help when shadow rays go at grazing angles
 	// along the surface — the ray can clip through neighboring BSP triangles.
 	// NOTE: computed here (after normal reconstruction) because both debug
 	// and production paths need them.
-	vec3 shadowOrigin = worldPos + normal * pc.bias;
+	vec3 shadowOrigin = worldPos + normal * (pc.bias * biasScale);
 	vec3 probeOrigin  = worldPos + viewDir * (pc.bias * 2.5);
+	float emitterEps = max(rt.params1.y, 0.5);
 
 	// Debug modes: set r_DynamicGlowReflectionFalloff to a negative integer
 	// Each mode visualizes ONE component as a grayscale heatmap so you can
@@ -220,17 +251,20 @@ void main() {
 			if (shadowDist > 1.0) {
 				vec3  shadowDir = toShadow / shadowDist;
 				float cosAngle  = max(abs(dot(shadowDir, normal)), 0.05);
-				float shadowMin = max(pc.bias / cosAngle, 2.0);
+				// Important: don't use a huge tMin at grazing angles (it skips nearby occluders).
+				// Instead, increase the normal-offset bias and keep a small tMin.
+				vec3  biasedOrigin = worldPos + normal * (max(pc.bias / cosAngle, pc.bias) * biasScale);
+				float shadowMin = max(pc.bias * 0.25 * biasScale, 0.5);
 				float shadowMax = shadowDist - 2.0;
 				if (shadowMax > shadowMin) {
 					hitDistance = -1.0;
 					traceRayEXT(
 						topLevelAS,
-						gl_RayFlagsOpaqueEXT | gl_RayFlagsTerminateOnFirstHitEXT,
+						gl_RayFlagsTerminateOnFirstHitEXT,
 						0xFF, 0, 0, 0,
-						shadowOrigin, shadowMin, shadowDir, shadowMax, 0
+						biasedOrigin, shadowMin, shadowDir, shadowMax, 0
 					);
-					if (hitDistance > 0.0) vis = 0.0;
+					if (hitDistance > 0.0 || hitDistance < -1.5) vis = 0.0;
 				}
 			}
 			imageStore(outputImage, pixelCoord, vec4(vec3(vis), 1.0));
@@ -290,16 +324,32 @@ void main() {
 
 		// -7: classic debug (R=Ghoul2, G=shadow, B=NdotL cull, W=lit)
 		if (debugMode == 7) {
-			// BSP detection
+			// Combined-mask detection: single trace with 0x03, rchit encodes
+			// type in sign (positive=BSP, < -1=G2, -1=miss).
 			float surfaceScale = 1.0;
 			{
 				hitDistance = -1.0;
 				traceRayEXT(
 					topLevelAS, gl_RayFlagsOpaqueEXT | gl_RayFlagsTerminateOnFirstHitEXT,
-					0x01, 0, 0, 0,
+					0x03, 0, 0, 0,
 					probeOrigin, 0.1, -viewDir, pc.bias * 5.0 + 10.0, 0
 				);
-				if (hitDistance < 0.0) surfaceScale = pc.g2ReflectScale;
+				if (hitDistance < -1.5) {
+					// G2 closest — verify BSP isn't within 1 unit (feet on floor)
+					float g2Dist = -(hitDistance + 1.0);
+					hitDistance = -1.0;
+					traceRayEXT(
+						topLevelAS, gl_RayFlagsOpaqueEXT | gl_RayFlagsTerminateOnFirstHitEXT,
+						0x01, 0, 0, 0,
+						probeOrigin, 0.1, -viewDir, pc.bias * 5.0 + 10.0, 0
+					);
+					if (hitDistance < 0.0 || hitDistance > g2Dist + 1.0) {
+						surfaceScale = pc.g2ReflectScale;
+					}
+				} else if (hitDistance < -0.5) {
+					// Miss → treat as G2
+					surfaceScale = pc.g2ReflectScale;
+				}
 			}
 			if (surfaceScale < 1.0) {
 				imageStore(outputImage, pixelCoord, vec4(1.0, 0.0, 0.0, 1.0));
@@ -315,17 +365,18 @@ void main() {
 			if (shadowDist > 1.0) {
 				vec3  shadowDir = toShadow / shadowDist;
 				float cosAngle  = max(abs(dot(shadowDir, normal)), 0.05);
-				float shadowMin = max(pc.bias / cosAngle, 2.0);
+				vec3  biasedOrigin = worldPos + normal * (max(pc.bias / cosAngle, pc.bias) * biasScale);
+				float shadowMin = max(pc.bias * 0.25 * biasScale, 0.5);
 				float shadowMax = shadowDist - 2.0;
 				if (shadowMax > shadowMin) {
-					hitDistance = -1.0;
+						hitDistance = -1.0;
 					traceRayEXT(
 						topLevelAS,
-						gl_RayFlagsOpaqueEXT | gl_RayFlagsTerminateOnFirstHitEXT,
+						gl_RayFlagsTerminateOnFirstHitEXT,
 						0xFF, 0, 0, 0,
-						shadowOrigin, shadowMin, shadowDir, shadowMax, 0
+						biasedOrigin, shadowMin, shadowDir, shadowMax, 0
 					);
-					if (hitDistance > 0.0) {
+					if (hitDistance > 0.0 || hitDistance < -1.5) {
 						imageStore(outputImage, pixelCoord, vec4(0.0, 1.0, 0.0, 1.0));
 						return;
 					}
@@ -342,6 +393,11 @@ void main() {
 
 	// ---- Accumulate illumination from each glow source ----
 	vec3 totalLight = vec3(0.0);
+	// Shadow result is shared across sources: trace only the first qualifying ray,
+	// reuse its visibility for subsequent sources. For the common single-saber case
+	// this is exact; for multiple sources it's an approximation that temporal
+	// accumulation smooths out. Saves N-1 traces when N sources are in range.
+	float cachedVisibility = -1.0; // -1 = not yet computed
 
 	for (int s = 0; s < pc.numSources; s++) {
 		vec3  srcStart  = glowSources.sources[s].posAndRadius.xyz;
@@ -352,7 +408,19 @@ void main() {
 
 		// For line sources, find the closest point on the blade segment;
 		// for point sources (start == end), this is just the position.
-		vec3  closestPt = closestPointOnSegment(srcStart, srcEnd, worldPos);
+		// For line sources, jitter the sampled point along the segment to reduce
+		// banding and allow temporal accumulation to converge.
+		vec3 ab = srcEnd - srcStart;
+		float abLenSq = dot(ab, ab);
+		float tClosest = 0.0;
+		float tJitter = 0.0;
+		if (abLenSq >= 0.001) {
+			tClosest = clamp(dot(worldPos - srcStart, ab) / abLenSq, 0.0, 1.0);
+			float r = rand01(uvec3(uvec2(pixelCoord), rt.params0.x ^ uint(s * 977u)));
+			tJitter = (r - 0.5) * 0.25; // +-12.5% of segment
+		}
+		float tSeg = clamp(tClosest + tJitter, 0.0, 1.0);
+		vec3  closestPt = (abLenSq < 0.001) ? srcStart : (srcStart + ab * tSeg);
 		vec3  toLight   = closestPt - worldPos;
 		float distSq    = dot(toLight, toLight);
 		float radiusSq  = srcRadius * srcRadius;
@@ -365,8 +433,8 @@ void main() {
 		// preventing a visible Mach band at the radius boundary. The old
 		// linear 1-distSq/radiusSq had a derivative kink there, and with
 		// exponent < 1 the pow() made it even sharper.
-		float t = distSq / radiusSq;
-		float attenBase = smoothstep(1.0, 0.0, t);  // 0 at edge, 1 at center
+		float distT = distSq / radiusSq;
+		float attenBase = smoothstep(1.0, 0.0, distT);  // 0 at edge, 1 at center
 		if (attenBase <= 0.0)
 			continue;
 
@@ -405,34 +473,35 @@ void main() {
 		NdotL = mix(1.0, NdotL, ndotlFlatten);
 
 		// Very small theoretical contribution: skip expensive visibility test.
-		if ((NdotL * atten * srcPower * globalIntensity) < 0.0001)
+		if ((NdotL * atten * srcPower * globalIntensity) < 0.001)
 			continue;
 
 		// ---- RT shadow ray: is the path to the emitter clear? ----
-		// lightDir and dist already point toward the closest emitting point
-		// on the blade segment — reuse them instead of recomputing.
-		hitDistance = -1.0;
 		float visibility = 1.0;
 		if (dist > 1.0) {
-			// Grazing-angle correction: when the shadow ray goes nearly parallel
-			// to the surface, a fixed tMin isn't enough to clear the wall. Scale
-			// tMin by 1/cos(angle) so the ray always starts bias units above the
-			// surface plane, regardless of direction.
-			float cosAngle = max(abs(dot(lightDir, normal)), 0.05);
-			float shadowMin = max(pc.bias / cosAngle, 2.0);
-			float shadowMax = dist - 2.0;
-			if (shadowMax > shadowMin) {
-				traceRayEXT(
-					topLevelAS,
-					gl_RayFlagsOpaqueEXT | gl_RayFlagsTerminateOnFirstHitEXT,
-					0xFF, 0, 0, 0,
-					shadowOrigin, shadowMin, lightDir, shadowMax, 0
-				);
-
-				// If the ray hit something before reaching the emitter,
-				// keep a reduced contribution instead of hard-killing it.
-				if (hitDistance > 0.0)
-					visibility = pc.shadowIntensity;
+			if (cachedVisibility >= 0.0) {
+				visibility = cachedVisibility;
+			} else {
+				// Grazing-angle correction: when the shadow ray goes nearly parallel
+				// to the surface, a fixed tMin isn't enough to clear the wall. Scale
+				// tMin by 1/cos(angle) so the ray always starts bias units above the
+				// surface plane, regardless of direction.
+				float cosAngle = max(abs(dot(lightDir, normal)), 0.05);
+				vec3  biasedOrigin = worldPos + normal * (max(pc.bias / cosAngle, pc.bias) * biasScale);
+				float shadowMin = max(pc.bias * 0.25 * biasScale, 0.5);
+				float shadowMax = dist - emitterEps;
+				if (shadowMax > shadowMin) {
+					hitDistance = -1.0;
+					traceRayEXT(
+						topLevelAS,
+						gl_RayFlagsTerminateOnFirstHitEXT,
+						0xFF, 0, 0, 0,
+						biasedOrigin, shadowMin, lightDir, shadowMax, 0
+					);
+					if (hitDistance > 0.0 || hitDistance < -1.5)
+						visibility = pc.shadowIntensity;
+				}
+				cachedVisibility = visibility;
 			}
 		}
 
@@ -450,21 +519,61 @@ void main() {
 	// surfaceScale dims Ghoul2 pixels (not in TLAS) to pc.g2ReflectScale. Skipping this
 	// ray when totalLight == 0 saves the most expensive operation for the
 	// majority of pixels that have no glow source in range.
+	// Combined-mask detection: single trace with BSP|G2 (0x03).
+	// rchit encodes type in sign: positive=BSP, < -1=G2, -1=miss.
+	// Only trace the BSP fallback when G2 is closest (rare), so BSP-
+	// dominant scenes save 1 traceRayEXT per lit pixel.
 	float surfaceScale = 1.0;
 	if (dot(totalLight, totalLight) > 0.0) {
 		hitDistance = -1.0;
 		traceRayEXT(
 			topLevelAS, gl_RayFlagsOpaqueEXT | gl_RayFlagsTerminateOnFirstHitEXT,
-			0x01, 0, 0, 0,
+			0x03, 0, 0, 0,
 			probeOrigin, 0.1, -viewDir, pc.bias * 5.0 + 10.0, 0
 		);
-
-		if (hitDistance < 0.0) {
+		if (hitDistance < -0.5) {
+			// G2 or miss → dim the reflection
 			surfaceScale = pc.g2ReflectScale;
 		}
+		// else: BSP closest → surfaceScale stays 1.0
 	}
 
 	// Apply global intensity and surface type scaling
 	vec3 result = totalLight * globalIntensity * surfaceScale;
-	imageStore(outputImage, pixelCoord, vec4(result, 1.0));
+
+	// Alpha encodes surface type: 1.0 for BSP (blurrable), 0.0 for Ghoul2 (skip blur)
+	float blurMask = (surfaceScale >= 1.0) ? 1.0 : 0.0;
+
+	// Temporal accumulation: reproject history using previous view-projection.
+	// Guard against low-energy pixels accumulating a "veil" (washed-out look).
+	// Skip entirely when temporal blend is zero to avoid unnecessary work.
+	float blend = clamp(rt.params1.z, 0.0, 0.98);
+	if (blend <= 0.0) {
+		imageStore(outputImage, pixelCoord, vec4(result, blurMask));
+		return;
+	}
+	float lum = dot(result, vec3(0.2126, 0.7152, 0.0722));
+	float confidence = smoothstep(0.01, 0.05, lum);
+	float blendPix = blend * confidence;
+	vec3 history = vec3(0.0);
+	float historyValid = 0.0;
+	{
+		vec4 prevClip = rt.prevViewProjection * vec4(worldPos, 1.0);
+		if (prevClip.w > 0.0) {
+			vec2 prevUV = (prevClip.xy / prevClip.w) * 0.5 + 0.5;
+			if (all(greaterThanEqual(prevUV, vec2(0.0))) && all(lessThanEqual(prevUV, vec2(1.0)))) {
+				history = texture(historySampler, prevUV).rgb;
+				historyValid = 1.0;
+			}
+		}
+	}
+	if (historyValid > 0.0 && blendPix > 0.0) {
+		// Simple clamp to avoid ghosting when reprojection is wrong.
+		// Tight bounds keep contrast and reduce "haze".
+		vec3 lo = result * 0.8 - vec3(0.01);
+		vec3 hi = result * 1.25 + vec3(0.01);
+		history = clamp(history, lo, hi);
+		result = mix(result, history, blendPix);
+	}
+	imageStore(outputImage, pixelCoord, vec4(result, blurMask));
 }

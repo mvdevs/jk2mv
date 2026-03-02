@@ -265,11 +265,11 @@ Client-Side
 
 ..
 
-:Name: r_ext_multisample
+:Name: r_fxaa
 :Values: "0", "2", "4", "8", "16"
-:Default: "8"
+:Default: "0"
 :Description:
-   Multisample anti-aliasing. May not work on all machines.
+   FXAA anti-aliasing quality preset (Vulkan renderer). 0 = disabled, higher values increase quality and cost.
 
 ..
 
@@ -641,7 +641,6 @@ Undocumented Cvars
 * mv_coloredTextShadows
 * net_dropsim (dev cvar)
 * net_enabled
-* r_allowsoftwaregl
 * r_convertModelBones
 * r_loadSkinsJKA
 * r_noborder

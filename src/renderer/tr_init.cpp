@@ -95,6 +95,12 @@ cvar_t	*r_DynamicGlowReflectionIntensity;
 cvar_t	*r_DynamicGlowReflectionFalloff;
 cvar_t	*r_DynamicGlowReflectionG2Scale;
 cvar_t	*r_DynamicGlowReflectionShadowIntensity;
+cvar_t	*r_DynamicGlowReflectionG2Opacity;
+cvar_t	*r_DynamicGlowReflectionBlur;
+cvar_t	*r_DynamicGlowReflectionScale;
+
+cvar_t	*r_hdr;
+cvar_t	*r_hdr_exposure;
 
 cvar_t	*r_logFile;
 
@@ -597,16 +603,22 @@ void R_Register( void )
 	r_DynamicGlow = ri.Cvar_Get( "r_DynamicGlow", "1", CVAR_ARCHIVE | CVAR_GLOBAL );
 	r_DynamicGlowPasses = ri.Cvar_Get("r_DynamicGlowPasses", "3", CVAR_ARCHIVE | CVAR_GLOBAL);
 	r_DynamicGlowDelta = ri.Cvar_Get("r_DynamicGlowDelta", "0.02", CVAR_ARCHIVE | CVAR_GLOBAL);
-	r_DynamicGlowIntensity = ri.Cvar_Get("r_DynamicGlowIntensity", "1.75", CVAR_ARCHIVE | CVAR_GLOBAL);
-	r_DynamicGlowSoft = ri.Cvar_Get("r_DynamicGlowSoft", "1.5", CVAR_ARCHIVE | CVAR_GLOBAL);
-	r_DynamicGlowWidth = ri.Cvar_Get("r_DynamicGlowWidth", "320", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);
-	r_DynamicGlowHeight = ri.Cvar_Get("r_DynamicGlowHeight", "240", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);
+	r_DynamicGlowIntensity = ri.Cvar_Get("r_DynamicGlowIntensity", "0.6", CVAR_ARCHIVE | CVAR_GLOBAL);
+	r_DynamicGlowSoft = ri.Cvar_Get("r_DynamicGlowSoft", "2", CVAR_ARCHIVE | CVAR_GLOBAL);
+	r_DynamicGlowWidth = ri.Cvar_Get("r_DynamicGlowWidth", "0", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);
+	r_DynamicGlowHeight = ri.Cvar_Get("r_DynamicGlowHeight", "0", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);
 	r_DynamicGlowReflections = ri.Cvar_Get("r_DynamicGlowReflections", "1", CVAR_ARCHIVE | CVAR_GLOBAL);
-	r_DynamicGlowReflectionRadius = ri.Cvar_Get("r_DynamicGlowReflectionRadius", "1.0", CVAR_ARCHIVE | CVAR_GLOBAL);
+	r_DynamicGlowReflectionRadius = ri.Cvar_Get("r_DynamicGlowReflectionRadius", "0.8", CVAR_ARCHIVE | CVAR_GLOBAL);
 	r_DynamicGlowReflectionIntensity = ri.Cvar_Get("r_DynamicGlowReflectionIntensity", "0.2", CVAR_ARCHIVE | CVAR_GLOBAL);
 	r_DynamicGlowReflectionFalloff = ri.Cvar_Get("r_DynamicGlowReflectionFalloff", "20", CVAR_ARCHIVE | CVAR_GLOBAL);
 	r_DynamicGlowReflectionG2Scale = ri.Cvar_Get("r_DynamicGlowReflectionG2Scale", "0.3", CVAR_ARCHIVE | CVAR_GLOBAL);
-	r_DynamicGlowReflectionShadowIntensity = ri.Cvar_Get("r_DynamicGlowReflectionShadowIntensity", "0.7", CVAR_ARCHIVE | CVAR_GLOBAL);
+	r_DynamicGlowReflectionShadowIntensity = ri.Cvar_Get("r_DynamicGlowReflectionShadowIntensity", "0.2", CVAR_ARCHIVE | CVAR_GLOBAL);
+	r_DynamicGlowReflectionG2Opacity = ri.Cvar_Get("r_DynamicGlowReflectionG2Opacity", "0.4", CVAR_ARCHIVE | CVAR_GLOBAL);
+	r_DynamicGlowReflectionBlur = ri.Cvar_Get("r_DynamicGlowReflectionBlur", "3.0", CVAR_ARCHIVE | CVAR_GLOBAL);
+	r_DynamicGlowReflectionScale = ri.Cvar_Get("r_DynamicGlowReflectionScale", "1.0", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);
+
+	r_hdr = ri.Cvar_Get("r_hdr", "1", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);
+	r_hdr_exposure = ri.Cvar_Get("r_hdr_exposure", "0.5", CVAR_ARCHIVE | CVAR_GLOBAL);
 
 	r_picmip = ri.Cvar_Get("r_picmip", "0", CVAR_ARCHIVE | CVAR_GLOBAL | CVAR_LATCH);
 	AssertCvarRange( r_picmip, 0, 16, qtrue );
@@ -651,7 +663,7 @@ void R_Register( void )
 	r_textureMode = ri.Cvar_Get("r_textureMode", "GL_LINEAR_MIPMAP_LINEAR", CVAR_ARCHIVE | CVAR_GLOBAL);
 
 	// gamma correction
-	r_gamma = ri.Cvar_Get("r_gamma", "1", CVAR_ARCHIVE | CVAR_GLOBAL);
+	r_gamma = ri.Cvar_Get("r_gamma", "1.6", CVAR_ARCHIVE | CVAR_GLOBAL);
 
 	r_facePlaneCull = ri.Cvar_Get("r_facePlaneCull", "1", CVAR_ARCHIVE | CVAR_GLOBAL);
 
@@ -883,6 +895,9 @@ void RE_Shutdown( qboolean destroyWindow ) {
 
 #ifndef DEDICATED
 	// Vulkan: glow and gamma resources are cleaned up by VK_Shutdown
+
+	// Flush any pending deferred image destruction before deleting textures
+	VK_FlushDeferredResources();
 
 	R_ShutdownFonts();
 	if ( tr.registered ) {
