@@ -20,9 +20,11 @@ AI generated summary of what has been changed in this branch:
 - Adds static “world VBO” building for eligible BSP surfaces: groups world faces/triangles by `(shader, fogNum)` and uploads them once to device-local GPU buffers for lower CPU overhead during rendering.
 - Tightens multiple Vulkan/renderer hot paths and updates several SPIR-V shaders.
 
-## Ray-traced glow reflections
+## Advanced glow rendering
 
+- Comprehensive glow pipeline with multi-stage processing: downsampling, blur masking, upsampling, and composition.
 - Adds hardware ray-traced glow reflections using `VK_KHR_ray_tracing_pipeline` + `VK_KHR_acceleration_structure`.
+- Integrates reflection dispatches with dedicated dispatch table for flexible ray tracing configuration.
 - Adds new tuning CVARs:
   - `r_DynamicGlowReflections`
   - `r_DynamicGlowReflectionRadius`
@@ -32,6 +34,18 @@ AI generated summary of what has been changed in this branch:
   - `r_DynamicGlowReflectionShadowIntensity`
 - Integrates reflections into the glow pipeline (dispatch after glow render, composite additively).
 - When RT reflections are enabled, skips legacy dynamic-light projection to avoid double work.
+
+## Texture compression and image improvements
+
+- Extended texture compression support with improved image format handling and memory management.
+- Optimized texture binding and descriptor set updates for better pipeline performance.
+- Enhanced mipmap generation and sampling with refined filter quality.
+
+## Gamma correction
+
+- Adds dedicated gamma correction pass for accurate color space transforms.
+- Improves visual consistency across different display configurations.
+- Supports both linear and sRGB color space workflows in the Vulkan renderer.
 
 ## Modern defaults and UX polish
 
