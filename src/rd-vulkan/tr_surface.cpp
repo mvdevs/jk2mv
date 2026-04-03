@@ -2110,7 +2110,7 @@ void RB_SurfaceEntity( const surfaceType_t *surfType ) {
 #endif
 
 	// FIX ME: just a testing hack. Pretty sure we can merge all of these
-	tess.shader->entityMergable = qtrue;
+	//tess.shader->entityMergable = qtrue;
 	return;
 }
 
