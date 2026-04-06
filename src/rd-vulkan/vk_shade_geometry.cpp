@@ -95,6 +95,10 @@ void vk_update_mvp( const float *m ) {
 
 void vk_set_2d( void ) 
 {
+	if ( backEnd.projection2D ) {
+		return;
+	}
+
 	backEnd.projection2D = qtrue;
 
 	vk_update_mvp(NULL);

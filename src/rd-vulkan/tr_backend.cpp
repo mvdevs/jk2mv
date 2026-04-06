@@ -125,6 +125,7 @@ static void RB_Hyperspace(void) {
 
 	if ( tess.shader != tr.whiteShader ) {
 		RB_EndSurface();
+		vk_set_2d();
 		RB_BeginSurface( tr.whiteShader, 0 );
 	}
 
@@ -292,7 +293,7 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 
 		push_constant = qfalse;
 
-		//if (((oldSort ^ drawSurfs->sort) & ~QSORT_REFENTITYNUM_MASK) || !shader->entityMergable) {
+		//if (((oldSort ^ drawSurf->sort) & ~QSORT_REFENTITYNUM_MASK) || !shader->entityMergable) {
 		if ( shader != oldShader || fogNum != oldFogNum || dlighted != oldDlighted
 			|| ( entityNum != oldEntityNum && !shader->entityMergable ) )
 		{
@@ -668,10 +669,9 @@ const void *RB_StretchPic ( const void *data ) {
 	if ( shader != tess.shader ) 
 #endif
 	{
-		if ( tess.numIndexes ) {
-			RB_EndSurface();
-		}
+		RB_EndSurface();
 		backEnd.currentEntity = &backEnd.entity2D;
+		vk_set_2d(); // set correct shader time before RB_BeginSurface() on 3D->2D transition
 		RB_BeginSurface( shader, 0 );
 	}
 
@@ -679,10 +679,7 @@ const void *RB_StretchPic ( const void *data ) {
 	VBO_UnBind();
 #endif
 
-	if ( !backEnd.projection2D )
-	{
-		vk_set_2d();
-	}
+	vk_set_2d();
 
 	if ( vk.bloomActive ) {
 		vk_bloom();
@@ -711,18 +708,15 @@ const void *RB_RotatePic ( const void *data )
 	image = shader->stages[0]->bundle[0].image[0];
 
 	if ( image ) {
-		if ( !backEnd.projection2D ) {
-			vk_set_2d();
-		}
-
 		shader = cmd->shader;
 		if ( shader != tess.shader ) {
-			if ( tess.numIndexes ) {
-				RB_EndSurface();
-			}
+			RB_EndSurface();
 			backEnd.currentEntity = &backEnd.entity2D;
+			vk_set_2d(); // set correct shader time before RB_BeginSurface() on 3D->2D transition
 			RB_BeginSurface( shader, 0 );
 		}
+
+		vk_set_2d();
 
 		RB_CHECKOVERFLOW( 4, 6 );
 		int numVerts = tess.numVertexes;
@@ -807,18 +801,15 @@ const void *RB_RotatePic2 ( const void *data )
 
 		if ( image )
 		{
-			if ( !backEnd.projection2D ) {
-				vk_set_2d();
-			}
-
 			shader = cmd->shader;
 			if ( shader != tess.shader ) {
-				if ( tess.numIndexes ) {
-					RB_EndSurface();
-				}
+				RB_EndSurface();
 				backEnd.currentEntity = &backEnd.entity2D;
+				vk_set_2d(); // set correct shader time before RB_BeginSurface() on 3D->2D transition
 				RB_BeginSurface( shader, 0 );
 			}
+
+			vk_set_2d();
 
 			RB_CHECKOVERFLOW( 4, 6 );
 			int numVerts = tess.numVertexes;
