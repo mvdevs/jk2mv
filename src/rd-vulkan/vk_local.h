@@ -1079,6 +1079,8 @@ typedef struct {
 		VkDeviceSize geometry_size;
 	} defaults;
 
+	char driverNote[200];
+
 	struct {
 		VkDescriptorSet *descriptor;
 		uint32_t descriptor_size;

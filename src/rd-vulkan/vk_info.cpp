@@ -262,6 +262,21 @@ void vk_get_vulkan_properties( VkPhysicalDeviceProperties *props )
     glConfig.version_string = (const char*)vk.version_string;
     glConfig.renderer_string = (const char*)vk.renderer_string;
 
+#ifdef _WIN32
+	// Intel iGPU drivers from 101.5333 to 101.6737 have a known bug that causes
+	// VK_ERROR_DEVICE_LOST during vkQueueSubmit, see https://github.com/ec-/Quake3e/issues/312
+	if ( props->vendorID == 0x8086 ) {
+		uint32_t drvMajor = props->driverVersion >> 14;
+		uint32_t drvMinor = props->driverVersion & 0x3FFF;
+		if ( drvMajor == 101 && drvMinor >= 5333 && drvMinor <= 6737 ) {
+			Com_sprintf( vk.driverNote, sizeof( vk.driverNote ), S_COLOR_ORANGE
+				"\nWARNING: Intel driver %i.%i is known to cause Vulkan crashes.\n"
+				"Consider updating to driver >= 101.6790 or downgrading to <= 101.5186.\n",
+				drvMajor, drvMinor );
+		}
+	}
+#endif
+
     ri.Printf( PRINT_ALL, "----- Vulkan -----\n" );
     ri.Printf( PRINT_ALL, "VK_VENDOR: %s\n", vk.vendor_string );
     ri.Printf( PRINT_ALL, "VK_RENDERER: %s\n", vk.renderer_string );
@@ -326,6 +341,11 @@ static void GfxInfo ( void )
     ri.Printf( PRINT_ALL, "VK_VENDOR: %s\n", vk.vendor_string );
     ri.Printf( PRINT_ALL, "VK_RENDERER: %s\n", vk.renderer_string );
     ri.Printf( PRINT_ALL, "VK_VERSION: %s\n", vk.version_string );
+
+	if ( vk.driverNote[0] != '\0' )
+	{
+		ri.Printf( PRINT_ALL, "%s", vk.driverNote );
+	}
 
     ri.Printf( PRINT_ALL, "\nVK_DEVICE_EXTENSIONS:\n" );
     R_PrintLongString( vk.device_extensions_string );
