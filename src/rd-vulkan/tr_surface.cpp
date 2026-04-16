@@ -2055,6 +2055,8 @@ void RB_SurfaceEntity( const surfaceType_t *surfType ) {
 #ifdef USE_VBO
 	VBO_Flush();
 #endif
+	qboolean allow_merge = qtrue;
+
 	switch( backEnd.currentEntity->e.reType ) {
 	case RT_SPRITE:
 		RB_SurfaceSprite();
@@ -2105,6 +2107,7 @@ void RB_SurfaceEntity( const surfaceType_t *surfType ) {
 		}
 		break;
 	default:
+		allow_merge = qfalse;
 		RB_SurfaceAxis();
 		break;
 	}
@@ -2115,6 +2118,7 @@ void RB_SurfaceEntity( const surfaceType_t *surfType ) {
 
 	// FIX ME: just a testing hack. Pretty sure we can merge all of these
 	//tess.shader->entityMergable = qtrue;
+	tess.shader->entityMergable = (allow_merge && tess.shader != tr.defaultShader)  ? qtrue : qfalse;;
 	return;
 }
 
