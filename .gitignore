@@ -130,3 +130,5 @@ src/jk2mvmp.dir/Debug/mv.res
 *.dat
 *.zip
 *.res
+
+src/rd-vulkan/shaders/tools/compile_threaded.exe
