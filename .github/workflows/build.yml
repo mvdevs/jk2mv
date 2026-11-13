@@ -19,13 +19,13 @@ jobs:
         arch: [Win32]
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v7
       with:
         submodules: true
         fetch-depth: 0
 
     - name: Add msbuild to PATH
-      uses: microsoft/setup-msbuild@v1.1
+      uses: microsoft/setup-msbuild@v3
 
     - name: Create Build Environment
       run: cmake -E make_directory ${{github.workspace}}/build/actions
@@ -40,12 +40,12 @@ jobs:
       shell: cmd
       run: msbuild /m /p:Configuration=${{ matrix.build_type }} PACKAGE.vcxproj
 
-    #- uses: 'actions/upload-artifact@v3'
+    #- uses: 'actions/upload-artifact@v7'
     #  with:
     #    name: Windows Binaries (Installer), ${{ matrix.build_type }}, ${{ matrix.arch }}
     #    path: ${{github.workspace}}/build/actions/out/${{ matrix.build_type }}/*
 
-    - uses: 'actions/upload-artifact@v3'
+    - uses: 'actions/upload-artifact@v7'
       with:
         name: Windows Package (Installer), ${{ matrix.build_type }}, ${{ matrix.arch }}
         path: ${{github.workspace}}/build/actions/out/*.exe
@@ -53,7 +53,7 @@ jobs:
     # As actions/upload-release-asset seems to demand exact filenames and content types we use a script instead
     - name: Upload Release
       if: ${{ github.event_name == 'release' && matrix.build_type == 'RelWithDebInfo' }}
-      uses: actions/github-script@v6
+      uses: actions/github-script@v9
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
@@ -83,13 +83,13 @@ jobs:
         arch: [Win32, x64]
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v7
       with:
         submodules: true
         fetch-depth: 0
 
     - name: Add msbuild to PATH
-      uses: microsoft/setup-msbuild@v1.1
+      uses: microsoft/setup-msbuild@v3
 
     - name: Create Build Environment
       run: cmake -E make_directory ${{github.workspace}}/build/actions
@@ -104,12 +104,12 @@ jobs:
       shell: cmd
       run: msbuild /m /p:Configuration=${{ matrix.build_type }} PACKAGE.vcxproj
 
-    #- uses: 'actions/upload-artifact@v3'
+    #- uses: 'actions/upload-artifact@v7'
     #  with:
     #    name: Windows Binaries (Portable), ${{ matrix.build_type }}, ${{ matrix.arch }}
     #    path: ${{github.workspace}}/build/actions/out/${{ matrix.build_type }}/*
 
-    - uses: 'actions/upload-artifact@v3'
+    - uses: 'actions/upload-artifact@v7'
       if: ${{ matrix.build_type == 'RelWithDebInfo' }}
       with:
         name: Windows Package (Portable), ${{ matrix.build_type }}, ${{ matrix.arch }}
@@ -118,7 +118,7 @@ jobs:
     # As actions/upload-release-asset seems to demand exact filenames and content types we use a script instead
     - name: Upload Release
       if: ${{ github.event_name == 'release' && matrix.build_type == 'RelWithDebInfo' }}
-      uses: actions/github-script@v6
+      uses: actions/github-script@v9
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
@@ -148,7 +148,7 @@ jobs:
         arch: [Win32]
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v7
       with:
         submodules: true
         fetch-depth: 0
@@ -160,7 +160,7 @@ jobs:
         Start-Process -FilePath vs_installer.exe -ArgumentList "modify", "--installPath", "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise", "--add Microsoft.VisualStudio.Component.WinXP", "--quiet", "--norestart", "--nocache" -Wait -PassThru -WindowStyle Hidden
 
     - name: Add msbuild to PATH
-      uses: microsoft/setup-msbuild@v1.1
+      uses: microsoft/setup-msbuild@v3
 
     - name: Create Build Environment
       run: cmake -E make_directory ${{github.workspace}}/build/actions
@@ -175,12 +175,12 @@ jobs:
       shell: cmd
       run: msbuild /m /p:Configuration=${{ matrix.build_type }} PACKAGE.vcxproj
 
-    #- uses: 'actions/upload-artifact@v3'
+    #- uses: 'actions/upload-artifact@v7'
     #  with:
     #    name: Windows Binaries (Portable - WinXP), ${{ matrix.build_type }}, ${{ matrix.arch }}
     #    path: ${{github.workspace}}/build/actions/out/${{ matrix.build_type }}/*
 
-    - uses: 'actions/upload-artifact@v3'
+    - uses: 'actions/upload-artifact@v7'
       if: ${{ matrix.build_type == 'RelWithDebInfo' }}
       with:
         name: Windows Package (Portable - WinXP), ${{ matrix.build_type }}, ${{ matrix.arch }}
@@ -189,7 +189,7 @@ jobs:
     # As actions/upload-release-asset seems to demand exact filenames and content types we use a script instead
     - name: Upload Release
       if: ${{ github.event_name == 'release' && matrix.build_type == 'RelWithDebInfo' }}
-      uses: actions/github-script@v6
+      uses: actions/github-script@v9
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
@@ -212,15 +212,20 @@ jobs:
 
   macos:
     name: Build macOS (${{ matrix.portable }}), ${{ matrix.build_type }}, ${{ matrix.arch }}
-    runs-on: macos-12
+    runs-on: ${{ matrix.runner }}
     strategy:
       matrix:
         build_type: [Debug, Release]
         portable: [Portable, Non-Portable]
-        arch: [x86_64]
+        arch: [arm64, x86_64]
+        include:
+          - arch: arm64
+            runner: macos-15
+          - arch: x86_64
+            runner: macos-15-intel
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v7
       with:
         submodules: true
         fetch-depth: 0
@@ -237,13 +242,18 @@ jobs:
 
     - name: Create Build Environment
       run: |
-        brew install sdl2
+        curl -fsSLO https://github.com/libsdl-org/SDL/releases/download/release-2.32.10/SDL2-2.32.10.dmg
+        echo "4a7ac31640d70214e848f994be8a12849c0f97918a7e6c2e27a40036166d1a7f  SDL2-2.32.10.dmg" | shasum -a 256 -c
+        hdiutil attach -nobrowse -readonly -mountpoint $RUNNER_TEMP/sdl SDL2-2.32.10.dmg
+        mkdir -p $RUNNER_TEMP/Frameworks
+        cp -R $RUNNER_TEMP/sdl/SDL2.framework $RUNNER_TEMP/Frameworks/
+        hdiutil detach $RUNNER_TEMP/sdl
         mkdir -p ${{github.workspace}}/build/actions
 
     - name: Configure CMake
       shell: bash
       working-directory: ${{github.workspace}}/build/actions
-      run: cmake -G "Unix Makefiles" -DUseInternalLibs=ON ${{ steps.cmakeargs.outputs.PORTABLE }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} $GITHUB_WORKSPACE
+      run: cmake -G "Unix Makefiles" -DUseInternalLibs=ON ${{ steps.cmakeargs.outputs.PORTABLE }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DCMAKE_FRAMEWORK_PATH=$RUNNER_TEMP/Frameworks $GITHUB_WORKSPACE
 
     - name: Build
       working-directory: ${{github.workspace}}/build/actions
@@ -255,12 +265,12 @@ jobs:
       shell: bash
       run: make package
 
-    #- uses: 'actions/upload-artifact@v3'
+    #- uses: 'actions/upload-artifact@v7'
     #  with:
     #    name: macOS Binaries (${{ matrix.portable }}), ${{ matrix.build_type }}, ${{ matrix.arch }}
     #    path: ${{github.workspace}}/build/actions/out/${{ matrix.build_type }}/*
 
-    - uses: 'actions/upload-artifact@v3'
+    - uses: 'actions/upload-artifact@v7'
       if: ${{ matrix.build_type == 'Release' }}
       with:
         name: macOS Package (${{ matrix.portable }}), ${{ matrix.build_type }}, ${{ matrix.arch }}
@@ -271,7 +281,7 @@ jobs:
     # As actions/upload-release-asset seems to demand exact filenames and content types we use a script instead
     - name: Upload Release
       if: ${{ github.event_name == 'release' && matrix.build_type == 'Release' }}
-      uses: actions/github-script@v6
+      uses: actions/github-script@v9
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
@@ -302,7 +312,7 @@ jobs:
         portable: [Portable, Non-Portable]
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v7
       with:
         submodules: true
         fetch-depth: 0
@@ -343,12 +353,12 @@ jobs:
       shell: bash
       run: podman exec -w /jk2mv/build/actions buildenv make package
 
-    #- uses: 'actions/upload-artifact@v3'
+    #- uses: 'actions/upload-artifact@v7'
     #  with:
     #    name: ${{ steps.parameters.outputs.BINARTIFACTNAME }}
     #    path: ${{github.workspace}}/build/actions/out/${{ matrix.build_type }}/*
 
-    - uses: 'actions/upload-artifact@v3'
+    - uses: 'actions/upload-artifact@v7'
       if: ${{ matrix.build_type == 'Release' }}
       with:
         name: ${{ steps.parameters.outputs.PKGARTIFACTNAME }}
@@ -360,7 +370,7 @@ jobs:
     # As actions/upload-release-asset seems to demand exact filenames and content types we use a script instead
     - name: Upload Release
       if: ${{ github.event_name == 'release' && matrix.build_type == 'Release' }}
-      uses: actions/github-script@v6
+      uses: actions/github-script@v9
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
