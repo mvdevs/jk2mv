@@ -15,6 +15,10 @@ list(INSERT CMAKE_MODULE_PATH 0 "${RESDir}")
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 set(ProjectName "JK2MV" CACHE STRING "Project Name")
+
+if(APPLE AND NOT CMAKE_OSX_DEPLOYMENT_TARGET)
+	set(CMAKE_OSX_DEPLOYMENT_TARGET "10.13" CACHE STRING "Minimum macOS version")
+endif()
 set(ProjectURL "https://jk2mv.org")
 project(${ProjectName})
 
@@ -439,3 +443,13 @@ include(CPack)
 
 add_subdirectory(assets)
 add_subdirectory(src)
+
+# re-sign the app after everything is installed into it
+if(APPLE AND BuildMVMP AND NOT BuildPortableVersion)
+	install(CODE "
+		execute_process(COMMAND codesign --force --deep --sign - \"\${CMAKE_INSTALL_PREFIX}/jk2mvmp.app\" RESULT_VARIABLE _cs)
+		if(NOT _cs EQUAL 0)
+			message(FATAL_ERROR \"codesign failed\")
+		endif()
+	")
+endif()
